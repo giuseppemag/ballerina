@@ -78,3 +78,7 @@ domains
       writes-to: document-viewer.set-selected-cells, show, hide, show-highlighted, hide-highlighted
       actions: select-cells
 ```
+
+1. Split updaters in repository: define 3 different updaters: Core, Coroutine, Presentation.
+2. Wrapper template: template not only type but also constructor with any and embed as extension of JSX.Element
+   (JSX.Element & { ... }).

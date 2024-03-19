@@ -8,7 +8,7 @@ export type AsyncState<a> = (
   | ((
       | { kind: "unloaded" }
       | { kind: "loading" }
-      | { kind: "extra-loading"; value: a }
+      | { kind: "reloading"; value: a }
       | { kind: "error"; value: any }
     ) & { failedLoadingAttempts: number })
   | { kind: "loaded"; value: a }
@@ -69,13 +69,13 @@ export const AsyncState = {
     }),
   },
   Updaters: {
-    failedLoadingAttempts: <a>(_: Updater<number>): Updater<AsyncState<a>> =>
+    failedLoadingAttempts: <a>(updateAttempts: Updater<number>): Updater<AsyncState<a>> =>
       Updater((current) =>
         current.kind == "loaded"
           ? current
           : {
               ...current,
-              failedLoadingAttempts: _(current.failedLoadingAttempts),
+              failedLoadingAttempts: updateAttempts(current.failedLoadingAttempts),
             }
       ),
     toUnloaded: <a>(): Updater<AsyncState<a>> =>
@@ -92,13 +92,13 @@ export const AsyncState = {
         getLoadingAttempts,
         failedLoadingAttempts: current.getLoadingAttempts(),
       })),
-    toExtraLoading: <a>(value: a): Updater<AsyncState<a>> =>
+    toReloading: <a>(value: a): Updater<AsyncState<a>> =>
       Updater((current) => ({
-        kind: "extra-loading",
+        kind: "reloading",
         value,
         map,
         getLoadingAttempts,
-        failedLoadingAttempts: current.getLoadingAttempts(),
+        failedLoadingAttempts: 0,
       })),
     toError: <a>(value?: any): Updater<AsyncState<a>> =>
       Updater((current) => ({
