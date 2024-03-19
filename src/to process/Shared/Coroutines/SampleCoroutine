@@ -1,0 +1,15 @@
+const sayHelloAfterSomeTime = (_: Unit) => new Promise<string>((resolve, reject) => setTimeout(() => resolve("hello"), 1000));
+export const sampleAwaitCoroutine = 
+  Co.Repeat(
+    Co.Await<number, Unit, string, string>(sayHelloAfterSomeTime, _ => "uhm, not good, no").then(_ => 
+      Co.SetState<number, Unit>(_ => 0).then(_ => 
+        Co.While<number, Unit>(([state,_]) => state < 10, 
+          Co.SetState<number, Unit>(_ => _+1).then(_ => Co.Wait(500))
+          ).then(_ =>
+            Co.While<number, Unit>(([state,_]) => state < 20, 
+            Co.SetState<number, Unit>(_ => _+2).then(_ => Co.Wait(1500))
+            )
+          )
+        )
+      )
+    )
