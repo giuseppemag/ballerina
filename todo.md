@@ -1,10 +1,7 @@
 Todo
-  fun
   updater
-    (insideOf)
-    simpleUpdater
     to another file
-  either and option (nullable)
+  sum/either (from App.tsx) and option (nullable)
   templates
   asyncState
     asyncOperation

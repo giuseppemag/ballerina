@@ -1,7 +1,47 @@
 import { useState } from "react";
 import reactLogo from "./assets/react.svg";
 import "./App.css";
-import { BasicFun, Fun, id } from "./domains/core/fun/state";
+import { BasicFun, Fun } from "./domains/core/fun/state";
+import { caseUpdater } from "./domains/core/fun/domains/updater/domains/caseUpdater/state";
+import { simpleUpdater } from "./domains/core/fun/domains/updater/domains/simpleUpdater/state";
+import { id } from "./domains/core/fun/domains/id/state";
+
+type C1 = { Kind:"C1", value:number, otherValue:number }
+const C1 = {
+  Updaters:{
+    ...simpleUpdater<C1>()("value"),
+    ...simpleUpdater<C1>()("otherValue"),
+  }
+}
+type C2 = { Kind:"C2", value:string }
+const C2 = {
+  Updaters:{
+    ...simpleUpdater<C2>()("value")
+  }
+}
+type C3 = { Kind:"C3", value:boolean }
+const C3 = {
+  Updaters:{
+    ...simpleUpdater<C3>()("value")
+  }
+}
+type U = C1 | C2 | C3
+const U = {
+  Updaters:{
+    ...caseUpdater<U>()("C1"),
+    ...caseUpdater<U>()("C2"),
+    ...caseUpdater<U>()("C3"),
+  }
+}
+
+U.Updaters.C1(
+	C1.Updaters.value(_ => _ + 1).then(
+	C1.Updaters.otherValue(_ => _ * 2))
+).then(
+	U.Updaters.C2(C2.Updaters.value(_ => _ + "!"))
+).then(
+	U.Updaters.C3(C3.Updaters.value(_ => !_))
+)
 
 type Sum<a,b> = { value:a, kind:"l" } | { value:b, kind:"r" }
 const Sum = {
@@ -25,7 +65,7 @@ const Array = {
 }
 
 const program = () : Fun<Sum<Array<string>, Array<number>>, Sum<Array<string>, Array<number>>> => {
-	return Sum.map2(Array.map(id()), Array.map(id()))
+	return Sum.map2(Array.map(id), Array.map(id))
 }
 
 /*
