@@ -1,8 +1,5 @@
-import {
-  BasicFun,
-  Fun,
-  Updater,
-} from "../../../../Shared/widgets-library/widgets-main";
+import { Updater } from "../fun/domains/updater/state";
+import { BasicFun, Fun } from "../fun/state";
 
 export type AsyncState<a> = (
   | ((
@@ -48,7 +45,7 @@ export const AsyncState = {
       failedLoadingAttempts: 0,
     }),
     extraLoading: <a>(value: a): AsyncState<a> => ({
-      kind: "extra-loading",
+      kind: "reloading",
       value,
       map,
       getLoadingAttempts,

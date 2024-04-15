@@ -1,81 +1,94 @@
-Todo
-  updater
-    to another file
-  sum/either (from App.tsx) and option (nullable)
-  templates
-  asyncState
-    asyncOperation
-  coroutines
-  immutable
-  operation extractor (template + core, coroutine + core)
-  authentication
-  table
-  gallery
-  filter
+Todo (✅/❌)
+  ❌ coroutines
+    ✅ without widgets
+    ❌ asyncOperation
+      ✅ asyncState
+      ❌ retry-coroutine with exit upon error handling 
+  ❌ template
+    ❌ the constructor should enforce the context to be an intersection with the state
+    ❌ add wrapView to Template
+  ❌ sample application
+    ❌ parent 
+      ❌ template
+        ❌ instantiate children templates
+        ❌ instantiate coroutine runner
+          ❌ coroutine runner as a template, not a widget
+      ❌ view
+        ❌ wrapper for template
+        ❌ simple debug renderer
+        ❌ tiny form for incrementing the counters
+          ❌ updating one counter updates the other as well
+      ❌ coroutine
+        ❌ manage form submission with debounce
+          ❌ embed the coroutine from the core domain debounce
+            ❌ then the events are parameterized in the core domain
+        ❌ apply async validation
+    ❌ child1
+      ❌ template
+        ❌ instantiate coroutine runner
+        ❌ reset values
+      ❌ view
+        ❌ show values
+      ❌ coroutine
+        ❌ animate values
+    ❌ child2
+      ❌ template
+        ❌ instantiate coroutine runner
+        ❌ reset values
+      ❌ view
+        ❌ show values
+      ❌ coroutine
+        ❌ animate values
 
+  ❌ should "state.ts" just be "type", "model", or "structure"
+  ❌ templates
+  ❌ split updaters across core, template, and coroutine
+    ❌ not in state.ts file
+    ❌ possibly in three separate files
+  ❌ pair
+  ❌ immutable and array
+  ❌ operation extractor (template + core, coroutine + core)
+  ❌ insideOf needs some further thinking
+  ❌ think of a decent example application with
+  ❌ auth
+  ❌   with org selection
+  ❌ navigation (with foreign mutations)
+  ❌ website with building blocks
+  ❌ e-commerce
+  ❌ private area
+  ❌ workflow editor
+  ❌   actions
+  ❌   advanced filtering
+  ❌ tasks
+  ❌   actions
+  ❌   advanced filtering
+  ❌ typesafe subscription forms with validation
+  ❌ typesafe parsing and validation
 
-Frontend
-  Domains scaffolder from spec
-  Coroutines
-  Updaters
-    Updater::inside
-  Templates
-    Compositions
-  Library of utilities
-    Forms
-    Tables
-    AsyncOperation
-  Frontend framework customization
+❌ Hangfire-style coroutines
+  ❌ define coroutine in F#
+  ❌ define computation expression
+    ❌ define Tick
+    ❌ define Any
+    ❌ define Repeat
+    ❌ define Wait
+  ❌ define computation expression based on System.Expression or F# Quotation
+  ❌ runner uses serialization interface
+    ❌ first implementation to file
+  ❌ implement SelectMany and Return (?) as well
+  ❌ serialize to database (Docker)
+  ❌ implement lock and separate runner threads for higher performance
 
-Backend
-  OData-style queries
-  Entities and relations scaffolder
-  Expressjs and some ORM
-  Endpoints scaffolder
-  Backend framework and language customization
+❌ Frontend
+  ❌ Domains scaffolder from spec
+  ❌ Frontend domain extensibility
 
-
-
-```
-domains
-  auth
-    state: username, organization
-    coroutines: load username, load organization
-    api: login
-  main
-    when: auth.state is loaded
-    reads: auth.state
-    tasks
-      actions
-        simple-action
-          a
-          b
-          c
-        simple-modal
-          x
-          y
-          z
-        simple-modal-with-extra-data
-          p
-          q
-          r
-      table
-        columns
-          api: load-columns
-        rows
-          api: load-rows-chunk
-        filter
-          reads: tasks.state
-    document-viewer
-      writes-to: dashboard.select-cells
-      actions: set-selected-cells, show, hide, show-highlighted, hide-highlighted
-      thumbnails
-      pages
-    dashboard
-      writes-to: document-viewer.set-selected-cells, show, hide, show-highlighted, hide-highlighted
-      actions: select-cells
-```
-
-1. Split updaters in repository: define 3 different updaters: Core, Coroutine, Presentation.
-2. Wrapper template: template not only type but also constructor with any and embed as extension of JSX.Element
-   (JSX.Element & { ... }).
+❌ Backend
+  ❌ Coroutines
+    ❌ Streams
+  ❌ OData-style queries
+  ❌ Some sort of scaffolder and query-generator connected to endpoints and based on coroutines
+  ❌ Entities, relations, and permissions scaffolder
+  ❌ Expressjs and some ORM
+  ❌ Endpoints scaffolder
+  ❌ Language-independent backend framework

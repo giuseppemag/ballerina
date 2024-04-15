@@ -1,11 +1,9 @@
-import { SharedLayoutConstants } from "../Layout/SharedLayoutConstants";
-import {
-  BasicFun,
-  BasicUpdater,
-  then,
-  Unit,
-} from "../widgets-library/basics/fun";
-import { Sum } from "../widgets-library/basics/sum";
+import { SharedLayoutConstants } from "../../../../../to process/Shared/Layout/SharedLayoutConstants";
+import { Sum } from "../collections/domains/sum/state";
+import { id } from "../fun/domains/id/state";
+import { Unit } from "../fun/domains/unit/state";
+import { BasicUpdater } from "../fun/domains/updater/state";
+import { BasicFun, Fun } from "../fun/state";
 export type DeltaT = number;
 export type Coroutine<context, state, events, result> = {
   ([context, deltaT, events]: [context, DeltaT, Array<events>]): CoroutineStep<
@@ -28,11 +26,14 @@ export type Coroutine<context, state, events, result> = {
   ) => Coroutine<context, state, events, nextResult>;
 };
 
+const callMaybe = <a,b>(f:BasicFun<BasicUpdater<a>,BasicUpdater<b>>) : BasicFun<BasicUpdater<a> | undefined,BasicUpdater<b> | undefined> =>
+    x => x == undefined ? undefined : f(x)
+
 const thenMaybe = <state>(
   f: BasicUpdater<state> | undefined,
   g: BasicUpdater<state> | undefined
 ): BasicUpdater<state> | undefined =>
-  f == undefined ? g : g == undefined ? f : then(f, g);
+  f == undefined ? g : g == undefined ? f : (x => g(f(x)));
 
 export const Coroutine = {
   Create: <context, state, events, result>(
@@ -114,13 +115,28 @@ export const Coroutine = {
   //   f: Fun<result1, result2>
   // ): Coroutine<context, state, events, result2> =>
   //   Coroutine.Create((state) => CoroutineStep.Map(p(state), f)),
-  MapState: <context, state, events, result>(
+  MapContext: <childContext, result, parentContext, state, events>(
+    p: Coroutine<childContext, state, events, result>,
+    narrow:BasicFun<parentContext, childContext>,
+  ): Coroutine<parentContext, state, events, result> =>
+    Coroutine.Create(([parentContext, deltaT, events]) => 
+      CoroutineStep.MapContext(p([narrow(parentContext), deltaT, events]), narrow)
+    ),
+  Embed: <childContext, childState, result, parentContext, parentState, events>(
+    p: Coroutine<childContext, childState, events, result>,
+    narrow:BasicFun<parentContext, childContext>,
+    widen:BasicFun<BasicUpdater<childState>,BasicUpdater<parentState>>
+  ): Coroutine<parentContext, parentState, events, result> =>
+    Coroutine.Create(([parentContext, deltaT, events]) => {
+      return CoroutineStep.Embed(p([narrow(parentContext), deltaT, events]), narrow, widen)
+    }),
+  MapState: <context, state, newState, events, result>(
     p: Coroutine<context, state, events, result>,
     f: BasicFun<
-      BasicUpdater<state> | undefined,
-      BasicUpdater<state> | undefined
+      BasicUpdater<state>,
+      BasicUpdater<newState>
     >
-  ): Coroutine<context, state, events, result> =>
+  ): Coroutine<context, newState, events, result> =>
     Coroutine.Create((state) => CoroutineStep.MapState(p(state), f)),
   // Join: <context, state, events, result>(
   //   p: Coroutine<context, state, events, Coroutine<context, state, events, result>>
@@ -241,7 +257,7 @@ export const Coroutine = {
             );
             return CoroutineStep.MapState(
               step.next([context, deltaT, events]),
-              (_) => thenMaybe(nextState, _)
+              ((_) => thenMaybe(nextState, _) || id)
             );
           } else ps1.push(step.next);
         }
@@ -368,18 +384,18 @@ export const Coroutine = {
           : promiseResult.kind == "resolve"
             ? CoroutineStep.Result(
                 undefined,
-                Sum.CreateLeft(promiseResult.result)
+                Sum.Default.left(promiseResult.result)
               )
             : CoroutineStep.Result(
                 undefined,
-                Sum.CreateRight(promiseResult.error)
+                Sum.Default.right(promiseResult.error)
               );
       };
       return CoroutineStep.Yield(
         undefined,
         Coroutine.Create(([_, __, ___]) => awaiter())
       );
-    }),
+    }),    
 };
 
 export const CoTypedFactory = <c, s, e extends { Kind: string }>() => ({
@@ -399,6 +415,12 @@ export const CoTypedFactory = <c, s, e extends { Kind: string }>() => ({
   Return: <r>(res: r) => Coroutine.Return<c & s, s, e, r>(res),
   While: Coroutine.While<c & s, s, e>,
   On: Coroutine.On<c & s, s, e>(),
+  Embed: <parentContext, parentState, result, events>(
+    p: Coroutine<c, s, events, result>,
+    narrow:BasicFun<parentContext, c>,
+    widen:BasicFun<BasicUpdater<s>,BasicUpdater<parentState>>
+  ): Coroutine<parentContext, parentState, events, result> =>
+    Coroutine.Embed(p, narrow, widen)
 });
 
 export type CoroutineEventProcessor<context, state, events, result> = BasicFun<
@@ -531,31 +553,62 @@ export const CoroutineStep = {
   //             const next = p.next(e);
   //             return next == "no match" ? next : Coroutine.Map(next, f)
   //           }),
-  MapState: <context, state, events, result>(
-    p: CoroutineStep<context, state, events, result>,
-    f: BasicFun<
-      BasicUpdater<state> | undefined,
-      BasicUpdater<state> | undefined
-    >
-  ): CoroutineStep<context, state, events, result> =>
+  MapContext: <childContext, parentContext, state, result, events>(
+    p: CoroutineStep<childContext, state, events, result>,
+    narrow:BasicFun<parentContext, childContext>,
+  ): CoroutineStep<parentContext, state, events, result> =>
     p.kind == "result"
-      ? CoroutineStep.Result(f(p.newState), p.result)
+      ? p
       : p.kind == "yield"
-        ? CoroutineStep.Yield(f(p.newState), Coroutine.MapState(p.next, f))
+        ? CoroutineStep.Yield(p.newState, Coroutine.MapContext(p.next, narrow))
         : p.kind == "waiting"
           ? CoroutineStep.Waiting(
-              f(p.newState),
+              p.newState,
+              p.msLeft,
+              Coroutine.MapContext(p.next, narrow)
+            )
+                : p.kind == "then"
+                  ? CoroutineStep.Then(
+                      p.newState,
+                      Coroutine.MapContext(p.p, narrow),
+                      Fun(p.k).then((_) => Coroutine.MapContext(_, narrow))
+                    )
+            : CoroutineStep.WaitingForEvent(p.newState, (e) => {
+                const next = p.next(e);
+                return next == "no match" ? next : Coroutine.MapContext(next, narrow);
+              }),
+  MapState: <context, state, newState, events, result>(
+    p: CoroutineStep<context, state, events, result>,
+    f: BasicFun<
+      BasicUpdater<state>,
+      BasicUpdater<newState>
+    >
+  ): CoroutineStep<context, newState, events, result> =>
+    p.kind == "result"
+      ? CoroutineStep.Result(callMaybe(f)(p.newState), p.result)
+      : p.kind == "yield"
+        ? CoroutineStep.Yield(callMaybe(f)(p.newState), Coroutine.MapState(p.next, f))
+        : p.kind == "waiting"
+          ? CoroutineStep.Waiting(
+            callMaybe(f)(p.newState),
               p.msLeft,
               Coroutine.MapState(p.next, f)
             )
           : p.kind == "then"
             ? CoroutineStep.Then(
-                f(p.newState),
+              callMaybe(f)(p.newState),
                 Coroutine.MapState(p.p, f),
-                then(p.k, (_) => Coroutine.MapState(_, f))
+                Fun(p.k).then((_) => Coroutine.MapState(_, f))
               )
-            : CoroutineStep.WaitingForEvent(f(p.newState), (e) => {
+            : CoroutineStep.WaitingForEvent(callMaybe(f)(p.newState), (e) => {
                 const next = p.next(e);
                 return next == "no match" ? next : Coroutine.MapState(next, f);
               }),
+  Embed: <childContext, childState, result, parentContext, parentState, events>(
+    p: CoroutineStep<childContext, childState, events, result>,
+    narrow:BasicFun<parentContext, childContext>,
+    widen:BasicFun<BasicUpdater<childState>,BasicUpdater<parentState>>
+  ): CoroutineStep<parentContext, parentState, events, result> =>
+    CoroutineStep.MapState(CoroutineStep.MapContext(p, narrow), widen)
+            
 };
