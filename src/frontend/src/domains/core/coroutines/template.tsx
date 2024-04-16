@@ -6,7 +6,7 @@ import { BasicFun } from "../fun/state";
 import { Coroutine } from "./state";
 import { Template } from "../template/state";
 
-type CoroutineComponentOptions = {
+export type CoroutineComponentOptions = {
   interval?: number;
   key?: string;
   restartWhenFinished?: boolean;
@@ -107,7 +107,7 @@ class CoroutineComponent<context, state, events> extends React.Component<
 }
 
 export const CoroutineTemplate = <context, state, events>() => 
-  Template.Default<context & CoroutineReadonlyContext<context, state, events>, state, events>(props => 
+  Template.Default<context & CoroutineReadonlyContext<context, state, events>, state, Unit>(props => 
     <CoroutineComponent
       context={props.context}
       events={props.context.events}

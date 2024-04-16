@@ -1,9 +1,7 @@
 import { Unit } from "../core/fun/domains/unit/state";
 import { Template } from "../core/template/state";
-import { Parent } from "./state";
-
-export type ParentWritableState = Parent
-export type ParentReadonlyContext = Unit
+import { ParentCoroutinesRunner } from "./coroutines/runner";
+import { ParentReadonlyContext, ParentWritableState } from "./state";
 
 export const ParentTemplate = 
 	Template.Default<
@@ -13,4 +11,6 @@ export const ParentTemplate =
 					JSON.stringify(props)
 				}
 			</>
-	)
+	).any([
+		ParentCoroutinesRunner.mapContext(c => ({...c, events:[]}))
+	])

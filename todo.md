@@ -5,6 +5,7 @@ Todo (✅/❌)
       ✅ asyncState
       ❌ retry-coroutine with exit upon error handling 
   ❌ template
+    ❌ rename subdomains folder from "domains" to "children"
     ❌ the constructor should enforce the context to be an intersection with the state
     ❌ add wrapView to Template
   ❌ sample application
@@ -12,7 +13,7 @@ Todo (✅/❌)
       ❌ template
         ❌ instantiate children templates
         ❌ instantiate coroutine runner
-          ❌ coroutine runner as a template, not a widget
+          ✅ coroutine runner as a template, not a widget
       ❌ view
         ❌ wrapper for template
         ❌ simple debug renderer

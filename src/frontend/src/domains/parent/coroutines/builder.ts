@@ -1,4 +1,4 @@
-import { CoTypedFactory } from "../../core/coroutines/state";
-import { Parent } from "../state";
+import { CoTypedFactory } from "../../core/coroutines/builder";
+import { ParentReadonlyContext, ParentWritableState } from "../state";
 
-export const CoParent = CoTypedFactory<Parent, Parent, never>();
+export const Co = CoTypedFactory<ParentReadonlyContext, ParentWritableState, never>()
