@@ -6,40 +6,47 @@ Todo (✅/❌)
       ❌ retry-coroutine with exit upon error handling 
   ❌ template
     ❌ rename subdomains folder from "domains" to "children"
-    ❌ the constructor should enforce the context to be an intersection with the state
-    ❌ add wrapView to Template
+    ❌ the Template coroutine constructor should enforce the context to be an intersection with the state
   ❌ sample application
     ❌ parent 
-      ❌ template
-        ❌ instantiate children templates
-        ❌ instantiate coroutine runner
-          ✅ coroutine runner as a template, not a widget
-      ❌ view
-        ❌ wrapper for template
-        ❌ simple debug renderer
-        ❌ tiny form for incrementing the counters
-          ❌ updating one counter updates the other as well
       ❌ coroutine
-        ❌ manage form submission with debounce
+        ✅ simple "animation"
+        ❌ apply async validation with debounce
           ❌ embed the coroutine from the core domain debounce
             ❌ then the events are parameterized in the core domain
-        ❌ apply async validation
-    ❌ child1
       ❌ template
-        ❌ instantiate coroutine runner
-        ❌ reset values
-      ❌ view
-        ❌ show values
-      ❌ coroutine
-        ❌ animate values
-    ❌ child2
-      ❌ template
-        ❌ instantiate coroutine runner
-        ❌ reset values
-      ❌ view
-        ❌ show values
-      ❌ coroutine
-        ❌ animate values
+        ❌ instantiate children templates
+          ❌ child1
+            ❌ template
+              ❌ instantiate coroutine runner
+              ❌ reset values
+            ❌ view
+              ❌ show values
+            ❌ coroutine
+              ❌ animate values
+          ❌ child2
+            ❌ template
+              ❌ instantiate coroutine runner
+              ❌ reset values
+            ❌ view
+              ❌ show values
+            ❌ coroutine
+              ❌ animate values
+        ✅ instantiate coroutine runner
+          ✅ coroutine runner as a template, not a widget
+      ✅ view
+        ✅ wrapper for template
+          ✅ add wrapView to Template
+        ✅ simple debug renderer
+        ✅ tiny form for writing a string "a^Nb^M"
+        ✅ tiny form for incrementing the counters
+          ✅ updating one counter updates the other as well
+    ❌ uncle domain
+      ❌ lonely boolean in the state
+      ❌ empty template
+      ❌ empty coroutine
+      ❌ placeholder (debug) view
+      ❌ foreign mutations from child2 to uncle
 
   ❌ should "state.ts" just be "type", "model", or "structure"
   ❌ templates

@@ -10,8 +10,7 @@ _Separation of concerns: rendering, logic, api, etc._
 _Separation of domains: nesting and verticals_
 
 ### Organizing code
-Trivial sample: CMS, Authentication, Products page infinite list, "Private area" with my wishlist
-Coroutine to retry the authentication, coroutine for the infinite list
+Trivial sample: Parent, Child1, Child2, Uncle.
 
 _State_
   _Introducing the Train, with wagons and engine_
@@ -25,6 +24,8 @@ _Templates_
   _Readonly context_
   _Writable state_
   _Layouts_
+    _Dumb components_
+    _Wrappers_
   _Template embedding, business logic vs visuals, dispatching subdomains_
 _State management across domains_
   _useState_
@@ -40,3 +41,8 @@ _Api's_
   _Mocks vs regular promises_
   _Parsers_
 _Core vs feature domains_
+_Advanced patterns_
+  _Debouncers_
+  _Asynchronous validation_
+  _Await with retry_
+  _Infinite lists_

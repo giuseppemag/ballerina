@@ -11,6 +11,7 @@ type TemplateRunner<context, state, foreignMutations> =
 export type Template<context, state, foreignMutations> = 
   {
     any:BasicFun<Array<Template<context, state, foreignMutations>>, Template<context, state, foreignMutations>>,
+    mapView:(f:BasicUpdater<JSX.Element>) => Template<context, state, foreignMutations>,
     mapState:<newState>(f:BasicFun<BasicUpdater<state>,BasicUpdater<newState>>) => Template<context, newState, foreignMutations>,
     mapContext:<newContext>(f:BasicFun<newContext, context>) => Template<newContext, state, foreignMutations>,
     mapForeignMutations:<newForeignMutations>(f:BasicFun<newForeignMutations, foreignMutations>) => Template<context, state, newForeignMutations>,
@@ -20,6 +21,9 @@ export const Template = {
   Default:<context, state, foreignMutations>(actual:TemplateRunner<context, state, foreignMutations>) : 
     Template<context, state, foreignMutations> => {
     const result = actual as Template<context, state, foreignMutations>
+    result.mapView = function(this:Template<context, state, foreignMutations>, f:BasicUpdater<JSX.Element>) {
+      return Template.Operations.MapView(this, f)
+    }
     result.mapContext = function<newContext>(this:Template<context, state, foreignMutations>, f:BasicFun<newContext, context>) {
       return Template.Operations.MapContext(this, f)
     }
@@ -35,6 +39,13 @@ export const Template = {
     return result
   },
   Operations:{
+    MapView:<context, state, foreignMutations>(p:Template<context, state, foreignMutations>, f:BasicUpdater<JSX.Element>) : Template<context, state, foreignMutations> =>
+      Template.Default(props => f(<>
+          {
+            p(props)
+          }
+        </>)
+      ),
     MapState:<context, state, newState, foreignMutations>(p:Template<context, state, foreignMutations>, f:BasicFun<BasicUpdater<state>,BasicUpdater<newState>>) : Template<context, newState, foreignMutations> =>
       Template.Default(props => <>
           {
