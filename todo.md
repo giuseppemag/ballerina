@@ -24,16 +24,14 @@ Todo (✅/❌)
           ✅ debounced and synchronized should just extend V, or at least Synchronized
           ✅ move extra subdomains from Parent to Core
           ✅ embed the coroutine from the core domain debounce
-          ❌ debounce(sync'ed) does not work at all, debug it extensively
-            ❌ print better stats on screen
-          ❌ debounce(sync'ed) is semantically totally screwed up, it needs a more reasonable implementation
+          ✅ debounce(sync'ed) does not work under all edge cases, debug it extensively
+            ✅ print better stats on screen
+          ❌ the sample of debounce(sync'ed) is semantically totally screwed up, it needs a more reasonable implementation
             ❌ split Api and keep mocks separate
-          ❌ embed should be a method of the coroutine, not only of the CoTypedFactory
-            ❌ accept the parameters in a curried order
-            ❌ rewrite the instances of Co.Embed so they look more decent
-              ❌ oh God the code for the embedding of Sync inside Debounce looks like shit
+          ✅ embed should be a method of the coroutine, not only of the CoTypedFactory
+            ✅ rewrite the instances of Co.Embed so they look more decent
             ❌ make sure the `events` are parameterized in the core domains Debounced and Synchronized to avoid imposing `never` on the caller `events`
-          ❌ prevent the debounce coroutine from running when dirty is not set
+          ❌ prevent the debounce coroutine from running when dirty is not set with a separate runner for performance
       ❌ template
         ❌ instantiate children templates
           ❌ child1

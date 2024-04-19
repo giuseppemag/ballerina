@@ -1,3 +1,4 @@
+import { useContext } from "react";
 import { SharedLayoutConstants } from "../../../../../to process/Shared/Layout/SharedLayoutConstants";
 import { Sum } from "../collections/domains/sum/state";
 import { id } from "../fun/domains/id/state";
@@ -18,6 +19,10 @@ export type Coroutine<context, state, events, result> = {
   // mapState: (
   //   f: Fun<Updater<state> | undefined, Updater<state> | undefined>
   // ) => Coroutine<context, state, events, result>;
+  embed: <parentContext, parentState>(
+    narrow:BasicFun<parentContext, context>,
+    widen:BasicFun<BasicUpdater<state>,BasicUpdater<parentState>>
+  ) => Coroutine<parentContext, parentState, events, result>,
   then: <nextResult>(
     f: BasicFun<result, Coroutine<context, state, events, nextResult>>
   ) => Coroutine<context, state, events, nextResult>;
@@ -53,6 +58,13 @@ export const Coroutine = {
     // ): Coroutine<context, state, events, result> {
     //   return Coroutine.MapState(this, f);
     // };
+    co.embed = function<parentContext, parentState>(
+      this:Coroutine<context, state, events, result>,
+      narrow:BasicFun<parentContext, context>,
+      widen:BasicFun<BasicUpdater<state>,BasicUpdater<parentState>>
+    ) : Coroutine<parentContext, parentState, events, result> {
+      return Coroutine.Embed<context, state, result, parentContext, parentState, events>(this, narrow, widen)
+    }
     co.then = function <nextResult>(
       f: BasicFun<result, Coroutine<context, state, events, nextResult>>
     ): Coroutine<context, state, events, nextResult> {

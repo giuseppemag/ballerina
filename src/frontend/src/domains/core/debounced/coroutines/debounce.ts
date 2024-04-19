@@ -1,7 +1,6 @@
 import { ApiResultStatus } from "../../apiResultStatus/state";
 import { CoTypedFactory } from "../../coroutines/builder";
 import { Coroutine } from "../../coroutines/state";
-import { id } from "../../fun/domains/id/state";
 import { Unit } from "../../fun/domains/unit/state";
 import { replaceWith } from "../../fun/domains/updater/domains/replaceWith/state";
 import { Debounced, DebouncedStatus, DirtyStatus } from "../state";
@@ -9,7 +8,6 @@ import { Debounced, DebouncedStatus, DirtyStatus } from "../state";
 
 export const Debounce = <v, e extends { Kind: string; }>(k: Coroutine<v, v, e, ApiResultStatus>, debounceDurationInMs: number, waitBeforeRetryOnTransientFailure: number = debounceDurationInMs * 2) => {
 	const Co = CoTypedFactory<Unit, Debounced<v>, e>();
-	const CoK = CoTypedFactory<Unit, v, e>();
 	const updaters = Debounced.Updaters;
 	return Co.Seq([
 		Co.SetState(updaters.Core.status(replaceWith<DebouncedStatus>("waiting for dirty"))),
@@ -18,8 +16,7 @@ export const Debounce = <v, e extends { Kind: string; }>(k: Coroutine<v, v, e, A
 		),
 		Co.SetState(updaters.Core.dirty(replaceWith<DirtyStatus>("dirty but being processed"))),
 		Co.SetState(updaters.Core.status(replaceWith<DebouncedStatus>("just detected dirty, starting processing"))),
-		// Co.Wait(250),
-		CoK.Embed<Debounced<v>, Debounced<v>, ApiResultStatus, e>(k, (_: Debounced<v>) => _, updaters.Core.value).then(apiResult => {
+		k.embed((_: Debounced<v>) => _, updaters.Core.value).then(apiResult => {
 			return Co.Seq([
 				Co.SetState(updaters.Core.status(replaceWith<DebouncedStatus>("processing finished"))),
 				// Co.Wait(250)
