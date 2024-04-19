@@ -8,8 +8,9 @@ Todo (✅/❌)
     ❌ parent 
       ❌ coroutine
         ❌ Embed must allow mapping, or outright ignoring of events
+          ❌ Define mapEvents on coroutine
         ✅ simple "animation"
-        ❌ apply async validation with debounce
+        ✅ apply async validation with debounce
           ✅ debounced
             ✅ generic methods, not repository
           ✅ synchronized
@@ -26,12 +27,12 @@ Todo (✅/❌)
           ✅ embed the coroutine from the core domain debounce
           ✅ debounce(sync'ed) does not work under all edge cases, debug it extensively
             ✅ print better stats on screen
-          ❌ the sample of debounce(sync'ed) is semantically totally screwed up, it needs a more reasonable implementation
-            ❌ split Api and keep mocks separate
+          ✅ the sample of debounce(sync'ed) is semantically totally screwed up, it needs a more reasonable implementation
+            ✅ split Api and keep mocks separate
           ✅ embed should be a method of the coroutine, not only of the CoTypedFactory
             ✅ rewrite the instances of Co.Embed so they look more decent
-            ❌ make sure the `events` are parameterized in the core domains Debounced and Synchronized to avoid imposing `never` on the caller `events`
-          ❌ prevent the debounce coroutine from running when dirty is not set with a separate runner for performance
+            ✅ make the `events` are parameterized in the core domains Debounced and Synchronized to avoid imposing `never` on the caller `events`
+          ✅ prevent the debounce coroutine from running when dirty is not set with a separate runner for performance
       ❌ template
         ❌ instantiate children templates
           ❌ child1

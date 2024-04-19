@@ -1,7 +1,7 @@
 import { Unit } from "../core/fun/domains/unit/state";
 import { replaceWith } from "../core/fun/domains/updater/domains/replaceWith/state";
 import { Template } from "../core/template/state";
-import { ParentCoroutinesRunner } from "./coroutines/runner";
+import { ParentCoroutinesRunner, ParentDebouncerRunner } from "./coroutines/runner";
 import { Parent, ParentReadonlyContext, ParentWritableState } from "./state";
 import { ParentInputs } from "./views/inputs";
 import { ParentWrapper } from "./views/wrapper";
@@ -41,7 +41,8 @@ export const ParentTemplate =
 				/>
 			</>
 		).any([
-			ParentCoroutinesRunner.mapContext(c => ({ ...c, events: [] }))
+			ParentCoroutinesRunner.mapContext(c => ({ ...c, events: [] })),
+			ParentDebouncerRunner.mapContext(c => ({ ...c, events: [] })),
 		]).mapView(
 			ParentWrapper
 		)

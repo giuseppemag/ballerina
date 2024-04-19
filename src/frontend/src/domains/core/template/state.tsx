@@ -2,7 +2,7 @@ import React from 'react'
 import { BasicFun } from '../fun/state'
 import { BasicUpdater, Updater } from '../fun/domains/updater/state'
 
-type TemplateProps<context, state, foreignMutations> =
+export type TemplateProps<context, state, foreignMutations> =
   { context:context, setState:BasicFun<BasicUpdater<state>, void>, foreignMutations:foreignMutations }
 
 type TemplateRunner<context, state, foreignMutations> =
