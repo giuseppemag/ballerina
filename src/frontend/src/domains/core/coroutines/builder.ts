@@ -23,10 +23,10 @@ export const CoTypedFactory = <c, s, e extends { Kind: string }>() => ({
   While: Coroutine.While<c & s, s, e>,
   On: Coroutine.On<c & s, s, e>(),
   Embed: <parentContext, parentState, result, events>(
-    p: Coroutine<c, s, events, result>,
-    narrow:BasicFun<parentContext, c>,
+    p: Coroutine<c &s, s, events, result>,
+    narrow:BasicFun<parentContext & parentState, c &s>,
     widen:BasicFun<BasicUpdater<s>,BasicUpdater<parentState>>
-  ): Coroutine<parentContext, parentState, events, result> =>
+  ): Coroutine<parentContext & parentState, parentState, events, result> =>
     Coroutine.Embed(p, narrow, widen),
   Template:(
     initialCoroutine: Coroutine<c & s, s, e, Unit>,

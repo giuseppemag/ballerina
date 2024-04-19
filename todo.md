@@ -1,19 +1,39 @@
 Todo (✅/❌)
   ❌ coroutines
     ✅ without widgets
-    ❌ asyncOperation
-      ✅ asyncState
-      ❌ retry-coroutine with exit upon error handling 
   ❌ template
     ❌ rename subdomains folder from "domains" to "children"
     ❌ the Template coroutine constructor should enforce the context to be an intersection with the state
   ❌ sample application
     ❌ parent 
       ❌ coroutine
+        ❌ Embed must allow mapping, or outright ignoring of events
         ✅ simple "animation"
         ❌ apply async validation with debounce
-          ❌ embed the coroutine from the core domain debounce
-            ❌ then the events are parameterized in the core domain
+          ✅ debounced
+            ✅ generic methods, not repository
+          ✅ synchronized
+            ✅ synchronization coroutine
+              ✅ asyncRetry coroutine
+                ✅ asyncState
+                ✅ Synchronized inside Debounced
+                ✅ Validated is just part of synchronized/AsyncState
+                ✅ Debounce coroutine with embedded k
+                  ✅ How to prevent the guard on dirty to stop the coroutine from doing its job?
+                ✅ Synchronize coroutine with p:Promise, max attempts, error handler
+          ✅ debounced and synchronized should just extend V, or at least Synchronized
+          ✅ move extra subdomains from Parent to Core
+          ✅ embed the coroutine from the core domain debounce
+          ❌ debounce(sync'ed) does not work at all, debug it extensively
+            ❌ print better stats on screen
+          ❌ debounce(sync'ed) is semantically totally screwed up, it needs a more reasonable implementation
+            ❌ split Api and keep mocks separate
+          ❌ embed should be a method of the coroutine, not only of the CoTypedFactory
+            ❌ accept the parameters in a curried order
+            ❌ rewrite the instances of Co.Embed so they look more decent
+              ❌ oh God the code for the embedding of Sync inside Debounce looks like shit
+            ❌ make sure the `events` are parameterized in the core domains Debounced and Synchronized to avoid imposing `never` on the caller `events`
+          ❌ prevent the debounce coroutine from running when dirty is not set
       ❌ template
         ❌ instantiate children templates
           ❌ child1
@@ -50,9 +70,9 @@ Todo (✅/❌)
 
   ❌ should "state.ts" just be "type", "model", or "structure"
   ❌ templates
-  ❌ split updaters across core, template, and coroutine
-    ❌ not in state.ts file
-    ❌ possibly in three separate files
+    ❌ split updaters across core, template, and coroutine
+      ❌ not in state.ts file
+      ❌ possibly in three separate files
   ❌ pair
   ❌ immutable and array
   ❌ operation extractor (template + core, coroutine + core)

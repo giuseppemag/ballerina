@@ -46,3 +46,4 @@ _Advanced patterns_
   _Asynchronous validation_
   _Await with retry_
   _Infinite lists_
+  _Filters_
