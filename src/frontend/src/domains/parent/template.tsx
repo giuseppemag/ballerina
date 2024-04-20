@@ -2,9 +2,14 @@ import { Unit } from "../core/fun/domains/unit/state";
 import { replaceWith } from "../core/fun/domains/updater/domains/replaceWith/state";
 import { Template } from "../core/template/state";
 import { ParentCoroutinesRunner, ParentDebouncerRunner } from "./coroutines/runner";
+import { Child1Template } from "./domains/child1/template";
 import { Parent, ParentReadonlyContext, ParentWritableState } from "./state";
 import { ParentInputs } from "./views/inputs";
 import { ParentWrapper } from "./views/wrapper";
+
+const Child1TemplateEmbedded = Child1Template
+	.mapContext<Parent>(p => p.child1)
+	.mapState(Parent.Updaters.Core.child1)
 
 export const ParentTemplate =
 	Template.Default<
@@ -39,6 +44,7 @@ export const ParentTemplate =
 					inputString={props.context.inputString.value}
 					onChangeInputString={_ => props.setState(Parent.Updaters.Template.inputString(replaceWith(_)))}
 				/>
+				<Child1TemplateEmbedded {...props}  />
 			</>
 		).any([
 			ParentCoroutinesRunner.mapContext(c => ({ ...c, events: [] })),

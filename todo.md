@@ -36,21 +36,22 @@ Todo (✅/❌)
       ❌ template
         ❌ instantiate children templates
           ❌ child1
-            ❌ template
-              ❌ instantiate coroutine runner
-              ❌ reset values
+            ✅ coroutine
+              ✅ animate values
+              ✅ runner
+            ✅ template
+              ✅ instantiate coroutine runner
             ❌ view
-              ❌ show values
-            ❌ coroutine
-              ❌ animate values
+              ❌ show values in a neat table
           ❌ child2
+            ❌ coroutine
+              ❌ animate values
+              ❌ runner
             ❌ template
               ❌ instantiate coroutine runner
               ❌ reset values
             ❌ view
-              ❌ show values
-            ❌ coroutine
-              ❌ animate values
+              ❌ show values in a neat table
         ✅ instantiate coroutine runner
           ✅ coroutine runner as a template, not a widget
       ✅ view
