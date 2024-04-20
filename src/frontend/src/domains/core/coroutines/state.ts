@@ -19,6 +19,9 @@ export type Coroutine<context, state, events, result> = {
   // mapState: (
   //   f: Fun<Updater<state> | undefined, Updater<state> | undefined>
   // ) => Coroutine<context, state, events, result>;
+  mapEvents: <newEvents>(
+    f: BasicFun<newEvents, events>
+  ) => Coroutine<context, state, newEvents, result>,
   embed: <parentContext, parentState>(
     narrow:BasicFun<parentContext, context>,
     widen:BasicFun<BasicUpdater<state>,BasicUpdater<parentState>>
@@ -58,6 +61,9 @@ export const Coroutine = {
     // ): Coroutine<context, state, events, result> {
     //   return Coroutine.MapState(this, f);
     // };
+    co.mapEvents = function<newEvents>(this:Coroutine<context, state, events, result>, f:BasicFun<newEvents, events>) {
+      return Coroutine.MapEvents(this, f)
+    }  
     co.embed = function<parentContext, parentState>(
       this:Coroutine<context, state, events, result>,
       narrow:BasicFun<parentContext, context>,
@@ -142,6 +148,11 @@ export const Coroutine = {
     Coroutine.Create(([parentContext, deltaT, events]) => {
       return CoroutineStep.Embed(p([narrow(parentContext), deltaT, events]), narrow, widen)
     }),
+  MapEvents: <context, state, events, newEvents, result>(
+      p: Coroutine<context, state, events, result>,
+      f: BasicFun<newEvents, events>
+    ): Coroutine<context, state, newEvents, result> =>
+      Coroutine.Create(([state, deltaT, newEvents]) => CoroutineStep.MapEvents(p([state, deltaT, newEvents.map(f)]), f)),  
   MapState: <context, state, newState, events, result>(
     p: Coroutine<context, state, events, result>,
     f: BasicFun<
@@ -563,6 +574,30 @@ export const CoroutineStep = {
             : CoroutineStep.WaitingForEvent(p.newState, (e) => {
                 const next = p.next(e);
                 return next == "no match" ? next : Coroutine.MapContext(next, narrow);
+              }),
+  MapEvents: <context, state, events, newEvents, result>(
+      p: CoroutineStep<context, state, events, result>,
+      f: BasicFun<newEvents, events>
+    ): CoroutineStep<context, state, newEvents, result> =>
+    p.kind == "result"
+      ? p
+      : p.kind == "yield"
+        ? CoroutineStep.Yield(p.newState, Coroutine.MapEvents(p.next, f))
+        : p.kind == "waiting"
+          ? CoroutineStep.Waiting(
+              p.newState,
+              p.msLeft,
+              Coroutine.MapEvents(p.next, f)
+            )
+                : p.kind == "then"
+                  ? CoroutineStep.Then(
+                      p.newState,
+                      Coroutine.MapEvents(p.p, f),
+                      Fun(p.k).then((_) => Coroutine.MapEvents(_, f))
+                    )
+            : CoroutineStep.WaitingForEvent(p.newState, (e) => {
+                const next = p.next(e.map(f));
+                return next == "no match" ? next : Coroutine.MapEvents(next, f);
               }),
   MapState: <context, state, newState, events, result>(
     p: CoroutineStep<context, state, events, result>,

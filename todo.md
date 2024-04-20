@@ -6,9 +6,9 @@ Todo (✅/❌)
     ❌ the Template coroutine constructor should enforce the context to be an intersection with the state
   ❌ sample application
     ❌ parent 
-      ❌ coroutine
-        ❌ Embed must allow mapping, or outright ignoring of events
-          ❌ Define mapEvents on coroutine
+      ✅ coroutine
+        ✅ Embed must allow mapping, or outright ignoring of events
+          ✅ Define mapEvents on coroutine
         ✅ simple "animation"
         ✅ apply async validation with debounce
           ✅ debounced
@@ -66,6 +66,7 @@ Todo (✅/❌)
       ❌ empty coroutine
       ❌ placeholder (debug) view
       ❌ foreign mutations from child2 to uncle
+    ❌ write guidelines
 
   ❌ should "state.ts" just be "type", "model", or "structure"
   ❌ templates
