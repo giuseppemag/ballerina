@@ -5,7 +5,7 @@ import { Child2ReadonlyContext, Child2WritableState } from "./state";
 import { Child2Table } from "./views/table";
 
 export const Child2Template =
-	Template.Default<Child2ReadonlyContext & Child2WritableState, Child2WritableState, Unit>(props =>
+	Template.Default<Child2ReadonlyContext, Child2WritableState, Unit>(props =>
 		<>
 			<Child2Table {...props.context} />
 		</>).any([

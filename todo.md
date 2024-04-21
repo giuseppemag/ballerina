@@ -1,11 +1,8 @@
 Todo (✅/❌)
-  ❌ coroutines
+  ✅ coroutines
     ✅ without widgets
-  ❌ template
-    ❌ rename subdomains folder from "domains" to "children"
-    ❌ the Template coroutine constructor should enforce the context to be an intersection with the state
   ❌ sample application
-    ❌ parent 
+    ✅ parent 
       ✅ coroutine
         ✅ Embed must allow mapping, or outright ignoring of events
           ✅ Define mapEvents on coroutine
@@ -33,9 +30,9 @@ Todo (✅/❌)
             ✅ rewrite the instances of Co.Embed so they look more decent
             ✅ make the `events` are parameterized in the core domains Debounced and Synchronized to avoid imposing `never` on the caller `events`
           ✅ prevent the debounce coroutine from running when dirty is not set with a separate runner for performance
-      ❌ template
-        ❌ instantiate children templates
-          ❌ define a table wrapper and child wrappers to put the children in a table
+      ✅ template
+        ✅ instantiate children templates
+          ✅ define a table wrapper and child wrappers to put the children in a table
           ✅ child1
             ✅ coroutine
               ✅ animate values
@@ -46,7 +43,7 @@ Todo (✅/❌)
               ✅ show values in a neat table
           ✅ child2
             ✅ coroutine
-              ✅ animate values
+              ✅ animate values with For coroutine
               ✅ runner
             ✅ template
               ✅ instantiate coroutine runner
@@ -67,11 +64,13 @@ Todo (✅/❌)
       ❌ empty coroutine
       ❌ placeholder (debug) view
       ❌ foreign mutations from child2 to uncle
-    ❌ write guidelines
+  ✅ the Template coroutine constructor should enforce the context to be an intersection with the state
+  ❌ write guidelines
 
   ❌ should "state.ts" just be "type", "model", or "structure"
   ❌ templates
-    ❌ split updaters across core, template, and coroutine
+      ❌ rename subdomains folder from "domains" to "children"
+      ❌ split updaters across core, template, and coroutine
       ❌ not in state.ts file
       ❌ possibly in three separate files
   ❌ pair

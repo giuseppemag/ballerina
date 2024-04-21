@@ -1,7 +1,8 @@
+import { Collection } from "immutable";
 import { Unit } from "../fun/domains/unit/state";
 import { BasicUpdater } from "../fun/domains/updater/state";
 import { BasicFun } from "../fun/state";
-import { Template } from "../template/state";
+import { Template, createTemplate } from "../template/state";
 import { Coroutine } from "./state";
 import { CoroutineComponentOptions, CoroutineTemplate } from "./template";
 
@@ -21,6 +22,8 @@ export const CoTypedFactory = <c, s, e extends { Kind: string }>() => ({
   Repeat: Coroutine.Repeat<c & s, s, e>,
   Return: <r>(res: r) => Coroutine.Return<c & s, s, e, r>(res),
   While: Coroutine.While<c & s, s, e>,
+  For: <element>(collection:Collection<number, element>) => (p:BasicFun<element, Coroutine<c & s, s, e, Unit>>) => 
+    Coroutine.For<c & s, s, e, element>(collection, p),
   On: Coroutine.On<c & s, s, e>(),
   Embed: <parentContext, parentState, result, events>(
     p: Coroutine<c &s, s, events, result>,
@@ -31,7 +34,7 @@ export const CoTypedFactory = <c, s, e extends { Kind: string }>() => ({
   Template:(
     initialCoroutine: Coroutine<c & s, s, e, Unit>,
     options?: CoroutineComponentOptions
-  ) : Template<c & s & { events:e[] }, s, Unit> => Template.Default(
+  ) : Template<c & s & { events:e[] }, s, Unit> => createTemplate(
       props => CoroutineTemplate<c & s, s, e>()({
       ...props,
       context:{

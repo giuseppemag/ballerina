@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { Collection } from "immutable";
 import { SharedLayoutConstants } from "../../../../../to process/Shared/Layout/SharedLayoutConstants";
 import { Sum } from "../collections/domains/sum/state";
 import { id } from "../fun/domains/id/state";
@@ -320,6 +320,15 @@ export const Coroutine = {
     ps.length <= 0
       ? Coroutine.Return<context, state, events, Unit>({})
       : ps[0].then(() => Coroutine.Seq<context, state, events>(ps.slice(1))),
+  For: <context, state, events, element>(
+      collection: Collection<number,element>,
+      p: BasicFun<element, Coroutine<context, state, events, Unit>>
+    ): Coroutine<context, state, events, Unit> =>
+        collection.isEmpty() ? Coroutine.Return({})
+    : Coroutine.Seq([
+      p(collection.first()!),
+      Coroutine.For(collection.skip(1), p)
+    ]),
   While: <context, state, events>(
     predicate: BasicFun<[context, Array<events>], boolean>,
     p: Coroutine<context, state, events, Unit>

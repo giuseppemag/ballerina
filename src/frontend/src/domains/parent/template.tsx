@@ -7,7 +7,7 @@ import { Child2Template } from "./domains/child2/template";
 import { Parent, ParentReadonlyContext, ParentWritableState } from "./state";
 import { ParentInputs } from "./views/inputs";
 import { ParentTable } from "./views/table";
-import { ParentWrapper } from "./views/wrapper";
+import { ChildrenWrapper, ChildWrapper, ParentWrapper } from "./views/wrappers";
 
 const Child1TemplateEmbedded = Child1Template
 	.mapContext<Parent>(p => p.child1)
@@ -19,7 +19,7 @@ const Child2TemplateEmbedded = Child2Template
 
 export const ParentTemplate =
 	Template.Default<
-		ParentReadonlyContext & ParentWritableState, ParentWritableState, Unit>(props =>
+		ParentReadonlyContext, ParentWritableState, Unit>(props =>
 			<>
 				<ParentTable {...props.context} />
 				<ParentInputs
@@ -29,8 +29,14 @@ export const ParentTemplate =
 					inputString={props.context.inputString.value}
 					onChangeInputString={_ => props.setState(Parent.Updaters.Template.inputString(replaceWith(_)))}
 				/>
-				<Child1TemplateEmbedded {...props}  />
-				<Child2TemplateEmbedded {...props}  />
+				<ChildrenWrapper>
+					<ChildWrapper>
+						<Child1TemplateEmbedded {...props} />
+					</ChildWrapper>
+					<ChildWrapper>
+						<Child2TemplateEmbedded {...props} />
+					</ChildWrapper>
+				</ChildrenWrapper>
 			</>
 		).any([
 			ParentCoroutinesRunner.mapContext(c => ({ ...c, events: [] })),
@@ -38,5 +44,3 @@ export const ParentTemplate =
 		]).mapView(
 			ParentWrapper
 		)
-
-
