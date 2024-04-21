@@ -1,9 +1,11 @@
+import { Unit } from "../../../core/fun/domains/unit/state";
 import { simpleUpdater } from "../../../core/fun/domains/updater/domains/simpleUpdater/state";
+import { Co } from "./coroutines/builder";
 
 export type Child2 = { a: number; b: string; };
 export const Child2 = {
 	Default:() : Child2 => ({
-		a:0,
+		a:1,
 		b:"",
 	}),
 	Updaters: {
@@ -13,3 +15,6 @@ export const Child2 = {
 		}
 	}
 };
+
+export type Child2ReadonlyContext = Unit
+export type Child2WritableState = Child2

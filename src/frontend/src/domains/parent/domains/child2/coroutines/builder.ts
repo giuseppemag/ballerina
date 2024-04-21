@@ -1,5 +1,5 @@
-import { CoTypedFactory } from "../../../../core/coroutines/state";
-import { Unit } from "../../../../core/fun/domains/unit/state";
-import { Child1 } from "../../child1/state";
+import { CoTypedFactory } from "../../../../core/coroutines/builder";
+import { Child2ReadonlyContext, Child2WritableState } from "../state";
 
-export const CoChild2 = CoTypedFactory<Unit, Child1, never>();
+export const Co = CoTypedFactory<Child2ReadonlyContext, Child2WritableState, never>();
+

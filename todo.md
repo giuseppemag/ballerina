@@ -35,23 +35,23 @@ Todo (✅/❌)
           ✅ prevent the debounce coroutine from running when dirty is not set with a separate runner for performance
       ❌ template
         ❌ instantiate children templates
-          ❌ child1
+          ❌ define a table wrapper and child wrappers to put the children in a table
+          ✅ child1
             ✅ coroutine
               ✅ animate values
               ✅ runner
             ✅ template
               ✅ instantiate coroutine runner
-            ❌ view
-              ❌ show values in a neat table
-          ❌ child2
-            ❌ coroutine
-              ❌ animate values
-              ❌ runner
-            ❌ template
-              ❌ instantiate coroutine runner
-              ❌ reset values
-            ❌ view
-              ❌ show values in a neat table
+            ✅ view
+              ✅ show values in a neat table
+          ✅ child2
+            ✅ coroutine
+              ✅ animate values
+              ✅ runner
+            ✅ template
+              ✅ instantiate coroutine runner
+            ✅ view
+              ✅ show values in a neat table
         ✅ instantiate coroutine runner
           ✅ coroutine runner as a template, not a widget
       ✅ view
@@ -93,6 +93,7 @@ Todo (✅/❌)
   ❌   advanced filtering
   ❌ typesafe subscription forms with validation
   ❌ typesafe parsing and validation
+  ❌ templates for unions, lists, trees, products, and sums
 
 ❌ Hangfire-style coroutines
   ❌ define coroutine in F#
