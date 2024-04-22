@@ -1,4 +1,4 @@
-import { Child2 } from "./domains/child2/state";
+import { Child2, Child2ForeignMutations } from "./domains/child2/state";
 import { Child1 } from "./domains/child1/state";
 import { simpleUpdater } from "../core/fun/domains/updater/domains/simpleUpdater/state";
 import { Updater } from "../core/fun/domains/updater/state";
@@ -64,3 +64,4 @@ export const Parent = {
 
 export type ParentWritableState = Parent
 export type ParentReadonlyContext = Unit
+export type ParentForeignMutations = Child2ForeignMutations

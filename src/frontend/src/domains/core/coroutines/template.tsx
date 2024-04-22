@@ -106,8 +106,8 @@ class CoroutineComponent<context, state, events> extends React.Component<
   }
 }
 
-export const CoroutineTemplate = <context, state, events>() => 
-  Template.Default<context & CoroutineReadonlyContext<context, state, events>, state, Unit>(props => 
+export const CoroutineTemplate = <context, state, events, foreignMutations>() => 
+  Template.Default<context & CoroutineReadonlyContext<context, state, events>, state, foreignMutations>(props => 
     <CoroutineComponent
       context={props.context}
       events={props.context.events}

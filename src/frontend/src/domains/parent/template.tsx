@@ -1,10 +1,10 @@
-import { Unit } from "../core/fun/domains/unit/state";
 import { replaceWith } from "../core/fun/domains/updater/domains/replaceWith/state";
 import { Template } from "../core/template/state";
+import { Uncle } from "../uncle/state";
 import { ParentCoroutinesRunner, ParentDebouncerRunner } from "./coroutines/runner";
 import { Child1Template } from "./domains/child1/template";
 import { Child2Template } from "./domains/child2/template";
-import { Parent, ParentReadonlyContext, ParentWritableState } from "./state";
+import { Parent, ParentForeignMutations, ParentReadonlyContext, ParentWritableState } from "./state";
 import { ParentInputs } from "./views/inputs";
 import { ParentTable } from "./views/table";
 import { ChildrenWrapper, ChildWrapper, ParentWrapper } from "./views/wrappers";
@@ -19,7 +19,7 @@ const Child2TemplateEmbedded = Child2Template
 
 export const ParentTemplate =
 	Template.Default<
-		ParentReadonlyContext, ParentWritableState, Unit>(props =>
+		ParentReadonlyContext, ParentWritableState, ParentForeignMutations>(props =>
 			<>
 				<ParentTable {...props.context} />
 				<ParentInputs

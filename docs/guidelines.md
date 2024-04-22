@@ -13,7 +13,7 @@ _Separation of domains: nesting and verticals_
 Trivial sample: Parent, Child1, Child2, Uncle.
 
 _State_
-  _Introducing the Train, with wagons and engine_
+  _Introducing the sample domains_
 _Constructors_
 _Updaters_
   _Horizontal and vertical composition_

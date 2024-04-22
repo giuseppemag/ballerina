@@ -3,9 +3,12 @@ import reactLogo from "./assets/react.svg";
 import "./App.css";
 import { ParentTemplate } from "./domains/parent/template";
 import { Parent } from "./domains/parent/state";
+import { Uncle } from "./domains/uncle/state";
+import { UncleTemplate } from "./domains/uncle/template";
 
 function App() {
 	const [parent, setParent] = useState(Parent.Default());
+	const [uncle, setUncle] = useState(Uncle.Default());
 
 	return (
 		<div className="App">
@@ -16,18 +19,17 @@ function App() {
 			</div>
 			<h1>Rspack + React + TypeScript</h1>
 			<div className="card">
+				<UncleTemplate
+					context={uncle}
+					setState={setUncle}
+					foreignMutations={{}}
+				/>
 				<ParentTemplate
 					context={parent}
 					setState={setParent}
-					foreignMutations={{}}
+					foreignMutations={{ Uncle:Uncle.ForeignMutations({ context:uncle, setState:setUncle }) }}
 				/>
-				<p>
-					Edit <code>src/App.tsx</code> and save to test HMR
-				</p>
 			</div>
-			<p className="read-the-docs">
-				Click on the Rspack and React logos to learn more
-			</p>
 		</div>
 	);
 }

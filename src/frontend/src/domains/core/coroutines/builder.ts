@@ -31,11 +31,11 @@ export const CoTypedFactory = <c, s, e extends { Kind: string }>() => ({
     widen:BasicFun<BasicUpdater<s>,BasicUpdater<parentState>>
   ): Coroutine<parentContext & parentState, parentState, events, result> =>
     Coroutine.Embed(p, narrow, widen),
-  Template:(
+  Template:<fm>(
     initialCoroutine: Coroutine<c & s, s, e, Unit>,
     options?: CoroutineComponentOptions
-  ) : Template<c & s & { events:e[] }, s, Unit> => createTemplate(
-      props => CoroutineTemplate<c & s, s, e>()({
+  ) : Template<c & s & { events:e[] }, s, fm> => createTemplate(
+      props => CoroutineTemplate<c & s, s, e, fm>()({
       ...props,
       context:{
         ...props.context, 
