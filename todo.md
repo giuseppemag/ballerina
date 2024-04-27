@@ -5,7 +5,12 @@ Todo (✅/❌)
       ✅ child2
     ✅ uncle domain
     ✅ foreign mutations from child2 to uncle
+  ❌ Parent runner needs splitting!!!
+  ❌ Parent/state.ts contains an extra type
   ❌ write guidelines
+  ❌ map of children
+    ❌ automate Map/OrderedMap updaters
+  ❌ write readme
 
   ❌ should "state.ts" just be "type", "model", or "structure"
   ❌ templates
@@ -17,22 +22,24 @@ Todo (✅/❌)
   ❌ immutable and array
   ❌ operation extractor (template + core, coroutine + core)
   ❌ insideOf needs some further thinking
+  ❌ standard templates for unions, lists, trees, products, and sums
+    ❌ tree zipping?
+  ❌ builder pattern for updaters?
   ❌ think of a decent example application with
-  ❌ auth
-  ❌   with org selection
-  ❌ navigation (with foreign mutations)
-  ❌ website with building blocks
-  ❌ e-commerce
-  ❌ private area
-  ❌ workflow editor
-  ❌   actions
-  ❌   advanced filtering
-  ❌ tasks
-  ❌   actions
-  ❌   advanced filtering
-  ❌ typesafe subscription forms with validation
-  ❌ typesafe parsing and validation
-  ❌ templates for unions, lists, trees, products, and sums
+    ❌ auth
+    ❌   with org selection
+    ❌ navigation (with foreign mutations)
+    ❌ website with building blocks
+    ❌ e-commerce
+    ❌ private area
+    ❌ workflow editor
+    ❌   actions
+    ❌   advanced filtering
+    ❌ tasks
+    ❌   actions
+    ❌   advanced filtering
+    ❌ typesafe subscription forms with validation
+    ❌ typesafe parsing and validation
 
 ❌ Hangfire-style coroutines
   ❌ define coroutine in F#

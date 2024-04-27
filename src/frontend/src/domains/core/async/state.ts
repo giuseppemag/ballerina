@@ -23,7 +23,7 @@ function map<a, b>(this: AsyncState<a>, f: BasicFun<a, b>): AsyncState<b> {
         ? AsyncState.Default.error()
         : this.kind == "loading"
           ? AsyncState.Default.loading()
-          : AsyncState.Default.extraLoading(f(this.value));
+          : AsyncState.Default.reloading(f(this.value));
 }
 
 function getLoadingAttempts<a>(this: AsyncState<a>): number {
@@ -44,7 +44,7 @@ export const AsyncState = {
       getLoadingAttempts,
       failedLoadingAttempts: 0,
     }),
-    extraLoading: <a>(value: a): AsyncState<a> => ({
+    reloading: <a>(value: a): AsyncState<a> => ({
       kind: "reloading",
       value,
       map,
