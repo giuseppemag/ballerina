@@ -8,10 +8,12 @@ import { InputStringValidation, Parent } from "../state";
 import { Co } from "./builder";
 
 
-export const debouncedInputSynchronizer = Co.Repeat(
-  (Debounce<Synchronized<Value<string>, InputStringValidation>, never>(
-    Synchronize<Value<string>, InputStringValidation, never>(ParentApi.validateInputString,
-      (_: any) => _ in apiResultStatuses ? _ : "permanent failure", 5, 150),
-    250, 500).embed(
-      parent => parent.inputString, Parent.Updaters.Core.inputString)
-  ));
+export const debouncedInputSynchronizer = 
+  Co.Repeat(
+    (Debounce<Synchronized<Value<string>, InputStringValidation>, never>(
+      Synchronize<Value<string>, InputStringValidation, never>(
+        ParentApi.validateInputString,
+        (_: any) => _ in apiResultStatuses ? _ : "permanent failure", 5, 150),
+      250, 500).embed(
+        parent => parent.inputString, Parent.Updaters.Core.inputString)
+    ));

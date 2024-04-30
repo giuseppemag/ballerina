@@ -1,4 +1,5 @@
-import { Updater } from "../fun/domains/updater/state";
+import { caseUpdater } from "../fun/domains/updater/domains/caseUpdater/state";
+import { BasicUpdater, Updater } from "../fun/domains/updater/state";
 import { BasicFun, Fun } from "../fun/state";
 
 export type AsyncState<a> = (
@@ -66,6 +67,11 @@ export const AsyncState = {
     }),
   },
   Updaters: {
+    unloaded:<a>(_:BasicUpdater<AsyncState<a> & { kind:"unloaded" }>) => caseUpdater<AsyncState<a>>()("unloaded").unloaded(_),
+    loading:<a>(_:BasicUpdater<AsyncState<a> & { kind:"loading" }>) => caseUpdater<AsyncState<a>>()("loading").loading(_),
+    loaded:<a>(_:BasicUpdater<AsyncState<a> & { kind:"loaded" }>) => caseUpdater<AsyncState<a>>()("loaded").loaded(_),
+    error:<a>(_:BasicUpdater<AsyncState<a> & { kind:"error" }>) => caseUpdater<AsyncState<a>>()("error").error(_),
+    reloading:<a>(_:BasicUpdater<AsyncState<a> & { kind:"reloading" }>) => caseUpdater<AsyncState<a>>()("reloading").reloading(_),
     failedLoadingAttempts: <a>(updateAttempts: Updater<number>): Updater<AsyncState<a>> =>
       Updater((current) =>
         current.kind == "loaded"
@@ -90,7 +96,7 @@ export const AsyncState = {
         failedLoadingAttempts: current.getLoadingAttempts(),
       })),
     toReloading: <a>(value: a): Updater<AsyncState<a>> =>
-      Updater((current) => ({
+      Updater((_) => ({
         kind: "reloading",
         value,
         map,

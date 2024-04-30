@@ -1,4 +1,3 @@
-import { Sum } from "../../../collections/domains/sum/state";
 import { BasicUpdater, Updater } from "../../../fun/domains/updater/state";
 import { AsyncState } from "../../state";
 

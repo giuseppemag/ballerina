@@ -1,3 +1,4 @@
+import { Debounced } from "../../core/debounced/state";
 import { Template } from "../../core/template/state";
 import { Parent, ParentForeignMutations, ParentReadonlyContext } from "../state";
 import { autoTickCounter } from "./autoTickCounter";
@@ -6,7 +7,7 @@ import { debouncedInputSynchronizer } from "./debouncedInputSynchronizer";
 
 export const ParentDebouncerRunner = 
   Template.Default<ParentReadonlyContext & { events: Array<never> }, Parent, ParentForeignMutations>(props =>
-    props.context.inputString.dirty != "not dirty" ?
+    Debounced.Operations.shouldCoroutineRun(props.context.inputString) ?
       <>
         {
           Co.Template(
@@ -19,7 +20,5 @@ export const ParentDebouncerRunner =
 
 export const ParentCoroutinesRunner =
   Co.Template<ParentForeignMutations>(
-    Co.Any([
-      autoTickCounter,
-    ])
+    autoTickCounter,
   )

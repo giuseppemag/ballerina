@@ -7,6 +7,8 @@ Todo (✅/❌)
     ✅ foreign mutations from child2 to uncle
   ❌ Parent runner needs splitting!!!
   ❌ Parent/state.ts contains an extra type
+  ❌ Debouncer coroutine should stop the async iterations with `Any` when `Dirty` is reset
+  ❌ Debounced and Synchronized status types should move to core
   ❌ write guidelines
   ❌ map of children
     ❌ automate Map/OrderedMap updaters
