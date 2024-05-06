@@ -451,7 +451,7 @@ We can run a coroutine by wrapping it in a runner object with `Co.Template`, whi
 
 ```ts
 export const ParentCoroutinesRunner =
-  Co.Template<ParentForeignMutations>(
+  Co.Template<ParentForeignMutationsExpected>(
     autoTickCounter,
   )
 ```
@@ -904,21 +904,14 @@ Notice two peculiarities. First of all, we run this coroutine forever thanks to 
 
 > Embedding is a fundamental operator when dealing with any form of software engineering. We want to define isolated, generic, reusable units across our code, because without such units we will end up with either a lot of repetition or leaky abstractions. Using such reusable units though requires plugging them into the domain into which they are supposed to operate, and this requires narrowing, because the domain state is always larger than the domain of the reusable unit, but the mutation signals from the reusable units then need to be widened back into the larger domain. Narrowing and widening together form an embedding.
 
-Finally, we can run the debounce coroutine. We could run it directly with `Co.Template`, which takes as input a coroutine and gives us a React element that we can render with the normal `<.../>` syntax, but in this case we add an extra layer of indirection because we want to dismount the coroutine in case `shouldCoroutineRun` is set to false, so that when there are no input changes we do not run the `Co.While` of the coroutine for no reason, pointlessly burning CPU cycles (especially if a lot of debouncers are active on the screen):
+Finally, we can run the debounce coroutine. We could run it directly with `Co.Template`, which takes as input a coroutine and gives us a React element that we can render with the normal `<.../>` syntax, but in this case we add an extra parameter to prevent instantiating the coroutine when not needed, because we want to dismount it from the scene in case `shouldCoroutineRun` is set to false, so that when there are no input changes we do not run the `Co.While` of the coroutine for no reason, pointlessly burning CPU cycles (especially if a lot of debouncers are active on the screen):
 
 ```ts
 export const ParentDebouncerRunner = 
-  Template.Default<ParentReadonlyContext & { events: Array<never> }, Parent, ParentForeignMutations>(props =>
-    Debounced.Operations.shouldCoroutineRun(props.context.inputString) ?
-      <>
-        {
-          Co.Template(
-            debouncedInputSynchronizer
-          )(props)
-        }
-      </>
-      : <></>
-    )
+  Co.Template(
+    debouncedInputSynchronizer,
+    { runFilter:props => Debounced.Operations.shouldCoroutineRun(props.context.inputString) }
+  )
 ```
 
 The `ParentDebouncerRunner` can be instantiated as a regular React component. More on instantiating components in the chapter about _templates_.
@@ -986,11 +979,25 @@ _State management across domains_
     _Warp gates across domains_
     _Rerendering vs dependency management of foreign mutations vs state_
 _Core vs feature domains_
+	_The octaves of an application_
 _Advanced patterns_
+  _Parent with N children in a Map or OrderedMap_
   _Asynchronous validation_
-  _Await with retry_
-  _Infinite lists_
+  _Infinite streams_
+	  _Prevent pointless running_
   _Case updater_
   _Coroutine.On_ vs manual implementation of events
   _Manually running a coroutine_
   _Filters_
+	_useMemo_
+	_multi-field form validation_
+	_whole form validation in one go_
+ —
+ below should be in new line
+ > We might use the concurrent operator `Co.Any`, which runs two coroutines in a race that will terminate as soon as any of them is completed, to shortcut `k` if it takes too long to process and/or `dirty` has switched back. Something like this:
+ —
+ Hlep was needed. 
+ —
+ makes is perfectly clear 
+ —
+ Cleaan Architecture    

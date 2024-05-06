@@ -3,7 +3,7 @@ import { Template } from "../core/template/state";
 import { ParentCoroutinesRunner, ParentDebouncerRunner } from "./coroutines/runner";
 import { Child1Template } from "./domains/child1/template";
 import { Child2Template } from "./domains/child2/template";
-import { Parent, ParentForeignMutations, ParentReadonlyContext, ParentWritableState } from "./state";
+import { Parent, ParentForeignMutationsExpected, ParentReadonlyContext, ParentWritableState } from "./state";
 import { ParentInputs } from "./views/inputs";
 import { ParentTable } from "./views/table";
 import { ChildrenWrapper, ChildWrapper, ParentWrapper } from "./views/wrappers";
@@ -18,7 +18,7 @@ const Child2TemplateEmbedded = Child2Template
 
 export const ParentTemplate =
 	Template.Default<
-		ParentReadonlyContext, ParentWritableState, ParentForeignMutations>(props =>
+		ParentReadonlyContext, ParentWritableState, ParentForeignMutationsExpected>(props =>
 			<>
 				<ParentTable {...props.context} />
 				<ParentInputs

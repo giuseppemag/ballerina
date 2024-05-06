@@ -1,19 +1,14 @@
 import { OrderedMap } from "immutable";
-
-import { AuthHeaders } from "../../../../../orval/useAuthHeaders";
-import {
-  BasicFun,
-  BasicUpdater,
-  replaceWith,
-  simpleUpdater,
-  Unit,
-  Updater,
-} from "../../../../../Shared/widgets-library/widgets-main";
-import { AsyncState } from "../../state/async";
+import { BasicUpdater, Updater } from "../fun/domains/updater/state";
+import { replaceWith } from "../fun/domains/updater/domains/replaceWith/state";
+import { simpleUpdater } from "../fun/domains/updater/domains/simpleUpdater/state";
+import { AsyncState } from "../async/state";
+import { Unit } from "../fun/domains/unit/state";
+import { BasicFun } from "../fun/state";
 
 export type StreamingStatus = "reload" | "loadMore" | false;
 
-export type Identifiable = { id: string };
+type Identifiable = { id: string };
 
 export type StreamPosition = {
   chunkSize: number;
@@ -80,7 +75,7 @@ export type InfiniteStreamState<Element extends Identifiable> = {
   loadingMore: AsyncState<Unit>;
   loadedElements: OrderedMap<StreamPosition["chunkIndex"], Chunk<Element>>;
   position: StreamPosition;
-  getChunk: BasicFun<[StreamPosition, AuthHeaders], Promise<Chunk<Element>>>;
+  getChunk: BasicFun<[StreamPosition], Promise<Chunk<Element>>>;
 };
 
 export const InfiniteStreamState = <Element extends Identifiable>() => ({
@@ -95,6 +90,8 @@ export const InfiniteStreamState = <Element extends Identifiable>() => ({
     getChunk,
   }),
   Operations: {
+    shouldCoroutineRun: (current: InfiniteStreamState<Element>): boolean =>
+      current.position.shouldLoad != false,
     loadNextPage: (current: InfiniteStreamState<Element>): boolean =>
       current.position.shouldLoad !== false &&
       current.loadedElements.last()?.hasMoreValues !== false,
@@ -164,3 +161,7 @@ export const InfiniteStreamState = <Element extends Identifiable>() => ({
     },
   },
 });
+
+export type InfiniteStreamReadonlyState = Unit;
+export type InfiniteStreamWritableState<Element extends { id: string }> =
+  InfiniteStreamState<Element>;

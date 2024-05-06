@@ -1,6 +1,5 @@
-import React from 'react'
 import { BasicFun } from '../fun/state'
-import { BasicUpdater, Updater } from '../fun/domains/updater/state'
+import { BasicUpdater } from '../fun/domains/updater/state'
 
 export type TemplateProps<context, state, foreignMutations> =
   { context: context, setState: BasicFun<BasicUpdater<state>, void>, foreignMutations: foreignMutations }

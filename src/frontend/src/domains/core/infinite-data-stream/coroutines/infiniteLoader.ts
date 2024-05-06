@@ -1,22 +1,24 @@
-import { replaceWith } from "../../../../../../Shared/widgets-library/widgets-main";
-import { AsyncState } from "../../../state/async";
+import { AsyncState } from "../../async/state";
+import { replaceWith } from "../../fun/domains/updater/domains/replaceWith/state";
 import { InfiniteStreamState, StreamPosition } from "../state";
-import { StreamCo } from "./coFactory";
+import { StreamCo } from "./builder";
 
 export const Loader = <Element extends { id: string }>() => {
   const Co = StreamCo<Element>();
   const updaters = InfiniteStreamState<Element>().Updaters;
-  const operations = InfiniteStreamState<Element>().Operations;
+  // const operations = InfiniteStreamState<Element>().Operations;
 
-  const LoadCurrentChunk = Co.Seq([
+  return Co.Seq([
     Co.SetState(
-      updaters.Core.loadingMore(replaceWith(AsyncState.Default.loading()))
+      updaters.Core.loadingMore(
+        replaceWith(AsyncState.Default.loading())
+      )
     ),
     Co.While(
       ([current]) => current.loadingMore.kind != "loaded",
-      Co.GetState().then((current) =>
-        Co.Await(
-          () => current.getChunk([current.position, current.headers]),
+      Co.GetState().then((current) => {
+        return Co.Await(
+          () => current.getChunk([current.position]),
           () => "error" as const
         ).then((apiResult) => {
           if (apiResult.kind == "l") {
@@ -26,7 +28,7 @@ export const Loader = <Element extends { id: string }>() => {
               ).then(
                 updaters.Coroutine.addLoadedChunk(
                   current.position.chunkIndex,
-                  apiResult.v
+                  apiResult.value
                 ).then(
                   updaters.Core.position(
                     StreamPosition.Updaters.Core.shouldLoad(
@@ -40,17 +42,8 @@ export const Loader = <Element extends { id: string }>() => {
             return Co.Wait(500);
           }
         })
+      }
       )
-    ),
-  ]);
-
-  const LoadMoreForever = Co.While(
-    () => true,
-    Co.GetState().then((current) => {
-      if (operations.loadNextPage(current)) return LoadCurrentChunk;
-      else return Co.Wait(250);
-    })
-  );
-
-  return LoadMoreForever;
+    )
+  ])
 };

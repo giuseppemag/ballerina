@@ -1,15 +1,7 @@
-import { Map, OrderedMap } from "immutable";
-
-import {
-  Identifiable,
-  SmallIdentifiable,
-} from "../../../../../Shared/Entity/Identifiable";
-import {
-  BasicFun,
-  BasicUpdater,
-  Unit,
-  Updater,
-} from "../../../../../Shared/widgets-library/widgets-main";
+import { OrderedMap } from "immutable";
+import { Identifiable, SmallIdentifiable } from "../../../../../baseEntity/domains/identifiable/state";
+import { Updater } from "../../../../../fun/domains/updater/state";
+import { BasicFun } from "../../../../../fun/state";
 
 export const OrderedMapRepo = {
   Default: {
@@ -91,20 +83,3 @@ export const OrderedMapRepo = {
   },
 };
 
-export const MapRepo = {
-  Default: {
-    fromIdentifiables: <T extends Identifiable>(array: T[]): Map<T["Id"], T> =>
-      Map(
-        array.reduce<Record<string, T>>((acc, item) => {
-          acc[item.Id] = item;
-          return acc;
-        }, {})
-      ),
-  },
-  Updaters:{
-    upsert: <k, v>(k: k, defaultValue:BasicFun<Unit,v>, _: BasicUpdater<v>): Updater<OrderedMap<k, v>> =>
-      Updater((current) =>
-        current.has(k) ? current.set(k, _(current.get(k)!)) : current.set(k, defaultValue({}))
-      ),
-  }
-};

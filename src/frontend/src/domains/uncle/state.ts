@@ -17,10 +17,11 @@ export const Uncle = {
     }
   },
   ForeignMutations:(_:ForeignMutationsInput<UncleReadonlyContext, UncleWritableState>) => ({
-    setFlag:(newValue:boolean) =>
+    overrideFlag:(newValue:boolean) =>
       _.setState(Uncle.Updaters.Core.flag(replaceWith(newValue)))
   })
 }
 
 export type UncleWritableState = Uncle
 export type UncleReadonlyContext = Unit
+export type UncleForeignMutationsExposed = ReturnType<typeof  Uncle.ForeignMutations>

@@ -1,5 +1,4 @@
 import { Collection } from "immutable";
-import { SharedLayoutConstants } from "../../../../../to process/Shared/Layout/SharedLayoutConstants";
 import { Sum } from "../collections/domains/sum/state";
 import { id } from "../fun/domains/id/state";
 import { Unit } from "../fun/domains/unit/state";
@@ -381,13 +380,9 @@ export const Coroutine = {
       setTimeout(() =>
         promise({})
           .then((result) => {
-            if (SharedLayoutConstants.LogCoroutineTicks)
-              console.log(`co::await::resolved ${debugName}`);
             promiseResult = { kind: "resolve", result: result };
           })
           .catch((_) => {
-            if (SharedLayoutConstants.LogCoroutineTicks)
-              console.log(`co::await::rejected ${debugName}`);
             promiseResult = { kind: "reject", error: onCatch(_) };
           })
       );

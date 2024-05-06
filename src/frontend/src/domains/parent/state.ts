@@ -1,4 +1,4 @@
-import { Child2, Child2ForeignMutations } from "./domains/child2/state";
+import { Child2, Child2ForeignMutationsExpected as Child2ForeignMutationsExpected } from "./domains/child2/state";
 import { Child1 } from "./domains/child1/state";
 import { simpleUpdater } from "../core/fun/domains/updater/domains/simpleUpdater/state";
 import { Updater } from "../core/fun/domains/updater/state";
@@ -8,10 +8,10 @@ import { ForeignMutationsInput } from "../core/foreignMutations/state";
 import { Debounced } from "../core/debounced/state";
 import { Value } from "../core/value/state";
 import { Synchronized } from "../core/async/domains/synchronized/state";
+import { Validation } from "../core/validation/state";
 
-export type InputStringValidation = "valid" | { kind:"error", errors:Array<string> }
 export type Parent = { child1: Child1; child2: Child2; counter:number; doubleCounter:number, 
-	inputString:Debounced<Synchronized<Value<string>, InputStringValidation>>
+	inputString:Debounced<Synchronized<Value<string>, Validation>>
 };
 
 const CoreUpdaters = {
@@ -64,4 +64,4 @@ export const Parent = {
 
 export type ParentWritableState = Parent
 export type ParentReadonlyContext = Unit
-export type ParentForeignMutations = Child2ForeignMutations
+export type ParentForeignMutationsExpected = Child2ForeignMutationsExpected

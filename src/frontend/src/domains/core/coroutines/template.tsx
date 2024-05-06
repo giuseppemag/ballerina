@@ -1,15 +1,15 @@
 import React from "react";
-import { SharedLayoutConstants } from "../../../../../to process/Shared/Layout/SharedLayoutConstants";
 import { Unit } from "../fun/domains/unit/state";
 import { BasicUpdater, Updater } from "../fun/domains/updater/state";
 import { BasicFun } from "../fun/state";
 import { Coroutine } from "./state";
-import { Template } from "../template/state";
+import { Template, TemplateProps } from "../template/state";
 
-export type CoroutineComponentOptions = {
+export type CoroutineComponentOptions<context, state, event> = {
   interval?: number;
   key?: string;
   restartWhenFinished?: boolean;
+  runFilter?: BasicFun<TemplateProps<context & state & { events:event[] }, state, Unit>, boolean>
 };
 
 const Co = Coroutine;
@@ -17,7 +17,7 @@ const Co = Coroutine;
 type CoroutineReadonlyContext<context, state, events> = {
   initialCoroutine: Coroutine<context, state, events, Unit>;
   events: events[];
-  options?: CoroutineComponentOptions;
+  options?: CoroutineComponentOptions<context, state, events>;
 }
 
 type CoroutineComponentProps<context, state, events> = {
@@ -54,8 +54,6 @@ class CoroutineComponent<context, state, events> extends React.Component<
         this.state.currentCoroutine,
         currTimestamp - lastTimestamp
       );
-      if (SharedLayoutConstants.LogCoroutineTicks)
-        console.log("co::ticking, deltaT = ", currTimestamp - lastTimestamp);
       lastTimestamp = currTimestamp;
       if (!this.running) return;
       if (step.kind == "done") {

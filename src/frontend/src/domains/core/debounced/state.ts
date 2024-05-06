@@ -1,8 +1,10 @@
+import { replaceWith } from "../fun/domains/updater/domains/replaceWith/state";
 import { BasicUpdater, Updater } from "../fun/domains/updater/state";
 
 export type DirtyStatus = "dirty" | "not dirty" | "dirty but being processed"
 export type DebouncedStatus = "waiting for dirty" | "just detected dirty, starting processing" 
 	| "processing finished" | "state was still dirty but being processed, resetting to not dirty"
+	| "processing shortcircuited"
 	| "state was changed underwater back to dirty, leaving the dirty flag alone"
 	| "inner call failed with transient failure"
 export type Debounced<Value> = Value & { lastUpdated: number; dirty: DirtyStatus; status:DebouncedStatus };
@@ -35,12 +37,18 @@ export const Debounced = {
 			})),
 		},
 		Template:{
-			value: <v>(_: BasicUpdater<v>): Updater<Debounced<v>> => Updater<Debounced<v>>(current => ({
-				...(_(current)),
-				dirty: "dirty",
-				lastUpdated: Date.now(),
-				status: current.status
-			}))
+			value: <v>(_: BasicUpdater<v>): Updater<Debounced<v>> => 
+				// Debounced.Updaters.Core.value(_).then(
+				// 	Debounced.Updaters.Core.dirty(replaceWith<DirtyStatus>("dirty"))
+				// ).then(
+				// 	Debounced.Updaters.Core.lastUpdated(replaceWith(Date.now()))
+				// )
+				Updater<Debounced<v>>(current => ({
+					...(_(current)),
+					dirty: "dirty",
+					lastUpdated: Date.now(),
+					status: current.status
+				}))
 		}
 	},
 	Operations:{

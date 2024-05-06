@@ -17,3 +17,5 @@ export const Child1 = {
 
 export type Child1ReadonlyState = Unit
 export type Child1WritableState = Child1
+export type Child1ForeignMutationsExposed = Unit
+export type Child1ForeignMutationsExpected = Unit

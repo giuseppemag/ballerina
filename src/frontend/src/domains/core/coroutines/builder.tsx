@@ -12,6 +12,7 @@ export const CoTypedFactory = <c, s, e extends { Kind: string }>() => ({
   SetState: Coroutine.SetState<c & s, s, e>,
   UpdateState: Coroutine.UpdateState<c & s, s, e>,
   Any: Coroutine.Any<c & s, s, e, Unit>,
+  All: Coroutine.All<c & s, s, e, Unit>,
   Yield: Coroutine.Yield<c & s, s, e, Unit>,
   Wait: Coroutine.Wait<c & s, s, e>,
   Await: <r, err>(
@@ -20,9 +21,9 @@ export const CoTypedFactory = <c, s, e extends { Kind: string }>() => ({
     debugName?: string
   ) => Coroutine.Await<c & s, s, e, r, err>(p, onErr, debugName),
   Repeat: Coroutine.Repeat<c & s, s, e>,
-  Return: <r>(res: r) => Coroutine.Return<c & s, s, e, r>(res),
+  Return: <r,>(res: r) => Coroutine.Return<c & s, s, e, r>(res),
   While: Coroutine.While<c & s, s, e>,
-  For: <element>(collection:Collection<number, element>) => (p:BasicFun<element, Coroutine<c & s, s, e, Unit>>) => 
+  For: <element,>(collection:Collection<number, element>) => (p:BasicFun<element, Coroutine<c & s, s, e, Unit>>) => 
     Coroutine.For<c & s, s, e, element>(collection, p),
   On: Coroutine.On<c & s, s, e>(),
   Embed: <parentContext, parentState, result, events>(
@@ -31,17 +32,17 @@ export const CoTypedFactory = <c, s, e extends { Kind: string }>() => ({
     widen:BasicFun<BasicUpdater<s>,BasicUpdater<parentState>>
   ): Coroutine<parentContext & parentState, parentState, events, result> =>
     Coroutine.Embed(p, narrow, widen),
-  Template:<fm>(
+  Template:<fm,>(
     initialCoroutine: Coroutine<c & s, s, e, Unit>,
-    options?: CoroutineComponentOptions
+    options?: CoroutineComponentOptions<c & s, s, e>
   ) : Template<c & s & { events:e[] }, s, fm> => createTemplate(
-      props => CoroutineTemplate<c & s, s, e, fm>()({
+      props => (options?.runFilter || (_ => true))({...props, foreignMutations:{}}) ? CoroutineTemplate<c & s, s, e, fm>()({
       ...props,
       context:{
         ...props.context, 
         initialCoroutine,
         options,
       },
-    })
+    }) : <></>
   )
 });

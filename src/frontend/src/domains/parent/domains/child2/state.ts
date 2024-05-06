@@ -1,7 +1,6 @@
+import { SimpleCallback } from "../../../core/fun/domains/simpleCallback/state";
 import { Unit } from "../../../core/fun/domains/unit/state";
 import { simpleUpdater } from "../../../core/fun/domains/updater/domains/simpleUpdater/state";
-import { Uncle } from "../../../uncle/state";
-import { Co } from "./coroutines/builder";
 
 export type Child2 = { a: number; b: string; };
 export const Child2 = {
@@ -19,4 +18,4 @@ export const Child2 = {
 
 export type Child2ReadonlyContext = Unit
 export type Child2WritableState = Child2
-export type Child2ForeignMutations = { Uncle:ReturnType<typeof Uncle["ForeignMutations"]> }
+export type Child2ForeignMutationsExpected = { setFlag:SimpleCallback<boolean> }

@@ -5,10 +5,12 @@ import { ParentTemplate } from "./domains/parent/template";
 import { Parent } from "./domains/parent/state";
 import { Uncle } from "./domains/uncle/state";
 import { UncleTemplate } from "./domains/uncle/template";
+import { OrderedMap } from "immutable";
 
 function App() {
 	const [parent, setParent] = useState(Parent.Default());
 	const [uncle, setUncle] = useState(Uncle.Default());
+	const uncleForeignMutations = Uncle.ForeignMutations({ context:uncle, setState:setUncle })
 
 	return (
 		<div className="App">
@@ -19,6 +21,11 @@ function App() {
 			</div>
 			<h1>Rspack + React + TypeScript</h1>
 			<div className="card">
+				<DashboardTemplate
+					context={{...dashboard, definition:OrderedMap([["card1", {}], ["card3", {}], ["card2", {}]])}}
+					setState={setDashboard}
+					foreignMutations={{}}
+				/>
 				<UncleTemplate
 					context={uncle}
 					setState={setUncle}
@@ -27,7 +34,9 @@ function App() {
 				<ParentTemplate
 					context={parent}
 					setState={setParent}
-					foreignMutations={{ Uncle:Uncle.ForeignMutations({ context:uncle, setState:setUncle }) }}
+					foreignMutations={{
+						setFlag:uncleForeignMutations.overrideFlag
+					}}
 				/>
 			</div>
 		</div>

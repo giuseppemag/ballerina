@@ -1,4 +1,4 @@
-import { SimpleCallback } from "../../core/simpleCallback/state"
+import { SimpleCallback } from "../../core/fun/domains/simpleCallback/state"
 
 export const ParentInputs = (props:{
   counter:number,

@@ -1,0 +1,19 @@
+{
+  "name": "create-domain",
+  "version": "1.0.0",
+  "license": "MIT",
+  "bin": {
+    "create-domain": "bin/main.js"
+  },
+  "devDependencies": {
+    "@types/capitalize": "^2.0.2",
+    "@types/command-line-args": "^5.2.3",
+    "@types/node": "^20.12.8",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "capitalize": "^2.0.4",
+    "command-line-args": "^5.2.1",
+    "path-depth": "^1.0.0"
+  }
+}
