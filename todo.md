@@ -1,15 +1,9 @@
 Todo (✅/❌)
   ❌ give back/forward
-    ❌ ballerina -> blp script
-      ❌ everything
-      ❌ delete blp folder
-      ❌ add script to .gitignore
-      ❌ run once
-      ❌ ensure blp repo works fully
-      ❌ commit and push
     ❌ blp script -> ballerina
       ❌ everything minus blp folder and App.tsx
       ❌ add script to .gitignore
+      ❌ export after split
   ❌ write guidelines
     ✅ adjust to new way of filtering the running of coroutines 
     ❌ adjust naming of foreign mutations (expected/exposed), update guidelines
@@ -19,6 +13,13 @@ Todo (✅/❌)
     ❌ add to readme
     ❌ convert dash to camelCase to create-domain
     ❌ implement repository
+  ❌ publish
+    ❌ split core and playground
+    ❌ publish core to npm
+    ❌ write readme
+    ❌ credits to BLP and Hoppinger
+    ❌ publish repo
+    ❌ publish on LinkedIn
   ❌ coroutine wrapper name is currently anonymous (in React Developer Tools). can that be updated?
   ✅ coroutine runner extension. we currently have both *.ts and *.tsx you've mentioned that we will only have *.ts
   ❌ remove JS warnings (component children missing keys)
