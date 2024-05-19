@@ -11,7 +11,7 @@ const pathDepth = require('path-depth')
 const optionDefinitions = [
   { name: 'name', alias: 'n', type: String, helpText: `The name of the domain folder, also used for type definitions/repository/etc.`, required: true },
   { name: 'path', type: String, helpText: `The path of the domain, relative to the location from which the tool is executed`, required: true },
-  { name: 'frameworkPath', type: String, helpText: `The path of the "core" folder, relative to the location from which the tool is executed`, required: false },
+  // { name: 'frameworkPath', type: String, helpText: `The path of the "core" folder, relative to the location from which the tool is executed`, required: false },
   { name: 'override', type: Boolean, helpText: `[DANGEROUS] Overwrite existing files`, required: false },
   { name: 'help', type: Boolean, helpText: `Print this guide`, required: false },
 ]
@@ -48,7 +48,7 @@ try {
     const domainNameCamelCased = domainNameHyphenated.replace(/-([a-z])/g, function (g) { return g[1].toUpperCase(); });
     console.log(domainNameCamelCased)
     const domainPath = options.path as string
-    const frameworkPath = (options.frameworkPath || "src/domains/core") as string
+    // const frameworkPath = (options.frameworkPath || "src/domains/core") as string
     const override = !!options.override
 
     const createDir = (d: string) => {
@@ -67,9 +67,7 @@ try {
 
 
 
-    const stateDefault = () => `import { ForeignMutationsInput } from "${"../".repeat(pathDepth(domainPath) - pathDepth(frameworkPath) + 2)}core/foreignMutations/state"
-import { simpleUpdater } from "${"../".repeat(pathDepth(domainPath) - pathDepth(frameworkPath) + 2)}core/fun/domains/updater/domains/simpleUpdater/state"
-import { Unit } from "${"../".repeat(pathDepth(domainPath) - pathDepth(frameworkPath) + 2)}core/fun/domains/unit/state"
+    const stateDefault = () => `import { ForeignMutationsInput, simpleUpdater, Unit } from "ballerina-core"
 
 export type ${capitalize(domainNameCamelCased, true)}State = {}
 export const ${capitalize(domainNameCamelCased, true)}State = {
@@ -94,7 +92,7 @@ export type ${capitalize(domainNameCamelCased, true)}ForeignMutationsExposed = R
 export type ${capitalize(domainNameCamelCased, true)}ForeignMutationsExpected = Unit
 `
 
-    const templateDefault = () => `import { Template } from "${"../".repeat(pathDepth(domainPath) - pathDepth(frameworkPath) + 2)}core/template/state";
+    const templateDefault = () => `import { Template } from "ballerina-core";
 import { ${capitalize(domainNameCamelCased, true)}CoroutinesRunner } from "./coroutines/runner";
 import { ${capitalize(domainNameCamelCased, true)}ReadonlyContext, ${capitalize(domainNameCamelCased, true)}WritableState, ${capitalize(domainNameCamelCased, true)}ForeignMutationsExpected } from "./state";
 
@@ -108,7 +106,7 @@ export const ${capitalize(domainNameCamelCased, true)}Template = Template.Defaul
   ${capitalize(domainNameCamelCased, true)}CoroutinesRunner.mapContext(_ => ({..._, events:[]}))
 ])`
 
-    const builderDefault = () => `import { CoTypedFactory } from "${"../".repeat(pathDepth(domainPath) - pathDepth(frameworkPath) + 3)}core/coroutines/builder";
+    const builderDefault = () => `import { CoTypedFactory } from "ballerina-core";
 import { ${capitalize(domainNameCamelCased, true)}ReadonlyContext, ${capitalize(domainNameCamelCased, true)}WritableState } from "../state";
 
 export const Co = CoTypedFactory<${capitalize(domainNameCamelCased, true)}ReadonlyContext, ${capitalize(domainNameCamelCased, true)}WritableState, never>()`
@@ -138,5 +136,6 @@ export const ${capitalize(domainNameCamelCased, true)}CoroutinesRunner =
     // console.log(options)
   }
 } catch (error) {
+  console.error(`There was an error: ${error}.`)
   showHelp()
 }
