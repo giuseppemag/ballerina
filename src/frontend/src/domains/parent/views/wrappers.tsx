@@ -11,7 +11,9 @@ export const ChildWrapper = (props: { children?: Array<JSX.Element> | JSX.Elemen
 
 export const ChildrenWrapper = (props: { children?: Array<JSX.Element> | JSX.Element }) =>
 	<table>
+		<tbody>
 		<tr>
 			{props.children}
 		</tr>
+		</tbody>
 	</table>

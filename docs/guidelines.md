@@ -17,7 +17,7 @@ Moving some computation to the frontend allowed developers to write dynamic page
 
 Pioneered by applications such as Reddit and GMail, the browser started to morph into a globally available lightweight operating system capable of running whole applications. And that is where the troubles began.
 
-Javascript and direct HTML (DOM) manipulation was nowhere near a mature-enough model to deal with large applications, complex functionality, and especially one of the nastiest, most complex domains of all: network concurrency, which means that many processes need to wait for API responses that might not even ever arrive. It was a dark time, with monstrous spaghetti-code driving developers young and old to despising despair. Hlep was needed. 
+Javascript and direct HTML (DOM) manipulation was nowhere near a mature-enough model to deal with large applications, complex functionality, and especially one of the nastiest, most complex domains of all: network concurrency, which means that many processes need to wait for API responses that might not even ever arrive. It was a dark time, with monstrous spaghetti-code driving developers young and old to despising despair. Help was needed. 
 
 Help was on the way. Microsoft and Facebook started work on two shining projects. Typescript, and React. Typescript brought an advanced type system on top of Javascript. This type system could easily compete against type systems that we had so far only seen in the context of academic functional programming languages such as Haskell or Scala: beautiful, enticing like the song of sirens, but pitifully unusable in the context of real-world tasks. And there it was: Typescript! Capable of supporting pragmatic Javascript-style hacks when needed, but also capable of grand and beautiful type algebras to support the most advanced definitions to ensure spotless correctness in our concurrent, dynamic, API-driven frontend programs. Oh, the joy of functional programming, great types, and yet usable pragmatism for a pleasant but also practical daily life...
 But no, the gifts from the realm of functional programming to the web were not exhausted! React, based on the obscure but beloved FRP (functional REACTive programming) came into play and defined a new model of declarative rendering capable of automatically updating the "scene" on the screen whenever the data that this scene depends on changes. React introduced a series of models of computation that were unheard of outside the academic world, and even more so unheard of in the world of web development. The hard split between readonly properties and a mutable state, the notion of controlled components (straight out of functional programming), the model of flawless composition: React introduced a new scale of elegance to UI development.
@@ -50,7 +50,7 @@ Let's go!
 
 The main driving philosophy of our way of working is based on _separation of concerns_. Separation of concerns aims at splitting code into different units. 
 - Along the lines of methodologies such as MVC, Cleaan Architecture, etc., the units can be focused on a different _layer_ of the application (rendering, api calls, business logic, asynchronous background operations, etc.). Not everything about a given part of a program should be in the same file, and by layering out our architecture we make files a bit smaller, a bit clearer to work with, and we even make it easier to assign work to different people.
-- Along the hierarchical split of different conceptual domains and their subdomains, in a hierarchy of information. Clearly splitting tables into header, filtering, and rows, and the hierarchical relationship between their states, makes is perfectly clear which components are responsible for updating which parts of which state. Debugging and maintenance become easier and more reliable. Such a split also makes it possible to identify those components that have no dependencies from the state of their parent or siblings: such domains are part of our core framework and can be moved out of the hierarchy altogether, leading to a leaner codebase where functionality stands out from tooling.
+- Along the hierarchical split of different conceptual domains and their subdomains, in a hierarchy of information. Clearly splitting tables into header, filtering, and rows, and the hierarchical relationship between their states, makes it perfectly clear which components are responsible for updating which parts of which state. Debugging and maintenance become easier and more reliable. Such a split also makes it possible to identify those components that have no dependencies from the state of their parent or siblings: such domains are part of our core framework and can be moved out of the hierarchy altogether, leading to a leaner codebase where functionality stands out from tooling.
 
 
 ### Organizing code
@@ -841,13 +841,13 @@ In case of a transient failure, we update the trace, keep dirty as `"dirty"`, an
 
 > We might use the concurrent operator `Co.Any`, which runs two coroutines in a race that will terminate as soon as any of them is completed, to shortcut `k` if it takes too long to process and/or `dirty` has switched back. Something like this:
 > ```ts
-Co.Any([
-	k.embed(...),
-	Co.While(([current]) => current.dirty != "dirty" || Date.now() - current.lastUpdated <= debounceDurationInMs,
-		Co.Wait(debounceDurationInMs / 5)
-	),
-])
-```
+> Co.Any([
+> 	k.embed(...),
+> 	Co.While(([current]) => current.dirty != "dirty" || Date.now() - current.lastUpdated <= debounceDurationInMs,
+> 		Co.Wait(debounceDurationInMs / 5)
+> 	),
+> ])
+> ```
 >
 > would effectively only allow `k` to run while dirty is not reset, because in that case the old execution of `k` is processing stale data and so we might want to restart the coroutine. Be careful though! This optimization might have the side effect that in case of a slow network, we might make things even worse by firing up many calls to `k` in a relatively short sequence, and if those leave a `Promise` hanging, this might consume too many network resources. It is an easy change, but it needs a conscious evaluation of the tradeoffs.
 
@@ -932,6 +932,10 @@ We switch the whole API repository object between one containing mocks, and one 
 
 When parsing and validation of API responses is needed (often thus), we separate the raw API calls from the parsers, validators, and converters. The repository pattern is the usual, and we just use the `.then` operator after the `Promise` performing the API call in order to post-process its result.
 
+> Generating a mocked promise manually is a tedious process. If you don't want to write such boilerplate over and over again, feel free to use the `PromiseRepo.Default.mock` constructor which creates a synthethic `Promise` with randomized exponential waiting time, customizable fail rates, etc.
+> The `ParentApi` can be simplified with this reusable domain as follows:
+> `PromiseRepo.Default.mock<Validation>(() => "valid", () => apiResultStatuses[2], 0.8, 0.2)`
+> denoting that we want to simulate an API call with an average delay of 0.2s (and exponential distribution), with 80% success rates, and the success and error callbacks producing the outputs of the call.
 
 #### Templates
 As mentioned before, all the files we have written so far are `.ts` files built in vanilla Typescript with minimal dependencies. This is very important and can hardly be understated: writing vanilla files makes debugging a reliable and self-contained investigation (rather than desperately scouring the web for error messages from a weird library); it separate the business logic and business object definitions from the rendering logic of React and other packages; it makes usage of React.Native or even outright different libraries for native or server-side rendering based on the same underlying business logic. Also, disentangling business logic and rendering minimizes merge conflicts, and promotes working in parallel on the same codebase, and even on the same domain by different specialists.
@@ -969,6 +973,10 @@ export const ParentInputs = (props:{
 
 We often see two kinds of wrappers in the views of a domain. The typical wrappers with children, ... the other wrapper kind as Pro<JSX.Element>
 
+_naming conventions_
+	_files and folder with dashes_
+	_state and repos with just the name of the domain_
+		_repos with Repo suffix when not otherwise possible, for ex. MapRepo_
 _Templates_
   _Readonly context_
   _Writable state_
@@ -992,12 +1000,6 @@ _Advanced patterns_
 	_useMemo_
 	_multi-field form validation_
 	_whole form validation in one go_
- —
- below should be in new line
- > We might use the concurrent operator `Co.Any`, which runs two coroutines in a race that will terminate as soon as any of them is completed, to shortcut `k` if it takes too long to process and/or `dirty` has switched back. Something like this:
- —
- Hlep was needed. 
- —
- makes is perfectly clear 
- —
- Cleaan Architecture    
+_Extensible generic domains_
+
+_Process Giulia's feedback_

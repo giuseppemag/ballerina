@@ -1,18 +1,4 @@
 Todo (✅/❌)
-  ✅ sample application
-    ✅ parent 
-      ✅ child1
-      ✅ child2
-    ✅ uncle domain
-    ✅ foreign mutations from child2 to uncle
-  ✅ Parent/state.ts contains an extra type
-  ✅ Debounced and Synchronized status types should move to core
-  ✅ Debouncer coroutine should stop the async iterations with `Any` when `Dirty` is reset
-  ✅ create domain tool
-    ✅ add readonly state, writable state, and most basic starter stuff to created files
-    ✅ make it an npm package
-    ✅ link from the main repo
-    ✅ test on another domain
   ❌ give back/forward
     ❌ ballerina -> blp script
       ❌ everything
@@ -26,14 +12,23 @@ Todo (✅/❌)
       ❌ add script to .gitignore
   ❌ write guidelines
     ✅ adjust to new way of filtering the running of coroutines 
-  ❌ add create-domain command line tool to readme
+    ❌ adjust naming of foreign mutations (expected/exposed), update guidelines
+  ✅ add help to create-domain command line tool (https://github.com/75lb/command-line-usage)
+  ❌ create-domain
+    ❌ add to guidelines
+    ❌ add to readme
+    ❌ convert dash to camelCase to create-domain
+    ❌ implement repository
   ❌ coroutine wrapper name is currently anonymous (in React Developer Tools). can that be updated?
-  ❌ coroutine runner extension. we currently have both *.ts and *.tsx you've mentioned that we will only have *.ts
-  ❌ we've discussed JS warnings (component children missing keys)
-  ❌ table->tbody
-  ❌ rename single-lettered type variables to decent names
-  ❌ use pretty printer for AsyncState in all debug views instead of JSON.stringify
-  ❌ rewrite InfiniteStreamState with Debounced/Synchronized
+  ✅ coroutine runner extension. we currently have both *.ts and *.tsx you've mentioned that we will only have *.ts
+  ❌ remove JS warnings (component children missing keys)
+  ✅ table->tbody
+  ✅ rename single-lettered type variables to decent names
+  ✅ use pretty printer for AsyncState in all debug views instead of JSON.stringify
+  ❌ card1...card3 use an extensibility pattern that could be embedded in the simpleUpdater<CardState, Extra = Unit> for easier reuse  
+    ❌ the extensibility pattern of Cards in the dashboad deserves a global sample and a spot in the coroutines
+  ❌ simpleUpdater should return a Fun so that we can write ((cardsRepository.Updaters.Core.card3.then(dashboardRepository.Updaters.Core.cards))) instead of the ugly eta-expansion
+
 
   ❌ every domain should have both FM types
   ✅ the child2 foreign mutations expected should not reference Uncle
@@ -44,8 +39,8 @@ Todo (✅/❌)
     ❌ automate Map/OrderedMap updaters
     ❌ add ChildN to Parent domain
   ❌ write readme
+  ❌ rewrite InfiniteStreamState with Debounced/Synchronized
 
-  ❌ should "state.ts" just be "type", "model", or "structure"
   ❌ pair
   ❌ builder pattern for updaters to not have to specify Core, Template, Coroutines
   ❌ templates

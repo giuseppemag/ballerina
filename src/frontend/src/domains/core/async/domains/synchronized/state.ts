@@ -1,18 +1,18 @@
 import { BasicUpdater, Updater } from "../../../fun/domains/updater/state";
 import { AsyncState } from "../../state";
 
-export type Synchronized<v, s> = v & { sync: AsyncState<s>; };
+export type Synchronized<value, syncResult> = value & { sync: AsyncState<syncResult>; };
 export const Synchronized = {
-	Default: <v, s>(initialValue: v): Synchronized<v, s> => ({
+	Default: <value, syncResult>(initialValue: value): Synchronized<value, syncResult> => ({
 		...initialValue,
 		sync: AsyncState.Default.unloaded()
 	}),
 	Updaters: {
-		sync: <v, s>(_: BasicUpdater<AsyncState<s>>): Updater<Synchronized<v, s>> => Updater<Synchronized<v, s>>(current => ({
+		sync: <value, syncResult>(_: BasicUpdater<AsyncState<syncResult>>): Updater<Synchronized<value, syncResult>> => Updater<Synchronized<value, syncResult>>(current => ({
 			...current,
 			sync:_(current.sync),
 		})),
-		value: <v, s>(_: BasicUpdater<v>): Updater<Synchronized<v, s>> => Updater<Synchronized<v, s>>(current => ({
+		value: <value, syncResult>(_: BasicUpdater<value>): Updater<Synchronized<value, syncResult>> => Updater<Synchronized<value, syncResult>>(current => ({
 			...current,
 			...(_(current))
 		})),

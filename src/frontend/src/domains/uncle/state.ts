@@ -24,4 +24,5 @@ export const Uncle = {
 
 export type UncleWritableState = Uncle
 export type UncleReadonlyContext = Unit
+export type UncleForeignMutationsExpected = Unit
 export type UncleForeignMutationsExposed = ReturnType<typeof  Uncle.ForeignMutations>

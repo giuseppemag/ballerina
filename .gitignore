@@ -1,5 +1,7 @@
 .mono
 
+move-to-ballerina.sh
+
 # Logs
 logs
 *.log

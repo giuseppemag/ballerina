@@ -21,11 +21,6 @@ function App() {
 			</div>
 			<h1>Rspack + React + TypeScript</h1>
 			<div className="card">
-				<DashboardTemplate
-					context={{...dashboard, definition:OrderedMap([["card1", {}], ["card3", {}], ["card2", {}]])}}
-					setState={setDashboard}
-					foreignMutations={{}}
-				/>
 				<UncleTemplate
 					context={uncle}
 					setState={setUncle}
