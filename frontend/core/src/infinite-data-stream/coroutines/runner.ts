@@ -8,5 +8,5 @@ export const StreamDataLoader =
     const LoaderTemplate = StreamCo<Element>().Template<foreignMutations>(Loader<Element>(), { 
       runFilter:props => operations.shouldCoroutineRun(props.context) 
     })
-    return LoaderTemplate.mapContext<InfiniteStreamReadonlyState & InfiniteStreamWritableState<Element>>(_ => ({..._, events:[] }))
+    return LoaderTemplate.mapContext<InfiniteStreamReadonlyState & InfiniteStreamWritableState<Element>>(_ => _)
   }

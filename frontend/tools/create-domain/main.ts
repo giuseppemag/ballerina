@@ -109,7 +109,7 @@ export const ${capitalize(domainNameCamelCased, true)}Template = Template.Defaul
     const builderDefault = () => `import { CoTypedFactory } from "ballerina-core";
 import { ${capitalize(domainNameCamelCased, true)}ReadonlyContext, ${capitalize(domainNameCamelCased, true)}WritableState } from "../state";
 
-export const Co = CoTypedFactory<${capitalize(domainNameCamelCased, true)}ReadonlyContext, ${capitalize(domainNameCamelCased, true)}WritableState, never>()`
+export const Co = CoTypedFactory<${capitalize(domainNameCamelCased, true)}ReadonlyContext, ${capitalize(domainNameCamelCased, true)}WritableState>()`
 
     const runnerDefault = () => `import { ${capitalize(domainNameCamelCased, true)}ForeignMutationsExpected } from "../state";
 import { Co } from "./builder";

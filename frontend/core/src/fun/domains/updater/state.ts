@@ -1,4 +1,4 @@
-import { BasicFun } from "../../state";
+import { BasicFun, Fun } from "../../state";
 
 export type BasicUpdater<e> = BasicFun<e, e>;
 
@@ -9,7 +9,7 @@ export type Updater<e> = BasicUpdater<e> & {
     Updaters:{ [_ in k]: BasicFun<BasicUpdater<e>, Updater<p>>; }
   }>(up: up) => Updater<p>;
 };
-export type Widening<p, c extends keyof p> = BasicFun<BasicUpdater<p[c]>, Updater<p>>;
+export type Widening<p, c extends keyof p> = Fun<BasicUpdater<p[c]>, Updater<p>>;
 
 export const Updater = <e>(_: BasicUpdater<e>): Updater<e> => {
   const u = _ as Updater<e>;

@@ -4,6 +4,5 @@ import { InfiniteStreamReadonlyState, InfiniteStreamWritableState } from "../sta
 export const StreamCo = <Element extends { id: string }>() =>
   CoTypedFactory<
     InfiniteStreamReadonlyState,
-    InfiniteStreamWritableState<Element>,
-    never
+    InfiniteStreamWritableState<Element>
   >();

@@ -5,34 +5,33 @@ import { BasicFun } from "../fun/state";
 import { Coroutine } from "./state";
 import { Template, TemplateProps } from "../template/state";
 
-export type CoroutineComponentOptions<context, state, event> = {
+export type CoroutineComponentOptions<context, state> = {
   interval?: number;
   key?: string;
   restartWhenFinished?: boolean;
-  runFilter?: BasicFun<TemplateProps<context & state & { events:event[] }, state, Unit>, boolean>
+  runFilter?: BasicFun<TemplateProps<context & state , state, Unit>, boolean>
 };
 
 const Co = Coroutine;
 
-type CoroutineReadonlyContext<context, state, events> = {
-  initialCoroutine: Coroutine<context, state, events, Unit>;
-  events: events[];
-  options?: CoroutineComponentOptions<context, state, events>;
+type CoroutineReadonlyContext<context, state> = {
+  initialCoroutine: Coroutine<context, state, Unit>;
+  options?: CoroutineComponentOptions<context, state>;
 }
 
-type CoroutineComponentProps<context, state, events> = {
+type CoroutineComponentProps<context, state> = {
   context: context;
   setState: BasicFun<BasicUpdater<state>, void>;
-} & CoroutineReadonlyContext<context, state, events>;
+} & CoroutineReadonlyContext<context, state>;
 
-type CoroutineComponentState<context, state, events> = {
-  currentCoroutine: Coroutine<context, state, events, Unit>;
+type CoroutineComponentState<context, state> = {
+  currentCoroutine: Coroutine<context, state, Unit>;
 };
-class CoroutineComponent<context, state, events> extends React.Component<
-  CoroutineComponentProps<context, state, events>,
-  CoroutineComponentState<context, state, events>
+class CoroutineComponent<context, state> extends React.Component<
+  CoroutineComponentProps<context, state>,
+  CoroutineComponentState<context, state>
 > {
-  constructor(props: CoroutineComponentProps<context, state, events>) {
+  constructor(props: CoroutineComponentProps<context, state>) {
     super(props);
     this.state = { currentCoroutine: props.initialCoroutine };
   }
@@ -50,7 +49,6 @@ class CoroutineComponent<context, state, events> extends React.Component<
       const currTimestamp = Date.now();
       const step = Co.Tick(
         this.props.context,
-        this.props.events,
         this.state.currentCoroutine,
         currTimestamp - lastTimestamp
       );
@@ -104,11 +102,10 @@ class CoroutineComponent<context, state, events> extends React.Component<
   }
 }
 
-export const CoroutineTemplate = <context, state, events, foreignMutations>() => 
-  Template.Default<context & CoroutineReadonlyContext<context, state, events>, state, foreignMutations>(props => 
+export const CoroutineTemplate = <context, state, foreignMutations>() => 
+  Template.Default<context & CoroutineReadonlyContext<context, state>, state, foreignMutations>(props => 
     <CoroutineComponent
       context={props.context}
-      events={props.context.events}
       initialCoroutine={props.context.initialCoroutine}
       setState={props.setState}
       options={props.context.options}    

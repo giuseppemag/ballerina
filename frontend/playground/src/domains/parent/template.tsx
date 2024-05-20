@@ -38,8 +38,8 @@ export const ParentTemplate =
 				</ChildrenWrapper>
 			</>
 		).any([
-			ParentCoroutinesRunner.mapContext(c => ({ ...c, events: [] })),
-			ParentDebouncerRunner.mapContext(c => ({ ...c, events: [] })),
+			ParentCoroutinesRunner,
+			ParentDebouncerRunner,
 		]).mapView(
 			ParentWrapper
 		)

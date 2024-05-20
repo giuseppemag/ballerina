@@ -6,8 +6,8 @@ import { replaceWith } from "../../fun/domains/updater/domains/replaceWith/state
 import { Debounced, DebouncedStatus, DirtyStatus } from "../state";
 
 
-export const Debounce = <value, e extends { Kind: string; }>(k: Coroutine<value, value, e, ApiResultStatus>, debounceDurationInMs: number, waitBeforeRetryOnTransientFailure: number = debounceDurationInMs * 2) => {
-	const Co = CoTypedFactory<Unit, Debounced<value>, e>();
+export const Debounce = <value>(k: Coroutine<value, value, ApiResultStatus>, debounceDurationInMs: number, waitBeforeRetryOnTransientFailure: number = debounceDurationInMs * 2) => {
+	const Co = CoTypedFactory<Unit, Debounced<value>>();
 	const updaters = Debounced.Updaters;
 	return Co.Seq([
 		Co.SetState(updaters.Core.status(replaceWith<DebouncedStatus>("waiting for dirty"))),

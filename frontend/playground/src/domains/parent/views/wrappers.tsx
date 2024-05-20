@@ -1,6 +1,6 @@
-export const ParentWrapper = (_:JSX.Element) =>
+export const ParentWrapper = (props:{ children?: Array<JSX.Element> | JSX.Element }) =>
   <div>
-    {_}
+    {props.children}
   </div>
 
 

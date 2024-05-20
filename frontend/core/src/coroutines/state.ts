@@ -1,40 +1,37 @@
-import { Collection } from "immutable";
+import { Collection, OrderedMap } from "immutable";
 import { Sum } from "../collections/domains/sum/state";
 import { id } from "../fun/domains/id/state";
 import { Unit } from "../fun/domains/unit/state";
 import { BasicUpdater } from "../fun/domains/updater/state";
 import { BasicFun, Fun } from "../fun/state";
+import { Guid } from "../../main";
 export type DeltaT = number;
-export type Coroutine<context, state, events, result> = {
-  ([context, deltaT, events]: [context, DeltaT, Array<events>]): CoroutineStep<
+export type Coroutine<context, state, result> = {
+  ([context, deltaT]: [context, DeltaT]): CoroutineStep<
     context,
     state,
-    events,
     result
   >;
   // map: <nextResult>(
   //   f: Fun<result, nextResult>
-  // ) => Coroutine<context, state, events, nextResult>;
+  // ) => Coroutine<context, state, nextResult>;
   // mapState: (
   //   f: Fun<Updater<state> | undefined, Updater<state> | undefined>
-  // ) => Coroutine<context, state, events, result>;
-  mapEvents: <newEvents>(
-    f: BasicFun<newEvents, events>
-  ) => Coroutine<context, state, newEvents, result>,
+  // ) => Coroutine<context, state, result>;
   embed: <parentContext, parentState>(
-    narrow:BasicFun<parentContext, context>,
-    widen:BasicFun<BasicUpdater<state>,BasicUpdater<parentState>>
-  ) => Coroutine<parentContext, parentState, events, result>,
+    narrow: BasicFun<parentContext, context>,
+    widen: BasicFun<BasicUpdater<state>, BasicUpdater<parentState>>
+  ) => Coroutine<parentContext, parentState, result>,
   then: <nextResult>(
-    f: BasicFun<result, Coroutine<context, state, events, nextResult>>
-  ) => Coroutine<context, state, events, nextResult>;
+    f: BasicFun<result, Coroutine<context, state, nextResult>>
+  ) => Coroutine<context, state, nextResult>;
   seq: <nextResult>(
-    k: Coroutine<context, state, events, nextResult>
-  ) => Coroutine<context, state, events, nextResult>;
+    k: Coroutine<context, state, nextResult>
+  ) => Coroutine<context, state, nextResult>;
 };
 
-const callMaybe = <a,b>(f:BasicFun<BasicUpdater<a>,BasicUpdater<b>>) : BasicFun<BasicUpdater<a> | undefined,BasicUpdater<b> | undefined> =>
-    x => x == undefined ? undefined : f(x)
+const callMaybe = <a, b>(f: BasicFun<BasicUpdater<a>, BasicUpdater<b>>): BasicFun<BasicUpdater<a> | undefined, BasicUpdater<b> | undefined> =>
+  x => x == undefined ? undefined : f(x)
 
 const thenMaybe = <state>(
   f: BasicUpdater<state> | undefined,
@@ -43,131 +40,116 @@ const thenMaybe = <state>(
   f == undefined ? g : g == undefined ? f : (x => g(f(x)));
 
 export const Coroutine = {
-  Create: <context, state, events, result>(
+  Create: <context, state, result>(
     p: BasicFun<
-      [context, DeltaT, Array<events>],
-      CoroutineStep<context, state, events, result>
+      [context, DeltaT],
+      CoroutineStep<context, state, result>
     >
-  ): Coroutine<context, state, events, result> => {
-    const co = p as unknown as Coroutine<context, state, events, result>;
+  ): Coroutine<context, state, result> => {
+    const co = p as unknown as Coroutine<context, state, result>;
     // co.map = function <nextResult>(
     //   f: Fun<result, nextResult>
-    // ): Coroutine<context, state, events, nextResult> {
+    // ): Coroutine<context, state, nextResult> {
     //   return Coroutine.Map(this, f);
     // };
     // co.mapState = function (
     //   f: Fun<Updater<state> | undefined, Updater<state> | undefined>
-    // ): Coroutine<context, state, events, result> {
+    // ): Coroutine<context, state, result> {
     //   return Coroutine.MapState(this, f);
     // };
-    co.mapEvents = function<newEvents>(this:Coroutine<context, state, events, result>, f:BasicFun<newEvents, events>) {
-      return Coroutine.MapEvents(this, f)
-    }  
-    co.embed = function<parentContext, parentState>(
-      this:Coroutine<context, state, events, result>,
-      narrow:BasicFun<parentContext, context>,
-      widen:BasicFun<BasicUpdater<state>,BasicUpdater<parentState>>
-    ) : Coroutine<parentContext, parentState, events, result> {
-      return Coroutine.Embed<context, state, result, parentContext, parentState, events>(this, narrow, widen)
+    co.embed = function <parentContext, parentState>(
+      this: Coroutine<context, state, result>,
+      narrow: BasicFun<parentContext, context>,
+      widen: BasicFun<BasicUpdater<state>, BasicUpdater<parentState>>
+    ): Coroutine<parentContext, parentState, result> {
+      return Coroutine.Embed<context, state, result, parentContext, parentState>(this, narrow, widen)
     }
     co.then = function <nextResult>(
-      f: BasicFun<result, Coroutine<context, state, events, nextResult>>
-    ): Coroutine<context, state, events, nextResult> {
+      f: BasicFun<result, Coroutine<context, state, nextResult>>
+    ): Coroutine<context, state, nextResult> {
       // return Coroutine.Join(Coroutine.Map(this, f));
       return Coroutine.Create((_) => CoroutineStep.Then(undefined, this, f));
     };
     co.seq = function <nextResult>(
-      f: Coroutine<context, state, events, nextResult>
-    ): Coroutine<context, state, events, nextResult> {
+      f: Coroutine<context, state, nextResult>
+    ): Coroutine<context, state, nextResult> {
       return this.then(() => f);
     };
     return co;
   },
-  UpdateState: <context, state, events>(
+  UpdateState: <context, state>(
     stateUpdater: BasicFun<state, BasicUpdater<state>>
-  ): Coroutine<context, state, events, Unit> =>
+  ): Coroutine<context, state, Unit> =>
     Coroutine.Create(([__, _]) =>
       CoroutineStep.Result((state) => stateUpdater(state)(state), {})
     ),
-  SetState: <context, state, events>(
+  SetState: <context, state>(
     stateUpdater: BasicUpdater<state>
-  ): Coroutine<context, state, events, Unit> =>
+  ): Coroutine<context, state, Unit> =>
     Coroutine.Yield(
       Coroutine.Create(([__, _]) => CoroutineStep.Result(stateUpdater, {}))
     ),
-  GetState: <context, state, events>(): Coroutine<
+  GetState: <context, state>(): Coroutine<
     context,
     state,
-    events,
     context
   > =>
-    Coroutine.Create(([context, __, _]) =>
+    Coroutine.Create(([context, __]) =>
       CoroutineStep.Result(undefined, context)
     ),
-  Start: <context, state, events>(): Coroutine<context, state, events, Unit> =>
+  Start: <context, state>(): Coroutine<context, state, Unit> =>
     Coroutine.Create(([__, _]) => CoroutineStep.Result(undefined, {})),
-  Return: <context, state, events, result>(
+  Return: <context, state, result>(
     result: result
-  ): Coroutine<context, state, events, result> =>
+  ): Coroutine<context, state, result> =>
     Coroutine.Create(([__, _]) => CoroutineStep.Result(undefined, result)),
-  Yield: <context, state, events, result>(
-    next: Coroutine<context, state, events, result>
-  ): Coroutine<context, state, events, result> =>
+  Yield: <context, state, result>(
+    next: Coroutine<context, state, result>
+  ): Coroutine<context, state, result> =>
     Coroutine.Create(([__, _]) => CoroutineStep.Yield(undefined, next)),
-  Waiting: <context, state, events, result>(
+  Waiting: <context, state, result>(
     msLeft: number,
-    next: Coroutine<context, state, events, result>
-  ): Coroutine<context, state, events, result> =>
+    next: Coroutine<context, state, result>
+  ): Coroutine<context, state, result> =>
     Coroutine.Create(([__, _]) =>
       CoroutineStep.Waiting(undefined, msLeft, next)
     ),
-  WaitingForEvent: <context, state, events, result>(
-    next: CoroutineEventProcessor<context, state, events, result>
-  ): Coroutine<context, state, events, result> =>
-    Coroutine.Create(([__, _]) =>
-      CoroutineStep.WaitingForEvent(undefined, next)
-    ),
-  // Map: <context, state, events, result1, result2>(
-  //   p: Coroutine<context, state, events, result1>,
+  // Map: <context, state, result1, result2>(
+  //   p: Coroutine<context, state, result1>,
   //   f: Fun<result1, result2>
-  // ): Coroutine<context, state, events, result2> =>
+  // ): Coroutine<context, state, result2> =>
   //   Coroutine.Create((state) => CoroutineStep.Map(p(state), f)),
-  MapContext: <childContext, result, parentContext, state, events>(
-    p: Coroutine<childContext, state, events, result>,
-    narrow:BasicFun<parentContext, childContext>,
-  ): Coroutine<parentContext, state, events, result> =>
-    Coroutine.Create(([parentContext, deltaT, events]) => 
-      CoroutineStep.MapContext(p([narrow(parentContext), deltaT, events]), narrow)
+  MapContext: <childContext, result, parentContext, state>(
+    p: Coroutine<childContext, state, result>,
+    narrow: BasicFun<parentContext, childContext>,
+  ): Coroutine<parentContext, state, result> =>
+    Coroutine.Create(([parentContext, deltaT]) =>
+      CoroutineStep.MapContext(p([narrow(parentContext), deltaT]), narrow)
     ),
-  Embed: <childContext, childState, result, parentContext, parentState, events>(
-    p: Coroutine<childContext, childState, events, result>,
-    narrow:BasicFun<parentContext, childContext>,
-    widen:BasicFun<BasicUpdater<childState>,BasicUpdater<parentState>>
-  ): Coroutine<parentContext, parentState, events, result> =>
-    Coroutine.Create(([parentContext, deltaT, events]) => {
-      return CoroutineStep.Embed(p([narrow(parentContext), deltaT, events]), narrow, widen)
+  Embed: <childContext, childState, result, parentContext, parentState>(
+    p: Coroutine<childContext, childState, result>,
+    narrow: BasicFun<parentContext, childContext>,
+    widen: BasicFun<BasicUpdater<childState>, BasicUpdater<parentState>>
+  ): Coroutine<parentContext, parentState, result> =>
+    Coroutine.Create(([parentContext, deltaT]) => {
+      return CoroutineStep.Embed(p([narrow(parentContext), deltaT]), narrow, widen)
     }),
-  MapEvents: <context, state, events, newEvents, result>(
-      p: Coroutine<context, state, events, result>,
-      f: BasicFun<newEvents, events>
-    ): Coroutine<context, state, newEvents, result> =>
-      Coroutine.Create(([state, deltaT, newEvents]) => CoroutineStep.MapEvents(p([state, deltaT, newEvents.map(f)]), f)),  
-  MapState: <context, state, newState, events, result>(
-    p: Coroutine<context, state, events, result>,
+  MapState: <context, state, newState, result>(
+    p: Coroutine<context, state, result>,
     f: BasicFun<
       BasicUpdater<state>,
       BasicUpdater<newState>
     >
-  ): Coroutine<context, newState, events, result> =>
+  ): Coroutine<context, newState, result> =>
     Coroutine.Create((state) => CoroutineStep.MapState(p(state), f)),
-  // Join: <context, state, events, result>(
-  //   p: Coroutine<context, state, events, Coroutine<context, state, events, result>>
-  // ): Coroutine<context, state, events, result> =>
-  //   Coroutine.Create<context, state, events, result>(([state, deltaT, events]) => {
-  //     const step = p([state, deltaT, events]);
+  // Join: <context, state, result>(
+  //   p: Coroutine<context, state, Coroutine<context, state, result>>
+  // ): Coroutine<context, state, result> =>
+  //   Coroutine.Create<context, state, result>(([state, deltaT]) => {
+  //     const step = p([state, deltaT]);
   //     if (step.kind == "result")
   //       return CoroutineStep.MapState(step
-  //         .result([(step.newState || id)(state), deltaT, events]),
+  //         .result([(step.newState || id)(state), deltaT]),
   //         (_) =>
   //           _ == undefined
   //             ? step.newState
@@ -189,25 +171,24 @@ export const Coroutine = {
   //       return next == "no match" ? next : Coroutine.Join(next);
   //     });
   //   }),
-  Tick: <context, state, events, result>(
+  Tick: <context, state, result>(
     context: context,
-    events: Array<events>,
-    p: Coroutine<context, state, events, result>,
+    p: Coroutine<context, state, result>,
     deltaT: number
   ):
     | {
-        kind: "continuing";
-        excludeOthers?: true;
-        state: BasicUpdater<state> | undefined;
-        next: Coroutine<context, state, events, result>;
-      }
+      kind: "continuing";
+      excludeOthers?: true;
+      state: BasicUpdater<state> | undefined;
+      next: Coroutine<context, state, result>;
+    }
     | {
-        kind: "done";
-        state: BasicUpdater<state> | undefined;
-        result: result;
-      } => {
+      kind: "done";
+      state: BasicUpdater<state> | undefined;
+      result: result;
+    } => {
     // debugger
-    const step = p([context, deltaT, events]);
+    const step = p([context, deltaT]);
     if (step.kind == "result")
       return { kind: "done", state: step.newState, result: step.result };
     if (step.kind == "yield")
@@ -220,65 +201,47 @@ export const Coroutine = {
         state: step.newState,
         next: Coroutine.Waiting(step.msLeft - deltaT, step.next),
       };
-    if (step.kind == "then") {
-      const next = Coroutine.Tick(context, events, step.p, deltaT);
-      if (next.kind == "done")
-        return {
-          kind: "continuing",
-          state: thenMaybe(step.newState, next.state),
-          next: step.k(next.result),
-        };
-      else
-        return {
-          kind: "continuing",
-          state: next.state,
-          next: next.next.then(step.k),
-        };
-    }
-    if (events.length == 0)
+    const next = Coroutine.Tick(context, step.p, deltaT);
+    if (next.kind == "done")
       return {
         kind: "continuing",
-        state: step.newState,
-        next: Coroutine.WaitingForEvent(step.next),
+        state: thenMaybe(step.newState, next.state),
+        next: step.k(next.result),
       };
-    const next = step.next(events);
-    if (next == "no match")
+    else
       return {
         kind: "continuing",
-        state: step.newState,
-        next: Coroutine.WaitingForEvent(step.next),
+        state: next.state,
+        next: next.next.then(step.k),
       };
-    return { kind: "continuing", state: step.newState, next: next };
   },
-  Nothing: <context, state, events, result>(): Coroutine<
+  Nothing: <context, state, result>(): Coroutine<
     context,
     state,
-    events,
     result
   > =>
     Coroutine.Create(([__, _]) =>
       CoroutineStep.Yield(undefined, Coroutine.Nothing())
     ),
-  Any: <context, state, events, result>(
-    ps: Array<Coroutine<context, state, events, result>>
-  ): Coroutine<context, state, events, result> =>
-    Coroutine.Create(([context, deltaT, events]) => {
-      const ps1: Array<Coroutine<context, state, events, result>> = [];
+  Any: <context, state, result>(
+    ps: Array<Coroutine<context, state, result>>
+  ): Coroutine<context, state, result> =>
+    Coroutine.Create(([context, deltaT]) => {
+      const ps1: Array<Coroutine<context, state, result>> = [];
       let nextState: BasicUpdater<state> | undefined = undefined;
       for (const p of ps) {
-        const step = Coroutine.Tick(context, events, p, deltaT);
+        const step = Coroutine.Tick(context, p, deltaT);
         nextState = thenMaybe(nextState, step.state);
         if (step.kind == "done")
           return CoroutineStep.Result(nextState, step.result);
         else {
           if (step.excludeOthers) {
             console.log(
-              `exclude others detected, killing ${
-                ps.length - 1
+              `exclude others detected, killing ${ps.length - 1
               } other coroutines`
             );
             return CoroutineStep.MapState(
-              step.next([context, deltaT, events]),
+              step.next([context, deltaT]),
               ((_) => thenMaybe(nextState, _) || id)
             );
           } else ps1.push(step.next);
@@ -286,16 +249,16 @@ export const Coroutine = {
       }
       return CoroutineStep.Yield(nextState, Coroutine.Any(ps1));
     }),
-  All: <context, state, events, result>(
-    ps: Array<Coroutine<context, state, events, result>>
-  ): Coroutine<context, state, events, Array<result>> =>
-    Coroutine.Create(([context, deltaT, events]) => {
-      const ps1: Array<Coroutine<context, state, events, result>> = [];
+  All: <context, state, result>(
+    ps: Array<Coroutine<context, state, result>>
+  ): Coroutine<context, state, Array<result>> =>
+    Coroutine.Create(([context, deltaT]) => {
+      const ps1: Array<Coroutine<context, state, result>> = [];
       let nextState: BasicUpdater<state> | undefined = undefined;
       let stillRunning = false;
       const results: Array<result> = [];
       for (const p of ps) {
-        const step = Coroutine.Tick(context, events, p, deltaT);
+        const step = Coroutine.Tick(context, p, deltaT);
         nextState = thenMaybe(nextState, step.state);
         if (step.kind == "done") {
           results.push(step.result);
@@ -309,67 +272,46 @@ export const Coroutine = {
         ? CoroutineStep.Yield(nextState, Coroutine.All(ps1))
         : CoroutineStep.Result(nextState, results);
     }),
-  Repeat: <context, state, events>(
-    p: Coroutine<context, state, events, Unit>
-  ): Coroutine<context, state, events, Unit> =>
+  Repeat: <context, state>(
+    p: Coroutine<context, state, Unit>
+  ): Coroutine<context, state, Unit> =>
     p.then((_) => Coroutine.Yield(Coroutine.Repeat(p))),
-  Seq: <context, state, events>(
-    ps: Array<Coroutine<context, state, events, Unit>>
-  ): Coroutine<context, state, events, Unit> =>
+  Seq: <context, state>(
+    ps: Array<Coroutine<context, state, Unit>>
+  ): Coroutine<context, state, Unit> =>
     ps.length <= 0
-      ? Coroutine.Return<context, state, events, Unit>({})
-      : ps[0].then(() => Coroutine.Seq<context, state, events>(ps.slice(1))),
-  For: <context, state, events, element>(
-      collection: Collection<number,element>,
-      p: BasicFun<element, Coroutine<context, state, events, Unit>>
-    ): Coroutine<context, state, events, Unit> =>
-        collection.isEmpty() ? Coroutine.Return({})
-    : Coroutine.Seq([
-      p(collection.first()!),
-      Coroutine.For(collection.skip(1), p)
-    ]),
-  While: <context, state, events>(
-    predicate: BasicFun<[context, Array<events>], boolean>,
-    p: Coroutine<context, state, events, Unit>
-  ): Coroutine<context, state, events, Unit> =>
-    Coroutine.Create(([context, deltaT, events]) => {
-      if (predicate([context, events])) {
+      ? Coroutine.Return<context, state, Unit>({})
+      : ps[0].then(() => Coroutine.Seq<context, state>(ps.slice(1))),
+  For: <context, state, element>(
+    collection: Collection<number, element>,
+    p: BasicFun<element, Coroutine<context, state, Unit>>
+  ): Coroutine<context, state, Unit> =>
+    collection.isEmpty() ? Coroutine.Return({})
+      : Coroutine.Seq([
+        p(collection.first()!),
+        Coroutine.For(collection.skip(1), p)
+      ]),
+  While: <context, state>(
+    predicate: BasicFun<[context], boolean>,
+    p: Coroutine<context, state, Unit>
+  ): Coroutine<context, state, Unit> =>
+    Coroutine.Create(([context, deltaT]) => {
+      if (predicate([context])) {
         return p.then((_) =>
-          Coroutine.While<context, state, events>(predicate, p)
-        )([context, deltaT, events]);
+          Coroutine.While<context, state>(predicate, p)
+        )([context, deltaT]);
       } else return CoroutineStep.Result(undefined, {});
     }),
-  Wait: <context, state, events>(
+  Wait: <context, state>(
     ms: number
-  ): Coroutine<context, state, events, Unit> =>
+  ): Coroutine<context, state, Unit> =>
     Coroutine.Waiting(ms, Coroutine.Return({})),
-  On:
-    <context, state, events extends { Kind: string }>() =>
-    <event extends events["Kind"]>(
-      eventKind: event,
-      predicate?: BasicFun<[events & { Kind: event }, context], boolean>
-    ): Coroutine<context, state, events, events & { Kind: event }> =>
-      Coroutine.Create(([context, _, events]) => {
-        const event = events.find((e) => e.Kind == eventKind);
-        if (event != undefined) {
-          if (!predicate || predicate([event as any, context])) {
-            // we don't return undefined but rather s => s in order to 
-            // ensure that coroutine runners can see that something happened
-            // that might require flushing the event queue
-            return CoroutineStep.Result(s => s, event as any);
-          }
-        }
-        return CoroutineStep.Yield(
-          undefined,
-          Coroutine.On<context, state, events>()(eventKind, predicate)
-        );
-      }),
-  Await: <context, state, events, result, error>(
+  Await: <context, state, result, error>(
     promise: BasicFun<Unit, Promise<result>>,
     onCatch: BasicFun<any, error>,
     debugName?: string
-  ): Coroutine<context, state, events, Sum<result, error>> =>
-    Coroutine.Create(([_, __, ___]) => {
+  ): Coroutine<context, state, Sum<result, error>> =>
+    Coroutine.Create(([_, __]) => {
       let promiseResult:
         | { kind: "resolve"; result: result }
         | { kind: "reject"; error: error }
@@ -395,7 +337,6 @@ export const Coroutine = {
       const awaiter = (): CoroutineStep<
         context,
         state,
-        events,
         Sum<result, error>
       > => {
         // if (SharedLayoutConstants.LogCoroutineTicks)
@@ -405,62 +346,70 @@ export const Coroutine = {
         //   );
         return promiseResult == undefined
           ? CoroutineStep.Yield(
-              undefined,
-              Coroutine.Create(([_, __, ___]) => awaiter())
-            )
+            undefined,
+            Coroutine.Create(([_, __]) => awaiter())
+          )
           : promiseResult.kind == "resolve"
             ? CoroutineStep.Result(
-                undefined,
-                Sum.Default.left(promiseResult.result)
-              )
+              undefined,
+              Sum.Default.left(promiseResult.result)
+            )
             : CoroutineStep.Result(
-                undefined,
-                Sum.Default.right(promiseResult.error)
-              );
+              undefined,
+              Sum.Default.right(promiseResult.error)
+            );
       };
       return CoroutineStep.Yield(
         undefined,
-        Coroutine.Create(([_, __, ___]) => awaiter())
+        Coroutine.Create(([_, __]) => awaiter())
       );
-    }),    
+    }),
+  On:<context, state extends { events:Map<kind, OrderedMap<Guid, event>> }, event extends { id:Guid, kind:kind }, kind extends string>(kind:kind)
+    : Coroutine<context & state, state, OrderedMap<Guid, event>> => 
+    Coroutine.GetState<context & state, state>().then(context => {
+      const eventsOfKind = context.events.get(kind)
+      if (eventsOfKind == undefined || eventsOfKind.isEmpty())
+        return Coroutine.Yield<context & state, state, OrderedMap<Guid, event>>(Coroutine.On(kind))
+      else 
+        return Coroutine.SetState<context & state, state>(_ => ({..._, events:_.events.delete(kind)})).then(() => 
+          Coroutine.Return<context & state, state, OrderedMap<Guid, event>>(eventsOfKind)
+      )}
+    ),
+  Trigger:<context, state extends { events:Map<kind, OrderedMap<Guid, event>> }, event extends { id:Guid, kind:kind }, kind extends string>(event:event)
+    : Coroutine<context & state, state, Unit> => 
+    Coroutine.SetState<context & state, state>(
+      _ => ({..._, events:_.events.set(event.kind, (_.events.get(event.kind) ?? OrderedMap()).set(event.id, event))})
+    )    
 };
 
-export type CoroutineEventProcessor<context, state, events, result> = BasicFun<
-  Array<events>,
-  "no match" | Coroutine<context, state, events, result>
->;
-export type CoroutineStep<context, state, events, result> = {
+export type CoroutineStep<context, state, result> = {
   newState: BasicUpdater<state> | undefined;
 } & (
-  | { kind: "result"; result: result }
-  | {
+    | { kind: "result"; result: result }
+    | {
       kind: "then";
-      p: Coroutine<context, state, events, any>;
-      k: BasicFun<any, Coroutine<context, state, events, result>>;
+      p: Coroutine<context, state, any>;
+      k: BasicFun<any, Coroutine<context, state, result>>;
     }
-  | { kind: "yield"; next: Coroutine<context, state, events, result> }
-  | {
-      kind: "waiting-for-event";
-      next: CoroutineEventProcessor<context, state, events, result>;
-    }
-  | {
+    | { kind: "yield"; next: Coroutine<context, state, result> }
+    | {
       kind: "waiting";
       msLeft: number;
-      next: Coroutine<context, state, events, result>;
+      next: Coroutine<context, state, result>;
     }
-) & {
-    // map: <nextResult>(
-    //   f: Fun<result, nextResult>
-    // ) => CoroutineStep<context, state, events, nextResult>;
-    // mapState: (
-    //   f: Fun<Updater<state> | undefined, Updater<state> | undefined>
-    // ) => CoroutineStep<context, state, events, result>;
-  };
+  ) & {
+  // map: <nextResult>(
+  //   f: Fun<result, nextResult>
+  // ) => CoroutineStep<context, state, nextResult>;
+  // mapState: (
+  //   f: Fun<Updater<state> | undefined, Updater<state> | undefined>
+  // ) => CoroutineStep<context, state, result>;
+};
 export const CoroutineStep = {
-  Result: <context, state, events, result>(
+  Result: <context, state, result>(
     newState: BasicUpdater<state> | undefined,
     result: result
-  ): CoroutineStep<context, state, events, result> => ({
+  ): CoroutineStep<context, state, result> => ({
     newState,
     kind: "result",
     result: result,
@@ -473,11 +422,11 @@ export const CoroutineStep = {
     //   return CoroutineStep.MapState(this, f);
     // },
   }),
-  Then: <context, state, events, result>(
+  Then: <context, state, result>(
     newState: BasicUpdater<state> | undefined,
-    p: Coroutine<context, state, events, any>,
-    k: BasicFun<any, Coroutine<context, state, events, result>>
-  ): CoroutineStep<context, state, events, result> => ({
+    p: Coroutine<context, state, any>,
+    k: BasicFun<any, Coroutine<context, state, result>>
+  ): CoroutineStep<context, state, result> => ({
     kind: "then",
     newState: newState,
     p: p,
@@ -491,10 +440,10 @@ export const CoroutineStep = {
     //   return CoroutineStep.MapState(this, f);
     // },
   }),
-  Yield: <context, state, events, result>(
+  Yield: <context, state, result>(
     newState: BasicUpdater<state> | undefined,
-    next: Coroutine<context, state, events, result>
-  ): CoroutineStep<context, state, events, result> => ({
+    next: Coroutine<context, state, result>
+  ): CoroutineStep<context, state, result> => ({
     newState,
     kind: "yield",
     next: next,
@@ -507,11 +456,11 @@ export const CoroutineStep = {
     //   return CoroutineStep.MapState(this, f);
     // },
   }),
-  Waiting: <context, state, events, result>(
+  Waiting: <context, state, result>(
     newState: BasicUpdater<state> | undefined,
     msLeft: number,
-    next: Coroutine<context, state, events, result>
-  ): CoroutineStep<context, state, events, result> => ({
+    next: Coroutine<context, state, result>
+  ): CoroutineStep<context, state, result> => ({
     newState,
     kind: "waiting",
     msLeft: msLeft,
@@ -525,26 +474,10 @@ export const CoroutineStep = {
     //   return CoroutineStep.MapState(this, f);
     // },
   }),
-  WaitingForEvent: <context, state, events, result>(
-    newState: BasicUpdater<state> | undefined,
-    next: CoroutineEventProcessor<context, state, events, result>
-  ): CoroutineStep<context, state, events, result> => ({
-    newState,
-    kind: "waiting-for-event",
-    next: next,
-    // map: function <nextResult>(f: Fun<result, nextResult>) {
-    //   return CoroutineStep.Map(this, f);
-    // },
-    // mapState: function (
-    //   f: Fun<Updater<state> | undefined, Updater<state> | undefined>
-    // ) {
-    //   return CoroutineStep.MapState(this, f);
-    // },
-  }),
-  // Map: <context, state, events, result1, result2>(
-  //   p: CoroutineStep<context, state, events, result1>,
+  // Map: <context, state, result1, result2>(
+  //   p: CoroutineStep<context, state, result1>,
   //   f: Fun<result1, result2>
-  // ): CoroutineStep<context, state, events, result2> =>
+  // ): CoroutineStep<context, state, result2> =>
   //   p.kind == "result"
   //     ? CoroutineStep.Result(p.newState, f(p.result))
   //     : p.kind == "yield"
@@ -555,61 +488,32 @@ export const CoroutineStep = {
   //             const next = p.next(e);
   //             return next == "no match" ? next : Coroutine.Map(next, f)
   //           }),
-  MapContext: <childContext, parentContext, state, result, events>(
-    p: CoroutineStep<childContext, state, events, result>,
-    narrow:BasicFun<parentContext, childContext>,
-  ): CoroutineStep<parentContext, state, events, result> =>
+  MapContext: <childContext, parentContext, state, result>(
+    p: CoroutineStep<childContext, state, result>,
+    narrow: BasicFun<parentContext, childContext>,
+  ): CoroutineStep<parentContext, state, result> =>
     p.kind == "result"
       ? p
       : p.kind == "yield"
         ? CoroutineStep.Yield(p.newState, Coroutine.MapContext(p.next, narrow))
         : p.kind == "waiting"
           ? CoroutineStep.Waiting(
-              p.newState,
-              p.msLeft,
-              Coroutine.MapContext(p.next, narrow)
-            )
-                : p.kind == "then"
-                  ? CoroutineStep.Then(
-                      p.newState,
-                      Coroutine.MapContext(p.p, narrow),
-                      Fun(p.k).then((_) => Coroutine.MapContext(_, narrow))
-                    )
-            : CoroutineStep.WaitingForEvent(p.newState, (e) => {
-                const next = p.next(e);
-                return next == "no match" ? next : Coroutine.MapContext(next, narrow);
-              }),
-  MapEvents: <context, state, events, newEvents, result>(
-      p: CoroutineStep<context, state, events, result>,
-      f: BasicFun<newEvents, events>
-    ): CoroutineStep<context, state, newEvents, result> =>
-    p.kind == "result"
-      ? p
-      : p.kind == "yield"
-        ? CoroutineStep.Yield(p.newState, Coroutine.MapEvents(p.next, f))
-        : p.kind == "waiting"
-          ? CoroutineStep.Waiting(
-              p.newState,
-              p.msLeft,
-              Coroutine.MapEvents(p.next, f)
-            )
-                : p.kind == "then"
-                  ? CoroutineStep.Then(
-                      p.newState,
-                      Coroutine.MapEvents(p.p, f),
-                      Fun(p.k).then((_) => Coroutine.MapEvents(_, f))
-                    )
-            : CoroutineStep.WaitingForEvent(p.newState, (e) => {
-                const next = p.next(e.map(f));
-                return next == "no match" ? next : Coroutine.MapEvents(next, f);
-              }),
-  MapState: <context, state, newState, events, result>(
-    p: CoroutineStep<context, state, events, result>,
+            p.newState,
+            p.msLeft,
+            Coroutine.MapContext(p.next, narrow)
+          )
+          : CoroutineStep.Then(
+            p.newState,
+            Coroutine.MapContext(p.p, narrow),
+            Fun(p.k).then((_) => Coroutine.MapContext(_, narrow))
+          ),
+  MapState: <context, state, newState, result>(
+    p: CoroutineStep<context, state, result>,
     f: BasicFun<
       BasicUpdater<state>,
       BasicUpdater<newState>
     >
-  ): CoroutineStep<context, newState, events, result> =>
+  ): CoroutineStep<context, newState, result> =>
     p.kind == "result"
       ? CoroutineStep.Result(callMaybe(f)(p.newState), p.result)
       : p.kind == "yield"
@@ -617,24 +521,19 @@ export const CoroutineStep = {
         : p.kind == "waiting"
           ? CoroutineStep.Waiting(
             callMaybe(f)(p.newState),
-              p.msLeft,
-              Coroutine.MapState(p.next, f)
-            )
-          : p.kind == "then"
-            ? CoroutineStep.Then(
-              callMaybe(f)(p.newState),
-                Coroutine.MapState(p.p, f),
-                Fun(p.k).then((_) => Coroutine.MapState(_, f))
-              )
-            : CoroutineStep.WaitingForEvent(callMaybe(f)(p.newState), (e) => {
-                const next = p.next(e);
-                return next == "no match" ? next : Coroutine.MapState(next, f);
-              }),
-  Embed: <childContext, childState, result, parentContext, parentState, events>(
-    p: CoroutineStep<childContext, childState, events, result>,
-    narrow:BasicFun<parentContext, childContext>,
-    widen:BasicFun<BasicUpdater<childState>,BasicUpdater<parentState>>
-  ): CoroutineStep<parentContext, parentState, events, result> =>
+            p.msLeft,
+            Coroutine.MapState(p.next, f)
+          )
+          : CoroutineStep.Then(
+            callMaybe(f)(p.newState),
+            Coroutine.MapState(p.p, f),
+            Fun(p.k).then((_) => Coroutine.MapState(_, f))
+          ),
+  Embed: <childContext, childState, result, parentContext, parentState>(
+    p: CoroutineStep<childContext, childState, result>,
+    narrow: BasicFun<parentContext, childContext>,
+    widen: BasicFun<BasicUpdater<childState>, BasicUpdater<parentState>>
+  ): CoroutineStep<parentContext, parentState, result> =>
     CoroutineStep.MapState(CoroutineStep.MapContext(p, narrow), widen)
-            
+
 };

@@ -10,7 +10,7 @@ export const Child2Template =
 			<Child2Table {...props.context} />
 			<Child2Input onClick={() => props.foreignMutations.setFlag(true)} />
 		</>).any([
-			Child2CoroutinesRunner.mapContext(_ => ({ ..._, events: [] }))
+			Child2CoroutinesRunner
 		])
 
 

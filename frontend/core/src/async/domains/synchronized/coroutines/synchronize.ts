@@ -6,11 +6,11 @@ import { BasicFun } from "../../../../fun/state";
 import { AsyncState } from "../../../state";
 import { Synchronized } from "../state";
 
-export const Synchronize = <value, syncResult, event extends { Kind: string; } = never>(
+export const Synchronize = <value, syncResult>(
 	p: BasicFun<value, Promise<syncResult>>, errorProcessor: BasicFun<any, ErrorPermanenceStatus>,
 	maxAttempts: number, delayBetweenAttemptsInMs: number): 
-		Coroutine<Synchronized<value, syncResult>, Synchronized<value, syncResult>, event, ApiResultStatus> => {
-	const Co = CoTypedFactory<Unit, Synchronized<value, syncResult>, event>();
+		Coroutine<Synchronized<value, syncResult>, Synchronized<value, syncResult>, ApiResultStatus> => {
+	const Co = CoTypedFactory<Unit, Synchronized<value, syncResult>>();
 	return Co.SetState(Synchronized.Updaters.sync(AsyncState.Updaters.toLoading())).then(() => 
 			Co.GetState().then(current => Co.Await(() => p(current as value), errorProcessor).then(apiResult => {
 		if (apiResult.kind == "l") {

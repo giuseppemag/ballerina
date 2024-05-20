@@ -390,6 +390,49 @@ export const Uncle = {
 
 The `foreignMutations` should really only use updaters, because the business logic is fully implemented in the updaters and the foreign mutations just _expose_ a subset of this business logic, but do not define new business logic.
 
+For each domain, we define two types: the foreign mutations _exposed_ by this domain, which can be invoked by other domains in order to modify the local state, and the foreign mutations expected that the local domain needs in order to propagate its signals to the others.
+
+For example, the `Uncle` domain expects no foreign mutations, so it uses the `Unit = {}` empty type, but it exposes the return type of its `Uncle.ForeignMutations` factory as the foreign mutations that others can invoke in order to modify its own state:
+
+```ts
+export type UncleForeignMutationsExpected = Unit
+export type UncleForeignMutationsExposed = ReturnType<typeof Uncle.ForeignMutations>
+```
+
+On the other hand, the `Child2` (sub-) domain expects some foreign mutations, but what it exposes is really just the `Unit` type:
+
+```ts
+export const Child2 = {
+	...
+	ForeignMutations:(_:ForeignMutationsInput<Child2ReadonlyContext, Child2WritableState>) => ({})
+};
+
+export type Child2ForeignMutationsExpected = { setFlag:SimpleCallback<boolean> }
+export type Child2ForeignMutationsExposed = ReturnType<typeof Child2.ForeignMutations>
+```
+
+> We should not write `export type Child2ForeignMutationsExposed = Unit` because as the application grows in size, the chance that we will need to add foreign mutations exposed over the course of time is a virtual certainty, so better make room for extension from the start. This might be annoying to do manually, but given that domains can be created with a command line utility that sets everything up for us, including the foreign mutations expected and exposed, the annoyance is much smaller in practice.
+
+Whenever we are dealing with a hierarchical decomposition, such as that of `Parent` and `Child1`/`Child2`, we need to remember that the foreign mutations bubble up. This means that the parent expects _at least_ the foreign mutations of all of its children:
+
+```ts
+export type ParentForeignMutationsExpected = Child1ForeignMutationsExpected & Child2ForeignMutationsExpected
+```
+
+Where we instantiate the domains, we need to provide the `ParentTemplate` with its foreign mutations expected. It might very well be that we do not have a perfect match between foreign mutations, so we create a little _adapter_ on the fly that converts the available domains and their foreign mutations exposed into the various methods of the foreign mutations expected:
+
+```tsx
+<ParentTemplate
+	context={parent}
+	setState={setParent}
+	foreignMutations={{
+		setFlag: uncleForeignMutations.overrideFlag
+	}}
+/>
+```
+
+> It is very important to realize that domains need to be self contained, and that they should mention other domains outside of the same hierarchy **as little as possible**. It is much better for `Child2` to define its requirements independently of `Uncle`, because this promotes separation of concerns between domains. Of course sometimes this can become very impractical: an `AuthState` and its foreign mutations will probably be passed along everywhere as is, so the rule is: _a universal concern may be passed directly_, a _local one must be redefined in the consumer domain and adapted at the template instantiation_.
+
 
 ##### Readonly context and writable state
 The very last thing we define in a `state.ts` file are the readonly context and the writable state of the domain. The writable state is always the type of the state. This is just a disambiguation/hint for other developers, but there's nothing special here. Our domain will be able to read _and_ write this state.
@@ -422,13 +465,12 @@ In order to capture all of the asynchronous logic of our domains we use coroutin
 Coroutines are initialized by first creating the coroutines builder itself:
 
 ```ts
-export const Co = CoTypedFactory<ParentReadonlyContext, ParentWritableState, never>()
+export const Co = CoTypedFactory<ParentReadonlyContext, ParentWritableState>()
 ```
 
 We do this to avoid specifying the type arguments of the domain for each statement of the coroutine. The arguments are, in order:
 - the readonly context of the domain, which the coroutine may read;
-- the writable state of the domain, which the coroutine may read and write;
-- the input events that the domains may pass to the coroutine (click, mouse move, start drag, but also more custom things such as message received by socket, ping received, and so on). Very often, the messages just have type `never`, but not always.
+- the writable state of the domain, which the coroutine may read and write.
 
 We then use this builder to define the coroutine itself. For example, we could define an infinite loop which invokes the tick updater every 2.5s:
 
@@ -892,8 +934,8 @@ We are almost done! We only need to define the coroutine for the parent, which s
 
 ```ts
 Co.Repeat(
-	(Debounce<Synchronized<Value<string>, InputStringValidation>, never>(
-		Synchronize<Value<string>, InputStringValidation, never>(ParentApi.validateInputString,
+	(Debounce<Synchronized<Value<string>, InputStringValidation>>(
+		Synchronize<Value<string>, InputStringValidation>(ParentApi.validateInputString,
 			(_: any) => _ in apiResultStatuses ? _ : "permanent failure", 5, 150),
 		250, 500)
 			.embed(parent => parent.inputString, Parent.Updaters.Core.inputString))
@@ -971,20 +1013,74 @@ export const ParentInputs = (props:{
 
 > One prescription that is not always attainable in practice is independence from the state definitions of the parent domain. Of course sometimes this will be possible, but sometimes this will be impractical. One might consider defining an MVVM-style double model, one for the business objects and one for the visuals, with easy conversions, but this only makes sense when the business models are too complex and also we want to reuse the same rendering component with different business models. In short, your mileage may vary.
 
-We often see two kinds of wrappers in the views of a domain. The typical wrappers with children, ... the other wrapper kind as Pro<JSX.Element>
+There is no reason to say much more about such plain controlled React components: Ballerina 🩰 does not get in the way of the normal manner of writing presentational components, so follow whatever React metaframework/design system/etc. that matches the requirements of your application and go for it!
+
+> Ballerina 🩰 works really well with other frameworks such as Vue and Angular, but more on this later.
+
+We can now bring all of our logic together. The `ParentTemplate` for example will take care of instantiating the templates of the children, its own views, as well as the necessary visual wrappers and the templates that run the domain' coroutines:
+
+```tsx
+const Child1TemplateEmbedded = Child1Template
+	.mapContext<Parent>(p => p.child1)
+	.mapState(Parent.Updaters.Core.child1)
+
+const Child2TemplateEmbedded = Child2Template
+	.mapContext<Parent>(p => p.child2)
+	.mapState(Parent.Updaters.Core.child2)
+
+export const ParentTemplate =
+	Template.Default<
+		ParentReadonlyContext, ParentWritableState, ParentForeignMutationsExpected>(props =>
+			<>
+				<ParentTable {...props.context} />
+				<ParentInputs
+					counter={props.context.counter}
+					onIncrement={() => props.setState(Parent.Updaters.Template.tick())}
+					onDoubleIncrement={() => props.setState(Parent.Updaters.Template.doubleTick())}
+					inputString={props.context.inputString.value}
+					onChangeInputString={_ => props.setState(Parent.Updaters.Template.inputString(replaceWith(_)))}
+				/>
+				<ChildrenWrapper>
+					<ChildWrapper>
+						<Child1TemplateEmbedded {...props} />
+					</ChildWrapper>
+					<ChildWrapper>
+						<Child2TemplateEmbedded {...props} />
+					</ChildWrapper>
+				</ChildrenWrapper>
+			</>
+		).any([
+			ParentCoroutinesRunner,
+			ParentDebouncerRunner,
+		]).mapView(
+			ParentWrapper
+		)
+```
+
+It is quite a handful so let's unpack it bit by bit.
+
+
+##### Instantiating views components
+Views
+Wrappers
+
+##### Instantiating Child templates
+
+
+##### Instantiating coroutines
+
+
 
 _naming conventions_
 	_files and folder with dashes_
 	_state and repos with just the name of the domain_
 		_repos with Repo suffix when not otherwise possible, for ex. MapRepo_
 _Templates_
-  _Readonly context_
-  _Writable state_
   _Template embedding, business logic vs visuals, dispatching subdomains_
+  _Wrappers_
 _State management across domains_
   _useState_
   _Foreign mutations_
-    _Warp gates across domains_
     _Rerendering vs dependency management of foreign mutations vs state_
 _Core vs feature domains_
 	_The octaves of an application_
@@ -994,7 +1090,8 @@ _Advanced patterns_
   _Infinite streams_
 	  _Prevent pointless running_
   _Case updater_
-  _Coroutine.On_ vs manual implementation of events
+  _Coroutine.On and Trigger_
+	  _Maybe with a slightly inference-friendlier implementation?_
   _Manually running a coroutine_
   _Filters_
 	_useMemo_

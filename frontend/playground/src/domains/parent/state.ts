@@ -1,6 +1,6 @@
 import { Child2, Child2ForeignMutationsExpected as Child2ForeignMutationsExpected } from "./domains/child2/state";
-import { Child1 } from "./domains/child1/state";
-import { simpleUpdater } from "ballerina-core";
+import { Child1, Child1ForeignMutationsExpected } from "./domains/child1/state";
+import { Fun, simpleUpdater } from "ballerina-core";
 import { Updater } from "ballerina-core";
 import { replaceWith } from "ballerina-core";
 import { Unit } from "ballerina-core";
@@ -33,16 +33,14 @@ export const Parent = {
 	Updaters: {
 		Core:CoreUpdaters,
 		Template:{
-			inputString:(_:Updater<string>) => 
-					CoreUpdaters.inputString(
-						Debounced.Updaters.Template.value(
-							Synchronized.Updaters.value(
-								Value.Updaters.value(
-									_
-								)
-							)
+			inputString:
+				Fun(Value.Updaters.value<string>).then(
+					Fun(Synchronized.Updaters.value<Value<string>, Validation>).then(
+						Fun(Debounced.Updaters.Template.value<Synchronized<Value<string>, Validation>>).then(
+							CoreUpdaters.inputString
 						)
-					),
+					)
+				),
 			tick:() : Updater<Parent> => 
 				CoreUpdaters.counter(_ => _ + 1).then(p => 
 					CoreUpdaters.doubleCounter(replaceWith(p.counter * 2))(p)
@@ -64,4 +62,5 @@ export const Parent = {
 
 export type ParentWritableState = Parent
 export type ParentReadonlyContext = Unit
-export type ParentForeignMutationsExpected = Child2ForeignMutationsExpected
+export type ParentForeignMutationsExposed = Unit
+export type ParentForeignMutationsExpected = Child1ForeignMutationsExpected & Child2ForeignMutationsExpected
