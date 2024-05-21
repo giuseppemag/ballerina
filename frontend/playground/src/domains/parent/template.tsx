@@ -9,11 +9,11 @@ import { ParentTable } from "./views/table";
 import { ChildrenWrapper, ChildWrapper, ParentWrapper } from "./views/wrappers";
 
 const Child1TemplateEmbedded = Child1Template
-	.mapContext<Parent>(p => p.child1)
+	.mapContext<ParentReadonlyContext & ParentWritableState>(p => p.child1)
 	.mapState(Parent.Updaters.Core.child1)
 
 const Child2TemplateEmbedded = Child2Template
-	.mapContext<Parent>(p => p.child2)
+	.mapContext<ParentReadonlyContext & ParentWritableState>(p => p.child2)
 	.mapState(Parent.Updaters.Core.child2)
 
 export const ParentTemplate =
@@ -36,6 +36,8 @@ export const ParentTemplate =
 						<Child2TemplateEmbedded {...props} />
 					</ChildWrapper>
 				</ChildrenWrapper>
+				{/* <ParentCoroutinesRunner {...props} />
+				<ParentDebouncerRunner {...props} /> */}
 			</>
 		).any([
 			ParentCoroutinesRunner,

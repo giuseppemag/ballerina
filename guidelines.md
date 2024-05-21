@@ -97,6 +97,12 @@ The `views` folder contains all the "dumb" presentational React components for s
 
 The `template.tsx` file is a React component that instantiates and orchestrates all these items.
 
+> We adopt the following conventions:
+> - file and folder names use dashes, for example `infinite-stream-state.ts`
+> - types and exported values are captialized
+> - types and their operation repositories have the same name, which is the name of the domain
+> - the repositories for types defined in libraries will use the suffix `Repo` in the name, for example `MapRepo`
+
 
 #### `state.ts`
 
@@ -1021,11 +1027,11 @@ We can now bring all of our logic together. The `ParentTemplate` for example wil
 
 ```tsx
 const Child1TemplateEmbedded = Child1Template
-	.mapContext<Parent>(p => p.child1)
+	.mapContext<ParentParentReadonlyContext & ParentWritableState>(p => p.child1)
 	.mapState(Parent.Updaters.Core.child1)
 
 const Child2TemplateEmbedded = Child2Template
-	.mapContext<Parent>(p => p.child2)
+	.mapContext<ParentReadonlyContext & ParentWritableState>(p => p.child2)
 	.mapState(Parent.Updaters.Core.child2)
 
 export const ParentTemplate =
@@ -1061,27 +1067,110 @@ It is quite a handful so let's unpack it bit by bit.
 
 
 ##### Instantiating views components
-Views
-Wrappers
+The first and foremost task of a template is to instantiate the appropriate views. The template has access to the following `props`:
+- `context`, which contains both the readonly context as well as the writable state of the template (everything that can be _read_, with type `ReadonlyContext & WritableState`);
+- `setState`, which accepts an `Updater<WritableState>` to signal to the template that we wish to perform a mutation on the state;
+- `foreignMutations`, which are assorted callbacks that allow us to send signals to other domains.
+
+We pass a subset, or _projection_, of these `props` to the views of the domain, with the goal in mind of letting the view in on as little details as possible about the template itself. The view receives simple callbacks that usually invoke either `props.setState`, or a foreign mutation. The views also do not receive the whole readonly context and writable state, but ideally only the relevant information needed to perform their function, and nothing else.
+
+Very often, in the context of a view, we wish to apply visual wrappers. A wrapper is a React component with children, that is it has signature `{ children?:JSX.Element | Array<JSX.Element> }`. There are two ways to apply a wrapper. One, just like we are used to in the React world, is to simply put it around whatever we want (also other templates, given that they are renderable React elements like all others):
+
+```tsx
+<ChildWrapper>
+	<Child2TemplateEmbedded {...props} />
+</ChildWrapper>
+```
+
+The other way is by using `mapView`, which is a method that any templat has and which accepts a wrapper that is applied around the whole template:
+
+```tsx
+export const ParentTemplate =
+	Template.Default<
+		ParentReadonlyContext, ParentWritableState, ParentForeignMutationsExpected>(props =>
+			...
+		).mapView(
+			ParentWrapper
+		)
+```
+
+Interestingly, both `ParentWrapper` and `ChildWrapper` have the same wrapper signature, so they could both be used in both ways.
+
 
 ##### Instantiating Child templates
+Whenever a component has children, like `Parent` does, we also want to instantiate the templates of the children components inside the parent. Of course we need to convert the readonly context, writable state, as well as `setState` and foreign mutations from the parent to the child. We can do this manually, that is nobody is stopping us from writing:
+
+```tsx
+	<>
+		<Child1Template 
+			context={...something from props.context...}
+			setState={_ => props.setState(...some translation...)}
+			foreignMutations={...something from props.foreignMutations and props.setState...}
+		/>
+	</>
+```
+
+Most children though are easy to _embed_ in the parent context. This features a _narrowing_ of the parent context and state into the, usually smaller, context and state of the child, followed by a _widening_ of the state updaters propagated by the child into state updaters that are applicable for the parent.
+
+> Yes, this is **exactly** the same embedding, narrowing, and widening that we saw with coroutines. What a coincidence!!! It's almost as if we are encountering some fundamental patterns of mathematics that apply to the decomposition of information processing systems!!! Go figure...
+
+We can define an embedded child template which can be used with the same `props` of the parent by calling the methods `mapContext` (narrowing) and `mapState` (widening):
+
+```tsx
+const Child2TemplateEmbedded = Child2Template
+	.mapContext<ParentReadonlyContext & ParentWritableState>(p => p.child2)
+	.mapState(Parent.Updaters.Core.child2)
+```
+
+Narrowing usually just picks/singles out the subset of the readonly context and state of the child from the readonly context and state of the parent. It is usually quite a simple selection, almost trivial.
+Widening takes as input an `Updater<child>` and converts it to an `Updater<parent>` through the appropriate `simpleUpdater`. It is also usually quite simple and almost trivial, if one does not think too hard about the level of nesting of higher order functions hidden all over this little call.
+
+Note that we always need to pass the context of the parent as a generic argument to `mapContext`: when embedding a child template, the type inference of Typescript cannot possibly guess which parent component we are embedding into, so we do need to provide this information explicitly.
+
+Then we can simply invoke the embedded component with the `props` of the parent without any extra effort:
+
+```tsx
+	<Child2TemplateEmbedded {...props} />
+```
+
+So pretty 🩰
 
 
 ##### Instantiating coroutines
+Finally, whenever coroutines are present in a domain, we run them. This can be done by simply instantiating their runners (which are templates themselves thanks to `Co.Template`) as follows:
+
+```tsx
+	<>
+		...
+		<ParentCoroutinesRunner {...props} />
+		<ParentDebouncerRunner {...props} />
+	</>
+```
+
+A cute alternative passes an array of extra templates to just slam on the DOM somewhere at the discretion of the template to the `any` method of templates. This separates the rest of the logic of the template (views, inputs, children) from the coroutines, which sort of exist in their own little world anyway:
+
+```tsx
+export const ParentTemplate =
+	Template.Default<
+		ParentReadonlyContext, ParentWritableState, ParentForeignMutationsExpected>(props =>
+			<>
+				...
+			</>
+		).any([
+			ParentCoroutinesRunner,
+			ParentDebouncerRunner,
+		])
+```
+
+I really like the second variant but whatever, you know?
 
 
+# Instantiating domains
+...
 
-_naming conventions_
-	_files and folder with dashes_
-	_state and repos with just the name of the domain_
-		_repos with Repo suffix when not otherwise possible, for ex. MapRepo_
-_Templates_
-  _Template embedding, business logic vs visuals, dispatching subdomains_
-  _Wrappers_
 _State management across domains_
-  _useState_
-  _Foreign mutations_
-    _Rerendering vs dependency management of foreign mutations vs state_
+   _useState_
+ 	_reminder that this is the place where foreign mutations happen_
 _Core vs feature domains_
 	_The octaves of an application_
 _Advanced patterns_
