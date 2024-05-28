@@ -46,9 +46,9 @@ export const CoTypedFactory = <c, s>() => ({
     }) : <></>
   ),
   On:<event extends { id:Guid, kind:kind }, kind extends string>(kind:kind) 
-    : Coroutine<c & s & { events:Map<kind, OrderedMap<Guid, event>> }, s & { events:Map<kind, OrderedMap<Guid, event>> }, OrderedMap<Guid, event>> =>
-    Coroutine.On<c & s & { events:Map<kind, OrderedMap<Guid, event>> }, s & { events:Map<kind, OrderedMap<Guid, event>> }, event, kind>(kind),
+    : Coroutine<c & s & { inboundEvents:Map<kind, OrderedMap<Guid, event>> }, s & { inboundEvents:Map<kind, OrderedMap<Guid, event>> }, OrderedMap<Guid, event>> =>
+    Coroutine.On<c & s & { inboundEvents:Map<kind, OrderedMap<Guid, event>> }, s & { inboundEvents:Map<kind, OrderedMap<Guid, event>> }, event, kind>(kind),
   Trigger:<event extends { id:Guid, kind:kind }, kind extends string>(event:event)
-    : Coroutine<c & s & { events:Map<kind, OrderedMap<Guid, event>> }, s & { events:Map<kind, OrderedMap<Guid, event>> }, Unit> => 
-    Coroutine.Trigger<c & s & { events:Map<kind, OrderedMap<Guid, event>> }, s & { events:Map<kind, OrderedMap<Guid, event>> }, event, kind>(event),
+    : Coroutine<c & s & { outboundEvents:Map<kind, OrderedMap<Guid, event>> }, s & { outboundEvents:Map<kind, OrderedMap<Guid, event>> }, Unit> => 
+    Coroutine.Trigger<c & s & { outboundEvents:Map<kind, OrderedMap<Guid, event>> }, s & { outboundEvents:Map<kind, OrderedMap<Guid, event>> }, event, kind>(event),
 });

@@ -11,7 +11,7 @@ export const Synchronize = <value, syncResult>(
 	maxAttempts: number, delayBetweenAttemptsInMs: number): 
 		Coroutine<Synchronized<value, syncResult>, Synchronized<value, syncResult>, ApiResultStatus> => {
 	const Co = CoTypedFactory<Unit, Synchronized<value, syncResult>>();
-	return Co.SetState(Synchronized.Updaters.sync(AsyncState.Updaters.toLoading())).then(() => 
+	return Co.UpdateState(current => Synchronized.Updaters.sync(current.sync.kind == "loaded" ? AsyncState.Updaters.toReloading(current.sync.value) : AsyncState.Updaters.toLoading())).then(() => 
 			Co.GetState().then(current => Co.Await(() => p(current as value), errorProcessor).then(apiResult => {
 		if (apiResult.kind == "l") {
 			return Co.SetState(Synchronized.Updaters.sync(AsyncState.Updaters.toLoaded(apiResult.value))).then(() => 

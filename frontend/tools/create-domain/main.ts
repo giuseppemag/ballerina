@@ -69,9 +69,9 @@ try {
 
     const stateDefault = () => `import { ForeignMutationsInput, simpleUpdater, Unit } from "ballerina-core"
 
-export type ${capitalize(domainNameCamelCased, true)}State = {}
-export const ${capitalize(domainNameCamelCased, true)}State = {
-  Default:() : ${capitalize(domainNameCamelCased, true)}State => ({}),
+export type ${capitalize(domainNameCamelCased, true)} = {}
+export const ${capitalize(domainNameCamelCased, true)} = {
+  Default:() : ${capitalize(domainNameCamelCased, true)} => ({}),
   Updaters:{
     Core:{
       
@@ -87,8 +87,8 @@ export const ${capitalize(domainNameCamelCased, true)}State = {
 }
 
 export type ${capitalize(domainNameCamelCased, true)}ReadonlyContext = Unit
-export type ${capitalize(domainNameCamelCased, true)}WritableState = ${capitalize(domainNameCamelCased, true)}State
-export type ${capitalize(domainNameCamelCased, true)}ForeignMutationsExposed = ReturnType<typeof ${capitalize(domainNameCamelCased, true)}State["ForeignMutations"]>
+export type ${capitalize(domainNameCamelCased, true)}WritableState = ${capitalize(domainNameCamelCased, true)}
+export type ${capitalize(domainNameCamelCased, true)}ForeignMutationsExposed = ReturnType<typeof ${capitalize(domainNameCamelCased, true)}["ForeignMutations"]>
 export type ${capitalize(domainNameCamelCased, true)}ForeignMutationsExpected = Unit
 `
 
@@ -103,7 +103,7 @@ export const ${capitalize(domainNameCamelCased, true)}Template = Template.Defaul
     <p>{JSON.stringify(props.context)}</p>
   </>
 ).any([
-  ${capitalize(domainNameCamelCased, true)}CoroutinesRunner.mapContext(_ => ({..._, events:[]}))
+  ${capitalize(domainNameCamelCased, true)}CoroutinesRunner
 ])`
 
     const builderDefault = () => `import { CoTypedFactory } from "ballerina-core";

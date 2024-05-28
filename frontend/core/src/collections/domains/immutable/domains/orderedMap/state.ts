@@ -1,6 +1,6 @@
 import { OrderedMap } from "immutable";
 import { Identifiable, SmallIdentifiable } from "../../../../../baseEntity/domains/identifiable/state";
-import { Updater } from "../../../../../fun/domains/updater/state";
+import { BasicUpdater, Updater } from "../../../../../fun/domains/updater/state";
 import { BasicFun } from "../../../../../fun/state";
 
 export const OrderedMapRepo = {
@@ -72,7 +72,7 @@ export const OrderedMapRepo = {
 
       return originalMap;
     },
-    update: <k, v>(k: k, _: Updater<v>): Updater<OrderedMap<k, v>> =>
+    update: <k, v>(k: k, _: BasicUpdater<v>): Updater<OrderedMap<k, v>> =>
       Updater((current) =>
         current.has(k) ? current.set(k, _(current.get(k)!)) : current
       ),

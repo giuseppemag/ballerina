@@ -364,21 +364,21 @@ export const Coroutine = {
         Coroutine.Create(([_, __]) => awaiter())
       );
     }),
-  On:<context, state extends { events:Map<kind, OrderedMap<Guid, event>> }, event extends { id:Guid, kind:kind }, kind extends string>(kind:kind)
+  On:<context, state extends { inboundEvents:Map<kind, OrderedMap<Guid, event>> }, event extends { id:Guid, kind:kind }, kind extends string>(kind:kind)
     : Coroutine<context & state, state, OrderedMap<Guid, event>> => 
     Coroutine.GetState<context & state, state>().then(context => {
-      const eventsOfKind = context.events.get(kind)
+      const eventsOfKind = context.inboundEvents.get(kind)
       if (eventsOfKind == undefined || eventsOfKind.isEmpty())
         return Coroutine.Yield<context & state, state, OrderedMap<Guid, event>>(Coroutine.On(kind))
       else 
-        return Coroutine.SetState<context & state, state>(_ => ({..._, events:_.events.delete(kind)})).then(() => 
+        return Coroutine.SetState<context & state, state>(_ => ({..._, inboundEvents:_.inboundEvents.delete(kind)})).then(() => 
           Coroutine.Return<context & state, state, OrderedMap<Guid, event>>(eventsOfKind)
       )}
     ),
-  Trigger:<context, state extends { events:Map<kind, OrderedMap<Guid, event>> }, event extends { id:Guid, kind:kind }, kind extends string>(event:event)
+  Trigger:<context, state extends { outboundEvents:Map<kind, OrderedMap<Guid, event>> }, event extends { id:Guid, kind:kind }, kind extends string>(event:event)
     : Coroutine<context & state, state, Unit> => 
     Coroutine.SetState<context & state, state>(
-      _ => ({..._, events:_.events.set(event.kind, (_.events.get(event.kind) ?? OrderedMap()).set(event.id, event))})
+      _ => ({..._, outboundEvents:_.outboundEvents.set(event.kind, (_.outboundEvents.get(event.kind) ?? OrderedMap()).set(event.id, event))})
     )    
 };
 

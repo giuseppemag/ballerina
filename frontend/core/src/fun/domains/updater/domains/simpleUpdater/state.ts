@@ -1,5 +1,7 @@
 import { Fun } from "../../../../state";
-import { BasicUpdater, Updater, Widening } from "../../state";
+import { BasicUpdater, Updater } from "../../state";
+
+export type Widening<p, c extends keyof p> = Fun<BasicUpdater<p[c]>, Updater<p>>;
 
 export type SimpleUpdater<Entity, Field extends keyof Entity> = {
   [f in Field]: Widening<Entity, Field>;
