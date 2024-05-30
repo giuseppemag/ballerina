@@ -17,7 +17,7 @@ export type Template<context, state, foreignMutations> =
     mapView: (f: BasicFun<{ children?: TemplateChildren }, JSX.Element>) => Template<context, state, foreignMutations>,
     mapState: <newState>(f: BasicFun<BasicUpdater<state>, BasicUpdater<newState>>) => Template<context, newState, foreignMutations>,
     mapContext: <newContext>(f: BasicFun<newContext, context>) => Template<newContext, state, foreignMutations>,
-    mapForeignMutations: <newForeignMutations>(f: BasicFun<newForeignMutations, foreignMutations>) => Template<context, state, newForeignMutations>,
+    mapForeignMutations: <newForeignMutations>(f: BasicFun<[newForeignMutations, TemplateProps<context, state, newForeignMutations>], foreignMutations>) => Template<context, state, newForeignMutations>,
   } & TemplateRunner<context, state, foreignMutations>
 
 export const createTemplate = <context, state, foreignMutations>(actual: TemplateRunner<context, state, foreignMutations>):
@@ -32,7 +32,7 @@ export const createTemplate = <context, state, foreignMutations>(actual: Templat
   result.mapState = function <newState>(this: Template<context, state, foreignMutations>, f: BasicFun<BasicUpdater<state>, BasicUpdater<newState>>): Template<context, newState, foreignMutations> {
     return Template.Operations.MapState(this, f)
   },
-    result.mapForeignMutations = function <newForeignMutations>(this: Template<context, state, foreignMutations>, f: BasicFun<newForeignMutations, foreignMutations>): Template<context, state, newForeignMutations> {
+    result.mapForeignMutations = function <newForeignMutations>(this: Template<context, state, foreignMutations>, f: BasicFun<[newForeignMutations, TemplateProps<context, state, newForeignMutations>], foreignMutations>): Template<context, state, newForeignMutations> {
       return Template.Operations.MapForeignMutations(this, f)
     }
   result.any = function (this: Template<context, state, foreignMutations>, others: Array<Template<context, state, foreignMutations>>): Template<context, state, foreignMutations> {
@@ -74,13 +74,13 @@ export const Template = {
         }
       </>
       ),
-    MapForeignMutations: <context, state, foreignMutations, newForeignMutations>(p: Template<context, state, foreignMutations>, f: BasicFun<newForeignMutations, foreignMutations>): Template<context, state, newForeignMutations> =>
+    MapForeignMutations: <context, state, foreignMutations, newForeignMutations>(p: Template<context, state, foreignMutations>, f: BasicFun<[newForeignMutations, TemplateProps<context, state, newForeignMutations>], foreignMutations>): Template<context, state, newForeignMutations> =>
       createTemplate(props => <>
         {
           p({
             context: props.context,
             setState: props.setState,
-            foreignMutations: f(props.foreignMutations)
+            foreignMutations: f([props.foreignMutations, props])
           })
         }
       </>
