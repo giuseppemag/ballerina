@@ -48,8 +48,8 @@ export const OrderedMapRepo = {
 
       return newMap;
     },
-    filter<K, V>(predicate: BasicFun<V, boolean>): Updater<OrderedMap<K, V>> {
-      return Updater((_) => _.filter(predicate));
+    filter<K, V>(predicate: BasicFun<[K,V], boolean>): Updater<OrderedMap<K, V>> {
+      return Updater((_) => _.filter((v:V,k:K) => predicate([k, v])))
     },
     set<K, V>(key: K, value: V): Updater<OrderedMap<K, V>> {
       return Updater((_) => _.set(key, value));

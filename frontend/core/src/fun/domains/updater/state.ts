@@ -3,6 +3,7 @@ import { BasicFun, Fun } from "../../state";
 export type BasicUpdater<e> = BasicFun<e, e>;
 
 export type Updater<e> = BasicUpdater<e> & {
+  fun: Fun<e,e>;
   then(other: BasicUpdater<e>): Updater<e>;
   thenMany(others: Array<BasicUpdater<e>>): Updater<e>;
   insideOf: <p>() => <k extends keyof p>(k: k) => <up extends {
@@ -12,6 +13,7 @@ export type Updater<e> = BasicUpdater<e> & {
 
 export const Updater = <e>(_: BasicUpdater<e>): Updater<e> => {
   const u = _ as Updater<e>;
+  u.fun = Fun(u);
   u.thenMany = function (this: Updater<e>, others: Array<BasicUpdater<e>>): Updater<e> {
     return Updater(others.map(Updater).reduce((f, g) => f.then(g), this));
   };

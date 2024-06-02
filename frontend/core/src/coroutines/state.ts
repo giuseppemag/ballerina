@@ -1,4 +1,4 @@
-import { Collection, OrderedMap } from "immutable";
+import { Map, Collection, OrderedMap } from "immutable";
 import { Sum } from "../collections/domains/sum/state";
 import { id } from "../fun/domains/id/state";
 import { Unit } from "../fun/domains/unit/state";
@@ -352,11 +352,11 @@ export const Coroutine = {
           : promiseResult.kind == "resolve"
             ? CoroutineStep.Result(
               undefined,
-              Sum.Default.left(promiseResult.result)
+              Sum<result, error>().Default.left(promiseResult.result)
             )
             : CoroutineStep.Result(
               undefined,
-              Sum.Default.right(promiseResult.error)
+              Sum<result, error>().Default.right(promiseResult.error)
             );
       };
       return CoroutineStep.Yield(

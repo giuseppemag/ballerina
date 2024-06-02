@@ -1,18 +1,23 @@
 import { Updater } from "../fun/domains/updater/state";
 import { BasicFun, Fun } from "../fun/state";
 
+export type LoadedAsyncState<a> = { kind: "loaded"; value: a }
+export type ReloadingAsyncState<a> = { kind: "reloading"; value: a }
+
 export type AsyncState<a> = (
   | ((
       | { kind: "unloaded" }
       | { kind: "loading" }
-      | { kind: "reloading"; value: a }
+      | ReloadingAsyncState<a>
       | { kind: "error"; value: any }
     ) & { failedLoadingAttempts: number })
-  | { kind: "loaded"; value: a }
+  | LoadedAsyncState<a>
 ) & {
   map: <b>(f: BasicFun<a, b>) => AsyncState<b>;
   getLoadingAttempts: <a>(this: AsyncState<a>) => number;
 };
+
+export type HasValueAsyncState<a> = AsyncState<a> & { kind:"loaded" | "reloading" }
 
 function map<a, b>(this: AsyncState<a>, f: BasicFun<a, b>): AsyncState<b> {
   return this.kind == "loaded"
@@ -90,7 +95,7 @@ export const AsyncState = {
         failedLoadingAttempts: current.getLoadingAttempts(),
       })),
     toReloading: <a>(value: a): Updater<AsyncState<a>> =>
-      Updater((current) => ({
+      Updater((_current) => ({
         kind: "reloading",
         value,
         map,
@@ -112,6 +117,8 @@ export const AsyncState = {
     map: <a, b>(f: BasicFun<a, b>): Fun<AsyncState<a>, AsyncState<b>> =>
       Fun((_) => _.map(f)),
     status:<a>(_:AsyncState<a>) : a | AsyncState<a>["kind"] =>
-        _.kind == "loaded" ? _.value : _.kind
+        _.kind == "loaded" || _.kind == "reloading" ? _.value : _.kind,
+    hasValue:<a>(_:AsyncState<a>) : _ is HasValueAsyncState<a> =>
+      _.kind == "loaded" || _.kind == "reloading",
   },
 };

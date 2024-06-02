@@ -1,4 +1,4 @@
-import { Collection, OrderedMap } from "immutable";
+import { Map, Collection, OrderedMap } from "immutable";
 import { Unit } from "../fun/domains/unit/state";
 import { BasicUpdater } from "../fun/domains/updater/state";
 import { BasicFun } from "../fun/state";

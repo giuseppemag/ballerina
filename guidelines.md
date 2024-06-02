@@ -1165,7 +1165,7 @@ export const ParentTemplate =
 I really like the second variant but whatever, you know?
 
 
-# Instantiating domains
+<!-- # Instantiating domains
 ...
 
 _State management across domains_
@@ -1188,4 +1188,4 @@ _Advanced patterns_
 	_whole form validation in one go_
 _Extensible generic domains_
 
-_Process Giulia's feedback_
+_Process Giulia's feedback_ -->
