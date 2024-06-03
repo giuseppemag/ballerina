@@ -4,7 +4,7 @@ import { id } from "../fun/domains/id/state";
 import { Unit } from "../fun/domains/unit/state";
 import { BasicUpdater } from "../fun/domains/updater/state";
 import { BasicFun, Fun } from "../fun/state";
-import { Guid } from "../../main";
+import { Guid, SimpleCallback } from "../../main";
 export type DeltaT = number;
 export type Coroutine<context, state, result> = {
   ([context, deltaT]: [context, DeltaT]): CoroutineStep<
@@ -379,7 +379,13 @@ export const Coroutine = {
     : Coroutine<context & state, state, Unit> => 
     Coroutine.SetState<context & state, state>(
       _ => ({..._, outboundEvents:_.outboundEvents.set(event.kind, (_.outboundEvents.get(event.kind) ?? OrderedMap()).set(event.id, event))})
-    )    
+    ),
+  Do:<context, state>(action:SimpleCallback<void>)
+    : Coroutine<context, state, Unit> => 
+      Coroutine.Create(([_, __]) => {
+        action()
+        return CoroutineStep.Yield(undefined, Coroutine.Return({}))
+      })    
 };
 
 export type CoroutineStep<context, state, result> = {

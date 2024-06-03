@@ -6,6 +6,7 @@ import { Template, createTemplate } from "../template/state";
 import { Coroutine } from "./state";
 import { CoroutineComponentOptions, CoroutineTemplate } from "./template";
 import { Guid } from "../baseEntity/domains/identifiable/state";
+import { SimpleCallback } from "../fun/domains/simpleCallback/state";
 
 export const CoTypedFactory = <c, s>() => ({
   Seq: Coroutine.Seq<c & s, s>,
@@ -51,4 +52,7 @@ export const CoTypedFactory = <c, s>() => ({
   Trigger:<event extends { id:Guid, kind:kind }, kind extends string>(event:event)
     : Coroutine<c & s & { outboundEvents:Map<kind, OrderedMap<Guid, event>> }, s & { outboundEvents:Map<kind, OrderedMap<Guid, event>> }, Unit> => 
     Coroutine.Trigger<c & s & { outboundEvents:Map<kind, OrderedMap<Guid, event>> }, s & { outboundEvents:Map<kind, OrderedMap<Guid, event>> }, event, kind>(event),
+  Do:(action:SimpleCallback<void>)
+    : Coroutine<c & s, s, Unit> => 
+    Coroutine.Do(action),
 });
