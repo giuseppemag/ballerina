@@ -37,3 +37,55 @@ export * from "./src/state/domains/repository/state"
 export * from "./src/template/state"
 export * from "./src/validation/state"
 export * from "./src/value/state"
+
+// import { simpleUpdater, simpleUpdaterWithChildren } from "./src/fun/domains/updater/domains/simpleUpdater/state"
+// import { Updater } from "./src/fun/domains/updater/state"
+
+// // little testing playground and microsample: please do not remove
+// type City = { name: string, population: number }
+// const City = {
+//   Default: (): City => ({
+//     name: "Mirano", population: 25000
+//   }),
+//   Updaters: {
+//     Core: {
+//       ...simpleUpdater<City>()("name"),
+//       ...simpleUpdater<City>()("population"),
+//     }
+//   }
+// }
+// type Address = { street: string, number: number, city: City }
+// const Address = {
+//   Default: (): Address => ({
+//     street: "Don Minzoni", number: 20, city: City.Default()
+//   }),
+//   Updaters: {
+//     Core: {
+//       ...simpleUpdater<Address>()("street"),
+//       ...simpleUpdater<Address>()("number"),
+//       ...simpleUpdaterWithChildren<Address>()(City.Updaters)("city"),
+//     },
+//   }
+// }
+// type Person = { name: string, surname: string, address: Address }
+// const Person = {
+//   Default: (): Person => ({
+//     name: "John", surname: "Doe", address: Address.Default()
+//   }),
+//   Updaters: {
+//     Core: {
+//       ...simpleUpdater<Person>()("name"),
+//       ...simpleUpdater<Person>()("surname"),
+//       ...simpleUpdaterWithChildren<Person>()(Address.Updaters)("address"),
+//     }
+//   }
+// }
+
+// const personUpdater:Updater<Person> = 
+//   Person.Updaters.Core.address.children.Core.city.children.Core.name(_ =>"The Great " + _)
+//   .then(Person.Updaters.Core.address(Address.Updaters.Core.street(_ => _ + " str.")))
+//   .then(Person.Updaters.Core.address.children.Core.number(_ => _ + 1))
+// console.log(personUpdater(Person.Default()))
+
+// const addressUpdater:Updater<Address> = Address.Updaters.Core.city.children.name(_ =>"The Great " + _)
+// console.log(addressUpdater(Address.Default()))

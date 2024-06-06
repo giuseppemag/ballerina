@@ -3,27 +3,64 @@ import { BasicFun, Fun } from "../../state";
 export type BasicUpdater<e> = BasicFun<e, e>;
 
 export type Updater<e> = BasicUpdater<e> & {
-  fun: Fun<e,e>;
+  fun: Fun<e, e>;
   then(other: BasicUpdater<e>): Updater<e>;
   thenMany(others: Array<BasicUpdater<e>>): Updater<e>;
-  insideOf: <p>() => <k extends keyof p>(k: k) => <up extends {
-    Updaters:{ [_ in k]: BasicFun<BasicUpdater<e>, Updater<p>>; }
-  }>(up: up) => Updater<p>;
 };
 
-export const Updater = <e>(_: BasicUpdater<e>): Updater<e> => {
+export const Updater = Object.assign(<e>(_: BasicUpdater<e>): Updater<e> => {
   const u = _ as Updater<e>;
   u.fun = Fun(u);
   u.thenMany = function (this: Updater<e>, others: Array<BasicUpdater<e>>): Updater<e> {
-    return Updater(others.map(Updater).reduce((f, g) => f.then(g), this));
+    return Updater<e>(others.map(_ => Updater(_)).reduce((f, g) => f.then(g), this));
   };
   u.then = function (this: Updater<e>, other: BasicUpdater<e>): Updater<e> {
-    return Updater(_ => other(this(_)));
-  };
-  u.insideOf = function <p>(this: Updater<e>): <k extends keyof p>(k: k) => <up extends {
-    Updaters:{ [_ in k]: BasicFun<BasicUpdater<e>, Updater<p>>; }
-  }>(up: up) => Updater<p> {
-    return k => up => up.Updaters[k](this);
+    return Updater<e>(_ => other(this(_)));
   };
   return u;
-};
+}, {
+  withState:<e>(_: BasicFun<e,BasicUpdater<e>>) : Updater<e> =>
+    Updater(e => _(e)(e))
+});
+
+// // little testing playground and microsample: please do not remove
+// import { simpleUpdater, simpleUpdaterWithChildren } from "./domains/simpleUpdater/state";
+// type City = { name: string, population: number }
+// const City = {
+//   Default: (): City => ({
+//     name: "Mirano", population: 25000
+//   }),
+//   Updaters: {
+//     Core: {
+//       ...simpleUpdater<City>()("name"),
+//       ...simpleUpdater<City>()("population"),
+//     }
+//   }
+// }
+// type Address = { street: string, number: number, city: City }
+// const Address = {
+//   Default: (): Address => ({
+//     street: "via Don Minzoni", number: 20, city: City.Default()
+//   }),
+//   Updaters: {
+//     Core: {
+//       ...simpleUpdater<Address>()("street"),
+//       ...simpleUpdater<Address>()("number"),
+//       ...simpleUpdaterWithChildren<Address>()(City.Updaters)("city"),
+//     }
+//   }
+// }
+// type Person = { name: string, surname: string, address: Address }
+// const Person = {
+//   Default: (): Person => ({
+//     name: "John", surname: "Doe", address: Address.Default()
+//   }),
+//   Updaters: {
+//     Core: {
+//       ...simpleUpdater<Person>()("name"),
+//       ...simpleUpdater<Person>()("surname"),
+//       ...simpleUpdaterWithChildren<Person>()(Address.Updaters)("address"),
+//     }
+//   }
+// }
+// const personUpdater:Updater<Person> = Person.Updaters.Core.address.children.Core.city.Core.name(_ =>"Dr" + _)
