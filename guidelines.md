@@ -50,7 +50,7 @@ Let's go!
 
 The main driving philosophy of our way of working is based on _separation of concerns_. Separation of concerns aims at splitting code into different units. 
 - Along the lines of methodologies such as MVC, Cleaan Architecture, etc., the units can be focused on a different _layer_ of the application (rendering, api calls, business logic, asynchronous background operations, etc.). Not everything about a given part of a program should be in the same file, and by layering out our architecture we make files a bit smaller, a bit clearer to work with, and we even make it easier to assign work to different people.
-- Along the hierarchical split of different conceptual domains and their subdomains, in a hierarchy of information. Clearly splitting tables into header, filtering, and rows, and the hierarchical relationship between their states, makes it perfectly clear which components are responsible for updating which parts of which state. Debugging and maintenance become easier and more reliable. Such a split also makes it possible to identify those components that have no dependencies from the state of their parent or siblings: such domains are part of our core framework and can be moved out of the hierarchy altogether, leading to a leaner codebase where functionality stands out from tooling.
+- Along the hierarchical split of different conceptual domains and their subdomains, in a hierarchy of information. For example, clearly splitting _tables_ into _header_, _filtering_, and _rows_, and logically modelling the hierarchical relationship between the states, makes it perfectly clear which components are responsible for updating which parts of the composed state. Debugging and maintenance become easier and more reliable. Such a split also makes it possible to identify those components that have no dependencies from the state of their parent or siblings: such domains are part of our core framework and can be moved out of the hierarchy altogether, leading to a leaner codebase where functionality stands out from tooling.
 
 
 ### Organizing code
@@ -1165,27 +1165,119 @@ export const ParentTemplate =
 I really like the second variant but whatever, you know?
 
 
-<!-- # Instantiating domains
-...
+#### Instantiating domains
 
-_State management across domains_
-   _useState_
- 	_reminder that this is the place where foreign mutations happen_
-_Core vs feature domains_
-	_The octaves of an application_
-_Advanced patterns_
-  _Parent with N children in a Map or OrderedMap_
+After a domain and all its subdomains are defined, it is finally time to make things happen on the screen!
+
+We do this by instantiating domains at the root of our application, usually right next to routing but your mileage may vary.
+
+Instantiating a domain will be quite simple:
+- define the state
+- define the foreign mutations expected (likely based on the state of other top-level domains)
+- instantiate the template of the domain
+
+And that's it! It's actually pretty easy...
+
+
+##### State management within across domains
+It all starts with the `useState` hook. 
+
+> Of course there is no reason to use `useState` instead of, say, old-school class components besides a sense of aesthetics, common sense, and in general a preference for not committing efferate acts of cruelty but it's up to you after all.
+
+```ts
+const [uncle, setUncle] = useState(Uncle.Default())
+```
+
+There you go! Now we have a state instantiated. Cool! We can move to the rendering bit of the main application and instantiate the `Uncle` domain template with the right properties:
+
+```tsx
+<>
+  <Uncle 
+    context={uncle}
+    setState={setUncle}
+    foreignMutations={unit}
+  />
+</>
+```
+
+In this case, the `Uncle` domain does not need anything fancy: it just receives the state as readonly `context`, whenever the template triggers a state mutation then it gets forwarded immediately to `setUncle`, and there are no foreign mutations because the `Uncle` domain is self-contained.
+
+
+##### State management across domains
+What happens when domains need to communicate with each other is more exciting.
+
+Consider the `Parent` domain. We start with the `useState` hook:
+
+```ts
+const [parent, setParent] = useState(Parent.Default())
+```
+
+This is not enough! The `Parent` domain expects some foreign mutations, and those foreign mutations need to do something, namely change the state of the `Uncle` domain. Fortunately, both domains' states are declared next to each other, so they will be able to share information without too much effort.
+
+We extract the `Uncle` foreign mutations:
+
+```ts
+const uncleForeignMutations = Uncle.ForeignMutations([uncle, setUncle])
+```
+
+> It makes sense that the foreign mutations of the `Uncle` domain receive as input both the current state and state setter for the domain: after all, the foreign mutations are nothing more than a restricted interface around `setState`...
+
+We are _almost_ done: we now need to convert the `Uncle` foreign mutations into something that the `Parent` domain understands. We do this by building an adapter that maps the fields of the `Uncle` foreign mutations to the fields of the `Parent` foreign mutations, provided of course that such a translation is even possible...
+
+```ts
+const parentForeignMutationsExpected:ParentForeignMutationsExpected = {
+  setFlag:uncleForeignMutations.toggleFlag
+}
+```
+
+> In our sample we get to see a trivial translation, but this is done on purpose in order to highlight how we should never expect that the foreign mutations expected by a domain directly "click" in place with the foreign mutations exposed by another domain. And this is not an issue! Domains are supposed to be independent from each other, and this means that they do not refer each other unless strictly necessary. 
+> This makes it much easier to build domains (modules) which are independent from each other and which can be easily replaced, reused across applications, and much more.
+
+Finally, we can instantiate the `Parent` domain:
+
+```tsx
+<>
+  <Uncle 
+    context={uncle}
+    setState={setUncle}
+    foreignMutations={unit}
+  />
+  <Parent 
+    context={parent}
+    setState={setParent}
+    foreignMutations={parentForeignMutationsExpected}
+  />
+
+</>
+```
+
+
+### Organizing domains and the philosophy of octaves
+TODO
+<!-- _Core vs feature domains_
+	_The octaves of an application_ -->
+
+
+### Advanced patterns
+TODO
+	<!-- 
+	_Advanced updaters_
+		_Case updater_
+		_Sum updater_
+		_Map/OrderedMap/List updater_
+		  _Parent with N children in a Map or OrderedMap_
+		_updater with children_ 
+		
   _Asynchronous validation_
   _Infinite streams_
 	  _Prevent pointless running_
-  _Case updater_
   _Coroutine.On and Trigger_
-	  _Maybe with a slightly inference-friendlier implementation?_
   _Manually running a coroutine_
   _Filters_
 	_useMemo_
 	_multi-field form validation_
 	_whole form validation in one go_
 _Extensible generic domains_
+	_How to make useMemo unnecessary_		
+		-->
 
-_Process Giulia's feedback_ -->

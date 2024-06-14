@@ -1,7 +1,20 @@
 import { id } from "../../../fun/domains/id/state"
-import { Unit, unit } from "../../../fun/domains/unit/state";
+import { Unit } from "../../../fun/domains/unit/state";
 import { BasicUpdater, Updater } from "../../../fun/domains/updater/state"
 import { Fun, BasicFun } from "../../../fun/state"
+
+export type LeftValue<a> = { value: a; kind: "l"; }
+export const LeftValue = {
+	Updaters:{
+		value:<a>(_:BasicUpdater<a>) : Updater<LeftValue<a>> => Updater(v => ({...v, value:_(v.value)}))
+	}
+}
+export type RightValue<b> = { value: b; kind: "r"; };
+export const RightValue = {
+	Updaters:{
+		value:<b>(_:BasicUpdater<b>) : Updater<RightValue<b>> => Updater(v => ({...v, value:_(v.value)}))
+	}
+}
 
 export type Sum<a, b> = { value: a; kind: "l"; } | { value: b; kind: "r"; };
 export type Either<a,b> = Sum<a,b>
