@@ -1,3 +1,3 @@
 #! /bin/bash
 
-cd core; yarn; yarn tsc -w
+cd libraries/ballerina-core; yarn; yarn tsc -w

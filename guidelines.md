@@ -425,6 +425,8 @@ Whenever we are dealing with a hierarchical decomposition, such as that of `Pare
 export type ParentForeignMutationsExpected = Child1ForeignMutationsExpected & Child2ForeignMutationsExpected
 ```
 
+Unlike the type of `ParentForeignMutationsExposed`, which we progammaticaly define in order to be extensible, the type of `ParentForeignMutationsExpected` is a design choice. Here, we have defined it as the union of the children's foreign mutations expected even though only Child 2 expects a foreign mutation. We could have ommited `Child1ForeignMutationsExpected` and decided to add it later.
+
 Where we instantiate the domains, we need to provide the `ParentTemplate` with its foreign mutations expected. It might very well be that we do not have a perfect match between foreign mutations, so we create a little _adapter_ on the fly that converts the available domains and their foreign mutations exposed into the various methods of the foreign mutations expected:
 
 ```tsx

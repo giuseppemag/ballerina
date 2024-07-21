@@ -8,7 +8,7 @@ With special thanks to BLP Digital, where Ballerina has been built:
 
 
 ## The challenge
-Ballerina is an advanced professional tool for advanced professionals. She is your best ally when you need to build something big and complex, and thanks to her grace and ability she will help you turn this complexity into elegant code.
+Ballerina is an advanced framework that really shines when building larger applications with lots of business logic. She is your best ally when you need to build something big and complex, and thanks to her grace and ability she will help you turn this complexity into elegant code.
 
 Ballerina integrates the state of the art in functional programming and even category theory. She is great at these things, so that you don't necessarily need to be. You can just dance with her, and her skills will augment yours and make your work elegant and effective. And if you are a master of functional programming, together you will write code that can be, well, transcendental.
 
@@ -66,11 +66,11 @@ Ballerina views are currently based on React, but the library is completely fram
 
 
 ## Playground
-Head over to the [Playground](./frontend/playground) and start checking out the extensive code of the sample application.
+Head over to the [Playground](./apps/web) and start checking out the extensive code of the sample application.
 
-Launch the whole thing [with a single command](./frontend/startup.sh) and head over to [localhost:8081](http://localhost:8081/).
+Launch the whole thing [with a single command](startup.sh) and head over to [localhost:8081](http://localhost:8081/).
 
-Check out the [main.tsx](./frontend/playground/main.tsx) and [App.tsx](./frontend/playground/src/App.tsx) entry points, and then take the plunge into the [various](./frontend/playground/src/domains/parent) [domains](./frontend/playground/src/domains/uncle/) and [also the](./frontend/playground/src/domains/parent/domains/child1/) [subdomains](./frontend/playground/src/domains/parent/domains/child2/).
+Check out the [main.tsx](./apps/web/main.tsx) and [App.tsx](./apps/web/src/App.tsx) entry points, and then take the plunge into the [various](./apps/web/src/domains/parent) [domains](./apps/web/src/domains/uncle/) and [also the](./apps/web/src/domains/parent/domains/child1/) [subdomains](./apps/web/src/domains/parent/domains/child2/).
 
 Create a new domain by running:
 
@@ -78,17 +78,14 @@ Create a new domain by running:
 yarn create-domain --name child3 --path ./src/domains/parent/domains
 ```
 
-and check out the structure it creates for you. Try adding the `child3` subdomain to the [state of the parent](./frontend/playground/src/domains/parent/state.ts) and to render it from the [view of the parent](./frontend/playground/src/domains/parent/views/). Be curious, experiment, and most of all: enjoy! 
+and check out the structure it creates for you. Try adding the `child3` subdomain to the [state of the parent](./apps/web/src/domains/parent/state.ts) and to render it from the [view of the parent](./apps/web/src/domains/parent/views/). Be curious, experiment, and most of all: enjoy! 
 
 
 ## Getting started
 Coming soon: npm packages.
 
-
-
 ## Modifying the core
-You are free to adapt the core for whatever purpose you have in mind. Just head over to the [core folder](./frontend/core/) and don't forget to run the [core-startup.sh script](./frontend/core-startup.sh). Remember that the playground uses `npm link` to use the core as a dependency, so make sure to regularly re-run `npm link ../core` from the [playground folder](./frontend/playground/) so that any changes you make to the core are immediately visible from the playground.
-
+You are free to adapt the core for whatever purpose you have in mind. Just head over to the [core folder](./frontend/core/) and don't forget to run the [core-startup.sh script](./frontend/core-startup.sh). Remember that the playground uses `npm link` to use the core as a dependency, so make sure to regularly re-run `npm link ../core` from the [playground folder](./apps/web/) so that any changes you make to the core are immediately visible from the playground.
 
 ### Learning more about the foundations
 You might want to check out some resources in order to discover something about the theoretical foundations of Ballerina. If that's the case, we've got you covered! Here are a load of videos from the same author(s) of the framework:
@@ -100,6 +97,22 @@ You might want to check out some resources in order to discover something about 
 
 And something from the brilliant, ballerina-unrelated, Bartosw Milewski: his amazing [course on Category Theory for programmers](https://youtu.be/I8LbkfSSR58?si=zPscCamuxs8TdKbx).
 
+## Working with a monorepo
+Ballerina works well with a monorepo, allowing you to share domain logic between applications.
+We recommend [yarn classic workspaces ](https://classic.yarnpkg.com/lang/en/docs/workspaces/) if you're working with a react and react native workspace.
+To avoid issues with different React versions, you may need to use the [no hoist](https://classic.yarnpkg.com/blog/2018/02/15/nohoist/) option. You can start by setting nohoist to `[**]` which will completely turn off package hoisting, and then work from there.
+
+### Type Resolution Errors
+If you're using Typescript and React in your project, you may also run into type resolution issues when building your own app which looks like `TS2300: Duplicate identifier 'ElementType'`.
+This appears to be an issue with type resolution in workspaces where typescript does not see the `@types/react` module in locally imported packages (i.e. packages in your workspaces) as the same types in your app project.
+To fix this, you can add these lines to your compilerOptions of your app's `tsconfig.json` file:
+```
+    "baseUrl": "./",
+    "paths": { "*": ["node_modules/@types/*", "*"] }
+```
+
+This will direct typescript to attempt to resolve imports first from the root level `node_modules/@types` folder before resolving elsewhere.
+All dependent packages whose node_modules folder contains the same type definition packages as your project resolve from the root node modules.
 
 ## About the main author
 I am Giuseppe. I started programming as a teenager, ruinously attempting to build videogames in C++ and DirectX. I did not manage, but I ended up discovering algorithms, linear algebra, complexity, as well as memory leaks and spaghetti code.

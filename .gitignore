@@ -1,6 +1,6 @@
 .mono
 
-move-to-ballerina.sh
+# move-to-ballerina.sh
 
 # Logs
 bin
@@ -133,3 +133,14 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

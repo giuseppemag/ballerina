@@ -1,0 +1,15 @@
+{
+    "name": "frontend-framework",
+    "private": true,
+    "workspaces": {
+        "packages": [
+            "apps/web",
+            "libraries/ballerina-core",
+            "libraries/create-domain",
+            "libraries/playground-core"
+        ],
+        "nohoist": [
+            "**"
+        ]
+    }
+}
