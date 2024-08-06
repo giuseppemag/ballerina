@@ -7,8 +7,8 @@ export type AddressForm = SingletonFormWritableState<Address, never, never, Unit
 export const AddressForm = {
   Default: (): AddressForm => ({})
 };
-export const AddressFormConfig: FormTemplateAndDefinition<Address, never, never, Unit> = {
-  template: SingletonFormTemplate<Address, never, never, Unit>(),
+export const AddressFormConfig: FormTemplateAndDefinition<Address, never, never, Unit, Unit> = {
+  template: SingletonFormTemplate<Address, never, never, Unit, Unit>(),
   entityDescriptor: {
     id: StringConfig.Default(),
     city: StringConfig.Default(),

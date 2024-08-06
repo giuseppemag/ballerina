@@ -25,7 +25,7 @@ export const UserEmbeddedTemplate =
           props.context.entities.singletons.user.entity.value.value.sync.value.kind == "l")
           DataSync().ForeignMutations({ context: props.context, setState: props.setState })
             .updateSingleton("user", props.context.entities.singletons.user.entity.value.value.sync.value.value.id)
-            ("edit", User.Updaters.left(_ => ({ ..._, [k]: newFieldValue })))
+            ("edit", unit, User.Updaters.left(_ => ({ ..._, [k]: newFieldValue })))
       },
     }))
 
@@ -50,7 +50,7 @@ export const AddressEmbeddedTemplate =
         const entity = collectionEntity.value.value.sync.value
         DataSync().ForeignMutations({ context: props.context, setState: props.setState })
           .updateCollectionElement("addresses", entity.id)
-          ("edit", _ => ({ ..._, [k]: newFieldValue }))
+          ("edit", unit, _ => ({ ..._, [k]: newFieldValue }))
       },
     }))
 
@@ -77,7 +77,7 @@ export const InvoiceEmbeddedTemplate =
         const entity = collectionEntity.value.value.sync.value
         DataSync().ForeignMutations({ context: props.context, setState: props.setState })
           .updateCollectionElement("invoices", entity.id)
-          ("edit", _ => ({ ..._, [k]: newFieldValue }))
+          ("edit", unit, _ => ({ ..._, [k]: newFieldValue }))
       },
     }))
 

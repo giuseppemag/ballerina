@@ -8,7 +8,7 @@ import { CoroutineComponentOptions, CoroutineTemplate } from "./template";
 import { Guid } from "../baseEntity/domains/identifiable/state";
 import { SimpleCallback } from "../fun/domains/simpleCallback/state";
 
-export const CoTypedFactory = <c, s>() => ({
+export const CoTypedFactory = Object.assign(<c, s>() => ({
   Seq: Coroutine.Seq<c & s, s>,
   GetState: Coroutine.GetState<c & s, s>,
   SetState: Coroutine.SetState<c & s, s>,
@@ -46,15 +46,21 @@ export const CoTypedFactory = <c, s>() => ({
       },
     }) : <></>
   ),
-  On:<matchedEvent extends InboundKindFromContext<c & s>>(
-    kind:matchedEvent, 
-    filter?:BasicFun<[OrderedMap<Guid, InboundEventFromContext<c & s> & { kind:matchedEvent }>, c & s], boolean>)
-    : Coroutine<c & s, s, OrderedMap<Guid, InboundEventFromContext<c & s> & { kind:matchedEvent }>> =>
-    Coroutine.On<c & s, s, matchedEvent>(kind, filter),
   Trigger:<event extends { id:Guid, kind:kind }, kind extends string>(event:event)
     : Coroutine<c & s & { outboundEvents:Map<kind, OrderedMap<Guid, event>> }, s & { outboundEvents:Map<kind, OrderedMap<Guid, event>> }, Unit> => 
     Coroutine.Trigger<c & s & { outboundEvents:Map<kind, OrderedMap<Guid, event>> }, s & { outboundEvents:Map<kind, OrderedMap<Guid, event>> }, event, kind>(event),
   Do:(action:SimpleCallback<void>)
     : Coroutine<c & s, s, Unit> => 
     Coroutine.Do(action),
+}), 
+{
+  withOn:<eventKind, event, c, s extends { inboundEvents: Map<eventKind, OrderedMap<Guid, event>> }>() => ({
+    ...CoTypedFactory<c,s>(),
+    On:<matchedEvent extends InboundKindFromContext<c & s>>(
+      kind:matchedEvent, 
+      filter?:BasicFun<[InboundEventFromContext<c & s> & { kind:matchedEvent }, c & s], boolean>)
+      : Coroutine<c & s, s, InboundEventFromContext<c & s> & { kind:matchedEvent }> => {
+        return Coroutine.On<eventKind, event, c & s, s, matchedEvent>(kind, filter)
+      },
+  })
 });

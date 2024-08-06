@@ -1,6 +1,9 @@
 {
     "name": "frontend-framework",
     "private": true,
+    "scripts": {
+        "marp-to-pdf": "npx @marp-team/marp-cli main.md -o output.pdf --allow-local-files"
+    },
     "workspaces": {
         "packages": [
             "apps/web",

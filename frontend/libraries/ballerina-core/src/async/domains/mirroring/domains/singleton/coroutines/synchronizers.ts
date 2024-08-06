@@ -11,7 +11,7 @@ import { Singleton } from "../state";
 export type SingletonSynchronizers<Context, Singletons, SingletonMutations> = {
   [k in (keyof Singletons) & (keyof SingletonMutations)]:
   {
-    [_ in keyof (SingletonMutations[k])]: Coroutine<Context & Entity<Singletons[k]>, Entity<Singletons[k]>, SynchronizationResult>
+    [_ in keyof (SingletonMutations[k])]: BasicFun<SingletonMutations[k][_], Coroutine<Context & Entity<Singletons[k]>, Entity<Singletons[k]>, SynchronizationResult>>
   }
 };
 
@@ -46,7 +46,7 @@ export const insideEntitySynchronizedAndDebounced = <Context, E>(
 
 export type SingletonLoaders<Context, Singletons, SingletonMutations, SynchronizedEntities> = {
   [k in (keyof Singletons) & (keyof SingletonMutations)]:
-  <mutation extends keyof SingletonSynchronizers<Context, Singletons, SingletonMutations>[k]>(mutation: mutation) =>
+  <mutation extends (keyof SingletonSynchronizers<Context, Singletons, SingletonMutations>[k]) & (keyof SingletonMutations[k])>(mutation: mutation, mutationArg:SingletonMutations[k][mutation]) =>
     Coroutine<Context & SynchronizedEntities, SynchronizedEntities, SynchronizationResult>;
 };
 
@@ -54,10 +54,12 @@ export const singletonEntityLoader = <Context, Singletons, SingletonMutations, S
   synchronizers: SingletonSynchronizers<Context, Singletons, SingletonMutations>) => <k extends (keyof Singletons) & (keyof SingletonMutations)>(
     k: k, narrowing_k: BasicFun<SynchronizedEntities, Singleton<Singletons[k]>>,
     widening_k: BasicFun<BasicUpdater<Singleton<Singletons[k]>>, Updater<SynchronizedEntities>>,
-    dependees: Array<Coroutine<Context & SynchronizedEntities, SynchronizedEntities, SynchronizationResult>>) => <mutation extends keyof SingletonSynchronizers<Context, Singletons, SingletonMutations>[k]>(mutation: mutation): Coroutine<Context & SynchronizedEntities, SynchronizedEntities, SynchronizationResult> => {
+    dependees: Array<Coroutine<Context & SynchronizedEntities, SynchronizedEntities, SynchronizationResult>>) => 
+      <mutation extends (keyof SingletonSynchronizers<Context, Singletons, SingletonMutations>[k]) & (keyof SingletonMutations[k])>(mutation: mutation, mutationArg:SingletonMutations[k][mutation]) : 
+      Coroutine<Context & SynchronizedEntities, SynchronizedEntities, SynchronizationResult> => {
       const Co = CoTypedFactory<Context, SynchronizedEntities>();
 
-      return (synchronizers[k][mutation] as Coroutine<Context & Entity<Singletons[k]>, Entity<Singletons[k]>, SynchronizationResult>).embed<Context & SynchronizedEntities, SynchronizedEntities>(_ => ({ ..._, ...narrowing_k(_).entity }),
+      return (synchronizers[k][mutation](mutationArg) as Coroutine<Context & Entity<Singletons[k]>, Entity<Singletons[k]>, SynchronizationResult>).embed<Context & SynchronizedEntities, SynchronizedEntities>(_ => ({ ..._, ...narrowing_k(_).entity }),
         Singleton<Singletons[k]>().Updaters.Core.entity.then(
           widening_k
         )
@@ -160,7 +162,7 @@ export type SynchronizableSingletonEntity<Context, Singletons, SingletonMutation
   dependees: Array<Coroutine<Context & SynchronizedEntities, SynchronizedEntities, SynchronizationResult>>,
   reload: Coroutine<Context & Synchronized<Unit, Singletons[k]>, Synchronized<Unit, Singletons[k]>, Unit>,
 } & {
-  [_ in keyof (SingletonMutations[k])]: Coroutine<Context & Synchronized<Value<Synchronized<Unit, Singletons[k]>>, Unit>, Synchronized<Value<Synchronized<Unit, Singletons[k]>>, Unit>, Unit>
+  [_ in keyof (SingletonMutations[k])]: BasicFun<SingletonMutations[k][_], Coroutine<Context & Synchronized<Value<Synchronized<Unit, Singletons[k]>>, Unit>, Synchronized<Value<Synchronized<Unit, Singletons[k]>>, Unit>, Unit>>
 }
 
 export type SynchronizableEntityDescriptors<Context, Singletons, SingletonMutations, SynchronizedEntities> = {
@@ -185,8 +187,8 @@ export const singletonSynchronizationContext = <Context, Singletons, SingletonMu
     synchronizers[k] = {} as any
     Object.keys(entityDescriptors[k]).forEach(field => {
       // only update the mutation fields of the entity descriptor
-      if (field != "entityName" && field != "narrowing_k" && field != "widening_k" && field != "dependees")
-        (synchronizers[k] as any)[field] = insideEntitySynchronizedAndDebounced((entityDescriptors[k] as any)[field]) as any
+      if (field != "entityName" && field != "narrowing" && field != "widening" && field != "dependees" && field != "reload")
+        (synchronizers[k] as any)[field] = (mutationArg:any) => insideEntitySynchronizedAndDebounced((entityDescriptors[k] as any)[field](mutationArg)) as any
     })
   })
   let loaders: SingletonLoaders<Context, Singletons, SingletonMutations, SynchronizedEntities> = {} as any

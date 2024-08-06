@@ -6,8 +6,8 @@ export type UserForm = SingletonFormWritableState<UserData, never, never, Unit>;
 export const UserForm = {
   Default: (): UserForm => ({})
 };
-export const UserFormConfig: FormTemplateAndDefinition<UserData, never, never, Unit> = {
-  template: SingletonFormTemplate<UserData, never, never, Unit>(),
+export const UserFormConfig: FormTemplateAndDefinition<UserData, never, never, Unit, Unit> = {
+  template: SingletonFormTemplate<UserData, never, never, Unit, Unit>(),
   entityDescriptor: {
     id: StringConfig.Default(),
     name: StringConfig.Default(),

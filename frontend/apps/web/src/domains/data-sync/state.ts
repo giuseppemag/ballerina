@@ -55,7 +55,7 @@ export const DataSync = () => ({
       },
       updateSingleton: <k extends (keyof Singletons) & (keyof SingletonMutations)>(k: k, entityId: Guid) =>
         <mutation extends keyof (SingletonMutations[k])>(
-          mutation: mutation, updater: BasicUpdater<Singletons[k]>
+          mutation: mutation, mutationArg:SingletonMutations[k][mutation], updater: BasicUpdater<Singletons[k]>
         ) => {
           // if (AsyncState.Operations.hasValue(_.context.entities.sync)) {
           const entities = _.context.entities
@@ -69,7 +69,7 @@ export const DataSync = () => ({
                     mutation: mutation as any,
                     entityId,
                     dirtySetter: _ => SingletonDirtySetters[k](_),
-                    operation: SingletonLoaders[k](mutation as any)
+                    operation: SingletonLoaders[k](mutation as any, mutationArg)
                   }
                 ])
               )
@@ -83,7 +83,7 @@ export const DataSync = () => ({
         },
       updateCollectionElement: <k extends (keyof Collections) & (keyof CollectionMutations)>(k: k, entityId: Guid) =>
         <mutation extends keyof (CollectionMutations[k])>(
-          mutation: mutation, updater: BasicUpdater<Collections[k]>
+          mutation: mutation, mutationArg:CollectionMutations[k][mutation], updater: BasicUpdater<Collections[k]>
         ) => {
           // if (AsyncState.Operations.hasValue(_.context.entities.sync)) {
           const entities = _.context.entities
@@ -97,7 +97,7 @@ export const DataSync = () => ({
                     mutation: mutation as any,
                     entityId,
                     dirtySetter: _ => CollectionDirtySetters[k](entityId, _),
-                    operation: CollectionLoaders[k](mutation as any, entityId)
+                    operation: CollectionLoaders[k](mutation as any, mutationArg, entityId)
                   }
                 ])
               )

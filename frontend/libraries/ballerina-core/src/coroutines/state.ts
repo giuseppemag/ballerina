@@ -19,7 +19,7 @@ export type Coroutine<context, state, result> = {
   //   f: Fun<Updater<state> | undefined, Updater<state> | undefined>
   // ) => Coroutine<context, state, result>;
   embed: <parentContext, parentState>(
-    narrow: BasicFun<parentContext, context>,
+    narrow: BasicFun<parentContext, context | undefined>,
     widen: BasicFun<BasicUpdater<state>, BasicUpdater<parentState>>
   ) => Coroutine<parentContext, parentState, result>,
   then: <nextResult>(
@@ -59,7 +59,7 @@ export const Coroutine = {
     // };
     co.embed = function <parentContext, parentState>(
       this: Coroutine<context, state, result>,
-      narrow: BasicFun<parentContext, context>,
+      narrow: BasicFun<parentContext, context | undefined>,
       widen: BasicFun<BasicUpdater<state>, BasicUpdater<parentState>>
     ): Coroutine<parentContext, parentState, result> {
       return Coroutine.Embed<context, state, result, parentContext, parentState>(this, narrow, widen)
@@ -121,18 +121,25 @@ export const Coroutine = {
   //   Coroutine.Create((state) => CoroutineStep.Map(p(state), f)),
   MapContext: <childContext, result, parentContext, state>(
     p: Coroutine<childContext, state, result>,
-    narrow: BasicFun<parentContext, childContext>,
+    narrow: BasicFun<parentContext, childContext | undefined>,
   ): Coroutine<parentContext, state, result> =>
-    Coroutine.Create(([parentContext, deltaT]) =>
-      CoroutineStep.MapContext(p([narrow(parentContext), deltaT]), narrow)
+    Coroutine.Create(([parentContext, deltaT]) => {
+      const childContext = narrow(parentContext)
+      if (childContext != undefined)
+        return CoroutineStep.MapContext(p([childContext, deltaT]), narrow)
+      return CoroutineStep.Yield(undefined, Coroutine.MapContext(p, narrow))
+    }
     ),
   Embed: <childContext, childState, result, parentContext, parentState>(
     p: Coroutine<childContext, childState, result>,
-    narrow: BasicFun<parentContext, childContext>,
+    narrow: BasicFun<parentContext, childContext | undefined>,
     widen: BasicFun<BasicUpdater<childState>, BasicUpdater<parentState>>
   ): Coroutine<parentContext, parentState, result> =>
     Coroutine.Create(([parentContext, deltaT]) => {
-      return CoroutineStep.Embed(p([narrow(parentContext), deltaT]), narrow, widen)
+      const childContext = narrow(parentContext)
+      if (childContext != undefined)
+        return CoroutineStep.Embed(p([childContext, deltaT]), narrow, widen)
+      return CoroutineStep.Yield(undefined, Coroutine.Embed(p, narrow, widen))
     }),
   MapState: <context, state, newState, result>(
     p: Coroutine<context, state, result>,
@@ -364,29 +371,43 @@ export const Coroutine = {
         Coroutine.Create(([_, __]) => awaiter())
       );
     }),
-  On:<context, state, matchedEvent  extends InboundKindFromContext<context>>(kind:matchedEvent, filter?:BasicFun<[OrderedMap<Guid, InboundEventFromContext<context & state> & { kind:matchedEvent }>, context & state], boolean>)
-    : Coroutine<context & state, state, OrderedMap<Guid, InboundEventFromContext<context & state> & { kind:matchedEvent }>> => 
+  On: <eventKind, event, context extends { inboundEvents: Map<eventKind, OrderedMap<Guid, event>> }, state extends { inboundEvents: Map<eventKind, OrderedMap<Guid, event>> }, matchedEvent extends InboundKindFromContext<context>>(kind: matchedEvent, filter?: BasicFun<[InboundEventFromContext<context & state> & { kind: matchedEvent }, context & state], boolean>)
+    : Coroutine<context & state, state, InboundEventFromContext<context & state> & { kind: matchedEvent }> =>
     Coroutine.GetState<context & state, state>().then(context => {
       // { inboundEvents:Map<InboundKindFromContext<c & s>, OrderedMap<Guid, InboundEventFromContext<c & s>>> }
-      const eventsOfKind = ((context as any).inboundEvents ?? Map()).get(kind as any)
-      if (eventsOfKind == undefined || eventsOfKind.isEmpty() || !(!filter || filter([event as any, eventsOfKind])))
-        return Coroutine.Yield<context & state, state, OrderedMap<Guid, InboundEventFromContext<context & state> & { kind:matchedEvent }>>(Coroutine.On<context, state, matchedEvent>(kind))
-      else 
-        return Coroutine.SetState<context & state, state>(_ => ({..._, inboundEvents:((_ as any).inboundEvents ?? Map()).delete(kind as any)})).then(() => 
-          Coroutine.Return<context & state, state, OrderedMap<Guid, InboundEventFromContext<context & state> & { kind:matchedEvent }>>(eventsOfKind as any)
-      )}
-    ),
-  Trigger:<context, state extends { outboundEvents:Map<kind, OrderedMap<Guid, event>> }, event extends { id:Guid, kind:kind }, kind extends string>(event:event)
-    : Coroutine<context & state, state, Unit> => 
+      let inboundEvents = (context as any).inboundEvents ?? Map()
+      let eventsOfKind = ((context as any).inboundEvents ?? Map()).get(kind as any)
+      if (eventsOfKind == undefined || eventsOfKind.isEmpty()) {
+        return Coroutine.Yield<context & state, state, InboundEventFromContext<context & state> & { kind: matchedEvent }>(Coroutine.On<eventKind, event, context, state, matchedEvent>(kind, filter))
+      } else {
+        const firstEventOfKind = filter == undefined ? eventsOfKind?.first()
+          : eventsOfKind.filter((e: any) => {
+            return filter([e, context])
+        }).first()
+        if (firstEventOfKind == undefined) {
+          return Coroutine.Yield<context & state, state, InboundEventFromContext<context & state> & { kind: matchedEvent }>(Coroutine.On<eventKind, event, context, state, matchedEvent>(kind, filter))
+        }
+        eventsOfKind = eventsOfKind.remove(firstEventOfKind.id)
+        if (eventsOfKind.isEmpty())
+          inboundEvents = inboundEvents.remove(kind)
+        else
+          inboundEvents = inboundEvents.set(kind, eventsOfKind)
+        return Coroutine.SetState<context & state, state>(_ => ({ ..._, inboundEvents: inboundEvents })).then(() =>
+          Coroutine.Return<context & state, state, InboundEventFromContext<context & state> & { kind: matchedEvent }>(firstEventOfKind)
+        )
+      }
+    }),
+  Trigger: <context, state extends { outboundEvents: Map<kind, OrderedMap<Guid, event>> }, event extends { id: Guid, kind: kind }, kind extends string>(event: event)
+    : Coroutine<context & state, state, Unit> =>
     Coroutine.SetState<context & state, state>(
-      _ => ({..._, outboundEvents:_.outboundEvents.set(event.kind, (_.outboundEvents.get(event.kind) ?? OrderedMap()).set(event.id, event))})
+      _ => ({ ..._, outboundEvents: _.outboundEvents.set(event.kind, (_.outboundEvents.get(event.kind) ?? OrderedMap()).set(event.id, event)) })
     ),
-  Do:<context, state>(action:SimpleCallback<void>)
-    : Coroutine<context, state, Unit> => 
-      Coroutine.Create(([_, __]) => {
-        action()
-        return CoroutineStep.Yield(undefined, Coroutine.Return({}))
-      })    
+  Do: <context, state>(action: SimpleCallback<void>)
+    : Coroutine<context, state, Unit> =>
+    Coroutine.Create(([_, __]) => {
+      action()
+      return CoroutineStep.Yield(undefined, Coroutine.Return({}))
+    })
 };
 
 export type CoroutineStep<context, state, result> = {
@@ -497,7 +518,7 @@ export const CoroutineStep = {
   //           }),
   MapContext: <childContext, parentContext, state, result>(
     p: CoroutineStep<childContext, state, result>,
-    narrow: BasicFun<parentContext, childContext>,
+    narrow: BasicFun<parentContext, childContext | undefined>,
   ): CoroutineStep<parentContext, state, result> =>
     p.kind == "result"
       ? p
@@ -538,7 +559,7 @@ export const CoroutineStep = {
           ),
   Embed: <childContext, childState, result, parentContext, parentState>(
     p: CoroutineStep<childContext, childState, result>,
-    narrow: BasicFun<parentContext, childContext>,
+    narrow: BasicFun<parentContext, childContext | undefined>,
     widen: BasicFun<BasicUpdater<childState>, BasicUpdater<parentState>>
   ): CoroutineStep<parentContext, parentState, result> =>
     CoroutineStep.MapState(CoroutineStep.MapContext(p, narrow), widen)
@@ -546,8 +567,8 @@ export const CoroutineStep = {
 };
 
 export type InboundEventFromContext<s> =
-  s extends { inboundEvents:Map<infer _kind, OrderedMap<Guid, infer event>> } ? event : never
+  s extends { inboundEvents: Map<infer _kind, OrderedMap<Guid, infer event>> } ? event : never
 
 export type InboundKindFromContext<s> =
-  s extends { inboundEvents:Map<infer kind, OrderedMap<Guid, infer _event>> } ? kind : never
-  
+  s extends { inboundEvents: Map<infer kind, OrderedMap<Guid, infer _event>> } ? kind : never
+

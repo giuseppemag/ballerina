@@ -144,3 +144,4 @@ dist
 *.njsproj
 *.sln
 *.sw?
+**/SVGsDocument/**

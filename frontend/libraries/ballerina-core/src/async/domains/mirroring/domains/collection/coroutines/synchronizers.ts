@@ -1,4 +1,5 @@
-import { Value, Guid, BasicUpdater, Updater, Unit, CoTypedFactory, AsyncState, replaceWith, DirtyStatus, Entity, Debounced } from "../../../../../../../main";
+import { OrderedMap } from "immutable";
+import { Value, Guid, BasicUpdater, Updater, Unit, CoTypedFactory, AsyncState, replaceWith, DirtyStatus, Entity, Debounced, Synchronize, Sum, unit } from "../../../../../../../main";
 import { Coroutine } from "../../../../../../coroutines/state";
 import { Fun, BasicFun } from "../../../../../../fun/state";
 import { Synchronized } from "../../../../synchronized/state";
@@ -8,50 +9,57 @@ import { Collection, CollectionEntity } from "../state";
 
 export type CollectionSynchronizers<Context, Collections, CollectionMutations> = {
   [k in (keyof Collections) & (keyof CollectionMutations)]: {
-    add: (entity: CollectionEntity<Collections[k]>) =>
+    add: (entity: CollectionEntity<Collections[k]>, position?:InsertionPosition) =>
       Coroutine<Context & CollectionEntity<Collections[k]>, CollectionEntity<Collections[k]>, SynchronizationResult>,
     remove: (entityId: Guid) =>
       Coroutine<Context & CollectionEntity<Collections[k]>, CollectionEntity<Collections[k]>, SynchronizationResult>,
+    reload: () =>
+      Coroutine<Context & Synchronized<Unit, OrderedMap<Guid, CollectionEntity<Collections[k]>>>, Synchronized<Unit, OrderedMap<Guid, CollectionEntity<Collections[k]>>>, Unit>,
   } &
   {
-    [_ in keyof (CollectionMutations[k])]: Coroutine<Context & CollectionEntity<Collections[k]>, CollectionEntity<Collections[k]>, SynchronizationResult>
+    [_ in keyof (CollectionMutations[k])]: BasicFun<CollectionMutations[k][_], Coroutine<Context & CollectionEntity<Collections[k]>, CollectionEntity<Collections[k]>, SynchronizationResult>>
   }
 };
 
-
 export type CollectionLoaders<Context, Collections, CollectionMutations, SynchronizedEntities> = {
   [k in (keyof Collections) & (keyof CollectionMutations)]: {
-    <mutation extends keyof CollectionSynchronizers<Context, Collections, CollectionMutations>[k]>(mutation: mutation, entityId: Guid):
+    <mutation extends (keyof CollectionSynchronizers<Context, Collections, CollectionMutations>[k]) & (keyof CollectionMutations[k])>(mutation: mutation, mutationArg: CollectionMutations[k][mutation], entityId: Guid):
       Coroutine<Context & SynchronizedEntities, SynchronizedEntities, SynchronizationResult>,
-    add: (entityId: Guid, entity: CollectionEntity<Collections[k]>) =>
+    add: (entityId: Guid, entity: CollectionEntity<Collections[k]>, position?:InsertionPosition) =>
       Coroutine<Context & SynchronizedEntities, SynchronizedEntities, SynchronizationResult>,
     remove: (entityId: Guid) =>
+      Coroutine<Context & SynchronizedEntities, SynchronizedEntities, SynchronizationResult>,
+    reload: () =>
       Coroutine<Context & SynchronizedEntities, SynchronizedEntities, SynchronizationResult>,
   }
 };
 
 export const collectionEntityLoader = <Context, Collections, CollectionMutations, SynchronizedEntities>(
   synchronizers: CollectionSynchronizers<Context, Collections, CollectionMutations>) =>
-  <k extends (keyof Collections) & (keyof CollectionMutations)>(k: k, default_k: BasicFun<void, CollectionEntity<Collections[k]>>,
+  <k extends (keyof Collections) & (keyof CollectionMutations)>(k: k, 
+    id: BasicFun<Collections[k], Guid>,
     narrowing_k: BasicFun<SynchronizedEntities, Collection<Collections[k]>>,
     widening_k: BasicFun<BasicUpdater<Collection<Collections[k]>>, Updater<SynchronizedEntities>>,
     dependees: Array<Coroutine<Context & SynchronizedEntities, SynchronizedEntities, SynchronizationResult>>):
     CollectionLoaders<Context, Collections, CollectionMutations, SynchronizedEntities>[k] =>
     Object.assign(
-      <mutation extends keyof CollectionSynchronizers<Context, Collections, CollectionMutations>[k]>(mutation: mutation, entityId: Guid):
+      <mutation extends (keyof CollectionSynchronizers<Context, Collections, CollectionMutations>[k]) & (keyof CollectionMutations[k])>(mutation: mutation, mutationArg: CollectionMutations[k][mutation], entityId: Guid):
         Coroutine<Context & SynchronizedEntities, SynchronizedEntities, SynchronizationResult> => {
         const Co = CoTypedFactory<Context, SynchronizedEntities>();
         return Co.GetState().then(current => {
           const entities = narrowing_k(current).entities
           if (!AsyncState.Operations.hasValue(entities.sync) || !entities.sync.value.get(entityId))
             return Co.Return("completed" as const)
-          return (synchronizers[k][mutation] as Coroutine<Context & CollectionEntity<Collections[k]>, CollectionEntity<Collections[k]>, SynchronizationResult>)
+          return (synchronizers[k][mutation](mutationArg as any) as Coroutine<Context & CollectionEntity<Collections[k]>, CollectionEntity<Collections[k]>, SynchronizationResult>)
             .embed<Context & SynchronizedEntities, SynchronizedEntities>(
               _ => {
                 const entities = narrowing_k(_).entities
-                if (AsyncState.Operations.hasValue(entities.sync))
-                  return ({ ..._, ...(entities.sync.value.get(entityId) ?? default_k()) })
-                return ({ ..._, ...(default_k()) })
+                if (AsyncState.Operations.hasValue(entities.sync)) {
+                  const entity = entities.sync.value.get(entityId)
+                  if (entity != undefined)
+                    return ({ ..._, ...entity })
+                }
+                return undefined
               },
               Fun(Collection<Collections[k]>().Updaters.Core.entity.set(entityId)).then(widening_k)
             ).then(syncResult =>
@@ -62,24 +70,44 @@ export const collectionEntityLoader = <Context, Collections, CollectionMutations
         })
       },
       {
-        add: (entityId: Guid, entity: CollectionEntity<Collections[k]>):
+        add: (entityId: Guid, entity: CollectionEntity<Collections[k]>, position?:InsertionPosition):
           Coroutine<Context & SynchronizedEntities, SynchronizedEntities, SynchronizationResult> => {
           const Co = CoTypedFactory<Context, SynchronizedEntities>();
           const CoColl = CoTypedFactory<Context, Collection<Collections[k]>>();
           return CoColl.SetState(
-            Collection<Collections[k]>().Updaters.Core.entity.add([entityId, entity])
+            Collection<Collections[k]>().Updaters.Core.entity.add([entityId, entity, position ?? { kind: "at the end" }])
           ).embed<Context & SynchronizedEntities, SynchronizedEntities>(_ => ({ ..._, ...(narrowing_k(_)) }), widening_k)
             .then(() =>
               synchronizers[k].add(entity).embed<Context & SynchronizedEntities, SynchronizedEntities>(
                 _ => {
                   const entities = narrowing_k(_).entities
-                  if (AsyncState.Operations.hasValue(entities.sync))
-                    return ({ ..._, ...(entities.sync.value.get(entityId) ?? default_k()) })
-                  return ({ ..._, ...(default_k()) })
+                  if (AsyncState.Operations.hasValue(entities.sync)) {
+                    const entity = entities.sync.value.get(entityId)
+                    if (entity != undefined)
+                      return ({ ..._, ...(entity) })
+                  }
+                  return undefined
                 },
                 Fun(Collection<Collections[k]>().Updaters.Core.entity.set(entityId)).then(
                   widening_k
                 )
+              )
+            ).then(_ => 
+              CoColl.GetState().then(current => {
+                if (!AsyncState.Operations.hasValue(current.entities.sync)) return CoColl.Return(unit)
+                const syncedEntity = current.entities.sync.value.get(entityId)
+                if (!syncedEntity || !AsyncState.Operations.hasValue(syncedEntity.value.value.sync)) return CoColl.Return(unit)
+                if (id(syncedEntity.value.value.sync.value) == entityId) return CoColl.Return(unit)
+                // otherwise, the id has changed (probably overridden by the API), let's save the new id
+                return CoColl.SetState(
+                  Collection<Collections[k]>().Updaters.Core.entity.add([id(syncedEntity.value.value.sync.value), syncedEntity, position ?? { kind:"at the end" }]).then(
+                    Collection<Collections[k]>().Updaters.Core.entity.remove(entityId)
+                  )
+                )
+              }
+              ).embed<Context & SynchronizedEntities, SynchronizedEntities>(_ => ({ ..._, ...(narrowing_k(_)) }), widening_k)
+              .then(() => 
+                Co.Return(_)
               )
             )
         },
@@ -95,9 +123,12 @@ export const collectionEntityLoader = <Context, Collections, CollectionMutations
               synchronizers[k].remove(entityId).embed<Context & SynchronizedEntities, SynchronizedEntities>(
                 _ => {
                   const entities = narrowing_k(_).entities
-                  if (AsyncState.Operations.hasValue(entities.sync))
-                    return ({ ..._, ...(entities.sync.value.get(entityId) ?? default_k()) })
-                  return ({ ..._, ...(default_k()) })
+                  if (AsyncState.Operations.hasValue(entities.sync)) {
+                    const entity = entities.sync.value.get(entityId)
+                    if (entity != undefined)
+                      return ({ ..._, ...(entity) })
+                  }
+                  return undefined
                 },
                 Fun(Collection<Collections[k]>().Updaters.Core.entity.set(entityId)).then(
                   widening_k
@@ -118,6 +149,20 @@ export const collectionEntityLoader = <Context, Collections, CollectionMutations
               })
             )
         },
+        reload: ():
+          Coroutine<Context & SynchronizedEntities, SynchronizedEntities, SynchronizationResult> => {
+          const Co = CoTypedFactory<Context, SynchronizedEntities>();
+          const CoColl = CoTypedFactory<Context, Collection<Collections[k]>>();
+          return CoColl.Seq([
+            synchronizers[k].reload().embed(
+              _ => ({..._, ..._.entities}),
+              Collection<Collections[k]>().Updaters.Core.entities,
+            )
+          ]).embed<Context & SynchronizedEntities, SynchronizedEntities>(_ => ({ ..._, ...(narrowing_k(_)) }), widening_k)
+            .then(() =>
+              Co.Return<SynchronizationResult>("completed")
+            )
+        },
       }
     )
 
@@ -127,7 +172,7 @@ export type CollectionDirtySetters<Context, Collections, CollectionMutations, Sy
 };
 
 export const collectionDirtySetter = <Context, Collections, CollectionMutations, SynchronizedEntities>() =>
-  <k extends (keyof Collections) & (keyof CollectionMutations)>(k: k, default_k: BasicFun<void, CollectionEntity<Collections[k]>>,
+  <k extends (keyof Collections) & (keyof CollectionMutations)>(k: k, 
     narrowing_k: BasicFun<SynchronizedEntities, Collection<Collections[k]>>,
     widening_k: BasicFun<BasicUpdater<Collection<Collections[k]>>, Updater<SynchronizedEntities>>):
     CollectionDirtySetters<Context, Collections, CollectionMutations, SynchronizedEntities>[k] =>
@@ -146,9 +191,11 @@ export const collectionDirtySetter = <Context, Collections, CollectionMutations,
           const _narrowed = narrowing_k(_)
           const entities = _narrowed.entities
           if (AsyncState.Operations.hasValue(entities.sync)) {
-            return ({ ..._, ...(entities.sync.value.get(entityId) ?? default_k()) })
+            const entity = entities.sync.value.get(entityId)
+            if (entity != undefined)
+              return ({ ..._, ...entity })
           }
-          return ({ ..._, ...(default_k()) })
+          return undefined
         },
         Fun(Collection<Collections[k]>().Updaters.Core.entity.set(entityId)).then(widening_k)
       )
@@ -168,23 +215,27 @@ export type CollectionUpdaters<Collections, CollectionMutations, SynchronizedEnt
 
 export const collectionEntityUpdater = <Collections, CollectionMutations, SynchronizedEntities>() => <k extends (keyof Collections) & (keyof CollectionMutations)>(widening_k: BasicFun<BasicUpdater<Collection<Collections[k]>>, Updater<SynchronizedEntities>>): Fun<[Guid, BasicUpdater<Collections[k]>], Updater<SynchronizedEntities>> => Fun(([id, u]) => widening_k(
   Collection<Collections[k]>().Updaters.Template.entityValue(id, u)
-)
-);
+));
+
+export type InsertionPosition = { kind:"after", id:Guid } | { kind:"before", id:Guid } | { kind:"at the end" } | { kind:"at the beginning" }
 
 export type SynchronizableCollectionEntity<Context, Collections, CollectionMutations, SynchronizedEntities, k extends (keyof Collections) & (keyof CollectionMutations)> = {
   entityName: k,
-  default: BasicFun<void, CollectionEntity<Collections[k]>>,
+  // default: BasicFun<void, CollectionEntity<Collections[k]>>,
+  id: BasicFun<Collections[k], Guid>,
   narrowing: BasicFun<SynchronizedEntities, Collection<Collections[k]>>,
   widening: BasicFun<BasicUpdater<Collection<Collections[k]>>, Updater<SynchronizedEntities>>,
   dependees: Array<Coroutine<Context & SynchronizedEntities, SynchronizedEntities, SynchronizationResult>>,
-  add: (entity: CollectionEntity<Collections[k]>) =>
+  add: (entity: CollectionEntity<Collections[k]>, position?:InsertionPosition) =>
     Coroutine<Context & Synchronized<Value<Synchronized<Unit, Collections[k]>>, Unit>, Synchronized<Value<Synchronized<Unit, Collections[k]>>, Unit>, Unit>,
   remove: (entityId: Guid) =>
     Coroutine<Context & Synchronized<Value<Synchronized<Unit, Collections[k]>>, Unit>, Synchronized<Value<Synchronized<Unit, Collections[k]>>, Unit>, Unit>,
+  reload: () =>
+    Coroutine<Context & Synchronized<Unit, OrderedMap<Guid, CollectionEntity<Collections[k]>>>, Synchronized<Unit, OrderedMap<Guid, CollectionEntity<Collections[k]>>>, Unit>,
 } & (
     k extends keyof CollectionMutations ?
     {
-      [_ in keyof (CollectionMutations[k])]: Coroutine<Context & Synchronized<Value<Synchronized<Unit, Collections[k]>>, Unit>, Synchronized<Value<Synchronized<Unit, Collections[k]>>, Unit>, Unit>
+      [_ in keyof (CollectionMutations[k])]: BasicFun<CollectionMutations[k][_], Coroutine<Context & Synchronized<Value<Synchronized<Unit, Collections[k]>>, Unit>, Synchronized<Value<Synchronized<Unit, Collections[k]>>, Unit>, Unit>>
     }
     : {
       submit: Coroutine<Context & Synchronized<Value<Synchronized<Unit, Collections[k]>>, Unit>, Synchronized<Value<Synchronized<Unit, Collections[k]>>, Unit>, Unit>,
@@ -211,19 +262,22 @@ export const collectionSynchronizationContext = <Context, Collections, Collectio
     synchronizers[k] = {} as any
     Object.keys(entityDescriptors[k]).forEach(field => {
       // only update the mutation fields of the entity descriptor
-      if (field != "entityName" && field != "narrowing_k" && field != "widening_k" && field != "dependees" && field != "add" && field != "remove")
-        (synchronizers[k] as any)[field] = insideEntitySynchronizedAndDebounced((entityDescriptors[k] as any)[field]) as any
+      if (field != "entityName" && field != "narrowing" && field != "widening" && field != "dependees" && field != "add" && field != "remove" && field != "default" && field != "reload" && field != "reloadElement")
+        (synchronizers[k] as any)[field] = (mutationArg: any) => {
+          return insideEntitySynchronizedAndDebounced((entityDescriptors[k] as any)[field](mutationArg)) as any
+        }
     });
 
-    (synchronizers[k] as any)["add"] = (entity: CollectionEntity<any>) =>
-      insideEntitySynchronizedAndDebounced((entityDescriptors[k] as any)["add"](entity)) as any
+    (synchronizers[k] as any)["add"] = (entity: CollectionEntity<any>, position?:InsertionPosition) =>
+      insideEntitySynchronizedAndDebounced((entityDescriptors[k] as any)["add"](entity, position)) as any
     (synchronizers[k] as any)["remove"] = (entityId: Guid) =>
       insideEntitySynchronizedAndDebounced((entityDescriptors[k] as any)["remove"](entityId)) as any
+    (synchronizers[k] as any)["reload"] = () => (entityDescriptors[k] as any)["reload"]()
   })
   let loaders: CollectionLoaders<Context, Collections, CollectionMutations, SynchronizedEntities> = {} as any
   Object.keys(entityDescriptors).forEach(k_s => {
     const k = k_s as (keyof Collections) & (keyof CollectionMutations)
-    loaders[k] = collectionEntityLoader<Context, Collections, CollectionMutations, SynchronizedEntities>(synchronizers)(k, entityDescriptors[k].default, entityDescriptors[k].narrowing, entityDescriptors[k].widening, entityDescriptors[k].dependees)
+    loaders[k] = collectionEntityLoader<Context, Collections, CollectionMutations, SynchronizedEntities>(synchronizers)(k, entityDescriptors[k].id, entityDescriptors[k].narrowing, entityDescriptors[k].widening, entityDescriptors[k].dependees)
   })
   let dirtyCheckers: CollectionDirtyCheckers<Collections, CollectionMutations> = {} as any
   Object.keys(entityDescriptors).forEach(k_s => {
@@ -235,7 +289,7 @@ export const collectionSynchronizationContext = <Context, Collections, Collectio
     const k = k_s as (keyof Collections) & (keyof CollectionMutations)
     dirtySetters[k] =
       collectionDirtySetter<Context, Collections, CollectionMutations, SynchronizedEntities>()
-        (k, entityDescriptors[k].default, entityDescriptors[k].narrowing, entityDescriptors[k].widening)
+        (k, entityDescriptors[k].narrowing, entityDescriptors[k].widening)
   })
   let updaters: CollectionUpdaters<Collections, CollectionMutations, SynchronizedEntities> = {} as any
   Object.keys(entityDescriptors).forEach(k_s => {

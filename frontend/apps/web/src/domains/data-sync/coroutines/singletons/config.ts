@@ -9,7 +9,7 @@ import { faker } from "@faker-js/faker";
 export const singletonsConfig = () => singletonSynchronizationContext<DataSyncReadonlyContext, Singletons, SingletonMutations, DataSyncWritableState>({
   user: {
     entityName: "user",
-    edit: Synchronize<Value<Synchronized<Unit, User>>, Unit>(_ => PromiseRepo.Default.mock<Unit>(() => unit, () => "error", 0.8, 0.5), _ => "permanent failure", 5, 150),
+    edit: _ => Synchronize<Value<Synchronized<Unit, User>>, Unit>(_ => PromiseRepo.Default.mock<Unit>(() => unit, () => "error", 0.8, 0.5), _ => "permanent failure", 5, 150),
     reload: Synchronize<Unit, User>(_ => PromiseRepo.Default.mock<User>(() => 
       User.Default.left(UserData.Default(v4(), faker.person.firstName(), faker.person.lastName())), () => "error", 0.8, 0.5), _ => "transient failure", 5, 150),
     narrowing: _ => _.entities.singletons.user,

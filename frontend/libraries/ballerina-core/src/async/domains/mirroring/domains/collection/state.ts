@@ -1,4 +1,4 @@
-import { Value, AsyncState, BasicUpdater, Debounced, Guid, Synchronized, Updater, mapUpdater, Unit, unit, simpleUpdater, simpleUpdaterWithChildren, OrderedMapRepo } from "ballerina-core";
+import { Value, AsyncState, BasicUpdater, Debounced, Guid, Synchronized, Updater, mapUpdater, Unit, unit, simpleUpdater, simpleUpdaterWithChildren, OrderedMapRepo, InsertionPosition } from "ballerina-core";
 import { OrderedMap } from "immutable";
 import { Entity } from "../entity/state";
 
@@ -45,14 +45,34 @@ export const Collection = <E>() => {
         //     )
         //   ),
         entity: {
-          add: ([id, value]: [Guid, CollectionEntity<E>]): Updater<Collection<E>> =>
-            Collection<E>().Updaters.Core.entities(
-              Synchronized.Updaters.sync(
-                AsyncState.Operations.map(
-                  OrderedMapRepo.Updaters.set(id, value)
-                )
-              )
-            ),
+          add: ([id, value, position]: [
+            Guid,
+            CollectionEntity<E>,
+            InsertionPosition
+          ]): Updater<Collection<E>> =>
+            position.kind == "at the end" ?
+                Collection<E>().Updaters.Core.entities(
+                  Synchronized.Updaters.sync(
+                    AsyncState.Operations.map(
+                      OrderedMapRepo.Updaters.insertAtEnd(id, value)
+                    )
+                  )
+                ) :
+              position.kind =="at the beginning" ?
+                 Collection<E>().Updaters.Core.entities(
+                  Synchronized.Updaters.sync(
+                    AsyncState.Operations.map(
+                      OrderedMapRepo.Updaters.insertAtBeginning(id, value)
+                    )
+                  )
+                ) :
+                Collection<E>().Updaters.Core.entities(
+                  Synchronized.Updaters.sync(
+                    AsyncState.Operations.map(
+                      OrderedMapRepo.Updaters.insertAt([id, value], position.id, position.kind)
+                    )
+                  )
+                ),
           remove: (id: Guid): Updater<Collection<E>> =>
             Collection<E>().Updaters.Core.entities(
               Synchronized.Updaters.sync(

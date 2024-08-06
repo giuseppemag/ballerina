@@ -6,8 +6,8 @@ export type InvoiceLineForm = SingletonFormWritableState<InvoiceLine, never, nev
 export const InvoiceLineForm = {
   Default: (): InvoiceLineForm => ({})
 };
-export const InvoiceLineFormConfig: FormTemplateAndDefinition<InvoiceLine, never, never, Unit> = {
-  template: SingletonFormTemplate<InvoiceLine, never, never, Unit>(),
+export const InvoiceLineFormConfig: FormTemplateAndDefinition<InvoiceLine, never, never, Unit, Unit> = {
+  template: SingletonFormTemplate<InvoiceLine, never, never, Unit, Unit>(),
   entityDescriptor: {
     id: StringConfig.Default(),
     product: StringConfig.Default(),
