@@ -6,7 +6,6 @@
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
-  "bin": "./dist/index.js",
   "scripts": {
     "dev": "tsup index.ts --format cjs,esm --dts-resolve --sourcemap --watch",
     "build": "tsup index.ts --format cjs,esm --dts-resolve --minify --clean --sourcemap",

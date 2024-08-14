@@ -1,1 +1,0 @@
-{"version":3,"file":"state.d.ts","sourceRoot":"","sources":["../../../../../src/math/domains/vector2/state.ts"],"names":[],"mappings":"AAAA,MAAM,MAAM,OAAO,GAAG;IAAE,QAAQ,CAAC,CAAC,EAAC,MAAM,CAAC;IAAC,QAAQ,CAAC,CAAC,EAAC,MAAM,CAAA;CAAE,CAAA;AAC9D,eAAO,MAAM,OAAO;kBAEC,MAAM,KAAG,MAAM,KAAI,OAAO;oBAE/B,OAAO;qBACN,OAAO;qBACP,OAAO;;;;CAQvB,CAAA"}

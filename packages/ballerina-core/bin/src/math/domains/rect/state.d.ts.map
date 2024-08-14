@@ -1,1 +1,0 @@
-{"version":3,"file":"state.d.ts","sourceRoot":"","sources":["../../../../../src/math/domains/rect/state.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,UAAU,EAAE,MAAM,2BAA2B,CAAC;AAEvD,MAAM,MAAM,IAAI,GAAG;IAAE,GAAG,EAAE,MAAM,CAAC;IAAC,IAAI,EAAE,MAAM,CAAC;IAAC,MAAM,EAAE,MAAM,CAAC;IAAC,KAAK,EAAE,MAAM,CAAC;CAAE,CAAC;AACjF,eAAO,MAAM,IAAI;;kCAEa,IAAI,cAAc,IAAI,GAAG,UAAU;;CAgBhE,CAAA"}
