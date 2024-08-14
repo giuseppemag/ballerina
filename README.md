@@ -66,11 +66,11 @@ Ballerina views are currently based on React, but the library is completely fram
 
 
 ## Playground
-Head over to the [Playground](./apps/web) and start checking out the extensive code of the sample application.
+Head over to the [Playground](./frontend/apps/web) and start checking out the extensive code of the sample application.
 
-Launch the whole thing [with a single command](startup.sh) and head over to [localhost:8081](http://localhost:8081/).
+Launch the whole thing [with a single command](./frontend/startup-web.sh) and head over to [localhost:8081](http://localhost:8081/).
 
-Check out the [main.tsx](./apps/web/main.tsx) and [App.tsx](./apps/web/src/App.tsx) entry points, and then take the plunge into the [various](./apps/web/src/domains/parent) [domains](./apps/web/src/domains/uncle/) and [also the](./apps/web/src/domains/parent/domains/child1/) [subdomains](./apps/web/src/domains/parent/domains/child2/).
+Check out the [main.tsx](./frontend/apps/web/main.tsx) and [App.tsx](./frontend/apps/web/src/App.tsx) entry points, and then take the plunge into the [various](./frontend/apps/web/src/domains/parent) [domains](./frontend/apps/web/src/domains/uncle/) and [also the](./frontend/apps/web/src/domains/parent/domains/child1/) [subdomains](./frontend/apps/web/src/domains/parent/domains/child2/).
 
 Create a new domain by running:
 
@@ -78,14 +78,14 @@ Create a new domain by running:
 yarn create-domain --name child3 --path ./src/domains/parent/domains
 ```
 
-and check out the structure it creates for you. Try adding the `child3` subdomain to the [state of the parent](./apps/web/src/domains/parent/state.ts) and to render it from the [view of the parent](./apps/web/src/domains/parent/views/). Be curious, experiment, and most of all: enjoy! 
+and check out the structure it creates for you. Try adding the `child3` subdomain to the [state of the parent](./frontend/apps/web/src/domains/parent/state.ts) and to render it from the [view of the parent](./frontend/apps/web/src/domains/parent/views/). Be curious, experiment, and most of all: enjoy! 
 
 
 ## Getting started
 Coming soon: npm packages.
 
 ## Modifying the core
-You are free to adapt the core for whatever purpose you have in mind. Just head over to the [core folder](./frontend/core/) and don't forget to run the [core-startup.sh script](./frontend/core-startup.sh). Remember that the playground uses `npm link` to use the core as a dependency, so make sure to regularly re-run `npm link ../core` from the [playground folder](./apps/web/) so that any changes you make to the core are immediately visible from the playground.
+You are free to adapt the core for whatever purpose you have in mind. Just head over to the [core folder](./frontend/libraries/ballerina-core/) and don't forget to run the [core-startup.sh script](./frontend/core-startup.sh). Remember that the playground uses `npm link` to use the core as a dependency, so make sure to regularly re-run `npm link ../core` from the [playground folder](./frontend/apps/web/) so that any changes you make to the core are immediately visible from the playground.
 
 ### Learning more about the foundations
 You might want to check out some resources in order to discover something about the theoretical foundations of Ballerina. If that's the case, we've got you covered! Here are a load of videos from the same author(s) of the framework:
