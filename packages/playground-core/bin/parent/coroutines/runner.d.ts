@@ -1,0 +1,3 @@
+export declare const ParentDebouncerRunner: import("@ballerina/core").Template<import("../state").Parent, import("../state").Parent, import("../../main").Child2ForeignMutationsExpected>;
+export declare const ParentCoroutinesRunner: import("@ballerina/core").Template<import("../state").Parent, import("../state").Parent, import("../../main").Child2ForeignMutationsExpected>;
+//# sourceMappingURL=runner.d.ts.map

@@ -1,0 +1,1 @@
+{"version":3,"file":"template.js","sourceRoot":"","sources":["../../../src/infinite-data-stream/template.tsx"],"names":[],"mappings":";AACA,OAAO,EAAE,QAAQ,EAAE,MAAM,mBAAmB,CAAC;AAC7C,OAAO,EAAE,gBAAgB,EAAE,MAAM,qBAAqB,CAAC;AAGvD,MAAM,CAAC,MAAM,sBAAsB,GACjC,GAAmC,EAAE,CAAC,QAAQ,CAAC,OAAO,CAIpD,CAAC,MAAM,EAAE,EAAE,CACX,mBACI,CACL,CAAC,GAAG,CAAC;IACJ,gBAAgB,EAAiB;CAClC,CAAC,CAAA"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"state.d.ts","sourceRoot":"","sources":["../../../../../../../../../../src/forms/domains/singleton/domains/descriptors/field/domains/boolean/state.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,UAAU,EAAE,MAAM,eAAe,CAAC;AAE3C,MAAM,MAAM,aAAa,GAAG;IAAE,IAAI,EAAE,SAAS,CAAC;CAAE,GAAG,UAAU,CAAC;AAC9D,eAAO,MAAM,aAAa;wBACJ,OAAO,aAAa,OAAO,KAAG,aAAa;CAChE,CAAC"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"state.d.ts","sourceRoot":"","sources":["../../../../../../../../../../src/forms/domains/singleton/domains/descriptors/field/domains/base/state.ts"],"names":[],"mappings":"AACA,MAAM,MAAM,UAAU,GAAG;IAAE,OAAO,EAAE,OAAO,CAAC;IAAC,QAAQ,EAAE,OAAO,CAAC;CAAE,CAAC;AAClE,eAAO,MAAM,UAAU;wBACD,OAAO,aAAa,OAAO,KAAG,UAAU;CAC7D,CAAC"}

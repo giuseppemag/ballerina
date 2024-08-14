@@ -1,0 +1,34 @@
+{
+  "name": "web",
+  "author": "Dr. Giuseppe Maggiore",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "SET NODE_ENV=development && rspack serve",
+    "build": "SET NODE_ENV=production && rspack build"
+  },
+  "dependencies": {
+    "@faker-js/faker": "^8.4.1",
+    "i18next": "^23.11.5",
+    "immutable": "^5.0.0-beta.5",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-grid-layout": "^1.4.4",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@ballerina/core": "workspace:*",
+    "@ballerina/playground-core": "workspace:*",
+    "@ballerina/create-domain": "workspace:*",
+    "@rspack/cli": "0.5.5",
+    "@rspack/core": "0.5.5",
+    "@rspack/plugin-react-refresh": "0.5.5",
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
+    "@types/react-grid-layout": "^1.3.3",
+    "@types/uuid": "^9.0.8",
+    "link": "^2.1.0",
+    "react-refresh": "^0.14.0",
+    "typescript": "^5.4.5"
+  }
+}

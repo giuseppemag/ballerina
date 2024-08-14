@@ -1,0 +1,1 @@
+{"version":3,"file":"state.d.ts","sourceRoot":"","sources":["../../../src/apiResultStatus/state.ts"],"names":[],"mappings":"AACA,eAAO,MAAM,qBAAqB,qDAAsD,CAAA;AACxF,MAAM,MAAM,qBAAqB,GAAG,CAAC,OAAO,qBAAqB,CAAC,CAAC,MAAM,CAAC,CAAA;AAG1E,eAAO,MAAM,iBAAiB,gEAAiD,CAAA;AAC/E,MAAM,MAAM,eAAe,GAAG,CAAC,OAAO,iBAAiB,CAAC,CAAC,MAAM,CAAC,CAAA"}
