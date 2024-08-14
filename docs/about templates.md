@@ -1,1 +1,0 @@
-In this presentation we will talk about the signature of a template and how to render them with parameterized views
