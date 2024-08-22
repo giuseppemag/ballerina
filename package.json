@@ -1,11 +1,12 @@
 {
-  "name": "@ballerina/ballerina",
+  "name": "@tenet/tenet",
   "private": true,
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
     "lint": "turbo lint",
-    "typecheck": "turbo typecheck"
+    "typecheck": "turbo typecheck",
+    "format": "prettier --write \"./**/*.{js,jsx,mjs,cjs,ts,tsx,json}\""
   },
   "devDependencies": {
     "turbo": "latest"
@@ -13,5 +14,8 @@
   "packageManager": "pnpm@8.9.0",
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "prettier": "^3.3.3"
   }
 }

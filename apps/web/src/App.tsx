@@ -1,70 +1,63 @@
-import { useState } from "react";
-import "./App.css";
-import { ParentTemplate2 } from "@ballerina/playground-core";
-import { Parent } from "@ballerina/playground-core";
-import { Uncle } from "@ballerina/playground-core";
-import { UncleTemplate } from "@ballerina/playground-core";
-import { AsyncState, OrderedMapRepo, unit } from "@ballerina/core";
-import { UncleLayout } from "./domains/uncle/views/uncleLayout";
-import { ParentLayout2 } from "./domains/parent/views/parentLayout2";
-import { OrderedMap } from "immutable";
-import { t } from "i18next";
-import { DataSync } from "./domains/data-sync/state";
-import { DataSyncTemplate } from "./domains/data-sync/template";
-import { Range } from "immutable";
-import { v4 } from "uuid";
-import { faker } from "@faker-js/faker";
-import { UserData } from "./domains/data-sync/domains/entities/domains/singletons/domains/user/state";
-import { Address } from "./domains/data-sync/domains/entities/domains/collections/domains/address/state";
-import { Invoice } from "./domains/data-sync/domains/entities/domains/collections/domains/invoice/state";
-import { InvoiceLine } from "./domains/data-sync/domains/entities/domains/collections/domains/invoice/domains/invoice-line/state";
+import './App.css'
 
-function App(props: {}) {
-	const [parent, setParent] = useState(Parent.Default());
-	const [uncle, setUncle] = useState(Uncle.Default());
-	const uncleForeignMutations = Uncle.ForeignMutations({ context: uncle, setState: setUncle })
-	const [dataSync, setDataSync] = useState(DataSync().Default(
-		UserData.Default(v4(), faker.person.firstName(), faker.person.lastName()),
-		OrderedMap(Range(0, 4).map(_ =>
-			[`add-${_}`, Address.Default(`add-${_}`, faker.location.city(), faker.location.street(), faker.location.buildingNumber())]
-		)),
-		OrderedMap(Range(0, 4).map(_ =>
-			[`inv-${_}`, Invoice.Default(`inv-${_}`,
-				faker.animal.dog(),
-				Range(0, 1 + (Math.floor(Math.random() * 4))).map(j =>
-					InvoiceLine.Default(`invl-${_}${j}`, faker.vehicle.vehicle(), Math.floor(Math.random() * 90 + 10), Math.floor(Math.random() * 90 + 10))
-				).toArray()
-			)]
-		)),
-	));
+import { Link, useRouter } from '@tenet/core-react'
+import React from 'react'
 
-	return (
-		<div className="App">
-			<h1>Ballerina 🩰</h1>
-			<div className="card">
-				<DataSyncTemplate
-					context={{ ...dataSync }}
-					setState={setDataSync}
-					foreignMutations={unit}
-					view={unit}
-				/>
-				<UncleTemplate
-					context={uncle}
-					setState={setUncle}
-					foreignMutations={{}}
-					view={UncleLayout}
-				/>
-				<ParentTemplate2
-					context={parent}
-					setState={setParent}
-					foreignMutations={{
-						setFlag: uncleForeignMutations.overrideFlag
-					}}
-					view={ParentLayout2}
-				/>
-			</div>
-		</div>
-	);
+import { Authentication } from '@domains/authentication/authentication.domain'
+import { AuthenticationTemplate } from '@domains/authentication/authentication.template'
+import { AuthenticationLayout } from '@domains/authentication/components/AuthenticationLayout'
+
+const App = () => {
+  const { path, navigate, searchParams } = useRouter()
+
+  console.log('path', path)
+  console.log('searchParams', searchParams.toString())
+
+  const [authentication, setAuthentication] = React.useState(Authentication.Default())
+
+  const authenticationForeignMutations = React.useMemo(() => {
+    return Authentication.ForeignMutations({ context: authentication, setState: setAuthentication })
+  }, [authentication, setAuthentication])
+
+  const states = [{ x: 5 }, { y: 2 }].map((obj) => React.useState(obj))
+
+  console.log(states[0][0], states[1][0])
+
+  // React.useEffect(() => {
+  //   const handler = (e: FocusEvent) => {
+  //     console.log('focussing')
+
+  //     if (!AsyncState.Operations.isLoading(authentication.user.response)) {
+  //       console.log('not loading true')
+
+  //       setAuthentication(Authentication.Updaters.Core.user(Queryable.Updaters.response(AsyncState.Updaters.toReloading()))(authentication))
+  //     }
+  //   }
+
+  //   window.addEventListener('focus', handler)
+
+  //   return () => {
+  //     window.removeEventListener('focus', handler)
+  //   }
+  // }, [authentication, setAuthentication])
+
+  return (
+    <div className="content">
+      <h1>Rsbuild with React</h1>
+      <p>Start building amazing things with Rsbuild.</p>
+
+      <Link href="/user/500/a">User</Link>
+
+      {/* <ParentCoroutinesRunner context={parent} setState={setParent} foreignMutations={authenticationForeignMutations} view={unit} /> */}
+
+      <AuthenticationTemplate
+        context={authentication}
+        setState={setAuthentication}
+        foreignMutations={{}}
+        view={AuthenticationLayout}
+      />
+    </div>
+  )
 }
 
-export default App;
+export default App

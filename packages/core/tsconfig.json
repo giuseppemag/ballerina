@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "lib": ["ES2020"],
+    "module": "NodeNext",
+    "strict": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "NodeNext",
+    "useDefineForClassFields": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "exclude": ["**/node_modules/*"],
+  "include": ["src"]
+}
