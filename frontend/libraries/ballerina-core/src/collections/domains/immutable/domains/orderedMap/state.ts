@@ -69,6 +69,9 @@ export const OrderedMapRepo = {
     remove<K, V>(key: K): Updater<OrderedMap<K, V>> {
       return Updater((_) => _.remove(key));
     },
+    clear<K, V>(): Updater<OrderedMap<K, V>> {
+      return Updater((_) => OrderedMap<K,V>());
+    },
     merge<K, V>(
       key: K,
       originalMap: OrderedMap<K, V>,
@@ -90,9 +93,21 @@ export const OrderedMapRepo = {
       ),
     upsert: <k, v>(k: k, defaultValue: BasicFun<Unit, v>, _: BasicUpdater<v>): Updater<OrderedMap<k, v>> =>
       Updater((current) =>
-        current.has(k) ? current.set(k, _(current.get(k)!)) : current.set(k, defaultValue({}))
+        current.has(k) ? current.set(k, _(current.get(k)!)) : current.set(k, _(defaultValue({})))
       ),
-
+    append: <k, v>(
+      newEntries:Array<[k, v]>
+    ) : Updater<OrderedMap<k, v>> =>
+      Updater(current => 
+        OrderedMap([...current.toArray(), ...newEntries])
+      ),
+    prepend: <k, v>(
+      newEntries:Array<[k, v]>
+    ) : Updater<OrderedMap<k, v>> =>
+      Updater(current => 
+        OrderedMap([...newEntries, ...current.toArray()])
+      ),
+  
   },
   Operations: {
     toArray: <T extends Identifiable>(map: OrderedMap<T["Id"], T>) =>

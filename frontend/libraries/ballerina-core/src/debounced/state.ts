@@ -29,6 +29,10 @@ export const Debounced = {
 				...current,
 				lastUpdated: _(current.lastUpdated),
 			})),
+			valueWithoutDebouncing: <v>(_: BasicUpdater<v>): Updater<Debounced<v>> => Updater<Debounced<v>>(current => ({
+				...current,
+				...(_(current)),
+			})),
 			value: <v>(_: BasicUpdater<v>): Updater<Debounced<v>> => Updater<Debounced<v>>(current => ({
 				...(_(current)),
 				dirty: current.dirty,

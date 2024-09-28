@@ -15,7 +15,6 @@ export const simpleUpdater = <Entity>() => <Field extends keyof Entity>(field: F
 }) as SimpleUpdater<Entity, Field>;
 
 
-
 export type WidenedChildren<p, children> =
   { [k in Exclude<keyof children, "Core" | "Template" | "Coroutine">]:
     children[k] extends WideningWithChildren<infer child, infer nephew, infer nephews> ?

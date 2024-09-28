@@ -70,6 +70,14 @@ export type Chunk<Element extends Identifiable> = {
   hasMoreValues: boolean;
   data: OrderedMap<Element["id"], Element>;
 };
+export const Chunk = <Element extends Identifiable>() => ({
+  Default:(
+    hasMoreValues: boolean,
+    data: OrderedMap<Element["id"], Element>,
+  ) : Chunk<Element> => ({
+    hasMoreValues, data
+  })
+})
 
 export type InfiniteStreamState<Element extends Identifiable> = {
   loadingMore: AsyncState<Unit>;

@@ -1,4 +1,4 @@
-import { OrderedMap } from "node_modules/immutable/dist/immutable";
+import { OrderedMap } from "immutable";
 import { Guid, Unit, SynchronizationResult } from "../../main";
 import { CoTypedFactory } from "../coroutines/builder";
 import { Coroutine } from "../coroutines/state";

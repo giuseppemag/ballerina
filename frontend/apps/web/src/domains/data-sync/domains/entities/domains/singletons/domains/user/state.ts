@@ -18,4 +18,5 @@ export type User = Sum<UserData, "no user selected">;
 export const User = Sum<UserData, "no user selected">();
 export type UserMutations = {
   edit: Unit;
+  reload: Unit;
 };

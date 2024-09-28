@@ -17,7 +17,7 @@ export const LoadedCollection =
             collection.entities.sync.value.map(LoadedCollectionEntity.Default.fromEntity)
           : undefined,
           synchronizationErrors:AsyncState.Operations.errors(collection.entities.sync),
-          isReloading:collection.entities.sync.kind == "reloading"
+          isReloading:collection.entities.sync.kind == "reloading",
        })
     }
   })

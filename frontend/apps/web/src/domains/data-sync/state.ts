@@ -5,61 +5,37 @@ import { UserData } from "./domains/entities/domains/singletons/domains/user/sta
 import { Address } from "./domains/entities/domains/collections/domains/address/state"
 import { Invoice } from "./domains/entities/domains/collections/domains/invoice/state"
 import { Singletons, SingletonMutations } from "./domains/entities/domains/singletons/state"
-import { Collections, CollectionMutations } from "./domains/entities/domains/collections/state"
+import { Collections, CollectionMutations, WholeCollectionMutations } from "./domains/entities/domains/collections/state"
 import { Entities } from "./domains/entities/state"
 import { Queue } from "./domains/queue/state"
 import { singletonsConfig } from "./coroutines/singletons/config"
 import { collectionsConfig } from "./coroutines/collections/config"
-import { Forms } from "./domains/forms/state"
 
 export type DataSync = {
   entities: Entities,
   queue: Queue,
-  forms: Forms
 }
 export const DataSync = () => ({
   Default: (user: UserData | undefined, addresses: OrderedMap<Guid, Address>, invoices: OrderedMap<Guid, Invoice>): DataSync => ({
     entities: Entities.Default(user, addresses, invoices),
     queue: OrderedMap(),
-    forms: Forms.Default(),
   }),
   Updaters: {
     Core: {
       ...simpleUpdaterWithChildren<DataSync>()(Entities.Updaters)("entities"),
-      ...simpleUpdaterWithChildren<DataSync>()(Forms.Updaters)("forms"),
       ...mapUpdater<DataSync>()("queue", "queue"),
     }
   },
   ForeignMutations: (_: ForeignMutationsInput<DataSyncReadonlyContext, DataSyncWritableState>) => {
-    const [SingletonLoaders, SingletonReloaders, SingletonDirtyCheckers, SingletonDirtySetters, SingletonUpdaters, SingletonEntityConfigs] = singletonsConfig();
+    const [SingletonLoaders, SingletonDirtyCheckers, SingletonDirtySetters, SingletonUpdaters, SingletonEntityConfigs] = singletonsConfig();
     const [CollectionLoaders, CollectionDirtyCheckers, CollectionDirtySetters, CollectionUpdaters, CollectionEntityConfigs] = collectionsConfig();
 
     return ({
-      reloadSingleton: <k extends (keyof Singletons) & (keyof SingletonMutations)>(k: k, entityId: Guid) => {
-        // if (AsyncState.Operations.hasValue(_.context.entities.sync)) {
-        if (!_.context.queue.some(value => value.entityId == entityId && value.entity == k && value.mutation == "reload")) {
-          _.setState(
-            DataSync().Updaters.Core.queue.add([
-              v4(),
-              {
-                entity: k,
-                mutation: "reload",
-                entityId,
-                dirtySetter: _ => SingletonDirtySetters[k](_),
-                operation: SingletonReloaders[k]
-              }
-            ])
-          )
-        }
-        // }
-      },
       updateSingleton: <k extends (keyof Singletons) & (keyof SingletonMutations)>(k: k, entityId: Guid) =>
         <mutation extends keyof (SingletonMutations[k])>(
           mutation: mutation, mutationArg:SingletonMutations[k][mutation], updater: BasicUpdater<Singletons[k]>
         ) => {
-          // if (AsyncState.Operations.hasValue(_.context.entities.sync)) {
-          const entities = _.context.entities
-          if (!_.context.queue.some(value => value.entityId == entityId && value.entity == k && value.mutation == mutation as any)) {
+          if (_.context.queue.count(value => value.entityId == entityId && value.entity == k && value.mutation == mutation as any) < 2) {
             _.setState(
               SingletonUpdaters[k]([unit, updater]).then(
                 DataSync().Updaters.Core.queue.add([
@@ -79,15 +55,12 @@ export const DataSync = () => ({
               SingletonUpdaters[k]([unit, updater])
             )
           }
-          // }
         },
-      updateCollectionElement: <k extends (keyof Collections) & (keyof CollectionMutations)>(k: k, entityId: Guid) =>
+      updateCollectionElement: <k extends (keyof Collections) & (keyof CollectionMutations) & (keyof WholeCollectionMutations)>(k: k, entityId: Guid) =>
         <mutation extends keyof (CollectionMutations[k])>(
           mutation: mutation, mutationArg:CollectionMutations[k][mutation], updater: BasicUpdater<Collections[k]>
         ) => {
-          // if (AsyncState.Operations.hasValue(_.context.entities.sync)) {
-          const entities = _.context.entities
-          if (!_.context.queue.some(value => value.entityId == entityId && value.entity == k && value.mutation == mutation as any)) {
+          if (_.context.queue.count(value => value.entityId == entityId && value.entity == k && value.mutation == mutation as any) < 2) {
             _.setState(
               CollectionUpdaters[k]([entityId, updater]).then(
                 DataSync().Updaters.Core.queue.add([
@@ -107,12 +80,9 @@ export const DataSync = () => ({
               CollectionUpdaters[k]([entityId, updater])
             )
           }
-          // }
         },
       addElementToCollection: <k extends ((keyof Collections) & (keyof CollectionMutations)) & (keyof CollectionMutations)>(k: k) =>
         (entityId: Guid, newEntity: CollectionEntity<Collections[k]>) => {
-          // if (AsyncState.Operations.hasValue(_.context.entities.sync)) {
-          const entities = _.context.entities
           if (!_.context.queue.some(value => value.entityId == entityId && value.entity == k && value.mutation == "add")) {
             _.setState(
               (
@@ -128,15 +98,10 @@ export const DataSync = () => ({
                 ])
               )
             )
-            // }
           }
         },
       removeElementFromCollection: <k extends ((keyof Collections) & (keyof CollectionMutations)) & (keyof CollectionMutations)>(k: k) =>
         (entityId: Guid) => {
-          // if (AsyncState.Operations.hasValue(_.context.entities.sync)) {
-          const entities = _.context.entities
-          // skip enqueuing of the entity in the patch-queue if it is already dirty
-          // if (!CollectionDirtyCheckers[k]([entityId, entity])) {
           if (!_.context.queue.some(value => value.entityId == entityId && value.entity == k && value.mutation == "remove")) {
             _.setState(
               (
@@ -153,7 +118,6 @@ export const DataSync = () => ({
               )
             )
           }
-          // }
         },
     })
   }

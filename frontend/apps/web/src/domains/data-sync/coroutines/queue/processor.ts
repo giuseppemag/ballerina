@@ -17,7 +17,7 @@ export const QueueProcessor = (): Coroutine<DataSyncReadonlyContext & DataSyncWr
       });
       return workersToUpdateNow.map(k => ({
         preprocess: k.dirtySetter("dirty but being processed"),
-        operation: k.operation,
+        operation: k.operation.then(() => Co.Return("completed" as const)),
         postprocess: _ => (_ == "completed") ?
           Co.GetState().then(current => current.queue.count(mutation => mutation.entityId == k.entityId) <= 1 ?
             k.dirtySetter("not dirty").then(() => Co.Return({}))

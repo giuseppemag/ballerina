@@ -27,7 +27,7 @@ export const MapRepo = {
       ),
     upsert: <k, v>(k: k, defaultValue:BasicFun<Unit,v>, _: BasicUpdater<v>): Updater<Map<k, v>> =>
       Updater((current) =>
-        current.has(k) ? current.set(k, _(current.get(k)!)) : current.set(k, defaultValue({}))
+        current.has(k) ? current.set(k, _(current.get(k)!)) : current.set(k, _(defaultValue({})))
       ),
   }
 };

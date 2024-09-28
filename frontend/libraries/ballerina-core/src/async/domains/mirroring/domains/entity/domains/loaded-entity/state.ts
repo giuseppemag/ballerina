@@ -1,3 +1,4 @@
+import { DebouncedStatus, DirtyStatus } from "../../../../../../../debounced/state";
 import { AsyncState } from "../../../../../../state";
 import { Entity } from "../../state";
 
@@ -5,7 +6,11 @@ export type LoadedEntity<E> = {
   value?: E;
   isSubmitting:boolean;
   isReloading:boolean;
-  synchronizationErrors:Array<any>
+  isBeingCreated:boolean;
+  synchronizationErrors:Array<any>;
+  lastUpdated: number;
+  dirty: DirtyStatus;
+  status: DebouncedStatus;
 };
 export const LoadedEntity = {
   Default:{
@@ -14,7 +19,11 @@ export const LoadedEntity = {
         value:AsyncState.Operations.hasValue(e.value.value.sync) ? e.value.value.sync.value : undefined,
         isSubmitting:AsyncState.Operations.isLoading(e.value.sync),
         isReloading:AsyncState.Operations.isLoading(e.value.value.sync),
+        isBeingCreated:e.isBeingCreated,
         synchronizationErrors:[...AsyncState.Operations.errors(e.value.sync),...AsyncState.Operations.errors(e.value.value.sync)],
+        lastUpdated: e.value.lastUpdated,
+        dirty: e.value.dirty,
+        status: e.value.status
       })
   }
 }

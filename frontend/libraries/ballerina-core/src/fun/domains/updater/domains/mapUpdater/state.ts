@@ -29,7 +29,7 @@ export const mapUpdater = <Entity>() => <Field extends keyof Entity, DisplayName
         (entity[field] as Map<unknown, unknown>).set(key, 
           (entity[field] as Map<unknown, unknown>).has(key) ?
             fieldUpdater((entity[field] as Map<unknown, unknown>).get(key)!)
-          : fallback(unit))
+          : fieldUpdater(fallback(unit)))
     }) as Entity)
     ),
   }

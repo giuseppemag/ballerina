@@ -26,23 +26,8 @@ export const insideEntitySynchronizedAndDebounced = <Context, E>(
   ).then(() => k.embed<Context & Entity<E>, Entity<E>>(_ => ({ ..._, ..._.value }), (u) => Entity<E>().Updaters.Core.value(
     Debounced.Updaters.Core.value(u)
   )
-  ).then(() => Co.GetState().then(current => {
-    if (current.value.dirty == "dirty but being processed") {
-      return Co.Return<SynchronizationResult>("completed")
-      // Co.SetState(
-      //   Entity<E>().Updaters.Core.value(
-      //     Debounced.Updaters.Core.dirty(replaceWith<DirtyStatus>("not dirty"))
-      //   )
-      // ).then(() => Co.Return<SynchronizationResult>("completed")
-      // );
-    } else {
-      return Co.Return<SynchronizationResult>("should be enqueued again");
-    }
-  }
-  )
-  )
-  );
-};
+  ).then(() =>  Co.Return<SynchronizationResult>("completed"))
+  )}
 
 export type SingletonLoaders<Context, Singletons, SingletonMutations, SynchronizedEntities> = {
   [k in (keyof Singletons) & (keyof SingletonMutations)]:
@@ -70,52 +55,52 @@ export const singletonEntityLoader = <Context, Singletons, SingletonMutations, S
       )
     }
 
-export type SingletonReloadSynchronizers<Context, Singletons, SingletonMutations> = {
-  [k in (keyof Singletons) & (keyof SingletonMutations)]:
-  Coroutine<Context & Entity<Singletons[k]>, Entity<Singletons[k]>, SynchronizationResult>
-};
-export const reloaderToEntity = <Context, E>(
-  k: Coroutine<Context & Synchronized<Unit, E>, Synchronized<Unit, E>, Unit>):
-  Coroutine<Context & Entity<E>, Entity<E>, SynchronizationResult> => {
-  const Co = CoTypedFactory<Context, Entity<E>>();
-  return Co.Seq([
-    k.embed(
-      _ => ({..._, ..._.value.value}),
-      (_) => Entity<E>().Updaters.Core.value(
-        Debounced.Updaters.Core.value(
-          Synchronized.Updaters.value(
-            Value.Updaters.value(
-              _
-            )
-          )
-        )
-      ))
-  ]).then(() =>
-    Co.Return("completed" as const)
-  )
-}
+// export type SingletonReloadSynchronizers<Context, Singletons, SingletonMutations> = {
+//   [k in (keyof Singletons) & (keyof SingletonMutations)]:
+//   Coroutine<Context & Entity<Singletons[k]>, Entity<Singletons[k]>, SynchronizationResult>
+// };
+// export const reloaderToEntity = <Context, E>(
+//   k: Coroutine<Context & Synchronized<Unit, E>, Synchronized<Unit, E>, Unit>):
+//   Coroutine<Context & Entity<E>, Entity<E>, SynchronizationResult> => {
+//   const Co = CoTypedFactory<Context, Entity<E>>();
+//   return Co.Seq([
+//     k.embed(
+//       _ => ({..._, ..._.value.value}),
+//       (_) => Entity<E>().Updaters.Core.value(
+//         Debounced.Updaters.Core.value(
+//           Synchronized.Updaters.value(
+//             Value.Updaters.value(
+//               _
+//             )
+//           )
+//         )
+//       ))
+//   ]).then(() =>
+//     Co.Return("completed" as const)
+//   )
+// }
 
-export type SingletonReloaders<Context, Singletons, SingletonMutations, SynchronizedEntities> = {
-  [k in (keyof Singletons) & (keyof SingletonMutations)]: Coroutine<Context & SynchronizedEntities, SynchronizedEntities, SynchronizationResult>;
-};
-export const singletonEntityReloader = <Context, Singletons, SingletonMutations, SynchronizedEntities>(
-  synchronizers: SingletonReloadSynchronizers<Context, Singletons, SingletonMutations>) => <k extends (keyof Singletons) & (keyof SingletonMutations)>(
-    k: k, narrowing_k: BasicFun<SynchronizedEntities, Singleton<Singletons[k]>>,
-    widening_k: BasicFun<BasicUpdater<Singleton<Singletons[k]>>, Updater<SynchronizedEntities>>,
-    dependees: Array<Coroutine<Context & SynchronizedEntities, SynchronizedEntities, SynchronizationResult>>):
-    Coroutine<Context & SynchronizedEntities, SynchronizedEntities, SynchronizationResult> => {
-    const Co = CoTypedFactory<Context, SynchronizedEntities>();
+// export type SingletonReloaders<Context, Singletons, SingletonMutations, SynchronizedEntities> = {
+//   [k in (keyof Singletons) & (keyof SingletonMutations)]: Coroutine<Context & SynchronizedEntities, SynchronizedEntities, SynchronizationResult>;
+// };
+// export const singletonEntityReloader = <Context, Singletons, SingletonMutations, SynchronizedEntities>(
+//   synchronizers: SingletonReloadSynchronizers<Context, Singletons, SingletonMutations>) => <k extends (keyof Singletons) & (keyof SingletonMutations)>(
+//     k: k, narrowing_k: BasicFun<SynchronizedEntities, Singleton<Singletons[k]>>,
+//     widening_k: BasicFun<BasicUpdater<Singleton<Singletons[k]>>, Updater<SynchronizedEntities>>,
+//     dependees: Array<Coroutine<Context & SynchronizedEntities, SynchronizedEntities, SynchronizationResult>>):
+//     Coroutine<Context & SynchronizedEntities, SynchronizedEntities, SynchronizationResult> => {
+//     const Co = CoTypedFactory<Context, SynchronizedEntities>();
 
-    return (synchronizers[k]).embed<Context & SynchronizedEntities, SynchronizedEntities>(_ => ({ ..._, ...narrowing_k(_).entity }),
-      Singleton<Singletons[k]>().Updaters.Core.entity.then(
-        widening_k
-      )
-    ).then(syncResult =>
-      Co.All<SynchronizationResult>(dependees).then(syncResults =>
-        Co.Return([syncResult, ...syncResults].some(_ => _ == "should be enqueued again") ? "should be enqueued again" : "completed")
-      )
-    )
-  }
+//     return (synchronizers[k]).embed<Context & SynchronizedEntities, SynchronizedEntities>(_ => ({ ..._, ...narrowing_k(_).entity }),
+//       Singleton<Singletons[k]>().Updaters.Core.entity.then(
+//         widening_k
+//       )
+//     ).then(syncResult =>
+//       Co.All<SynchronizationResult>(dependees).then(syncResults =>
+//         Co.Return([syncResult, ...syncResults].some(_ => _ == "should be enqueued again") ? "should be enqueued again" : "completed")
+//       )
+//     )
+//   }
 
 export type SingletonDirtySetters<Context, Singletons, SingletonMutations, SynchronizedEntities> = {
   [k in (keyof Singletons) & (keyof SingletonMutations)]:
@@ -160,7 +145,7 @@ export type SynchronizableSingletonEntity<Context, Singletons, SingletonMutation
   narrowing: BasicFun<SynchronizedEntities, Singleton<Singletons[k]>>,
   widening: BasicFun<BasicUpdater<Singleton<Singletons[k]>>, Updater<SynchronizedEntities>>,
   dependees: Array<Coroutine<Context & SynchronizedEntities, SynchronizedEntities, SynchronizationResult>>,
-  reload: Coroutine<Context & Synchronized<Unit, Singletons[k]>, Synchronized<Unit, Singletons[k]>, Unit>,
+  // reload: Coroutine<Context & Synchronized<Unit, Singletons[k]>, Synchronized<Unit, Singletons[k]>, Unit>,
 } & {
   [_ in keyof (SingletonMutations[k])]: BasicFun<SingletonMutations[k][_], Coroutine<Context & Synchronized<Value<Synchronized<Unit, Singletons[k]>>, Unit>, Synchronized<Value<Synchronized<Unit, Singletons[k]>>, Unit>, Unit>>
 }
@@ -174,7 +159,7 @@ export const singletonSynchronizationContext = <Context, Singletons, SingletonMu
   entityDescriptors: SynchronizableEntityDescriptors<Context, Singletons, SingletonMutations, SynchronizedEntities>):
   [
     SingletonLoaders<Context, Singletons, SingletonMutations, SynchronizedEntities>,
-    SingletonReloaders<Context, Singletons, SingletonMutations, SynchronizedEntities>,
+    // SingletonReloaders<Context, Singletons, SingletonMutations, SynchronizedEntities>,
     SingletonDirtyCheckers<Singletons, SingletonMutations>,
     SingletonDirtySetters<Context, Singletons, SingletonMutations, SynchronizedEntities>,
     SingletonUpdaters<Singletons, SingletonMutations, SynchronizedEntities>,
@@ -197,16 +182,16 @@ export const singletonSynchronizationContext = <Context, Singletons, SingletonMu
     loaders[k] = singletonEntityLoader<Context, Singletons, SingletonMutations, SynchronizedEntities>(synchronizers)(k, entityDescriptors[k].narrowing, entityDescriptors[k].widening, entityDescriptors[k].dependees)
   })
 
-  let reloadSynchronizers: SingletonReloadSynchronizers<Context, Singletons, SingletonMutations> = {} as any
-  Object.keys(entityDescriptors).forEach(k_s => {
-    const k = k_s as (keyof Singletons) & (keyof SingletonMutations)
-    reloadSynchronizers[k] = reloaderToEntity((entityDescriptors[k])["reload"]) as any
-  })
-  let reloaders: SingletonReloaders<Context, Singletons, SingletonMutations, SynchronizedEntities> = {} as any
-  Object.keys(entityDescriptors).forEach(k_s => {
-    const k = k_s as (keyof Singletons) & (keyof SingletonMutations)
-    reloaders[k] = singletonEntityReloader<Context, Singletons, SingletonMutations, SynchronizedEntities>(reloadSynchronizers)(k, entityDescriptors[k].narrowing, entityDescriptors[k].widening, entityDescriptors[k].dependees)
-  })
+  // let reloadSynchronizers: SingletonReloadSynchronizers<Context, Singletons, SingletonMutations> = {} as any
+  // Object.keys(entityDescriptors).forEach(k_s => {
+  //   const k = k_s as (keyof Singletons) & (keyof SingletonMutations)
+  //   reloadSynchronizers[k] = reloaderToEntity((entityDescriptors[k])["reload"]) as any
+  // })
+  // let reloaders: SingletonReloaders<Context, Singletons, SingletonMutations, SynchronizedEntities> = {} as any
+  // Object.keys(entityDescriptors).forEach(k_s => {
+  //   const k = k_s as (keyof Singletons) & (keyof SingletonMutations)
+  //   reloaders[k] = singletonEntityReloader<Context, Singletons, SingletonMutations, SynchronizedEntities>(reloadSynchronizers)(k, entityDescriptors[k].narrowing, entityDescriptors[k].widening, entityDescriptors[k].dependees)
+  // })
 
   let dirtyCheckers: SingletonDirtyCheckers<Singletons, SingletonMutations> = {} as any
   Object.keys(entityDescriptors).forEach(k_s => {
@@ -226,6 +211,6 @@ export const singletonSynchronizationContext = <Context, Singletons, SingletonMu
     updaters[k] = singletonEntityUpdater<Singletons, SingletonMutations, SynchronizedEntities>()(entityDescriptors[k].widening)
   })
 
-  return [loaders, reloaders, dirtyCheckers, dirtySetters, updaters, entityDescriptors]
+  return [loaders, /*reloaders,*/ dirtyCheckers, dirtySetters, updaters, entityDescriptors]
 }
 
