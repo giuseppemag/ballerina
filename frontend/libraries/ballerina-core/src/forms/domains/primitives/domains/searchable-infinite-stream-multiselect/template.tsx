@@ -1,5 +1,5 @@
 import { List, OrderedMap } from "immutable";
-import { Guid, SimpleCallback, Debounce, InfiniteStreamLoader, CollectionSelection, id, replaceWith, OrderedMapRepo, AsyncState, BasicFun, Synchronize, Unit } from "../../../../../../main";
+import { Guid, SimpleCallback, Debounce, InfiniteStreamLoader, CollectionSelection, id, replaceWith, OrderedMapRepo, AsyncState, BasicFun, Synchronize, Unit, ValidateRunner } from "../../../../../../main";
 import { CoTypedFactory } from "../../../../../coroutines/builder";
 import { Debounced } from "../../../../../debounced/state";
 import { InfiniteStreamState } from "../../../../../infinite-data-stream/state";
@@ -7,9 +7,9 @@ import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
 import { CollectionReference } from "../../../collection/domains/reference/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
-import { FieldValidation, FieldValidationWithPath, FormValidatorSynchronized, OnChange, ValidateRunner, ValidationError } from "../../../singleton/template";
+import { FieldValidation, FieldValidationWithPath, FormValidatorSynchronized, OnChange, ValidationError } from "../../../singleton/state";
 import { SearchableInfiniteStreamState } from "../searchable-infinite-stream/state";
-import { InfiniteMultiselectDropdownView } from "./state";
+import { InfiniteStreamMultiselectView } from "./state";
 
 
 export const InfiniteMultiselectDropdownForm = <Element extends CollectionReference, Context extends FormLabel, ForeignMutationsExpected>(
@@ -44,7 +44,7 @@ export const InfiniteMultiselectDropdownForm = <Element extends CollectionRefere
     }
   );
 
-  return Template.Default<Context & Value<OrderedMap<Guid, Element>>, SearchableInfiniteStreamState<Element>, ForeignMutationsExpected & { onChange: OnChange<OrderedMap<Guid, Element>>; }, InfiniteMultiselectDropdownView<Element, Context, ForeignMutationsExpected>>(props => <>
+  return Template.Default<Context & Value<OrderedMap<Guid, Element>>, SearchableInfiniteStreamState<Element>, ForeignMutationsExpected & { onChange: OnChange<OrderedMap<Guid, Element>>; }, InfiniteStreamMultiselectView<Element, Context, ForeignMutationsExpected>>(props => <>
     <props.view {...props}
       context={{
         ...props.context,

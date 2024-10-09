@@ -4,7 +4,7 @@ import { View } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
 import { CollectionReference } from "../../../collection/domains/reference/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
-import { OnChange } from "../../../singleton/template";
+import { OnChange } from "../../../singleton/state";
 import { BaseEnumContext, EnumFormState } from "../enum/state";
 
 

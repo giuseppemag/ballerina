@@ -25,6 +25,7 @@ export type Template<context, state, foreignMutations, view = Unit> =
     any: BasicFun<Array<Template<context, state, foreignMutations>>, Template<context, state, foreignMutations, view>>,
     wrap: (Wrapper: Wrapper) => Template<context, state, foreignMutations, view>,
     withView: (view:view) => Template<context, state, foreignMutations, Unit>,
+    withViewFromProps: (f: BasicFun<TemplateProps<context, state, foreignMutations, Unit>, view>) => Template<context, state, foreignMutations, Unit>,
     mapState: <newState>(f: BasicFun<BasicUpdater<state>, BasicUpdater<newState>>) => Template<context, newState, foreignMutations, view>,
     mapStateFromProps: <newState>(f: BasicFun<[TemplateProps<context, newState, foreignMutations, view>, BasicUpdater<state>], BasicUpdater<newState>>) => Template<context, newState, foreignMutations, view>,
     mapContext: <newContext>(f: BasicFun<newContext, context | undefined>) => Template<newContext, state, foreignMutations, view>,
@@ -41,6 +42,9 @@ export const createTemplate = <context, state, foreignMutations, view>(actual: T
   }
   result.withView = function (this: Template<context, state, foreignMutations, view>, view:view) : Template<context, state, foreignMutations, Unit> {
     return Template.Operations.WithView(this, view)    
+  }
+  result.withViewFromProps = function (this: Template<context, state, foreignMutations, view>, f: BasicFun<TemplateProps<context, state, foreignMutations, Unit>, view>) : Template<context, state, foreignMutations, Unit> {
+    return Template.Operations.WithViewFromProps(this, f)    
   }
   result.mapState = function <newState>(this: Template<context, state, foreignMutations, view>, f: BasicFun<BasicUpdater<state>, BasicUpdater<newState>>): Template<context, newState, foreignMutations, view> {
     return Template.Operations.MapState(this, f)
@@ -83,6 +87,16 @@ export const Template = {
           p({
             ...props,
             view: view,
+          })
+        }
+      </>
+      ),        
+    WithViewFromProps: <context, state, foreignMutations, view>(p: Template<context, state, foreignMutations, view>, f: BasicFun<TemplateProps<context, state, foreignMutations, Unit>, view>) : Template<context, state, foreignMutations, Unit> =>
+      createTemplate(props => <>
+        {
+          p({
+            ...props,
+            view: f(props),
           })
         }
       </>

@@ -1,11 +1,11 @@
 import { List, OrderedMap } from "immutable";
-import { AsyncState, BasicFun, BasicPredicate, CoTypedFactory, Debounce, Debounced, Guid, replaceWith, Synchronize, Unit } from "../../../../../../main";
+import { AsyncState, BasicFun, BasicPredicate, CoTypedFactory, Debounce, Debounced, Guid, replaceWith, Synchronize, Unit, ValidateRunner } from "../../../../../../main";
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
 import { CollectionReference } from "../../../collection/domains/reference/state";
 import { CollectionSelection } from "../../../collection/domains/selection/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
-import { FieldValidation, FieldValidationWithPath, FormValidatorSynchronized, OnChange, ValidateRunner, ValidationError } from "../../../singleton/template";
+import { FieldValidation, FieldValidationWithPath, FormValidatorSynchronized, OnChange, ValidationError } from "../../../singleton/state";
 import { BaseEnumContext, EnumFormState, EnumView } from "./state";
 
 

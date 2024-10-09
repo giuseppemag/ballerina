@@ -7,7 +7,7 @@ import { Value } from "../../../../../value/state";
 import { CollectionReference } from "../../../collection/domains/reference/state";
 import { CollectionSelection } from "../../../collection/domains/selection/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
-import { OnChange, SharedFormState } from "../../../singleton/template";
+import { OnChange, SharedFormState } from "../../../singleton/state";
 
 
 export type SearchableInfiniteStreamState<Element extends CollectionReference> = 

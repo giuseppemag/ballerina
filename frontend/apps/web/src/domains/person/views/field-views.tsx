@@ -1,5 +1,5 @@
-import { FormLabel, CollectionReference, DateView, EnumView, EnumMultiselectView, StringView, NumberView, BooleanView, SearchableInfiniteStreamView, InfiniteMultiselectDropdownView, SharedFormState, AsyncState, BaseEnumContext } from "ballerina-core";
-import { PersonContext } from "../template";
+import { FormLabel, CollectionReference, DateView, EnumView, EnumMultiselectView, StringView, NumberView, BooleanView, SearchableInfiniteStreamView, InfiniteStreamMultiselectView, SharedFormState, AsyncState, BaseEnumContext } from "ballerina-core";
+import { PersonFormPredicateContext } from "../domains/predicates";
 
 export const MostUglyValidationDebugView = (props: { context: { showAllErrors: boolean } & SharedFormState }) =>
   props.context.modifiedByUser && AsyncState.Operations.isLoading(props.context.validation.sync) ?
@@ -90,7 +90,7 @@ export const PersonFieldViews = {
         </select>}
       <MostUglyValidationDebugView {...props} />
     </>,
-  Interests: <Context extends PersonContext & FormLabel & BaseEnumContext<Context, Element> & { showAllErrors: boolean }, Element extends CollectionReference, ForeignMutationsExpected>(): EnumMultiselectView<Context, Element, ForeignMutationsExpected> =>
+  Interests: <Context extends PersonFormPredicateContext & FormLabel & BaseEnumContext<Context, Element> & { showAllErrors: boolean }, Element extends CollectionReference, ForeignMutationsExpected>(): EnumMultiselectView<Context, Element, ForeignMutationsExpected> =>
     props => <>
       {props.context.label && <h3>{props.context.label}</h3>}
       {props.context.activeOptions == "loading" ?
@@ -160,8 +160,8 @@ export const PersonFieldViews = {
           onClick={() => props.foreignMutations.loadMore()}>⋯</button>
         <button onClick={() => props.foreignMutations.reload()}>🔄</button>
       </>,
-  InfiniteMultiselectDropdownView: <Element extends CollectionReference, Context extends FormLabel & { showAllErrors: boolean }, ForeignMutationsExpected>():
-    InfiniteMultiselectDropdownView<Element, Context, ForeignMutationsExpected> =>
+  InfiniteStreamMultiselectView: <Element extends CollectionReference, Context extends FormLabel & { showAllErrors: boolean }, ForeignMutationsExpected>():
+    InfiniteStreamMultiselectView<Element, Context, ForeignMutationsExpected> =>
     props =>
       <>
         {props.context.label && <h3>{props.context.label}</h3>}

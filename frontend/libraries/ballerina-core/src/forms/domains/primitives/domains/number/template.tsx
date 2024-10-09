@@ -1,9 +1,9 @@
 import { List } from "immutable";
-import { BasicFun, CoTypedFactory, Debounce, Debounced, NumberView, replaceWith, Synchronize, Unit } from "../../../../../../main";
+import { BasicFun, CoTypedFactory, Debounce, Debounced, NumberView, replaceWith, Synchronize, Unit, ValidateRunner } from "../../../../../../main";
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
-import { FieldValidation, FieldValidationWithPath, FormValidatorSynchronized, OnChange, SharedFormState, ValidateRunner, ValidationError } from "../../../singleton/template";
+import { FieldValidation, FieldValidationWithPath, FormValidatorSynchronized, OnChange, SharedFormState, ValidationError } from "../../../singleton/state";
 
 
 export const NumberForm = <Context extends FormLabel, ForeignMutationsExpected>(

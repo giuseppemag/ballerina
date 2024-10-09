@@ -1,5 +1,5 @@
 import { List } from "immutable";
-import { SimpleCallback, Debounce, InfiniteStreamLoader, id, replaceWith, BasicFun, Synchronize, Unit } from "../../../../../../main";
+import { SimpleCallback, Debounce, InfiniteStreamLoader, id, replaceWith, BasicFun, Synchronize, Unit, ValidateRunner } from "../../../../../../main";
 import { CoTypedFactory } from "../../../../../coroutines/builder";
 import { Debounced } from "../../../../../debounced/state";
 import { InfiniteStreamState } from "../../../../../infinite-data-stream/state";
@@ -8,7 +8,7 @@ import { Value } from "../../../../../value/state";
 import { CollectionReference } from "../../../collection/domains/reference/state";
 import { CollectionSelection } from "../../../collection/domains/selection/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
-import { FieldValidation, FieldValidationWithPath, FormValidatorSynchronized, OnChange, ValidateRunner, ValidationError } from "../../../singleton/template";
+import { FieldValidation, FieldValidationWithPath, FormValidatorSynchronized, OnChange, ValidationError } from "../../../singleton/state";
 import { SearchableInfiniteStreamState, SearchableInfiniteStreamView } from "./state";
 
 
