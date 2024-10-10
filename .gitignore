@@ -144,3 +144,6 @@ dist
 *.njsproj
 *.sln
 *.sw?
+
+move-to-ff.sh
+move-to-ballerina.sh
