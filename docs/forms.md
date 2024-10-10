@@ -15,15 +15,15 @@ marp: true
     --color-foreground: #ffedf5;
     --color-highlight: #ffedf5;
     --color-dimmed: #ffedf5; */
-    /* --color-background: #083d34;
+    --color-background: #083d34;
     --color-foreground: #e3e8e7;
     --color-highlight: #35a674;
-    --color-dimmed: #35a674; */
+    --color-dimmed: #35a674;
 
---color-background: #3A36AE;
+/* --color-background: #3A36AE;
     --color-foreground: #FCEEF5;
     --color-highlight: #E0569B;
-    --color-dimmed: #E0569B;
+    --color-dimmed: #E0569B; */
 
 /* --color-background: #FCEEF5;
     --color-foreground: #3A36AE;
@@ -32,9 +32,9 @@ marp: true
 
   }
 
-  code {
+  /* code {
    font-family:  "Fira code";
-  }  
+  }   */
 </style>
 
 
@@ -50,6 +50,23 @@ Ballerina is an open source frontend framework based, but not tied, to React
 - It frees from npm dependency Hell by promoting high quality code
 - It is write-once, run anywhere (thanks to React Native)
 - It is future-proof: future versions of React and also other frameworks (Vue and Ng) work with Ballerina 🩰
+
+---
+
+# Why a form system?
+We have an entity. 
+We need to render and edit it field by field.
+Editing requires asynchronous (debounced) validation.
+The rendering and validation are bound by the types of the fields.
+Some fields are primitive types, others are whole sub-forms.
+
+---
+
+# Why a form system?
+
+Sounds familiar? It should! This sort of scenario is extremely common in modern web development.
+
+Ballerina 🩰 solves this with full type safety and a large does of reusability, modularity, and automation.
 
 ---
 
@@ -240,6 +257,27 @@ The `City` will only be shown when on of the `BC` or `FO` predicates is `true`.
 
 ---
 
+# Whole-entity validation
+We can validate whole entities. For example, person checks that there are `interests` only if the user subscribes to the newsletter:
+
+```ts
+export const PersonForm = PersonFormBuilder.template({
+  // ... all the field configuration goes here,
+}, 
+(_:Person) : Promise<FieldValidationWithPath> =>
+  PromiseRepo.Default.mock(() =>
+    [
+      ...(_.subscribeToNewsletter && _.interests.count() <= 0 ?
+        [[["interests"], "please select at least one interest for the newsletter"] as ValidationErrorWithPath]
+        : []),
+    ])
+)
+```
+
+> Errors at the form level provide a path to the problematic field(s).
+
+---
+
 # Instantiating the forms
 We need the states somewhere:
 
@@ -265,6 +303,16 @@ We run the form as a regular React component:
 ```
 
 Changes to the form state go via `setState`, changes to the entity go via `foreignMutations::onChange`.
+
+---
+
+# Recap
+With the following steps, we end up getting to type-safe, declarative, composable forms for our application:
+- define the types of the entities
+- define the types of the form states (composing the existing helpers for supported field types)
+- define the form configuration: for each field, its renderer and validation
+- define the validation for the whole form
+- inject the views for styling and layout
 
 ---
 
