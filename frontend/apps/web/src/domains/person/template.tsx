@@ -28,7 +28,7 @@ export const PersonForm = PersonFormBuilder.template({
   interests: EnumMultiselectForm<PersonFormPredicateContext & FormLabel & BaseEnumContext<PersonFormPredicateContext, Interest>, Unit, Interest>(_ => PromiseRepo.Default.mock(() => []))
     .withView(PersonFieldViews.Interests())
     .mapContext(_ => ({ ..._, label: "interests", getOptions: PersonApi.getInterests })),
-  departments: InfiniteMultiselectDropdownForm<Department, PersonFormPredicateContext & FormLabel, Unit>(_ => PromiseRepo.Default.mock(() => [...(_.count() <= 0 ? ["please select at least one interest"] : [])]))
+  departments: InfiniteMultiselectDropdownForm<Department, PersonFormPredicateContext & FormLabel, Unit>(_ => PromiseRepo.Default.mock(() => [...(_.count() <= 0 ? ["please select at least one department"] : [])]))
     .withView(PersonFieldViews.InfiniteStreamMultiselectView())
     .mapContext(_ => ({ ..._, label: "department" })),
   address: AddressForm

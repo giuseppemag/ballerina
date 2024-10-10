@@ -14,7 +14,3 @@ Head over to the [Ballerina 🩰 readme](./frontend/libraries/ballerina-core/rea
 Ballerina 🩰 offers a lot more functionality. Advanced management of asynchronous processes, organisation of code in composable and reusable domains, forms, database mirroring, and much more.
 
 Read more [here](./docs/overview.md)
-
-[TODO: SPLIT IN SUBFILES]
-[TODO: ADJUST ALL LINKS]
-
