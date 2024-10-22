@@ -1,4 +1,4 @@
-import { collectionSynchronizationContext, CollectionEntity, Synchronized, Synchronize, Value, Unit, PromiseRepo, unit, Guid, Coroutine, OrderedMapRepo, AsyncState } from "ballerina-core";
+import { collectionSynchronizationContext, CollectionEntity, Synchronized, Synchronize, Value, Unit, PromiseRepo, unit, Guid, Coroutine, OrderedMapRepo, AsyncState, withTrivialComparator } from "ballerina-core";
 import { OrderedMap, Range } from "immutable";
 import { Address } from "../../domains/entities/domains/collections/domains/address/state";
 import { Invoice } from "../../domains/entities/domains/collections/domains/invoice/state";
@@ -12,8 +12,8 @@ export const collectionsConfig = () => collectionSynchronizationContext<DataSync
   addresses: {
     entityName: "addresses",
     id:_ => _.id,
-    edit: _ => Synchronize<Value<Synchronized<Unit, Address>>, Unit>(_ => PromiseRepo.Default.mock<Unit>(() => unit,
-      () => "error", 0.8, 0.5), _ => "permanent failure", 5, 150),
+    edit: withTrivialComparator(_ => Synchronize<Value<Synchronized<Unit, Address>>, Unit>(_ => PromiseRepo.Default.mock<Unit>(() => unit,
+      () => "error", 0.8, 0.5), _ => "permanent failure", 5, 150)),
     narrowing: _ => _.entities.collections.addresses,
     widening: DataSync().Updaters.Core.entities.children.Core.collections.children.addresses,
     add: (_entity: CollectionEntity<Address>) => Synchronize<Value<Synchronized<Unit, Address>>, Unit>(_ => PromiseRepo.Default.mock<Unit>(() => unit, () => "error", 0.5, 0), _ => "permanent failure", 5, 150),
@@ -28,9 +28,9 @@ export const collectionsConfig = () => collectionSynchronizationContext<DataSync
   invoices: {
     entityName: "invoices",
     id:_ => _.id,
-    edit: _ => Synchronize<Value<Synchronized<Unit, Invoice>>, Unit>(_ => PromiseRepo.Default.mock<Unit>(() => unit, () => "error", 0.8, 0.5), _ => "permanent failure", 5, 150),
-    approve: _ => Synchronize<Value<Synchronized<Unit, Invoice>>, Unit>(_ => PromiseRepo.Default.mock<Unit>(() => unit, () => "error", 0.8, 0.5), _ => "permanent failure", 5, 150),
-    reject: _ => Synchronize<Value<Synchronized<Unit, Invoice>>, Unit>(_ => PromiseRepo.Default.mock<Unit>(() => unit, () => "error", 0.8, 0.5), _ => "permanent failure", 5, 150),
+    edit: withTrivialComparator(_ => Synchronize<Value<Synchronized<Unit, Invoice>>, Unit>(_ => PromiseRepo.Default.mock<Unit>(() => unit, () => "error", 0.8, 0.5), _ => "permanent failure", 5, 150)),
+    approve: withTrivialComparator(_ => Synchronize<Value<Synchronized<Unit, Invoice>>, Unit>(_ => PromiseRepo.Default.mock<Unit>(() => unit, () => "error", 0.8, 0.5), _ => "permanent failure", 5, 150)),
+    reject: withTrivialComparator(_ => Synchronize<Value<Synchronized<Unit, Invoice>>, Unit>(_ => PromiseRepo.Default.mock<Unit>(() => unit, () => "error", 0.8, 0.5), _ => "permanent failure", 5, 150)),
     narrowing: _ => _.entities.collections.invoices,
     widening: DataSync().Updaters.Core.entities.children.Core.collections.children.invoices,
     add: (_entity: CollectionEntity<Invoice>) => Synchronize<Value<Synchronized<Unit, Invoice>>, Unit>(_ => PromiseRepo.Default.mock<Unit>(() => unit, () => "error", 0.5, 0), _ => "permanent failure", 5, 150),

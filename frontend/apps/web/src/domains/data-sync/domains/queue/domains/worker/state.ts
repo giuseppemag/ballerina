@@ -7,6 +7,7 @@ import { Singletons, SingletonMutations } from "../../../entities/domains/single
 export type Worker = {
   entity: ((keyof Singletons) & (keyof SingletonMutations)) | ((keyof Collections) & (keyof CollectionMutations));
   mutation: keyof (SingletonMutations[(keyof Singletons) & (keyof SingletonMutations)]) | keyof (CollectionMutations[(keyof Collections) & (keyof CollectionMutations)]) | "add" | "remove" | "reload";
+  mutationArg: CollectionMutations[keyof Collections & keyof CollectionMutations][keyof CollectionMutations[keyof Collections & keyof CollectionMutations]];
   entityId: Guid;
   dirtySetter: BasicFun<DirtyStatus, Coroutine<DataSyncReadonlyContext & DataSyncWritableState, DataSyncWritableState, Unit>>;
   operation: Coroutine<DataSyncReadonlyContext & DataSyncWritableState, DataSyncWritableState, SynchronizationResult>;

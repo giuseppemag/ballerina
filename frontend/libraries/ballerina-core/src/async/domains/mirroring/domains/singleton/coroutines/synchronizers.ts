@@ -1,4 +1,4 @@
-import { Unit, replaceWith, BasicUpdater, Updater, Value, AsyncState, unit } from "../../../../../../../main";
+import { Unit, replaceWith, BasicUpdater, Updater, Value, AsyncState, unit, MutationArgumentComparator } from "../../../../../../../main";
 import { CoTypedFactory } from "../../../../../../coroutines/builder";
 import { Coroutine } from "../../../../../../coroutines/state";
 import { Debounced, DirtyStatus } from "../../../../../../debounced/state";
@@ -33,6 +33,10 @@ export type SingletonLoaders<Context, Singletons, SingletonMutations, Synchroniz
   [k in (keyof Singletons) & (keyof SingletonMutations)]:
   <mutation extends (keyof SingletonSynchronizers<Context, Singletons, SingletonMutations>[k]) & (keyof SingletonMutations[k])>(mutation: mutation, mutationArg:SingletonMutations[k][mutation]) =>
     Coroutine<Context & SynchronizedEntities, SynchronizedEntities, SynchronizationResult>;
+};
+
+export type SingletonMutationArgumentComparators<Singletons, SingletonMutation> = {
+  [k in (keyof Singletons) & (keyof SingletonMutation)]: {[_ in keyof SingletonMutation[k]]: MutationArgumentComparator<SingletonMutation[k][_]>};
 };
 
 export const singletonEntityLoader = <Context, Singletons, SingletonMutations, SynchronizedEntities>(
@@ -147,7 +151,10 @@ export type SynchronizableSingletonEntity<Context, Singletons, SingletonMutation
   dependees: Array<Coroutine<Context & SynchronizedEntities, SynchronizedEntities, SynchronizationResult>>,
   // reload: Coroutine<Context & Synchronized<Unit, Singletons[k]>, Synchronized<Unit, Singletons[k]>, Unit>,
 } & {
-  [_ in keyof (SingletonMutations[k])]: BasicFun<SingletonMutations[k][_], Coroutine<Context & Synchronized<Value<Synchronized<Unit, Singletons[k]>>, Unit>, Synchronized<Value<Synchronized<Unit, Singletons[k]>>, Unit>, Unit>>
+  [_ in keyof (SingletonMutations[k])]: [
+    BasicFun<SingletonMutations[k][_], Coroutine<Context & Synchronized<Value<Synchronized<Unit, Singletons[k]>>, Unit>, Synchronized<Value<Synchronized<Unit, Singletons[k]>>, Unit>, Unit>>,
+    MutationArgumentComparator<SingletonMutations[k][_]>
+  ]
 }
 
 export type SynchronizableEntityDescriptors<Context, Singletons, SingletonMutations, SynchronizedEntities> = {
@@ -163,9 +170,10 @@ export const singletonSynchronizationContext = <Context, Singletons, SingletonMu
     SingletonDirtyCheckers<Singletons, SingletonMutations>,
     SingletonDirtySetters<Context, Singletons, SingletonMutations, SynchronizedEntities>,
     SingletonUpdaters<Singletons, SingletonMutations, SynchronizedEntities>,
-    SynchronizableEntityDescriptors<Context, Singletons, SingletonMutations, SynchronizedEntities>
+    SynchronizableEntityDescriptors<Context, Singletons, SingletonMutations, SynchronizedEntities>,
+    SingletonMutationArgumentComparators<Singletons, SingletonMutations>,
   ] => {
-  let synchronizers: SingletonSynchronizers<Context, Singletons, SingletonMutations> = {} as any
+  const synchronizers: SingletonSynchronizers<Context, Singletons, SingletonMutations> = {} as any
   Object.keys(entityDescriptors).forEach(k_s => {
     const k = k_s as (keyof Singletons) & (keyof SingletonMutations)
 
@@ -176,7 +184,7 @@ export const singletonSynchronizationContext = <Context, Singletons, SingletonMu
         (synchronizers[k] as any)[field] = (mutationArg:any) => insideEntitySynchronizedAndDebounced((entityDescriptors[k] as any)[field](mutationArg)) as any
     })
   })
-  let loaders: SingletonLoaders<Context, Singletons, SingletonMutations, SynchronizedEntities> = {} as any
+  const loaders: SingletonLoaders<Context, Singletons, SingletonMutations, SynchronizedEntities> = {} as any
   Object.keys(entityDescriptors).forEach(k_s => {
     const k = k_s as (keyof Singletons) & (keyof SingletonMutations)
     loaders[k] = singletonEntityLoader<Context, Singletons, SingletonMutations, SynchronizedEntities>(synchronizers)(k, entityDescriptors[k].narrowing, entityDescriptors[k].widening, entityDescriptors[k].dependees)
@@ -193,24 +201,41 @@ export const singletonSynchronizationContext = <Context, Singletons, SingletonMu
   //   reloaders[k] = singletonEntityReloader<Context, Singletons, SingletonMutations, SynchronizedEntities>(reloadSynchronizers)(k, entityDescriptors[k].narrowing, entityDescriptors[k].widening, entityDescriptors[k].dependees)
   // })
 
-  let dirtyCheckers: SingletonDirtyCheckers<Singletons, SingletonMutations> = {} as any
+  const dirtyCheckers: SingletonDirtyCheckers<Singletons, SingletonMutations> = {} as any
   Object.keys(entityDescriptors).forEach(k_s => {
     const k = k_s as (keyof Singletons) & (keyof SingletonMutations)
     dirtyCheckers[k] = Fun(singletonCheckNotDirty<Singletons, SingletonMutations>())
   })
-  let dirtySetters: SingletonDirtySetters<Context, Singletons, SingletonMutations, SynchronizedEntities> = {} as any
+  const dirtySetters: SingletonDirtySetters<Context, Singletons, SingletonMutations, SynchronizedEntities> = {} as any
   Object.keys(entityDescriptors).forEach(k_s => {
     const k = k_s as (keyof Singletons) & (keyof SingletonMutations)
     dirtySetters[k] = singletonDirtySetter<Context, Singletons, SingletonMutations, SynchronizedEntities>()(
       k, entityDescriptors[k].narrowing, entityDescriptors[k].widening
     )
   })
-  let updaters: SingletonUpdaters<Singletons, SingletonMutations, SynchronizedEntities> = {} as any
+  const updaters: SingletonUpdaters<Singletons, SingletonMutations, SynchronizedEntities> = {} as any
   Object.keys(entityDescriptors).forEach(k_s => {
     const k = k_s as (keyof Singletons) & (keyof SingletonMutations)
     updaters[k] = singletonEntityUpdater<Singletons, SingletonMutations, SynchronizedEntities>()(entityDescriptors[k].widening)
   })
-
-  return [loaders, /*reloaders,*/ dirtyCheckers, dirtySetters, updaters, entityDescriptors]
+  const mutationComparators: SingletonMutationArgumentComparators<Singletons, SingletonMutations> = {} as any;
+  Object.keys(entityDescriptors).forEach((k_s) => {
+    const k = k_s as (keyof Singletons) & (keyof SingletonMutations)
+    mutationComparators[k] = {} as any;
+    Object.keys(entityDescriptors[k]).forEach((field) => {
+      if (
+        field != "entityName" &&
+        field != "narrowing" &&
+        field != "widening" &&
+        field != "dependees" &&
+        field != "add" &&
+        field != "remove" &&
+        field != "default" &&
+        field != "reload"
+      )
+      (mutationComparators[k] as any)[field] = (entityDescriptors[k] as any)[field][1];
+    });
+  });
+  return [loaders, /*reloaders,*/ dirtyCheckers, dirtySetters, updaters, entityDescriptors, mutationComparators]
 }
 

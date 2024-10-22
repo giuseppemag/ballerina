@@ -1,6 +1,6 @@
 import { EntityFormView, FormLayout, Unit, unit, CreateFormView, Template, CreateFormContext, CreateFormWritableState, CreateFormForeignMutationsExpected, SimpleCallback, FormParsingResult, FormValidationResult } from "ballerina-core"
 
-export const ContainerFormView: EntityFormView<any, any, any, { layout: FormLayout }, Unit> = props => {
+export const PersonContainerFormView: EntityFormView<any, any, any, { layout: FormLayout }, Unit> = props => {
   return <>
     <table>
       <tbody>
@@ -8,13 +8,14 @@ export const ContainerFormView: EntityFormView<any, any, any, { layout: FormLayo
         {
           props.context.layout.valueSeq().map(tab =>
             tab.columns.valueSeq().map(column =>
-              <tr>
+              <tr style={{ display: "block", float: "left" }}>
                 {
                   column.groups.valueSeq().map(group =>
                     group.filter(fieldName => props.VisibleFieldKeys.has(fieldName))
                       .map(fieldName =>
-                        <td>
-                          {props.EmbeddedFields[fieldName]({ ...props, view: unit })}
+                        <td style={{ display: "block" }}>
+                          {props.EmbeddedFields[fieldName]({ ...props, 
+                            context:{...props.context, disabled:props.DisabledFieldKeys.has(fieldName) }, view: unit })}
                         </td>
                       )
                   )
@@ -28,7 +29,7 @@ export const ContainerFormView: EntityFormView<any, any, any, { layout: FormLayo
   </>
 }
 
-export const SubmitButtonWrapper: CreateFormView<any, any> = Template.Default<
+export const PersonSubmitButtonWrapper: CreateFormView<any, any> = Template.Default<
   CreateFormContext<any, any> & CreateFormWritableState<any, any>,
   CreateFormWritableState<any, any>,
   CreateFormForeignMutationsExpected<any, any> & { onSubmit: SimpleCallback<void> },
@@ -41,7 +42,7 @@ export const SubmitButtonWrapper: CreateFormView<any, any> = Template.Default<
     </>
   )
 
-export const ShowFormSetupErrors = (validatedFormsConfig: FormValidationResult, parsedFormsConfig: FormParsingResult) => ({
+export const PersonShowFormSetupErrors = (validatedFormsConfig: FormValidationResult, parsedFormsConfig: FormParsingResult) => ({
   form: Template.Default((props: any) =>
     <>
       {validatedFormsConfig.kind == "r" && JSON.stringify(validatedFormsConfig.value)}

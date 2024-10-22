@@ -1,5 +1,5 @@
 import { FormLabel, CollectionReference, DateView, EnumView, EnumMultiselectView, StringView, NumberView, BooleanView, SearchableInfiniteStreamView, InfiniteStreamMultiselectView, SharedFormState, AsyncState, BaseEnumContext } from "ballerina-core";
-import { PersonFormPredicateContext } from "../domains/predicates";
+import { PersonFormPredicateContext } from "playground-core";
 
 export const MostUglyValidationDebugView = (props: { context: { showAllErrors: boolean } & SharedFormState }) =>
   props.context.modifiedByUser && AsyncState.Operations.isLoading(props.context.validation.sync) ?

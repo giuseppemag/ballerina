@@ -41,7 +41,8 @@ export const SearchableInfiniteStreamState = <Element extends CollectionReferenc
 export type SearchableInfiniteStreamView<Element extends CollectionReference, Context extends FormLabel, ForeignMutationsExpected> = 
   View<
     Context & Value<CollectionSelection<Element>> & SearchableInfiniteStreamState<Element> & {
-      hasMoreValues:boolean
+      hasMoreValues:boolean,
+      disabled:boolean
     }, 
     SearchableInfiniteStreamState<Element>, 
     ForeignMutationsExpected & { 

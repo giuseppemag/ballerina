@@ -54,7 +54,7 @@ export const SharedFormState = {
 export type EntityFormState<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> =
   { [f in Fields]: FieldStates[f] & SharedFormState } & SharedFormState
 export type EntityFormContext<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> =
-  Context & EntityFormState<Entity, Fields, FieldStates, Context, ForeignMutationsExpected> & { visibleFields: OrderedMap<Fields, BasicPredicate<Context>> } & Value<Entity>
+  Context & EntityFormState<Entity, Fields, FieldStates, Context, ForeignMutationsExpected> & { visibleFields: OrderedMap<Fields, BasicPredicate<Context>>, disabledFields: OrderedMap<Fields, BasicPredicate<Context>> } & Value<Entity>
 export type OnChange<Entity> = (updater: BasicUpdater<Entity>, path: List<string>) => void
 export type EntityFormForeignMutationsExpected<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> =
   ForeignMutationsExpected & { onChange: OnChange<Entity> }
@@ -67,6 +67,7 @@ export type EntityFormView<Entity, Fields extends (keyof Entity) & (keyof FieldS
   View<EntityFormContext<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>, EntityFormState<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>, EntityFormForeignMutationsExpected<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>, {
     EmbeddedFields: FieldTemplates<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>,
     VisibleFieldKeys: OrderedSet<Fields>
+    DisabledFieldKeys: OrderedSet<Fields>
   }>
 export type EntityFormTemplate<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> =
   Template<
@@ -77,7 +78,7 @@ export type EntityFormTemplate<Entity, Fields extends (keyof Entity) & (keyof Fi
   >
 export type EmbeddedFieldTemplate<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> =
   Template<
-    EntityFormContext<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>,
+    EntityFormContext<Entity, Fields, FieldStates, Context, ForeignMutationsExpected> & { disabled:boolean },
     EntityFormState<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>,
     EntityFormForeignMutationsExpected<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>
   >

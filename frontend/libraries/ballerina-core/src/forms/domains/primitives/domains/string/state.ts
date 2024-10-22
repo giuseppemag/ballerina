@@ -6,7 +6,7 @@ import { OnChange, SharedFormState } from "../../../singleton/state";
 
 export type StringView<Context extends FormLabel, ForeignMutationsExpected> = 
   View<
-    Context & Value<string> & SharedFormState, 
+    Context & Value<string> & SharedFormState & { disabled:boolean }, 
     SharedFormState, 
     ForeignMutationsExpected & { onChange: OnChange<string>; setNewValue: SimpleCallback<string> }
   >;

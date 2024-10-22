@@ -21,7 +21,7 @@ export const MostUglyValidationDebugView = (props: { context: SharedFormState })
       <></>
 
 
-export const FieldViews = {
+export const PersonFieldViews = {
   BooleanViews: {
     defaultBoolean: <Context extends FormLabel, ForeignMutationsExpected>(): BooleanView<Context, ForeignMutationsExpected> =>
       props =>

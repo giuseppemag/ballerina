@@ -1,43 +1,52 @@
 import { useState } from "react";
 import "./App.css";
-import { unit, FormsConfig, parseForms, FormParsingResult, Sum, builtInsFromFieldViews, FormValidationResult } from "ballerina-core";
+import { unit, FormsConfig, parseForms, FormParsingResult, Sum, builtInsFromFieldViews, FormValidationResult, EditLauncherContext, CreateLauncherContext } from "ballerina-core";
 import { Set } from "immutable";
-import { PersonForm } from "./domains/person/template";
 import { PersonView } from "./domains/person/views/main-view";
-import { Person, PersonFormState } from "./domains/person/state";
-import { PersonFormsConfig } from "./domains/person/domains/from-config/api/config-mocks";
-import { FieldViews } from "./domains/person/domains/from-config/views/field-views";
-import { PersonFromConfigApis } from "./domains/person/domains/from-config/api/data-mocks";
-import { ContainerFormView, ShowFormSetupErrors, SubmitButtonWrapper } from "./domains/person/domains/from-config/views/wrappers";
-import { PersonConfigFormsLeafPredicates } from "./domains/person/domains/from-config/state";
+import { PersonContainerFormView, PersonShowFormSetupErrors, PersonSubmitButtonWrapper } from "./domains/person/domains/from-config/views/wrappers";
+import { PersonFormsConfig, PersonFromConfigApis, PersonConfigFormsLeafPredicates, PersonConfig, MappedPersonForm, personConfigToPersonMapping, PersonFormState, Person } from "playground-core";
+import { PersonFieldViews } from "./domains/person-from-config/views/field-views";
 
-const validatedFormsConfig: FormValidationResult = FormsConfig.Default.validateAndParseAPIResponse(builtInsFromFieldViews(FieldViews))(PersonFormsConfig)
+const validatedFormsConfig: FormValidationResult = FormsConfig.Default.validateAndParseAPIResponse(builtInsFromFieldViews(PersonFieldViews))(PersonFormsConfig)
 const parsedFormsConfig: FormParsingResult = validatedFormsConfig.kind == "l" ?
 	parseForms(
-		ContainerFormView,
-		FieldViews,
+		PersonContainerFormView,
+		PersonFieldViews,
 		PersonFromConfigApis.streamApis,
 		PersonFromConfigApis.enumApis,
 		PersonFromConfigApis.entityApis,
 		PersonConfigFormsLeafPredicates)(validatedFormsConfig.value) : Sum.Default.right([])
 
-const PersonEditForm = parsedFormsConfig.kind == "l" ?
-	parsedFormsConfig.value.edit.get("edit-person") ?? ShowFormSetupErrors(validatedFormsConfig, parsedFormsConfig) : ShowFormSetupErrors(validatedFormsConfig, parsedFormsConfig)
+const MaybePersonEditForm = parsedFormsConfig.kind == "l" ?
+	parsedFormsConfig.value.edit.get("edit-person") ?? undefined : undefined
+const PersonEditForm =
+	MaybePersonEditForm != undefined ? MaybePersonEditForm<any, any, any, EditLauncherContext<any, any, any>>()
+		: PersonShowFormSetupErrors(validatedFormsConfig, parsedFormsConfig)
 
-const PersonCreateForm = parsedFormsConfig.kind == "l" ?
-	parsedFormsConfig.value.create.get("create-person") ?? ShowFormSetupErrors(validatedFormsConfig, parsedFormsConfig) : ShowFormSetupErrors(validatedFormsConfig, parsedFormsConfig)
+const MaybePersonCreateForm = parsedFormsConfig.kind == "l" ?
+	parsedFormsConfig.value.create.get("create-person") ?? undefined : undefined
+const PersonCreateForm =
+	MaybePersonCreateForm != undefined ? MaybePersonCreateForm<any, any, any, CreateLauncherContext<any, any, any>>()
+		: PersonShowFormSetupErrors(validatedFormsConfig, parsedFormsConfig)
+
 
 export const FormsApp = (props: {}) => {
 	const [formToShow, setFormToShow] = useState(0)
 	const [personCreateFormState, setPersonCreateFormState] = useState(PersonCreateForm.initialState)
 	const [personEditFormState, setPersonEditFormState] = useState(PersonEditForm.initialState)
 	const forms = [
-		{ form: PersonCreateForm.form, state: personCreateFormState, setState: setPersonCreateFormState },
-		{ form: PersonEditForm.form, state: personEditFormState, setState: setPersonEditFormState },
+		{
+			form: PersonCreateForm.form, state: personCreateFormState, setState: setPersonCreateFormState,
+			container: PersonContainerFormView, submitButtonWrapper: PersonSubmitButtonWrapper
+		},
+		{
+			form: PersonEditForm.form, state: personEditFormState, setState: setPersonEditFormState,
+			container: PersonContainerFormView, submitButtonWrapper: PersonSubmitButtonWrapper
+		},
 	]
 	const currentForm = forms[formToShow % forms.length]
 	const [personFormState, setPersonFormState] = useState(PersonFormState.Default(""))
-	const [personState, setPersonState] = useState(Person.Default.mocked())
+	const [personConfigState, setPersonConfigState] = useState(PersonConfig.Default())
 
 	return (
 		<div className="App">
@@ -47,12 +56,13 @@ export const FormsApp = (props: {}) => {
 					<tbody>
 						<tr>
 							<td>
-								<PersonForm
+								{JSON.stringify(personConfigState)}
+								<MappedPersonForm 
 									context={{
 										...personFormState,
-										value: personState,
-										formState: personEditFormState,
-										person: personState,
+										value: personConfigState,
+										formState: personFormState,
+										person: personConfigToPersonMapping.from(personConfigState),
 										columns: [["name", "surname", "gender", "birthday"],
 										["subscribeToNewsletter", "interests"],
 										["departments", "address"]],
@@ -63,7 +73,10 @@ export const FormsApp = (props: {}) => {
 									setState={_ => setPersonFormState(_)}
 									view={PersonView}
 									foreignMutations={{
-										onChange: _ => setPersonState(_)
+										onChange: (_, path) => {
+											setPersonConfigState(_)
+											console.log(path.toArray())
+										}
 									}}
 								/>
 							</td>
@@ -76,14 +89,14 @@ export const FormsApp = (props: {}) => {
 										context={{
 											entityId: "abcd-1234",
 											...currentForm.state,
-											containerFormView: ContainerFormView,
-											submitButtonWrapper: SubmitButtonWrapper,
+											containerFormView: currentForm.container,
+											submitButtonWrapper: currentForm.submitButtonWrapper,
 											extraContext: {
 												flags: Set(["BC", "X"])
 											}
-										}}
-										setState={(_: any) => currentForm.setState(_)}
-										foreignMutations={{ onSubmitted:(_:any) => console.log(`submitted ${_.name}`)}}
+										} as any}
+										setState={(_) => currentForm.setState(_)}
+										foreignMutations={{ onSubmitted: (_: any) => console.log(`submitted ${_.name}`) }}
 										view={unit}
 									/>
 								}

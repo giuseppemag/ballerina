@@ -15,7 +15,7 @@ import { SearchableInfiniteStreamState, SearchableInfiniteStreamView } from "./s
 export const SearchableInfiniteStreamForm = <Element extends CollectionReference, Context extends FormLabel, ForeignMutationsExpected>(
   validation:BasicFun<CollectionSelection<Element>, Promise<FieldValidation>>
 ) => {
-  const Co = CoTypedFactory<Context & Value<CollectionSelection<Element>>, SearchableInfiniteStreamState<Element>>();
+  const Co = CoTypedFactory<Context & Value<CollectionSelection<Element>> & { disabled:boolean }, SearchableInfiniteStreamState<Element>>();
   const DebouncerCo = CoTypedFactory<Context & { onDebounce: SimpleCallback<void>; } & Value<CollectionSelection<Element>>, SearchableInfiniteStreamState<Element>>();
   const DebouncedCo = CoTypedFactory<{ onDebounce: SimpleCallback<void>; }, Value<string>>();
   const debouncer = DebouncerCo.Repeat(
@@ -44,7 +44,7 @@ export const SearchableInfiniteStreamForm = <Element extends CollectionReference
     }
   );
 
-  return Template.Default<Context & Value<CollectionSelection<Element>>, SearchableInfiniteStreamState<Element>, ForeignMutationsExpected & { onChange: OnChange<CollectionSelection<Element>>; },
+  return Template.Default<Context & Value<CollectionSelection<Element>> & { disabled:boolean }, SearchableInfiniteStreamState<Element>, ForeignMutationsExpected & { onChange: OnChange<CollectionSelection<Element>>; },
     SearchableInfiniteStreamView<Element, Context, ForeignMutationsExpected>>(props => <>
       <props.view {...props}
         context={{
@@ -107,7 +107,7 @@ export const SearchableInfiniteStreamForm = <Element extends CollectionReference
           )
         )
       })),
-      ValidateRunner<Context, SearchableInfiniteStreamState<Element>, ForeignMutationsExpected, CollectionSelection<Element>>(
+      ValidateRunner<Context & { disabled:boolean }, SearchableInfiniteStreamState<Element>, ForeignMutationsExpected, CollectionSelection<Element>>(
         _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation)
       ),
     ]);

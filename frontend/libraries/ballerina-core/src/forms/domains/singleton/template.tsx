@@ -6,7 +6,7 @@ import { Value } from "../../../value/state"
 export const Form = <Entity, FieldStates, Context, ForeignMutationsExpected>() => ({
   Default: <Fields extends (keyof Entity) & (keyof FieldStates)>() => {
     type State = EntityFormState<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>
-    type FieldTemplate<f extends Fields> = Template<Context & State[f] & Value<Entity[f]>, State[f], ForeignMutationsExpected & { onChange: OnChange<Entity[f]> }>
+    type FieldTemplate<f extends Fields> = Template<Context & State[f] & Value<Entity[f]> & { disabled:boolean }, State[f], ForeignMutationsExpected & { onChange: OnChange<Entity[f]> }>
     type EntityFormConfig = { [f in Fields]: FieldTemplate<f> }
 
     return {
@@ -16,7 +16,7 @@ export const Form = <Entity, FieldStates, Context, ForeignMutationsExpected>() =
         const setFieldTemplate = <field extends Fields>(field: field) => {
           fieldTemplates[field] =
             config[field]
-              .mapContext<EntityFormContext<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>>(_ => 
+              .mapContext<EntityFormContext<Entity, Fields, FieldStates, Context, ForeignMutationsExpected> & { disabled:boolean }>(_ => 
                 ({ ..._, value: _.value[field], ...(_[field]) }) as any)
               .mapState<State>(_ => current => ({ ...current, [field]: _(current[field]) }))
               .mapForeignMutationsFromProps<EntityFormForeignMutationsExpected<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>>(props =>
@@ -35,7 +35,7 @@ export const Form = <Entity, FieldStates, Context, ForeignMutationsExpected>() =
                     props.foreignMutations.onChange((current: Entity): Entity => ({
                       ...current,
                       [field]: _(current[field])
-                    }), path.push(field as string)),
+                    }), path.unshift(field as string)),
                     0)
                 }
               }))
@@ -52,9 +52,15 @@ export const Form = <Entity, FieldStates, Context, ForeignMutationsExpected>() =
               if (!showField(props.context)) return
               visibleFieldKeys = visibleFieldKeys.add(field)
             })
+            let disabledFieldKeys: OrderedSet<Fields> = OrderedSet()
+            props.context.disabledFields.forEach((showField, field) => {
+              if (!showField(props.context)) return
+              disabledFieldKeys = disabledFieldKeys.add(field)
+            })
             return <>
               <props.view {...props}
                 VisibleFieldKeys={visibleFieldKeys}
+                DisabledFieldKeys={disabledFieldKeys}
                 EmbeddedFields={fieldTemplates}
               />
             </>

@@ -1,12 +1,8 @@
-import { BaseEnumContext, BooleanForm, DateForm, EnumForm, EnumMultiselectForm, Form, FormLabel, id, InfiniteMultiselectDropdownForm, Predicate, PromiseRepo, replaceWith, StringForm, Unit, ValidationErrorWithPath } from "ballerina-core";
-import { Range, OrderedMap, Set, List } from "immutable";
+import { BaseEnumContext, BasicUpdater, BooleanForm, DateForm, EnumForm, EnumMultiselectForm, Form, FormLabel, id, InfiniteMultiselectDropdownForm, Predicate, PromiseRepo, replaceWith, StringForm, Unit, ValidationErrorWithPath } from "ballerina-core";
+import { OrderedMap, Range, Set } from "immutable";
 import { PersonFieldViews } from "./views/field-views";
-import { AddressForm } from "./domains/address/template";
 import { AddressView } from "./domains/address/views/main-view";
-import { PersonFormPredicateContext } from "./domains/predicates";
-import { Interest, PersonApi } from "./apis/mocks";
-import { Person, PersonFormState, Gender, Department } from "./state";
-import { Address } from "./domains/address/state";
+import { PersonFormPredicateContext, PersonApi, Interest, AddressForm, Address, Department, Gender, Person, PersonFormState } from "playground-core";
 
 export const PersonFormBuilder = Form<Person, PersonFormState, PersonFormPredicateContext & { columns: [Array<keyof Person>, Array<keyof Person>, Array<keyof Person>] }, Unit>().Default<keyof Person>()
 export const PersonForm = PersonFormBuilder.template({
@@ -35,6 +31,8 @@ export const PersonForm = PersonFormBuilder.template({
     .withView(AddressView)
     .mapContext(_ => ({
       ..._,
-      visibleFields: Address.Operations.VisibleFields
+      visibleFields: Address.Operations.VisibleFields,
+      disabledFields: OrderedMap()
     })),
 }, PersonApi.validate)
+

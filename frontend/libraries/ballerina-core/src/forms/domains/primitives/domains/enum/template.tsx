@@ -12,8 +12,8 @@ import { BaseEnumContext, EnumFormState, EnumView } from "./state";
 export const EnumForm = <Context extends FormLabel & BaseEnumContext<Context, Element>, ForeignMutationsExpected, Element extends CollectionReference>(
   validation: BasicFun<CollectionSelection<Element>, Promise<FieldValidation>>
 ) => {
-  const Co = CoTypedFactory<Context & Value<CollectionSelection<Element>>, EnumFormState<Context, Element>>()
-  return Template.Default<Context & Value<CollectionSelection<Element>>, EnumFormState<Context, Element>, ForeignMutationsExpected & { onChange: OnChange<CollectionSelection<Element>>; },
+  const Co = CoTypedFactory<Context & Value<CollectionSelection<Element>> & { disabled:boolean }, EnumFormState<Context, Element>>()
+  return Template.Default<Context & Value<CollectionSelection<Element>> & { disabled:boolean }, EnumFormState<Context, Element>, ForeignMutationsExpected & { onChange: OnChange<CollectionSelection<Element>>; },
     EnumView<Context, Element, ForeignMutationsExpected>>(props => <>
       <props.view {...props}
         context={{
@@ -35,7 +35,7 @@ export const EnumForm = <Context extends FormLabel & BaseEnumContext<Context, El
         }} />
     </>
     ).any([
-      ValidateRunner<Context, EnumFormState<Context, Element>, ForeignMutationsExpected, CollectionSelection<Element>>(
+      ValidateRunner<Context & { disabled:boolean }, EnumFormState<Context, Element>, ForeignMutationsExpected, CollectionSelection<Element>>(
         _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation)
       ),
       Co.Template<ForeignMutationsExpected & { onChange: OnChange<CollectionSelection<Element>>; }>(

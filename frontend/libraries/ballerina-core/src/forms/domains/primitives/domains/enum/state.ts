@@ -20,7 +20,7 @@ export const EnumFormState = <Context extends BaseEnumContext<Context, Element>,
 });
 export type EnumView<Context extends FormLabel & BaseEnumContext<Context, Element>, Element extends CollectionReference, ForeignMutationsExpected> = View<
   Context & Value<CollectionSelection<Element>> & EnumFormState<Context, Element> & 
-  { activeOptions: "loading" | Array<Element>; }, EnumFormState<Context, Element>, 
+  { activeOptions: "loading" | Array<Element>; } & { disabled:boolean }, EnumFormState<Context, Element>, 
   ForeignMutationsExpected & { 
     onChange: OnChange<CollectionSelection<Element>>; 
     setNewValue: SimpleCallback<Guid> 

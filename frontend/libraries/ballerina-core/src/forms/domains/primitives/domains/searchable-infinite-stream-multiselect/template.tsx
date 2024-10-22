@@ -15,7 +15,7 @@ import { InfiniteStreamMultiselectView } from "./state";
 export const InfiniteMultiselectDropdownForm = <Element extends CollectionReference, Context extends FormLabel, ForeignMutationsExpected>(
   validation:BasicFun<OrderedMap<Guid, Element>, Promise<FieldValidation>>
 ) => {
-  const Co = CoTypedFactory<Context & Value<OrderedMap<Guid, Element>>, SearchableInfiniteStreamState<Element>>();
+  const Co = CoTypedFactory<Context & Value<OrderedMap<Guid, Element>> & { disabled:boolean }, SearchableInfiniteStreamState<Element>>();
   const DebouncerCo = CoTypedFactory<Context & { onDebounce: SimpleCallback<void>; } & Value<OrderedMap<Guid, Element>>, SearchableInfiniteStreamState<Element>>();
   const DebouncedCo = CoTypedFactory<{ onDebounce: SimpleCallback<void>; }, Value<string>>();
   const debouncer = DebouncerCo.Repeat(
@@ -44,7 +44,7 @@ export const InfiniteMultiselectDropdownForm = <Element extends CollectionRefere
     }
   );
 
-  return Template.Default<Context & Value<OrderedMap<Guid, Element>>, SearchableInfiniteStreamState<Element>, ForeignMutationsExpected & { onChange: OnChange<OrderedMap<Guid, Element>>; }, InfiniteStreamMultiselectView<Element, Context, ForeignMutationsExpected>>(props => <>
+  return Template.Default<Context & Value<OrderedMap<Guid, Element>> & { disabled:boolean }, SearchableInfiniteStreamState<Element>, ForeignMutationsExpected & { onChange: OnChange<OrderedMap<Guid, Element>>; }, InfiniteStreamMultiselectView<Element, Context, ForeignMutationsExpected>>(props => <>
     <props.view {...props}
       context={{
         ...props.context,
@@ -112,7 +112,7 @@ export const InfiniteMultiselectDropdownForm = <Element extends CollectionRefere
         )
       )
     })),
-    ValidateRunner<Context, SearchableInfiniteStreamState<Element>, ForeignMutationsExpected, OrderedMap<Guid, Element>>(
+    ValidateRunner<Context & { disabled:boolean }, SearchableInfiniteStreamState<Element>, ForeignMutationsExpected, OrderedMap<Guid, Element>>(
       _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation)
     ),
   ]);

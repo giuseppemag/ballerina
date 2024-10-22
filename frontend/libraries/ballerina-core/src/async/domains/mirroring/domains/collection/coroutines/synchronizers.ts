@@ -249,7 +249,21 @@ export const collectionEntityUpdater = <Collections, CollectionMutations, WholeC
   Collection<Collections[k]>().Updaters.Template.entityValue(id, u)
 ));
 
+export type CollectionMutationArgumentComparators<Collections, CollectionMutations> = {
+  [k in keyof Collections & keyof CollectionMutations]: {[_ in keyof CollectionMutations[k]]: MutationArgumentComparator<CollectionMutations[k][_]>};
+};
+
+export type WholeCollectionMutationArgumentComparators<Collections, WholeCollectionMutations> = {
+  [k in keyof Collections & keyof WholeCollectionMutations]: {[_ in keyof WholeCollectionMutations[k]]: MutationArgumentComparator<WholeCollectionMutations[k][_]>};
+};
+
 export type InsertionPosition = { kind: "after", id: Guid } | { kind: "before", id: Guid } | { kind: "at the end" } | { kind: "at the beginning" }
+
+export type ComparisonResult = ">" | "<" | "==";
+
+export type MutationArgumentComparator<T> = BasicFun<[T, T], ComparisonResult>;
+
+export const withTrivialComparator = <f, ma>(_: f): [f, MutationArgumentComparator<ma>] => [_, (_) => "=="];
 
 export type SynchronizableCollectionEntity<Context, Collections, CollectionMutations, WholeCollectionMutations, SynchronizedEntities, k extends (keyof Collections) & (keyof CollectionMutations) & (keyof WholeCollectionMutations)> = {
   entityName: k,
@@ -265,10 +279,16 @@ export type SynchronizableCollectionEntity<Context, Collections, CollectionMutat
   // reload: () =>
   //   Coroutine<Context & Synchronized<Unit, OrderedMap<Guid, CollectionEntity<Collections[k]>>>, Synchronized<Unit, OrderedMap<Guid, CollectionEntity<Collections[k]>>>, Unit>,
 } & {
-  [_ in keyof (CollectionMutations[k])]: BasicFun<CollectionMutations[k][_], Coroutine<Context & Synchronized<Value<Synchronized<Unit, Collections[k]>>, Unit>, Synchronized<Value<Synchronized<Unit, Collections[k]>>, Unit>, Unit>>
+  [_ in keyof (CollectionMutations[k])]: [
+    BasicFun<CollectionMutations[k][_], Coroutine<Context & Synchronized<Value<Synchronized<Unit, Collections[k]>>, Unit>, Synchronized<Value<Synchronized<Unit, Collections[k]>>, Unit>, Unit>>,
+    MutationArgumentComparator<CollectionMutations[k][_]>,
+  ]
 } & {
   wholeMutations:{
-    [_ in keyof (WholeCollectionMutations[k])]: BasicFun<WholeCollectionMutations[k][_], Coroutine<Context & Synchronized<Unit, OrderedMap<Guid, CollectionEntity<Collections[k]>>>, Synchronized<Unit, OrderedMap<Guid, CollectionEntity<Collections[k]>>>, Unit>>
+    [_ in keyof (WholeCollectionMutations[k])]: [
+      BasicFun<WholeCollectionMutations[k][_], Coroutine<Context & Synchronized<Unit, OrderedMap<Guid, CollectionEntity<Collections[k]>>>, Synchronized<Unit, OrderedMap<Guid, CollectionEntity<Collections[k]>>>, Unit>>,
+      MutationArgumentComparator<WholeCollectionMutations[k][_]>
+    ]
   }
 }
 
@@ -284,7 +304,9 @@ export const collectionSynchronizationContext = <Context, Collections, Collectio
     CollectionDirtyCheckers<Collections, CollectionMutations, WholeCollectionMutations>,
     CollectionDirtySetters<Context, Collections, CollectionMutations, WholeCollectionMutations, SynchronizedEntities>,
     CollectionUpdaters<Collections, CollectionMutations, WholeCollectionMutations, SynchronizedEntities>,
-    SynchronizableEntityDescriptor<Context, Collections, CollectionMutations, WholeCollectionMutations, SynchronizedEntities>
+    SynchronizableEntityDescriptor<Context, Collections, CollectionMutations, WholeCollectionMutations, SynchronizedEntities>,
+    CollectionMutationArgumentComparators<Collections, CollectionMutations>,
+    CollectionMutationArgumentComparators<Collections, WholeCollectionMutations>,
   ] => {
   let synchronizers: CollectionSynchronizers<Context, Collections, CollectionMutations, WholeCollectionMutations> = {} as any
   Object.keys(entityDescriptors).forEach(k_s => {
@@ -307,28 +329,63 @@ export const collectionSynchronizationContext = <Context, Collections, Collectio
       (synchronizers[k] as any)["wholeMutations"][field] = (mutationArg:any) => (entityDescriptors[k]["wholeMutations"] as any)[field](mutationArg)
     })
   })
-  let loaders: CollectionLoaders<Context, Collections, CollectionMutations, WholeCollectionMutations, SynchronizedEntities> = {} as any
+  const loaders: CollectionLoaders<Context, Collections, CollectionMutations, WholeCollectionMutations, SynchronizedEntities> = {} as any
   Object.keys(entityDescriptors).forEach(k_s => {
     const k = k_s as (keyof Collections) & (keyof CollectionMutations) & (keyof WholeCollectionMutations)
     loaders[k] = collectionEntityLoader<Context, Collections, CollectionMutations, WholeCollectionMutations, SynchronizedEntities>(synchronizers)(k, entityDescriptors[k].id, entityDescriptors[k].narrowing, entityDescriptors[k].widening, entityDescriptors[k].dependees)
   })
-  let dirtyCheckers: CollectionDirtyCheckers<Collections, CollectionMutations, WholeCollectionMutations> = {} as any
+  const dirtyCheckers: CollectionDirtyCheckers<Collections, CollectionMutations, WholeCollectionMutations> = {} as any
   Object.keys(entityDescriptors).forEach(k_s => {
     const k = k_s as (keyof Collections) & (keyof CollectionMutations) & (keyof WholeCollectionMutations)
     dirtyCheckers[k] = Fun(collectionCheckNotDirty<Collections, CollectionMutations, WholeCollectionMutations>())
   })
-  let dirtySetters: CollectionDirtySetters<Context, Collections, CollectionMutations, WholeCollectionMutations, SynchronizedEntities> = {} as any
+  const dirtySetters: CollectionDirtySetters<Context, Collections, CollectionMutations, WholeCollectionMutations, SynchronizedEntities> = {} as any
   Object.keys(entityDescriptors).forEach(k_s => {
     const k = k_s as (keyof Collections) & (keyof CollectionMutations) & (keyof WholeCollectionMutations)
     dirtySetters[k] =
       collectionDirtySetter<Context, Collections, CollectionMutations, WholeCollectionMutations, SynchronizedEntities>()
         (k, entityDescriptors[k].narrowing, entityDescriptors[k].widening)
   })
-  let updaters: CollectionUpdaters<Collections, CollectionMutations, WholeCollectionMutations, SynchronizedEntities> = {} as any
+  const updaters: CollectionUpdaters<Collections, CollectionMutations, WholeCollectionMutations, SynchronizedEntities> = {} as any
   Object.keys(entityDescriptors).forEach(k_s => {
     const k = k_s as (keyof Collections) & (keyof CollectionMutations) & (keyof WholeCollectionMutations)
     updaters[k] = collectionEntityUpdater<Collections, CollectionMutations, WholeCollectionMutations, SynchronizedEntities>()(entityDescriptors[k].widening)
   })
-
-  return [loaders, dirtyCheckers, dirtySetters, updaters, entityDescriptors]
+  const mutationComparators: CollectionMutationArgumentComparators<Collections, CollectionMutations> = {} as any;
+  Object.keys(entityDescriptors).forEach((k_s) => {
+    const k = k_s as (keyof Collections) & (keyof CollectionMutations) & (keyof WholeCollectionMutations);
+    mutationComparators[k] = {} as any;
+    Object.keys(entityDescriptors[k]).forEach((field) => {
+      if (
+        field != "entityName" &&
+        field != "narrowing" &&
+        field != "widening" &&
+        field != "dependees" &&
+        field != "add" &&
+        field != "remove" &&
+        field != "default" &&
+        field != "reload"
+      )
+        (mutationComparators[k] as any)[field] = (entityDescriptors[k] as any)[field][1]
+    });
+  });
+  const wholeMutationComparators: WholeCollectionMutationArgumentComparators<Collections, WholeCollectionMutations> = {} as any;
+  Object.keys(entityDescriptors).forEach((k_s) => {
+    const k = k_s as (keyof Collections) & (keyof CollectionMutations) & (keyof WholeCollectionMutations);
+    wholeMutationComparators[k] = {} as any;
+    Object.keys(entityDescriptors[k]).forEach((field) => {
+      if (
+        field != "entityName" &&
+        field != "narrowing" &&
+        field != "widening" &&
+        field != "dependees" &&
+        field != "add" &&
+        field != "remove" &&
+        field != "default" &&
+        field != "reload"
+      )
+        (wholeMutationComparators[k] as any)[field] = (entityDescriptors[k] as any)[field][1];
+    });
+  });
+  return [loaders, dirtyCheckers, dirtySetters, updaters, entityDescriptors, mutationComparators, wholeMutationComparators]
 }

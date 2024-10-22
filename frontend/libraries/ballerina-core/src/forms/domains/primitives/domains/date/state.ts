@@ -17,7 +17,7 @@ export const DateFormState = {
 };
 export type DateView<Context extends FormLabel, ForeignMutationsExpected> = 
   View<
-    Context & Value<Date> & DateFormState, 
+    Context & Value<Date> & DateFormState & { disabled:boolean }, 
     DateFormState, 
     ForeignMutationsExpected & { onChange: OnChange<Date>; setNewValue: SimpleCallback<string> }
   >;

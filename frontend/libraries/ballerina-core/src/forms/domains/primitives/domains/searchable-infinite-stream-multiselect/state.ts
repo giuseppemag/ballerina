@@ -13,7 +13,8 @@ export type InfiniteStreamMultiselectView<Element extends CollectionReference, C
     Context & Value<OrderedMap<Guid, Element>> & SearchableInfiniteStreamState<Element> & {
       hasMoreValues:boolean,
       isLoading:boolean,
-      availableOptions:Array<Element>
+      availableOptions:Array<Element>,
+      disabled: boolean
     }, 
     SearchableInfiniteStreamState<Element>, 
     ForeignMutationsExpected & { 

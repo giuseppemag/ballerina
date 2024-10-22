@@ -1,7 +1,6 @@
 import { PromiseRepo, Unit, Form, StringForm, FormLabel, NumberForm, SearchableInfiniteStreamForm } from "ballerina-core";
-import { PersonFormPredicateContext as PersonFormPredicatesContext } from "../predicates";
+import { Address, AddressFormState, City, PersonFormPredicateContext as PersonFormPredicatesContext } from "playground-core";
 import { PersonFieldViews } from "../../views/field-views";
-import { Address, AddressFormState, City } from "./state";
 
 
 export const AddressFormBuilder = Form<Address, AddressFormState, PersonFormPredicatesContext, Unit>().Default<keyof Address>();

@@ -12,8 +12,8 @@ import { EnumMultiselectView } from "./state";
 export const EnumMultiselectForm = <Context extends FormLabel & BaseEnumContext<Context, Element>, ForeignMutationsExpected, Element extends CollectionReference>(
   validation:BasicFun<OrderedMap<Guid, Element>, Promise<FieldValidation>>
 ) => {
-  const Co = CoTypedFactory<Context & Value<OrderedMap<Guid, Element>> & EnumFormState<Context, Element>, EnumFormState<Context, Element>>()
-  return Template.Default<Context & Value<OrderedMap<Guid, Element>>, EnumFormState<Context, Element>, ForeignMutationsExpected & { onChange: OnChange<OrderedMap<Guid, Element>>; }, EnumMultiselectView<Context, Element, ForeignMutationsExpected>>(props => <>
+  const Co = CoTypedFactory<Context & Value<OrderedMap<Guid, Element>> & EnumFormState<Context, Element> & { disabled:boolean }, EnumFormState<Context, Element>>()
+  return Template.Default<Context & Value<OrderedMap<Guid, Element>> & { disabled: boolean }, EnumFormState<Context, Element>, ForeignMutationsExpected & { onChange: OnChange<OrderedMap<Guid, Element>>; }, EnumMultiselectView<Context, Element, ForeignMutationsExpected>>(props => <>
     <props.view {...props}
       context={{
         ...props.context,
@@ -39,7 +39,7 @@ export const EnumMultiselectForm = <Context extends FormLabel & BaseEnumContext<
     />
   </>
   ).any([
-    ValidateRunner<Context, EnumFormState<Context, Element>, ForeignMutationsExpected, OrderedMap<Guid, Element>>(
+    ValidateRunner<Context & { disabled:boolean }, EnumFormState<Context, Element>, ForeignMutationsExpected, OrderedMap<Guid, Element>>(
       _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation)
     ),
     Co.Template<ForeignMutationsExpected & { onChange: OnChange<OrderedMap<Guid, Element>>; }>(

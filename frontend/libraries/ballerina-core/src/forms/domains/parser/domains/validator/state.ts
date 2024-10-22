@@ -1,5 +1,5 @@
 import { Set, Map, OrderedMap } from "immutable";
-import { BoolExpr, Sum } from "../../../../../../main";
+import { BoolExpr, FormsConfigMerger, MappingPaths, Sum } from "../../../../../../main";
 
 
 export type FieldName = string;
@@ -12,14 +12,30 @@ export type TypeDefinition = {
 export type Type = {
   kind: "lookup"; name: TypeName;
 } | {
-  kind: "primitive"; value: "string" | "number" | "boolean" | "Date" | "CollectionReference";
+  kind: "primitive"; value: "string" | "number" | "maybeBoolean" | "boolean" | "Date" | "CollectionReference";
 } | {
   kind: "application"; value: TypeName; args: Array<TypeName>;
 };
+export const Type = {
+  Default:{
+    lookup:(name:TypeName) : Type => ({ kind:"lookup", name })
+  },
+  Operations: {
+    Equals: (fst: Type, snd: Type): boolean =>
+      fst.kind == "lookup" && snd.kind == "lookup" ? fst.name == snd.name :
+        fst.kind == "primitive" && snd.kind == "primitive" ? fst.value == snd.value :
+          fst.kind == "application" && snd.kind == "application" ?
+            fst.value == snd.value &&
+            fst.args.length == snd.args.length &&
+            fst.args.every((v, i) => v == snd.args[i]) :
+            false
+  }
+}
 export type FieldConfig = {
   renderer: string;
   api: { stream?: string, enumOptions?: string },
   visible: BoolExpr<any>;
+  disabled: BoolExpr<any>;
 };
 export type FormDef = {
   name: string;
@@ -36,26 +52,39 @@ export type TabLayout = {
   columns: OrderedMap<string, ColumnLayout>;
 };
 export type Launcher = {
-  name:string,
-  kind:"create"|"edit",
-  form:string,
-  api:string
+  name: string,
+  kind: "create" | "edit",
+  form: string,
+  api: string
+}
+export type MappingLauncher = {
+  name: string,
+  kind: "mapping",
+  form: string,
+  mapping: string
 }
 export type EntityApi = {
-  type:TypeName,
-  methods:{ create:boolean, get:boolean, update:boolean, default:boolean }
+  type: TypeName,
+  methods: { create: boolean, get: boolean, update: boolean, default: boolean }
+}
+export type EntitiesMapping = {
+  source: TypeName,
+  target: TypeName,
+  paths: MappingPaths<any>
 }
 export type FormsConfig = {
   types: Map<TypeName, TypeDefinition>;
+  forms: Map<string, FormDef>;
   apis: {
     enums: Map<string, TypeName>;
     streams: Map<string, TypeName>;
     entities: Map<string, EntityApi>;
   };
-  forms: Map<string, FormDef>;
+  mappings: Map<string, EntitiesMapping>,
   launchers: {
-    create:Map<string, Launcher>;
-    edit:Map<string, Launcher>;
+    create: Map<string, Launcher>;
+    edit: Map<string, Launcher>;
+    mappings: Map<string, MappingLauncher>;
   }
 };
 export type FormValidationError = string;
@@ -65,6 +94,7 @@ export type BuiltIns = {
   generics: Set<string>;
   renderers: {
     BooleanViews: Set<string>;
+    MaybeBooleanViews: Set<string>;
     NumberViews: Set<string>;
     StringViews: Set<string>;
     DateViews: Set<string>;
@@ -80,6 +110,13 @@ export const FormsConfig = {
   Default: {
     validateAndParseAPIResponse: (builtIns: BuiltIns) => (formsConfig: any): FormValidationResult => {
       let errors: Array<FormValidationError> = [];
+      if (Array.isArray(formsConfig)) {
+        alert("formsConfig is an array!")
+        const merged = FormsConfigMerger.Default.merge(formsConfig, errors)
+        formsConfig = merged[0]
+        errors = merged[0]
+      }
+
       let types: Map<TypeName, TypeDefinition> = Map();
       if ("types" in formsConfig == false) {
         errors.push("the formsConfig does not contain a 'types' field");
@@ -112,11 +149,11 @@ export const FormsConfig = {
               typeof configFieldType["fun"] == "string" &&
               Array.isArray(configFieldType["args"]) &&
               configFieldType["args"].every(_ => typeof (_) == "string")) {
-                const fieldType:Type = {
-                  kind: "application",
-                  value: configFieldType["fun"] as any,
-                  args: configFieldType["args"] as any,
-                }
+              const fieldType: Type = {
+                kind: "application",
+                value: configFieldType["fun"] as any,
+                args: configFieldType["args"] as any,
+              }
               typeDef.fields = typeDef.fields.set(fieldName, fieldType);
             }
             else
@@ -133,9 +170,9 @@ export const FormsConfig = {
           if (fieldDef.kind == "primitive" && !builtIns.primitives.includes(fieldDef.value))
             errors.push(`field ${fieldName} of type ${typeName} is non-existent primitive type ${fieldDef.value}`);
           if (fieldDef.kind == "lookup" && !types.has(fieldDef.name))
-            errors.push(`field ${fieldName} of type ${typeName} is non-existent defined type ${fieldDef.name}`);
+            errors.push(`field ${fieldName} of type ${typeName} is non-existent type ${fieldDef.name}`);
           if (fieldDef.kind == "application" && !builtIns.generics.includes(fieldDef.value))
-            errors.push(`field ${fieldName} of type ${typeName} applies non-existent generic  type ${fieldDef.value}`);
+            errors.push(`field ${fieldName} of type ${typeName} applies non-existent generic type ${fieldDef.value}`);
           if (fieldDef.kind == "application" && fieldDef.args.some(argType => !builtIns.primitives.includes(argType) && !types.has(argType)))
             errors.push(`field ${fieldName} of type ${typeName} applies non-existent type arguments ${JSON.stringify(fieldDef.args.filter(argType => !builtIns.primitives.has(argType) && !types.has(argType)))}`);
           if (fieldDef.kind == "application" && fieldDef.value == "SingleSelection") {
@@ -143,7 +180,7 @@ export const FormsConfig = {
               errors.push(`field ${fieldName} in type ${typeName}: SingleSelection should have exactly one type argument, found ${JSON.stringify(fieldDef.args)}`);
             else {
               const argType = types.get(fieldDef.args[0])!
-              if (argType.extends.length != 1 || argType.extends[0] != "CollectionReference") 
+              if (argType.extends.length != 1 || argType.extends[0] != "CollectionReference")
                 errors.push(`field ${fieldName} in type ${typeName}: SingleSelection requires ${argType.name} to 'extend CollectionReference'`);
             }
           }
@@ -152,11 +189,11 @@ export const FormsConfig = {
               errors.push(`field ${fieldName} in type ${typeName}: Multiselection should have exactly one type argument, found ${JSON.stringify(fieldDef.args)}`);
             else {
               const argType = types.get(fieldDef.args[0])!
-              if (argType.extends.length != 1 || argType.extends[0] != "CollectionReference") 
+              if (argType.extends.length != 1 || argType.extends[0] != "CollectionReference")
                 errors.push(`field ${fieldName} in type ${typeName}: Multiselection requires ${argType.name} to 'extend CollectionReference'`);
             }
           }
-    });
+        });
       });
 
       if ("forms" in formsConfig == false) {
@@ -165,6 +202,10 @@ export const FormsConfig = {
       }
       if ("apis" in formsConfig == false) {
         errors.push("the formsConfig does not contain an 'apis' field");
+        return Sum.Default.right(errors);
+      }
+      if ("mappings" in formsConfig == false) {
+        errors.push("the formsConfig does not contain a 'mappings' field");
         return Sum.Default.right(errors);
       }
       if ("enumOptions" in formsConfig["apis"] == false) {
@@ -198,15 +239,71 @@ export const FormsConfig = {
           errors.push(`formsConfig.apis.entities refers to non-existent type ${formsConfig['apis']['entities'][entityApiName]["type"]}`);
         } else {
           entities = entities.set(entityApiName, {
-            type:entityApiConfig["type"],
-            methods:{
-              create:entityApiConfig["methods"].includes("create"),
-              get:entityApiConfig["methods"].includes("get"),
-              update:entityApiConfig["methods"].includes("update"),
-              default:entityApiConfig["methods"].includes("default"),
+            type: entityApiConfig["type"],
+            methods: {
+              create: entityApiConfig["methods"].includes("create"),
+              get: entityApiConfig["methods"].includes("get"),
+              update: entityApiConfig["methods"].includes("update"),
+              default: entityApiConfig["methods"].includes("default"),
             }
           })
         }
+      })
+
+      let mappings: Map<string, EntitiesMapping> = Map()
+      Object.keys(formsConfig["mappings"]).forEach((mappingName: any) => {
+        const mapping = formsConfig["mappings"][mappingName]
+        if (!("source" in mapping && "target" in mapping && "paths" in mapping))
+          errors.push(`formsConfig.mappings.${mappingName} does not have all the required fields ('source', 'target', and 'path')`);
+        else {
+          const source = mapping.source as string
+          const target = mapping.target as string
+          const paths = mapping.paths
+          if (!types.has(source))
+            errors.push(`formsConfig.mappings.source refers to non-existent type ${source}`)
+          if (!types.has(target))
+            errors.push(`formsConfig.mappings.target refers to non-existent type ${target}`)
+          const lookupPath = (source: Type, path: Array<string>): Type | undefined => {
+            if (path.length <= 0) return source
+            if (source.kind != "lookup" || !types.has(source.name)) {
+              errors.push(`formsConfig.mappings ${JSON.stringify(source)} is not a lookup or does not exist`)
+            } else {
+              const sourceTypeDef = types.get(source.name)!
+              if (!sourceTypeDef.fields.has(path[0])) {
+                errors.push(`path ${JSON.stringify(path)} refers to non-existent field ${path[0]}`)
+              }
+              return lookupPath(sourceTypeDef.fields.get(path[0])!, path.slice(1))
+            }
+            return undefined
+          }
+          const mappingPathValidator = (source: Type, target: Type, path: any) => {
+            if (Array.isArray(path)) {
+              const sourceType = lookupPath(source, path)
+              if (!sourceType || Type.Operations.Equals(sourceType, target) == false) {
+                errors.push(`path ${JSON.stringify(path)} connects different types ${JSON.stringify(sourceType)} and ${JSON.stringify(target)}`)
+              }
+            } else {
+              if (target.kind != "lookup" || !types.has(target.name)) {
+                errors.push(`path ${JSON.stringify(path)} refers to an object but ${JSON.stringify(target)} is not`)
+              } else {
+                const targetTypeDef = types.get(target.name)!
+                const pathFieldNames = Set(Object.keys(path))
+                const targetFieldNames = targetTypeDef.fields.keySeq().toSet()
+                if (!pathFieldNames.equals(targetFieldNames))
+                  errors.push(`path ${JSON.stringify(pathFieldNames.toArray())} does not cover all fields of target ${JSON.stringify(targetFieldNames.toArray())}, ${JSON.stringify(targetFieldNames.subtract(pathFieldNames).toArray())} are missing`)
+                else
+                  Object.keys(path).forEach(fieldName => {
+                    if (!targetTypeDef.fields.has(fieldName)) {
+                      errors.push(`path ${JSON.stringify(path)} refers to non-existing field ${fieldName} on ${JSON.stringify(target)} is not`)
+                    }
+                    mappingPathValidator(source, targetTypeDef.fields.get(fieldName)!, path[fieldName])
+                  })
+              }
+            }
+          }
+          mappingPathValidator(Type.Default.lookup(source), Type.Default.lookup(target), paths)
+        }
+        mappings = mappings.set(mappingName, mapping)
       })
 
       let forms: Map<string, FormDef> = Map();
@@ -240,7 +337,12 @@ export const FormsConfig = {
               }
               const fieldTypeDef = formTypeDef?.fields.get(fieldName)
               if (fieldTypeDef?.kind == "primitive") {
-                if (fieldTypeDef.value == "boolean") {
+                if (fieldTypeDef.value == "maybeBoolean") {
+                  // alert(JSON.stringify(fieldConfig["renderer"]))
+                  // alert(JSON.stringify(builtIns.renderers.MaybeBooleanViews))
+                  if (!builtIns.renderers.MaybeBooleanViews.has(fieldConfig["renderer"]))
+                    errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
+                } else if (fieldTypeDef.value == "boolean") {
                   if (!builtIns.renderers.BooleanViews.has(fieldConfig["renderer"]))
                     errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
                 } else if (fieldTypeDef.value == "number") {
@@ -314,6 +416,9 @@ export const FormsConfig = {
             fieldName, {
             renderer: fieldConfig.renderer,
             visible: BoolExpr.Default(fieldConfig.visible),
+            disabled: fieldConfig.disabled != undefined ? 
+              BoolExpr.Default(fieldConfig.disabled)
+              : BoolExpr.Default.false(),
             api: { stream: fieldConfig.stream, enumOptions: fieldConfig.options }
           })
         })
@@ -368,41 +473,59 @@ export const FormsConfig = {
         errors.push("the formsConfig does not contain a 'launchers' field");
         return Sum.Default.right(errors);
       }
-      let launchers = { 
-        create:Map<string, Launcher>(),
-        edit:Map<string, Launcher>()
+      let launchers: FormsConfig["launchers"] = {
+        create: Map<string, Launcher>(),
+        edit: Map<string, Launcher>(),
+        mappings: Map<string, MappingLauncher>(),
       }
       Object.keys(formsConfig["launchers"]).forEach((launcherName: any) => {
         let launcherConfig = formsConfig["launchers"][launcherName]
-        const launcherKinds = ["create", "edit"]
-        if (launcherKinds.includes(formsConfig["launchers"][launcherName]["kind"]) == false)
+        const launcherKinds = ["create", "edit", "mapping"]
+        if (launcherKinds.includes(formsConfig["launchers"][launcherName]["kind"]) == false) {
           errors.push(`launcher '${launcherName}' has invalid 'kind': expected any of ${JSON.stringify(launcherKinds)}`);
+          return
+        }
+        const launcherKind = formsConfig["launchers"][launcherName]["kind"] as Launcher["kind"] | MappingLauncher["kind"]
         if (forms.has(formsConfig["launchers"][launcherName]["form"]) == false)
           errors.push(`launcher '${launcherName}' references non-existing form '${formsConfig.launchers[launcherName].form}'`);
-        if (entities.has(formsConfig["launchers"][launcherName]["api"]) == false)
-          errors.push(`launcher '${launcherName}' references non-existing entity api '${formsConfig.launchers[launcherName].api}'`);
         const form = forms.get(formsConfig["launchers"][launcherName]["form"])!
-        const api = entities.get(formsConfig["launchers"][launcherName]["api"])!
-        if (form.type != api.type)
-          errors.push(`form and api in launcher '${launcherName}' reference different types '${form.type}' and '${api.type}'`);
-        if (formsConfig["launchers"][launcherName]["kind"] == "create" && 
-          !(api.methods.create && api.methods.default)
-        )
+        if (launcherKind != "mapping") {
+          if (entities.has(formsConfig["launchers"][launcherName]["api"]) == false)
+            errors.push(`launcher '${launcherName}' references non-existing entity api '${formsConfig.launchers[launcherName].api}'`);
+          const api = entities.get(formsConfig["launchers"][launcherName]["api"])!
+          if (form.type != api.type)
+            errors.push(`form and api in launcher '${launcherName}' reference different types '${form.type}' and '${api.type}'`);
+          if (formsConfig["launchers"][launcherName]["kind"] == "create" &&
+            !(api.methods.create && api.methods.default)
+          )
           errors.push(`launcher '${launcherName}' requires api methods 'create' and 'default'`);
-          if (formsConfig["launchers"][launcherName]["kind"] == "edit" && 
+          if (formsConfig["launchers"][launcherName]["kind"] == "edit" &&
             !(api.methods.get && api.methods.update)
           )
-            errors.push(`launcher '${launcherName}' requires api methods 'get' and 'update'`);
-          let launcher: Launcher = { 
-          name: launcherName, 
-          kind:formsConfig["launchers"][launcherName]["kind"],
-          form:formsConfig["launchers"][launcherName]["form"],
-          api:formsConfig["launchers"][launcherName]["api"],
-         };
-         if (launcher.kind == "create")
+          errors.push(`launcher '${launcherName}' requires api methods 'get' and 'update'`);
+        let launcher: Launcher = {
+          name: launcherName,
+          kind: formsConfig["launchers"][launcherName]["kind"],
+          form: formsConfig["launchers"][launcherName]["form"],
+          api: formsConfig["launchers"][launcherName]["api"],
+        };
+        if (launcher.kind == "create")
           launchers.create = launchers.create.set(launcherName, launcher)
         else
           launchers.edit = launchers.edit.set(launcherName, launcher)
+        } else {
+          const launcherConfig = formsConfig["launchers"][launcherName]
+          const mappingName = launcherConfig["mapping"]
+          if (mappingName in formsConfig["mappings"] == false) 
+            errors.push(`launcher '${launcherName}' references non-existing mapping '${mappingName}'`);
+          else {
+            const mapping = formsConfig["mappings"][mappingName]
+            if (mapping["target"] != form.type)
+              errors.push(`launcher '${launcherName}' has a form over '${form.type}' but a mapping to a different type '${mapping["target"]}'`);
+            else
+              launchers.mappings = launchers.mappings.set(launcherName, launcherConfig)
+          } 
+        }
       })
 
       if (errors.length > 0)
@@ -416,6 +539,7 @@ export const FormsConfig = {
           streams: streams,
           entities: entities,
         },
+        mappings: mappings,
         launchers: launchers
       });
     }

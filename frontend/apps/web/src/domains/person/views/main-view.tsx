@@ -1,7 +1,6 @@
 import { EntityFormView, Unit, unit } from "ballerina-core";
-import { PersonFormPredicateContext } from "../domains/predicates";
-import { Person, PersonFormState } from "../state";
 import { MostUglyValidationDebugView } from "./field-views";
+import { Person, PersonFormPredicateContext, PersonFormState } from "playground-core";
 
 
 export type PersonView = EntityFormView<Person, keyof Person, PersonFormState, PersonFormPredicateContext & { columns: [Array<keyof Person>, Array<keyof Person>, Array<keyof Person>]; }, Unit>;
@@ -16,7 +15,8 @@ export const PersonView: PersonView = props => {
         </tr>
         <tr>
           {props.VisibleFieldKeys.map(field => <td>
-            {props.EmbeddedFields[field]({ ...props, view: unit })}
+            {props.EmbeddedFields[field]({ 
+              ...props, context:{...props.context, disabled:props.DisabledFieldKeys.has(field) }, view: unit })}
           </td>)}
         </tr>
       </tbody>

@@ -12,6 +12,7 @@ export type EnumMultiselectView<Context extends FormLabel & BaseEnumContext<Cont
   Context & Value<OrderedMap<Guid, Element>> & EnumFormState<Context, Element> & {
     selectedIds: Array<Guid>;
     activeOptions: "loading" | Array<Element>;
+    disabled: boolean
   }, EnumFormState<Context, Element>, ForeignMutationsExpected & { 
     onChange: OnChange<OrderedMap<Guid, Element>>; 
     setNewValue: SimpleCallback<Array<Guid>> 

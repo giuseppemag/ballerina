@@ -9,8 +9,8 @@ import { FieldValidation, FieldValidationWithPath, FormValidatorSynchronized, On
 export const NumberForm = <Context extends FormLabel, ForeignMutationsExpected>(
   validation:BasicFun<number, Promise<FieldValidation>>
 ) => {
-  const Co = CoTypedFactory<Context & Value<number> & SharedFormState, SharedFormState>()
-  return Template.Default<Context & Value<number>, SharedFormState, ForeignMutationsExpected & { onChange: OnChange<number>; },
+  const Co = CoTypedFactory<Context & Value<number> & SharedFormState & { disabled:boolean }, SharedFormState>()
+  return Template.Default<Context & Value<number> & { disabled:boolean }, SharedFormState, ForeignMutationsExpected & { onChange: OnChange<number>; },
   NumberView<Context, ForeignMutationsExpected>>(props => <>
     <props.view {...props} 
     foreignMutations={{
@@ -19,7 +19,7 @@ export const NumberForm = <Context extends FormLabel, ForeignMutationsExpected>(
     }} />
   </>
   ).any([
-    ValidateRunner<Context, SharedFormState, ForeignMutationsExpected, number>(
+    ValidateRunner<Context & { disabled:boolean }, SharedFormState, ForeignMutationsExpected, number>(
       _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation)
     ),
   ]);
