@@ -67,6 +67,7 @@ export const FormsApp = (props: {}) => {
 										["subscribeToNewsletter", "interests"],
 										["departments", "address"]],
 										visibleFields: Person.Operations.VisibleFields,
+										disabledFields: Person.Operations.VisibleFields,
 										flags: Set(["BC"]),
 										showAllErrors: false,
 									}}
