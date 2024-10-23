@@ -1,4 +1,4 @@
-import { FormRunnerErrorsTemplate, id, replaceWith, Sum } from "../../../../../main"
+import { FormRunnerErrorsTemplate, id, Mapping, replaceWith, Sum, unit } from "../../../../../main"
 import { AsyncState } from "../../../../async/state"
 import { CoTypedFactory } from "../../../../coroutines/builder"
 import { FormRunnerContext, FormRunnerForeignMutationsExpected, FormRunnerState } from "../state"
@@ -6,11 +6,6 @@ import { FormRunnerContext, FormRunnerForeignMutationsExpected, FormRunnerState 
 export const FormRunnerLoader = () => {
   const Co = CoTypedFactory<FormRunnerContext, FormRunnerState>()
 
-  //   const MaybePersonFromConfigForm = parsedFormsConfig.kind == "l" ?
-  // 	parsedFormsConfig.value.mappings.get("person-from-config") ?? undefined : undefined
-  // const PersonFromConfigForm =
-  // 	MaybePersonFromConfigForm != undefined ? MaybePersonFromConfigForm<any, any, any, any>()
-  // 		: PersonShowFormSetupErrors(validatedFormsConfig, parsedFormsConfig)
   return Co.Template<FormRunnerForeignMutationsExpected>(
     Co.GetState().then(current =>
       !AsyncState.Operations.hasValue(current.formsConfig.sync) ?
@@ -25,25 +20,69 @@ export const FormRunnerLoader = () => {
                 )
               )
             )
-          const mappedForm = current.formsConfig.sync.value.value.mappings.get(current.formName)
-          if (mappedForm == undefined)
-            return FormRunnerState.Updaters.form(
-              replaceWith(
-                Sum.Default.left(
-                  FormRunnerErrorsTemplate(Sum.Default.right([`Cannot find form '${current.formName}'`]))
+          const formRef = current.formRef
+          if (formRef.kind == "map") {
+            const mappedForm = current.formsConfig.sync.value.value.mappings.get(formRef.formName)
+            if (mappedForm == undefined)
+              return FormRunnerState.Updaters.form(
+                replaceWith(
+                  Sum.Default.left(
+                    FormRunnerErrorsTemplate(Sum.Default.right([`Cannot find form '${formRef.formName}'`]))
+                  )
                 )
               )
+            const instantiatedForm = mappedForm()
+            return FormRunnerState.Updaters.form(
+              replaceWith(
+                Sum.Default.left({
+                  form: instantiatedForm.form,
+                  formState: instantiatedForm.initialState,
+                  mapping: instantiatedForm.mapping
+                })
+              )
             )
-          const instantiatedMappedForm = mappedForm()
-          return FormRunnerState.Updaters.form(
-            replaceWith(
-              Sum.Default.left({
-                form:instantiatedMappedForm.form,
-                formState:instantiatedMappedForm.initialState,
-                mapping:instantiatedMappedForm.mapping
-              })
-            )
-          )
+          } else if (formRef.kind == "create") {
+            const createForm = current.formsConfig.sync.value.value.create.get(formRef.formName)
+            if (createForm == undefined)
+              return FormRunnerState.Updaters.form(
+                replaceWith(
+                  Sum.Default.left(
+                    FormRunnerErrorsTemplate(Sum.Default.right([`Cannot find form '${formRef.formName}'`]))
+                  )
+                )
+              )
+              const instantiatedForm = createForm()
+              return FormRunnerState.Updaters.form(
+                replaceWith(
+                  Sum.Default.left({
+                    form: instantiatedForm.form,
+                    formState: instantiatedForm.initialState,
+                    mapping: Mapping.Default.fromPaths(unit)
+                  })
+                )
+              )  
+          } else if (formRef.kind == "edit") {
+            const editForm = current.formsConfig.sync.value.value.edit.get(formRef.formName)
+            if (editForm == undefined)
+              return FormRunnerState.Updaters.form(
+                replaceWith(
+                  Sum.Default.left(
+                    FormRunnerErrorsTemplate(Sum.Default.right([`Cannot find form '${formRef.formName}'`]))
+                  )
+                )
+              )
+              const instantiatedForm = editForm()
+              return FormRunnerState.Updaters.form(
+                replaceWith(
+                  Sum.Default.left({
+                    form: instantiatedForm.form,
+                    formState: instantiatedForm.initialState,
+                    mapping: Mapping.Default.fromPaths(unit)
+                  })
+                )
+              )
+          }
+          return id
         })
     ),
     {

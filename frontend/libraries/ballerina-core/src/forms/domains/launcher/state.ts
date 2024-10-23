@@ -1,17 +1,31 @@
-import { Mapping, simpleUpdater, Sum } from "../../../../main"
-import { FormsParserState } from "../parser/state"
+import { BasicFun, Guid, Mapping, simpleUpdater, Sum, Unit } from "../../../../main"
+import { FormParsingResult, FormsParserState } from "../parser/state"
 import { OnChange } from "../singleton/state"
 
-export type FormRunnerContext = {
-  value:any
-  extraContext:any
-  viewWrappers:any
+export type FormRef = {
   formName:string
+} & ({
+  kind:"edit",
+  entityId:Guid
+} | {
+  kind:"map",
+  onChange:OnChange<any>
+  value:any
+} | {
+  kind:"create",
+  onSubmitted: (_: any) => void,
+  submitButtonWrapper:any
+})
+
+export type FormRunnerContext = {
+  extraContext:any
+  formRef:FormRef
+  showFormParsingErrors: BasicFun<FormParsingResult, JSX.Element>
 } & FormsParserState
 export type FormRunnerState = {
   form:Sum<{ form:any, formState:any, mapping:Mapping<any,any> }, "not initialized">
 }
-export type FormRunnerForeignMutationsExpected = { onChange:OnChange<any> }
+export type FormRunnerForeignMutationsExpected = Unit
 export const FormRunnerState = {
   Default:():FormRunnerState => ({
     form:Sum.Default.right("not initialized"),

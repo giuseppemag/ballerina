@@ -21,10 +21,9 @@ export const CreateFormTemplate = <E, FS>(): CreateFormTemplate<E, FS> =>
     CreateFormContext<E, FS> & CreateFormWritableState<E, FS>,
     CreateFormWritableState<E, FS>,
     CreateFormForeignMutationsExpected<E, FS>,
-    CreateFormView<E, FS>>(props =>
-      <>
+    CreateFormView<E, FS>>(props => {
+      return <>
         {
-
           props.view({
             ...props, 
             foreignMutations: {
@@ -58,7 +57,7 @@ export const CreateFormTemplate = <E, FS>(): CreateFormTemplate<E, FS> =>
           })
         }
       </>
-    ).any([
+    }).any([
       createFormRunner<E, FS>().mapContextFromProps(props => ({
         ...props.context,
         onSubmitted:props.foreignMutations.onSubmitted

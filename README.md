@@ -1,4 +1,4 @@
-# Ballerina 🩰
+<img src="./docs/pics/Ballerina_logo-04.svg" alt="Ballerina logo" height="200" />
 
 Welcome to _ballerina_, the effortlessly elegant functional programming framework for frontend web development, with a particular but non-exclusive preference for React.
 

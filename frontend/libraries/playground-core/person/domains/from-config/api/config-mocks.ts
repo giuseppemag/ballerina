@@ -108,6 +108,7 @@ export const PersonFormsConfig = {
       "fields": {
         "street": {
           renderer: "defaultString", visible:
+          // { "kind": "true" }
           {
             "kind": "or",
             operands: [
@@ -152,11 +153,13 @@ export const PersonFormsConfig = {
         "subscribeToNewsletter": { renderer: "defaultBoolean", visible: { "kind": "true" } },
         "interests": {
           renderer: "defaultEnumMultiselect", options: "interests",
-          visible: { "kind": "leaf", "operation": "field", "arguments": { "location": "local", "field": "subscribeToNewsletter", "value": true } },
+          visible: 
+          { "kind": "leaf", "operation": "field", "arguments": { "location": "local", "field": "subscribeToNewsletter", "value": true } },
         },
         "departments": { renderer: "defaultInfiniteStreamMultiselect", stream: "departments", 
           visible: { "kind": "true" }, 
-          disabled: { "kind": "leaf", "operation": "field", "arguments": { "location": "local", "field": "subscribeToNewsletter", "value": false } }
+          disabled: //{ "kind": "true" }
+            { "kind": "leaf", "operation": "field", "arguments": { "location": "local", "field": "subscribeToNewsletter", "value": false } }
         },
         "address": { renderer: "address", visible: { "kind": "true" } },
       },

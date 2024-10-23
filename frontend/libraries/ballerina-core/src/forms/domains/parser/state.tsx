@@ -324,7 +324,7 @@ export const parseForms =
               ({
                 ...parentContext,
                 api: api,
-                actualForm: form.withView(parentContext.containerFormView).mapContext((_: any) => ({ ..._, rootValue: _.value, ...parentContext.extraContext }))
+                actualForm: form.withView(containerFormView).mapContext((_: any) => ({ ..._, rootValue: _.value, ...parentContext.extraContext }))
               }) as any),
             initialState: EditFormState<Entity, FormState>().Default(initialState),
           })
@@ -346,7 +346,7 @@ export const parseForms =
               ({
                 ...parentContext,
                 api: api,
-                actualForm: form.withView(parentContext.containerFormView).mapContext((_: any) => ({ ..._, rootValue: _.value, ...parentContext.extraContext }))
+                actualForm: form.withView(containerFormView).mapContext((_: any) => ({ ..._, rootValue: _.value, ...parentContext.extraContext }))
               }) as any)
               .withViewFromProps(props => props.context.submitButtonWrapper)
               .mapForeignMutationsFromProps(props => props.foreignMutations as any),
@@ -358,7 +358,7 @@ export const parseForms =
 
       formsConfig.launchers.mappings.forEach((launcher, launcherName) => {
         const parsedForm = parsedForms.get(launcher.form)!
-        const form = parsedForm.form
+        const form = parsedForm.form.withView(containerFormView)
         const initialState = parsedForm.initialFormState
         const mappingConfig = formsConfig.mappings.get(launcher.mapping)! as any
         const mapping =
