@@ -2,6 +2,9 @@
 
 # move-to-ballerina.sh
 
+obj
+bin
+
 # Logs
 bin
 logs
@@ -148,3 +151,4 @@ dist
 move-to-ff.sh
 move-to-ballerina.sh
 # todo.md
+.fake

@@ -1,5 +1,60 @@
 Todo (✅/❌)
-  ❌ give back/forward
+  GrandeOmega2
+  ❌ coroutines
+  ❌ .rest file
+  ❌ create new repo like frontend framework
+  ❌ serve React app
+  ❌ setup with Docker, PG, ES
+  ❌ setup scaffolder
+  ❌ add appsettings
+
+  ❌ auth
+    ❌ registration 
+    ❌ login 
+    ❌ logout 
+    ❌ reset password 
+    ❌ magic link
+  ❌ personal area
+    ❌ avatar
+    ❌ subscriptions
+    ❌ invoices
+    ❌ payments
+      ❌ products (bundles)
+      ❌ subscriptions
+  ❌ highlight
+  ❌ picked for you
+  ❌ library
+  ❌ filtering
+  ❌ collection
+    ❌ class
+      ❌ building blocks
+      ❌ video block/video player
+  ❌ deployment to web
+  ❌ deployment to native
+    ❌ registration via Apple and Google
+    ❌ payments via Apple and Google
+
+  Backend
+  ❌ coroutines
+    ❌ main definition
+    ❌ test program in apps
+    ❌ generic events and their kind
+    ❌ serialized suspension
+    ❌ serialization interface to Postgres and volume
+      ❌ volume via parameters
+      ❌ postgres in a container (in test program in apps)
+  ❌ predicates
+    ❌ boolean expression
+    ❌ rule evaluator
+    ❌ session id, saved via i/o interface to eitehr postgres or volume
+  ❌ synchronizer
+    ❌ i/o interfaces
+    ❌ fsparsec-style interface
+    ❌ serialization of intermediate results to c
+    ❌ testing app connects to an OData service
+      ❌ read from appsettings or env variable
+
+  ✅ give back/forward
   ❌ write guidelines
     ✅ adjust to new way of filtering the running of coroutines 
     ✅ write a quick-start
