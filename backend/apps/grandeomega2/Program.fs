@@ -27,7 +27,7 @@ module Program =
 
         builder.Services.AddControllers()
 
-        let co:Coroutine<int, unit> = failwith ""
+        let co:Coroutine<int, unit, unit> = failwith ""
         // co.
 
         let app = builder.Build()

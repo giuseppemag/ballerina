@@ -1,11 +1,125 @@
 Todo (✅/❌)
   GrandeOmega2
+  ❌ auth
+    ❌ registration
+      ❌ backend
+```
+let register = 
+  co{
+    let! newUser = co.on (function NewUser newUser -> Some newUser | _ -> None)
+    do! co.spawn
+      co.any [
+        co{
+          let! userId = co.do(User.create newUser { emailConfirmed:false })
+          do! co.on (function | EmailConfirmed confirmedEmail when confirmedEmail = newUser.email -> Some() | _ -> None)
+          do! co.do(User.update userId User.emailConfirmed(replaceWith true))
+        }
+        co.wait User.registrationExpiration
+      ]
+  }
+
+let resetPassword = 
+  co{
+    let! email = co.on (function ResetPassword email -> Some email | _ -> None)
+    do! co.spawn
+      co.any [
+        co{
+          let! maybeUserId = User.findByEmail
+          match maybeUserId with
+          | Some userId ->
+            let resetToken = randomToken()
+            do! co.do(User.update userId User.resetToken(replaceWith resetToken))
+            do! co.do(User.sendResetPasswordEmail email resetToken)
+            do! co.on (function | NewPassword (token, newPassword) when token = resetToken -> Some() | _ -> None)
+            do! co.do(User.update userId User.password(newPassword))
+          | _ -> 
+            return ()
+        }  
+        co.wait User.resetPasswordExpiration
+      ]
+  }
+
+let subscription = 
+  co{
+    let! newSubscription = co.on (function NewSubscription _ -> Some _ | _ -> None)
+    let rec repeatedPayments autoRenew numPayments noticePeriodNumPayments interval = 
+      if numPayments <= 0 then 
+        if autoRenew = false then co.Return()
+        else repeatedPayments newSubscription.AutoRenew newSubscription.NumPayments newSusbscription.NoticePeriodNumPayments newSubscription.Interval
+      else 
+        co.any [
+          if numPayments <= noticePeriodNumPayments then
+            co{
+              do! co.on (function SubscriptionCancellation subscriptionId when subscriptionId = newSubscription.Id -> Some() | _ -> None)
+              do! co.do(Subscription.delete newSubscription.Id)
+            }
+          else co.never
+          co{
+            co.any[
+              co{
+                do! co.do(Subscription.sendAutomatedPayment newSubscription.Id)
+                do! co.on (function AutomatedPayment subscriptionId when subscriptionId = newSubscription.Id -> Some() | _ -> None)
+              }
+              co{
+                let paymentPeriodStarted = DateTime.Now
+                let! token = co.do Subscription.createPaymentToken
+                do! co.do(Subscription.sendPaymentLink token)
+                co.all [
+                  co.any[
+                    co.on payment confirmed with token
+                    co{
+                      do! co.wait Subscription.paymentReminder
+                      do! co.do(Subscription.sendPaymentReminderLink token)
+                    }
+                  ]
+                  co{
+                    do! co.wait Subscription.accessLockedDelay
+                    do! co.do(Subscription.update newSubscription.Id Subscription.active(replaceWith false))
+                  }
+                ]
+                do! co.do(Subscription.update subscriptionId Subscription.active(replaceWith false))
+                do! co.wait (interval - (DateTime.now - paymentPeriodStarted))
+              }
+            ]
+            do! repeatedPayments autoRenew (numPayments-1) noticePeriodNumPayments interval
+          }
+        ]
+      do! repeatedPayments newSubscription.AutoRenew newSubscription.NumPayments newSusbscription.NoticePeriodNumPayments newSubscription.Interval
+    }
+```
+  ❌ subscription
   ❌ coroutines
+    ❌ actual operators
+      ❌ on
+      ❌ do/await
+    ❌ actual runner
+    ❌ serialize to file
+    ❌ serialize to (async) interface
+    ✅ return any, all, etc. for the interpreter to process instead of evaluating directly
+    ❌ await will be started in the background: make resilient wrt restarts and migrations
+      ❌ how to re-enqueue after completion? Just a local mutable list to pump into the deserialized state?
+    ❌ fast suspension and timer - see register as a case study
   ❌ .rest file
-  ❌ create new repo like frontend framework
-  ❌ serve React app
-  ❌ setup with Docker, PG, ES
-  ❌ setup scaffolder
+    ❌ register
+      ❌ encrypt password with bcrypt
+      ❌ save variable in .rest script
+    ❌ login
+      ❌ reuse variable in .rest script
+    ❌ reset password
+    ❌ logout
+    ❌ login with changed password
+    ❌ delete user
+    ❌ run with docker-compose: coroutines container vs webapi container
+    ❌ accept events from a single POST endpoint
+  ❌ setup pg docker container
+  ❌ define model-first database
+    ❌ coroutines
+    ❌ events
+    ❌ subscriptions
+      ❌ payment status (for info only)
+    ❌ users
+  ❌ serialize running coroutines in pg through serialization interface
+  ❌ new scaffolder: type-provider for PG and ES
   ❌ add appsettings
 
   ❌ auth
