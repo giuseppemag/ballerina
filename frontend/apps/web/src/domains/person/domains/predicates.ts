@@ -1,6 +1,6 @@
 import { Predicate } from "ballerina-core";
-import { Person, PersonFormState } from "../state";
 import { Set } from "immutable"
+import { Person, PersonFormState } from "playground-core";
 
 export type PersonFormPredicateContextFlags = "BC" | "F&O" | "SAP" | "SIMPLIFIED" | "SUPER ADMIN";
 export type PersonFormPredicateContext = { flags: Set<PersonFormPredicateContextFlags>; person: Person; formState: PersonFormState; showAllErrors: boolean; };

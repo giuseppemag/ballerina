@@ -4,8 +4,9 @@ import { unit, FormsConfig, parseForms, FormParsingResult, Sum, builtInsFromFiel
 import { Set } from "immutable";
 import { PersonView } from "./domains/person/views/main-view";
 import { PersonContainerFormView, PersonShowFormSetupErrors, PersonSubmitButtonWrapper } from "./domains/person/domains/from-config/views/wrappers";
-import { PersonFormsConfig, PersonFromConfigApis, PersonConfigFormsLeafPredicates, PersonConfig, MappedPersonForm, personConfigToPersonMapping, PersonFormState, Person } from "playground-core";
+import { PersonFormsConfig, PersonFromConfigApis, PersonConfigFormsLeafPredicates, PersonConfig, PersonFormState, Person } from "playground-core";
 import { PersonFieldViews } from "./domains/person-from-config/views/field-views";
+import { PersonForm } from "./domains/person/template";
 
 const validatedFormsConfig: FormValidationResult = FormsConfig.Default.validateAndParseAPIResponse(builtInsFromFieldViews(PersonFieldViews))(PersonFormsConfig)
 const parsedFormsConfig: FormParsingResult = validatedFormsConfig.kind == "l" ?
@@ -45,6 +46,7 @@ export const FormsApp = (props: {}) => {
 		},
 	]
 	const currentForm = forms[formToShow % forms.length]
+	const [personState, setPersonState] = useState(Person.Default.mocked())
 	const [personFormState, setPersonFormState] = useState(PersonFormState.Default(""))
 	const [personConfigState, setPersonConfigState] = useState(PersonConfig.Default())
 
@@ -56,8 +58,32 @@ export const FormsApp = (props: {}) => {
 					<tbody>
 						<tr>
 							<td>
-								{JSON.stringify(personConfigState)}
-								<MappedPersonForm 
+								{/* { JSON.stringify(personFormState.address.elementFormStates.toArray()) } */}
+								<PersonForm
+									context={{
+										...personFormState,
+										value: personState,
+										formState: personFormState,
+										person: personState,
+										columns: [["name", "surname", "gender", "birthday"],
+										["subscribeToNewsletter", "interests"],
+										["departments", "address"]],
+										visibleFields: Person.Operations.VisibleFields,
+										disabledFields: Person.Operations.VisibleFields,
+										flags: Set(["BC"]),
+										showAllErrors: false,
+									}}
+									setState={_ => setPersonFormState(_)}
+									view={PersonView}
+									foreignMutations={{
+										onChange: (_, path) => {
+											setPersonState(_)
+											console.log(path.toArray())
+										}
+									}}
+								/>
+								{/* {JSON.stringify(personConfigState)} */}
+								{/* <MappedPersonForm 
 									context={{
 										...personFormState,
 										value: personConfigState,
@@ -79,7 +105,7 @@ export const FormsApp = (props: {}) => {
 											console.log(path.toArray())
 										}
 									}}
-								/>
+								/> */}
 							</td>
 						</tr>
 						<tr>

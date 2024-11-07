@@ -7,6 +7,9 @@ export const ListRepo = {
 
   },
   Updaters: {
+    remove<V>(elementIndex:number): Updater<List<V>> {
+      return Updater((_) => _.remove(elementIndex));
+    },
     push<V>(v:V): Updater<List<V>> {
       return Updater((_) => _.push(v));
     },

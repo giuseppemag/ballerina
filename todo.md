@@ -1,23 +1,25 @@
 Todo (✅/❌)
+  ❌ list fields
+    ❌ the changes to the underlying form state of the address are not propagating correctly
+    ❌ missing: add, remove, embeddedElementTemplate
+    ❌ embed the form renderer of the element
+      ❌ what is the signature?
+      ❌ inject into the view
+      ❌ ensure the embedding is upserting into the map
+      ❌ delete from the map when an element is removed, otherwise it never happens
+      ❌ delete from the map when an element is removed, otherwise it never happens
+    ❌ update needs to extend the path
+  ❌ map fields
+    ❌ design
+    ❌ implement
+  ❌ implement data-driven configuration for list and map fields
+  ❌ restore mapping builder for both list and map 
+
   GrandeOmega2
   ❌ auth
     ❌ registration
       ❌ backend
 ```
-let register = 
-  co{
-    let! newUser = co.on (function NewUser newUser -> Some newUser | _ -> None)
-    do! co.spawn
-      co.any [
-        co{
-          let! userId = co.do(User.create newUser { emailConfirmed:false })
-          do! co.on (function | EmailConfirmed confirmedEmail when confirmedEmail = newUser.email -> Some() | _ -> None)
-          do! co.do(User.update userId User.emailConfirmed(replaceWith true))
-        }
-        co.wait User.registrationExpiration
-      ]
-  }
-
 let resetPassword = 
   co{
     let! email = co.on (function ResetPassword email -> Some email | _ -> None)
@@ -87,12 +89,18 @@ let subscription =
       do! repeatedPayments newSubscription.AutoRenew newSubscription.NumPayments newSusbscription.NoticePeriodNumPayments newSubscription.Interval
     }
 ```
-  ❌ subscription
   ❌ coroutines
+    ❌ move updaters to the core library
+    ❌ set state, get state, update state
     ❌ actual operators
       ❌ on
       ❌ do/await
     ❌ actual runner
+    ❌ model-first
+      ❌ user, user events
+      ❌ add postgres
+      ❌ make DbContext implement the db contexts of the imported projects
+
     ❌ serialize to file
     ❌ serialize to (async) interface
     ✅ return any, all, etc. for the interpreter to process instead of evaluating directly
@@ -121,6 +129,12 @@ let subscription =
   ❌ serialize running coroutines in pg through serialization interface
   ❌ new scaffolder: type-provider for PG and ES
   ❌ add appsettings
+  ❌ subscription
+  ❌ payment with UBS
+  ❌ payment with Adyen
+  ❌ building blocks
+  ❌ videos through kinoscope
+  ❌ styling and frontend implementation
 
   ❌ auth
     ❌ registration 

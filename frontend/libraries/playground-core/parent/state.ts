@@ -8,10 +8,10 @@ import { ForeignMutationsInput } from "ballerina-core";
 import { Debounced } from "ballerina-core";
 import { Value } from "ballerina-core";
 import { Synchronized } from "ballerina-core";
-import { Validation } from "ballerina-core";
+import { ValidationResult } from "ballerina-core";
 
 export type Parent = { child1: Child1; child2: Child2; counter:number; doubleCounter:number, 
-	inputString:Debounced<Synchronized<Value<string>, Validation>>
+	inputString:Debounced<Synchronized<Value<string>, ValidationResult>>
 };
 
 const CoreUpdaters = {
@@ -35,8 +35,8 @@ export const Parent = {
 		Template:{
 			inputString:
 				Fun(Value.Updaters.value<string>).then(
-					Fun(Synchronized.Updaters.value<Value<string>, Validation>).then(
-						Fun(Debounced.Updaters.Template.value<Synchronized<Value<string>, Validation>>).then(
+					Fun(Synchronized.Updaters.value<Value<string>, ValidationResult>).then(
+						Fun(Debounced.Updaters.Template.value<Synchronized<Value<string>, ValidationResult>>).then(
 							CoreUpdaters.inputString
 						)
 					)
