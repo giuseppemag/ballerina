@@ -16,9 +16,70 @@ Todo (✅/❌)
   ❌ restore mapping builder for both list and map 
 
   GrandeOmega2
-  ❌ auth
-    ❌ registration
-      ❌ backend
+  ✅ docker
+    ✅ PG
+    ✅ PG-admin
+  ❌ port forward pgadmin or use DBeaver
+  ❌ auth.fsproj
+    ❌ models
+      ✅ users
+      ✅ registration-tokens
+      ✅ user events
+      ❌ sessions
+      ❌ active coroutines
+      ❌ suspended coroutines (wait vs on vs both)
+    ❌ registration, etc. coroutines
+      ❌ coroutine runtime engine
+        ❌ how to spawn? Spawn is a different exit point because it is an alternative way of being Done, without a result
+          ❌ spawn does not kill the rest of the computation inside the Then
+        ❌ how to await? Awaiters need to be saved to the active list and polled actively
+        ❌ Any is not correct wrt Spawn
+        ❌ Then is also a beast
+        ❌ move runner to separate file
+        ❌ move updater U<'s> to separate file
+      ❌ run in memory
+      ❌ test serializers on startup/simple endpoint
+      ❌ serialize to disk with binary serializer
+      ❌ serialize to DB with JSON serializer
+      ❌ update state (serialized together with coroutine in DB)
+      ❌ update events
+      ❌ serialize to DB with quotations serializer (how does the state work)
+      ❌ run with intelligent suspensions
+        ❌ accumulate ps' in Any with the co-results, and then pattern match on 1 or 2 and only waiting or listening
+  ✅ blog.fsproj
+  ❌ postgres.csproj (this is the migrations project)
+    ✅ dbContext (in C#)
+    ✅ migrate one discriminated union
+    ❌ connection string from appsettings!!!
+      ❌ ensure we are reading the dev appsettings
+    ❌ separate schema for user stuff
+  ❌ web app
+    ❌ from Docker
+    ❌ use appsettings.Development
+    ❌ remove unnecessary references to EF Core stuff, only LINQ queries should still work
+    ❌ import PositionOptions
+      ❌ delete the PositionOptions and move to something more useful eventually
+    ❌ import DbContext options
+    ❌ migrations, db-update, db-drop, seed-db
+    ❌ make sure pg-admin works
+    ❌ post user-event endpoint
+    ❌ login, logout, reset-password, edit-user, change-password, delete-user
+      ❌ invoke methods from auth domain
+      ❌ think about security
+  ❌ move from PG to MySQL
+  ❌ business rule staged partial evaluator
+  ❌ data-dependencies as business rules or as coroutine-events
+  ❌ SPA
+    ❌ from docker container
+    ❌ serve from backend
+    ❌ import material UI
+    ❌ signup form
+    ❌ login form
+    ❌ logout form
+    ❌ edit user form
+      ❌ delete user
+    ❌ change password form
+  ❌ bool predicate evaluator
 ```
 let resetPassword = 
   co{

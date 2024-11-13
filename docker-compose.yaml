@@ -1,0 +1,52 @@
+version: '3'
+
+services:
+  postgresserver:
+    image: postgres
+    command: -c shared_buffers=256MB -c max_connections=200
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - blp_network
+    # logging:
+    #   driver: none
+
+  pgadmin:
+    image: dpage/pgadmin4:4.18
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@ad.min
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_LISTEN_PORT: 80
+    ports:
+      - '8081:80'
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      - "postgresserver"
+    networks:
+      - blp_network
+    logging:
+      driver: none
+    user: ${CURRENT_UID}
+
+  # spa:
+  #   build:
+  #     context: .
+  #     dockerfile: Docker/Dockerfile.SPA
+  #   ports:
+  #     - 8088:8088
+  #   volumes:
+  #     - .:/app
+  #   user: ${CURRENT_UID}
+
+volumes:
+  pgdata:
+  pgadmin-data:
+
+networks:
+  blp_network:
+    driver: bridge

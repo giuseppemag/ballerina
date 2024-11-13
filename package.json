@@ -1,0 +1,30 @@
+{
+  "name": "react_typescript_webpack",
+  "version": "1.0.0",
+  "description": "Basis webpack,react, and typescript pipeline.",
+  "scripts": {
+    "dotnet": "CURRENT_UID=$(id -u):$(id -g) cd Main/EntryPoint; dotnet run --verbosity q",
+    "storage-reset": "yarn db-drop; yarn db-update",
+    "storage-update": "yarn es-update; yarn db-update",
+    "db-drop": "yarn db-drop-main",
+    "db-update": "yarn db-update-main",
+    "db-drop-main": "clear; dotnet ef database drop -p ../../libraries/migrations -s ./",
+    "db-update-main": "clear; dotnet ef database update -p ../../libraries/migrations -s ./",
+    "setup-migrations": "clear; dotnet ef migrations add Setup -p ../../libraries/migrations -s ./",
+
+    "docker-up-no-build": "CURRENT_UID=$(id -u):$(id -g) docker-compose up",
+    "docker-up-no-build-d": "CURRENT_UID=$(id -u):$(id -g) docker-compose up -d",
+    "docker-up": "CURRENT_UID=$(id -u):$(id -g) docker-compose up --build",
+    "docker-up-d": "CURRENT_UID=$(id -u):$(id -g) docker-compose up --build -d",
+    "docker-down": "CURRENT_UID=$(id -u):$(id -g) docker-compose down",
+    "docker-down-volumes": "CURRENT_UID=$(id -u):$(id -g) docker-compose down -v",
+    "docker-stop": "CURRENT_UID=$(id -u):$(id -g) docker-compose stop"
+  },
+  "author": "giuseppemag@gmail.com",
+  "license": "MIT",
+  "dependencies": {
+    "ts-odata-scaffolder": "^1.0.2"
+  },
+  "devDependencies": {
+  }
+}

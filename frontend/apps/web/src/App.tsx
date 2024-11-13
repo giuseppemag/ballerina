@@ -12,7 +12,7 @@ function App(props: { showForms:boolean }) {
 	const uncleForeignMutations = Uncle.ForeignMutations({ setState:setUncle, context:uncle })
 
 	type P = { name:string, surname:string, age:number, married:boolean, address:{ city:string, street:string, number:number } }
-	const p:any = { name:"Pippo", surname:"Schmidt", age:35, married:true, address:{ city:"Amsterdam", street:"Balatonmeerlaan", number:"21" } }
+	const p:any = { name:"Pippo", surname:"Schmidt", age:35, married:true, address:{ city:"Amsterdam", street:"Balatonmeerlaan", number:21 } }
 	const p_wrong:any = { name:"Pippo", surname:"Schmidt", age:35, married:true, address:{ city:"Amsterdam", street:"Balatonmeerlaan" } }
 	if (props.showForms) return FormsApp({})
 	return (

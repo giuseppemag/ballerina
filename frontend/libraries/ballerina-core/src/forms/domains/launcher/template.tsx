@@ -5,8 +5,14 @@ import { FormParsingResult } from "../parser/state"
 
 export const FormRunnerErrorsTemplate = (parsedFormsConfig: FormParsingResult) => ({
   form: Template.Default<FormRunnerContext & FormRunnerState, FormRunnerState, FormRunnerForeignMutationsExpected>(props =>
-    props.context.showFormParsingErrors(parsedFormsConfig)
-  ),
+    <>
+      {JSON.stringify(parsedFormsConfig)}
+      <br />
+      {JSON.stringify(props)}
+    </>),
+  // form: Template.Default<FormRunnerContext & FormRunnerState, FormRunnerState, FormRunnerForeignMutationsExpected>(props =>
+  //   props.context.showFormParsingErrors(parsedFormsConfig)
+  // ),
   formState: unit,
   mapping: Mapping.Default.fromPaths(unit)
 })
