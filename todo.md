@@ -1,19 +1,20 @@
 Todo (✅/❌)
-  ❌ list fields
-    ❌ the changes to the underlying form state of the address are not propagating correctly
-    ❌ missing: add, remove, embeddedElementTemplate
-    ❌ embed the form renderer of the element
-      ❌ what is the signature?
-      ❌ inject into the view
-      ❌ ensure the embedding is upserting into the map
-      ❌ delete from the map when an element is removed, otherwise it never happens
-      ❌ delete from the map when an element is removed, otherwise it never happens
-    ❌ update needs to extend the path
+  ❌ make validator partial
+  ❌ list fields in config
+    ✅ write config: addresses, emails
+    ✅ invoke forms config parser
+    ✅ only show validation and parsing results
+    ✅ validate configuration with lists
+    ❌ parse configuration with lists
+    ❌ run configuration with lists
+      ❌ initial value of Address/string should be provided as well in the config or at least the parser
+    ❌ does the create form just invoke submit, or does it also submit the API underwater?
   ❌ map fields
     ❌ design
     ❌ implement
   ❌ implement data-driven configuration for list and map fields
   ❌ restore mapping builder for both list and map 
+  ❌ add to FormsApp.tsx examples of statically typed mapping, as well as config'ed mapping
 
   GrandeOmega2
   ✅ docker

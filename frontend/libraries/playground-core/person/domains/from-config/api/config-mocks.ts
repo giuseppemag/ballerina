@@ -37,7 +37,8 @@ export const PersonFormsConfig = {
         "gender": { fun: "SingleSelection", args: ["GenderRef"] },
         "interests": { fun: "Multiselection", args: ["InterestRef"] },
         "departments": { fun: "Multiselection", args: ["DepartmentRef"] },
-        "address": "Address",
+        "addresses": { fun: "List", args: ["Address"] },
+        "emails": { fun: "List", args: ["string"] },
       }
     },
     "PersonFromAPI": {
@@ -82,25 +83,25 @@ export const PersonFormsConfig = {
     }
   },
   "mappings": {
-    "personFromConfig": {
-      "source":"PersonConfigFromAPI",
-      "target":"Person",
-      "paths":{
-        "name": ["person", "name"],
-        "surname": ["person", "surname"],
-        "birthday": ["person", "birthday"],
-        "favoriteColor": ["person", "favoriteColor"],
-        "departments": ["person", "departments"],
-        "gender": ["person", "gender"],
-        "subscribeToNewsletter": ["mailing", "subscribeToNewsletter"],
-        "interests": ["mailing", "interests"],
-        "address":{
-            "street": ["address", "street"],
-            "number": ["address", "number"],
-            "city": ["address", "city"],
-        }
-      }
-    }
+    // "personFromConfig": {
+    //   "source":"PersonConfigFromAPI",
+    //   "target":"Person",
+    //   "paths":{
+    //     "name": ["person", "name"],
+    //     "surname": ["person", "surname"],
+    //     "birthday": ["person", "birthday"],
+    //     "favoriteColor": ["person", "favoriteColor"],
+    //     "departments": ["person", "departments"],
+    //     "gender": ["person", "gender"],
+    //     "subscribeToNewsletter": ["mailing", "subscribeToNewsletter"],
+    //     "interests": ["mailing", "interests"],
+    //     "address":{
+    //         "street": ["address", "street"],
+    //         "number": ["address", "number"],
+    //         "city": ["address", "city"],
+    //     }
+    //   }
+    // }
   },
   "forms": {
     "address": {
@@ -161,7 +162,8 @@ export const PersonFormsConfig = {
           disabled: //{ "kind": "true" }
             { "kind": "leaf", "operation": "field", "arguments": { "location": "local", "field": "subscribeToNewsletter", "value": false } }
         },
-        "address": { renderer: "address", visible: { "kind": "true" } },
+        "addresses": { renderer: "defaultList", elementRenderer:"address", visible: { "kind": "true" } },
+        "emails": { renderer: "defaultList", elementRenderer:"defaultString", visible: { "kind": "true" } },
       },
       "tabs": {
         "main": {
@@ -176,9 +178,9 @@ export const PersonFormsConfig = {
                 "main": ["subscribeToNewsletter", "interests", "favoriteColor"],
               }
             },
-            "address": {
+            "addresses": {
               "groups": {
-                "main": ["departments", "address"],
+                "main": ["departments", "addresses"],
               }
             }
           }
@@ -197,10 +199,10 @@ export const PersonFormsConfig = {
       "form": "person",
       "api": "person"
     },
-    "person-from-config": {
-      "kind": "mapping",
-      "form": "person",
-      "mapping": "personFromConfig"
-    }
+    // "person-from-config": {
+    //   "kind": "mapping",
+    //   "form": "person",
+    //   "mapping": "personFromConfig"
+    // }
   }
 }

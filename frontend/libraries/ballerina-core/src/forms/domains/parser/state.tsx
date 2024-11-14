@@ -160,8 +160,8 @@ export const parseVisibleFields = (
 
 export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
   let builtins: BuiltIns = {
-    "primitives": Set(["string", "number", "boolean", "maybeBoolean", "Date", "CollectionReference"]),
-    "generics": Set(["SingleSelection", "Multiselection"]),
+    "primitives": Map([["string", Set(["StringViews"])] as [string, Set<keyof BuiltIns["renderers"]>], ["number", Set(["NumberViews"])], ["boolean", Set(["BooleanViews"])], ["maybeBoolean", Set(["MaybeBooleanViews"])], ["Date", Set(["DateViews"])], ["CollectionReference", Set(["EnumViews"])]]),
+    "generics": Set(["SingleSelection", "Multiselection", "List"]),
     "renderers": {
       "BooleanViews": Set(),
       "MaybeBooleanViews": Set(),
@@ -172,6 +172,7 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
       "InfiniteStreamViews": Set(),
       "NumberViews": Set(),
       "StringViews": Set(),
+      "ListViews": Set(),
     }
   }
   Object.keys(builtins.renderers).forEach((_categoryName) => {

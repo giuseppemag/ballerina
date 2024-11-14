@@ -1,4 +1,4 @@
-import { SharedFormState, AsyncState, FormLabel, BooleanView, NumberView, StringView, DateView, CollectionReference, EnumView, EnumMultiselectView, SearchableInfiniteStreamView, InfiniteStreamMultiselectView, BaseEnumContext } from "ballerina-core";
+import { SharedFormState, AsyncState, FormLabel, BooleanView, NumberView, StringView, DateView, CollectionReference, EnumView, EnumMultiselectView, SearchableInfiniteStreamView, InfiniteStreamMultiselectView, BaseEnumContext, ListFieldView, unit } from "ballerina-core";
 import React from "react";
 
 export const MostUglyValidationDebugView = (props: { context: SharedFormState }) =>
@@ -191,4 +191,25 @@ export const PersonFieldViews = {
           }>🔄</button>
         </>,
   },
+  ListViews: {
+    defaultList: <Element, ElementFormState, Context extends FormLabel, ForeignMutationsExpected>():
+      ListFieldView<Element, ElementFormState, Context, ForeignMutationsExpected> =>
+      props =>
+        <>
+          {props.context.label && <h3>{props.context.label}</h3>}
+          <ul>
+            {
+              props.context.value.map((element, elementIndex) =>
+                <li>
+                  <button onClick={() => props.foreignMutations.remove(elementIndex)}>❌</button>
+                  {
+                    props.embeddedElementTemplate(elementIndex)({ ...props, view: unit })
+                  }
+                </li>
+              )
+            }
+          </ul>
+          <button onClick={() => props.foreignMutations.add(unit)}>➕</button>
+        </>
+    }  
 };

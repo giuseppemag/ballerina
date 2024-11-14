@@ -1,7 +1,6 @@
 import { Set, Map, OrderedMap } from "immutable";
 import { BoolExpr, FormsConfigMerger, MappingPaths, Sum } from "../../../../../../main";
 
-
 export type FieldName = string;
 export type TypeName = string;
 export type TypeDefinition = {
@@ -17,8 +16,8 @@ export type Type = {
   kind: "application"; value: TypeName; args: Array<TypeName>;
 };
 export const Type = {
-  Default:{
-    lookup:(name:TypeName) : Type => ({ kind:"lookup", name })
+  Default: {
+    lookup: (name: TypeName): Type => ({ kind: "lookup", name })
   },
   Operations: {
     Equals: (fst: Type, snd: Type): boolean =>
@@ -90,7 +89,7 @@ export type FormsConfig = {
 export type FormValidationError = string;
 
 export type BuiltIns = {
-  primitives: Set<string>;
+  primitives: Map<string, Set<keyof BuiltIns["renderers"]>>;
   generics: Set<string>;
   renderers: {
     BooleanViews: Set<string>;
@@ -102,6 +101,7 @@ export type BuiltIns = {
     EnumMultiselectViews: Set<string>;
     InfiniteStreamViews: Set<string>;
     InfiniteStreamMultiselectViews: Set<string>;
+    ListViews: Set<string>;
   };
 };
 
@@ -163,17 +163,17 @@ export const FormsConfig = {
       });
       types.forEach((typeDef, typeName) => {
         typeDef.extends.forEach(extendedTypeName => {
-          if (!builtIns.primitives.includes(extendedTypeName) && !types.has(extendedTypeName))
+          if (!builtIns.primitives.has(extendedTypeName) && !types.has(extendedTypeName))
             errors.push(`type ${typeName} extends non-existent type ${extendedTypeName}`);
         });
         typeDef.fields.forEach((fieldDef, fieldName) => {
-          if (fieldDef.kind == "primitive" && !builtIns.primitives.includes(fieldDef.value))
+          if (fieldDef.kind == "primitive" && !builtIns.primitives.has(fieldDef.value))
             errors.push(`field ${fieldName} of type ${typeName} is non-existent primitive type ${fieldDef.value}`);
           if (fieldDef.kind == "lookup" && !types.has(fieldDef.name))
             errors.push(`field ${fieldName} of type ${typeName} is non-existent type ${fieldDef.name}`);
           if (fieldDef.kind == "application" && !builtIns.generics.includes(fieldDef.value))
             errors.push(`field ${fieldName} of type ${typeName} applies non-existent generic type ${fieldDef.value}`);
-          if (fieldDef.kind == "application" && fieldDef.args.some(argType => !builtIns.primitives.includes(argType) && !types.has(argType)))
+          if (fieldDef.kind == "application" && fieldDef.args.some(argType => !builtIns.primitives.has(argType) && !types.has(argType)))
             errors.push(`field ${fieldName} of type ${typeName} applies non-existent type arguments ${JSON.stringify(fieldDef.args.filter(argType => !builtIns.primitives.has(argType) && !types.has(argType)))}`);
           if (fieldDef.kind == "application" && fieldDef.value == "SingleSelection") {
             if (fieldDef.args.length != 1)
@@ -366,9 +366,15 @@ export const FormsConfig = {
                   if (!builtIns.renderers.EnumMultiselectViews.has(fieldConfig["renderer"]) &&
                     !builtIns.renderers.InfiniteStreamMultiselectViews.has(fieldConfig["renderer"]))
                     errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
+                } else if (fieldTypeDef?.value == "List") {
+                  if (!builtIns.renderers.ListViews.has(fieldConfig["renderer"]))
+                    errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
                 }
                 if (fieldTypeDef.args.length < 1)
                   errors.push(`field ${fieldName} of form ${formName} should have one type argument}`);
+                else if (
+                  (builtIns.renderers.ListViews.has(fieldConfig["renderer"])) && "elementRenderer" in fieldConfig != true)
+                  errors.push(`field ${fieldName} of form ${formName} is missing the 'elementRenderer' property`);
                 else if (
                   (builtIns.renderers.EnumMultiselectViews.has(fieldConfig["renderer"]) ||
                     builtIns.renderers.EnumViews.has(fieldConfig["renderer"])) && "options" in fieldConfig != true)
@@ -403,6 +409,33 @@ export const FormsConfig = {
         Object.keys(configFormDef["fields"]).forEach(fieldName => {
           const fieldConfig = configFormDef["fields"][fieldName]
           const fieldTypeDef = formTypeDef?.fields.get(fieldName);
+          if (fieldTypeDef && fieldTypeDef.kind == "application" && fieldTypeDef.value == "List" && (builtIns.renderers.ListViews.has(fieldConfig["renderer"]))) {
+            let elementRenderer = fieldConfig["elementRenderer"]
+            let elementType = fieldTypeDef.args[0]
+            const rendererHasType = (elementRenderer: string, elementType: string): Array<string> => {
+              const primitiveRendererNames = builtIns.primitives.get(elementType)
+              if (primitiveRendererNames != undefined) {
+                const primitiveRenderers = 
+                  Set(primitiveRendererNames.flatMap(_ => builtIns.renderers[_]).toArray())
+                if (!primitiveRenderers.has(elementRenderer)) {
+                  return [`${elementType} cannot be rendered by primitive renderer ${elementRenderer}`]
+                }
+                // do we have elementRenderer as a builtIn renderer with the right type?
+              } else {
+                let elementForm = forms.get(elementRenderer)
+                if (elementForm != undefined) {
+                  if (elementForm.type != elementType)
+                    return [`${elementType} cannot be rendered by form renderer ${elementRenderer} (which renders ${elementForm.type})`]
+                } else {
+                  return [`cannot find ${elementType}, cannot validate whether or not ${elementRenderer} is the right one`]
+                }
+              }
+              return []
+            }
+            let elementErrors = rendererHasType(elementRenderer, elementType)
+            if (elementErrors.length > 0)
+              errors.push(...elementErrors)
+          }
           if (fieldTypeDef?.kind == "lookup") {
             if (!forms.has(fieldConfig.renderer))
               errors.push(`field ${fieldName} of form ${formName} references non-existing form ${fieldConfig["renderer"]}`);
@@ -416,7 +449,7 @@ export const FormsConfig = {
             fieldName, {
             renderer: fieldConfig.renderer,
             visible: BoolExpr.Default(fieldConfig.visible),
-            disabled: fieldConfig.disabled != undefined ? 
+            disabled: fieldConfig.disabled != undefined ?
               BoolExpr.Default(fieldConfig.disabled)
               : BoolExpr.Default.false(),
             api: { stream: fieldConfig.stream, enumOptions: fieldConfig.options }
@@ -426,7 +459,7 @@ export const FormsConfig = {
 
       Object.keys(formsConfig["forms"]).forEach((formName: any) => {
         let formDef = forms.get(formName)!
-        const formTypeDef = types.get(formDef.type)
+        // const formTypeDef = types.get(formDef.type)
         const configFormDef = formsConfig["forms"][formName];
         if ("tabs" in configFormDef == false)
           errors.push(`form ${formName} is missing required attribute 'tabs'`);
@@ -479,7 +512,7 @@ export const FormsConfig = {
         mappings: Map<string, MappingLauncher>(),
       }
       Object.keys(formsConfig["launchers"]).forEach((launcherName: any) => {
-        let launcherConfig = formsConfig["launchers"][launcherName]
+        // let launcherConfig = formsConfig["launchers"][launcherName]
         const launcherKinds = ["create", "edit", "mapping"]
         if (launcherKinds.includes(formsConfig["launchers"][launcherName]["kind"]) == false) {
           errors.push(`launcher '${launcherName}' has invalid 'kind': expected any of ${JSON.stringify(launcherKinds)}`);
@@ -498,25 +531,25 @@ export const FormsConfig = {
           if (formsConfig["launchers"][launcherName]["kind"] == "create" &&
             !(api.methods.create && api.methods.default)
           )
-          errors.push(`launcher '${launcherName}' requires api methods 'create' and 'default'`);
+            errors.push(`launcher '${launcherName}' requires api methods 'create' and 'default'`);
           if (formsConfig["launchers"][launcherName]["kind"] == "edit" &&
             !(api.methods.get && api.methods.update)
           )
-          errors.push(`launcher '${launcherName}' requires api methods 'get' and 'update'`);
-        let launcher: Launcher = {
-          name: launcherName,
-          kind: formsConfig["launchers"][launcherName]["kind"],
-          form: formsConfig["launchers"][launcherName]["form"],
-          api: formsConfig["launchers"][launcherName]["api"],
-        };
-        if (launcher.kind == "create")
-          launchers.create = launchers.create.set(launcherName, launcher)
-        else
-          launchers.edit = launchers.edit.set(launcherName, launcher)
+            errors.push(`launcher '${launcherName}' requires api methods 'get' and 'update'`);
+          let launcher: Launcher = {
+            name: launcherName,
+            kind: formsConfig["launchers"][launcherName]["kind"],
+            form: formsConfig["launchers"][launcherName]["form"],
+            api: formsConfig["launchers"][launcherName]["api"],
+          };
+          if (launcher.kind == "create")
+            launchers.create = launchers.create.set(launcherName, launcher)
+          else
+            launchers.edit = launchers.edit.set(launcherName, launcher)
         } else {
           const launcherConfig = formsConfig["launchers"][launcherName]
           const mappingName = launcherConfig["mapping"]
-          if (mappingName in formsConfig["mappings"] == false) 
+          if (mappingName in formsConfig["mappings"] == false)
             errors.push(`launcher '${launcherName}' references non-existing mapping '${mappingName}'`);
           else {
             const mapping = formsConfig["mappings"][mappingName]
@@ -524,12 +557,15 @@ export const FormsConfig = {
               errors.push(`launcher '${launcherName}' has a form over '${form.type}' but a mapping to a different type '${mapping["target"]}'`);
             else
               launchers.mappings = launchers.mappings.set(launcherName, launcherConfig)
-          } 
+          }
         }
       })
 
-      if (errors.length > 0)
+      if (errors.length > 0) {
+        console.log("parsing errors")
+        console.log(errors)
         return Sum.Default.right(errors);
+      }
 
       return Sum.Default.left({
         types: types,
