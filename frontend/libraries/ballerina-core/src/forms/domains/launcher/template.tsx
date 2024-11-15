@@ -18,9 +18,10 @@ export const FormRunnerErrorsTemplate = (parsedFormsConfig: FormParsingResult) =
 })
 
 export const FormRunnerTemplate =
-  Template.Default<FormRunnerContext & FormRunnerState, FormRunnerState, FormRunnerForeignMutationsExpected>(props =>
-    props.context.form.kind == "r" ? <></> :
-      <>
+  Template.Default<FormRunnerContext & FormRunnerState, FormRunnerState, FormRunnerForeignMutationsExpected>(props => {
+    if (props.context.form.kind == "r") return <></>
+    console.log("props.context.form.value.formState", props.context)
+    return <>
         <props.context.form.value.form
           context={{
             ...props.context.form.value.formState,
@@ -55,6 +56,7 @@ export const FormRunnerTemplate =
           }}
         />
 
-      </>).any([
+      </>
+      }).any([
         FormRunnerLoader()
       ])

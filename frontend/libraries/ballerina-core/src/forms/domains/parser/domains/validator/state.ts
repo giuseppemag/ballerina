@@ -33,12 +33,14 @@ export const Type = {
 export type FieldConfig = {
   renderer: string;
   api: { stream?: string, enumOptions?: string },
+  elementRenderer?: string,
   visible: BoolExpr<any>;
   disabled: BoolExpr<any>;
 };
 export type FormDef = {
   name: string;
   type: TypeName;
+  typeDef: TypeDefinition;
   fields: Map<FieldName, FieldConfig>;
   tabs: FormLayout;
 };
@@ -88,9 +90,11 @@ export type FormsConfig = {
 };
 export type FormValidationError = string;
 
+export type PrimitiveBuiltIn = { renderers: Set<keyof BuiltIns["renderers"]>, defaultValue: any }
+export type GenericBuiltIn = { defaultValue: any }
 export type BuiltIns = {
-  primitives: Map<string, Set<keyof BuiltIns["renderers"]>>;
-  generics: Set<string>;
+  primitives: Map<string, PrimitiveBuiltIn>;
+  generics: Map<string, GenericBuiltIn>;
   renderers: {
     BooleanViews: Set<string>;
     MaybeBooleanViews: Set<string>;
@@ -171,7 +175,7 @@ export const FormsConfig = {
             errors.push(`field ${fieldName} of type ${typeName} is non-existent primitive type ${fieldDef.value}`);
           if (fieldDef.kind == "lookup" && !types.has(fieldDef.name))
             errors.push(`field ${fieldName} of type ${typeName} is non-existent type ${fieldDef.name}`);
-          if (fieldDef.kind == "application" && !builtIns.generics.includes(fieldDef.value))
+          if (fieldDef.kind == "application" && !builtIns.generics.has(fieldDef.value))
             errors.push(`field ${fieldName} of type ${typeName} applies non-existent generic type ${fieldDef.value}`);
           if (fieldDef.kind == "application" && fieldDef.args.some(argType => !builtIns.primitives.has(argType) && !types.has(argType)))
             errors.push(`field ${fieldName} of type ${typeName} applies non-existent type arguments ${JSON.stringify(fieldDef.args.filter(argType => !builtIns.primitives.has(argType) && !types.has(argType)))}`);
@@ -308,15 +312,16 @@ export const FormsConfig = {
 
       let forms: Map<string, FormDef> = Map();
       Object.keys(formsConfig["forms"]).forEach((formName: any) => {
-        let formDef: FormDef = { name: formName, type: "", fields: Map(), tabs: Map() };
+        let formDef: FormDef = { name: formName, type: "", fields: Map(), tabs: Map(), typeDef:null! };
         forms = forms.set(formName, formDef);
         const configFormDef = formsConfig["forms"][formName];
         if ("type" in configFormDef == false) {
           errors.push(`form ${formName} is missing the required 'type' attribute`);
         } else {
-          if (types.has(configFormDef["type"]))
+          if (types.has(configFormDef["type"])) {
             formDef.type = configFormDef["type"];
-          else
+            formDef.typeDef = types.get(configFormDef["type"])!
+          } else
             errors.push(`form ${formName} references non-existing type ${configFormDef["type"]}`);
         }
         const formTypeDef = types.get(configFormDef["type"])
@@ -415,8 +420,8 @@ export const FormsConfig = {
             const rendererHasType = (elementRenderer: string, elementType: string): Array<string> => {
               const primitiveRendererNames = builtIns.primitives.get(elementType)
               if (primitiveRendererNames != undefined) {
-                const primitiveRenderers = 
-                  Set(primitiveRendererNames.flatMap(_ => builtIns.renderers[_]).toArray())
+                const primitiveRenderers =
+                  Set(primitiveRendererNames.renderers.flatMap(_ => builtIns.renderers[_]).toArray())
                 if (!primitiveRenderers.has(elementRenderer)) {
                   return [`${elementType} cannot be rendered by primitive renderer ${elementRenderer}`]
                 }
@@ -448,6 +453,7 @@ export const FormsConfig = {
           formDef.fields = formDef.fields.set(
             fieldName, {
             renderer: fieldConfig.renderer,
+            elementRenderer: fieldConfig.elementRenderer,
             visible: BoolExpr.Default(fieldConfig.visible),
             disabled: fieldConfig.disabled != undefined ?
               BoolExpr.Default(fieldConfig.disabled)

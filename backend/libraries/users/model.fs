@@ -64,7 +64,7 @@ let register : Coroutine<unit, UserCoroutinesState, UserEventUnion> =
           do! co.Await(User.SendRegistrationConfirmationEmail userId token)
           do! co.Any [            
             co{ // after a few days, remove this account: it is "dead"
-              do! co.Wait User.RegistrationExpiration
+              wait User.RegistrationExpiration
               do! co.Await(User.Delete userId)
             }
             co{ // wait for an email confirmation event, then mark the user as confirmed and active

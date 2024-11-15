@@ -1,18 +1,16 @@
 Todo (✅/❌)
+  ❌ add label override in field renderer
   ❌ make validator partial
-  ❌ list fields in config
+  ✅ list fields in config
     ✅ write config: addresses, emails
     ✅ invoke forms config parser
     ✅ only show validation and parsing results
     ✅ validate configuration with lists
-    ❌ parse configuration with lists
-    ❌ run configuration with lists
-      ❌ initial value of Address/string should be provided as well in the config or at least the parser
-    ❌ does the create form just invoke submit, or does it also submit the API underwater?
+    ✅ initial value of Address/string should be provided as well in the config or at least the parser
+    ✅ parse and run configuration with lists
   ❌ map fields
     ❌ design
     ❌ implement
-  ❌ implement data-driven configuration for list and map fields
   ❌ restore mapping builder for both list and map 
   ❌ add to FormsApp.tsx examples of statically typed mapping, as well as config'ed mapping
 

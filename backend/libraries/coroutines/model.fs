@@ -67,7 +67,11 @@ and repeat (p:Coroutine<'a,'s,'e>) =
   bind(p, fun _ -> repeat p)
   
 type CoroutineBuilder() = 
+  member _.Zero() = 
+    Co(fun _ -> CoroutineResult.Return(()), None, None)
   member _.Return(result:'a) = 
+    Co(fun _ -> CoroutineResult.Return(result), None, None)
+  member _.Yield(result:'a) = 
     Co(fun _ -> CoroutineResult.Return(result), None, None)
   member co.Yield() =
     Co(fun _ -> CoroutineResult.Wait(TimeSpan.FromMilliseconds(0), co.Return()), None, None)
@@ -81,8 +85,11 @@ type CoroutineBuilder() =
   //   Co(fun _ -> CoroutineResult.Any(ps), None, None)
   member _.On(p_e:'e -> Option<'a>) =
     Co(fun _ -> CoroutineResult.On(p_e), None, None)
-  member co.Wait(t:TimeSpan) =
-    Co(fun _ -> CoroutineResult.Wait(t, co.Return()), None, None)
+  [<CustomOperation("wait", MaintainsVariableSpaceUsingBind = true) >]
+  member co.Wait(p:Coroutine<_,_,_>, [<ProjectionParameter>] t) =
+    co.Bind(p, fun x -> 
+      Co(fun _ -> CoroutineResult.Wait(t x, co.Return()), None, None)
+    )
   member _.Await(p : Async<'a>) =
     Co(fun _ -> CoroutineResult.Await(p), None, None)
   member _.Awaiting(id:Guid, p : Async<'a>) =
@@ -91,6 +98,10 @@ type CoroutineBuilder() =
     Co(fun _ -> CoroutineResult.Spawn(p), None, None)
   member _.Repeat(p:Coroutine<'a,'s,'e>) =
     repeat p    
+  member _.GetState() =
+    Co(fun (s,es,dt) -> CoroutineResult.Return(s), None, None)
+  member _.SetState(u:U<'s>) =
+    Co(fun (s,es,dt) -> CoroutineResult.Return(), Some u, None)
   member co.ReturnFrom(p:Coroutine<'a,'s,'e>) = 
     co{
       let! res = p
@@ -193,7 +204,7 @@ type Eval<'s,'e when 'e : comparison>() = class end
           Active(p', None, None)
         else
           Active(co{ 
-            do! co.Wait timeSpan'
+            do! co.Wait (co.Return(), fun _ -> timeSpan')
             return! p'
           }, None, None)
       | On(p_e) ->

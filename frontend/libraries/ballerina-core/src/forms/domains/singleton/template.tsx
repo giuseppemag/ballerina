@@ -17,7 +17,10 @@ export const Form = <Entity, FieldStates, Context, ForeignMutationsExpected>() =
           fieldTemplates[field] =
             config[field]
               .mapContext<EntityFormContext<Entity, Fields, FieldStates, Context, ForeignMutationsExpected> & { disabled:boolean }>(_ => 
-                ({ ..._, value: _.value[field], ...(_[field]) }) as any)
+                {
+                  // if (field == "emails") debugger
+                  return ({ ..._, value: _.value[field], ...(_[field]) }) as any
+                })
               .mapState<State>(_ => current => ({ ...current, [field]: _(current[field]) }))
               .mapForeignMutationsFromProps<EntityFormForeignMutationsExpected<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>>(props =>
               ({

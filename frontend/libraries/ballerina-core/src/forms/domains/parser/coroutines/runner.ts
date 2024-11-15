@@ -14,6 +14,7 @@ export const LoadValidateAndParseFormsConfig = () => {
     if (validationResult.kind == "r")
       return Sum.Default.right(validationResult.value)
     return parseForms(
+      builtIns,
       current.containerFormView,
       current.fieldViews,
       current.infiniteStreamSources,

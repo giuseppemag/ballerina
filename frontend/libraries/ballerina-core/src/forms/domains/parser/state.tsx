@@ -1,5 +1,5 @@
 import { Collection, Map, OrderedMap, OrderedSet, Set } from "immutable";
-import { BoolExpr, Unit, PromiseRepo, Guid, LeafPredicatesEvaluators, Predicate, FormsConfig, BuiltIns, FormDef, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, SharedFormState, CreateFormState, Entity, EditFormContext, CreateFormContext, MappedEntityFormTemplate, Mapping, FormValidationResult, Synchronized, simpleUpdater } from "../../../../main";
+import { BoolExpr, Unit, PromiseRepo, Guid, LeafPredicatesEvaluators, Predicate, FormsConfig, BuiltIns, FormDef, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, SharedFormState, CreateFormState, Entity, EditFormContext, CreateFormContext, MappedEntityFormTemplate, Mapping, FormValidationResult, Synchronized, simpleUpdater, PrimitiveBuiltIn, GenericBuiltIn, TypeName, ListFieldState, ListForm, TypeDefinition } from "../../../../main";
 import { Value } from "../../../value/state";
 import { CollectionReference } from "../collection/domains/reference/state";
 import { CollectionSelection } from "../collection/domains/selection/state";
@@ -24,48 +24,50 @@ const parseOptions = (leafPredicates: any, options: any) => {
 };
 
 export const FieldView = //<Context, FieldViews extends DefaultFieldViews, EnumFieldConfigs extends {}, EnumSources extends {}>() => <ViewType extends keyof FieldViews, ViewName extends keyof FieldViews[ViewType]>
-  (fieldViews: any, viewType: any, viewName: any, fieldName: string, enumFieldConfigs: any, enumSources: any, leafPredicates: any): any => // FieldView<Context, FieldViews, ViewType, ViewName> =>
-    viewType == "MaybeBooleanViews" ?
-      MaybeBooleanForm<any & FormLabel, Unit>(_ => PromiseRepo.Default.mock(() => []))
+  (fieldViews: any, viewType: any, viewName: any, fieldName: string, enumFieldConfigs: any, enumSources: any, leafPredicates: any): any => // FieldView<Context, FieldViews, ViewType, ViewName> => 
+  {
+    if (viewType == "MaybeBooleanViews")
+      return MaybeBooleanForm<any & FormLabel, Unit>(_ => PromiseRepo.Default.mock(() => []))
         .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
         .mapContext<any & SharedFormState & Value<boolean>>(_ => ({ ..._, label: fieldName })) as any
-      : viewType == "BooleanViews" ?
-        BooleanForm<any & FormLabel, Unit>(_ => PromiseRepo.Default.mock(() => []))
-          .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
-          .mapContext<any & SharedFormState & Value<boolean>>(_ => ({ ..._, label: fieldName })) as any
-        : viewType == "DateViews" ?
-          DateForm<any & FormLabel, Unit>(_ => PromiseRepo.Default.mock(() => []))
-            .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
-            .mapContext<any & DateFormState & Value<Date>>(_ => ({ ..._, label: fieldName })) as any
-          : viewType == "NumberViews" ?
-            NumberForm<any & FormLabel, Unit>(_ => PromiseRepo.Default.mock(() => []))
-              .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
-              .mapContext<any & SharedFormState & Value<number>>(_ => ({ ..._, label: fieldName })) as any
-            : viewType == "StringViews" ?
-              StringForm<any & FormLabel, Unit>(_ => PromiseRepo.Default.mock(() => []))
-                .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
-                .mapContext<any & SharedFormState & Value<string>>(_ => ({ ..._, label: fieldName })) as any
-              : viewType == "EnumViews" ?
-                EnumForm<any & FormLabel & BaseEnumContext<any, CollectionReference>, Unit, CollectionReference>(_ => PromiseRepo.Default.mock(() => []))
-                  .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
-                  .mapContext<any & EnumFormState<any & BaseEnumContext<any, CollectionReference>, CollectionReference> & Value<CollectionSelection<CollectionReference>>>(_ => ({
-                    ..._, label: fieldName, getOptions: () => ((enumFieldConfigs as any)((enumSources as any)[fieldName]) as Promise<any>).then(options => parseOptions(leafPredicates, options))
-                  })) as any
-                : viewType == "EnumMultiselectViews" ?
-                  EnumMultiselectForm<any & FormLabel & BaseEnumContext<any, CollectionReference>, Unit, CollectionReference>(_ => PromiseRepo.Default.mock(() => []))
-                    .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
-                    .mapContext<any & EnumFormState<any & BaseEnumContext<any, CollectionReference>, CollectionReference> & Value<OrderedMap<Guid, CollectionReference>>>(_ => ({
-                      ..._, label: fieldName, getOptions: () => ((enumFieldConfigs as any)((enumSources as any)[fieldName]) as Promise<any>).then(options => parseOptions(leafPredicates, options))
-                    })) as any
-                  : viewType == "InfiniteStreamViews" ?
-                    SearchableInfiniteStreamForm<CollectionReference, any & FormLabel, Unit>(_ => PromiseRepo.Default.mock(() => []))
-                      .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
-                      .mapContext<any & SearchableInfiniteStreamState<CollectionReference> & Value<CollectionSelection<CollectionReference>>>(_ => ({ ..._, label: fieldName })) as any
-                    : viewType == "InfiniteStreamMultiselectViews" ?
-                      InfiniteMultiselectDropdownForm<CollectionReference, any & FormLabel, Unit>(_ => PromiseRepo.Default.mock(() => []))
-                        .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
-                        .mapContext<any & FormLabel & SharedFormState & SearchableInfiniteStreamState<CollectionReference> & Value<OrderedMap<Guid, CollectionReference>>>(_ => ({ ..._, label: fieldName })) as any
-                      : `error: the view for ${viewType as string}::${viewName as string} cannot be found`;
+    if (viewType == "BooleanViews")
+      return BooleanForm<any & FormLabel, Unit>(_ => PromiseRepo.Default.mock(() => []))
+        .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
+        .mapContext<any & SharedFormState & Value<boolean>>(_ => ({ ..._, label: fieldName })) as any
+    if (viewType == "DateViews")
+      return DateForm<any & FormLabel, Unit>(_ => PromiseRepo.Default.mock(() => []))
+        .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
+        .mapContext<any & DateFormState & Value<Date>>(_ => ({ ..._, label: fieldName })) as any
+    if (viewType == "NumberViews")
+      return NumberForm<any & FormLabel, Unit>(_ => PromiseRepo.Default.mock(() => []))
+        .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
+        .mapContext<any & SharedFormState & Value<number>>(_ => ({ ..._, label: fieldName })) as any
+    if (viewType == "StringViews")
+      return StringForm<any & FormLabel, Unit>(_ => PromiseRepo.Default.mock(() => []))
+        .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
+        .mapContext<any & SharedFormState & Value<string>>(_ => ({ ..._, label: fieldName })) as any
+    if (viewType == "EnumViews")
+      return EnumForm<any & FormLabel & BaseEnumContext<any, CollectionReference>, Unit, CollectionReference>(_ => PromiseRepo.Default.mock(() => []))
+        .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
+        .mapContext<any & EnumFormState<any & BaseEnumContext<any, CollectionReference>, CollectionReference> & Value<CollectionSelection<CollectionReference>>>(_ => ({
+          ..._, label: fieldName, getOptions: () => ((enumFieldConfigs as any)((enumSources as any)[fieldName]) as Promise<any>).then(options => parseOptions(leafPredicates, options))
+        })) as any
+    if (viewType == "EnumMultiselectViews")
+      return EnumMultiselectForm<any & FormLabel & BaseEnumContext<any, CollectionReference>, Unit, CollectionReference>(_ => PromiseRepo.Default.mock(() => []))
+        .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
+        .mapContext<any & EnumFormState<any & BaseEnumContext<any, CollectionReference>, CollectionReference> & Value<OrderedMap<Guid, CollectionReference>>>(_ => ({
+          ..._, label: fieldName, getOptions: () => ((enumFieldConfigs as any)((enumSources as any)[fieldName]) as Promise<any>).then(options => parseOptions(leafPredicates, options))
+        })) as any
+    if (viewType == "InfiniteStreamViews")
+      return SearchableInfiniteStreamForm<CollectionReference, any & FormLabel, Unit>(_ => PromiseRepo.Default.mock(() => []))
+        .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
+        .mapContext<any & SearchableInfiniteStreamState<CollectionReference> & Value<CollectionSelection<CollectionReference>>>(_ => ({ ..._, label: fieldName })) as any
+    if (viewType == "InfiniteStreamMultiselectViews")
+      return InfiniteMultiselectDropdownForm<CollectionReference, any & FormLabel, Unit>(_ => PromiseRepo.Default.mock(() => []))
+        .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
+        .mapContext<any & FormLabel & SharedFormState & SearchableInfiniteStreamState<CollectionReference> & Value<OrderedMap<Guid, CollectionReference>>>(_ => ({ ..._, label: fieldName })) as any
+    return `error: the view for ${viewType as string}::${viewName as string} cannot be found`;
+  }
 
 export const FieldFormState = //<Context, FieldViews extends DefaultFieldViews, InfiniteStreamSources extends {}, InfiniteStreamConfigs extends {}>() => <ViewType extends keyof FieldViews, ViewName extends keyof FieldViews[ViewType]>
   (fieldViews: any, viewType: any, viewName: any, fieldName: string, InfiniteStreamSources: any, infiniteStreamConfigs: any): any => {
@@ -81,6 +83,8 @@ export const FieldFormState = //<Context, FieldViews extends DefaultFieldViews, 
         ), ...SharedFormState.Default()
       });
     }
+    if (viewType == "ListViews")
+      return ListFieldState<any, any>().Default(Map())
     return `error: the view for ${viewType as string}::${viewName as string} cannot be found when creating the corresponding field form state`;
   };
 
@@ -91,10 +95,12 @@ export type ParsedForm = {
   disabledFields: any,
 }
 export const ParseForm = (
+  formDef: FormDef,
   containerFormView: any,
   fieldViews: any,
   otherForms: ParsedForms,
   fieldsViewsConfig: any,
+  formFieldElementRenderers: any,
   fieldsInfiniteStreamsConfig: any,
   fieldsOptionsConfig: any,
   InfiniteStreamSources: any,
@@ -102,10 +108,23 @@ export const ParseForm = (
   leafPredicates: any,
   visibleFieldsBoolExprs: any,
   disabledFieldsBoolExprs: any,
+  defaultValue: BasicFun<TypeName, any>,
+  type: TypeDefinition
 ): ParsedForm => {
   const fieldNameToViewCategory = (fieldName: string) => {
     const fieldViewCategories = Object.keys(fieldViews)
     const viewName = (fieldsViewsConfig as any)[fieldName];
+    for (const categoryName of fieldViewCategories) {
+      const viewCategory = (fieldViews as any)[categoryName];
+      if (viewName in viewCategory) {
+        return categoryName;
+      }
+    }
+    throw `cannot resolve view ${viewName} of field ${fieldName}`
+  };
+  const fieldNameToElementViewCategory = (fieldName: string) => {
+    const fieldViewCategories = Object.keys(fieldViews)
+    const viewName = (formFieldElementRenderers as any)[fieldName];
     for (const categoryName of fieldViewCategories) {
       const viewCategory = (fieldViews as any)[categoryName];
       if (viewName in viewCategory) {
@@ -128,12 +147,40 @@ export const ParseForm = (
   const formConfig: any = {};
   Object.keys(fieldsViewsConfig).forEach(fieldName => {
     const viewName = (fieldsViewsConfig as any)[fieldName];
-    formConfig[fieldName] =
-      otherForms.get(viewName)?.form.withView(containerFormView) ??
-      FieldView(fieldViews, fieldNameToViewCategory(fieldName) as any, (fieldsViewsConfig as any)[fieldName], fieldName, EnumOptionsSources, fieldsOptionsConfig, leafPredicates);
+    const viewType = fieldNameToViewCategory(fieldName) as any
+    if (viewType == "ListViews") {
+      const elementRendererName = formFieldElementRenderers[fieldName]
+      const field = type.fields.get(fieldName)!
+      const initialElementValue = defaultValue(field.kind == "primitive" ? field.value : field.kind == "lookup" ? field.name : field.args[0])
+      const elementForm = otherForms.get(elementRendererName)
+      if (elementForm != undefined) { // the list argument is a nested form
+        const initialFormState = elementForm.initialFormState
+        formConfig[fieldName] = ListForm<any, any, any & FormLabel, Unit>(
+          { Default: () => ({ ...initialFormState }) },
+          { Default: () => ({ ...initialElementValue }) },
+          _ => PromiseRepo.Default.mock(() => []),
+          elementForm.form.withView(containerFormView)
+        ).withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
+          .mapContext<any>(_ => ({ ..._, label: fieldName }))
+      } else { // the list argument is a primitive
+        const elementForm = FieldView(fieldViews, fieldNameToElementViewCategory(fieldName) as any, elementRendererName, fieldName, EnumOptionsSources, fieldsOptionsConfig, leafPredicates)
+        const initialFormState = FieldFormState(fieldViews, fieldNameToElementViewCategory(fieldName) as any, elementRendererName, fieldName, InfiniteStreamSources, fieldsInfiniteStreamsConfig);
+        formConfig[fieldName] = ListForm<any, any, any & FormLabel, Unit>(
+          { Default: () => initialFormState },
+          { Default: () => initialElementValue },
+          _ => PromiseRepo.Default.mock(() => []),
+          elementForm
+        ).withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
+          .mapContext<any>(_ => ({ ..._, label: fieldName }))
+      }
+    } else
+      formConfig[fieldName] =
+        otherForms.get(viewName)?.form.withView(containerFormView).mapContext<any>(_ => ({ ..._, label: fieldName })) ??
+        FieldView(fieldViews, viewType, viewName, fieldName, EnumOptionsSources, fieldsOptionsConfig, leafPredicates);
     if (typeof formConfig[fieldName] == "string") {
+      const err = formConfig[fieldName]
       formConfig[fieldName] = (props: any) => <>Error: field {fieldName} with {viewName} could not be instantiated</>
-      throw `cannot resolve view ${viewName} of field ${fieldName}`
+      throw err
     }
   });
 
@@ -160,8 +207,18 @@ export const parseVisibleFields = (
 
 export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
   let builtins: BuiltIns = {
-    "primitives": Map([["string", Set(["StringViews"])] as [string, Set<keyof BuiltIns["renderers"]>], ["number", Set(["NumberViews"])], ["boolean", Set(["BooleanViews"])], ["maybeBoolean", Set(["MaybeBooleanViews"])], ["Date", Set(["DateViews"])], ["CollectionReference", Set(["EnumViews"])]]),
-    "generics": Set(["SingleSelection", "Multiselection", "List"]),
+    "primitives": Map([
+      ["string", { renderers: Set(["StringViews"]), defaultValue: "" }] as [string, PrimitiveBuiltIn],
+      ["number", { renderers: Set(["NumberViews"]), defaultValue: 0 }],
+      ["boolean", { renderers: Set(["BooleanViews"]), defaultValue: false }],
+      ["maybeBoolean", { renderers: Set(["MaybeBooleanViews"]), defaultValue: undefined }],
+      ["Date", { renderers: Set(["DateViews"]), defaultValue: new Date(Date.now()) }],
+      ["CollectionReference", { renderers: Set(["EnumViews"]), defaultValue: CollectionReference.Default("", "") }]]),
+    "generics": Map([
+      ["SingleSelection", { defaultValue: CollectionSelection().Default.right("no selection") }] as [string, GenericBuiltIn],
+      ["Multiselection", { defaultValue: Map() }],
+      ["List", { defaultValue: [] }]
+    ]),
     "renderers": {
       "BooleanViews": Set(),
       "MaybeBooleanViews": Set(),
@@ -224,7 +281,7 @@ export type ParsedLaunchers = {
       MappedEntityFormTemplate<
         Source, Target, FormState, ExtraContext, Unit>,
       initialState: EditFormState<Target, FormState>,
-      mapping:Mapping<any,any>
+      mapping: Mapping<any, any>
     }>
 }
 export type ParsedForms = Map<string, ParsedForm & { form: EntityFormTemplate<any, any, any, any, any> }>
@@ -243,6 +300,7 @@ export type EnumName = string
 export type EnumOptionsSources = BasicFun<EnumName, Promise<Array<[CollectionReference, BoolExpr<Unit>]>>>
 export const parseForms =
   <LeafPredicates,>(
+    builtIns: BuiltIns,
     containerFormView: any,
     fieldViews: any,
     infiniteStreamSources: InfiniteStreamSources,
@@ -254,6 +312,32 @@ export const parseForms =
       let errors: FormParsingErrors = []
       let seen = Set<string>()
       let formProcessingOrder = OrderedSet<string>()
+
+      const defaultValue = (t: TypeName): any => {
+        let primitive = builtIns.primitives.get(t)
+        if (primitive != undefined) {
+          return primitive.defaultValue
+        } else {
+          let generic = builtIns.generics.get(t)
+          if (generic != undefined) {
+            return generic.defaultValue
+          } else {
+            let custom = formsConfig.types.get(t)
+            if (custom != undefined) {
+              let res = {} as any
+              custom.fields.forEach((field, fieldName) => {
+                res[fieldName] = defaultValue(field.kind == "primitive" ? field.value : field.kind == "lookup" ? field.name : field.value)
+              }
+              )
+              return res
+            } else {
+              errors.push(`cannot find type ${t} when resolving defaultValue`)
+              return undefined
+            }
+          }
+        }
+      }
+
       let parsedLaunchers: ParsedLaunchers = {
         create: Map(),
         edit: Map(),
@@ -277,6 +361,7 @@ export const parseForms =
         formProcessingOrder = formProcessingOrder.add(formDef.name)
       }
       formsConfig.forms.forEach(form => traverse(form))
+
       formProcessingOrder.forEach(formName => {
         const formConfig = formsConfig.forms.get(formName)!
         const formFieldRenderers = formConfig.fields.map(field => field.renderer).toObject()
@@ -284,12 +369,16 @@ export const parseForms =
         const formFieldDisabled = formConfig.fields.map(field => field.disabled).toObject()
         const formFieldStreams = formConfig.fields.filter(field => field.api.stream != undefined).map(field => field.api.stream).toObject()
         const formFieldEnumOptions = formConfig.fields.filter(field => field.api.enumOptions != undefined).map(field => field.api.enumOptions).toObject()
+        const formFieldElementRenderers = formConfig.fields.filter(field => field.elementRenderer != undefined).map(field => field.elementRenderer).toObject()
+
         try {
           const parsedForm = ParseForm(
+            formConfig,
             containerFormView,
             fieldViews,
             parsedForms,
             formFieldRenderers,
+            formFieldElementRenderers,
             formFieldStreams,
             formFieldEnumOptions,
             infiniteStreamSources,
@@ -297,6 +386,8 @@ export const parseForms =
             leafPredicates,
             formFieldVisibilities,
             formFieldDisabled,
+            defaultValue,
+            formConfig.typeDef,
           )
           const formBuilder = Form<any, any, any, any>().Default<any>()
           const form = formBuilder.template({
@@ -309,6 +400,10 @@ export const parseForms =
           errors.push(error)
         }
       })
+
+      if (errors.length > 0) {
+        return Sum.Default.right(errors)
+      }
 
       formsConfig.launchers.edit.forEach((launcher, launcherName) => {
         const parsedForm = parsedForms.get(launcher.form)!
@@ -372,41 +467,42 @@ export const parseForms =
             form:
               MappedEntityFormTemplate<Source, Target, FormState, ExtraContext, Unit>(
                 mapping,
-                (form as any).mapContext((parentContext:any) => {
-                  return ({...parentContext, ...parentContext.extraContext})
+                (form as any).mapContext((parentContext: any) => {
+                  return ({ ...parentContext, ...parentContext.extraContext })
                 }))
                 .mapForeignMutationsFromProps(props => props.foreignMutations as any),
             initialState: initialState,
-            mapping:mapping,
+            mapping: mapping,
             actualForm: form,
           })
         )
       })
-      // 
 
-      if (errors.length > 0) return Sum.Default.right(errors)
+      if (errors.length > 0) {
+        return Sum.Default.right(errors)
+      }
       return Sum.Default.left(parsedLaunchers)
     }
 
 
 
-export type FormsParserContext = { 
+export type FormsParserContext = {
   containerFormView: any,
   fieldViews: any,
   infiniteStreamSources: InfiniteStreamSources,
   enumOptionsSources: EnumOptionsSources,
   entityApis: EntityApis,
   leafPredicates: any,
-  getFormsConfig:BasicFun<void,Promise<any>>
-} 
+  getFormsConfig: BasicFun<void, Promise<any>>
+}
 export type FormsParserState = {
-  formsConfig:Synchronized<Unit, FormParsingResult>
+  formsConfig: Synchronized<Unit, FormParsingResult>
 }
 export const FormsParserState = {
-  Default:() : FormsParserState => ({
-    formsConfig:Synchronized.Default(unit)
+  Default: (): FormsParserState => ({
+    formsConfig: Synchronized.Default(unit)
   }),
-  Updaters:{
+  Updaters: {
     ...simpleUpdater<FormsParserState>()("formsConfig")
   }
 }

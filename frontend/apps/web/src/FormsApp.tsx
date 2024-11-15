@@ -83,8 +83,8 @@ export const FormsApp = (props: {}) => {
 						</tr>
 						<tr>
 							<td>
-							{JSON.stringify(configFormsParser)}
-							<button onClick={() => setFormToShow(formToShow + 1)}>Show next form</button>
+								{/* {JSON.stringify(configFormsParser)} */}
+								<button onClick={() => setFormToShow(formToShow + 1)}>Show next form</button>
 								<FormsParserTemplate
 									context={{
 										...configFormsParser,
@@ -101,9 +101,10 @@ export const FormsApp = (props: {}) => {
 									foreignMutations={unit}
 								/>
 
-								{/* {
+								{
 									formToShow % numForms == 0 ?
 										<>
+											{JSON.stringify(personCreateFormState)}
 											<h3>Create person</h3>
 											<FormRunnerTemplate
 												context={{
@@ -151,7 +152,7 @@ export const FormsApp = (props: {}) => {
 
 											</>
 											: undefined
-								} */}
+								}
 							</td>
 						</tr>
 					</tbody>

@@ -35,7 +35,7 @@ export const ListForm = <Element, ElementFormState, Context extends FormLabel, F
         }))
         .mapContext((_: Context & Value<List<Element>> & ListFieldState<Element, ElementFormState>) : (Context & Value<Element> & ElementFormState) | undefined => {
           const element = _.value.get(elementIndex)
-          if (!element) return undefined
+          if (element == undefined) return undefined
           const elementFormState = _.elementFormStates.get(elementIndex) || ElementFormState.Default()
           const elementContext : Context & Value<Element> & ElementFormState = ({ ..._, ...elementFormState, value: element })
           return elementContext

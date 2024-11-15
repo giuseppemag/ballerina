@@ -170,7 +170,9 @@ export const PersonFormsConfig = {
           "columns": {
             "demographics": {
               "groups": {
-                "main": ["name", "surname", "birthday", "gender"],
+                "main": ["name", "surname", "birthday", "gender", "emails"
+
+                ],
               },
             },
             "mailing": {

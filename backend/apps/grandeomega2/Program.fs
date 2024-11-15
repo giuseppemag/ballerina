@@ -27,6 +27,52 @@ module Program =
     static member Position = "Position"
     override p.ToString() = $"title={p.Title} name={p.Name}"
 
+  let Counter = {| 
+    updaters={| 
+      counter=fun u (s:{| counter:int |}) -> 
+        {| s with counter = u(s.counter) |} 
+      |} 
+    |}
+  let mutable state = {| counter=0 |}
+  let p:Coroutine<Unit, {| counter:int |}, Unit> = 
+    co.Repeat(
+      co{
+        wait (TimeSpan.FromSeconds 1.0)
+        do! co.SetState (Counter.updaters.counter(fun x -> x + 1))
+      }
+    )
+  let mutable evals : EvaluatedCoroutines<_,_> = { 
+    active = Map.empty |> Map.add (Guid.NewGuid()) p;
+    waiting = Map.empty;
+    waitingOrListening = Map.empty;
+    listening = Map.empty;
+    stopped = Set.empty;
+  }
+  Console.Clear()
+  let mutable lastT = DateTime.Now
+  let start = DateTime.Now
+  while true do
+    let now = DateTime.Now
+    let dT = now - lastT
+    lastT <- now
+    let (evals', u_s, u_e) = evalMany (evals.active) (state, Set.empty, dT)
+    match u_s with
+    | Some u_s -> 
+      state <- u_s state
+    | None -> ()
+    let active' = evals'.active |> Map.values |> Seq.toList
+    let waiting' = evals'.waiting |> Map.values |> Seq.map (fun w -> w.P) |> Seq.toList
+    let waiting'' = evals'.waitingOrListening |> Map.values |> Seq.map (fun w -> w.P) |> Seq.toList
+    let listening' = evals'.listening |> Map.values |> Seq.toList
+    evals <- { 
+      active = active' @ waiting' @ waiting'' @ listening' |> Seq.map (fun p -> Guid.NewGuid(), p) |> Map.ofSeq
+      waiting = Map.empty;
+      waitingOrListening = Map.empty;
+      listening = Map.empty;
+      stopped = Set.empty;
+    }
+    printf "\r%A(%.1f)                                               " state ((now - start)).TotalSeconds
+
   let context = new BloggingContext();
   if context.Blogs.Count() = 0 then
     do context.Blogs.Add({ BlogId=Guid.NewGuid(); Url = "www.myblog.com"; Posts = []; Tags = [] })

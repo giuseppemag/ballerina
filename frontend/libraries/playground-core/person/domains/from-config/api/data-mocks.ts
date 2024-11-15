@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker"
 import { CollectionReference, BoolExpr, Unit, InfiniteStreamSources, StreamPosition, PromiseRepo, OrderedMapRepo, EnumOptionsSources, EntityApis, unit, Guid, CollectionSelection } from "ballerina-core"
-import { Range, OrderedMap } from "immutable"
+import { Range, OrderedMap, List } from "immutable"
 import { City } from "../../address/state"
 import { AddressApi } from "../../address/apis/mocks"
 import { v4 } from "uuid"
@@ -75,14 +75,15 @@ const entityApis: EntityApis = {
         gender: CollectionSelection<CollectionReference>().Default.right("no selection"),
         interests: OrderedMap(),
         departments: OrderedMap(),
-        address: {
+        addresses: List([{
           street: faker.location.street(),
           number: Math.floor(Math.random() * 500),
           city: Math.random() > 0.5 ?
             CollectionSelection<CollectionReference>().Default.right("no selection")
             :
             CollectionSelection<CollectionReference>().Default.left(City.Default(v4(), faker.location.city()))
-        }
+        }]),
+        emails:List(["john@doe.it"])
       })
       : (id: Guid) => {
         alert(`Cannot find entity API ${apiName} for 'get'`)
@@ -107,11 +108,8 @@ const entityApis: EntityApis = {
           gender: CollectionSelection<CollectionReference>().Default.right("no selection"),
           interests: OrderedMap(),
           departments: OrderedMap(),
-          address: {
-            street: "",
-            number: 0,
-            city: CollectionSelection<CollectionReference>().Default.right("no selection")
-          }
+          addresses:List(),
+          emails:List()
         })
       }
       )
