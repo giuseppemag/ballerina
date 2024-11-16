@@ -13,6 +13,7 @@ Todo (✅/❌)
     ❌ implement
   ❌ restore mapping builder for both list and map 
   ❌ add to FormsApp.tsx examples of statically typed mapping, as well as config'ed mapping
+  ❌ combine data-sync and type-safe forms
 
   GrandeOmega2
   ✅ docker
@@ -29,29 +30,26 @@ Todo (✅/❌)
       ❌ suspended coroutines (wait vs on vs both)
     ❌ registration, etc. coroutines
       ❌ coroutine runtime engine
-        ❌ how to spawn? Spawn is a different exit point because it is an alternative way of being Done, without a result
-          ❌ spawn does not kill the rest of the computation inside the Then
-        ❌ how to await? Awaiters need to be saved to the active list and polled actively
-        ❌ Any is not correct wrt Spawn
-        ❌ Then is also a beast
+        ✅ fix stack overflow (flatten .Then)
+        ❌ test Any, Spawn
+        ❌ implement Repeat as a reified construct
+        ❌ add `any`, `spawn`, `repeat`, `on` keyword
         ❌ move runner to separate file
         ❌ move updater U<'s> to separate file
-      ❌ run in memory
-      ❌ test serializers on startup/simple endpoint
-      ❌ serialize to disk with binary serializer
-      ❌ serialize to DB with JSON serializer
+      ✅ run in memory
+      ✅ serialize to disk with JSON serializer
+      ❌ serialize to DB with any of the serializers
       ❌ update state (serialized together with coroutine in DB)
       ❌ update events
-      ❌ serialize to DB with quotations serializer (how does the state work)
+      ❌ test user registration coroutine, create events with testing endpoint
       ❌ run with intelligent suspensions
-        ❌ accumulate ps' in Any with the co-results, and then pattern match on 1 or 2 and only waiting or listening
   ✅ blog.fsproj
   ❌ postgres.csproj (this is the migrations project)
     ✅ dbContext (in C#)
     ✅ migrate one discriminated union
+    ✅ separate schema for user stuff
     ❌ connection string from appsettings!!!
       ❌ ensure we are reading the dev appsettings
-    ❌ separate schema for user stuff
   ❌ web app
     ❌ from Docker
     ❌ use appsettings.Development

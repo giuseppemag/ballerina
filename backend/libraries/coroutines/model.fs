@@ -57,12 +57,13 @@ and CoroutineResult<'a, 's, 'e when 'e : comparison> =
             }
           )
       | Then(p_p) -> 
-        p_p |> Coroutine.map (Coroutine.map f) |> CoroutineResult.Then
+          p_p |> Coroutine.map (Coroutine.map f) |> CoroutineResult.Then
+        // Then(p', k >> (Coroutine.map f))
       | Combine(p, k) -> 
         Combine(p, k |> Coroutine.map  f)
 
 let rec bind(p:Coroutine<'a, 's, 'e>, k:'a -> Coroutine<'b, 's, 'e>) = 
-    Co(fun _ -> CoroutineResult.Then(p |> Coroutine.map(k)), None, None)
+    Co(fun _ -> Then(p |> Coroutine.map k), None, None)
 and repeat (p:Coroutine<'a,'s,'e>) = 
   bind(p, fun _ -> repeat p)
   
@@ -90,6 +91,8 @@ type CoroutineBuilder() =
     co.Bind(p, fun x -> 
       Co(fun _ -> CoroutineResult.Wait(t x, co.Return()), None, None)
     )
+  // member co.Wait(t) =
+  //     Co(fun _ -> CoroutineResult.Wait(t, co.Return()), None, None)
   member _.Await(p : Async<'a>) =
     Co(fun _ -> CoroutineResult.Await(p), None, None)
   member _.Awaiting(id:Guid, p : Async<'a>) =
@@ -144,13 +147,13 @@ type Eval<'s,'e when 'e : comparison>() = class end
       let (s,es,dt) = ctx
       let (step, u_s, u_e) = p ctx
       match step with
-      | Then(p_p:Coroutine<Coroutine<'a, 's, 'e>, 's, 'e>) ->
+      | Then(p_p) ->
         match Eval.eval p_p ctx with
-        | Done(p', u_s, u_e) -> 
-          let res = Eval.eval p' ctx
+        | Done(p, u_s, u_e) -> 
+          let res = Eval.eval p ctx
           res.After(u_s, u_e)
-        | Spawned(p_p', u_s, u_e, rest) -> 
-          Spawned(p_p', u_s, u_e, rest |> Option.map (fun p -> Co(fun _ -> CoroutineResult.Then(p), None, None)))
+        | Spawned(p', u_s, u_e, rest:Option<Coroutine<Coroutine<'a, 's, 'e>, 's, 'e>>) -> 
+          Spawned(p', u_s, u_e, rest |> Option.map (fun rest_p -> Co(fun _ -> CoroutineResult.Then(rest_p), None, None)))
         | Active(p_p', u_s, u_e) -> 
           Active(Co(fun _ -> CoroutineResult.Then(p_p'), None, None), u_s, u_e)
         | Listening(p_p', u_s, u_e) -> 
@@ -199,14 +202,15 @@ type Eval<'s,'e when 'e : comparison>() = class end
         | Choice2Of2(res, u_s, u_e) -> 
           Done(res, u_s, u_e)
       | Wait(timeSpan, p':Coroutine<'a,'s,'e>) -> 
-        let timeSpan' = timeSpan - dt
-        if timeSpan'.TotalMilliseconds <= 0 then
-          Active(p', None, None)
-        else
-          Active(co{ 
-            do! co.Wait (co.Return(), fun _ -> timeSpan')
-            return! p'
-          }, None, None)
+        Waiting({ P=p'; Until=DateTime.Now + timeSpan }, None, None)
+        // let timeSpan' = timeSpan - dt
+        // if timeSpan'.TotalMilliseconds <= 0 then
+        //   Active(p', None, None)
+        // else
+        //   Active(co{ 
+        //     do! co.Wait timeSpan'
+        //     return! p'
+        //   }, None, None)
       | On(p_e) ->
         match es |> Seq.map (fun e -> p_e e, e) |> Seq.tryFind (function Some _, e -> true | _ -> false) with
         | Some(Some res,e) -> Done(res, None, Some(Set.remove e))
