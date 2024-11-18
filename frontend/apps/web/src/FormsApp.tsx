@@ -104,7 +104,7 @@ export const FormsApp = (props: {}) => {
 								{
 									formToShow % numForms == 0 ?
 										<>
-											{JSON.stringify(personCreateFormState)}
+											{/* {JSON.stringify(personCreateFormState)} */}
 											<h3>Create person</h3>
 											<FormRunnerTemplate
 												context={{

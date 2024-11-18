@@ -136,8 +136,8 @@ export const PersonFormsConfig = {
     "person": {
       "type": "Person",
       "fields": {
-        "name": { renderer: "defaultString", visible: { "kind": "true" } },
-        "surname": { renderer: "defaultString", visible: { "kind": "true" } },
+        "name": { label:"first name", renderer: "defaultString", visible: { "kind": "true" } },
+        "surname": { label:"last name", renderer: "defaultString", visible: { "kind": "true" } },
         "birthday": { renderer: "defaultDate", visible: { "kind": "true" } },
         "favoriteColor": {
           renderer: "defaultEnum", options: "colors", visible: { "kind": "true" }

@@ -32,6 +32,7 @@ export const Type = {
 }
 export type FieldConfig = {
   renderer: string;
+  label: string
   api: { stream?: string, enumOptions?: string },
   elementRenderer?: string,
   visible: BoolExpr<any>;
@@ -453,6 +454,7 @@ export const FormsConfig = {
           formDef.fields = formDef.fields.set(
             fieldName, {
             renderer: fieldConfig.renderer,
+            label: fieldConfig.label ?? fieldName,
             elementRenderer: fieldConfig.elementRenderer,
             visible: BoolExpr.Default(fieldConfig.visible),
             disabled: fieldConfig.disabled != undefined ?

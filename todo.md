@@ -1,19 +1,13 @@
 Todo (✅/❌)
-  ❌ add label override in field renderer
+  ✅ add label override in field renderer
   ❌ make validator partial
-  ✅ list fields in config
-    ✅ write config: addresses, emails
-    ✅ invoke forms config parser
-    ✅ only show validation and parsing results
-    ✅ validate configuration with lists
-    ✅ initial value of Address/string should be provided as well in the config or at least the parser
-    ✅ parse and run configuration with lists
   ❌ map fields
     ❌ design
     ❌ implement
   ❌ restore mapping builder for both list and map 
   ❌ add to FormsApp.tsx examples of statically typed mapping, as well as config'ed mapping
   ❌ combine data-sync and type-safe forms
+  ❌ add `required` validation field renderer
 
   GrandeOmega2
   ✅ docker
@@ -29,16 +23,33 @@ Todo (✅/❌)
       ❌ active coroutines
       ❌ suspended coroutines (wait vs on vs both)
     ❌ registration, etc. coroutines
-      ❌ coroutine runtime engine
-        ✅ fix stack overflow (flatten .Then)
-        ❌ test Any, Spawn
-        ❌ implement Repeat as a reified construct
-        ❌ add `any`, `spawn`, `repeat`, `on` keyword
+      ❌ serialize to DB with any of the serializers
+      ❌ sample coroutines
         ❌ move runner to separate file
         ❌ move updater U<'s> to separate file
+        ❌ events A of int, B of bool, with an ABId
+        ❌ spawn any(on A, increment ACount; wait 10, increment WaitAFailCount)
+        ❌ spawn any(on B, increment BCount; wait 10, increment WaitBFailCount)
+          ❌ test Any, Spawn
+          ❌ implement Repeat as a reified construct
+          ❌ add `any`, `spawn`, `repeat`, `on` keywords
+        ❌ entity AB with ACount, BCount, WaitXFailCount
+        ❌ pass CRUD repositories for ABEvents, AB, ABCoroutines
+          ❌ implement in memory
+          ❌ implement in DB
+        ❌ run coroutine in memory
+        ❌ table of AB serialized Coroutines
+        ❌ table of AB Events
+        ❌ thread to run the coroutines forever
+          ❌ separate entry point with own executable/docker container
+          ❌ endpoint to push AB events
+            ❌ expose OpenAPI spec
+      ❌ generate APIs from queries: allow, restrict
+        ❌ expose OpenAPI spec
+      ✅ coroutine runtime engine
+      ✅ fix stack overflow (flatten .Then)
       ✅ run in memory
       ✅ serialize to disk with JSON serializer
-      ❌ serialize to DB with any of the serializers
       ❌ update state (serialized together with coroutine in DB)
       ❌ update events
       ❌ test user registration coroutine, create events with testing endpoint

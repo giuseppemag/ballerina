@@ -20,7 +20,7 @@ export const FormRunnerErrorsTemplate = (parsedFormsConfig: FormParsingResult) =
 export const FormRunnerTemplate =
   Template.Default<FormRunnerContext & FormRunnerState, FormRunnerState, FormRunnerForeignMutationsExpected>(props => {
     if (props.context.form.kind == "r") return <></>
-    console.log("props.context.form.value.formState", props.context)
+    // console.log("props.context.form.value.formState", props.context)
     return <>
         <props.context.form.value.form
           context={{
