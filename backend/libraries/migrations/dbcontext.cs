@@ -16,6 +16,11 @@ namespace Migrations
     public DbSet<Users.UserEvent> UserEvents { get; set; }
     public DbSet<Users.NewUserEvent> NewUserEvents { get; set; }
     public DbSet<Users.EmailConfirmedEvent> EmailConfirmedEvents { get; set; }
+
+    public DbSet<absample.models.AB> ABs { get; set; }
+    public DbSet<absample.efmodels.ABEvent> ABEvents { get; set; }
+    public DbSet<absample.efmodels.AEvent> AEvents { get; set; }
+    public DbSet<absample.efmodels.BEvent> BEvents { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
 
       optionsBuilder.UseNpgsql("User ID=postgres;Password=;Host=localhost;Port=5432;Database=blog;Pooling=true;Maximum Pool Size=50;");
@@ -26,6 +31,8 @@ namespace Migrations
           .HasDiscriminator<string>("tag_type");
       modelBuilder.Entity<Users.UserEvent>()
           .HasDiscriminator<string>("user_event_type");
+      modelBuilder.Entity<absample.efmodels.ABEvent>()
+          .HasDiscriminator<string>("abevent_type");
     }
   }
   // inherit DbContext()

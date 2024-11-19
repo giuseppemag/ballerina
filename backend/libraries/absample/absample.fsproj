@@ -6,11 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="model.fs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <Compile Include="./models/models.fs" />
+    <Compile Include="./models/ef-models.fs" />
   </ItemGroup>
 
 </Project>

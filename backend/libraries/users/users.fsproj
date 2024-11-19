@@ -10,7 +10,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\coroutines\coroutines.fsproj" />
+    <ProjectReference Include="..\ballerina-core\ballerina-core.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
   </ItemGroup>
 
 </Project>

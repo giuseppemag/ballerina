@@ -1,16 +1,7 @@
 ﻿module Ballerina.Coroutines
+open Ballerina.Fun
 open System
 
-type U<'s> = 's -> 's
-let (>>?) (f:Option<U<'a>>) (g:Option<U<'a>>) : Option<U<'a>> =
-  match f,g with 
-  | Some f, Some g -> Some(fun x -> g(f(x)))
-  | None, Some _ -> g
-  | Some _, None -> f
-  | _ -> None
-
-type Updater<'s> = U<'s>
-let replaceWith (v:'a) : U<'a> = fun _ -> v
 type DeltaT = TimeSpan
 
 type Coroutine<'a, 's, 'e when 'e : comparison> = Co of ('s * Set<'e> * DeltaT -> CoroutineResult<'a, 's, 'e> * Option<U<'s>> * Option<U<Set<'e>>>)

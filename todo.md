@@ -23,24 +23,23 @@ Todo (✅/❌)
       ❌ active coroutines
       ❌ suspended coroutines (wait vs on vs both)
     ❌ registration, etc. coroutines
-      ❌ serialize to DB with any of the serializers
-      ❌ sample coroutines
-        ❌ move runner to separate file
-        ❌ move updater U<'s> to separate file
-        ❌ events A of int, B of bool, with an ABId
-        ❌ spawn any(on A, increment ACount; wait 10, increment WaitAFailCount)
-        ❌ spawn any(on B, increment BCount; wait 10, increment WaitBFailCount)
-          ❌ test Any, Spawn
-          ❌ implement Repeat as a reified construct
-          ❌ add `any`, `spawn`, `repeat`, `on` keywords
-        ❌ entity AB with ACount, BCount, WaitXFailCount
-        ❌ pass CRUD repositories for ABEvents, AB, ABCoroutines
-          ❌ implement in memory
-          ❌ implement in DB
-        ❌ run coroutine in memory
-        ❌ table of AB serialized Coroutines
-        ❌ table of AB Events
+      ✅ serialize/deserialize F# unions and records with endpoints
+      ✅ define CRUD 'a
+      ✅ define AB, ABEvent, ABEvent_CLI
+      ✅ define DBSets in DBContext
+      ✅ run migrations
+      ✅ move CRUD 'a to separate project
+      ✅ move updater U<'s> to separate file
+      ❌ define ABRepo, ABEventRepo
+      ❌ post ABEvent, AB via repos
+        ❌ expose OpenAPI spec
+      ❌ move runner to separate file
+      ❌ test Any, Spawn
+      ❌ implement Repeat as a reified construct
+      ❌ add `any`, `spawn`, `repeat`, `on` keywords
+      ❌ define and run ABCoroutine
         ❌ thread to run the coroutines forever
+          ❌ check FSharp.json instead of the other lib to have only one way to serialize coroutines and endpoint stuff
           ❌ separate entry point with own executable/docker container
           ❌ endpoint to push AB events
             ❌ expose OpenAPI spec

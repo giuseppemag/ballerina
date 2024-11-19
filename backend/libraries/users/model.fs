@@ -1,6 +1,7 @@
 ﻿module Users
 open System
 open Ballerina.Coroutines
+open Ballerina.Fun
 
 type [<CLIMutable>] Token = { TokenId:Guid; Token:string }
 let Token = {|

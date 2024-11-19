@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>ballerina_core</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="updater/model.fs" />
+    <Compile Include="crud/model.fs" />
+    <Compile Include="coroutine/model.fs" />
+  </ItemGroup>
+
+</Project>

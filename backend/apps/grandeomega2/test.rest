@@ -1,0 +1,28 @@
+POST http://localhost:5000/add HTTP/1.1
+content-type: application/json
+
+{
+  "value": 100
+}
+#####
+
+GET http://localhost:5000/AEvent HTTP/1.1
+content-type: application/json
+#####
+
+GET http://localhost:5000/BEvent HTTP/1.1
+content-type: application/json
+#####
+
+POST http://localhost:5000/ABEvent HTTP/1.1
+content-type: application/json
+
+{"Case":"B","Fields":[{"abEventId":"2293a596-4b3f-4b91-bded-4ff418c367c4","bValue":222}]}
+#####
+
+
+POST http://localhost:5000/ABEvent HTTP/1.1
+content-type: application/json
+
+{"Case":"A","Fields":[{"abEventId":"5a941956-6d82-46f7-8a63-fa7316b06d69","aValue":111}]}
+#####
