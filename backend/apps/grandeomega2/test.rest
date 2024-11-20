@@ -6,6 +6,14 @@ content-type: application/json
 }
 #####
 
+GET http://localhost:5000/positionOptions HTTP/1.1
+content-type: application/json
+#####
+
+GET http://localhost:5000/FirstBlog HTTP/1.1
+content-type: application/json
+#####
+
 GET http://localhost:5000/AEvent HTTP/1.1
 content-type: application/json
 #####

@@ -75,6 +75,14 @@ const entityApis: EntityApis = {
         gender: CollectionSelection<CollectionReference>().Default.right("no selection"),
         interests: OrderedMap(),
         departments: OrderedMap(),
+        mainAddress:{
+          street: faker.location.street(),
+          number: Math.floor(Math.random() * 500),
+          city: Math.random() > 0.5 ?
+            CollectionSelection<CollectionReference>().Default.right("no selection")
+            :
+            CollectionSelection<CollectionReference>().Default.left(City.Default(v4(), faker.location.city()))
+        },
         addresses: List([{
           street: faker.location.street(),
           number: Math.floor(Math.random() * 500),
@@ -108,6 +116,11 @@ const entityApis: EntityApis = {
           gender: CollectionSelection<CollectionReference>().Default.right("no selection"),
           interests: OrderedMap(),
           departments: OrderedMap(),
+          mainAddress: {
+            street: "",
+            number: 0,
+            city: CollectionSelection<CollectionReference>().Default.right("no selection"),
+          },
           addresses:List(),
           emails:List()
         })

@@ -18,7 +18,9 @@ open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.Options
 open Ballerina.Coroutines
+open Ballerina.CRUD
 open Migrations
+open Microsoft.EntityFrameworkCore
 
 module Program =
   type PositionOptions() = 
@@ -83,36 +85,44 @@ module Program =
     File.WriteAllText("evals.json", text)
     printf "\r%A(%.1f)                                               " state ((now - start)).TotalSeconds
 
-  let context = new BloggingContext();
-  if context.Blogs.Count() = 0 then
-    do context.Blogs.Add({ BlogId=Guid.NewGuid(); Url = "www.myblog.com"; Posts = []; Tags = [] })
-    do context.SaveChanges()
-  if context.Tags.Count() = 0 then
-    do context.Tags.Add(new Interview("Albert", "Sanders"))
-    do context.Tags.Add(new Lifestyle())
-    do context.SaveChanges()
-
-  // let tmp = context.Users.Where(<@ fun (u:Users.User) -> u.Active @>)
-
-  open System.Linq.Expressions
-  /// Converts a F# Expression to a LINQ Lambda
-  let toLambda (exp:Quotations.Expr) =
-      let linq = exp |> Microsoft.FSharp.Linq.RuntimeHelpers.LeafExpressionConverter.QuotationToExpression :?> MethodCallExpression
-      linq.Arguments.[0] :?> LambdaExpression
-
-  /// Converts a Lambda quotation into a Linq Lamba Expression with 1 parameter
-  let ToLinq (exp : Quotations.Expr<'a -> 'b>) =
-      let lambda = toLambda exp
-      Expression.Lambda<Func<'a, 'b>>(lambda.Body, lambda.Parameters)
-  let tmp:Quotations.Expr<Users.User -> bool> = <@ fun (u:Users.User) -> u.Active @>
-  let activeUsers = context.Users.Where(tmp |> ToLinq)
-  
-  printfn "%A" (context.Blogs.Where(fun b -> b.Url.Contains("goo")).ToArray())
-  printfn "%A" (context.Tags |> Seq.map Tag.ToUnion |> Seq.toArray)
-
   let exitCode = 0
 
-  type ABEvent = A of {| ABEventId:Guid; AValue:int |} | B of {| ABEventId:Guid; BValue:int |}
+  let AB(db:BloggingContext) : Crud<absample.models.AB> = {
+    create = fun e -> 
+      let id = Guid.NewGuid()
+      do db.ABs.Add({ e with ABId=id })
+      async{ 
+        let! _ = db.SaveChangesAsync() |> Async.AwaitTask
+        return id 
+      }
+    delete = fun id -> 
+      async{
+        let! _ = db.ABs.Where(fun e -> e.ABId = id).ExecuteDeleteAsync() |> Async.AwaitTask
+        return ()
+      }
+    update = fun id u -> 
+      async{
+        let! es = db.ABs.Where(fun e -> e.ABId = id).ToListAsync() |> Async.AwaitTask
+        let es = es.Select(u)
+        db.ABs.UpdateRange(es)
+        let! _ = db.SaveChangesAsync() |> Async.AwaitTask
+        return ()
+      }      
+    get = fun id -> 
+      async{
+        let! es = db.ABs.Where(fun e -> e.ABId = id).ToListAsync() |> Async.AwaitTask
+        return es |> Seq.tryHead
+      }
+    getN = fun _ -> failwith ""
+  }
+
+  let ABEvent(db:BloggingContext) : Crud<absample.models.ABEvent> = {
+    create = fun _ -> failwith ""
+    delete = fun _ -> failwith ""
+    update = fun _ -> failwith ""
+    get = fun _ -> failwith ""
+    getN = fun _ -> failwith ""
+  }
 
   [<EntryPoint>]
   let main args =
@@ -121,23 +131,20 @@ module Program =
     builder.Services.Configure<JsonOptions>(fun (options:JsonOptions) -> 
       JsonFSharpOptions.Default().AddToJsonSerializerOptions(options.SerializerOptions) |> ignore
     )
-
-    // let position =
-    //     builder.Configuration.GetSection(PositionOptions.Position)
-    //         .Get<PositionOptions>();
-    // Console.WriteLine(position)
+    builder.Services.AddDbContext<BloggingContext>(fun opt -> 
+      opt.UseNpgsql(
+        builder.Configuration.GetConnectionString("DbConnection")
+        // "User ID=postgres;Password=;Host=localhost;Port=5432;Database=blog;Pooling=true;Maximum Pool Size=50;"
+        ) |> ignore)
 
     let app = builder.Build()
-    // let position = app.Services.GetService<IOptions<PositionOptions>>()    
-    // Console.WriteLine(position.Value)
-
     // app.UseHttpsRedirection()
 
-    // app.UseAuthorization()    
-    app.MapGet("/positionOptions", new Func<_>(fun () -> app.Configuration.Get<PositionOptions>()))
-    app.MapGet("/AEvent", new Func<_>(fun () -> ABEvent.A({| ABEventId=Guid.NewGuid(); AValue=111 |})))
-    app.MapGet("/BEvent", new Func<_>(fun () -> ABEvent.B({| ABEventId=Guid.NewGuid(); BValue=222 |})))
-    app.MapPost("/ABEvent", new Func<_,_>(fun ([<FromBody>] msg: ABEvent) -> msg))
+    app.MapGet("/FirstBlog", new Func<_,_>(fun (db:BloggingContext) -> db.Blogs.FirstOrDefault()))
+    app.MapGet("/positionOptions", new Func<_,_>(fun (position:IOptions<PositionOptions>) -> position))
+    // app.MapGet("/AEvent", new Func<_>(fun () -> ABEvent.A({| ABEventId=Guid.NewGuid(); AValue=111 |})))
+    // app.MapGet("/BEvent", new Func<_>(fun () -> ABEvent.B({| ABEventId=Guid.NewGuid(); BValue=222 |})))
+    // app.MapPost("/ABEvent", new Func<_,_>(fun ([<FromBody>] msg: ABEvent) -> msg))
     app.MapPost("/add", new Func<_,_>(fun ([<FromBody>] msg: {| value: int |}) -> {| value = msg.value + 1 |}))
 
     app.Run("http://localhost:5000")

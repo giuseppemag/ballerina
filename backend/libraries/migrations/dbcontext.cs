@@ -4,7 +4,7 @@ using Blogs;
 
 namespace Migrations
 {
-  public class BloggingContext() : DbContext
+  public class BloggingContext : DbContext
   {
     public DbSet<Blog> Blogs { get; set; }
     public DbSet<Post> Posts { get; set; }
@@ -21,10 +21,14 @@ namespace Migrations
     public DbSet<absample.efmodels.ABEvent> ABEvents { get; set; }
     public DbSet<absample.efmodels.AEvent> AEvents { get; set; }
     public DbSet<absample.efmodels.BEvent> BEvents { get; set; }
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
 
-      optionsBuilder.UseNpgsql("User ID=postgres;Password=;Host=localhost;Port=5432;Database=blog;Pooling=true;Maximum Pool Size=50;");
-    // , fun cfg -> cfg.MigrationsAssembly "migrations" |> ignore)
+    public BloggingContext(DbContextOptions<BloggingContext> options)
+        : base(options) { }
+
+    // protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
+
+    //   optionsBuilder.UseNpgsql("User ID=postgres;Password=;Host=localhost;Port=5432;Database=blog;Pooling=true;Maximum Pool Size=50;");
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
       modelBuilder.Entity<Tag>()

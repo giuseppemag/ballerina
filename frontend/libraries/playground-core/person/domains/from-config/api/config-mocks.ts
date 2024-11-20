@@ -37,6 +37,7 @@ export const PersonFormsConfig = {
         "gender": { fun: "SingleSelection", args: ["GenderRef"] },
         "interests": { fun: "Multiselection", args: ["InterestRef"] },
         "departments": { fun: "Multiselection", args: ["DepartmentRef"] },
+        "mainAddress": "Address",
         "addresses": { fun: "List", args: ["Address"] },
         "emails": { fun: "List", args: ["string"] },
       }
@@ -162,6 +163,7 @@ export const PersonFormsConfig = {
           disabled: //{ "kind": "true" }
             { "kind": "leaf", "operation": "field", "arguments": { "location": "local", "field": "subscribeToNewsletter", "value": false } }
         },
+        "mainAddress": { renderer: "address", visible: { "kind": "true" } },
         "addresses": { renderer: "defaultList", elementRenderer:"address", visible: { "kind": "true" } },
         "emails": { renderer: "defaultList", elementRenderer:"defaultString", visible: { "kind": "true" } },
       },
@@ -182,7 +184,7 @@ export const PersonFormsConfig = {
             },
             "addresses": {
               "groups": {
-                "main": ["departments", "addresses"],
+                "main": ["departments", "mainAddress", "addresses"],
               }
             }
           }

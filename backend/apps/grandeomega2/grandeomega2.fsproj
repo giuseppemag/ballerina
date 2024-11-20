@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="./samples/queries/sample.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

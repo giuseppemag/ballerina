@@ -24,7 +24,7 @@ const parseOptions = (leafPredicates: any, options: any) => {
 };
 
 export const FieldView = //<Context, FieldViews extends DefaultFieldViews, EnumFieldConfigs extends {}, EnumSources extends {}>() => <ViewType extends keyof FieldViews, ViewName extends keyof FieldViews[ViewType]>
-  (fieldViews: any, viewType: any, viewName: any, fieldName: string, label:string, enumFieldConfigs: any, enumSources: any, leafPredicates: any): any => // FieldView<Context, FieldViews, ViewType, ViewName> => 
+  (fieldViews: any, viewType: any, viewName: any, fieldName: string, label: string, enumFieldConfigs: any, enumSources: any, leafPredicates: any): any => // FieldView<Context, FieldViews, ViewType, ViewName> => 
   {
     if (viewType == "MaybeBooleanViews")
       return MaybeBooleanForm<any & FormLabel, Unit>(_ => PromiseRepo.Default.mock(() => []))
@@ -145,41 +145,49 @@ export const ParseForm = (
     }
   });
   const formConfig: any = {};
+  console.log(fieldsViewsConfig)
+  console.log(Object.keys(fieldsViewsConfig))
   Object.keys(fieldsViewsConfig).forEach(fieldName => {
     const label = formDef.fields.get(fieldName)!.label
     const viewName = (fieldsViewsConfig as any)[fieldName];
-    const viewType = fieldNameToViewCategory(fieldName) as any
-    if (viewType == "ListViews") {
-      const elementRendererName = formFieldElementRenderers[fieldName]
-      const field = type.fields.get(fieldName)!
-      const initialElementValue = defaultValue(field.kind == "primitive" ? field.value : field.kind == "lookup" ? field.name : field.args[0])
-      const elementForm = otherForms.get(elementRendererName)
-      if (elementForm != undefined) { // the list argument is a nested form
-        const initialFormState = elementForm.initialFormState
-        formConfig[fieldName] = ListForm<any, any, any & FormLabel, Unit>(
-          { Default: () => ({ ...initialFormState }) },
-          { Default: () => ({ ...initialElementValue }) },
-          _ => PromiseRepo.Default.mock(() => []),
-          elementForm.form.withView(containerFormView)
-        ).withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
-          .mapContext<any>(_ => ({ ..._, label: label }))
-      } else { // the list argument is a primitive
-        const elementForm = FieldView(fieldViews, fieldNameToElementViewCategory(fieldName) as any, elementRendererName, fieldName, label, EnumOptionsSources, fieldsOptionsConfig, leafPredicates)
-        const initialFormState = FieldFormState(fieldViews, fieldNameToElementViewCategory(fieldName) as any, elementRendererName, fieldName, InfiniteStreamSources, fieldsInfiniteStreamsConfig);
-        formConfig[fieldName] = ListForm<any, any, any & FormLabel, Unit>(
-          { Default: () => initialFormState },
-          { Default: () => initialElementValue },
-          _ => PromiseRepo.Default.mock(() => []),
-          elementForm
-        ).withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
-          .mapContext<any>(_ => ({ ..._, label: label }))
+    const otherForm = otherForms.get(viewName)
+    if (otherForm != undefined) {
+      formConfig[fieldName] = otherForm.form.withView(containerFormView).mapContext<any>(_ => ({ ..._, label: label }))
+    } else {
+      const viewType = fieldNameToViewCategory(fieldName) as any
+      if (viewType == "ListViews") {
+        const elementRendererName = formFieldElementRenderers[fieldName]
+        const field = type.fields.get(fieldName)!
+        const initialElementValue = defaultValue(field.kind == "primitive" ? field.value : field.kind == "lookup" ? field.name : field.args[0])
+        const elementForm = otherForms.get(elementRendererName)
+        if (elementForm != undefined) { // the list argument is a nested form
+          const initialFormState = elementForm.initialFormState
+          formConfig[fieldName] = ListForm<any, any, any & FormLabel, Unit>(
+            { Default: () => ({ ...initialFormState }) },
+            { Default: () => ({ ...initialElementValue }) },
+            _ => PromiseRepo.Default.mock(() => []),
+            elementForm.form.withView(containerFormView)
+          ).withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
+            .mapContext<any>(_ => ({ ..._, label: label }))
+        } else { // the list argument is a primitive
+          const elementForm = FieldView(fieldViews, fieldNameToElementViewCategory(fieldName) as any, elementRendererName, fieldName, label, EnumOptionsSources, fieldsOptionsConfig, leafPredicates)
+          const initialFormState = FieldFormState(fieldViews, fieldNameToElementViewCategory(fieldName) as any, elementRendererName, fieldName, InfiniteStreamSources, fieldsInfiniteStreamsConfig);
+          formConfig[fieldName] = ListForm<any, any, any & FormLabel, Unit>(
+            { Default: () => initialFormState },
+            { Default: () => initialElementValue },
+            _ => PromiseRepo.Default.mock(() => []),
+            elementForm
+          ).withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
+            .mapContext<any>(_ => ({ ..._, label: label }))
+        }
+      } else {
+        formConfig[fieldName] = FieldView(fieldViews, viewType, viewName, fieldName, label, EnumOptionsSources, fieldsOptionsConfig, leafPredicates);
       }
-    } else
-      formConfig[fieldName] =
-        otherForms.get(viewName)?.form.withView(containerFormView).mapContext<any>(_ => ({ ..._, label: label })) ??
-        FieldView(fieldViews, viewType, viewName, fieldName, label, EnumOptionsSources, fieldsOptionsConfig, leafPredicates);
+    }
     if (typeof formConfig[fieldName] == "string") {
+      debugger
       const err = formConfig[fieldName]
+      console.log(`error processing field ${fieldName}`, err)
       formConfig[fieldName] = (props: any) => <>Error: field {fieldName} with {viewName} could not be instantiated</>
       throw err
     }
