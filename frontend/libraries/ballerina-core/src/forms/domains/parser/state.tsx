@@ -145,8 +145,6 @@ export const ParseForm = (
     }
   });
   const formConfig: any = {};
-  console.log(fieldsViewsConfig)
-  console.log(Object.keys(fieldsViewsConfig))
   Object.keys(fieldsViewsConfig).forEach(fieldName => {
     const label = formDef.fields.get(fieldName)!.label
     const viewName = (fieldsViewsConfig as any)[fieldName];
@@ -187,7 +185,7 @@ export const ParseForm = (
     if (typeof formConfig[fieldName] == "string") {
       debugger
       const err = formConfig[fieldName]
-      console.log(`error processing field ${fieldName}`, err)
+      console.error(`error processing field ${fieldName}`, err)
       formConfig[fieldName] = (props: any) => <>Error: field {fieldName} with {viewName} could not be instantiated</>
       throw err
     }

@@ -564,8 +564,8 @@ export const FormsConfig = {
       })
 
       if (errors.length > 0) {
-        console.log("parsing errors")
-        console.log(errors)
+        console.error("parsing errors")
+        console.error(errors)
         return Sum.Default.right(errors);
       }
 

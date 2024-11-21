@@ -243,10 +243,10 @@ export const Coroutine = {
           return CoroutineStep.Result(nextState, step.result);
         else {
           if (step.excludeOthers) {
-            console.log(
-              `exclude others detected, killing ${ps.length - 1
-              } other coroutines`
-            );
+            // console.log(
+            //   `exclude others detected, killing ${ps.length - 1
+            //   } other coroutines`
+            // );
             return CoroutineStep.MapState(
               step.next([context, deltaT]),
               ((_) => thenMaybe(nextState, _) || id)

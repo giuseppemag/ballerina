@@ -36,7 +36,7 @@ const showHelp = () => {
     }
   ]
   const usage = commandLineUsage(sections)
-  console.log(usage)
+  // console.log(usage)
 }
 
 try {
@@ -46,20 +46,20 @@ try {
   } else {
     const domainNameHyphenated = options.name as string
     const domainNameCamelCased = domainNameHyphenated.replace(/-([a-z])/g, function (g) { return g[1].toUpperCase(); });
-    console.log(domainNameCamelCased)
+    // console.log(domainNameCamelCased)
     const domainPath = options.path as string
     // const frameworkPath = (options.frameworkPath || "src/domains/core") as string
     const override = !!options.override
 
     const createDir = (d: string) => {
       const p = path.join(process.cwd(), domainPath, domainNameHyphenated, d)
-      console.log(`Creating dir ${p}`)
+      // console.log(`Creating dir ${p}`)
       if (!fs.existsSync(p))
         fs.mkdirSync(p)
     }
     const createFile = (f: string, defaultText: string) => {
       const p = path.join(process.cwd(), domainPath, domainNameHyphenated, f)
-      console.log(`Creating file ${p}`)
+      // console.log(`Creating file ${p}`)
       if (override && fs.existsSync(p))
         fs.rmSync(p)
       fs.appendFileSync(p, defaultText)
@@ -74,13 +74,13 @@ export const ${capitalize(domainNameCamelCased, true)} = {
   Default:() : ${capitalize(domainNameCamelCased, true)} => ({}),
   Updaters:{
     Core:{
-      
+
     },
     Template:{
-      
+
     },
     Coroutine:{
-      
+
     },
   },
   ForeignMutations:(_:ForeignMutationsInput<${capitalize(domainNameCamelCased, true)}ReadonlyContext, ${capitalize(domainNameCamelCased, true)}WritableState>) => ({})
