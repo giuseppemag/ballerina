@@ -1,35 +1,6 @@
 import { Set, Map, OrderedMap } from "immutable";
-import { BoolExpr, FormsConfigMerger, MappingPaths, Sum } from "../../../../../../main";
+import { BoolExpr, BuiltIns, FieldName, FormsConfigMerger, MappingPaths, Sum, Type, TypeDefinition, TypeName } from "../../../../../../main";
 
-export type FieldName = string;
-export type TypeName = string;
-export type TypeDefinition = {
-  extends: Array<TypeName>;
-  name: TypeName;
-  fields: OrderedMap<FieldName, Type>;
-};
-export type Type = {
-  kind: "lookup"; name: TypeName;
-} | {
-  kind: "primitive"; value: "string" | "number" | "maybeBoolean" | "boolean" | "Date" | "CollectionReference";
-} | {
-  kind: "application"; value: TypeName; args: Array<TypeName>;
-};
-export const Type = {
-  Default: {
-    lookup: (name: TypeName): Type => ({ kind: "lookup", name })
-  },
-  Operations: {
-    Equals: (fst: Type, snd: Type): boolean =>
-      fst.kind == "lookup" && snd.kind == "lookup" ? fst.name == snd.name :
-        fst.kind == "primitive" && snd.kind == "primitive" ? fst.value == snd.value :
-          fst.kind == "application" && snd.kind == "application" ?
-            fst.value == snd.value &&
-            fst.args.length == snd.args.length &&
-            fst.args.every((v, i) => v == snd.args[i]) :
-            false
-  }
-}
 export type FieldConfig = {
   renderer: string;
   label: string
@@ -90,25 +61,6 @@ export type FormsConfig = {
   }
 };
 export type FormValidationError = string;
-
-export type PrimitiveBuiltIn = { renderers: Set<keyof BuiltIns["renderers"]>, defaultValue: any }
-export type GenericBuiltIn = { defaultValue: any }
-export type BuiltIns = {
-  primitives: Map<string, PrimitiveBuiltIn>;
-  generics: Map<string, GenericBuiltIn>;
-  renderers: {
-    BooleanViews: Set<string>;
-    MaybeBooleanViews: Set<string>;
-    NumberViews: Set<string>;
-    StringViews: Set<string>;
-    DateViews: Set<string>;
-    EnumViews: Set<string>;
-    EnumMultiselectViews: Set<string>;
-    InfiniteStreamViews: Set<string>;
-    InfiniteStreamMultiselectViews: Set<string>;
-    ListViews: Set<string>;
-  };
-};
 
 export type FormValidationResult = Sum<FormsConfig, Array<FormValidationError>>
 export const FormsConfig = {
@@ -340,57 +292,59 @@ export const FormsConfig = {
                 if (fieldTypeDef.value == "maybeBoolean") {
                   // alert(JSON.stringify(fieldConfig["renderer"]))
                   // alert(JSON.stringify(builtIns.renderers.MaybeBooleanViews))
-                  if (!builtIns.renderers.MaybeBooleanViews.has(fieldConfig["renderer"]))
+                  if (!builtIns.renderers.maybeBoolean.has(fieldConfig["renderer"]))
                     errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
                 } else if (fieldTypeDef.value == "boolean") {
-                  if (!builtIns.renderers.BooleanViews.has(fieldConfig["renderer"]))
+                  if (!builtIns.renderers.boolean.has(fieldConfig["renderer"]))
                     errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
                 } else if (fieldTypeDef.value == "number") {
-                  if (!builtIns.renderers.NumberViews.has(fieldConfig["renderer"]))
+                  if (!builtIns.renderers.number.has(fieldConfig["renderer"]))
                     errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
                 } else if (fieldTypeDef.value == "string") {
-                  if (!builtIns.renderers.StringViews.has(fieldConfig["renderer"]))
+                  if (!builtIns.renderers.string.has(fieldConfig["renderer"]))
                     errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
                 } else if (fieldTypeDef.value == "Date") {
-                  if (!builtIns.renderers.DateViews.has(fieldConfig["renderer"]))
+                  if (!builtIns.renderers.date.has(fieldConfig["renderer"])) {
+                    alert(JSON.stringify(builtIns.renderers))
                     errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
-                } else {
+                  }
+                  } else {
                   errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
                 }
               } else if (fieldTypeDef?.kind == "application") {
                 if (fieldTypeDef?.value == "SingleSelection") {
-                  if (!builtIns.renderers.EnumViews.has(fieldConfig["renderer"]) &&
-                    !builtIns.renderers.InfiniteStreamViews.has(fieldConfig["renderer"]))
+                  if (!builtIns.renderers.enumSingleSelection.has(fieldConfig["renderer"]) &&
+                    !builtIns.renderers.streamSingleSelection.has(fieldConfig["renderer"]))
                     errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
                 } else if (fieldTypeDef?.value == "Multiselection") {
-                  if (!builtIns.renderers.EnumMultiselectViews.has(fieldConfig["renderer"]) &&
-                    !builtIns.renderers.InfiniteStreamMultiselectViews.has(fieldConfig["renderer"]))
+                  if (!builtIns.renderers.enumMultiSelection.has(fieldConfig["renderer"]) &&
+                    !builtIns.renderers.streamMultiSelection.has(fieldConfig["renderer"]))
                     errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
                 } else if (fieldTypeDef?.value == "List") {
-                  if (!builtIns.renderers.ListViews.has(fieldConfig["renderer"]))
+                  if (!builtIns.renderers.list.has(fieldConfig["renderer"]))
                     errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
                 }
                 if (fieldTypeDef.args.length < 1)
                   errors.push(`field ${fieldName} of form ${formName} should have one type argument}`);
                 else if (
-                  (builtIns.renderers.ListViews.has(fieldConfig["renderer"])) && "elementRenderer" in fieldConfig != true)
+                  (builtIns.renderers.list.has(fieldConfig["renderer"])) && "elementRenderer" in fieldConfig != true)
                   errors.push(`field ${fieldName} of form ${formName} is missing the 'elementRenderer' property`);
                 else if (
-                  (builtIns.renderers.EnumMultiselectViews.has(fieldConfig["renderer"]) ||
-                    builtIns.renderers.EnumViews.has(fieldConfig["renderer"])) && "options" in fieldConfig != true)
+                  (builtIns.renderers.enumMultiSelection.has(fieldConfig["renderer"]) ||
+                    builtIns.renderers.enumSingleSelection.has(fieldConfig["renderer"])) && "options" in fieldConfig != true)
                   errors.push(`field ${fieldName} of form ${formName} is missing the 'options' property`);
                 else if (
-                  (builtIns.renderers.InfiniteStreamViews.has(fieldConfig["renderer"]) ||
-                    builtIns.renderers.InfiniteStreamMultiselectViews.has(fieldConfig["renderer"])) && "stream" in fieldConfig != true)
+                  (builtIns.renderers.streamSingleSelection.has(fieldConfig["renderer"]) ||
+                    builtIns.renderers.streamMultiSelection.has(fieldConfig["renderer"])) && "stream" in fieldConfig != true)
                   errors.push(`field ${fieldName} of form ${formName} is missing the 'stream' property`);
-                else if ((builtIns.renderers.EnumMultiselectViews.has(fieldConfig["renderer"]) ||
-                  builtIns.renderers.EnumViews.has(fieldConfig["renderer"])) && (enums.get(fieldConfig["options"])) != fieldTypeDef.args[0]) {
+                else if ((builtIns.renderers.enumMultiSelection.has(fieldConfig["renderer"]) ||
+                  builtIns.renderers.enumSingleSelection.has(fieldConfig["renderer"])) && (enums.get(fieldConfig["options"])) != fieldTypeDef.args[0]) {
                   if (enums.has(fieldConfig["options"]))
                     errors.push(`field ${fieldName} of form ${formName} references an enum api with type ${enums.get(fieldConfig["options"])} when ${fieldTypeDef.args[0]} was expected`);
                   else
                     errors.push(`field ${fieldName} of form ${formName} references a non-existing enum api`);
-                } else if ((builtIns.renderers.InfiniteStreamMultiselectViews.has(fieldConfig["renderer"]) ||
-                  builtIns.renderers.InfiniteStreamViews.has(fieldConfig["renderer"])) && (streams.get(fieldConfig["stream"])) != fieldTypeDef.args[0]) {
+                } else if ((builtIns.renderers.streamMultiSelection.has(fieldConfig["renderer"]) ||
+                  builtIns.renderers.streamSingleSelection.has(fieldConfig["renderer"])) && (streams.get(fieldConfig["stream"])) != fieldTypeDef.args[0]) {
                   if (streams.has(fieldConfig["stream"]))
                     errors.push(`field ${fieldName} of form ${formName} references an api with type ${streams.get(fieldConfig["stream"])} when ${fieldTypeDef.args[0]} was expected`);
                   else
@@ -409,7 +363,7 @@ export const FormsConfig = {
         Object.keys(configFormDef["fields"]).forEach(fieldName => {
           const fieldConfig = configFormDef["fields"][fieldName]
           const fieldTypeDef = formTypeDef?.fields.get(fieldName);
-          if (fieldTypeDef && fieldTypeDef.kind == "application" && fieldTypeDef.value == "List" && (builtIns.renderers.ListViews.has(fieldConfig["renderer"]))) {
+          if (fieldTypeDef && fieldTypeDef.kind == "application" && fieldTypeDef.value == "List" && (builtIns.renderers.list.has(fieldConfig["renderer"]))) {
             let elementRenderer = fieldConfig["elementRenderer"]
             let elementType = fieldTypeDef.args[0]
             const rendererHasType = (elementRenderer: string, elementType: string): Array<string> => {

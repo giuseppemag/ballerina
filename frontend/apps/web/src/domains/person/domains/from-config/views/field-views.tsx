@@ -21,7 +21,7 @@ export const MostUglyValidationDebugView = (props: { context: SharedFormState })
 
 
 export const PersonFieldViews = {
-  MaybeBooleanViews: {
+  maybeBoolean: {
     defaultMaybeBoolean: <Context extends FormLabel, ForeignMutationsExpected>(): MaybeBooleanView<Context, ForeignMutationsExpected> =>
       props =>
         <>
@@ -32,7 +32,7 @@ export const PersonFieldViews = {
           <MostUglyValidationDebugView {...props} />
         </>,
   },
-  BooleanViews: {
+  boolean: {
     defaultBoolean: <Context extends FormLabel, ForeignMutationsExpected>(): BooleanView<Context, ForeignMutationsExpected> =>
       props =>
         <>
@@ -50,7 +50,7 @@ export const PersonFieldViews = {
           <MostUglyValidationDebugView {...props} />
         </>,
   },
-  NumberViews: {
+  number: {
     defaultNumber: <Context extends FormLabel, ForeignMutationsExpected>(): NumberView<Context, ForeignMutationsExpected> =>
       props =>
         <>
@@ -60,7 +60,7 @@ export const PersonFieldViews = {
           <MostUglyValidationDebugView {...props} />
         </>,
   },
-  StringViews: {
+  string: {
     defaultString: <Context extends FormLabel, ForeignMutationsExpected>(): StringView<Context, ForeignMutationsExpected> =>
       props =>
         <>
@@ -70,7 +70,7 @@ export const PersonFieldViews = {
           <MostUglyValidationDebugView {...props} />
         </>,
   },
-  DateViews: {
+  Date: {
     defaultDate: <Context extends FormLabel, ForeignMutationsExpected>(): DateView<Context, ForeignMutationsExpected> =>
       props =>
         <>
@@ -81,7 +81,7 @@ export const PersonFieldViews = {
           <MostUglyValidationDebugView {...props} />
         </>,
   },
-  EnumViews: {
+  enumSingleSelection: {
     defaultEnum: <Context extends FormLabel & BaseEnumContext<Context, Element>, Element extends CollectionReference, ForeignMutationsExpected>(): 
     EnumView<Context, Element, ForeignMutationsExpected> =>
       props => <>
@@ -103,7 +103,7 @@ export const PersonFieldViews = {
         <MostUglyValidationDebugView {...props} />
       </>,
   },
-  EnumMultiselectViews: {
+  enumMultiSelection: {
     defaultEnumMultiselect: <Context extends FormLabel & BaseEnumContext<Context, Element>, Element extends CollectionReference, ForeignMutationsExpected>(): 
       EnumMultiselectView<Context, Element, ForeignMutationsExpected> =>
       props => <>
@@ -125,7 +125,7 @@ export const PersonFieldViews = {
         <MostUglyValidationDebugView {...props} />
       </>,
   },
-  InfiniteStreamViews: {
+  streamSingleSelection: {
     defaultInfiniteStream: <Element extends CollectionReference, Context extends FormLabel, ForeignMutationsExpected>():
       SearchableInfiniteStreamView<Element, Context, ForeignMutationsExpected> =>
       props =>
@@ -163,7 +163,7 @@ export const PersonFieldViews = {
           <button onClick={() => props.foreignMutations.reload()}>🔄</button>
         </>,
   },
-  InfiniteStreamMultiselectViews: {
+  streamMultiSelection: {
     defaultInfiniteStreamMultiselect: <Element extends CollectionReference, Context extends FormLabel, ForeignMutationsExpected>():
       InfiniteStreamMultiselectView<Element, Context, ForeignMutationsExpected> =>
       props =>
@@ -204,7 +204,7 @@ export const PersonFieldViews = {
           }>🔄</button>
         </>,
   },
-  ListViews: {
+  list: {
     defaultList: <Element, ElementFormState, Context extends FormLabel, ForeignMutationsExpected>():
       ListFieldView<Element, ElementFormState, Context, ForeignMutationsExpected> =>
       props =>

@@ -71,27 +71,27 @@ const entityApis: EntityApis = {
         surname: faker.person.lastName(),
         birthday: new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45),
         subscribeToNewsletter: Math.random() > 0.5,
-        favoriteColor: CollectionSelection<CollectionReference>().Default.right("no selection"),
-        gender: CollectionSelection<CollectionReference>().Default.right("no selection"),
-        interests: OrderedMap(),
-        departments: OrderedMap(),
+        favoriteColor: undefined,
+        gender: undefined,
+        interests: [],
+        departments: [],
         mainAddress:{
           street: faker.location.street(),
           number: Math.floor(Math.random() * 500),
           city: Math.random() > 0.5 ?
-            CollectionSelection<CollectionReference>().Default.right("no selection")
+            undefined
             :
-            CollectionSelection<CollectionReference>().Default.left(City.Default(v4(), faker.location.city()))
+            City.Default(v4(), faker.location.city())
         },
         addresses: List([{
           street: faker.location.street(),
           number: Math.floor(Math.random() * 500),
           city: Math.random() > 0.5 ?
-            CollectionSelection<CollectionReference>().Default.right("no selection")
+            undefined
             :
-            CollectionSelection<CollectionReference>().Default.left(City.Default(v4(), faker.location.city()))
+            City.Default(v4(), faker.location.city())
         }]),
-        emails:List(["john@doe.it"])
+        emails:["john@doe.it", "johnthedon@doe.com"]
       })
       : (id: Guid) => {
         alert(`Cannot find entity API ${apiName} for 'get'`)
@@ -112,17 +112,24 @@ const entityApis: EntityApis = {
           surname: "",
           birthday: Date.now(),
           subscribeToNewsletter: false,
-          favoriteColor: CollectionSelection<CollectionReference>().Default.right("no selection"),
-          gender: CollectionSelection<CollectionReference>().Default.right("no selection"),
-          interests: OrderedMap(),
-          departments: OrderedMap(),
+          favoriteColor: undefined, 
+            // CollectionSelection<CollectionReference>().Default.right("no selection"),
+          gender: undefined, 
+            // CollectionSelection<CollectionReference>().Default.right("no selection"),
+          interests: [], 
+            // OrderedMap(),
+          departments: [], 
+            // OrderedMap(),
           mainAddress: {
             street: "",
             number: 0,
-            city: CollectionSelection<CollectionReference>().Default.right("no selection"),
+            city: undefined, 
+              // CollectionSelection<CollectionReference>().Default.right("no selection"),
           },
-          addresses:List(),
-          emails:List()
+          addresses: [], 
+           // List(),
+          emails: [], 
+            // List(),
         })
       }
       )
