@@ -97,6 +97,7 @@ export type ParsedForm = {
 export const ParseForm = (
   formDef: FormDef,
   containerFormView: any,
+  nestedContainerFormView: any,
   fieldViews: any,
   otherForms: ParsedForms,
   fieldsViewsConfig: any,
@@ -152,7 +153,7 @@ export const ParseForm = (
     const viewName = (fieldsViewsConfig as any)[fieldName];
     const otherForm = otherForms.get(viewName)
     if (otherForm != undefined) {
-      formConfig[fieldName] = otherForm.form.withView(containerFormView).mapContext<any>(_ => ({ ..._, label: label }))
+      formConfig[fieldName] = otherForm.form.withView(nestedContainerFormView).mapContext<any>(_ => ({ ..._, label: label }))
     } else {
       const viewType = fieldNameToViewCategory(fieldName) as any
       if (viewType == "ListViews") {
@@ -166,7 +167,7 @@ export const ParseForm = (
             { Default: () => ({ ...initialFormState }) },
             { Default: () => ({ ...initialElementValue }) },
             _ => PromiseRepo.Default.mock(() => []),
-            elementForm.form.withView(containerFormView)
+            elementForm.form.withView(nestedContainerFormView)
           ).withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
             .mapContext<any>(_ => ({ ..._, label: label }))
         } else { // the list argument is a primitive
@@ -311,6 +312,7 @@ export const parseForms =
   <LeafPredicates,>(
     builtIns: BuiltIns,
     containerFormView: any,
+    nestedContainerFormView: any,
     fieldViews: any,
     infiniteStreamSources: InfiniteStreamSources,
     enumOptionsSources: EnumOptionsSources,
@@ -384,6 +386,7 @@ export const parseForms =
           const parsedForm = ParseForm(
             formConfig,
             containerFormView,
+            nestedContainerFormView,
             fieldViews,
             parsedForms,
             formFieldRenderers,
@@ -497,6 +500,7 @@ export const parseForms =
 
 export type FormsParserContext = {
   containerFormView: any,
+  nestedContainerFormView: any,
   fieldViews: any,
   infiniteStreamSources: InfiniteStreamSources,
   enumOptionsSources: EnumOptionsSources,

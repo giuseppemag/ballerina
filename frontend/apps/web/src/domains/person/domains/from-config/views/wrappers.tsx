@@ -29,6 +29,35 @@ export const PersonContainerFormView: EntityFormView<any, any, any, { layout: Fo
   </>
 }
 
+export const PersonNestedContainerFormView: EntityFormView<any, any, any, { layout: FormLayout }, Unit> = props => {
+  return <>
+    <table>
+      <tbody>
+        {/* {JSON.stringify(props.VisibleFieldKeys.toArray())} */}
+        {
+          props.context.layout.valueSeq().map(tab =>
+            tab.columns.valueSeq().map(column =>
+              <tr style={{ display: "block", float: "left" }}>
+                {
+                  column.groups.valueSeq().map(group =>
+                    group.filter(fieldName => props.VisibleFieldKeys.has(fieldName))
+                      .map(fieldName =>
+                        <td style={{ display: "block" }}>
+                          {props.EmbeddedFields[fieldName]({ ...props, 
+                            context:{...props.context, disabled:props.DisabledFieldKeys.has(fieldName) }, view: unit })}
+                        </td>
+                      )
+                  )
+                }
+              </tr>
+            )
+          )
+        }
+      </tbody>
+    </table>
+  </>
+}
+
 export const PersonSubmitButtonWrapper: CreateFormView<any, any> = Template.Default<
   CreateFormContext<any, any> & CreateFormWritableState<any, any>,
   CreateFormWritableState<any, any>,

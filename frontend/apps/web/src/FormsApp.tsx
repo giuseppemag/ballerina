@@ -3,7 +3,7 @@ import "./App.css";
 import { unit, FormsConfig, parseForms, FormParsingResult, Sum, builtInsFromFieldViews, FormValidationResult, EditLauncherContext, CreateLauncherContext, FormsParserState, FormRunnerState, FormsParserTemplate, PromiseRepo, FormRunnerTemplate } from "ballerina-core";
 import { Set } from "immutable";
 import { PersonView } from "./domains/person/views/main-view";
-import { PersonContainerFormView, PersonShowFormSetupErrors, PersonSubmitButtonWrapper } from "./domains/person/domains/from-config/views/wrappers";
+import { PersonContainerFormView, PersonNestedContainerFormView, PersonShowFormSetupErrors, PersonSubmitButtonWrapper } from "./domains/person/domains/from-config/views/wrappers";
 import { PersonFormsConfig, PersonFromConfigApis, PersonConfigFormsLeafPredicates, PersonConfig, PersonFormState, Person } from "playground-core";
 import { PersonFieldViews } from "./domains/person-from-config/views/field-views";
 import { PersonForm } from "./domains/person/template";
@@ -89,6 +89,7 @@ export const FormsApp = (props: {}) => {
 									context={{
 										...configFormsParser,
 										containerFormView: PersonContainerFormView,
+										nestedContainerFormView: PersonNestedContainerFormView,
 										fieldViews: PersonFieldViews,
 										infiniteStreamSources: PersonFromConfigApis.streamApis,
 										enumOptionsSources: PersonFromConfigApis.enumApis,

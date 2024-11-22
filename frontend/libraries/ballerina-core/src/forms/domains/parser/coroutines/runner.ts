@@ -16,6 +16,7 @@ export const LoadValidateAndParseFormsConfig = () => {
     return parseForms(
       builtIns,
       current.containerFormView,
+      current.nestedContainerFormView,
       current.fieldViews,
       current.infiniteStreamSources,
       current.enumOptionsSources,
