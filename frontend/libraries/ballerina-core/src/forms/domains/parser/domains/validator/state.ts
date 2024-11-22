@@ -113,15 +113,9 @@ export type BuiltIns = {
 export type FormValidationResult = Sum<FormsConfig, Array<FormValidationError>>
 export const FormsConfig = {
   Default: {
-    validateAndParseAPIResponse: (builtIns: BuiltIns) => (formsConfig: any): FormValidationResult => {
+    validateAndParseAPIResponse: (builtIns: BuiltIns) => (fc: any): FormValidationResult => {
       let errors: Array<FormValidationError> = [];
-      if (Array.isArray(formsConfig)) {
-        alert("formsConfig is an array!")
-        const merged = FormsConfigMerger.Default.merge(formsConfig, errors)
-        formsConfig = merged[0]
-        errors = merged[0]
-      }
-
+      const formsConfig = Array.isArray(fc) ? FormsConfigMerger.Default.merge(fc) : fc;
       let types: Map<TypeName, TypeDefinition> = Map();
       if ("types" in formsConfig == false) {
         errors.push("the formsConfig does not contain a 'types' field");
@@ -570,8 +564,8 @@ export const FormsConfig = {
       })
 
       if (errors.length > 0) {
-        console.log("parsing errors")
-        console.log(errors)
+        console.error("parsing errors")
+        console.error(errors)
         return Sum.Default.right(errors);
       }
 

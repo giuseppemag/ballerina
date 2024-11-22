@@ -35,10 +35,10 @@ const X = {
   }
 }
 
-const visitor = 
-  X.Updaters.y.l(LeftValue.Updaters.value(_ => _ + 1)).then(
-    X.Updaters.y.r(RightValue.Updaters.value(_ => !_))
-  )
+// const visitor =
+//   X.Updaters.y.l(LeftValue.Updaters.value(_ => _ + 1)).then(
+//     X.Updaters.y.r(RightValue.Updaters.value(_ => !_))
+//   )
 
 
-console.log(visitor)
+// console.log(visitor)
