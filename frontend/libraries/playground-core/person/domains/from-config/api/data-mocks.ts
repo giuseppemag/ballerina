@@ -71,9 +71,9 @@ const entityApis: EntityApis = {
         surname: faker.person.lastName(),
         birthday: new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45),
         subscribeToNewsletter: Math.random() > 0.5,
-        favoriteColor: undefined,
+        favoriteColor: Math.random() > 0.5 ? colors[0][0] : undefined,
         gender: undefined,
-        interests: [],
+        interests: [interests[1][0], interests[2][0]],
         departments: [],
         mainAddress:{
           street: faker.location.street(),

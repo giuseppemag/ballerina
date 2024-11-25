@@ -120,7 +120,7 @@ export const defaultValue = (types:Map<TypeName, TypeDefinition>, builtIns:Built
 export const fromAPIRawValue = (t:Type, types:Map<TypeName, TypeDefinition>, builtIns:BuiltIns, converters:ApiConverters) => (raw:any) : any => {
   // alert(JSON.stringify(t))
   if (raw == undefined) {
-    console.error(`instantiating default value for type ${JSON.stringify(t)}: something is missing from the API response`)
+    console.warn(`instantiating default value for type ${JSON.stringify(t)}: the value was undefined so something is missing from the API response`)
     return defaultValue(types, builtIns)(t.kind == "primitive" ? t.value : t.kind == "lookup" ? t.name : t.value)
   }
 
@@ -133,8 +133,8 @@ export const fromAPIRawValue = (t:Type, types:Map<TypeName, TypeDefinition>, bui
         fromAPIRawValue({ kind:"lookup", name:t.args[0] }, types, builtIns, converters))(result)
       return result
     }
-    if (t.value == "MultiSelection" && t.args.length == 1) {
-      let result = converters[t.value].fromAPIRawValue(raw)
+    if ((t.value == "Multiselection" || t.value == "MultiSelection") && t.args.length == 1) {
+      let result = converters["MultiSelection"].fromAPIRawValue(raw)
       result = result.map(fromAPIRawValue({ kind:"lookup", name:t.args[0] }, types, builtIns, converters))
       return result
     }
@@ -148,15 +148,16 @@ export const fromAPIRawValue = (t:Type, types:Map<TypeName, TypeDefinition>, bui
       return result
     }
   } else { // t.kind == lookup: we are dealing with a record/object
-    let result:any = {}
+    let result:any = {...raw}
     const tDef = types.get(t.name)!
     tDef.fields.forEach((fieldType, fieldName) => {
-      result[fieldName] = fromAPIRawValue(fieldType, types, builtIns, converters)(raw[fieldName])
+      const fieldValue = raw[fieldName]
+      result[fieldName] = fromAPIRawValue(fieldType, types, builtIns, converters)(fieldValue)
     })
     return result
   }
-  console.error(`instantiating default value for type ${JSON.stringify(t)}: something is missing from the API response`)
-  return defaultValue(types, builtIns)(t.value)     
+  console.error(`unsupported type ${JSON.stringify(t)}, returning the raw value right away`)
+  return raw
 }
 
 
@@ -193,7 +194,8 @@ export const toAPIRawValue = (t:Type, types:Map<TypeName, TypeDefinition>, built
     let result:any = {...raw}
     const tDef = types.get(t.name)!
     tDef.fields.forEach((fieldType, fieldName) => {
-      result[fieldName] = toAPIRawValue(fieldType, types, builtIns, converters)(raw[fieldName])
+      const fieldValue = raw[fieldName]
+      result[fieldName] = toAPIRawValue(fieldType, types, builtIns, converters)(fieldValue)
     })
     return result
   }

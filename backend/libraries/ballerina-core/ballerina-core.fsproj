@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <Compile Include="updater/model.fs" />
+    <Compile Include="queries/quotationToLinq.fs" />
     <Compile Include="crud/model.fs" />
     <Compile Include="coroutine/model.fs" />
   </ItemGroup>

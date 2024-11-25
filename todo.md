@@ -41,10 +41,11 @@ Todo (✅/❌)
         ❌ adding and configuring the dbcontext should also be done from somewhere else, but that is not a sample
       ❌ define ABRepo, ABEventRepo
         ❌ generalize from a single DbSet
+        ❌ add ordering - requires making CRUD an interface
         ❌ test with simple endpoints
       ❌ post ABEvent, AB via repos
         ❌ expose OpenAPI spec
-      ❌ move runner to separate file
+      ❌ move coroutine evaluator to separate file
       ❌ test Any, Spawn
       ❌ implement Repeat as a reified construct
       ❌ add `any`, `spawn`, `repeat`, `on` keywords

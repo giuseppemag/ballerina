@@ -58,6 +58,7 @@ module Program =
   open Microsoft.AspNetCore.Http.Json
   open System.Text.Json
   open System.Text.Json.Serialization
+  open Ballerina.Queries
 
   let jsonSerializer = FsPickler.CreateJsonSerializer(indent = false)
   let text = jsonSerializer.PickleToString initialEvals
@@ -113,7 +114,10 @@ module Program =
         let! es = db.ABs.Where(fun e -> e.ABId = id).ToListAsync() |> Async.AwaitTask
         return es |> Seq.tryHead
       }
-    getN = fun _ -> failwith ""
+    getN = fun id predicate -> 
+      async {
+        return db.ABs.Where(ToLinq predicate) // .OrderBy()
+      }
   }
 
   let ABEvent(db:BloggingContext) : Crud<absample.models.ABEvent> = {
