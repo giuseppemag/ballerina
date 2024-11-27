@@ -43,6 +43,8 @@ Todo (✅/❌)
         ❌ define ABRepo, ABEventRepo
           ❌ generalize from a single DbSet
           ❌ add ordering - requires making CRUD an interface
+        ❌ also convert the AB record itself (especially when it references DUs)
+        ❌ add ASubEventX and ASubEventY
         ❌ post ABEvent, AB via repos
           ✅ expose OpenAPI spec
             ✅ type discriminator in swagger
@@ -56,7 +58,6 @@ Todo (✅/❌)
             ❌ endpoint to push AB events
               ❌ expose OpenAPI spec
         ❌ reorganize the main project decently, moving all the AB-related logic to a separate folder
-
       ❌ define sample Positions API and types
         ❌ DocEvents = SenderEvents | ReceiverEvents | BankDetailEvents
           ❌ further split by field types
@@ -72,11 +73,13 @@ Todo (✅/❌)
           ❌ GET Order (pretend it's only one)
         ❌ link event handlers to business rules and value defaults
         ❌ add OpenAPI support, see if we get luckier with C# unions and inheritance
+      ❌ remove all the unused extra dependencies
       ❌ generate translation of models into ef and OpenAPI
         ❌ records
         ❌ unions
         ❌ recursion
         ❌ serialization attributes
+        ❌ events from (annotated) static methods or annotations on attributes with dependency on CRUD repository
         ❌ generate APIs from queries: allow, restrict
           ❌ expose OpenAPI spec
       ❌ move coroutine evaluator to separate file

@@ -92,6 +92,13 @@ module Program =
 
   let exitCode = 0
 
+//     { new Crud<'a> with
+//         member this.create _ = failwith ""
+//         member this.delete _ = failwith ""
+//         member this.get _ = failwith ""
+//         member this.getN _ _ = failwith ""
+//         member this.update _ _ = failwith "" }
+
   // let AB(db:BloggingContext) : Crud<absample.models.AB> = {
   //   create = fun e -> 
   //     let id = Guid.NewGuid()
@@ -149,7 +156,6 @@ module Program =
         ) |> ignore)
     builder.Services
         .AddRouting()
-        // .AddOxpecker()
         .AddEndpointsApiExplorer() // use the API Explorer to discover and describe endpoints
         .AddSwaggerGen(fun options ->
             options.UseOneOfForPolymorphism()
@@ -159,7 +165,6 @@ module Program =
     let app = builder.Build()
     // app.UseHttpsRedirection()
 
-    // app.MapGet("/FirstBlog", new Func<_,_>(fun (db:BloggingContext) -> db.Blogs.FirstOrDefault()))
     // app.MapGet("/positionOptions", new Func<_,_>(fun (position:IOptions<PositionOptions>) -> position))
     app.MapGet("/AEvent", new Func<_, _>(fun (db:BloggingContext) -> 
       ABEvent.AEvent(
