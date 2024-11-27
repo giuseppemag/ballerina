@@ -397,7 +397,7 @@ export const parseForms =
             // alert(`type = ${JSON.stringify(parsedForm.formDef.type)}`)
             // alert(`value = ${JSON.stringify(value)}`)
             const raw = toAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters)(value)
-            alert(`raw = ${JSON.stringify(raw.interests)}`)
+            // alert(`raw = ${JSON.stringify(raw.interests)}`)
             return entityApis.create(launcher.api)(raw)
           },
           default: (_: Unit) => entityApis.default(launcher.api)(unit)
