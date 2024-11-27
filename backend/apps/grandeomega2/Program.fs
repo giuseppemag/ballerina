@@ -21,6 +21,19 @@ open Ballerina.Coroutines
 open Ballerina.CRUD
 open Migrations
 open Microsoft.EntityFrameworkCore
+open Oxpecker
+open Oxpecker.OpenApi
+open Newtonsoft.Json
+open MBrace.FsPickler
+open MBrace.FsPickler.Json
+open Microsoft.AspNetCore.Mvc
+open Microsoft.AspNetCore.Http.Json
+open System.Text.Json
+open System.Text.Json.Serialization
+open Ballerina.Queries
+open absample.models
+// open FSharp.SystemTextJson.Swagger
+open Microsoft.OpenApi.Models
 
 module Program =
   type PositionOptions() = 
@@ -51,15 +64,6 @@ module Program =
     stopped = Set.empty;
   }
 
-  open Newtonsoft.Json
-  open MBrace.FsPickler
-  open MBrace.FsPickler.Json
-  open Microsoft.AspNetCore.Mvc
-  open Microsoft.AspNetCore.Http.Json
-  open System.Text.Json
-  open System.Text.Json.Serialization
-  open Ballerina.Queries
-
   let jsonSerializer = FsPickler.CreateJsonSerializer(indent = false)
   let text = jsonSerializer.PickleToString initialEvals
   File.WriteAllText("evals.json", text)
@@ -88,68 +92,134 @@ module Program =
 
   let exitCode = 0
 
-  let AB(db:BloggingContext) : Crud<absample.models.AB> = {
-    create = fun e -> 
-      let id = Guid.NewGuid()
-      do db.ABs.Add({ e with ABId=id })
-      async{ 
-        let! _ = db.SaveChangesAsync() |> Async.AwaitTask
-        return id 
-      }
-    delete = fun id -> 
-      async{
-        let! _ = db.ABs.Where(fun e -> e.ABId = id).ExecuteDeleteAsync() |> Async.AwaitTask
-        return ()
-      }
-    update = fun id u -> 
-      async{
-        let! es = db.ABs.Where(fun e -> e.ABId = id).ToListAsync() |> Async.AwaitTask
-        let es = es.Select(u)
-        db.ABs.UpdateRange(es)
-        let! _ = db.SaveChangesAsync() |> Async.AwaitTask
-        return ()
-      }      
-    get = fun id -> 
-      async{
-        let! es = db.ABs.Where(fun e -> e.ABId = id).ToListAsync() |> Async.AwaitTask
-        return es |> Seq.tryHead
-      }
-    getN = fun id predicate -> 
-      async {
-        return db.ABs.Where(ToLinq predicate) // .OrderBy()
-      }
-  }
+  // let AB(db:BloggingContext) : Crud<absample.models.AB> = {
+  //   create = fun e -> 
+  //     let id = Guid.NewGuid()
+  //     do db.ABs.Add({ e with ABId=id })
+  //     async{ 
+  //       let! _ = db.SaveChangesAsync() |> Async.AwaitTask
+  //       return id 
+  //     }
+  //   delete = fun id -> 
+  //     async{
+  //       let! _ = db.ABs.Where(fun e -> e.ABId = id).ExecuteDeleteAsync() |> Async.AwaitTask
+  //       return ()
+  //     }
+  //   update = fun id u -> 
+  //     async{
+  //       let! es = db.ABs.Where(fun e -> e.ABId = id).ToListAsync() |> Async.AwaitTask
+  //       let es = es.Select(u)
+  //       db.ABs.UpdateRange(es)
+  //       let! _ = db.SaveChangesAsync() |> Async.AwaitTask
+  //       return ()
+  //     }      
+  //   get = fun id -> 
+  //     async{
+  //       let! es = db.ABs.Where(fun e -> e.ABId = id).ToListAsync() |> Async.AwaitTask
+  //       return es |> Seq.tryHead
+  //     }
+  //   getN = fun id predicate -> 
+  //     async {
+  //       return db.ABs.Where(ToLinq predicate) // .OrderBy()
+  //     }
+  // }
 
-  let ABEvent(db:BloggingContext) : Crud<absample.models.ABEvent> = {
-    create = fun _ -> failwith ""
-    delete = fun _ -> failwith ""
-    update = fun _ -> failwith ""
-    get = fun _ -> failwith ""
-    getN = fun _ -> failwith ""
-  }
+  // let ABEvent(db:BloggingContext) : Crud<absample.models.ABEvent> = {
+  //   create = fun _ -> failwith ""
+  //   delete = fun _ -> failwith ""
+  //   update = fun _ -> failwith ""
+  //   get = fun _ -> failwith ""
+  //   getN = fun _ -> failwith ""
+  // }
 
   [<EntryPoint>]
   let main args =
     let builder = WebApplication.CreateBuilder(args)
     builder.Services.Configure<PositionOptions>(builder.Configuration.GetSection(PositionOptions.Position))
     builder.Services.Configure<JsonOptions>(fun (options:JsonOptions) -> 
-      JsonFSharpOptions.Default().AddToJsonSerializerOptions(options.SerializerOptions) |> ignore
+      // JsonFSharpOptions.Default().AddToJsonSerializerOptions(options.SerializerOptions) |> ignore
+      options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
     )
+    // builder.Services.AddSwaggerForSystemTextJson(JsonFSharpOptions())
+
     builder.Services.AddDbContext<BloggingContext>(fun opt -> 
       opt.UseNpgsql(
         builder.Configuration.GetConnectionString("DbConnection")
         // "User ID=postgres;Password=;Host=localhost;Port=5432;Database=blog;Pooling=true;Maximum Pool Size=50;"
         ) |> ignore)
+    builder.Services
+        .AddRouting()
+        // .AddOxpecker()
+        .AddEndpointsApiExplorer() // use the API Explorer to discover and describe endpoints
+        .AddSwaggerGen(fun options ->
+            options.UseOneOfForPolymorphism()
+            options.SelectDiscriminatorNameUsing(fun _ -> "$type")
+          )
 
     let app = builder.Build()
     // app.UseHttpsRedirection()
 
-    app.MapGet("/FirstBlog", new Func<_,_>(fun (db:BloggingContext) -> db.Blogs.FirstOrDefault()))
-    app.MapGet("/positionOptions", new Func<_,_>(fun (position:IOptions<PositionOptions>) -> position))
-    // app.MapGet("/AEvent", new Func<_>(fun () -> ABEvent.A({| ABEventId=Guid.NewGuid(); AValue=111 |})))
-    // app.MapGet("/BEvent", new Func<_>(fun () -> ABEvent.B({| ABEventId=Guid.NewGuid(); BValue=222 |})))
-    // app.MapPost("/ABEvent", new Func<_,_>(fun ([<FromBody>] msg: ABEvent) -> msg))
-    app.MapPost("/add", new Func<_,_>(fun ([<FromBody>] msg: {| value: int |}) -> {| value = msg.value + 1 |}))
+    // app.MapGet("/FirstBlog", new Func<_,_>(fun (db:BloggingContext) -> db.Blogs.FirstOrDefault()))
+    // app.MapGet("/positionOptions", new Func<_,_>(fun (position:IOptions<PositionOptions>) -> position))
+    app.MapGet("/AEvent", new Func<_, _>(fun (db:BloggingContext) -> 
+      ABEvent.AEvent(
+        { 
+          ABEventId=Guid.NewGuid(); 
+          ABId=Guid.NewGuid(); 
+          AB={ ABId=Guid.Empty; ACount=0; BCount=0; AFailCount=0; BFailCount=0; };
+          // A1EventId=Guid.NewGuid();
+          // A1Event=A1Event.A1EventX({ A1EventXId=Guid.Empty; Value="Value"; }) 
+          })
+          |> absample.efmodels.ABEvent.FromUnion
+        ))
+      .WithOpenApi() 
+    app.MapGet("/BEvent", new Func<_, _>(fun (db:BloggingContext) -> 
+      ABEvent.BEvent(
+        { ABEventId=Guid.NewGuid(); ABId=Guid.NewGuid(); 
+          AB={ ABId=Guid.Empty; ACount=0; BCount=0; AFailCount=0; BFailCount=0 } 
+        }) |> absample.efmodels.ABEvent.FromUnion))
+      .WithOpenApi()
+    app.MapPost("/ABEvent", new Func<_,_,_>(fun (db:BloggingContext) ([<FromBody>] msg: absample.efmodels.ABEvent) -> 
+      msg))
+      .WithOpenApi()
+
+      // app.MapGet("/BEvent", new Func<_>(fun () -> ABEvent.B({| ABEventId=Guid.NewGuid(); BValue=222 |})))
+    // app.MapPost("/add", new Func<_,_>(fun ([<FromBody>] msg: {| value: int |}) -> {| value = msg.value + 1 |}))
+
+    // let endpoints = [
+    //     // POST [
+    //     //     route "/AEvent" (ABEvent.AEvent({ ABEventId=Guid.NewGuid(); ABId=Guid.NewGuid(); AB={ ABId=Guid.Empty; ACount=0; BCount=0; AFailCount=0; BFailCount=0 } }) |> json)
+    //     //         |> addOpenApi (OpenApiConfig(
+    //     //             requestBody = RequestBody(typeof<Product>),
+    //     //             responseBodies = [| ResponseBody(typeof<string>) |],
+    //     //             configureOperation = (fun o -> o.OperationId <- "PostProduct"; o)
+    //     //         ))
+    //     // ]
+
+    //     GET [
+    //         route "/AEvent" (ABEvent.AEvent({ ABEventId=Guid.NewGuid(); ABId=Guid.NewGuid(); AB={ ABId=Guid.Empty; ACount=0; BCount=0; AFailCount=0; BFailCount=0 } }) |> json)
+    //             |> addOpenApiSimple<Unit, ABEvent>
+    //     ]
+
+    //     // // addOpenApiSimple is a shortcut for simple cases
+    //     // GET [
+    //     //     routef "/product/{%i}" (
+    //     //         fun id ->
+    //     //             products
+    //     //             |> Array.find (fun f -> f.Id = num)
+    //     //             |> json
+    //     //     )
+    //     //         |> configureEndpoint _.WithName("GetProduct")
+    //     //         |> addOpenApiSimple<int, Product>
+    //     // ]
+    //     // // such route won't work with OpenAPI, since HTTP method is not specified
+    //     // route "/hello" <| text "Hello, world!"
+    // ]
+
+    app .UseRouting()
+        // .UseOxpecker(endpoints)
+        .UseSwagger() // for json OpenAPI endpoint
+        .UseSwaggerUI() // for
 
     app.Run("http://localhost:5000")
 

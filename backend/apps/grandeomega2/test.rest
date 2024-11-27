@@ -1,17 +1,4 @@
-POST http://localhost:5000/add HTTP/1.1
-content-type: application/json
-
-{
-  "value": 100
-}
-#####
-
-GET http://localhost:5000/positionOptions HTTP/1.1
-content-type: application/json
-#####
-
-GET http://localhost:5000/FirstBlog HTTP/1.1
-content-type: application/json
+GET http://localhost:5000/swagger/v1/swagger.json HTTP/1.1
 #####
 
 GET http://localhost:5000/AEvent HTTP/1.1
@@ -25,12 +12,11 @@ content-type: application/json
 POST http://localhost:5000/ABEvent HTTP/1.1
 content-type: application/json
 
-{"Case":"B","Fields":[{"abEventId":"2293a596-4b3f-4b91-bded-4ff418c367c4","bValue":222}]}
+{"$type":"AEvent","abId":"17e69105-6bc2-4154-b0a7-a39b036c264e","ab":{"abId":"00000000-0000-0000-0000-000000000000","aCount":5,"bCount":6,"aFailCount":7,"bFailCount":8},"abEventId":"00000000-0000-0000-0000-000000000000"}
 #####
-
 
 POST http://localhost:5000/ABEvent HTTP/1.1
 content-type: application/json
 
-{"Case":"A","Fields":[{"abEventId":"5a941956-6d82-46f7-8a63-fa7316b06d69","aValue":111}]}
+{"$type":"BEvent","abId":"5c153005-2c1e-47d6-b223-ef463f057d31","ab":{"abId":"00000000-0000-0000-0000-000000000000","aCount":1,"bCount":2,"aFailCount":3,"bFailCount":4},"abEventId":"00000000-0000-0000-0000-000000000000"}
 #####

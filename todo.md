@@ -39,26 +39,50 @@ Todo (✅/❌)
         ✅ move AB sample
         ❌ add PositionOptions config with extension method on builder
         ❌ adding and configuring the dbcontext should also be done from somewhere else, but that is not a sample
-      ❌ define ABRepo, ABEventRepo
-        ❌ generalize from a single DbSet
-        ❌ add ordering - requires making CRUD an interface
-        ❌ test with simple endpoints
-      ❌ post ABEvent, AB via repos
-        ❌ expose OpenAPI spec
+      ❌ AB events sample domain
+        ❌ define ABRepo, ABEventRepo
+          ❌ generalize from a single DbSet
+          ❌ add ordering - requires making CRUD an interface
+        ❌ post ABEvent, AB via repos
+          ✅ expose OpenAPI spec
+            ✅ type discriminator in swagger
+            ✅ type discriminator when serializing
+            ✅ type discriminator when deserializing
+        ❌ define and run ABCoroutine
+          ❌ dependent on repo's for AB and ABEvent
+          ❌ thread to run the coroutines forever
+            ❌ check FSharp.json instead of the other lib to have only one way to serialize coroutines and endpoint stuff
+            ❌ separate entry point with own executable based on cmd-line arguments
+            ❌ endpoint to push AB events
+              ❌ expose OpenAPI spec
+        ❌ reorganize the main project decently, moving all the AB-related logic to a separate folder
+
+      ❌ define sample Positions API and types
+        ❌ DocEvents = SenderEvents | ReceiverEvents | BankDetailEvents
+          ❌ further split by field types
+        ❌ InvoiceEvents = DocEvents | InvoiceEvents
+          ❌ InvoiceEvents = PositionEvents | PositionsEvents
+            ❌ SetPositionsVatIds
+            ❌ further split by field types
+        ❌ OrderEvents = DocEvents (| OrderEvents == ())
+        ❌ Document = Invoice | Order
+          ❌ Post Invoice with InvoiceEvent
+          ❌ Post Order with OrderEvent
+          ❌ GET Invoice (pretend it's only one)
+          ❌ GET Order (pretend it's only one)
+        ❌ link event handlers to business rules and value defaults
+        ❌ add OpenAPI support, see if we get luckier with C# unions and inheritance
+      ❌ generate translation of models into ef and OpenAPI
+        ❌ records
+        ❌ unions
+        ❌ recursion
+        ❌ serialization attributes
+        ❌ generate APIs from queries: allow, restrict
+          ❌ expose OpenAPI spec
       ❌ move coroutine evaluator to separate file
       ❌ test Any, Spawn
       ❌ implement Repeat as a reified construct
       ❌ add `any`, `spawn`, `repeat`, `on` keywords
-      ❌ define and run ABCoroutine
-        ❌ dependent on repo's for AB and ABEvent
-        ❌ thread to run the coroutines forever
-          ❌ check FSharp.json instead of the other lib to have only one way to serialize coroutines and endpoint stuff
-          ❌ separate entry point with own executable based on cmd-line arguments
-          ❌ endpoint to push AB events
-            ❌ expose OpenAPI spec
-      ❌ reorganize the main project decently, moving all the AB-related logic to a separate folder
-      ❌ generate APIs from queries: allow, restrict
-        ❌ expose OpenAPI spec
       ✅ coroutine runtime engine
       ✅ fix stack overflow (flatten .Then)
       ✅ run in memory
