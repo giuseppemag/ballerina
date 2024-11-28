@@ -30,6 +30,7 @@ open Microsoft.AspNetCore.Mvc
 open Microsoft.AspNetCore.Http.Json
 open System.Text.Json
 open System.Text.Json.Serialization
+open Ballerina.Fun
 open Ballerina.Queries
 open absample.models
 // open FSharp.SystemTextJson.Swagger
@@ -93,79 +94,53 @@ module Program =
   let exitCode = 0
 
 
-  // let DbSetToCrud (entity:{| getId: |}) (db:BloggingContext) (dbSet:DbSet<^a>) : Crud<^a> =
-  //   { new Crud<_> with
-  //       member this.create e = 
-  //         let id = Guid.NewGuid()
-  //         do dbSet.Add({ e with ABId=id })
-  //         async{ 
-  //           let! _ = db.SaveChangesAsync() |> Async.AwaitTask
-  //           return id 
-  //         }
-  //       member this.delete id = 
-  //         async{
-  //           let! _ = dbSet.Where(fun e -> e.ABId = id).ExecuteDeleteAsync() |> Async.AwaitTask
-  //           return ()
-  //         }
-  //       member this.update id u = 
-  //         async{
-  //           let! es = dbSet.Where(fun e -> e.ABId = id).ToListAsync() |> Async.AwaitTask
-  //           let es = es.Select(u)
-  //           dbSet.UpdateRange(es)
-  //           let! _ = db.SaveChangesAsync() |> Async.AwaitTask
-  //           return ()
-  //         }      
-  //       member this.get id =
-  //         async{
-  //           let! es = dbSet.Where(fun e -> e.ABId = id).ToListAsync() |> Async.AwaitTask
-  //           return es |> Seq.tryHead
-  //         }
-  //       member this.getN id predicate = 
-  //         async {
-  //           return dbSet.Where(ToLinq predicate) // .OrderBy()
-  //         }
-  //   }
-
-  let AB(db:BloggingContext) : Crud<absample.efmodels.AB> =
+  let DbSetToCrud (dbSet:DbSet<'a>) (entity:{| setId:Guid -> Updater<'a>; getId:Guid -> Quotations.Expr<'a -> bool> |}) (db:DbContext)  : Crud<'a> =
     { new Crud<_> with
         member this.create e = 
           let id = Guid.NewGuid()
-          do db.ABs.Add({ e with ABId=id })
+          do dbSet.Add(entity.setId id e)
           async{ 
             let! _ = db.SaveChangesAsync() |> Async.AwaitTask
             return id 
           }
         member this.delete id = 
           async{
-            let! _ = db.ABs.Where(fun e -> e.ABId = id).ExecuteDeleteAsync() |> Async.AwaitTask
+            let! _ = dbSet.Where(entity.getId id |> ToLinq).ExecuteDeleteAsync() |> Async.AwaitTask
             return ()
           }
         member this.update id u = 
           async{
-            let! es = db.ABs.Where(fun e -> e.ABId = id).ToListAsync() |> Async.AwaitTask
+            let! es = dbSet.Where(entity.getId id |> ToLinq).ToListAsync() |> Async.AwaitTask
             let es = es.Select(u)
-            db.ABs.UpdateRange(es)
+            dbSet.UpdateRange(es)
             let! _ = db.SaveChangesAsync() |> Async.AwaitTask
             return ()
           }      
         member this.get id =
           async{
-            let! es = db.ABs.Where(fun e -> e.ABId = id).ToListAsync() |> Async.AwaitTask
+            let! es = dbSet.Where(entity.getId id |> ToLinq).ToListAsync() |> Async.AwaitTask
             return es |> Seq.tryHead
           }
-        member this.getN id predicate = 
+        member this.getN predicate = 
           async {
-            return db.ABs.Where(ToLinq predicate) // .OrderBy()
+            return dbSet.Where(ToLinq predicate) // .OrderBy()
           }
     }
 
-  // let ABEvent(db:BloggingContext) : Crud<absample.models.ABEvent> = {
-  //   create = fun _ -> failwith ""
-  //   delete = fun _ -> failwith ""
-  //   update = fun _ -> failwith ""
-  //   get = fun _ -> failwith ""
-  //   getN = fun _ -> failwith ""
-  // }
+  let AB (db:BloggingContext) = 
+    DbSetToCrud (db.ABs) 
+      ({| getId = (fun id -> <@ fun e -> e.ABId = id @>); 
+          setId = fun id -> fun e -> { e with ABId = id } |}) db
+
+  let ABEvent (db:BloggingContext) = 
+    DbSetToCrud (db.ABEvents) 
+      ({| getId = (fun id -> <@ fun e -> e.ABEventId = id @>); 
+          setId = fun id -> 
+            fun e -> 
+              (match e |> absample.efmodels.ABEvent.ToUnion with
+               | AEvent a -> AEvent { a with ABEventId = id }
+               | BEvent b -> BEvent { b with ABEventId = id })
+              |> absample.efmodels.ABEvent.FromUnion |}) db
 
   [<EntryPoint>]
   let main args =
@@ -179,8 +154,8 @@ module Program =
 
     builder.Services.AddDbContext<BloggingContext>(fun opt -> 
       opt.UseNpgsql(
-        builder.Configuration.GetConnectionString("DbConnection")
-        // "User ID=postgres;Password=;Host=localhost;Port=5432;Database=blog;Pooling=true;Maximum Pool Size=50;"
+        // builder.Configuration.GetConnectionString("DbConnection")
+        "User ID=postgres;Password=;Host=localhost;Port=5432;Database=blog;Pooling=true;Maximum Pool Size=50;"
         ) |> ignore)
     builder.Services
         .AddRouting()
@@ -194,24 +169,17 @@ module Program =
     // app.UseHttpsRedirection()
 
     // app.MapGet("/positionOptions", new Func<_,_>(fun (position:IOptions<PositionOptions>) -> position))
-    app.MapGet("/AEvent", new Func<_, _>(fun (db:BloggingContext) -> 
-      ABEvent.AEvent(
-        { 
-          ABEventId=Guid.NewGuid(); 
-          ABId=Guid.NewGuid(); 
-          AB={ ABId=Guid.Empty; ACount=0; BCount=0; AFailCount=0; BFailCount=0; };
-          // A1EventId=Guid.NewGuid();
-          // A1Event=A1Event.A1EventX({ A1EventXId=Guid.Empty; Value="Value"; }) 
-          })
-          |> absample.efmodels.ABEvent.FromUnion
-        ))
+    app.MapGet("/ABEvents", new Func<_, _>(fun (db:BloggingContext) -> 
+      let repo = ABEvent(db)
+      repo.getN <@ fun _ -> true @>
+      ))
       .WithOpenApi() 
-    app.MapGet("/BEvent", new Func<_, _>(fun (db:BloggingContext) -> 
-      ABEvent.BEvent(
-        { ABEventId=Guid.NewGuid(); ABId=Guid.NewGuid(); 
-          AB={ ABId=Guid.Empty; ACount=0; BCount=0; AFailCount=0; BFailCount=0 } 
-        }) |> absample.efmodels.ABEvent.FromUnion))
-      .WithOpenApi()
+    // app.MapGet("/BEvent", new Func<_, _>(fun (db:BloggingContext) -> 
+    //   ABEvent.BEvent(
+    //     { ABEventId=Guid.NewGuid(); ABId=Guid.NewGuid(); 
+    //       AB={ ABId=Guid.Empty; ACount=0; BCount=0; AFailCount=0; BFailCount=0 } 
+    //     }) |> absample.efmodels.ABEvent.FromUnion))
+    //   .WithOpenApi()
     app.MapPost("/ABEvent", new Func<_,_,_>(fun (db:BloggingContext) ([<FromBody>] msg: absample.efmodels.ABEvent) -> 
       msg))
       .WithOpenApi()

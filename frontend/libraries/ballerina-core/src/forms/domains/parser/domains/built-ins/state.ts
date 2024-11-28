@@ -176,7 +176,8 @@ export const toAPIRawValue = (t:Type, types:Map<TypeName, TypeDefinition>, built
       let result = converters["MultiSelection"].toAPIRawValue(raw)
       // alert(`MultiSelect result1 = ${JSON.stringify(result)}`)
       // alert(`${JSON.stringify(t.args[0])}`)
-      result = result.map(toAPIRawValue({ kind:"lookup", name:t.args[0] }, types, builtIns, converters))
+      result = result.map((_:any) => 
+        typeof _ == "object" ? toAPIRawValue({ kind:"lookup", name:t.args[0] }, types, builtIns, converters)(_) : _)
       // alert(`MultiSelect result2 = ${JSON.stringify(result)}`)
       return result
     }

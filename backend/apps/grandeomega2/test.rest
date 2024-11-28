@@ -1,7 +1,7 @@
 GET http://localhost:5000/swagger/v1/swagger.json HTTP/1.1
 #####
 
-GET http://localhost:5000/AEvent HTTP/1.1
+GET http://localhost:5000/ABEvents HTTP/1.1
 content-type: application/json
 #####
 

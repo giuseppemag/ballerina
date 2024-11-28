@@ -145,7 +145,6 @@ dist
 *.suo
 *.ntvs*
 *.njsproj
-*.sln
 *.sw?
 
 move-to-ff.sh
