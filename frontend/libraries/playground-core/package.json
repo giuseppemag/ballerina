@@ -8,12 +8,12 @@
       "immutable": "^5.0.0-beta.5",
       "react": "^18.2.0",
       "react-dom": "^18.2.0",
+      "ballerina-core": "*",
       "@faker-js/faker": "^8.4.1"
     },
     "devDependencies": {
       "@types/react": "^18.2.48",
       "@types/react-dom": "^18.2.18",
-      "ballerina-core": "*",
       "typescript": "^5.4.5"
     }
   }

@@ -24,7 +24,7 @@ const parseOptions = (leafPredicates: any, options: any) => {
 };
 
 export const FieldView = //<Context, FieldViews extends DefaultFieldViews, EnumFieldConfigs extends {}, EnumSources extends {}>() => <ViewType extends keyof FieldViews, ViewName extends keyof FieldViews[ViewType]>
-  (fieldViews: any, viewType: any, viewName: any, fieldName: string, label: string, enumFieldConfigs: any, enumSources: EnumOptionsSources, leafPredicates: any): any => // FieldView<Context, FieldViews, ViewType, ViewName> => 
+  (fieldViews: any, viewType: any, viewName: any, fieldName: string, label: string, enumFieldConfigs: EnumOptionsSources, enumSources: any, leafPredicates: any): any => // FieldView<Context, FieldViews, ViewType, ViewName> => 
   {
     if (viewType == "maybeBoolean")
       return MaybeBooleanForm<any & FormLabel, Unit>(_ => PromiseRepo.Default.mock(() => []))
@@ -50,13 +50,13 @@ export const FieldView = //<Context, FieldViews extends DefaultFieldViews, EnumF
       return EnumForm<any & FormLabel & BaseEnumContext<any, CollectionReference>, Unit, CollectionReference>(_ => PromiseRepo.Default.mock(() => []))
         .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
         .mapContext<any & EnumFormState<any & BaseEnumContext<any, CollectionReference>, CollectionReference> & Value<CollectionSelection<CollectionReference>>>(_ => ({
-          ..._, label: label, getOptions: () => ((enumFieldConfigs as any)(((enumSources as any)[fieldName])()) as Promise<any>).then(options => parseOptions(leafPredicates, options))
+          ..._, label: label, getOptions: () => ((enumFieldConfigs as any)(((enumSources as any)[fieldName]))() as Promise<any>).then(options => parseOptions(leafPredicates, options))
         })) as any
     if (viewType == "enumMultiSelection")
       return EnumMultiselectForm<any & FormLabel & BaseEnumContext<any, CollectionReference>, Unit, CollectionReference>(_ => PromiseRepo.Default.mock(() => []))
         .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
         .mapContext<any & EnumFormState<any & BaseEnumContext<any, CollectionReference>, CollectionReference> & Value<OrderedMap<Guid, CollectionReference>>>(_ => ({
-          ..._, label: label, getOptions: () => ((enumFieldConfigs as any)(((enumSources as any)[fieldName])()) as Promise<any>).then(options => parseOptions(leafPredicates, options))
+          ..._, label: label, getOptions: () => ((enumFieldConfigs as any)(((enumSources as any)[fieldName]))() as Promise<any>).then(options => parseOptions(leafPredicates, options))
         })) as any
     if (viewType == "streamSingleSelection")
       return SearchableInfiniteStreamForm<CollectionReference, any & FormLabel, Unit>(_ => PromiseRepo.Default.mock(() => []))
