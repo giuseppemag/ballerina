@@ -14,7 +14,7 @@ export type EditFormContext<E,FS> = {
 
 export type EditFormState<E,FS> = {
   // first sync is GET (returns E), second is UPDATE (accepts E)
-  entity:Debounced<Synchronized<Unit, Synchronized<E, ApiErrors>>>
+  entity:Debounced<Synchronized<Unit, Synchronized<Value<E>, ApiErrors>>>
   formState:FS,
 }
 
@@ -37,8 +37,9 @@ export const EditFormState = <E,FS>() => ({
             Synchronized.Updaters.sync(
               AsyncState.Operations.map(
                 Synchronized.Updaters.value(
+                  Value.Updaters.value(
                   _
-                )
+                ))
               )
             )
           )

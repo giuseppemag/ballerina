@@ -1,4 +1,4 @@
-import { ApiErrors, AsyncState, Debounce, Debounced, EditFormForeignMutationsExpected, EditFormState, Synchronize, Synchronized, Unit } from "../../../../../../../main"
+import { ApiErrors, AsyncState, Debounce, Debounced, EditFormForeignMutationsExpected, EditFormState, Synchronize, Synchronized, Unit, Value } from "../../../../../../../main"
 import { CoTypedFactory } from "../../../../../../coroutines/builder"
 import { EditFormContext, EditFormWritableState } from "../state"
 
@@ -7,8 +7,8 @@ export const editFormRunner = <E, FS>() => {
 
   const init =
     Co.GetState().then(current =>
-      Synchronize<Unit, Synchronized<E, ApiErrors>>(() => current.api.get().then(e =>
-        Synchronized.Default<E, ApiErrors>(e)
+      Synchronize<Unit, Synchronized<Value<E>, ApiErrors>>(() => current.api.get().then(e =>
+        Synchronized.Default<Value<E>, ApiErrors>(Value.Default(e))
       ), _ => "transient failure", 5, 50)
         .embed(_ => _.entity,
           _ => EditFormState<E, FS>().Updaters.Core.entity(Debounced.Updaters.Core.value(_)))
@@ -17,11 +17,12 @@ export const editFormRunner = <E, FS>() => {
   const synchronize =
     Co.Repeat(
       Co.GetState().then(current =>
-        Debounce<Synchronized<Unit, Synchronized<E, ApiErrors>>, EditFormContext<E, FS>>(
-          Synchronize<E, ApiErrors>(e => current.api.update(e), _ => "transient failure", 5, 50)
+        Debounce<Synchronized<Unit, Synchronized<Value<E>, ApiErrors>>, EditFormContext<E, FS>>(
+          Synchronize<Value<E>, ApiErrors>(e => current.api.update(e.value), _ => "transient failure", 5, 50)
             .embed(
               _ => AsyncState.Operations.hasValue(_.sync) ? _.sync.value : undefined,
-              _ => Synchronized.Updaters.sync<Unit, Synchronized<E, ApiErrors>>(AsyncState.Operations.map(_))
+              _ => Synchronized.Updaters.sync<Unit, Synchronized<Value<E>, ApiErrors>>(
+                  AsyncState.Operations.map(_))
             ),
           15
         ).embed(
