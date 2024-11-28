@@ -30,22 +30,21 @@ Todo (✅/❌)
       ✅ run migrations
       ✅ move CRUD 'a to separate project
       ✅ move updater U<'s> to separate file
-      ❌ split Program.fs
+      ❌ cleanup
         ❌ move sample coroutines
         ❌ move sample dbcontext stuff
           ✅ resolve dbcontext with DI
           ✅ pass config from appsettings.development (based on env variable)
-        ❌ move sample endpoints
         ✅ move AB sample
+        ❌ move sample endpoints
         ❌ add PositionOptions config with extension method on builder
-        ❌ adding and configuring the dbcontext should also be done from somewhere else, but that is not a sample
+        ❌ adding and configuring the dbcontext should also be done from another file, from ballerina-core perhaps
+        ❌ DbContext config does not come from appsettings
       ❌ AB events sample domain
-        ❌ define ABRepo, ABEventRepo
-          ❌ generalize from a single DbSet
+        ✅ define ABRepo, ABEventRepo
+          ✅ generalize from a single DbSet
           ❌ add ordering - requires making CRUD an interface
-        ❌ also convert the AB record itself (especially when it references DUs)
-        ❌ add ASubEventX and ASubEventY
-        ❌ post ABEvent, AB via repos
+        ✅ post ABEvent, AB via repos
           ✅ expose OpenAPI spec
             ✅ type discriminator in swagger
             ✅ type discriminator when serializing
@@ -53,11 +52,26 @@ Todo (✅/❌)
         ❌ define and run ABCoroutine
           ❌ dependent on repo's for AB and ABEvent
           ❌ thread to run the coroutines forever
-            ❌ check FSharp.json instead of the other lib to have only one way to serialize coroutines and endpoint stuff
             ❌ separate entry point with own executable based on cmd-line arguments
             ❌ endpoint to push AB events
               ❌ expose OpenAPI spec
         ❌ reorganize the main project decently, moving all the AB-related logic to a separate folder
+        ❌ generate translation of models into ef and OpenAPI
+          ❌ records
+          ❌ unions
+          ❌ recursion
+          ❌ serialization attributes
+          ❌ events from (annotated) static methods or annotations on attributes with dependency on CRUD repository
+          ❌ generate APIs from queries: allow, restrict
+            ❌ expose OpenAPI spec
+        ❌ extend CRUD and CRUD endpoint generation
+          ❌ CRUD
+            ❌ sorting
+          ❌ endpoint generation
+            ❌ security model
+            ❌ extend
+            ❌ filter (over extended entity)
+            ❌ sorting
       ❌ define sample Positions API and types
         ❌ DocEvents = SenderEvents | ReceiverEvents | BankDetailEvents
           ❌ further split by field types
@@ -72,16 +86,8 @@ Todo (✅/❌)
           ❌ GET Invoice (pretend it's only one)
           ❌ GET Order (pretend it's only one)
         ❌ link event handlers to business rules and value defaults
-        ❌ add OpenAPI support, see if we get luckier with C# unions and inheritance
-      ❌ remove all the unused extra dependencies
-      ❌ generate translation of models into ef and OpenAPI
-        ❌ records
-        ❌ unions
-        ❌ recursion
-        ❌ serialization attributes
-        ❌ events from (annotated) static methods or annotations on attributes with dependency on CRUD repository
-        ❌ generate APIs from queries: allow, restrict
-          ❌ expose OpenAPI spec
+        ✅ add OpenAPI support, see if we get luckier with C# unions and inheritance
+      ✅ remove all the unused extra dependencies
       ❌ move coroutine evaluator to separate file
       ❌ test Any, Spawn
       ❌ implement Repeat as a reified construct
@@ -95,28 +101,24 @@ Todo (✅/❌)
       ❌ test user registration coroutine, create events with testing endpoint
       ❌ run with intelligent suspensions
   ✅ blog.fsproj
-  ❌ postgres.csproj (this is the migrations project)
+  ✅ postgres.csproj (this is the migrations project)
     ✅ dbContext (in C#)
     ✅ migrate one discriminated union
     ✅ separate schema for user stuff
-    ❌ connection string from appsettings!!!
-      ❌ ensure we are reading the dev appsettings
   ❌ web app
     ❌ from Docker
     ❌ use appsettings.Development
     ❌ remove unnecessary references to EF Core stuff, only LINQ queries should still work
     ❌ import PositionOptions
       ❌ delete the PositionOptions and move to something more useful eventually
-    ❌ import DbContext options
     ❌ migrations, db-update, db-drop, seed-db
-    ❌ make sure pg-admin works
+    ❌ make sure pg-admin or DBeaver works
     ❌ post user-event endpoint
     ❌ login, logout, reset-password, edit-user, change-password, delete-user
       ❌ invoke methods from auth domain
       ❌ think about security
-  ❌ move from PG to MySQL
-  ❌ business rule staged partial evaluator
-  ❌ data-dependencies as business rules or as coroutine-events
+  ❌ support both PG and MySQL
+  ❌ add some security model on top of CRUD
   ❌ SPA
     ❌ from docker container
     ❌ serve from backend

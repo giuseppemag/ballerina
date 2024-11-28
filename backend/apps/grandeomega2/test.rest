@@ -5,7 +5,11 @@ GET http://localhost:5000/ABEvents HTTP/1.1
 content-type: application/json
 #####
 
-GET http://localhost:5000/BEvent HTTP/1.1
+GET http://localhost:5000/AEvents HTTP/1.1
+content-type: application/json
+#####
+
+GET http://localhost:5000/BEvents HTTP/1.1
 content-type: application/json
 #####
 

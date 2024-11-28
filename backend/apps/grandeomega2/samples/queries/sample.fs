@@ -18,7 +18,6 @@ module grandeomega2.samples.queries
   open Ballerina.Coroutines
   open Migrations
   open System.Linq.Expressions
-  open Newtonsoft.Json
   open MBrace.FsPickler
   open MBrace.FsPickler.Json
   open Microsoft.AspNetCore.Mvc
