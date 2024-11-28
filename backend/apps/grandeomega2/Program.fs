@@ -92,44 +92,72 @@ module Program =
 
   let exitCode = 0
 
-//     { new Crud<'a> with
-//         member this.create _ = failwith ""
-//         member this.delete _ = failwith ""
-//         member this.get _ = failwith ""
-//         member this.getN _ _ = failwith ""
-//         member this.update _ _ = failwith "" }
 
-  // let AB(db:BloggingContext) : Crud<absample.models.AB> = {
-  //   create = fun e -> 
-  //     let id = Guid.NewGuid()
-  //     do db.ABs.Add({ e with ABId=id })
-  //     async{ 
-  //       let! _ = db.SaveChangesAsync() |> Async.AwaitTask
-  //       return id 
-  //     }
-  //   delete = fun id -> 
-  //     async{
-  //       let! _ = db.ABs.Where(fun e -> e.ABId = id).ExecuteDeleteAsync() |> Async.AwaitTask
-  //       return ()
-  //     }
-  //   update = fun id u -> 
-  //     async{
-  //       let! es = db.ABs.Where(fun e -> e.ABId = id).ToListAsync() |> Async.AwaitTask
-  //       let es = es.Select(u)
-  //       db.ABs.UpdateRange(es)
-  //       let! _ = db.SaveChangesAsync() |> Async.AwaitTask
-  //       return ()
-  //     }      
-  //   get = fun id -> 
-  //     async{
-  //       let! es = db.ABs.Where(fun e -> e.ABId = id).ToListAsync() |> Async.AwaitTask
-  //       return es |> Seq.tryHead
-  //     }
-  //   getN = fun id predicate -> 
-  //     async {
-  //       return db.ABs.Where(ToLinq predicate) // .OrderBy()
-  //     }
-  // }
+  // let DbSetToCrud (entity:{| getId: |}) (db:BloggingContext) (dbSet:DbSet<^a>) : Crud<^a> =
+  //   { new Crud<_> with
+  //       member this.create e = 
+  //         let id = Guid.NewGuid()
+  //         do dbSet.Add({ e with ABId=id })
+  //         async{ 
+  //           let! _ = db.SaveChangesAsync() |> Async.AwaitTask
+  //           return id 
+  //         }
+  //       member this.delete id = 
+  //         async{
+  //           let! _ = dbSet.Where(fun e -> e.ABId = id).ExecuteDeleteAsync() |> Async.AwaitTask
+  //           return ()
+  //         }
+  //       member this.update id u = 
+  //         async{
+  //           let! es = dbSet.Where(fun e -> e.ABId = id).ToListAsync() |> Async.AwaitTask
+  //           let es = es.Select(u)
+  //           dbSet.UpdateRange(es)
+  //           let! _ = db.SaveChangesAsync() |> Async.AwaitTask
+  //           return ()
+  //         }      
+  //       member this.get id =
+  //         async{
+  //           let! es = dbSet.Where(fun e -> e.ABId = id).ToListAsync() |> Async.AwaitTask
+  //           return es |> Seq.tryHead
+  //         }
+  //       member this.getN id predicate = 
+  //         async {
+  //           return dbSet.Where(ToLinq predicate) // .OrderBy()
+  //         }
+  //   }
+
+  let AB(db:BloggingContext) : Crud<absample.efmodels.AB> =
+    { new Crud<_> with
+        member this.create e = 
+          let id = Guid.NewGuid()
+          do db.ABs.Add({ e with ABId=id })
+          async{ 
+            let! _ = db.SaveChangesAsync() |> Async.AwaitTask
+            return id 
+          }
+        member this.delete id = 
+          async{
+            let! _ = db.ABs.Where(fun e -> e.ABId = id).ExecuteDeleteAsync() |> Async.AwaitTask
+            return ()
+          }
+        member this.update id u = 
+          async{
+            let! es = db.ABs.Where(fun e -> e.ABId = id).ToListAsync() |> Async.AwaitTask
+            let es = es.Select(u)
+            db.ABs.UpdateRange(es)
+            let! _ = db.SaveChangesAsync() |> Async.AwaitTask
+            return ()
+          }      
+        member this.get id =
+          async{
+            let! es = db.ABs.Where(fun e -> e.ABId = id).ToListAsync() |> Async.AwaitTask
+            return es |> Seq.tryHead
+          }
+        member this.getN id predicate = 
+          async {
+            return db.ABs.Where(ToLinq predicate) // .OrderBy()
+          }
+    }
 
   // let ABEvent(db:BloggingContext) : Crud<absample.models.ABEvent> = {
   //   create = fun _ -> failwith ""

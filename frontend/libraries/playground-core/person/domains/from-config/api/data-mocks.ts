@@ -41,15 +41,15 @@ const streamApis: InfiniteStreamSources = (streamName: string) =>
       })
 const enumApis: EnumOptionsSources = (enumName: string) =>
   enumName == "colors" ?
-    PromiseRepo.Default.mock(() => colors)
+    () => PromiseRepo.Default.mock(() => colors)
     :
     enumName == "genders" ?
-      PromiseRepo.Default.mock(() => genders)
+    () => PromiseRepo.Default.mock(() => genders)
       :
       enumName == "interests" ?
-        PromiseRepo.Default.mock(() => interests)
+        () => PromiseRepo.Default.mock(() => interests)
         :
-        PromiseRepo.Default.mock(() => {
+        () => PromiseRepo.Default.mock(() => {
           alert(`Cannot find enum API ${enumName}`)
           return []
         })

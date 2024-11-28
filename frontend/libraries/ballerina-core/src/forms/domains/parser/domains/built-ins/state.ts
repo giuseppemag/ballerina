@@ -167,7 +167,7 @@ export const toAPIRawValue = (t:Type, types:Map<TypeName, TypeDefinition>, built
   } else if (t.kind == "application") { // application here means "generic type application"
     if (t.value == "SingleSelection" && t.args.length == 1) {
       let result = converters[t.value].toAPIRawValue(raw)
-      if (result != undefined)
+      if (result != undefined && typeof result == "object")
         result = toAPIRawValue({ kind:"lookup", name:t.args[0] }, types, builtIns, converters)(result)
       return result
     }
