@@ -17,7 +17,7 @@ export const EditFormTemplate = <E, FS>() : EditFormTemplate<E,FS> =>
           !AsyncState.Operations.hasValue(props.context.entity.sync) ? undefined :
             props.context.actualForm({
               context: {
-                value: props.context.entity.sync.value,
+                value: props.context.entity.sync.value.value,
                 ...props.context.formState,
               },
               setState: _ => {
