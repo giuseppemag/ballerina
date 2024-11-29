@@ -21,3 +21,6 @@ export * from "./person/domains/from-config/api/data-mocks"
 export * from "./person/domains/from-config/api/config-mocks"
 export * from "./person/domains/person-container-config/state"
 export * from "../../apps/web/src/domains/person/domains/person-container-config/template"
+
+export * from './debit-note/config'
+export * from './debit-note/data-mocks'
