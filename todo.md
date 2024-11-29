@@ -41,9 +41,13 @@ Todo (✅/❌)
         ❌ adding and configuring the dbcontext should also be done from another file, from ballerina-core perhaps
         ❌ DbContext config does not come from appsettings
       ❌ AB events sample domain
+        ✅ reorganize the main project decently, moving all the AB-related logic to a separate folder
+          ✅ repositories
+          ✅ endpoints
         ✅ define ABRepo, ABEventRepo
           ✅ generalize from a single DbSet
           ❌ add ordering - requires making CRUD an interface
+          ❌ add skip/take
         ✅ post ABEvent, AB via repos
           ✅ expose OpenAPI spec
             ✅ type discriminator in swagger
@@ -55,23 +59,23 @@ Todo (✅/❌)
             ❌ separate entry point with own executable based on cmd-line arguments
             ❌ endpoint to push AB events
               ❌ expose OpenAPI spec
-        ❌ reorganize the main project decently, moving all the AB-related logic to a separate folder
         ❌ generate translation of models into ef and OpenAPI
           ❌ records
           ❌ unions
           ❌ recursion
           ❌ serialization attributes
           ❌ events from (annotated) static methods or annotations on attributes with dependency on CRUD repository
-          ❌ generate APIs from queries: allow, restrict
-            ❌ expose OpenAPI spec
+        ❌ move all the AB-related logic to the right project 
         ❌ extend CRUD and CRUD endpoint generation
           ❌ CRUD
             ❌ sorting
           ❌ endpoint generation
-            ❌ security model
-            ❌ extend
-            ❌ filter (over extended entity)
-            ❌ sorting
+            ❌ extend chains
+            ❌ filter parameter (over extended entity)
+            ❌ sorting parameter (over extended entity)
+            ❌ security model of generated APIs from queries: allow, restrict
+            ❌ security model of extension
+              ❌ define User' vault data and prevent anyone from extending along User -> Vault unless they are the user themselves
       ❌ define sample Positions API and types
         ❌ DocEvents = SenderEvents | ReceiverEvents | BankDetailEvents
           ❌ further split by field types

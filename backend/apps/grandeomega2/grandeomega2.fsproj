@@ -5,13 +5,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="./samples/queries/sample.fs" />
+    <Compile Include=".\samples\ab-events\repositories.fs" />
+    <Compile Include=".\samples\ab-events\endpoints.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\libraries\ballerina-core\ballerina-core.fsproj" />
-    <ProjectReference Include="..\..\libraries\blog\blog.fsproj" />
     <ProjectReference Include="..\..\libraries\migrations\migrations.csproj" />
     <ProjectReference Include="..\..\libraries\users\users.fsproj" />
     <ProjectReference Include="..\..\libraries\absample\absample.fsproj" />

@@ -66,7 +66,7 @@ export const builtInsFromFieldViews = (fieldViews: any, fieldTypeConverters: Api
     "generics": Map([
       ["SingleSelection", { apiConverters: fieldTypeConverters["SingleSelection"], defaultValue: CollectionSelection().Default.right("no selection") }] as [string, GenericBuiltIn],
       ["Multiselection", { apiConverters: fieldTypeConverters["SingleSelection"], defaultValue: Map() }] as [string, GenericBuiltIn],
-      ["List", { apiConverters: fieldTypeConverters["SingleSelection"], defaultValue: [] }] as [string, GenericBuiltIn]
+      ["List", { apiConverters: fieldTypeConverters["SingleSelection"], defaultValue: List() }] as [string, GenericBuiltIn]
     ]),
     "renderers": {
       "boolean": Set(),

@@ -2,7 +2,6 @@ namespace grandeomega2
 
 #nowarn "20"
 
-open Blogs
 open System
 open System.Collections.Generic
 open System.IO
@@ -30,7 +29,8 @@ open System.Text.Json.Serialization
 open Ballerina.Fun
 open Ballerina.Queries
 open absample.efmodels
-// open FSharp.SystemTextJson.Swagger
+open absample.repositories
+open absample.endpoints
 open Microsoft.OpenApi.Models
 
 module Program =
@@ -48,12 +48,13 @@ module Program =
     |}
   let mutable state = {| counter=0 |}
   let p:Coroutine<Unit, {| counter:int |}, Unit> = 
-    co{
-      wait (TimeSpan.FromSeconds 1.0)
-      do! co.SetState (Counter.updaters.counter(fun x -> x + 1))
-      wait (TimeSpan.FromSeconds 2.0)
-      do! co.SetState (Counter.updaters.counter(fun x -> x + 2))
-    } |> co.Repeat
+    co.Repeat(
+      co{
+        wait (TimeSpan.FromSeconds 1.0)
+        do! co.SetState (Counter.updaters.counter(fun x -> x + 1))
+        wait (TimeSpan.FromSeconds 2.0)
+        do! co.SetState (Counter.updaters.counter(fun x -> x + 2))
+      })
   let initialEvals : EvaluatedCoroutines<_,_> = { 
     active = Map.empty |> Map.add (Guid.NewGuid()) p;
     waiting = Map.empty;
@@ -90,36 +91,6 @@ module Program =
 
   let exitCode = 0
 
-
-  let AB (db:BloggingContext) = 
-    Crud.FromDbSet (db.ABs) 
-      ({| getId = (fun id -> <@ fun e -> e.ABId = id @>); 
-          setId = fun id -> fun e -> { e with ABId = id } |}) db
-
-  let ABEvent (db:BloggingContext) = 
-    Crud.FromDbSet (db.ABEvents) 
-      ({| getId = (fun id -> <@ fun e -> e.ABEventId = id @>); 
-          setId = fun id -> 
-            fun e -> 
-              (match e |> ABEvent.ToUnion with
-               | absample.models.AEvent a -> absample.models.AEvent { a with ABEventId = id }
-               | absample.models.BEvent b -> absample.models.BEvent { b with ABEventId = id })
-              |> ABEvent.FromUnion |}) db
-
-  let AEvent (db:BloggingContext) = 
-    Crud.FromDbSet (db.AEvents) 
-      ({| getId = (fun id -> <@ fun e -> e.ABEventId = id @>); 
-          setId = fun id -> 
-            fun e -> 
-              { (e |> AEvent.ToRecord) with ABEventId = id } |> AEvent.FromRecord |}) db
-
-  let BEvent (db:BloggingContext) = 
-    Crud.FromDbSet (db.BEvents) 
-      ({| getId = (fun id -> <@ fun e -> e.ABEventId = id @>); 
-          setId = fun id -> 
-            fun e -> 
-              { (e |> BEvent.ToRecord) with ABEventId = id } |> BEvent.FromRecord |}) db
-
   [<EntryPoint>]
   let main args =
     let builder = WebApplication.CreateBuilder(args)
@@ -134,7 +105,6 @@ module Program =
         "User ID=postgres;Password=;Host=localhost;Port=5432;Database=blog;Pooling=true;Maximum Pool Size=50;"
         ) |> ignore)
     builder.Services
-        .AddRouting()
         .AddEndpointsApiExplorer() // use the API Explorer to discover and describe endpoints
         .AddSwaggerGen(fun options ->
             options.UseOneOfForPolymorphism()
@@ -144,24 +114,9 @@ module Program =
     let app = builder.Build()
     // app.UseHttpsRedirection()
 
-    app.MapGet("/ABEvents", new Func<_, _>(fun (db:BloggingContext) -> 
-      async{
-        let! values = (ABEvent(db).getN <@ fun _ -> true @>)
-        return values.Include(fun x -> x.AB)
-      })).WithOpenApi() 
-    app.MapGet("/AEvents", new Func<_, _>(fun (db:BloggingContext) -> AEvent(db).getN <@ fun _ -> true @>)).WithOpenApi() 
-    app.MapGet("/BEvents", new Func<_, _>(fun (db:BloggingContext) -> BEvent(db).getN <@ fun _ -> true @>)).WithOpenApi() 
-    app.MapPost("/ABEvent", new Func<_,_,_>(fun (db:BloggingContext) ([<FromBody>] msg: ABEvent) -> 
-      let msg = ABEvent(db).setId (Guid.NewGuid()) msg
-      db.ABEvents.Add(msg)
-      db.SaveChanges()
-      msg.ABEventId))
-      .WithOpenApi()
-
-    app 
-        // .UseOxpecker(endpoints)
-        .UseSwagger() // for json OpenAPI endpoint
-        .UseSwaggerUI() // for
+    app.UseABSample()
+       .UseSwagger() // for json OpenAPI endpoint
+       .UseSwaggerUI() // for
 
     app.Run("http://localhost:5000")
 

@@ -17,7 +17,7 @@ namespace migrations.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.10")
+                .HasAnnotation("ProductVersion", "9.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -146,12 +146,17 @@ namespace migrations.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("ABId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("abevent_type")
                         .IsRequired()
                         .HasMaxLength(8)
                         .HasColumnType("character varying(8)");
 
                     b.HasKey("ABEventId");
+
+                    b.HasIndex("ABId");
 
                     b.ToTable("ABEvents");
 
@@ -241,28 +246,12 @@ namespace migrations.Migrations
                 {
                     b.HasBaseType("absample.efmodels+ABEvent");
 
-                    b.Property<Guid>("ABId")
-                        .HasColumnType("uuid");
-
-                    b.HasIndex("ABId");
-
                     b.HasDiscriminator().HasValue("AEvent");
                 });
 
             modelBuilder.Entity("absample.efmodels+BEvent", b =>
                 {
                     b.HasBaseType("absample.efmodels+ABEvent");
-
-                    b.Property<Guid>("ABId")
-                        .HasColumnType("uuid");
-
-                    b.HasIndex("ABId");
-
-                    b.ToTable("ABEvents", t =>
-                        {
-                            t.Property("ABId")
-                                .HasColumnName("BEvent_ABId");
-                        });
 
                     b.HasDiscriminator().HasValue("BEvent");
                 });
@@ -285,6 +274,17 @@ namespace migrations.Migrations
                         .HasForeignKey("BlogId");
                 });
 
+            modelBuilder.Entity("absample.efmodels+ABEvent", b =>
+                {
+                    b.HasOne("absample.models+AB", "AB")
+                        .WithMany()
+                        .HasForeignKey("ABId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AB");
+                });
+
             modelBuilder.Entity("Users+EmailConfirmedEvent", b =>
                 {
                     b.HasOne("Users+Token", "Token")
@@ -294,28 +294,6 @@ namespace migrations.Migrations
                         .IsRequired();
 
                     b.Navigation("Token");
-                });
-
-            modelBuilder.Entity("absample.efmodels+AEvent", b =>
-                {
-                    b.HasOne("absample.models+AB", "AB")
-                        .WithMany()
-                        .HasForeignKey("ABId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AB");
-                });
-
-            modelBuilder.Entity("absample.efmodels+BEvent", b =>
-                {
-                    b.HasOne("absample.models+AB", "AB")
-                        .WithMany()
-                        .HasForeignKey("ABId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AB");
                 });
 
             modelBuilder.Entity("Blogs.Blog", b =>

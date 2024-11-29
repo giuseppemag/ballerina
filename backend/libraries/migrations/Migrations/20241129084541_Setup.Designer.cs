@@ -12,15 +12,15 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace migrations.Migrations
 {
     [DbContext(typeof(BloggingContext))]
-    [Migration("20241111134745_AddUsers")]
-    partial class AddUsers
+    [Migration("20241129084541_Setup")]
+    partial class Setup
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.10")
+                .HasAnnotation("ProductVersion", "9.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -143,6 +143,54 @@ namespace migrations.Migrations
                     b.UseTphMappingStrategy();
                 });
 
+            modelBuilder.Entity("absample.efmodels+ABEvent", b =>
+                {
+                    b.Property<Guid>("ABEventId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ABId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("abevent_type")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.HasKey("ABEventId");
+
+                    b.HasIndex("ABId");
+
+                    b.ToTable("ABEvents");
+
+                    b.HasDiscriminator<string>("abevent_type").HasValue("ABEvent");
+
+                    b.UseTphMappingStrategy();
+                });
+
+            modelBuilder.Entity("absample.models+AB", b =>
+                {
+                    b.Property<Guid>("ABId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ACount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("AFailCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BFailCount")
+                        .HasColumnType("integer");
+
+                    b.HasKey("ABId");
+
+                    b.ToTable("ABs");
+                });
+
             modelBuilder.Entity("Blogs.Interview", b =>
                 {
                     b.HasBaseType("Blogs.Tag");
@@ -197,6 +245,20 @@ namespace migrations.Migrations
                     b.HasDiscriminator().HasValue("NewUserEvent");
                 });
 
+            modelBuilder.Entity("absample.efmodels+AEvent", b =>
+                {
+                    b.HasBaseType("absample.efmodels+ABEvent");
+
+                    b.HasDiscriminator().HasValue("AEvent");
+                });
+
+            modelBuilder.Entity("absample.efmodels+BEvent", b =>
+                {
+                    b.HasBaseType("absample.efmodels+ABEvent");
+
+                    b.HasDiscriminator().HasValue("BEvent");
+                });
+
             modelBuilder.Entity("Blogs.Post", b =>
                 {
                     b.HasOne("Blogs.Blog", "Blog")
@@ -213,6 +275,17 @@ namespace migrations.Migrations
                     b.HasOne("Blogs.Blog", null)
                         .WithMany("Tags")
                         .HasForeignKey("BlogId");
+                });
+
+            modelBuilder.Entity("absample.efmodels+ABEvent", b =>
+                {
+                    b.HasOne("absample.models+AB", "AB")
+                        .WithMany()
+                        .HasForeignKey("ABId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AB");
                 });
 
             modelBuilder.Entity("Users+EmailConfirmedEvent", b =>

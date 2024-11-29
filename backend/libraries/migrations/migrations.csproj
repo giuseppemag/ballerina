@@ -23,7 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\blog\blog.fsproj" />
     <ProjectReference Include="..\users\users.fsproj" />
     <ProjectReference Include="..\absample\absample.fsproj" />
   </ItemGroup>
