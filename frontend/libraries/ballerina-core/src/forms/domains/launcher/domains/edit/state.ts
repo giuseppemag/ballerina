@@ -1,4 +1,4 @@
-import { AsyncState, BasicUpdater, Debounced, ForeignMutationsInput, SimpleCallback, simpleUpdater, Synchronized, Template, unit, Unit, Updater, Value } from "../../../../../../main"
+import { AsyncState, BasicUpdater, Debounced, ForeignMutationsInput, id, SimpleCallback, simpleUpdater, Synchronized, Template, unit, Unit, Updater, Value } from "../../../../../../main"
 import { BasicFun } from "../../../../../fun/state"
 
 export type ApiErrors = Array<string>
@@ -14,13 +14,15 @@ export type EditFormContext<E,FS> = {
 
 export type EditFormState<E,FS> = {
   // first sync is GET (returns E), second is UPDATE (accepts E)
-  entity:Debounced<Synchronized<Unit, Synchronized<Value<E>, ApiErrors>>>
+  entity:Synchronized<Unit, E>
+  apiRunner:Debounced<Synchronized<Unit,ApiErrors>>
   formState:FS,
 }
 
 export const EditFormState = <E,FS>() => ({
   Default:(initialFormState:FS) : EditFormState<E,FS> => ({
-    entity:Debounced.Default(
+    entity:Synchronized.Default(unit),
+    apiRunner:Debounced.Default(
       Synchronized.Default(unit)
     ),
     formState:initialFormState,
@@ -28,18 +30,24 @@ export const EditFormState = <E,FS>() => ({
   Updaters:{
     Core:{
       ...simpleUpdater<EditFormState<E,FS>>()("entity"),
+      ...simpleUpdater<EditFormState<E,FS>>()("apiRunner"),
       ...simpleUpdater<EditFormState<E,FS>>()("formState"),
     },
     Template:{
       entity:(_:BasicUpdater<E>) : Updater<EditFormState<E,FS>> => 
-        EditFormState<E,FS>().Updaters.Core.entity(
+        EditFormState<E,FS>().Updaters.Core.apiRunner(
           Debounced.Updaters.Template.value(
             Synchronized.Updaters.sync(
               AsyncState.Operations.map(
-                Synchronized.Updaters.value(
-                  Value.Updaters.value(
+                  id
+              )
+            )
+          )
+        ).then(
+          EditFormState<E,FS>().Updaters.Core.entity(
+            Synchronized.Updaters.sync(
+              AsyncState.Operations.map(
                   _
-                ))
               )
             )
           )
