@@ -20,6 +20,7 @@ export const FormsApp = (props: {}) => {
 	// const numForms = 2
 	// const [personCreateFormState, setPersonCreateFormState] = useState(FormRunnerState.Default())
 	const [personEditFormState, setPersonEditFormState] = useState(FormRunnerState.Default())
+	const [debitNoteEditFormState, setDebitNoteEditFormState] = useState(FormRunnerState.Default())
 	// const [personState, setPersonState] = useState(Person.Default.mocked())
 	// const [personFormState, setPersonFormState] = useState(PersonFormState.Default(""))
 	// const [personConfigState, setPersonConfigState] = useState(PersonConfig.Default())
@@ -154,10 +155,12 @@ export const FormsApp = (props: {}) => {
 									foreignMutations={unit}
 								/>
 
+								{/* {JSON.stringify(configFormsParser)} */}
+
 								<FormRunnerTemplate
 									context={{
 										...configFormsParser,
-										...personEditFormState,
+										...debitNoteEditFormState,
 										formRef: {
 											formName: "DEBIT_NOTE_HEADER_CONFIG",
 											entityId: "11112",
@@ -168,7 +171,7 @@ export const FormsApp = (props: {}) => {
 											flags: Set(["BC", "X"]),
 										},
 									}}
-									setState={setPersonEditFormState}
+									setState={setDebitNoteEditFormState}
 									view={unit}
 									foreignMutations={unit}
 								/>

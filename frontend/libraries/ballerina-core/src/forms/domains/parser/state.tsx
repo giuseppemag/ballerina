@@ -187,7 +187,6 @@ export const ParseForm = (
       }
     }
     if (typeof formConfig[fieldName] == "string") {
-      debugger
       const err = formConfig[fieldName]
       console.error(`error processing field ${fieldName}`, err)
       formConfig[fieldName] = (props: any) => <>Error: field {fieldName} with {viewName} could not be instantiated</>
@@ -274,7 +273,7 @@ export type EntityApis = {
 export type EnumName = string
 
 
-export type EnumOptionsSources = BasicFun<EnumName, BasicFun<Unit,Promise<Array<[CollectionReference, BoolExpr<Unit>]>>>>
+export type EnumOptionsSources = BasicFun<EnumName, BasicFun<Unit, Promise<Array<[CollectionReference, BoolExpr<Unit>]>>>>
 export const parseForms =
   <LeafPredicates,>(
     builtIns: BuiltIns,
@@ -299,7 +298,9 @@ export const parseForms =
       }
       let parsedForms: ParsedForms = Map()
       const traverse = (formDef: FormDef) => {
-        if (formProcessingOrder.has(formDef.name)) return
+        if (formProcessingOrder.has(formDef.name)) {
+          return
+        }
         if (seen.has(formDef.name)) {
           errors.push(`aborting: cycle detected when parsing forms: ${JSON.stringify(formProcessingOrder.reverse().toArray())} -> ${formDef.name}`)
           return
@@ -311,10 +312,22 @@ export const parseForms =
           if (fieldType?.kind == "lookup") {
             traverse(formsConfig.forms.get(field.renderer)!)
           }
+          try {
+            if (fieldType?.kind == "application" && fieldType?.value == "List" && fieldType?.args.length == 1 && field.elementRenderer != undefined) {
+              if (formsConfig.forms.has(field.elementRenderer))
+                traverse(formsConfig.forms.get(field.elementRenderer)!)
+            }
+          } catch (error) {
+            errors.push(`unhandled error: ${JSON.stringify(error)} -> ${formDef.name}`)
+          }
         })
         formProcessingOrder = formProcessingOrder.add(formDef.name)
       }
-      formsConfig.forms.forEach(form => traverse(form))
+      const allForms = formsConfig.forms.valueSeq().toArray()
+      allForms.forEach(form => {
+        seen = seen.clear()
+        traverse(form)
+      })
 
       formProcessingOrder.forEach(formName => {
         const formConfig = formsConfig.forms.get(formName)!
@@ -366,13 +379,13 @@ export const parseForms =
         const form = parsedForm.form
         const initialState = parsedForm.initialFormState
         const api = {
-          get: (id:string) => entityApis.get(launcher.api)(id).then((raw: any) => {
+          get: (id: string) => entityApis.get(launcher.api)(id).then((raw: any) => {
             // alert(JSON.stringify(raw))
             // alert(JSON.stringify(parsedForm.formDef.type))
             const parsed = fromAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters)(raw)
             return parsed
           }),
-          update: (value:any) => entityApis.update(launcher.api)(toAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters)(value))
+          update: (value: any) => entityApis.update(launcher.api)(toAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters)(value))
         }
         parsedLaunchers.edit = parsedLaunchers.edit.set(
           launcherName,
@@ -393,7 +406,7 @@ export const parseForms =
         const form = parsedForm.form
         const initialState = parsedForm.initialFormState
         const api = {
-          create: (value:any) => {
+          create: (value: any) => {
             // alert(`type = ${JSON.stringify(parsedForm.formDef.type)}`)
             // alert(`value = ${JSON.stringify(value)}`)
             const raw = toAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters)(value)

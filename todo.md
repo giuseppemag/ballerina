@@ -59,23 +59,22 @@ Todo (✅/❌)
             ❌ separate entry point with own executable based on cmd-line arguments
             ❌ endpoint to push AB events
               ❌ expose OpenAPI spec
+          ❌ move coroutine evaluator to separate file
+          ❌ test Any, Spawn
+          ❌ implement Repeat as a reified construct
+          ❌ add `any`, `spawn`, `repeat`, `on` keywords
         ❌ generate translation of models into ef and OpenAPI
           ❌ records
           ❌ unions
           ❌ recursion
           ❌ serialization attributes
           ❌ events from (annotated) static methods or annotations on attributes with dependency on CRUD repository
-        ❌ move all the AB-related logic to the right project 
+        ❌ project refactoring
+          ❌ move all the AB-related logic to the right project 
+          ❌ rename grandeomega to web
         ❌ extend CRUD and CRUD endpoint generation
           ❌ CRUD
             ❌ sorting
-          ❌ endpoint generation
-            ❌ extend chains
-            ❌ filter parameter (over extended entity)
-            ❌ sorting parameter (over extended entity)
-            ❌ security model of generated APIs from queries: allow, restrict
-            ❌ security model of extension
-              ❌ define User' vault data and prevent anyone from extending along User -> Vault unless they are the user themselves
       ❌ define sample Positions API and types
         ❌ DocEvents = SenderEvents | ReceiverEvents | BankDetailEvents
           ❌ further split by field types
@@ -91,11 +90,14 @@ Todo (✅/❌)
           ❌ GET Order (pretend it's only one)
         ❌ link event handlers to business rules and value defaults
         ✅ add OpenAPI support, see if we get luckier with C# unions and inheritance
+      ❌ endpoint generation
+        ❌ extend chains
+        ❌ filter parameter (over extended entity)
+        ❌ sorting parameter (over extended entity)
+        ❌ security model of generated APIs from queries: allow, restrict
+        ❌ security model of extension
+          ❌ define User' vault data and prevent anyone from extending along User -> Vault unless they are the user themselves
       ✅ remove all the unused extra dependencies
-      ❌ move coroutine evaluator to separate file
-      ❌ test Any, Spawn
-      ❌ implement Repeat as a reified construct
-      ❌ add `any`, `spawn`, `repeat`, `on` keywords
       ✅ coroutine runtime engine
       ✅ fix stack overflow (flatten .Then)
       ✅ run in memory
