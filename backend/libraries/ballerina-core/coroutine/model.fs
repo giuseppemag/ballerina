@@ -1,44 +1,48 @@
 ﻿module Ballerina.Coroutines
 open Ballerina.Fun
 open System
+open System.Threading.Tasks
 
 type DeltaT = TimeSpan
 
-type Coroutine<'a, 's, 'e when 'e : comparison> = Co of ('s * Set<'e> * DeltaT -> CoroutineResult<'a, 's, 'e> * Option<U<'s>> * Option<U<Set<'e>>>)
+type Coroutine<'a, 's, 'e> = Co of ('s * Map<Guid, 'e> * DeltaT -> CoroutineResult<'a, 's, 'e> * Option<U<'s>> * Option<U<Map<Guid, 'e>>>)
   with 
-    static member map<'a, 'b, 's, 'e when 'e : comparison> (f:('a -> 'b)) ((Co p):Coroutine<'a,'s,'e>): Coroutine<'b, 's, 'e> = 
+    static member map<'a, 'b, 's, 'e> (f:('a -> 'b)) ((Co p):Coroutine<'a,'s,'e>): Coroutine<'b, 's, 'e> = 
       Co(fun (s, e, dt) ->
         let (p_result, s_updater, e_updater) = p(s,e,dt)
         (CoroutineResult.map f p_result, s_updater, e_updater)
       )
 
-and CoroutineResult<'a, 's, 'e when 'e : comparison> = 
+and CoroutineResult<'a, 's, 'e> = 
   | Return of 'a
   | Any of List<Coroutine<'a, 's, 'e>>
   // | All of List<Coroutine<'a, 's, 'e>>
   | Spawn of Coroutine<Unit, 's, 'e>
   | Wait of TimeSpan * Coroutine<'a, 's, 'e>
   | On of ('e -> Option<'a>)
+  | Do of ('s -> 'a)
   | Await of Async<'a>
-  | Awaiting of Guid * Async<'a>
+  | Awaiting of Guid * Async<'a> * Task<'a>
   | Then of (Coroutine<Coroutine<'a, 's, 'e>, 's, 'e>)
   | Combine of (Coroutine<Unit, 's, 'e> * Coroutine<'a, 's, 'e>)
   with 
-    static member map<'a, 'b, 's, 'e when 'e : comparison> (f:('a -> 'b)) (p:CoroutineResult<'a,'s,'e>) : CoroutineResult<'b, 's, 'e> = 
+    static member map<'a, 'b, 's, 'e> (f:('a -> 'b)) (p:CoroutineResult<'a,'s,'e>) : CoroutineResult<'b, 's, 'e> = 
       match p with
       | Return x -> x |> f |> Return
       | Any ps -> ps |> List.map(Coroutine.map f) |> Any
       // | All ps -> ps |> List.map(Coroutine.map f) |> All
       | Spawn p -> p |> Spawn
+      | Do (g) -> Do(g >> f)
       | Wait (t, p) -> Wait(t, p |> Coroutine.map f)
       | On(e_predicate) -> On(fun e -> e |> e_predicate |> Option.map f)
-      | Awaiting (id,p) -> 
+      | Awaiting (id,p,t) -> 
           Awaiting(
             id,
             async{ 
               let! x = p
               return f x
-            }
+            },
+            t.ContinueWith(new Func<_,_>(fun (a:Task<'a>) -> f(a.Result)))
           )
       | Await (p) -> 
           Await(
@@ -84,13 +88,15 @@ type CoroutineBuilder() =
     )
   // member co.Wait(t) =
   //     Co(fun _ -> CoroutineResult.Wait(t, co.Return()), None, None)
+  member _.Do(f : 's -> 'a) =
+    Co(fun _ -> CoroutineResult.Do(f), None, None)
   member _.Await(p : Async<'a>) =
     Co(fun _ -> CoroutineResult.Await(p), None, None)
-  member _.Awaiting(id:Guid, p : Async<'a>) =
-    Co(fun _ -> CoroutineResult.Awaiting(id,p), None, None)
+  member _.Awaiting(id:Guid, p : Async<'a>, t:Task<'a>) =
+    Co(fun _ -> CoroutineResult.Awaiting(id,p,t), None, None)
   member _.Spawn(p:Coroutine<Unit,'s,'e>) =
     Co(fun _ -> CoroutineResult.Spawn(p), None, None)
-  member _.Repeat(p:Coroutine<'a,'s,'e>) =
+  member _.Repeat(p:Coroutine<'a,'s,'e>) : Coroutine<Unit,'s,'e> =
     repeat p    
   member _.GetState() =
     Co(fun (s,es,dt) -> CoroutineResult.Return(s), None, None)
@@ -104,14 +110,14 @@ type CoroutineBuilder() =
     
 let co = CoroutineBuilder()
 
-type WaitingCoroutine<'a, 's, 'e when 'e : comparison> = { P:Coroutine<'a, 's, 'e>; Until:DateTime }
-type EvaluatedCoroutine<'a, 's, 'e when 'e : comparison> = 
-  | Done of 'a * Option<U<'s>> * Option<U<Set<'e>>>
-  | Spawned of List<Coroutine<Unit, 's, 'e>> * Option<U<'s>> * Option<U<Set<'e>>> * Option<Coroutine<'a, 's, 'e>>
-  | Active of Coroutine<'a, 's, 'e> * Option<U<'s>> * Option<U<Set<'e>>>
-  | Listening of Coroutine<'a, 's, 'e> * Option<U<'s>> * Option<U<Set<'e>>>
-  | Waiting of WaitingCoroutine<'a, 's, 'e> * Option<U<'s>> * Option<U<Set<'e>>>
-  | WaitingOrListening of WaitingCoroutine<'a, 's, 'e> * Option<U<'s>> * Option<U<Set<'e>>>
+type WaitingCoroutine<'a, 's, 'e> = { P:Coroutine<'a, 's, 'e>; Until:DateTime }
+type EvaluatedCoroutine<'a, 's, 'e> = 
+  | Done of 'a * Option<U<'s>> * Option<U<Map<Guid, 'e>>>
+  | Spawned of List<Coroutine<Unit, 's, 'e>> * Option<U<'s>> * Option<U<Map<Guid, 'e>>> * Option<Coroutine<'a, 's, 'e>>
+  | Active of Coroutine<'a, 's, 'e> * Option<U<'s>> * Option<U<Map<Guid, 'e>>>
+  | Listening of Coroutine<'a, 's, 'e> * Option<U<'s>> * Option<U<Map<Guid, 'e>>>
+  | Waiting of WaitingCoroutine<'a, 's, 'e> * Option<U<'s>> * Option<U<Map<Guid, 'e>>>
+  | WaitingOrListening of WaitingCoroutine<'a, 's, 'e> * Option<U<'s>> * Option<U<Map<Guid, 'e>>>
   with 
     member this.After(u_s, u_e) = 
       match this with
@@ -122,9 +128,8 @@ type EvaluatedCoroutine<'a, 's, 'e when 'e : comparison> =
       | Waiting(x, u_s', u_e') -> Waiting(x, u_s >>? u_s', u_e >>? u_e')
       | WaitingOrListening(x, u_s', u_e') -> WaitingOrListening(x, u_s >>? u_s', u_e >>? u_e')
 
-let mutable awaiting:Map<Guid, Async<obj>> = Map.empty
 let mutable awaited:Map<Guid, obj> = Map.empty
-type EvaluatedCoroutines<'s, 'e when 'e : comparison> = {
+type EvaluatedCoroutines<'s, 'e> = {
     active:Map<Guid, Coroutine<Unit, 's, 'e>>
     stopped:Set<Guid>
     waiting:Map<Guid, WaitingCoroutine<Unit, 's, 'e>>
@@ -132,9 +137,9 @@ type EvaluatedCoroutines<'s, 'e when 'e : comparison> = {
     waitingOrListening:Map<Guid, WaitingCoroutine<Unit, 's, 'e>>
   }
 
-type Eval<'s,'e when 'e : comparison>() = class end
+type Eval<'s,'e>() = class end
   with 
-    static member eval<'a> ((Co p):Coroutine<'a,'s,'e>) (ctx:'s * Set<'e> * DeltaT) : EvaluatedCoroutine<'a,'s,'e> = 
+    static member eval<'a> ((Co p):Coroutine<'a,'s,'e>) (ctx:'s * Map<Guid, 'e> * DeltaT) : EvaluatedCoroutine<'a,'s,'e> = 
       let (s,es,dt) = ctx
       let (step, u_s, u_e) = p ctx
       match step with
@@ -180,10 +185,11 @@ type Eval<'s,'e when 'e : comparison>() = class end
                 | Done(res, u_s', u_e') -> Choice2Of2(res, u_s >>? u_s', u_e >>? u_e')
                 | Spawned(p', u_s', u_e', rest) -> Choice1Of2(ps' @ Option.toList rest, p' @ spawned', u_s >>? u_s', u_e >>? u_e')
                 | Active(p',u_s',u_e')
-                | Listening(p',u_s',u_e')
-                | Waiting({ P = p'; Until = _ }, u_s', u_e')
-                | WaitingOrListening({ P = p'; Until = _ }, u_s', u_e') ->
+                | Listening(p',u_s',u_e') ->
                   Choice1Of2(p'::ps', spawned', u_s >>? u_s', u_e >>? u_e')
+                | Waiting({ P = p'; Until = until }, u_s', u_e')
+                | WaitingOrListening({ P = p'; Until = until }, u_s', u_e') ->
+                  Choice1Of2(Co(fun _ -> CoroutineResult.Wait(until-DateTime.Now, p'), None, None)::ps', spawned', u_s >>? u_s', u_e >>? u_e')
             ) (Choice1Of2([], [], None, None)) 
         match res with
         | Choice1Of2(ps', [], u_s, u_e) -> 
@@ -193,7 +199,10 @@ type Eval<'s,'e when 'e : comparison>() = class end
         | Choice2Of2(res, u_s, u_e) -> 
           Done(res, u_s, u_e)
       | Wait(timeSpan, p':Coroutine<'a,'s,'e>) -> 
-        Waiting({ P=p'; Until=DateTime.Now + timeSpan }, None, None)
+        if timeSpan.TotalSeconds <= 0 then
+          Active(p', None, None)
+        else
+          Waiting({ P=p'; Until=DateTime.Now + timeSpan - dt }, None, None)
         // let timeSpan' = timeSpan - dt
         // if timeSpan'.TotalMilliseconds <= 0 then
         //   Active(p', None, None)
@@ -203,37 +212,28 @@ type Eval<'s,'e when 'e : comparison>() = class end
         //     return! p'
         //   }, None, None)
       | On(p_e) ->
-        match es |> Seq.map (fun e -> p_e e, e) |> Seq.tryFind (function Some _, e -> true | _ -> false) with
-        | Some(Some res,e) -> Done(res, None, Some(Set.remove e))
+        match es |> Seq.map (fun e -> p_e e.Value, e) |> Seq.tryFind (function Some _, e -> true | _ -> false) with
+        | Some(Some res,e) -> Done(res, None, Some(Map.remove e.Key))
         | _ -> Active(co.On p_e, None, None)
       | Spawn(p) -> 
         Spawned([p], None, None, None)
+      | Do(f) ->
+        Done(f s, None, None)
       | Await(a:Async<'a>) ->
         let id = Guid.NewGuid()
-        do Async.Start(
-          async{
-            let! res = a
-            awaited <- awaited |> Map.add id (res :> obj)
-          })
-        awaiting <- awaiting |> Map.add id 
-          (async{ 
-            let! res = a
-            return res :> obj 
-          })
-        Active(co.Awaiting(id, a), None, None)
-      | Awaiting(id, a) ->
-        match awaited |> Map.tryFind id with
-        | Some res -> 
-          awaiting <- awaiting |> Map.remove id
-          awaited <- awaited |> Map.remove id
-          Done(res :?> 'a, None, None)
-        | None when awaiting |> Map.containsKey id  -> Active(co.Awaiting(id, a), None, None)
-        | _ -> Active(co.Await(a), None, None) // this can happen if the container has been restarted
+        let task = a |> Async.StartAsTask
+        Active(co.Awaiting(id, a, task), None, None)
+      | Awaiting(id, a, task) ->
+        do printfn "%A" task.Status
+        if task.IsCompletedSuccessfully then
+          Done(task.Result, None, None)
+        else 
+          Active(co.Awaiting(id, a, task), None, None)
 
-let rec evalMany (ps:Map<Guid, Coroutine<Unit, 's, 'e>>) ((s, es, dt):'s * Set<'e> * DeltaT) : EvaluatedCoroutines<'s, 'e> * Option<U<'s>> * Option<U<Set<'e>>> =
+let rec evalMany (ps:Map<Guid, Coroutine<Unit, 's, 'e>>) ((s, es, dt):'s * Map<Guid, 'e> * DeltaT) : EvaluatedCoroutines<'s, 'e> * Option<U<'s>> * Option<U<Map<Guid, 'e>>> =
     let ctx = (s,es,dt)
     let mutable u_s:Option<U<'s>> = None
-    let mutable u_e:Option<U<Set<'e>>> = None
+    let mutable u_e:Option<U<Map<Guid, 'e>>> = None
     let mutable evaluated:EvaluatedCoroutines<'s, 'e> = {
       active=Map.empty;
       stopped=Set.empty;

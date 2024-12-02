@@ -33,11 +33,9 @@ and AEvent(ABId:Guid) = // , A1EventId:Guid) =
     // A1EventId=e.A1EventId; A1Event=e.A1Event 
     }
   static member FromRecord (e:absample.models.AEvent) : AEvent = 
-    new AEvent(ABId = e.ABId, //A1EventId = e.A1EventId, 
-      AB = e.AB //, A1Event = e.A1Event
-      )
+    new AEvent(ABEventId = e.ABEventId, ABId = e.ABId, AB = e.AB)
 and BEvent(ABId:Guid) =
   inherit ABEvent(ABId)
   static member ToRecord (e:BEvent) : absample.models.BEvent = { ABEventId=e.ABEventId; ABId=e.ABId; AB=e.AB }
   static member FromRecord (e:absample.models.BEvent) : BEvent = 
-    new BEvent(ABId = e.ABId, AB = e.AB)
+    new BEvent(ABEventId = e.ABEventId, ABId = e.ABId, AB = e.AB)

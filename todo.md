@@ -40,32 +40,41 @@ Todo (✅/❌)
         ❌ add PositionOptions config with extension method on builder
         ❌ adding and configuring the dbcontext should also be done from another file, from ballerina-core perhaps
         ❌ DbContext config does not come from appsettings
-      ❌ AB events sample domain
+      ✅ AB events sample domain
         ✅ reorganize the main project decently, moving all the AB-related logic to a separate folder
           ✅ repositories
           ✅ endpoints
         ✅ define ABRepo, ABEventRepo
           ✅ generalize from a single DbSet
           ✅ add ordering - requires making CRUD an interface
-          ❌ add skip/take
+          ✅ add skip/take
             ✅ add url parameters to endpoint, check that they work also in OpenAPI
-            ❌ add "safety clamp" to avoid DDoS
+            ✅ add "safety clamp" to avoid DDoS
         ✅ post ABEvent, AB via repos
           ✅ expose OpenAPI spec
             ✅ type discriminator in swagger
             ✅ type discriminator when serializing
             ✅ type discriminator when deserializing
         ❌ define and run ABCoroutine
-          ❌ dependent on repo's for AB and ABEvent
+          ✅ dependent on repo's for AB and ABEvent
           ❌ thread to run the coroutines forever
             ❌ separate entry point with own executable based on cmd-line arguments
-            ❌ endpoint to push AB events
-              ❌ expose OpenAPI spec
+              ❌ this should fix the tracking issue - remove the ugly `wait 0`
+            ✅ endpoint to push AB events
+              ✅ expose OpenAPI spec
+          ✅ co.On for ABEvent should check that the ABId matches or every ABEvent will match every co.On
+          ❌ processBs
+          ❌ serialize running coroutine to the DB naively: everything is active
           ❌ move coroutine evaluator to separate file
-          ❌ test Any, Spawn
+          ✅ test Any
           ❌ implement Repeat as a reified construct
+          ❌ separate state from context
+          ❌ "blogging" context -> BallerinaContext
           ❌ add `any`, `spawn`, `repeat`, `on` keywords
-        ❌ generate translation of models into ef and OpenAPI
+          ❌ test Spawn
+            ❌ remove ugly starting logic, everything is bootstrapped by the endpoint that pushes the CreateABEvent
+            ❌ create ABs from event
+        ❌ _generate_ translation of models into ef and OpenAPI
           ❌ records
           ❌ unions
           ❌ recursion
@@ -74,9 +83,6 @@ Todo (✅/❌)
         ❌ project refactoring
           ❌ move all the AB-related logic to the right project 
           ❌ rename grandeomega to web
-        ❌ extend CRUD and CRUD endpoint generation
-          ❌ CRUD
-            ❌ sorting
       ❌ define sample Positions API and types
         ❌ DocEvents = SenderEvents | ReceiverEvents | BankDetailEvents
           ❌ further split by field types
@@ -99,6 +105,7 @@ Todo (✅/❌)
         ❌ security model of generated APIs from queries: allow, restrict
         ❌ security model of extension
           ❌ define User' vault data and prevent anyone from extending along User -> Vault unless they are the user themselves
+        ❌ control creation of extended entities (AB inside ABEvent for example)
       ✅ remove all the unused extra dependencies
       ✅ coroutine runtime engine
       ✅ fix stack overflow (flatten .Then)

@@ -18,9 +18,8 @@ namespace Migrations
     public BloggingContext(DbContextOptions<BloggingContext> options)
         : base(options) { }
 
-    // protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
-
-    //   optionsBuilder.UseNpgsql("User ID=postgres;Password=;Host=localhost;Port=5432;Database=blog;Pooling=true;Maximum Pool Size=50;");
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
+      optionsBuilder.UseNpgsql("User ID=postgres;Password=;Host=localhost;Port=5432;Database=blog;Pooling=true;Maximum Pool Size=50");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
