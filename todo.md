@@ -46,8 +46,10 @@ Todo (✅/❌)
           ✅ endpoints
         ✅ define ABRepo, ABEventRepo
           ✅ generalize from a single DbSet
-          ❌ add ordering - requires making CRUD an interface
+          ✅ add ordering - requires making CRUD an interface
           ❌ add skip/take
+            ✅ add url parameters to endpoint, check that they work also in OpenAPI
+            ❌ add "safety clamp" to avoid DDoS
         ✅ post ABEvent, AB via repos
           ✅ expose OpenAPI spec
             ✅ type discriminator in swagger
@@ -106,6 +108,8 @@ Todo (✅/❌)
       ❌ update events
       ❌ test user registration coroutine, create events with testing endpoint
       ❌ run with intelligent suspensions
+  ❌ data sync'er and mapper
+  ❌ statements and expressions evaluator
   ✅ blog.fsproj
   ✅ postgres.csproj (this is the migrations project)
     ✅ dbContext (in C#)
@@ -124,7 +128,6 @@ Todo (✅/❌)
       ❌ invoke methods from auth domain
       ❌ think about security
   ❌ support both PG and MySQL
-  ❌ add some security model on top of CRUD
   ❌ SPA
     ❌ from docker container
     ❌ serve from backend

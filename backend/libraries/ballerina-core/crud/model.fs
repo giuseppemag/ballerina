@@ -12,7 +12,7 @@ type Crud<'a> =
   abstract member create:'a -> Async<Guid>
   abstract member delete:Guid -> Async<Unit>
   abstract member get:Guid -> Async<Option<'a>>
-  abstract member getN:Quotations.Expr<'a -> bool> -> Async<Linq.IQueryable<'a>>
+  abstract member getN:Quotations.Expr<'a -> bool> -> Quotations.Expr<'a -> 'key> -> Ballerina.Range -> Async<Linq.IQueryable<'a>>
   abstract member update:Guid -> Updater<'a> -> Async<Unit>
 
 type Crud<'a> with
@@ -45,9 +45,9 @@ type Crud<'a> with
             let! es = dbSet.Where(entity.getId id |> ToLinq).ToListAsync() |> Async.AwaitTask
             return es |> Seq.tryHead
           }
-        member this.getN predicate = 
+        member this.getN predicate ordering range = 
           async {
-            return dbSet.Where(ToLinq predicate) // .OrderBy()
+            return dbSet.Where(ToLinq predicate).OrderBy(ToLinq ordering).Skip(range.skip).Take(range.take)
           }
     }
 

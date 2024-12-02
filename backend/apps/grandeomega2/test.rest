@@ -1,15 +1,15 @@
 GET http://localhost:5000/swagger/v1/swagger.json HTTP/1.1
 #####
 
-GET http://localhost:5000/ABEvents HTTP/1.1
+GET http://localhost:5000/ABEvents?skip=0&take=100 HTTP/1.1
 content-type: application/json
 #####
 
-GET http://localhost:5000/AEvents HTTP/1.1
+GET http://localhost:5000/AEvents?skip=0&take=100 HTTP/1.1
 content-type: application/json
 #####
 
-GET http://localhost:5000/BEvents HTTP/1.1
+GET http://localhost:5000/BEvents?skip=0&take=100 HTTP/1.1
 content-type: application/json
 #####
 
