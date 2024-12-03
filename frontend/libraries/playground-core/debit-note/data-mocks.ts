@@ -308,7 +308,7 @@ const entityApis: EntityApis = {
         return (_) =>
           Promise.resolve({
             name: "",
-            value: {
+            value__: {
               anyOfEnum: undefined,
               anyOfTypes: {
                 anyOfString: "",

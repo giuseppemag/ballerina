@@ -56,24 +56,35 @@ Todo (✅/❌)
             ✅ type discriminator when serializing
             ✅ type discriminator when deserializing
         ❌ define and run ABCoroutine
-          ✅ dependent on repo's for AB and ABEvent
-          ❌ thread to run the coroutines forever
-            ❌ separate entry point with own executable based on cmd-line arguments
-              ❌ this should fix the tracking issue - remove the ugly `wait 0`
+          ❌ separate entry point with own executable based on cmd-line arguments
+            ❌ check the cmd line parameters with System.CommandLine
+              ❌ pass app.Services.CreateScope to the custom Commandhandlers
+              ❌ `dotnet run -- web & dotnet run -- jobs [clear]`
+            ❌ this should fix the tracking issue - remove the ugly `wait 0`
+            ❌ move coroutine evaluator to separate file
+            ❌ isolate thread evaluator, move to separate file in main project
+            ❌ serialize running coroutine to the DB naively: everything is active
+              ❌ parameterize the event queries with a CRUD repo
+              ❌ parameterize the coroutine queries with a CRUD repo
             ✅ endpoint to push AB events
               ✅ expose OpenAPI spec
-          ✅ co.On for ABEvent should check that the ABId matches or every ABEvent will match every co.On
           ❌ processBs
-          ❌ serialize running coroutine to the DB naively: everything is active
-          ❌ move coroutine evaluator to separate file
-          ✅ test Any
-          ❌ implement Repeat as a reified construct
           ❌ separate state from context
           ❌ "blogging" context -> BallerinaContext
+          ❌ remove the ugly wait 0
+            ❌ after Crud.update untrack the entity
+            ❌ after event deletion untrack all the events
+          ❌ restore Async in Crud, run with Do anyway with RunSync
+          ❌ do not delete events, mark them as done, with an index on the status and a createdAt for ordering
+          ❌ implement Repeat as a reified construct
           ❌ add `any`, `spawn`, `repeat`, `on` keywords
           ❌ test Spawn
             ❌ remove ugly starting logic, everything is bootstrapped by the endpoint that pushes the CreateABEvent
             ❌ create ABs from event
+          ❌ add nested A' and B' events
+          ✅ dependent on repo's for AB and ABEvent
+          ✅ co.On for ABEvent should check that the ABId matches or every ABEvent will match every co.On
+          ✅ test Any
         ❌ _generate_ translation of models into ef and OpenAPI
           ❌ records
           ❌ unions
@@ -115,6 +126,9 @@ Todo (✅/❌)
       ❌ update events
       ❌ test user registration coroutine, create events with testing endpoint
       ❌ run with intelligent suspensions
+  ❌ low-code platform
+    ❌ business rules (of which defaultings are a data-driven instance) should be just data 
+    ❌ workflow manager should be just data-driven coroutines
   ❌ data sync'er and mapper
   ❌ statements and expressions evaluator
   ✅ blog.fsproj

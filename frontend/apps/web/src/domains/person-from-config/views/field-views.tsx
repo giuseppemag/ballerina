@@ -211,7 +211,8 @@ export const PersonFieldViews = {
           <>
             {props.context.label && <h3>{props.context.label}</h3>}
             <ul>
-              {props.context.value.map((element, elementIndex) => (
+              {props.context.value.map((element, elementIndex) => {
+                return (
                 <li>
                   <button onClick={() => props.foreignMutations.remove(elementIndex)}>❌</button>
                   {props.embeddedElementTemplate(elementIndex)({
@@ -219,9 +220,11 @@ export const PersonFieldViews = {
                     view: unit,
                   })}
                 </li>
-              ))}
+              )})}
             </ul>
-            <button onClick={() => props.foreignMutations.add(unit)}>➕</button>
+            <button onClick={() => {
+              props.foreignMutations.add(unit)
+            }}>➕</button>
           </>
   }
 };

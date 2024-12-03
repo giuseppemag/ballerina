@@ -49,13 +49,11 @@ module Program =
       co.Any([
         co{
           do! co.On(function absample.models.AEvent e when e.ABId = abId -> Some() | _ -> None)
-          wait (TimeSpan.FromSeconds 0.0)
           do! co.Do(fun ctx -> ctx.ABs.update abId (fun ab -> ({ ab with ACount = ab.ACount+1 })))
         }
         co{
           wait (TimeSpan.FromSeconds 3.0)
           do! co.Do(fun ctx -> ctx.ABs.update abId (fun ab -> ({ ab with AFailCount = ab.AFailCount+1 })))
-          return ()
         }
       ])
     )
@@ -141,13 +139,10 @@ module Program =
         let resumedWaiting, stillWaiting = evals.waiting |> Map.partition (fun _ v -> v.Until <= now) 
         let active = (evals.active |> Map.values |> Seq.toList) @ (resumedWaiting |> Seq.map (fun w -> w.Value.P) |> Seq.toList) |> Seq.map (fun p -> Guid.NewGuid(), p) |> Map.ofSeq
         let events = db.ABEvents.AsNoTracking().ToArray() |> Seq.map (fun e -> e.ABEventId, e |> absample.efmodels.ABEvent.ToUnion) |> Map.ofSeq
-        let (evals', u_s, u_e) = 
-          evalMany (active) ({ services = app.Services; ABs = AB db (db.ABs); ABEvents = ABEvent db (db.ABEvents) }, events, dT)
+        let (evals', u_s, u_e) = evalMany (active) ({ services = app.Services; ABs = AB db (db.ABs); ABEvents = ABEvent db (db.ABEvents) }, events, dT)
         match u_e with
         | Some u_e ->
-          printfn "events = %A" events
           let events' = u_e events
-          printfn "events' = %A" events'
           let removed = events |> Map.filter (fun e'_id e' -> events' |> Map.containsKey e'_id |> not)
                                |> Map.toSeq
                                |> Seq.map snd

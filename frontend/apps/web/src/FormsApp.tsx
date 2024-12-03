@@ -54,7 +54,7 @@ export const FormsApp = (props: {}) => {
 
 	console.log({
 		parser: configFormsParser,
-		runner: personEditFormState
+		runner: debitNoteEditFormState
 	})
 
 	return (

@@ -22,7 +22,7 @@ content-type: application/json
 POST http://localhost:5000/ABEvents HTTP/1.1
 content-type: application/json
 
-{"$type":"AEvent","abId":"348188ef-3395-45bf-8aaa-7b838baad9f6","abEventId":"00000000-0000-0000-0000-000000000000"}
+{"$type":"AEvent","abId":"b968e52d-47e8-4e8d-923f-15f1d169e756","abEventId":"00000000-0000-0000-0000-000000000000"}
 #####
 
 POST http://localhost:5000/ABs HTTP/1.1
