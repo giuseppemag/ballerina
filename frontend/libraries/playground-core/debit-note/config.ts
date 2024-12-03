@@ -52,6 +52,10 @@ export const DebitNoteHeaderConfig = {
       extends: ["CollectionReference"],
       fields: {},
     },
+    ValueRef: {
+      extends: ["CollectionReference"],
+      fields: {},
+    },
     AccountingPositionFieldsRef: {
       extends: ["CollectionReference"],
       fields: {},
@@ -60,7 +64,10 @@ export const DebitNoteHeaderConfig = {
       extends: ["CollectionReference"],
       fields: {},
     },
-
+    FiltersValueAnyOfRef: {
+      extends: ["CollectionReference"],
+      fields: {},
+    },
     FieldContext: {
       fields: {
         accountingPositionFields: {
@@ -69,9 +76,27 @@ export const DebitNoteHeaderConfig = {
         },
       },
     },
+    AnyOfTypes: {
+      fields: {
+        anyOfString: "string",
+        anyOfNumber: "number",
+        anyOfDateTime: "string",
+        anyOfBoolean: "boolean",
+      },
+    },
+    FiltersValue: {
+      fields: {
+        anyOfEnum: {
+          fun: "SingleSelection",
+          args: ["FiltersValueAnyOfRef"],
+        },
+        anyOfTypes: "AnyOfTypes",
+      },
+    },
     Filters: {
       fields: {
         name: "string",
+        value: "FiltersValue",
         filterOp: {
           fun: "SingleSelection",
           args: ["FiltersOpRef"],
@@ -217,8 +242,7 @@ export const DebitNoteHeaderConfig = {
       fields: {
         keyValueCommitChecks: "KeyValueCommitChecks",
         dataFilterGroupCommitChecks: "DataFilterGroupCommitChecks",
-        synchronizedDataFilterGroupCommitChecks:
-          "SynchronizedDataFilterGroupCommitChecks",
+        synchronizedDataFilterGroupCommitChecks: "SynchronizedDataFilterGroupCommitChecks",
         documentNumberCommitChecks: "DocumentNumberCommitChecks",
         documentDateCommitChecks: "DocumentDateCommitChecks",
         unequalTableToDocumentRowsCheck: "UnequalTableToDocumentRowsCheck",
@@ -246,14 +270,13 @@ export const DebitNoteHeaderConfig = {
       informationCardFieldsEnum: "InformationCardFieldsRef",
       informationCardFieldsDisabledEnum: "InformationCardFieldsDisabledRef",
       debitNoteResultFieldsEnum: "DebitNoteResultFieldsRef",
-      documentNumberDefaultingsFromKeyValueEnum:
-        "DocumentNumberDefaultingsFromKeyValueRef",
-      documentDateDefaultingsFromKeyValueEnum:
-        "DocumentDateDefaultingsFromKeyValueRef",
-      configurableNumberDefaultingsFromKeyValueEnum:
-        "ConfigurableNumberDefaultingsFromKeyValueRef",
+      documentNumberDefaultingsFromKeyValueEnum: "DocumentNumberDefaultingsFromKeyValueRef",
+      documentDateDefaultingsFromKeyValueEnum: "DocumentDateDefaultingsFromKeyValueRef",
+      configurableNumberDefaultingsFromKeyValueEnum: "ConfigurableNumberDefaultingsFromKeyValueRef",
       configurableNumber2DefaultingsFromKeyValueEnum:
         "ConfigurableNumber2DefaultingsFromKeyValueRef",
+      valueEnum: "ValueRef",
+      filtersValueAnyOfEnum: "FiltersValueAnyOfRef",
     },
     searchableStreams: {},
     entities: {
@@ -267,6 +290,63 @@ export const DebitNoteHeaderConfig = {
   mappings: {},
 
   forms: {
+    anyOfTypesForm: {
+      type: "AnyOfTypes",
+      fields: {
+        anyOfString: {
+          renderer: "defaultString",
+          visible: { kind: "true" },
+        },
+        anyOfNumber: {
+          renderer: "defaultNumber",
+          visible: { kind: "true" },
+        },
+        anyOfDateTime: {
+          renderer: "defaultString",
+          visible: { kind: "true" },
+        },
+        anyOfBoolean: {
+          renderer: "defaultBoolean",
+          visible: { kind: "true" },
+        },
+      },
+      tabs: {
+        main: {
+          columns: {
+            AnyOfTypes: {
+              groups: {
+                main: ["anyOfString", "anyOfNumber", "anyOfDateTime", "anyOfBoolean"],
+              },
+            },
+          },
+        },
+      },
+    },
+    filtersValueForm: {
+      type: "FiltersValue",
+      fields: {
+        anyOfEnum: {
+          renderer: "defaultEnum",
+          options: "filtersValueAnyOfEnum",
+          visible: { kind: "true" },
+        },
+        anyOfTypes: {
+          renderer: "anyOfTypesForm",
+          visible: { kind: "true" },
+        },
+      },
+      tabs: {
+        main: {
+          columns: {
+            FiltersValue: {
+              groups: {
+                main: ["anyOfEnum", "anyOfTypes"],
+              },
+            },
+          },
+        },
+      },
+    },
     headerFieldsDefaultsForm: {
       type: "HeaderFieldsDefaults",
       fields: {
@@ -328,7 +408,7 @@ export const DebitNoteHeaderConfig = {
         },
       },
     },
-    informationCardFieldsDisbaledForm: {
+    informationCardFieldsDisabledForm: {
       type: "InformationCardFieldsDisabled",
       fields: {
         informationCardFieldsDisabled: {
@@ -394,11 +474,7 @@ export const DebitNoteHeaderConfig = {
           columns: {
             KeyValueFields: {
               groups: {
-                main: [
-                  "informationKeys",
-                  "informationKeysDisabled",
-                  "informationFreeKeys",
-                ],
+                main: ["informationKeys", "informationKeysDisabled", "informationFreeKeys"],
               },
             },
           },
@@ -550,6 +626,10 @@ export const DebitNoteHeaderConfig = {
           renderer: "defaultString",
           visible: { kind: "true" },
         },
+        value: {
+          renderer: "filtersValueForm",
+          visible: { kind: "true" },
+        },
         filterOp: {
           renderer: "defaultEnum",
           options: "filtersOpEnum",
@@ -561,7 +641,7 @@ export const DebitNoteHeaderConfig = {
           columns: {
             Filters: {
               groups: {
-                main: ["name", "filterOp"],
+                main: ["name", "value", "filterOp"],
               },
             },
           },
@@ -666,10 +746,7 @@ export const DebitNoteHeaderConfig = {
           columns: {
             KeyValueCommitChecks: {
               groups: {
-                main: [
-                  "requiredKeyValueFields",
-                  "highConfidenceKeyValueFields",
-                ],
+                main: ["requiredKeyValueFields", "highConfidenceKeyValueFields"],
               },
             },
           },
@@ -713,7 +790,7 @@ export const DebitNoteHeaderConfig = {
           visible: { kind: "true" },
         },
         informationCardFieldsDisabled: {
-          renderer: "informationCardFieldsDisbaledForm",
+          renderer: "informationCardFieldsDisabledForm",
           visible: { kind: "true" },
         },
       },
@@ -722,11 +799,7 @@ export const DebitNoteHeaderConfig = {
           columns: {
             Dashboard: {
               groups: {
-                main: [
-                  "keyValueFields",
-                  "informationCardFields",
-                  "informationCardFieldsDisabled",
-                ],
+                main: ["keyValueFields", "informationCardFields", "informationCardFieldsDisabled"],
               },
             },
           },
@@ -772,7 +845,6 @@ export const DebitNoteHeaderConfig = {
                   "synchronizedDataFilterGroupCommitChecks",
                   "documentNumberCommitChecks",
                   "documentDateCommitChecks",
-                  "unequalTableToDocumentRowsCheck",
                 ],
               },
             },
