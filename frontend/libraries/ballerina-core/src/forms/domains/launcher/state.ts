@@ -6,7 +6,8 @@ export type FormRef = {
   formName:string
 } & ({
   kind:"edit",
-  entityId:Guid
+  entityId:Guid,
+  debounceRateMs?:number
 } | {
   kind:"map",
   onChange:OnChange<any>

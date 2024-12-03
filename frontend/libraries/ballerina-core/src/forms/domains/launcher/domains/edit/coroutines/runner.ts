@@ -49,7 +49,7 @@ export const editFormRunner = <E, FS>() => {
           5,
           50
         ),
-        15
+        current.debounceRateMs ?? 15
       ).embed(
         (_) => ({..._, ..._.apiRunner}),
         (_) => EditFormState<E, FS>().Updaters.Core.apiRunner(_)
