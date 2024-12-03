@@ -10,6 +10,7 @@ export type EditFormContext<E,FS> = {
     update:BasicFun<E, Promise<ApiErrors>>
   },
   actualForm:Template<Value<E> & FS, FS, { onChange:SimpleCallback<BasicUpdater<E>> }>
+  debounceRateMs?: number
 }
 
 export type EditFormState<E,FS> = {

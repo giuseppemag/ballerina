@@ -25,6 +25,7 @@ export const FormRunnerTemplate =
         <props.context.form.value.form
           context={{
             ...props.context.form.value.formState,
+            debounceRateMs: props.context.formRef.kind == "edit" ? props.context.formRef.debounceRateMs : undefined,
             entityId: props.context.formRef.kind == "edit" ? props.context.formRef.entityId : undefined,
             value: props.context.formRef.kind == "map" ? props.context.formRef.value : undefined,
             formState: props.context.formRef.kind == "map" ? props.context.form.value.formState : props.context.form.value.formState.formState,

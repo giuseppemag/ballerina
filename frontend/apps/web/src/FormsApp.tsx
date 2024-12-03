@@ -165,6 +165,7 @@ export const FormsApp = (props: {}) => {
 											formName: "DEBIT_NOTE_HEADER_CONFIG",
 											entityId: "11112",
 											kind: "edit",
+											debounceRateMs: 100,
 										},
 										showFormParsingErrors: ShowFormsParsingErrors,
 										extraContext: {
