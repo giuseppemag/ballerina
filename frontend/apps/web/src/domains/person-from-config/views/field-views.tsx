@@ -82,7 +82,7 @@ export const PersonFieldViews = {
         </>,
   },
   enumSingleSelection: {
-    defaultEnum: <Context extends FormLabel & BaseEnumContext<Context, Element>, Element extends CollectionReference, ForeignMutationsExpected>(): 
+    defaultEnum: <Context extends FormLabel & BaseEnumContext<Context, Element>, Element extends CollectionReference, ForeignMutationsExpected>():
     EnumView<Context, Element, ForeignMutationsExpected> =>
       props => <>
         {props.context.label && <h3>{props.context.label}</h3>}
@@ -104,7 +104,7 @@ export const PersonFieldViews = {
       </>,
   },
   enumMultiSelection: {
-    defaultEnumMultiselect: <Context extends FormLabel & BaseEnumContext<Context, Element>, Element extends CollectionReference, ForeignMutationsExpected>(): 
+    defaultEnumMultiselect: <Context extends FormLabel & BaseEnumContext<Context, Element>, Element extends CollectionReference, ForeignMutationsExpected>():
       EnumMultiselectView<Context, Element, ForeignMutationsExpected> =>
       props => <>
         {props.context.label && <h3>{props.context.label}</h3>}
@@ -208,19 +208,20 @@ export const PersonFieldViews = {
     defaultList: <Element, ElementFormState, Context extends FormLabel, ForeignMutationsExpected>():
       ListFieldView<Element, ElementFormState, Context, ForeignMutationsExpected> =>
       props =>
-        <>
-          {props.context.label && <h3>{props.context.label}</h3>}
-          <ul>
-            {
-              props.context.value.map((element, elementIndex) =>
+          <>
+            {props.context.label && <h3>{props.context.label}</h3>}
+            <ul>
+              {props.context.value.map((element, elementIndex) => (
                 <li>
-                  {
-                    props.embeddedElementTemplate(elementIndex)({...props, view:unit })
-                  }
+                  <button onClick={() => props.foreignMutations.remove(elementIndex)}>❌</button>
+                  {props.embeddedElementTemplate(elementIndex)({
+                    ...props,
+                    view: unit,
+                  })}
                 </li>
-              )
-            }
-          </ul>
-        </>
+              ))}
+            </ul>
+            <button onClick={() => props.foreignMutations.add(unit)}>➕</button>
+          </>
   }
 };
