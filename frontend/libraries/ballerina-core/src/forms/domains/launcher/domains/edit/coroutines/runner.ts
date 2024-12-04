@@ -34,9 +34,7 @@ export const editFormRunner = <E, FS>() => {
     Co.GetState().then((current) =>
       Co.Seq([
         Co.SetState(
-          EditFormState<E, FS>().Updaters.Core.apiResponseChecked(
-            replaceWith(false)
-          )
+          EditFormState<E, FS>().Updaters.Template.toUnchecked()
         ),
         Debounce<Synchronized<Unit, ApiErrors>, EditFormWritableState<E, FS>>(
           Synchronize<Unit, ApiErrors, EditFormWritableState<E, FS>>(

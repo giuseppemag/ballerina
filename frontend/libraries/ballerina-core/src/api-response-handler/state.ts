@@ -12,14 +12,18 @@ export const ApiResponseChecker = {
     apiResponseChecked: _ ?? false,
   }),
   Updaters: {
-    toChecked: (): BasicUpdater<ApiResponseChecker> => (_) => ({
-      ..._,
-      apiResponseChecked: true,
-    }),
-    toUnchecked: (): BasicUpdater<ApiResponseChecker> => (_) => ({
-      ..._,
-      apiResponseChecked: false,
-    }),
+    toChecked:
+      <CheckedState extends ApiResponseChecker>(): BasicUpdater<CheckedState> =>
+      (_) => ({
+        ..._,
+        apiResponseChecked: true,
+      }),
+    toUnchecked:
+      <CheckedState extends ApiResponseChecker>(): BasicUpdater<CheckedState> =>
+      (_) => ({
+        ..._,
+        apiResponseChecked: false,
+      }),
   },
   Operations: {
     checked: (_: ApiResponseChecker) => _.apiResponseChecked,

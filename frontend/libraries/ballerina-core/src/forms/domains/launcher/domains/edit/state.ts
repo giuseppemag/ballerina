@@ -1,4 +1,4 @@
-import { AsyncState, BasicUpdater, Debounced, ForeignMutationsInput, id, SimpleCallback, simpleUpdater, Synchronized, Template, unit, Unit, Updater, Value } from "../../../../../../main"
+import { ApiResponseChecker, AsyncState, BasicUpdater, Debounced, ForeignMutationsInput, id, SimpleCallback, simpleUpdater, Synchronized, Template, unit, Unit, Updater, Value } from "../../../../../../main"
 import { BasicFun } from "../../../../../fun/state"
 
 export type ApiErrors = Array<string>
@@ -18,8 +18,7 @@ export type EditFormState<E,FS> = {
   entity:Synchronized<Unit, E>
   apiRunner:Debounced<Synchronized<Unit,ApiErrors>>
   formState:FS,
-  apiResponseChecked: boolean
-}
+} & ApiResponseChecker;
 
 export const EditFormState = <E,FS>() => ({
   Default:(initialFormState:FS) : EditFormState<E,FS> => ({
@@ -28,16 +27,17 @@ export const EditFormState = <E,FS>() => ({
       Synchronized.Default(unit)
     ),
     formState:initialFormState,
-    apiResponseChecked:false
+    ...ApiResponseChecker.Default(false),
   }),
   Updaters:{
     Core:{
       ...simpleUpdater<EditFormState<E,FS>>()("entity"),
       ...simpleUpdater<EditFormState<E,FS>>()("apiRunner"),
       ...simpleUpdater<EditFormState<E,FS>>()("formState"),
-      ...simpleUpdater<EditFormState<E,FS>>()("apiResponseChecked"),
     },
     Template:{
+      toChecked: () => ApiResponseChecker.Updaters.toChecked<EditFormState<E, FS>>(),
+      toUnchecked: () => ApiResponseChecker.Updaters.toUnchecked<EditFormState<E, FS>>(),
       entity:(_:BasicUpdater<E>) : Updater<EditFormState<E,FS>> => 
         EditFormState<E,FS>().Updaters.Core.apiRunner(
           Debounced.Updaters.Template.value(
