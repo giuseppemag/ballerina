@@ -7,6 +7,7 @@
   <ItemGroup>
     <Compile Include=".\samples\ab-events\repositories.fs" />
     <Compile Include=".\samples\ab-events\endpoints.fs" />
+    <Compile Include=".\samples\ab-events\jobs.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

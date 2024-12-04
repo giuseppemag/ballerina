@@ -58,11 +58,9 @@ Todo (✅/❌)
         ❌ define and run ABCoroutine
           ❌ separate entry point with own executable based on cmd-line arguments
             ✅ check the cmd line parameters with System.CommandLine
-              ❌ pass app.Services.CreateScope to the custom Commandhandlers
-              ❌ `dotnet run -- web & dotnet run -- jobs [clear]`
-              ❌ move app setup (all the app.Use statements) to a separate file
-              ❌ isolate thread evaluator, move to separate file in main project
-              ❌ this should fix the tracking issue - remove the ugly `wait 0`
+              ✅ shell script for `dotnet run -- mode web & dotnet run -- mode jobs`
+              ✅ isolate thread evaluator, move to separate file in main project
+              ❌ fix the ugly dancing ids of the active coroutines, they should remain the same
             ❌ move coroutine evaluator to a separate file in the coroutine project
             ❌ serialize running coroutine to the DB naively: everything is active
               ❌ parameterize the event queries with a CRUD repo
@@ -70,7 +68,7 @@ Todo (✅/❌)
             ✅ endpoint to push AB events
               ✅ expose OpenAPI spec
           ❌ processBs
-          ❌ separate state from context
+          ❌ separate state = Unit from context = ABContext
           ❌ "blogging" context -> BallerinaContext
           ❌ restore Async in Crud, run with Do anyway with RunSync
           ❌ do not delete events, mark them as done, with an index on the status
@@ -82,6 +80,7 @@ Todo (✅/❌)
             ❌ remove ugly starting logic, everything is bootstrapped by the endpoint that pushes the CreateABEvent
             ❌ create ABs from event
           ❌ add nested A' and B' events
+          ❌ fix the tracking issue - remove the ugly `wait 0`
           ✅ dependent on repo's for AB and ABEvent
           ✅ co.On for ABEvent should check that the ABId matches or every ABEvent will match every co.On
           ✅ test Any
