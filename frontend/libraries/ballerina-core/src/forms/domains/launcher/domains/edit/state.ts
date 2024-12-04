@@ -36,8 +36,7 @@ export const EditFormState = <E,FS>() => ({
       ...simpleUpdater<EditFormState<E,FS>>()("formState"),
     },
     Template:{
-      toChecked: () => ApiResponseChecker.Updaters.toChecked<EditFormState<E, FS>>(),
-      toUnchecked: () => ApiResponseChecker.Updaters.toUnchecked<EditFormState<E, FS>>(),
+      ...ApiResponseChecker.Updaters<EditFormState<E, FS>>(),
       entity:(_:BasicUpdater<E>) : Updater<EditFormState<E,FS>> => 
         EditFormState<E,FS>().Updaters.Core.apiRunner(
           Debounced.Updaters.Template.value(

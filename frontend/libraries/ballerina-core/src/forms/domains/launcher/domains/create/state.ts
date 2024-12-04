@@ -1,71 +1,98 @@
-import { ApiErrors, AsyncState, BasicUpdater, Debounced, ForeignMutationsInput, id, replaceWith, SimpleCallback, simpleUpdater, Synchronized, Template, unit, Unit, Updater, Value } from "../../../../../../main"
-import { BasicFun } from "../../../../../fun/state"
+import {
+  ApiErrors,
+  ApiResponseChecker,
+  AsyncState,
+  BasicUpdater,
+  Debounced,
+  ForeignMutationsInput,
+  id,
+  replaceWith,
+  SimpleCallback,
+  simpleUpdater,
+  Synchronized,
+  Template,
+  unit,
+  Unit,
+  Updater,
+  Value,
+} from "../../../../../../main";
+import { BasicFun } from "../../../../../fun/state";
 
-export type CreateFormContext<E,FS> = {
-  entityId:string,
-  api:{
-    default:() => Promise<E>,
-    create:BasicFun<E, Promise<ApiErrors>>
-  },
-  actualForm:Template<Value<E> & FS, FS, { onChange:SimpleCallback<BasicUpdater<E>> }>
-}
+export type CreateFormContext<E, FS> = {
+  entityId: string;
+  api: {
+    default: () => Promise<E>;
+    create: BasicFun<E, Promise<ApiErrors>>;
+  };
+  actualForm: Template<
+    Value<E> & FS,
+    FS,
+    { onChange: SimpleCallback<BasicUpdater<E>> }
+  >;
+};
 
-export type CreateFormState<E,FS> = {
+export type CreateFormState<E, FS> = {
   // first sync is GET (returns E), second is UPDATE (accepts E)
-  entity:Debounced<Synchronized<Unit, Synchronized<E, ApiErrors>>>
-  formState:FS,
-  notifySubmitAfterSync:boolean
-}
+  entity: Debounced<Synchronized<Unit, Synchronized<E, ApiErrors>>>;
+  formState: FS;
+  notifySubmitAfterSync: boolean;
+} & ApiResponseChecker;
 
-export const CreateFormState = <E,FS>() => ({
-  Default:(initialFormState:FS) : CreateFormState<E,FS> => ({
-    entity:Debounced.Default(
-      Synchronized.Default(unit)
-    ),
-    formState:initialFormState,
-    notifySubmitAfterSync:false
+export const CreateFormState = <E, FS>() => ({
+  Default: (initialFormState: FS): CreateFormState<E, FS> => ({
+    entity: Debounced.Default(Synchronized.Default(unit)),
+    formState: initialFormState,
+    notifySubmitAfterSync: false,
+    ...ApiResponseChecker.Default(),
   }),
-  Updaters:{
-    Core:{      
-      ...simpleUpdater<CreateFormState<E,FS>>()("notifySubmitAfterSync"),
-      ...simpleUpdater<CreateFormState<E,FS>>()("entity"),
-      ...simpleUpdater<CreateFormState<E,FS>>()("formState"),
+  Updaters: {
+    Core: {
+      ...simpleUpdater<CreateFormState<E, FS>>()("notifySubmitAfterSync"),
+      ...simpleUpdater<CreateFormState<E, FS>>()("entity"),
+      ...simpleUpdater<CreateFormState<E, FS>>()("formState"),
     },
-    Template:{
-      entity:(_:BasicUpdater<E>) : Updater<CreateFormState<E,FS>> => 
-        CreateFormState<E,FS>().Updaters.Core.entity(
+    Template: {
+      ...ApiResponseChecker.Updaters<CreateFormState<E, FS>>(),
+      entity: (_: BasicUpdater<E>): Updater<CreateFormState<E, FS>> =>
+        CreateFormState<E, FS>().Updaters.Core.entity(
           Debounced.Updaters.Core.value(
             Synchronized.Updaters.sync(
-              AsyncState.Operations.map(
-                Synchronized.Updaters.value(
-                  _
-                )
-              )
+              AsyncState.Operations.map(Synchronized.Updaters.value(_))
             )
           )
         ),
-        submit:() : Updater<CreateFormState<E,FS>> => 
-          CreateFormState<E,FS>().Updaters.Core.entity(
+      submit: (): Updater<CreateFormState<E, FS>> =>
+        CreateFormState<E, FS>()
+          .Updaters.Core.entity(
             Debounced.Updaters.Template.value(
               Synchronized.Updaters.sync(
-                AsyncState.Operations.map(
-                  Synchronized.Updaters.value(
-                    id
-                  )
-                )
+                AsyncState.Operations.map(Synchronized.Updaters.value(id))
               )
             )
-          ).then(
-            CreateFormState<E,FS>().Updaters.Core.notifySubmitAfterSync(replaceWith(true))
           )
-  
-    }
+          .then(
+            CreateFormState<E, FS>().Updaters.Core.notifySubmitAfterSync(
+              replaceWith(true)
+            )
+          ),
+    },
   },
-  ForeignMutations: (_: ForeignMutationsInput<CreateFormContext<E,FS>, CreateFormWritableState<E,FS>>) => ({
+  ForeignMutations: (
+    _: ForeignMutationsInput<
+      CreateFormContext<E, FS>,
+      CreateFormWritableState<E, FS>
+    >
+  ) => ({}),
+});
 
-  })
-})
-
-export type CreateFormWritableState<E,FS> = CreateFormState<E,FS>
-export type CreateFormForeignMutationsExposed<E,FS> = ReturnType<ReturnType<typeof CreateFormState<E,FS>>["ForeignMutations"]>
-export type CreateFormForeignMutationsExpected<E,FS> = { onSubmitted:SimpleCallback<E> }
+export type CreateFormWritableState<E, FS> = CreateFormState<E, FS>;
+export type CreateFormForeignMutationsExposed<E, FS> = ReturnType<
+  ReturnType<typeof CreateFormState<E, FS>>["ForeignMutations"]
+>;
+export type CreateFormForeignMutationsExpected<E, FS> = {
+  onSubmitted: SimpleCallback<E>;
+  apiHandlers?: {
+    success?: (_: CreateFormWritableState<E, FS> & CreateFormContext<E, FS> | undefined) => void;
+    error?: <ApiErrors>(_: ApiErrors | undefined) => void;
+  };
+};

@@ -2,16 +2,18 @@ import { BasicFun, Guid, Mapping, simpleUpdater, Sum, Unit } from "../../../../m
 import { FormParsingResult, FormsParserState } from "../parser/state"
 import { OnChange } from "../singleton/state"
 
+type ApiHandlers = {
+  success?: (_: any) => void,
+  error?: (_: any) => void,
+}
+
 export type FormRef = {
   formName:string
 } & ({
   kind:"edit",
   entityId:Guid,
   debounceRateMs?:number
-  apiHandlers?: {
-    success?: (_: any) => void,
-    error?: (_: any) => void,
-  }
+  apiHandlers?: ApiHandlers
 } | {
   kind:"map",
   onChange:OnChange<any>
@@ -19,7 +21,8 @@ export type FormRef = {
 } | {
   kind:"create",
   onSubmitted: (_: any) => void,
-  submitButtonWrapper:any
+  submitButtonWrapper:any,
+  apiHandlers?: ApiHandlers,
 })
 
 export type FormRunnerContext = {
