@@ -96,7 +96,7 @@ export const DebitNoteHeaderConfig = {
     Filters: {
       fields: {
         name: "string",
-        filterValue: "FiltersValue",
+        value: "FiltersValue",
         filterOp: {
           fun: "SingleSelection",
           args: ["FiltersOpRef"],
@@ -626,7 +626,7 @@ export const DebitNoteHeaderConfig = {
           renderer: "defaultString",
           visible: { kind: "true" },
         },
-        filterValue: {
+        value: {
           renderer: "filtersValueForm",
           visible: { kind: "true" },
         },
@@ -641,7 +641,7 @@ export const DebitNoteHeaderConfig = {
           columns: {
             Filters: {
               groups: {
-                main: ["name", "filterValue", "filterOp"],
+                main: ["name", "value", "filterOp"],
               },
             },
           },

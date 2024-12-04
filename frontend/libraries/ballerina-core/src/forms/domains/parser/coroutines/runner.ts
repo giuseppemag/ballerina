@@ -1,6 +1,6 @@
 import { AsyncState, builtInsFromFieldViews, FormsConfig, Sum, Synchronize, Unit } from "../../../../../main"
 import { CoTypedFactory } from "../../../../coroutines/builder"
-import { FormParsingResult, FormsParserContext, FormsParserState, parseForms } from "../state"
+import { FormParsingResult, FormsParserContext, FormsParserState, parseForms, replaceKeywords } from "../state"
 
 export const LoadValidateAndParseFormsConfig = () => {
   const Co = CoTypedFactory<FormsParserContext, FormsParserState>()
@@ -8,7 +8,8 @@ export const LoadValidateAndParseFormsConfig = () => {
  return Co.Template<Unit>(
   Co.GetState().then(current => 
   Synchronize<Unit, FormParsingResult>(async() => {
-    const formsConfig = await current.getFormsConfig()
+    const rawFormsConfig = await current.getFormsConfig();
+    const formsConfig = replaceKeywords(rawFormsConfig, "from api")
     const builtIns = builtInsFromFieldViews(current.fieldViews, current.fieldTypeConverters)
     const validationResult = FormsConfig.Default.validateAndParseAPIResponse(builtIns)(formsConfig)
     if (validationResult.kind == "r")

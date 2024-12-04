@@ -231,7 +231,7 @@ const entityApis: EntityApis = {
                 context: undefined,
                 filterGroup: {
                   filterGroupOp: undefined,
-                  filters: [],
+                  filters: [{ name: "hello", value: { anyOfEnum: {id: 'string', displayName: 'string'} }, filterOp: undefined }],
                 },
                 fieldContext: {
                   accountingPositionFields: undefined,

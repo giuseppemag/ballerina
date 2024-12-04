@@ -1,4 +1,4 @@
-import { Collection, Map, OrderedMap, OrderedSet, Set } from "immutable";
+import { List, Map, OrderedMap, OrderedSet, Set } from "immutable";
 import { BoolExpr, Unit, PromiseRepo, Guid, LeafPredicatesEvaluators, Predicate, FormsConfig, BuiltIns, FormDef, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, SharedFormState, CreateFormState, Entity, EditFormContext, CreateFormContext, MappedEntityFormTemplate, Mapping, FormValidationResult, Synchronized, simpleUpdater, PrimitiveType, GenericType, ApiConverter, TypeName, ListFieldState, ListForm, TypeDefinition, ApiConverters, defaultValue, fromAPIRawValue, toAPIRawValue, EditFormForeignMutationsExpected } from "../../../../main";
 import { Value } from "../../../value/state";
 import { CollectionReference } from "../collection/domains/reference/state";
@@ -385,7 +385,8 @@ export const parseForms =
             const parsed = fromAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters)(raw)
             return parsed
           }),
-          update: (value: any) => entityApis.update(launcher.api)(toAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters)(value))
+          update: (value: any) => 
+            entityApis.update(launcher.api)(toAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters)(value))
         }
         parsedLaunchers.edit = parsedLaunchers.edit.set(
           launcherName,
@@ -468,7 +469,60 @@ export const parseForms =
       return Sum.Default.left(parsedLaunchers)
     }
 
+const OVERRIDE_FIELDS = ["value", "sync"];
 
+export const replaceKeyword = (fieldName: string): string => {
+  if (OVERRIDE_FIELDS.includes(fieldName)) {
+    return `__keywordreplacement__${fieldName}__`;
+  }
+  return fieldName;
+};
+
+export const revertKeyword = (fieldName: string): string => {
+  const overridenFieldNames = OVERRIDE_FIELDS.reduce((acc, field) => {
+    const overrideName = `__keywordreplacement__${field}__`;
+    acc[overrideName] = field;
+    return acc;
+  }, {} as any);
+
+  if (fieldName in overridenFieldNames) {
+    return overridenFieldNames[fieldName];
+  }
+  return fieldName;
+};
+
+export const replaceKeywords = (obj: any, kind: "from api" | "to api"): any => {
+  const replacementFn = kind == "from api" ? replaceKeyword : revertKeyword;
+  if (Array.isArray(obj) || List.isList(obj)) {
+    return obj.map((item) =>
+      typeof item == "string"
+        ? replacementFn(item)
+        : replaceKeywords(item, kind )
+    );
+  } else if (typeof obj === "object" && obj !== null) {
+    if(OrderedMap.isOrderedMap(obj)) {
+      return obj.map((_, key) => 
+        replacementFn(key as string)
+      )
+    }
+    if(Map.isMap(obj)) {
+      return obj.map((_, key) =>
+        replacementFn(key as string)
+      )
+    }
+    const copy = { ...obj };
+    Object.keys(copy).forEach((key) => {
+      const value = copy[key];
+      const newKeyName = replacementFn(key);
+      copy[newKeyName] = replaceKeywords(value, kind);
+      if(newKeyName !== key) {
+        delete copy[key]
+      }
+    });
+    return copy;
+  }
+  return obj;
+};
 
 export type FormsParserContext = {
   containerFormView: any,
