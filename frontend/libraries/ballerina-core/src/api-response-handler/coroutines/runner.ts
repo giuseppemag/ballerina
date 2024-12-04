@@ -29,7 +29,7 @@ export const HandleApiResponse = <
           ),
           CheckerCo.SetState((_) => ({
             ..._,
-            ...ApiResponseChecker.Updaters.toChecked()(_),
+            ...ApiResponseChecker.Updaters().toChecked()(_),
           })),
         ]);
   });

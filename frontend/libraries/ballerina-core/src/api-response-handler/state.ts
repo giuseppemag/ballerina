@@ -11,20 +11,16 @@ export const ApiResponseChecker = {
   Default: (_?: boolean): ApiResponseChecker => ({
     apiResponseChecked: _ ?? false,
   }),
-  Updaters: {
-    toChecked:
-      <CheckedState extends ApiResponseChecker>(): BasicUpdater<CheckedState> =>
-      (_) => ({
-        ..._,
-        apiResponseChecked: true,
-      }),
-    toUnchecked:
-      <CheckedState extends ApiResponseChecker>(): BasicUpdater<CheckedState> =>
-      (_) => ({
-        ..._,
-        apiResponseChecked: false,
-      }),
-  },
+  Updaters: <CheckedState extends ApiResponseChecker>() => ({
+    toChecked: (): BasicUpdater<CheckedState> => (_) => ({
+      ..._,
+      apiResponseChecked: true,
+    }),
+    toUnchecked: (): BasicUpdater<CheckedState> => (_) => ({
+      ..._,
+      apiResponseChecked: false,
+    }),
+  }),
   Operations: {
     checked: (_: ApiResponseChecker) => _.apiResponseChecked,
   },
