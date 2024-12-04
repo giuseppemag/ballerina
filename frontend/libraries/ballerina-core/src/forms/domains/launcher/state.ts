@@ -8,6 +8,10 @@ export type FormRef = {
   kind:"edit",
   entityId:Guid,
   debounceRateMs?:number
+  apiHandlers?: {
+    success?: (_: any) => void,
+    error?: (_: any) => void,
+  }
 } | {
   kind:"map",
   onChange:OnChange<any>

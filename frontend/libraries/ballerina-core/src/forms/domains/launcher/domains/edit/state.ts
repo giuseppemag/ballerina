@@ -1,4 +1,4 @@
-import { AsyncState, BasicUpdater, Debounced, ForeignMutationsInput, id, SimpleCallback, simpleUpdater, Synchronized, Template, unit, Unit, Updater, Value } from "../../../../../../main"
+import { ApiResponseChecker, AsyncState, BasicUpdater, Debounced, ForeignMutationsInput, id, SimpleCallback, simpleUpdater, Synchronized, Template, unit, Unit, Updater, Value } from "../../../../../../main"
 import { BasicFun } from "../../../../../fun/state"
 
 export type ApiErrors = Array<string>
@@ -18,7 +18,7 @@ export type EditFormState<E,FS> = {
   entity:Synchronized<Unit, E>
   apiRunner:Debounced<Synchronized<Unit,ApiErrors>>
   formState:FS,
-}
+} & ApiResponseChecker;
 
 export const EditFormState = <E,FS>() => ({
   Default:(initialFormState:FS) : EditFormState<E,FS> => ({
@@ -27,6 +27,7 @@ export const EditFormState = <E,FS>() => ({
       Synchronized.Default(unit)
     ),
     formState:initialFormState,
+    ...ApiResponseChecker.Default(false),
   }),
   Updaters:{
     Core:{
@@ -35,6 +36,8 @@ export const EditFormState = <E,FS>() => ({
       ...simpleUpdater<EditFormState<E,FS>>()("formState"),
     },
     Template:{
+      toChecked: () => ApiResponseChecker.Updaters.toChecked<EditFormState<E, FS>>(),
+      toUnchecked: () => ApiResponseChecker.Updaters.toUnchecked<EditFormState<E, FS>>(),
       entity:(_:BasicUpdater<E>) : Updater<EditFormState<E,FS>> => 
         EditFormState<E,FS>().Updaters.Core.apiRunner(
           Debounced.Updaters.Template.value(
@@ -62,4 +65,9 @@ export const EditFormState = <E,FS>() => ({
 
 export type EditFormWritableState<E,FS> = EditFormState<E,FS>
 export type EditFormForeignMutationsExposed<E,FS> = ReturnType<ReturnType<typeof EditFormState<E,FS>>["ForeignMutations"]>
-export type EditFormForeignMutationsExpected<E,FS> = Unit
+export type EditFormForeignMutationsExpected<E,FS> = {
+  apiHandlers?: {
+    success?: (_: EditFormWritableState<E, FS> & EditFormContext<E, FS> | undefined) => void;
+    error?: <ApiErrors>(_: ApiErrors | undefined) => void;
+  }
+}

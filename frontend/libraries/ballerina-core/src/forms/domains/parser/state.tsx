@@ -1,5 +1,5 @@
 import { Collection, Map, OrderedMap, OrderedSet, Set } from "immutable";
-import { BoolExpr, Unit, PromiseRepo, Guid, LeafPredicatesEvaluators, Predicate, FormsConfig, BuiltIns, FormDef, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, SharedFormState, CreateFormState, Entity, EditFormContext, CreateFormContext, MappedEntityFormTemplate, Mapping, FormValidationResult, Synchronized, simpleUpdater, PrimitiveType, GenericType, ApiConverter, TypeName, ListFieldState, ListForm, TypeDefinition, ApiConverters, defaultValue, fromAPIRawValue, toAPIRawValue } from "../../../../main";
+import { BoolExpr, Unit, PromiseRepo, Guid, LeafPredicatesEvaluators, Predicate, FormsConfig, BuiltIns, FormDef, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, SharedFormState, CreateFormState, Entity, EditFormContext, CreateFormContext, MappedEntityFormTemplate, Mapping, FormValidationResult, Synchronized, simpleUpdater, PrimitiveType, GenericType, ApiConverter, TypeName, ListFieldState, ListForm, TypeDefinition, ApiConverters, defaultValue, fromAPIRawValue, toAPIRawValue, EditFormForeignMutationsExpected } from "../../../../main";
 import { Value } from "../../../value/state";
 import { CollectionReference } from "../collection/domains/reference/state";
 import { CollectionSelection } from "../collection/domains/selection/state";
@@ -246,7 +246,7 @@ export type ParsedLaunchers = {
     {
       form:
       Template<EditLauncherContext<Entity, FormState, ExtraContext> & EditFormState<Entity, FormState>,
-        EditFormState<Entity, FormState>, Unit>,
+        EditFormState<Entity, FormState>, EditFormForeignMutationsExpected<Entity, FormState>>,
       initialState: EditFormState<Entity, FormState>
     }>,
   mappings: Map<string, <Source, Target, FormState, ExtraContext>() =>
@@ -395,7 +395,7 @@ export const parseForms =
                 ...parentContext,
                 api: api,
                 actualForm: form.withView(containerFormView).mapContext((_: any) => ({ ..._, rootValue: _.value, ...parentContext.extraContext }))
-              }) as any),
+              }) as any).mapForeignMutationsFromProps(props => props.foreignMutations as any),
             initialState: EditFormState<Entity, FormState>().Default(initialState),
           })
         )
