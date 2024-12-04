@@ -4,6 +4,7 @@ namespace grandeomega2
 #nowarn "20"
 
 open System
+open System.CommandLine
 open System.Collections.Generic
 open System.IO
 open System.Linq
@@ -49,6 +50,7 @@ module Program =
       co.Any([
         co{
           do! co.On(function absample.models.AEvent e when e.ABId = abId -> Some() | _ -> None)
+          wait (TimeSpan.FromSeconds 0.0)
           do! co.Do(fun ctx -> ctx.ABs.update abId (fun ab -> ({ ab with ACount = ab.ACount+1 })))
         }
         co{
@@ -86,8 +88,24 @@ module Program =
 
   let exitCode = 0
 
+  type LaunchMode = 
+  | none = 0
+  | web = 1
+  | jobs = 2
+
   [<EntryPoint>]
   let main args =
+
+    let mode = new Option<LaunchMode>(
+            name= "mode",
+            description= "Start the application in web or jobs mode.");
+
+    let rootCommand = new RootCommand("Sample app for System.CommandLine");
+    rootCommand.AddOption(mode)
+
+    rootCommand.SetHandler(Action<_>(fun (mode:LaunchMode) ->printfn "mode = %A" (mode) |> ignore), mode)
+    do rootCommand.Invoke(args) |> ignore
+
     let builder = WebApplication.CreateBuilder(args)
     builder.Services.Configure<PositionOptions>(builder.Configuration.GetSection(PositionOptions.Position))
     builder.Services.Configure<JsonOptions>(fun (options:JsonOptions) -> 
@@ -148,7 +166,6 @@ module Program =
                                |> Seq.map snd
                                |> Seq.map (absample.efmodels.ABEvent.FromUnion)
                                |> Seq.map (fun e -> e.ABEventId) |> Seq.toArray
-          printfn "removed = %A" removed
           db.ABEvents.RemoveRange(db.ABEvents.Where(fun e -> removed.Contains e.ABEventId))
           db.SaveChanges()
           ()
@@ -164,7 +181,7 @@ module Program =
         // let text = jsonSerializer.PickleToString evals'
         // File.WriteAllText("evals.json", text)
         Console.Clear()
-        printfn "ABs=%A ABEvents=%A coroutines=%A" (db.ABs.AsNoTracking().ToArray()) (db.ABEvents.AsNoTracking().ToArray()) (initialEvals.active)
+        printfn "ABs=%A ABEvents=%A coroutines=%A" (db.ABs.AsNoTracking().OrderBy(fun e -> e.ABId).ToArray()) (db.ABEvents.AsNoTracking().OrderBy(fun e -> e.ABEventId).ToArray()) (initialEvals.active)
         ()
     )
     t.IsBackground <- true

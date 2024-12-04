@@ -57,12 +57,13 @@ Todo (✅/❌)
             ✅ type discriminator when deserializing
         ❌ define and run ABCoroutine
           ❌ separate entry point with own executable based on cmd-line arguments
-            ❌ check the cmd line parameters with System.CommandLine
+            ✅ check the cmd line parameters with System.CommandLine
               ❌ pass app.Services.CreateScope to the custom Commandhandlers
               ❌ `dotnet run -- web & dotnet run -- jobs [clear]`
-            ❌ this should fix the tracking issue - remove the ugly `wait 0`
-            ❌ move coroutine evaluator to separate file
-            ❌ isolate thread evaluator, move to separate file in main project
+              ❌ move app setup (all the app.Use statements) to a separate file
+              ❌ isolate thread evaluator, move to separate file in main project
+              ❌ this should fix the tracking issue - remove the ugly `wait 0`
+            ❌ move coroutine evaluator to a separate file in the coroutine project
             ❌ serialize running coroutine to the DB naively: everything is active
               ❌ parameterize the event queries with a CRUD repo
               ❌ parameterize the coroutine queries with a CRUD repo
@@ -71,11 +72,10 @@ Todo (✅/❌)
           ❌ processBs
           ❌ separate state from context
           ❌ "blogging" context -> BallerinaContext
-          ❌ remove the ugly wait 0
-            ❌ after Crud.update untrack the entity
-            ❌ after event deletion untrack all the events
           ❌ restore Async in Crud, run with Do anyway with RunSync
-          ❌ do not delete events, mark them as done, with an index on the status and a createdAt for ordering
+          ❌ do not delete events, mark them as done, with an index on the status
+            ❌ allow adding new events from coroutines
+            ❌ add timestamp to events, process in creation order
           ❌ implement Repeat as a reified construct
           ❌ add `any`, `spawn`, `repeat`, `on` keywords
           ❌ test Spawn
