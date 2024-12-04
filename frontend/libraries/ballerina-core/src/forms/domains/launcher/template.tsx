@@ -53,6 +53,16 @@ export const FormRunnerTemplate =
             onSubmitted: (_: any) => {
               if (props.context.formRef.kind == "create")
                 props.context.formRef.onSubmitted(_)
+            },
+            apiHandlers: {
+              success: (_: any) => {
+                if (props.context.formRef.kind === 'edit')
+                  props.context.formRef.apiHandlers?.success?.(_)
+              },
+              error: (_: any) => {
+                if (props.context.formRef.kind === 'edit')
+                  props.context.formRef.apiHandlers?.error?.(_)
+              }
             }
           }}
         />

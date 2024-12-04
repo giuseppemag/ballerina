@@ -166,6 +166,10 @@ export const FormsApp = (props: {}) => {
 											entityId: "11112",
 											kind: "edit",
 											debounceRateMs: 100,
+											apiHandlers: {
+												success: _ => console.debug('success: ', _),
+												error: _ => console.debug('error: ', _),
+											}
 										},
 										showFormParsingErrors: ShowFormsParsingErrors,
 										extraContext: {

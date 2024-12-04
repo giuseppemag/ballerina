@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@faker-js/faker": "^8.4.1",
+    "ballerina-core": "*",
     "i18next": "^23.11.5",
     "immutable": "^5.0.0-beta.5",
     "react": "^18.2.0",
