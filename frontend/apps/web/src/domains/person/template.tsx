@@ -30,14 +30,14 @@ export const PersonForm = PersonFormBuilder.template({
   address: ListForm<Address, AddressFormState, PersonFormPredicateContext & FormLabel, Unit>(
     { Default:() => ({ ...AddressFormState.Default(), ...SharedFormState.Default() })}, 
     { Default:() => Address.Default("", 0, CollectionSelection().Default.right("no selection")) },
-    _ => PromiseRepo.Default.mock(() => []), 
     AddressForm
     .withView(AddressView)
     .mapContext(_ => ({
       ..._,
       visibleFields: Address.Operations.VisibleFields,
       disabledFields: OrderedMap()
-    })))
+    })),
+     _ => PromiseRepo.Default.mock(() => []))
       .withView(PersonFieldViews.ListViews.defaultList())
       .mapContext(_ => ({..._, label:"address"}))
 }, PersonApi.validate)

@@ -9,13 +9,13 @@ import { ListFieldState, ListFieldView } from "./state";
 export const ListForm = <Element, ElementFormState, Context extends FormLabel, ForeignMutationsExpected>(
   ElementFormState: { Default: () => ElementFormState },
   Element: { Default: () => Element },
-  validation: BasicFun<List<Element>, Promise<FieldValidation>>,
   elementTemplate: Template<
     Context & Value<Element> & ElementFormState,
     ElementFormState,
     ForeignMutationsExpected & {
       onChange: OnChange<Element>;
-    }>
+    }>,
+  validation?: BasicFun<List<Element>, Promise<FieldValidation>>,
 ) => {
   const embeddedElementTemplate = (elementIndex:number) =>
       elementTemplate
@@ -68,7 +68,7 @@ export const ListForm = <Element, ElementFormState, Context extends FormLabel, F
     </>
     ).any([
       ValidateRunner<Context & { disabled: boolean }, ListFieldState<Element, ElementFormState>, ForeignMutationsExpected, List<Element>>(
-        _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation)
+        validation ? _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation) : undefined
       ),
     ]);
 };

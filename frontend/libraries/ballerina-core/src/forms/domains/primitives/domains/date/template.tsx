@@ -7,7 +7,7 @@ import { FieldValidation, FieldValidationWithPath, FormValidatorSynchronized, On
 import { DateFormState, DateView } from "./state";
 
 export const DateForm = <Context extends FormLabel, ForeignMutationsExpected>(
-  validation: BasicFun<Date, Promise<FieldValidation>>
+  validation?: BasicFun<Date, Promise<FieldValidation>>
 ) => {
   return Template.Default<Context & Value<Date> & { disabled:boolean }, DateFormState, ForeignMutationsExpected & { onChange: OnChange<Date>; }, DateView<Context, ForeignMutationsExpected>>(props => <>
     <props.view {...props}
@@ -25,7 +25,7 @@ export const DateForm = <Context extends FormLabel, ForeignMutationsExpected>(
   </>
   ).any([
     ValidateRunner<Context & { disabled:boolean }, DateFormState, ForeignMutationsExpected, Date>(
-      _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation)
+      validation ? _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation) : undefined
     ),
   ]);
 }

@@ -8,7 +8,7 @@ import { StringView } from "./state";
 
 
 export const StringForm = <Context extends FormLabel, ForeignMutationsExpected>(
-  validation:BasicFun<string, Promise<FieldValidation>>) => {
+  validation?:BasicFun<string, Promise<FieldValidation>>) => {
   return Template.Default<Context & Value<string> & { disabled:boolean }, SharedFormState, ForeignMutationsExpected & { onChange: OnChange<string>; }, StringView<Context, ForeignMutationsExpected>>(props => <>
     <props.view {...props}
       foreignMutations={{
@@ -18,7 +18,7 @@ export const StringForm = <Context extends FormLabel, ForeignMutationsExpected>(
   </>
   ).any([
     ValidateRunner<Context & { disabled:boolean }, SharedFormState, ForeignMutationsExpected, string>(
-      _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation)
+      validation ? _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation) : undefined
     ),
   ])
 }

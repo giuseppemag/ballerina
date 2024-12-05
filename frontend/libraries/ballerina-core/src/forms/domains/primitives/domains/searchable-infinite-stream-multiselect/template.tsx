@@ -13,7 +13,7 @@ import { InfiniteStreamMultiselectView } from "./state";
 
 
 export const InfiniteMultiselectDropdownForm = <Element extends CollectionReference, Context extends FormLabel, ForeignMutationsExpected>(
-  validation:BasicFun<OrderedMap<Guid, Element>, Promise<FieldValidation>>
+  validation? :BasicFun<OrderedMap<Guid, Element>, Promise<FieldValidation>>
 ) => {
   const Co = CoTypedFactory<Context & Value<OrderedMap<Guid, Element>> & { disabled:boolean }, SearchableInfiniteStreamState<Element>>();
   const DebouncerCo = CoTypedFactory<Context & { onDebounce: SimpleCallback<void>; } & Value<OrderedMap<Guid, Element>>, SearchableInfiniteStreamState<Element>>();
@@ -113,7 +113,7 @@ export const InfiniteMultiselectDropdownForm = <Element extends CollectionRefere
       )
     })),
     ValidateRunner<Context & { disabled:boolean }, SearchableInfiniteStreamState<Element>, ForeignMutationsExpected, OrderedMap<Guid, Element>>(
-      _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation)
+      validation ? _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation) : undefined
     ),
   ]);
 };

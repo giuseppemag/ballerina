@@ -10,7 +10,7 @@ import { BaseEnumContext, EnumFormState, EnumView } from "./state";
 
 
 export const EnumForm = <Context extends FormLabel & BaseEnumContext<Context, Element>, ForeignMutationsExpected, Element extends CollectionReference>(
-  validation: BasicFun<CollectionSelection<Element>, Promise<FieldValidation>>
+  validation?: BasicFun<CollectionSelection<Element>, Promise<FieldValidation>>
 ) => {
   const Co = CoTypedFactory<Context & Value<CollectionSelection<Element>> & { disabled:boolean }, EnumFormState<Context, Element>>()
   return Template.Default<Context & Value<CollectionSelection<Element>> & { disabled:boolean }, EnumFormState<Context, Element>, ForeignMutationsExpected & { onChange: OnChange<CollectionSelection<Element>>; },
@@ -36,7 +36,7 @@ export const EnumForm = <Context extends FormLabel & BaseEnumContext<Context, El
     </>
     ).any([
       ValidateRunner<Context & { disabled:boolean }, EnumFormState<Context, Element>, ForeignMutationsExpected, CollectionSelection<Element>>(
-        _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation)
+        validation ? _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation) : undefined
       ),
       Co.Template<ForeignMutationsExpected & { onChange: OnChange<CollectionSelection<Element>>; }>(
         Co.GetState().then(current =>

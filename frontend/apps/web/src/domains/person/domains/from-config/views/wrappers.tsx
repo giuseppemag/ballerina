@@ -1,4 +1,4 @@
-import { EntityFormView, FormLayout, Unit, unit, CreateFormView, Template, CreateFormContext, CreateFormWritableState, CreateFormForeignMutationsExpected, SimpleCallback, FormParsingResult, FormValidationResult } from "ballerina-core"
+import { EntityFormView, FormLayout, Unit, unit, CreateFormView, Template, CreateFormContext, CreateFormWritableState, CreateFormForeignMutationsExpected, SimpleCallback, FormParsingResult, FormValidationResult, EditFormView, EditFormWritableState, EditFormContext, EditFormForeignMutationsExpected } from "ballerina-core"
 
 export const PersonContainerFormView: EntityFormView<any, any, any, { layout: FormLayout }, Unit> = props => {
   return <>
@@ -58,7 +58,7 @@ export const PersonNestedContainerFormView: EntityFormView<any, any, any, { layo
   </>
 }
 
-export const PersonSubmitButtonWrapper: CreateFormView<any, any> = Template.Default<
+export const CreatePersonSubmitButtonWrapper: CreateFormView<any, any> = Template.Default<
   CreateFormContext<any, any> & CreateFormWritableState<any, any>,
   CreateFormWritableState<any, any>,
   CreateFormForeignMutationsExpected<any, any> & { onSubmit: SimpleCallback<void> },
@@ -69,6 +69,19 @@ export const PersonSubmitButtonWrapper: CreateFormView<any, any> = Template.Defa
       {props.view.actualForm}
       <button disabled={props.context.entity.dirty != "not dirty"} onClick={e => props.foreignMutations.onSubmit()}>Submit</button>
     </>
+  )
+
+  export const EditPersonSubmitButtonWrapper: EditFormView<any, any> = Template.Default<
+    EditFormContext<any, any> & EditFormWritableState<any, any>,
+    EditFormWritableState<any, any>,
+    EditFormForeignMutationsExpected<any, any> & { onSubmit: SimpleCallback<void> },
+    {
+      actualForm: JSX.Element | undefined
+    }>(props =>
+      <>
+        {props.view.actualForm}
+        <button disabled={props.context.apiRunner.dirty != "not dirty"} onClick={e => props.foreignMutations.onSubmit()}>Submit</button>
+      </>
   )
 
 export const PersonShowFormSetupErrors = (validatedFormsConfig: FormValidationResult, parsedFormsConfig: FormParsingResult) => ({

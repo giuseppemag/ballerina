@@ -9,8 +9,7 @@ export type EditFormContext<E,FS> = {
     get:() => Promise<E>,
     update:BasicFun<E, Promise<ApiErrors>>
   },
-  actualForm:Template<Value<E> & FS, FS, { onChange:SimpleCallback<BasicUpdater<E>> }>
-  debounceRateMs?: number
+  actualForm:Template<Value<E> & FS, FS, { onChange:SimpleCallback<BasicUpdater<E>>}>
 }
 
 export type EditFormState<E,FS> = {
@@ -39,19 +38,19 @@ export const EditFormState = <E,FS>() => ({
       toChecked: () => ApiResponseChecker.Updaters.toChecked<EditFormState<E, FS>>(),
       toUnchecked: () => ApiResponseChecker.Updaters.toUnchecked<EditFormState<E, FS>>(),
       entity:(_:BasicUpdater<E>) : Updater<EditFormState<E,FS>> => 
+          EditFormState<E,FS>().Updaters.Core.entity(
+            Synchronized.Updaters.sync(
+              AsyncState.Operations.map(
+                  _
+              )
+            )
+          ),
+      submit: () : Updater<EditFormState<E,FS>> =>
         EditFormState<E,FS>().Updaters.Core.apiRunner(
           Debounced.Updaters.Template.value(
             Synchronized.Updaters.sync(
               AsyncState.Operations.map(
                   id
-              )
-            )
-          )
-        ).then(
-          EditFormState<E,FS>().Updaters.Core.entity(
-            Synchronized.Updaters.sync(
-              AsyncState.Operations.map(
-                  _
               )
             )
           )

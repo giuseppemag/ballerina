@@ -7,7 +7,7 @@ import { FieldValidation, FieldValidationWithPath, FormValidatorSynchronized, On
 
 
 export const BooleanForm = <Context extends FormLabel, ForeignMutationsExpected>(
-  validation: BasicFun<boolean, Promise<FieldValidation>>
+  validation?: BasicFun<boolean, Promise<FieldValidation>>
 ) => {
   return Template.Default<Context & Value<boolean> & { disabled:boolean }, SharedFormState, ForeignMutationsExpected & { onChange: OnChange<boolean>; }, BooleanView<Context, ForeignMutationsExpected>>(props => <>
     <props.view {...props}
@@ -18,13 +18,13 @@ export const BooleanForm = <Context extends FormLabel, ForeignMutationsExpected>
   </>
   ).any([
     ValidateRunner<Context & { disabled:boolean }, SharedFormState, ForeignMutationsExpected, boolean>(
-      _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation)
+      validation ? _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation) : undefined
     ),
   ]);
 }
 
 export const MaybeBooleanForm = <Context extends FormLabel, ForeignMutationsExpected>(
-  validation: BasicFun<boolean | undefined, Promise<FieldValidation>>
+  validation?: BasicFun<boolean | undefined, Promise<FieldValidation>>
 ) => {
   return Template.Default<Context & Value<boolean | undefined> & { disabled:boolean }, SharedFormState, ForeignMutationsExpected & { onChange: OnChange<boolean | undefined>; }, MaybeBooleanView<Context, ForeignMutationsExpected>>(props => <>
     <props.view {...props}
@@ -35,7 +35,7 @@ export const MaybeBooleanForm = <Context extends FormLabel, ForeignMutationsExpe
   </>
   ).any([
     ValidateRunner<Context & { disabled:boolean }, SharedFormState, ForeignMutationsExpected, boolean | undefined>(
-      _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation)
+      validation ? _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation) : undefined
     ),
   ]);
 }

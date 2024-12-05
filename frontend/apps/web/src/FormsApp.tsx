@@ -3,7 +3,7 @@ import "./App.css";
 import { unit, FormsConfig, parseForms, FormParsingResult, Sum, builtInsFromFieldViews, FormValidationResult, EditLauncherContext, CreateLauncherContext, FormsParserState, FormRunnerState, FormsParserTemplate, PromiseRepo, FormRunnerTemplate, ApiConverters, CollectionReference, CollectionSelection } from "ballerina-core";
 import { List, OrderedMap, Set } from "immutable";
 import { PersonView } from "./domains/person/views/main-view";
-import { PersonContainerFormView, PersonNestedContainerFormView, PersonShowFormSetupErrors, PersonSubmitButtonWrapper } from "./domains/person/domains/from-config/views/wrappers";
+import { PersonContainerFormView, PersonNestedContainerFormView, PersonShowFormSetupErrors, CreatePersonSubmitButtonWrapper, EditPersonSubmitButtonWrapper } from "./domains/person/domains/from-config/views/wrappers";
 import { PersonFormsConfig, PersonFromConfigApis, PersonConfigFormsLeafPredicates, PersonConfig, PersonFormState, Person } from "playground-core";
 import { PersonFieldViews } from "./domains/person-from-config/views/field-views";
 import { PersonForm } from "./domains/person/template";
@@ -19,7 +19,7 @@ export const FormsApp = (props: {}) => {
 	// const [formToShow, setFormToShow] = useState(1)
 	// const numForms = 2
 	// const [personCreateFormState, setPersonCreateFormState] = useState(FormRunnerState.Default())
-	const [personEditFormState, setPersonEditFormState] = useState(FormRunnerState.Default())
+	// const [personEditFormState, setPersonEditFormState] = useState(FormRunnerState.Default())
 	const [debitNoteEditFormState, setDebitNoteEditFormState] = useState(FormRunnerState.Default())
 	// const [personState, setPersonState] = useState(Person.Default.mocked())
 	// const [personFormState, setPersonFormState] = useState(PersonFormState.Default(""))
@@ -165,7 +165,7 @@ export const FormsApp = (props: {}) => {
 											formName: "DEBIT_NOTE_HEADER_CONFIG",
 											entityId: "11112",
 											kind: "edit",
-											debounceRateMs: 100,
+											submitButtonWrapper: EditPersonSubmitButtonWrapper,
 											apiHandlers: {
 												success: _ => console.debug('success: ', _),
 												error: _ => console.debug('error: ', _),
@@ -180,6 +180,28 @@ export const FormsApp = (props: {}) => {
 									view={unit}
 									foreignMutations={unit}
 								/>
+
+{/* 
+									<h3>Edit person</h3>
+									<FormRunnerTemplate
+										context={{
+											...configFormsParser,
+											...personEditFormState,
+											formRef: {
+												formName: "edit-person",
+												entityId: "abcd-1234",
+												kind: "edit",
+												submitButtonWrapper: EditPersonSubmitButtonWrapper,
+											},
+											showFormParsingErrors: ShowFormsParsingErrors,
+											extraContext: {
+												flags: Set(["BC", "X"]),
+											},
+										}}
+										setState={setPersonEditFormState}
+										view={unit}
+										foreignMutations={unit}
+									/> */}
 
 								{
 									// formToShow % numForms == 0 ?
