@@ -27,7 +27,7 @@ export const EditFormState = <E,FS>() => ({
       Synchronized.Default(unit)
     ),
     formState:initialFormState,
-    ...ApiResponseChecker.Default(false),
+    ...ApiResponseChecker.Default(true),
   }),
   Updaters:{
     Core:{

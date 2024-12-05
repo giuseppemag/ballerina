@@ -71,8 +71,9 @@ export const editFormRunner = <E, FS>() => {
     Co.Template<EditFormForeignMutationsExpected<E, FS>>(synchronize, {
       interval: 100,
       runFilter: (props) =>
-        Debounced.Operations.shouldCoroutineRun(props.context.apiRunner) ||
-        !ApiResponseChecker.Operations.checked(props.context),
+        props.context.entity.sync.kind == "loaded" &&
+        (Debounced.Operations.shouldCoroutineRun(props.context.apiRunner) ||
+        !ApiResponseChecker.Operations.checked(props.context)),
     }),
   ]);
 };
