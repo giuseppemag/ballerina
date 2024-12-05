@@ -11,7 +11,7 @@ export const Form = <Entity, FieldStates, Context, ForeignMutationsExpected>() =
 
     return {
       config: id<EntityFormConfig>,
-      template: (config: EntityFormConfig, validation:BasicFun<Entity, Promise<FieldValidationWithPath>>): EntityFormTemplate<Entity, Fields, FieldStates, Context, ForeignMutationsExpected> => {
+      template: (config: EntityFormConfig, validation?: BasicFun<Entity, Promise<FieldValidationWithPath>>): EntityFormTemplate<Entity, Fields, FieldStates, Context, ForeignMutationsExpected> => {
         const fieldTemplates: FieldTemplates<Entity, Fields, FieldStates, Context, ForeignMutationsExpected> = {} as FieldTemplates<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>
         const setFieldTemplate = <field extends Fields>(field: field) => {
           fieldTemplates[field] =
@@ -26,7 +26,7 @@ export const Form = <Entity, FieldStates, Context, ForeignMutationsExpected>() =
               ({
                 ...props.foreignMutations,
                 onChange: (_: BasicUpdater<Entity[field]>, path) => {
-                  props.setState(_ => ({ ..._, 
+                  if(validation) {props.setState(_ => ({ ..._,
                     modifiedByUser: true, 
                     validation:Debounced.Updaters.Template.value<FormValidatorSynchronized>(Synchronized.Updaters.value(replaceWith(unit)))(_.validation),
                     [field]:({
@@ -34,6 +34,7 @@ export const Form = <Entity, FieldStates, Context, ForeignMutationsExpected>() =
                       modifiedByUser:true,
                       validation:Debounced.Updaters.Template.value<FormValidatorSynchronized>(Synchronized.Updaters.value(replaceWith(unit)))(_[field].validation),
                     }) }))
+                  }
                   setTimeout(() =>
                     props.foreignMutations.onChange((current: Entity): Entity => ({
                       ...current,
@@ -81,21 +82,21 @@ export const Form = <Entity, FieldStates, Context, ForeignMutationsExpected>() =
 })
 
 export const ValidateRunner = <Context, FormState extends SharedFormState, ForeignMutationsExpected, Entity,>(
-  validation:BasicFun<Entity, Promise<FieldValidationWithPath>>,
+  validation?:BasicFun<Entity, Promise<FieldValidationWithPath>>,
 ) => {
   const Co = CoTypedFactory<Context & Value<Entity> & FormState, FormState>()
   return Co.Template<ForeignMutationsExpected & { onChange: OnChange<Entity>; }>(
     Co.Repeat(
       Debounce<FormValidatorSynchronized, Value<Entity>>(
         Synchronize<Unit, FieldValidationWithPath, Value<Entity>>(
-          _ => validation(_.value),
+          _ => validation ? validation(_.value) : Promise.resolve([]),
           () => "transient failure", 3, 50
         ), 50
       ).embed(_ => ({..._.validation, value:_.value}), (_) => curr => ({...curr, validation:_(curr.validation)}))
     ),
     {
       interval:15,
-      runFilter:props => Debounced.Operations.shouldCoroutineRun(props.context.validation)
+      runFilter:props => Boolean(validation) && Debounced.Operations.shouldCoroutineRun(props.context.validation)
     }
   )
 }

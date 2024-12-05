@@ -13,7 +13,7 @@ import { SearchableInfiniteStreamState, SearchableInfiniteStreamView } from "./s
 
 
 export const SearchableInfiniteStreamForm = <Element extends CollectionReference, Context extends FormLabel, ForeignMutationsExpected>(
-  validation:BasicFun<CollectionSelection<Element>, Promise<FieldValidation>>
+  validation?: BasicFun<CollectionSelection<Element>, Promise<FieldValidation>>
 ) => {
   const Co = CoTypedFactory<Context & Value<CollectionSelection<Element>> & { disabled:boolean }, SearchableInfiniteStreamState<Element>>();
   const DebouncerCo = CoTypedFactory<Context & { onDebounce: SimpleCallback<void>; } & Value<CollectionSelection<Element>>, SearchableInfiniteStreamState<Element>>();
@@ -108,7 +108,7 @@ export const SearchableInfiniteStreamForm = <Element extends CollectionReference
         )
       })),
       ValidateRunner<Context & { disabled:boolean }, SearchableInfiniteStreamState<Element>, ForeignMutationsExpected, CollectionSelection<Element>>(
-        _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation)
+        validation ? _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation) : undefined
       ),
     ]);
 };

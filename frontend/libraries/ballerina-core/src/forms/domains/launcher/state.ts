@@ -6,8 +6,8 @@ export type FormRef = {
   formName:string
 } & ({
   kind:"edit",
+  submitButtonWrapper:any
   entityId:Guid,
-  debounceRateMs?:number
   apiHandlers?: {
     success?: (_: any) => void,
     error?: (_: any) => void,

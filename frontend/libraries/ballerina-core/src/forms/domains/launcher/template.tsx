@@ -25,7 +25,6 @@ export const FormRunnerTemplate =
         <props.context.form.value.form
           context={{
             ...props.context.form.value.formState,
-            debounceRateMs: props.context.formRef.kind == "edit" ? props.context.formRef.debounceRateMs : undefined,
             entityId: props.context.formRef.kind == "edit" ? props.context.formRef.entityId : undefined,
             value: props.context.formRef.kind == "map" ? props.context.formRef.value : undefined,
             formState: props.context.formRef.kind == "map" ? props.context.form.value.formState : props.context.form.value.formState.formState,
@@ -35,7 +34,7 @@ export const FormRunnerTemplate =
                 props.context.formRef.kind == "map" ? props.context.form.value.mapping.from(props.context.formRef.value) :
                   props.context.form.value.formState?.entity.sync?.value,
             },
-            submitButtonWrapper: props.context.formRef.kind == "create" ? props.context.formRef.submitButtonWrapper : undefined
+            submitButtonWrapper: (props.context.formRef.kind == "create" || props.context.formRef.kind == "edit" )  ? props.context.formRef.submitButtonWrapper : undefined
           }}
           setState={(_: BasicUpdater<any>) => props.setState(
             FormRunnerState.Updaters.form(
