@@ -10,8 +10,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace migrations.Migrations
 {
-    [DbContext(typeof(BloggingContext))]
-    partial class BloggingContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(BallerinaContext))]
+    partial class BallerinaContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
@@ -21,67 +21,6 @@ namespace migrations.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("Blogs.Blog", b =>
-                {
-                    b.Property<Guid>("BlogId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Url")
-                        .HasColumnType("text");
-
-                    b.HasKey("BlogId");
-
-                    b.ToTable("Blogs");
-                });
-
-            modelBuilder.Entity("Blogs.Post", b =>
-                {
-                    b.Property<Guid>("PostId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("BlogId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Content")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Title")
-                        .HasColumnType("text");
-
-                    b.HasKey("PostId");
-
-                    b.HasIndex("BlogId");
-
-                    b.ToTable("Posts");
-                });
-
-            modelBuilder.Entity("Blogs.Tag", b =>
-                {
-                    b.Property<Guid>("TagId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("BlogId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("tag_type")
-                        .IsRequired()
-                        .HasMaxLength(13)
-                        .HasColumnType("character varying(13)");
-
-                    b.HasKey("TagId");
-
-                    b.HasIndex("BlogId");
-
-                    b.ToTable("Tags");
-
-                    b.HasDiscriminator<string>("tag_type").HasValue("Tag");
-
-                    b.UseTphMappingStrategy();
-                });
 
             modelBuilder.Entity("Users+Token", b =>
                 {
@@ -188,26 +127,6 @@ namespace migrations.Migrations
                     b.ToTable("ABs");
                 });
 
-            modelBuilder.Entity("Blogs.Interview", b =>
-                {
-                    b.HasBaseType("Blogs.Tag");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Surname")
-                        .HasColumnType("text");
-
-                    b.HasDiscriminator().HasValue("Interview");
-                });
-
-            modelBuilder.Entity("Blogs.Lifestyle", b =>
-                {
-                    b.HasBaseType("Blogs.Tag");
-
-                    b.HasDiscriminator().HasValue("Lifestyle");
-                });
-
             modelBuilder.Entity("Users+EmailConfirmedEvent", b =>
                 {
                     b.HasBaseType("Users+UserEvent");
@@ -256,24 +175,6 @@ namespace migrations.Migrations
                     b.HasDiscriminator().HasValue("BEvent");
                 });
 
-            modelBuilder.Entity("Blogs.Post", b =>
-                {
-                    b.HasOne("Blogs.Blog", "Blog")
-                        .WithMany("Posts")
-                        .HasForeignKey("BlogId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Blog");
-                });
-
-            modelBuilder.Entity("Blogs.Tag", b =>
-                {
-                    b.HasOne("Blogs.Blog", null)
-                        .WithMany("Tags")
-                        .HasForeignKey("BlogId");
-                });
-
             modelBuilder.Entity("absample.efmodels+ABEvent", b =>
                 {
                     b.HasOne("absample.models+AB", "AB")
@@ -294,13 +195,6 @@ namespace migrations.Migrations
                         .IsRequired();
 
                     b.Navigation("Token");
-                });
-
-            modelBuilder.Entity("Blogs.Blog", b =>
-                {
-                    b.Navigation("Posts");
-
-                    b.Navigation("Tags");
                 });
 #pragma warning restore 612, 618
         }

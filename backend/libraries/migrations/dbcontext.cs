@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Migrations
 {
-  public class BloggingContext : DbContext
+  public class BallerinaContext : DbContext
   {
     public DbSet<Users.User> Users { get; set; }
     public DbSet<Users.UserEvent> UserEvents { get; set; }
@@ -15,11 +15,11 @@ namespace Migrations
     public DbSet<absample.efmodels.AEvent> AEvents { get; set; }
     public DbSet<absample.efmodels.BEvent> BEvents { get; set; }
 
-    public BloggingContext(DbContextOptions<BloggingContext> options)
+    public BallerinaContext(DbContextOptions<BallerinaContext> options)
         : base(options) { }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
-      optionsBuilder.UseNpgsql("User ID=postgres;Password=;Host=localhost;Port=5432;Database=blog;Pooling=true;Maximum Pool Size=50");
+    // protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
+    //   optionsBuilder.UseNpgsql("User ID=postgres;Password=;Host=localhost;Port=5432;Database=ballerina;Pooling=true;Maximum Pool Size=50");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

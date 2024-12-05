@@ -85,10 +85,10 @@ module Program =
       options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
     )
 
-    builder.Services.AddDbContext<BloggingContext>(fun opt -> 
+    builder.Services.AddDbContext<BallerinaContext>(fun opt -> 
       opt.UseNpgsql(
         // builder.Configuration.GetConnectionString("DbConnection")
-        "User ID=postgres;Password=;Host=localhost;Port=5432;Database=blog;Pooling=true;Maximum Pool Size=50;"
+        "User ID=postgres;Password=;Host=localhost;Port=5432;Database=ballerina;Pooling=true;Maximum Pool Size=50;"
         ) |> ignore)
     builder.Services
         .AddEndpointsApiExplorer() // use the API Explorer to discover and describe endpoints
