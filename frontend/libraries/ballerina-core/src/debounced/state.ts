@@ -1,3 +1,4 @@
+import { Sum } from "../../main";
 import { replaceWith } from "../fun/domains/updater/domains/replaceWith/state";
 import { BasicUpdater, Updater } from "../fun/domains/updater/state";
 
@@ -7,19 +8,19 @@ export type DebouncedStatus = "waiting for dirty" | "just detected dirty, starti
 	| "processing shortcircuited"
 	| "state was changed underwater back to dirty, leaving the dirty flag alone"
 	| "inner call failed with transient failure"
-export type Debounced<Value> = Value & { lastUpdated: number; dirty: DirtyStatus; status:DebouncedStatus };
+export type Debounced<Value> = Value & { lastUpdated: number; dirty: DirtyStatus; status: Sum<DebouncedStatus, "debug off"> };
 export const Debounced = {
-	Default: <v>(initialValue: v): Debounced<v> => ({
+	Default: <v>(initialValue: v, debug?: boolean): Debounced<v> => ({
 		...initialValue,
 		lastUpdated: 0,
 		dirty: "not dirty",
-		status: "waiting for dirty"
+		status: debug ? Sum.Default.left("waiting for dirty") : Sum.Default.right("debug off")
 	}),
 	Updaters: {
 		Core:{
 			status: <v>(_: BasicUpdater<DebouncedStatus>): Updater<Debounced<v>> => Updater<Debounced<v>>(current => ({
 				...current,
-				status: _(current.status),
+				status: current.status.kind == "l" ? Sum.Default.left(_(current.status.value)) : Sum.Default.right("debug off"),
 			})),
 			dirty: <v>(_: BasicUpdater<DirtyStatus>): Updater<Debounced<v>> => Updater<Debounced<v>>(current => ({
 				...current,
