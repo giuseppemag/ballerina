@@ -1,13 +1,13 @@
 Todo (✅/❌)
   ✅ add label override in field renderer
   ❌ make validator partial
+  ❌ add optional "info" field to form fields
+  ❌ support files
+  ❌ support secrets (not re-sent, use `modified`)
   ❌ map fields
-    ❌ design
     ❌ implement
-  ❌ restore mapping builder for both list and map 
-  ❌ add to FormsApp.tsx examples of statically typed mapping, as well as config'ed mapping
+  ❌ delete mappers, they are not a good idea
   ❌ combine data-sync and type-safe forms
-  ❌ add `required` validation field renderer
 
   GrandeOmega2
   ✅ docker
@@ -34,12 +34,11 @@ Todo (✅/❌)
         ❌ move sample coroutines
         ❌ move sample dbcontext stuff
           ✅ resolve dbcontext with DI
-          ✅ pass config from appsettings.development (based on env variable)
+          ❌ pass config from appsettings.development (based on env variable)
         ✅ move AB sample
         ❌ move sample endpoints
         ❌ add PositionOptions config with extension method on builder
         ❌ adding and configuring the dbcontext should also be done from another file, from ballerina-core perhaps
-        ❌ DbContext config does not come from appsettings
       ✅ AB events sample domain
         ✅ reorganize the main project decently, moving all the AB-related logic to a separate folder
           ✅ repositories
@@ -56,30 +55,35 @@ Todo (✅/❌)
             ✅ type discriminator when serializing
             ✅ type discriminator when deserializing
         ❌ define and run ABCoroutine
-          ❌ separate entry point with own executable based on cmd-line arguments
+          ✅ separate entry point with own executable based on cmd-line arguments
             ✅ check the cmd line parameters with System.CommandLine
               ✅ shell script for `dotnet run -- mode web & dotnet run -- mode jobs`
               ✅ isolate thread evaluator, move to separate file in main project
-              ❌ fix the ugly dancing ids of the active coroutines, they should remain the same
+              ✅ fix the ugly dancing ids of the active coroutines, they should remain the same
+          ✅ do not delete events, mark them as done, with an index on the status
+            ✅ add timestamp to events, process in creation order
+            ✅ allow adding new events from coroutines
+            ✅ POST should overwrite CreatedAt and ProcessingStatus
+              ✅ even better, POST should not expect CreatedAt and ProcessingStatus (deserializer)
+          ❌ add environment to the ./startup-be.sh launcher, otherwise we are using the wrong appsettings!!!
+          ❌ processBs
+          ❌ separate state = Unit from context = ABContext
           ❌ move coroutine evaluator to a separate file in the coroutine project
             ❌ parameterize the event queries with a CRUD repo
             ❌ parameterize the coroutine queries with a CRUD repo
-          ❌ serialize running coroutine to the DB naively: everything is active
           ✅ endpoint to push AB events
             ✅ expose OpenAPI spec
-          ❌ processBs
-          ❌ separate state = Unit from context = ABContext
-          ❌ "blogging" context -> BallerinaContext
-          ❌ do not delete events, mark them as done, with an index on the status
-            ❌ allow adding new events from coroutines
-            ❌ add timestamp to events, process in creation order
+          ✅ "blogging" context -> BallerinaContext
           ❌ implement Repeat as a reified construct
-          ❌ add `any`, `spawn`, `repeat`, `on` keywords
           ❌ test Spawn
             ❌ remove ugly starting logic, everything is bootstrapped by the endpoint that pushes the CreateABEvent
             ❌ create ABs from event
+            ❌ when the AB coroutine ends, it is respawned (migration-friendly strategy)
+          ❌ add history/enqueued event endpoints
+            ❌ this should be done with only the predicate + sorting parameters of the ABEvents endpoint
           ❌ fix the tracking issue - remove the ugly `wait 0`
-          ❌ restore Async in Crud, run with Do anyway with RunSync
+          ❌ fix keywords properly: `wait`, `any`, `spawn`, `repeat`, `on`, `produce`
+          ✅ restore Async in Crud, run with Await
           ✅ dependent on repo's for AB and ABEvent
           ✅ co.On for ABEvent should check that the ABId matches or every ABEvent will match every co.On
           ✅ test Any

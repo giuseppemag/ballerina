@@ -39,13 +39,18 @@ let jobs (createScope:Unit -> IServiceScope) =
     co.Repeat(
       co.Any([
         co{
-          do! co.On(function absample.models.AEvent e when e.ABId = abId -> Some() | _ -> None)
-          wait (TimeSpan.FromSeconds 0.0)
-          do! co.Do(fun ctx -> ctx.ABs.update abId (fun ab -> ({ ab with ACount = ab.ACount+1 })))
+          let! a_e = co.On(function absample.models.ABEvent.AEvent e when e.event.ABId = abId -> Some e | _ -> None)
+          do! co.Wait (TimeSpan.FromSeconds 0.0)
+          let! ctx = co.GetState()
+          do! co.Await(ctx.ABs.update abId (fun ab -> ({ ab with ACount = ab.ACount+a_e.AStep })))
         }
         co{
-          wait (TimeSpan.FromSeconds 3.0)
-          do! co.Do(fun ctx -> ctx.ABs.update abId (fun ab -> ({ ab with AFailCount = ab.AFailCount+1 })))
+          do! co.Wait (TimeSpan.FromSeconds 3.0)
+          let e_id = Guid.NewGuid()
+          let e = absample.models.ABEvent.AEvent { event={ ABEventId=Guid.Empty; ABId=abId; AB=Unchecked.defaultof<AB>; CreatedAt=DateTime.UtcNow; ProcessingStatus=ABEventStatus.Enqueued }; AStep=5 }
+          do! co.Produce (e_id, e)
+          let! ctx = co.GetState()
+          do! co.Await(ctx.ABs.update abId (fun ab -> ({ ab with AFailCount = ab.AFailCount+1 })))
         }
       ])
     )
@@ -81,17 +86,22 @@ let jobs (createScope:Unit -> IServiceScope) =
     let evals = initialEvals //jsonSerializer.UnPickleOfString<EvaluatedCoroutines<{| counter:int |},Unit>>(File.ReadAllText("evals.json"))
     let resumedWaiting, stillWaiting = evals.waiting |> Map.partition (fun _ v -> v.Until <= now) 
     let active = (evals.active |> Seq.map (fun a -> a.Key, a.Value) |> Seq.toList) @ (resumedWaiting |> Seq.map (fun w -> (w.Key, w.Value.P)) |> Seq.toList) |> Map.ofSeq
-    let events = db.ABEvents.AsNoTracking().ToArray() |> Seq.map (fun e -> e.ABEventId, e |> absample.efmodels.ABEvent.ToUnion) |> Map.ofSeq
+    let events = db.ABEvents.AsNoTracking().Where(fun e -> e.ProcessingStatus = ABEventStatus.Enqueued).OrderBy(fun e -> (e.CreatedAt, e.ABEventId)).ToArray() |> Seq.map (fun e -> e.ABEventId, e |> absample.efmodels.ABEvent.ToUnion) |> Map.ofSeq
     let (evals', u_s, u_e) = evalMany (active) ({ ABs = AB db (db.ABs); ABEvents = ABEvent db (db.ABEvents) }, events, dT)
     match u_e with
     | Some u_e ->
       let events' = u_e events
-      let removed = events |> Map.filter (fun e'_id e' -> events' |> Map.containsKey e'_id |> not)
+      let added = events' |> Map.filter (fun e'_id e' -> events |> Map.containsKey e'_id |> not)
                             |> Map.toSeq
                             |> Seq.map snd
                             |> Seq.map (absample.efmodels.ABEvent.FromUnion)
-                            |> Seq.map (fun e -> e.ABEventId) |> Seq.toArray
-      db.ABEvents.RemoveRange(db.ABEvents.Where(fun e -> removed.Contains e.ABEventId))
+      let removed = events |> Map.filter (fun e_id e -> events' |> Map.containsKey e_id |> not)
+                            |> Map.toSeq
+                            |> Seq.map snd
+                            |> Seq.map (absample.efmodels.ABEvent.FromUnion)
+                            |> Seq.map (absample.efmodels.ABEvent.WithRecord (fun e -> { e with ProcessingStatus=ABEventStatus.Processed }))
+      db.ABEvents.UpdateRange(removed)
+      db.ABEvents.AddRange(added)
       db.SaveChanges() |> ignore
       ()
     | _ -> ()
@@ -106,4 +116,4 @@ let jobs (createScope:Unit -> IServiceScope) =
     // let text = jsonSerializer.PickleToString evals'
     // File.WriteAllText("evals.json", text)
     Console.Clear()
-    printfn "ABs=%A ABEvents=%A coroutines=%A" (db.ABs.AsNoTracking().OrderBy(fun e -> e.ABId).ToArray()) (db.ABEvents.AsNoTracking().OrderBy(fun e -> e.ABEventId).ToArray()) (initialEvals.active)
+    printfn "ABs=%A ABEvents=%A coroutines=%A" (db.ABs.AsNoTracking().OrderBy(fun e -> e.ABId).ToArray()) (db.ABEvents.Where(fun e -> e.ProcessingStatus = ABEventStatus.Enqueued).AsNoTracking().OrderBy(fun e -> e.ABEventId).ToArray()) (initialEvals.active)

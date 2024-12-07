@@ -22,7 +22,7 @@ and CoroutineResult<'a, 's, 'e> =
   | On of ('e -> Option<'a>)
   | Do of ('s -> 'a)
   | Await of Async<'a>
-  | Awaiting of Guid * Async<'a> * Task<'a>
+  // | Awaiting of Guid * Async<'a> * Task<'a>
   | Then of (Coroutine<Coroutine<'a, 's, 'e>, 's, 'e>)
   | Combine of (Coroutine<Unit, 's, 'e> * Coroutine<'a, 's, 'e>)
   with 
@@ -35,15 +35,15 @@ and CoroutineResult<'a, 's, 'e> =
       | Do (g) -> Do(g >> f)
       | Wait (t, p) -> Wait(t, p |> Coroutine.map f)
       | On(e_predicate) -> On(fun e -> e |> e_predicate |> Option.map f)
-      | Awaiting (id,p,t) -> 
-          Awaiting(
-            id,
-            async{ 
-              let! x = p
-              return f x
-            },
-            t.ContinueWith(new Func<_,_>(fun (a:Task<'a>) -> f(a.Result)))
-          )
+      // | Awaiting (id,p,t) -> 
+      //     Awaiting(
+      //       id,
+      //       async{ 
+      //         let! x = p
+      //         return f x
+      //       },
+      //       t.ContinueWith(new Func<_,_>(fun (a:Task<'a>) -> f(a.Result)))
+      //     )
       | Await (p) -> 
           Await(
             async{ 
@@ -82,18 +82,18 @@ type CoroutineBuilder() =
   member _.On(p_e:'e -> Option<'a>) =
     Co(fun _ -> CoroutineResult.On(p_e), None, None)
   [<CustomOperation("wait", MaintainsVariableSpaceUsingBind = true) >]
-  member co.Wait(p:Coroutine<_,_,_>, [<ProjectionParameter>] t) =
+  member co.WaitOp(p:Coroutine<_,_,_>, [<ProjectionParameter>] t) =
     co.Bind(p, fun x -> 
       Co(fun _ -> CoroutineResult.Wait(t x, co.Return()), None, None)
     )
-  // member co.Wait(t) =
-  //     Co(fun _ -> CoroutineResult.Wait(t, co.Return()), None, None)
+  member co.Wait(t) =
+    Co(fun _ -> CoroutineResult.Wait(t, co.Return()), None, None)
   member _.Do(f : 's -> 'a) =
     Co(fun _ -> CoroutineResult.Do(f), None, None)
   member _.Await(p : Async<'a>) =
     Co(fun _ -> CoroutineResult.Await(p), None, None)
-  member _.Awaiting(id:Guid, p : Async<'a>, t:Task<'a>) =
-    Co(fun _ -> CoroutineResult.Awaiting(id,p,t), None, None)
+  // member _.Awaiting(id:Guid, p : Async<'a>, t:Task<'a>) =
+  //   Co(fun _ -> CoroutineResult.Awaiting(id,p,t), None, None)
   member _.Spawn(p:Coroutine<Unit,'s,'e>) =
     Co(fun _ -> CoroutineResult.Spawn(p), None, None)
   member _.Repeat(p:Coroutine<'a,'s,'e>) : Coroutine<Unit,'s,'e> =
@@ -102,6 +102,13 @@ type CoroutineBuilder() =
     Co(fun (s,es,dt) -> CoroutineResult.Return(s), None, None)
   member _.SetState(u:U<'s>) =
     Co(fun (s,es,dt) -> CoroutineResult.Return(), Some u, None)
+  [<CustomOperation("produce", MaintainsVariableSpaceUsingBind = true, AllowIntoPattern = true) >]
+  member co.ProduceOp(p:Coroutine<'a,'s,'e>, [<ProjectionParameter>] new_event) =
+    co.Bind(p, fun x -> 
+      Co(fun _ -> CoroutineResult.Return(), None, Some(fun es -> let (id,e) = new_event x in es |> Map.add id e))
+    )
+  member co.Produce(new_event) =
+    Co(fun _ -> CoroutineResult.Return(), None, Some(fun es -> let (id,e) = new_event in es |> Map.add id e))
   member co.ReturnFrom(p:Coroutine<'a,'s,'e>) = 
     co{
       let! res = p
@@ -220,15 +227,17 @@ type Eval<'s,'e>() = class end
       | Do(f) ->
         Done(f s, None, None)
       | Await(a:Async<'a>) ->
-        let id = Guid.NewGuid()
-        let task = a |> Async.StartAsTask
-        Active(co.Awaiting(id, a, task), None, None)
-      | Awaiting(id, a, task) ->
-        do printfn "%A" task.Status
-        if task.IsCompletedSuccessfully then
-          Done(task.Result, None, None)
-        else 
-          Active(co.Awaiting(id, a, task), None, None)
+        let result = a |> Async.RunSynchronously
+        Done(result, None, None)
+        // let id = Guid.NewGuid()
+        // let task = a |> Async.StartAsTask
+        // Active(co.Awaiting(id, a, task), None, None)
+      // | Awaiting(id, a, task) ->
+      //   do printfn "%A" task.Status
+      //   if task.IsCompletedSuccessfully then
+      //     Done(task.Result, None, None)
+      //   else 
+      //     Active(co.Awaiting(id, a, task), None, None)
 
 let rec evalMany (ps:Map<Guid, Coroutine<Unit, 's, 'e>>) ((s, es, dt):'s * Map<Guid, 'e> * DeltaT) : EvaluatedCoroutines<'s, 'e> * Option<U<'s>> * Option<U<Map<Guid, 'e>>> =
     let ctx = (s,es,dt)

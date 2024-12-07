@@ -10,7 +10,7 @@
     "db-update": "yarn db-update-main",
     "db-drop-main": "clear; dotnet ef database drop -p ../../libraries/migrations -s ./",
     "db-update-main": "clear; dotnet ef database update -p ../../libraries/migrations -s ./",
-    "setup-migrations": "clear; dotnet ef migrations add Setup -p ../../libraries/migrations -s ./",
+    "setup-migrations": "clear; dotnet ef migrations add Setup -p ../../libraries/migrations",
 
     "docker-up-no-build": "CURRENT_UID=$(id -u):$(id -g) docker-compose up",
     "docker-up-no-build-d": "CURRENT_UID=$(id -u):$(id -g) docker-compose up -d",

@@ -14,8 +14,8 @@ let ABEvent (db:DbContext) (table:DbSet<absample.efmodels.ABEvent>) =
         setId = fun id -> 
           fun e -> 
             (match e |> ABEvent.ToUnion with
-              | absample.models.AEvent a -> absample.models.AEvent { a with ABEventId = id }
-              | absample.models.BEvent b -> absample.models.BEvent { b with ABEventId = id })
+              | absample.models.AEvent a -> absample.models.AEvent { a with event.ABEventId = id }
+              | absample.models.BEvent b -> absample.models.BEvent { b with event.ABEventId = id })
             |> ABEvent.FromUnion |}) db
 
 let AEvent (db:DbContext) (table:DbSet<absample.efmodels.AEvent>) = 
@@ -23,11 +23,11 @@ let AEvent (db:DbContext) (table:DbSet<absample.efmodels.AEvent>) =
     ({| getId = (fun id -> <@ fun e -> e.ABEventId = id @>); 
         setId = fun id -> 
           fun e -> 
-            { (e |> AEvent.ToRecord) with ABEventId = id } |> AEvent.FromRecord |}) db
+            { (e |> AEvent.ToRecord) with event.ABEventId = id } |> AEvent.FromRecord |}) db
 
 let BEvent (db:DbContext) (table:DbSet<absample.efmodels.BEvent>) = 
   Crud.FromDbSet table 
     ({| getId = (fun id -> <@ fun e -> e.ABEventId = id @>); 
         setId = fun id -> 
           fun e -> 
-            { (e |> BEvent.ToRecord) with ABEventId = id } |> BEvent.FromRecord |}) db
+            { (e |> BEvent.ToRecord) with event.ABEventId = id } |> BEvent.FromRecord |}) db

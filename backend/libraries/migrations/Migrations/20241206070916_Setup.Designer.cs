@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace migrations.Migrations
 {
     [DbContext(typeof(BallerinaContext))]
-    [Migration("20241205145321_Setup")]
+    [Migration("20241206070916_Setup")]
     partial class Setup
     {
         /// <inheritdoc />
@@ -91,6 +91,12 @@ namespace migrations.Migrations
                     b.Property<Guid>("ABId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ProcessingStatus")
+                        .HasColumnType("integer");
+
                     b.Property<string>("abevent_type")
                         .IsRequired()
                         .HasMaxLength(8)
@@ -168,12 +174,18 @@ namespace migrations.Migrations
                 {
                     b.HasBaseType("absample.efmodels+ABEvent");
 
+                    b.Property<int>("AStep")
+                        .HasColumnType("integer");
+
                     b.HasDiscriminator().HasValue("AEvent");
                 });
 
             modelBuilder.Entity("absample.efmodels+BEvent", b =>
                 {
                     b.HasBaseType("absample.efmodels+ABEvent");
+
+                    b.Property<int>("BStep")
+                        .HasColumnType("integer");
 
                     b.HasDiscriminator().HasValue("BEvent");
                 });
