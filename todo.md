@@ -65,8 +65,8 @@ Todo (✅/❌)
             ✅ allow adding new events from coroutines
             ✅ POST should overwrite CreatedAt and ProcessingStatus
               ✅ even better, POST should not expect CreatedAt and ProcessingStatus (deserializer)
-          ❌ add environment to the ./startup-be.sh launcher, otherwise we are using the wrong appsettings!!!
-          ❌ processBs
+          ✅ add environment to the ./startup-be.sh launcher, otherwise we are using the wrong appsettings!!!
+          ✅ processBs
           ❌ separate state = Unit from context = ABContext
           ❌ move coroutine evaluator to a separate file in the coroutine project
             ❌ parameterize the event queries with a CRUD repo
@@ -79,20 +79,21 @@ Todo (✅/❌)
             ❌ remove ugly starting logic, everything is bootstrapped by the endpoint that pushes the CreateABEvent
             ❌ create ABs from event
             ❌ when the AB coroutine ends, it is respawned (migration-friendly strategy)
+          ❌ _generate_ translation of models into ef and OpenAPI
+            ❌ records
+            ❌ unions
+            ❌ recursion
+            ❌ serialization attributes
+            ❌ events from (annotated) static methods or annotations on attributes with dependency on CRUD repository
           ❌ add history/enqueued event endpoints
             ❌ this should be done with only the predicate + sorting parameters of the ABEvents endpoint
-          ❌ fix the tracking issue - remove the ugly `wait 0`
+          ❌ fix the tracking issue
+            ✅ remove the ugly `wait 0`
           ❌ fix keywords properly: `wait`, `any`, `spawn`, `repeat`, `on`, `produce`
           ✅ restore Async in Crud, run with Await
           ✅ dependent on repo's for AB and ABEvent
           ✅ co.On for ABEvent should check that the ABId matches or every ABEvent will match every co.On
           ✅ test Any
-        ❌ _generate_ translation of models into ef and OpenAPI
-          ❌ records
-          ❌ unions
-          ❌ recursion
-          ❌ serialization attributes
-          ❌ events from (annotated) static methods or annotations on attributes with dependency on CRUD repository
         ❌ project refactoring
           ❌ move all the AB-related logic to the right project 
           ❌ rename grandeomega to web

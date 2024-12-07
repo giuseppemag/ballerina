@@ -13,13 +13,6 @@ GET http://localhost:5000/BEvents?skip=0&take=100 HTTP/1.1
 content-type: application/json
 #####
 
-POST http://localhost:5000/ABEvents HTTP/1.1
-content-type: application/json
-
-{"$type":"BEvent","abId":"00000000-0000-0000-0000-000000000000","abEventId":"00000000-0000-0000-0000-000000000000"}
-#####
-
-
 POST http://localhost:5000/ABs HTTP/1.1
 content-type: application/json
 
@@ -29,7 +22,13 @@ content-type: application/json
 POST http://localhost:5000/ABEvents HTTP/1.1
 content-type: application/json
 
-{"$type":"AEvent","abId":"ee5ef6fb-4507-4fee-9917-827cab71109a","abEventId":"00000000-0000-0000-0000-000000000000", "AStep":1 }
+{"$type":"BEvent","abId":"0a5d8518-89ac-42bb-87f3-b38096c517d7","abEventId":"00000000-0000-0000-0000-000000000000", "BStep":10 }
+#####
+
+POST http://localhost:5000/ABEvents HTTP/1.1
+content-type: application/json
+
+{"$type":"AEvent","abId":"0a5d8518-89ac-42bb-87f3-b38096c517d7","abEventId":"00000000-0000-0000-0000-000000000000", "AStep":10 }
 #####
 
 GET http://localhost:5000/ABs?skip=0&take=100 HTTP/1.1

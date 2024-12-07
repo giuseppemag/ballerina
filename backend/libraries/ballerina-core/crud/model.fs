@@ -34,6 +34,7 @@ type Crud<'a> with
           }
         member this.update id u = 
           async{
+            db.ChangeTracker.Clear()
             let es = dbSet.AsNoTracking().Where(entity.getId id |> ToLinq).ToList()
             let es = es.Select(u)
             dbSet.UpdateRange(es)

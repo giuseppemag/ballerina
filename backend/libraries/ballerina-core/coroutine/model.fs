@@ -79,8 +79,10 @@ type CoroutineBuilder() =
     Co(fun _ -> CoroutineResult.Any(ps), None, None)
   // member _.All(ps:List<Coroutine<'a,'s,'e>>) =
   //   Co(fun _ -> CoroutineResult.Any(ps), None, None)
-  member _.On(p_e:'e -> Option<'a>) =
-    Co(fun _ -> CoroutineResult.On(p_e), None, None)
+  member co.YieldAfter(p:Coroutine<_,_,_>) =
+    co.Bind(p, fun x -> co.Bind(co.Wait(TimeSpan.FromSeconds 0.0), fun _ -> co.Return(x)))
+  member co.On(p_e:'e -> Option<'a>) =
+    co.YieldAfter(Co(fun _ -> CoroutineResult.On(p_e), None, None))
   [<CustomOperation("wait", MaintainsVariableSpaceUsingBind = true) >]
   member co.WaitOp(p:Coroutine<_,_,_>, [<ProjectionParameter>] t) =
     co.Bind(p, fun x -> 
@@ -88,10 +90,10 @@ type CoroutineBuilder() =
     )
   member co.Wait(t) =
     Co(fun _ -> CoroutineResult.Wait(t, co.Return()), None, None)
-  member _.Do(f : 's -> 'a) =
-    Co(fun _ -> CoroutineResult.Do(f), None, None)
-  member _.Await(p : Async<'a>) =
-    Co(fun _ -> CoroutineResult.Await(p), None, None)
+  member co.Do(f : 's -> 'a) =
+    co.YieldAfter(Co(fun _ -> CoroutineResult.Do(f), None, None))
+  member co.Await(p : Async<'a>) =    
+    co.YieldAfter(Co(fun _ -> CoroutineResult.Await(p), None, None))
   // member _.Awaiting(id:Guid, p : Async<'a>, t:Task<'a>) =
   //   Co(fun _ -> CoroutineResult.Awaiting(id,p,t), None, None)
   member _.Spawn(p:Coroutine<Unit,'s,'e>) =
@@ -108,7 +110,7 @@ type CoroutineBuilder() =
       Co(fun _ -> CoroutineResult.Return(), None, Some(fun es -> let (id,e) = new_event x in es |> Map.add id e))
     )
   member co.Produce(new_event) =
-    Co(fun _ -> CoroutineResult.Return(), None, Some(fun es -> let (id,e) = new_event in es |> Map.add id e))
+    co.YieldAfter(Co(fun _ -> CoroutineResult.Return(), None, Some(fun es -> let (id,e) = new_event in es |> Map.add id e)))
   member co.ReturnFrom(p:Coroutine<'a,'s,'e>) = 
     co{
       let! res = p

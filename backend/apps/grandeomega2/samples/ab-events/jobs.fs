@@ -40,20 +40,37 @@ let jobs (createScope:Unit -> IServiceScope) =
       co.Any([
         co{
           let! a_e = co.On(function absample.models.ABEvent.AEvent e when e.event.ABId = abId -> Some e | _ -> None)
-          do! co.Wait (TimeSpan.FromSeconds 0.0)
           let! ctx = co.GetState()
           do! co.Await(ctx.ABs.update abId (fun ab -> ({ ab with ACount = ab.ACount+a_e.AStep })))
         }
         co{
           do! co.Wait (TimeSpan.FromSeconds 3.0)
-          let e_id = Guid.NewGuid()
-          let e = absample.models.ABEvent.AEvent { event={ ABEventId=Guid.Empty; ABId=abId; AB=Unchecked.defaultof<AB>; CreatedAt=DateTime.UtcNow; ProcessingStatus=ABEventStatus.Enqueued }; AStep=5 }
-          do! co.Produce (e_id, e)
           let! ctx = co.GetState()
           do! co.Await(ctx.ABs.update abId (fun ab -> ({ ab with AFailCount = ab.AFailCount+1 })))
         }
       ])
     )
+  let processBEvents (abId:Guid) : Coroutine<Unit, ABContext, absample.models.ABEvent> =
+    co.Repeat(
+      co.Any([
+        co{
+          let! b_e = co.On(function absample.models.ABEvent.BEvent e when e.event.ABId = abId -> Some e | _ -> None)
+          let! ctx = co.GetState()
+          do! co.Await(ctx.ABs.update abId (fun ab -> ({ ab with BCount = ab.BCount+b_e.BStep })))
+        }
+        co{
+          do! co.Wait (TimeSpan.FromSeconds 5.0)
+          do! co.Produce (Guid.NewGuid(), absample.models.ABEvent.AEvent { event={ ABEventId=Guid.Empty; ABId=abId; AB=Unchecked.defaultof<AB>; CreatedAt=DateTime.UtcNow; ProcessingStatus=ABEventStatus.Enqueued }; AStep=1 })
+          let! ctx = co.GetState()
+          do! co.Await(ctx.ABs.update abId (fun ab -> ({ ab with BFailCount = ab.BFailCount+1 })))
+        }
+      ])
+    )
+  let processAB abId = 
+    co.Any([
+      processAEvents abId
+      processBEvents abId
+    ])
 
   let init(): EvaluatedCoroutines<_,_> = 
     use scope = createScope()
@@ -65,7 +82,7 @@ let jobs (createScope:Unit -> IServiceScope) =
     db.SaveChanges() |> ignore
     db.ChangeTracker.Clear()
     { 
-      active = db.ABs.AsNoTracking() |> Seq.toArray |> Seq.map (fun e -> e.ABId) |> Seq.map (fun abId -> (abId, processAEvents abId)) |> Map.ofSeq;
+      active = db.ABs.AsNoTracking() |> Seq.toArray |> Seq.map (fun e -> e.ABId) |> Seq.map (fun abId -> (abId, processAB abId)) |> Map.ofSeq;
       waiting = Map.empty;
       waitingOrListening = Map.empty;
       listening = Map.empty;
