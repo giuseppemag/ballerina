@@ -26,11 +26,18 @@ export const Debounce = <value, context = Unit>(
     Co.SetState(
       updaters.Core.dirty(replaceWith<DirtyStatus>("dirty but being processed"))
     ),
-    Co.SetState(
-      updaters.Core.status(
-        replaceWith<DebouncedStatus>("just detected dirty, starting processing")
-      )
-    ),
+    Co.GetState().then((current) => {
+      if (current.status.kind == "l") {
+        return Co.SetState(
+          updaters.Core.status(
+            replaceWith<DebouncedStatus>(
+              "just detected dirty, starting processing"
+            )
+          )
+        );
+      }
+      else return Co.Do(() => {});
+    }),
     Co.Any([
       // shortcircuit the validation if it takes longer than the whole cycle in the presence of an underwater update of the field
       Co.Seq([
@@ -40,22 +47,36 @@ export const Debounce = <value, context = Unit>(
             Date.now() - current.lastUpdated <= debounceDurationInMs,
           Co.Wait(debounceDurationInMs / 5)
         ),
-        Co.SetState(
-          updaters.Core.status(
-            replaceWith<DebouncedStatus>("processing shortcircuited")
-          )
-        ),
+        Co.GetState().then((current) => {
+          if (current.status.kind == "l") {
+            return Co.SetState(
+              updaters.Core.status(
+                replaceWith<DebouncedStatus>(
+                  "processing shortcircuited"
+                )
+              )
+            );
+          }
+          else return Co.Do(() => {});
+        }),
         Co.Wait(debounceDurationInMs / 2),
       ]),
       k
         .embed((_: Debounced<value & context>) => _, updaters.Core.value)
         .then((apiResult) => {
           return Co.Seq([
-            Co.SetState(
-              updaters.Core.status(
-                replaceWith<DebouncedStatus>("processing finished")
-              )
-            ),
+            Co.GetState().then((current) => {
+              if (current.status.kind == "l") {
+                return Co.SetState(
+                  updaters.Core.status(
+                    replaceWith<DebouncedStatus>(
+                      "processing finished"
+                    )
+                  )
+                );
+              }
+              else return Co.Do(() => {});
+            }),
             // Co.Wait(250)
           ]).then(() => {
             return Co.GetState().then((current) => {
@@ -64,13 +85,18 @@ export const Debounce = <value, context = Unit>(
                 // maybe a new change has already reset dirty, in that case we need to start all over again
                 if (current.dirty == "dirty but being processed") {
                   return Co.Seq([
-                    Co.SetState(
-                      updaters.Core.status(
-                        replaceWith<DebouncedStatus>(
-                          "state was still dirty but being processed, resetting to not dirty"
-                        )
-                      )
-                    ),
+                    Co.GetState().then((current) => {
+                      if (current.status.kind == "l") {
+                        return Co.SetState(
+                          updaters.Core.status(
+                            replaceWith<DebouncedStatus>(
+                              "state was still dirty but being processed, resetting to not dirty"
+                            )
+                          )
+                        );
+                      }
+                      else return Co.Do(() => {});
+                    }),
                     // use UpdateState to make sure that we look up the state at the last possible moment to account for delays
                     Co.UpdateState((state) =>
                       state.dirty == "dirty but being processed"
@@ -82,13 +108,18 @@ export const Debounce = <value, context = Unit>(
                   ]);
                 } else {
                   return Co.Seq([
-                    Co.SetState(
-                      updaters.Core.status(
-                        replaceWith<DebouncedStatus>(
-                          "state was changed underwater back to dirty, leaving the dirty flag alone"
-                        )
-                      )
-                    ),
+                    Co.GetState().then((current) => {
+                      if (current.status.kind == "l") {
+                        return Co.SetState(
+                          updaters.Core.status(
+                            replaceWith<DebouncedStatus>(
+                               "state was changed underwater back to dirty, leaving the dirty flag alone"
+                            )
+                          )
+                        );
+                      }
+                      else return Co.Do(() => {});
+                    }),
                     Co.SetState(
                       updaters.Core.dirty(replaceWith<DirtyStatus>("dirty"))
                     ),
@@ -97,13 +128,18 @@ export const Debounce = <value, context = Unit>(
                 }
               } else {
                 return Co.Seq([
-                  Co.SetState(
-                    updaters.Core.status(
-                      replaceWith<DebouncedStatus>(
-                        "inner call failed with transient failure"
-                      )
-                    )
-                  ),
+                  Co.GetState().then((current) => {
+                    if (current.status.kind == "l") {
+                      return Co.SetState(
+                        updaters.Core.status(
+                          replaceWith<DebouncedStatus>(
+                             "inner call failed with transient failure"
+                          )
+                        )
+                      );
+                    }
+                    else return Co.Do(() => {});
+                  }),
                   Co.SetState(
                     updaters.Core.dirty(replaceWith<DirtyStatus>("dirty"))
                   ),
