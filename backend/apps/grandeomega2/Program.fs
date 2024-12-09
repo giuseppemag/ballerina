@@ -97,7 +97,7 @@ module Program =
     rootCommand.SetHandler(Action<_>(fun (mode:LaunchMode) ->
       match mode with
       | LaunchMode.web -> web()
-      | LaunchMode.jobs -> jobs (app.Services.CreateScope)
+      | LaunchMode.jobs -> abEventLoop (app.Services.CreateScope)
       | _ -> printfn "no mode selected, exiting"
       ), mode)
     do rootCommand.Invoke(args) |> ignore
