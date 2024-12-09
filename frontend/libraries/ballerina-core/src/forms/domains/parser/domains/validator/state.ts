@@ -308,7 +308,17 @@ export const FormsConfig = {
                     alert(JSON.stringify(builtIns.renderers))
                     errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
                   }
-                  } else {
+                } else if (fieldTypeDef.value == "base64File") {
+                  if (!builtIns.renderers.base64File.has(fieldConfig["renderer"])) {
+                    alert(JSON.stringify(builtIns.renderers))
+                    errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
+                  }
+                } else if (fieldTypeDef.value == "secret") {
+                  if (!builtIns.renderers.secret.has(fieldConfig["renderer"])) {
+                    alert(JSON.stringify(builtIns.renderers))
+                    errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
+                  }
+                } else {
                   errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
                 }
               } else if (fieldTypeDef?.kind == "application") {
