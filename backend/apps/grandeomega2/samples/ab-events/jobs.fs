@@ -35,33 +35,33 @@ open System.Threading
 type ABContext = { ABs:Crud<absample.efmodels.AB>; ABEvents:Crud<absample.efmodels.ABEvent> }
 
 let jobs (createScope:Unit -> IServiceScope) =
-  let processAEvents (abId:Guid) : Coroutine<Unit, ABContext, absample.models.ABEvent> =
+  let processAEvents (abId:Guid) : Coroutine<Unit, Unit, ABContext, absample.models.ABEvent> =
     co.Repeat(
       co.Any([
         co{
           let! a_e = co.On(function absample.models.ABEvent.AEvent e when e.event.ABId = abId -> Some e | _ -> None)
-          let! ctx = co.GetState()
+          let! ctx = co.GetContext()
           do! co.Await(ctx.ABs.update abId (fun ab -> ({ ab with ACount = ab.ACount+a_e.AStep })))
         }
         co{
           do! co.Wait (TimeSpan.FromSeconds 3.0)
-          let! ctx = co.GetState()
+          let! ctx = co.GetContext()
           do! co.Await(ctx.ABs.update abId (fun ab -> ({ ab with AFailCount = ab.AFailCount+1 })))
         }
       ])
     )
-  let processBEvents (abId:Guid) : Coroutine<Unit, ABContext, absample.models.ABEvent> =
+  let processBEvents (abId:Guid) : Coroutine<Unit, Unit, ABContext, absample.models.ABEvent> =
     co.Repeat(
       co.Any([
         co{
           let! b_e = co.On(function absample.models.ABEvent.BEvent e when e.event.ABId = abId -> Some e | _ -> None)
-          let! ctx = co.GetState()
+          let! ctx = co.GetContext()
           do! co.Await(ctx.ABs.update abId (fun ab -> ({ ab with BCount = ab.BCount+b_e.BStep })))
         }
         co{
           do! co.Wait (TimeSpan.FromSeconds 5.0)
           do! co.Produce (Guid.NewGuid(), absample.models.ABEvent.AEvent { event={ ABEventId=Guid.Empty; ABId=abId; AB=Unchecked.defaultof<AB>; CreatedAt=DateTime.UtcNow; ProcessingStatus=ABEventStatus.Enqueued }; AStep=1 })
-          let! ctx = co.GetState()
+          let! ctx = co.GetContext()
           do! co.Await(ctx.ABs.update abId (fun ab -> ({ ab with BFailCount = ab.BFailCount+1 })))
         }
       ])
@@ -72,7 +72,7 @@ let jobs (createScope:Unit -> IServiceScope) =
       processBEvents abId
     ])
 
-  let init(): EvaluatedCoroutines<_,_> = 
+  let init(): EvaluatedCoroutines<_,_,_> = 
     use scope = createScope()
     use db = scope.ServiceProvider.GetService<BallerinaContext>()
     db.ABs.RemoveRange(db.ABs)
@@ -104,7 +104,7 @@ let jobs (createScope:Unit -> IServiceScope) =
     let resumedWaiting, stillWaiting = evals.waiting |> Map.partition (fun _ v -> v.Until <= now) 
     let active = (evals.active |> Seq.map (fun a -> a.Key, a.Value) |> Seq.toList) @ (resumedWaiting |> Seq.map (fun w -> (w.Key, w.Value.P)) |> Seq.toList) |> Map.ofSeq
     let events = db.ABEvents.AsNoTracking().Where(fun e -> e.ProcessingStatus = ABEventStatus.Enqueued).OrderBy(fun e -> (e.CreatedAt, e.ABEventId)).ToArray() |> Seq.map (fun e -> e.ABEventId, e |> absample.efmodels.ABEvent.ToUnion) |> Map.ofSeq
-    let (evals', u_s, u_e) = evalMany (active) ({ ABs = AB db (db.ABs); ABEvents = ABEvent db (db.ABEvents) }, events, dT)
+    let (evals', u_s, u_e) = evalMany (active) ((), { ABs = AB db (db.ABs); ABEvents = ABEvent db (db.ABEvents) }, events, dT)
     match u_e with
     | Some u_e ->
       let events' = u_e events

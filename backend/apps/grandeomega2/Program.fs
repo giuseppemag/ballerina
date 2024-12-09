@@ -47,28 +47,10 @@ module Program =
   // let jsonSerializer = FsPickler.CreateJsonSerializer(indent = false)
   // let text = jsonSerializer.PickleToString initialEvals
   // File.WriteAllText("evals.json", text)
-
-  // Console.Clear()
-  // let mutable lastT = DateTime.Now
-  // let start = DateTime.Now
-  // while false do
-  //   let now = DateTime.Now
-  //   let dT = now - lastT
-  //   lastT <- now
   //   let evals = jsonSerializer.UnPickleOfString<EvaluatedCoroutines<{| counter:int |},Unit>>(File.ReadAllText("evals.json"))
-  //   let resumedWaiting, stillWaiting = evals.waiting |> Map.partition (fun _ v -> v.Until <= now) 
-  //   let active = (evals.active |> Map.values |> Seq.toList) @ (resumedWaiting |> Seq.map (fun w -> w.Value.P) |> Seq.toList) |> Seq.map (fun p -> Guid.NewGuid(), p) |> Map.ofSeq
-  //   let (evals', u_s, u_e) = evalMany (active) (state, Set.empty, dT)
-  //   match u_s with
-  //   | Some u_s -> 
-  //     state <- u_s state
-  //   | None -> ()
-  //   let newWaiting = evals'.waiting |> Seq.map (fun w -> w.Value) |> Seq.map (fun v -> Guid.NewGuid(), v) |> Seq.toList
-  //   let newWaiting = newWaiting @ (stillWaiting |> Seq.map (fun w -> w.Value) |> Seq.map (fun v -> Guid.NewGuid(), v) |> Seq.toList)
-  //   let evals' = { evals' with waiting = newWaiting |> Map.ofSeq }
+  //   ...
   //   let text = jsonSerializer.PickleToString evals'
   //   File.WriteAllText("evals.json", text)
-  //   printf "\r%A(%.1f)                                               " state ((now - start)).TotalSeconds
 
   let exitCode = 0
 
@@ -88,10 +70,9 @@ module Program =
     builder.Services.AddDbContext<BallerinaContext>(fun opt -> 
       opt.UseNpgsql(
         builder.Configuration.GetConnectionString("DbConnection")
-        // "User ID=postgres;Password=;Host=localhost;Port=5432;Database=ballerina;Pooling=true;Maximum Pool Size=50;"
         ) |> ignore)
     builder.Services
-        .AddEndpointsApiExplorer() // use the API Explorer to discover and describe endpoints
+        .AddEndpointsApiExplorer()
         .AddSwaggerGen(fun options ->
             options.UseOneOfForPolymorphism()
             options.SelectDiscriminatorNameUsing(fun _ -> "$type")
@@ -102,9 +83,8 @@ module Program =
 
     let web() = 
       app.UseABSample()
-        .UseSwagger() // for json OpenAPI endpoint
-        .UseSwaggerUI() // for
-
+        .UseSwagger()
+        .UseSwaggerUI()
       app.Run("http://localhost:5000")
 
     let mode = new Option<LaunchMode>(

@@ -50,7 +50,7 @@ let User =
     RegistrationExpiration = TimeSpan.FromDays(3)
   |}
 
-let register : Coroutine<unit, UserCoroutinesState, UserEventUnion> = 
+let register : Coroutine<unit, UserCoroutinesState, unit, UserEventUnion> = 
   // forever, because users may register at any time
   co.Repeat(
     co{

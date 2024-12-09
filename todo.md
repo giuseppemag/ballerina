@@ -15,13 +15,10 @@ Todo (✅/❌)
     ✅ PG-admin
   ❌ port forward pgadmin or use DBeaver
   ❌ auth.fsproj
-    ❌ models
+    ✅ models
       ✅ users
       ✅ registration-tokens
       ✅ user events
-      ❌ sessions
-      ❌ active coroutines
-      ❌ suspended coroutines (wait vs on vs both)
     ❌ registration, etc. coroutines
       ✅ serialize/deserialize F# unions and records with endpoints
       ✅ define CRUD 'a
@@ -67,8 +64,9 @@ Todo (✅/❌)
               ✅ even better, POST should not expect CreatedAt and ProcessingStatus (deserializer)
           ✅ add environment to the ./startup-be.sh launcher, otherwise we are using the wrong appsettings!!!
           ✅ processBs
-          ❌ separate state = Unit from context = ABContext
+          ✅ separate state = Unit from context = ABContext
           ❌ move coroutine evaluator to a separate file in the coroutine project
+          ❌ extract the general purpose evaluator from jobs.fs
             ❌ parameterize the event queries with a CRUD repo
             ❌ parameterize the coroutine queries with a CRUD repo
           ✅ endpoint to push AB events
@@ -132,25 +130,34 @@ Todo (✅/❌)
   ❌ low-code platform
     ❌ business rules (of which defaultings are a data-driven instance) should be just data 
     ❌ workflow manager should be just data-driven coroutines
-  ❌ data sync'er and mapper
-  ❌ statements and expressions evaluator
+    ❌ statements and expressions evaluator
+    ❌ data sync'er and mapper
   ✅ blog.fsproj
   ✅ postgres.csproj (this is the migrations project)
     ✅ dbContext (in C#)
     ✅ migrate one discriminated union
     ✅ separate schema for user stuff
   ❌ web app
-    ❌ from Docker
-    ❌ use appsettings.Development
-    ❌ remove unnecessary references to EF Core stuff, only LINQ queries should still work
-    ❌ import PositionOptions
-      ❌ delete the PositionOptions and move to something more useful eventually
-    ❌ migrations, db-update, db-drop, seed-db
+    ✅ from Docker
+    ✅ use appsettings.Development
+    ✅ remove unnecessary references to EF Core stuff, only LINQ queries should still work
+    ✅ migrations, db-update, db-drop, seed-db
     ❌ make sure pg-admin or DBeaver works
     ❌ post user-event endpoint
     ❌ login, logout, reset-password, edit-user, change-password, delete-user
       ❌ invoke methods from auth domain
       ❌ think about security
+    ❌ users - organizations
+    ❌ orders
+    ❌ order confirmations
+    ❌ invoices
+    ❌ payments
+      ❌ partial payments
+      ❌ subscriptions
+    ❌ delivery notes
+    ❌ refunds
+    ❌ payment conditions
+    ❌ discounts per client
   ❌ support both PG and MySQL
   ❌ SPA
     ❌ from docker container
@@ -162,77 +169,6 @@ Todo (✅/❌)
     ❌ edit user form
       ❌ delete user
     ❌ change password form
-  ❌ bool predicate evaluator
-```
-let resetPassword = 
-  co{
-    let! email = co.on (function ResetPassword email -> Some email | _ -> None)
-    do! co.spawn
-      co.any [
-        co{
-          let! maybeUserId = User.findByEmail
-          match maybeUserId with
-          | Some userId ->
-            let resetToken = randomToken()
-            do! co.do(User.update userId User.resetToken(replaceWith resetToken))
-            do! co.do(User.sendResetPasswordEmail email resetToken)
-            do! co.on (function | NewPassword (token, newPassword) when token = resetToken -> Some() | _ -> None)
-            do! co.do(User.update userId User.password(newPassword))
-          | _ -> 
-            return ()
-        }  
-        co.wait User.resetPasswordExpiration
-      ]
-  }
-
-let subscription = 
-  co{
-    let! newSubscription = co.on (function NewSubscription _ -> Some _ | _ -> None)
-    let rec repeatedPayments autoRenew numPayments noticePeriodNumPayments interval = 
-      if numPayments <= 0 then 
-        if autoRenew = false then co.Return()
-        else repeatedPayments newSubscription.AutoRenew newSubscription.NumPayments newSusbscription.NoticePeriodNumPayments newSubscription.Interval
-      else 
-        co.any [
-          if numPayments <= noticePeriodNumPayments then
-            co{
-              do! co.on (function SubscriptionCancellation subscriptionId when subscriptionId = newSubscription.Id -> Some() | _ -> None)
-              do! co.do(Subscription.delete newSubscription.Id)
-            }
-          else co.never
-          co{
-            co.any[
-              co{
-                do! co.do(Subscription.sendAutomatedPayment newSubscription.Id)
-                do! co.on (function AutomatedPayment subscriptionId when subscriptionId = newSubscription.Id -> Some() | _ -> None)
-              }
-              co{
-                let paymentPeriodStarted = DateTime.Now
-                let! token = co.do Subscription.createPaymentToken
-                do! co.do(Subscription.sendPaymentLink token)
-                co.all [
-                  co.any[
-                    co.on payment confirmed with token
-                    co{
-                      do! co.wait Subscription.paymentReminder
-                      do! co.do(Subscription.sendPaymentReminderLink token)
-                    }
-                  ]
-                  co{
-                    do! co.wait Subscription.accessLockedDelay
-                    do! co.do(Subscription.update newSubscription.Id Subscription.active(replaceWith false))
-                  }
-                ]
-                do! co.do(Subscription.update subscriptionId Subscription.active(replaceWith false))
-                do! co.wait (interval - (DateTime.now - paymentPeriodStarted))
-              }
-            ]
-            do! repeatedPayments autoRenew (numPayments-1) noticePeriodNumPayments interval
-          }
-        ]
-      do! repeatedPayments newSubscription.AutoRenew newSubscription.NumPayments newSusbscription.NoticePeriodNumPayments newSubscription.Interval
-    }
-```
   ❌ coroutines
     ❌ move updaters to the core library
     ❌ set state, get state, update state
