@@ -65,6 +65,9 @@ Todo (✅/❌)
           ✅ add environment to the ./startup-be.sh launcher, otherwise we are using the wrong appsettings!!!
           ✅ processBs
           ✅ separate state = Unit from context = ABContext
+          ❌ BEvent is not triggering
+            ❌ events added while processing are deleted before consideration
+            ❌ maybe an issue with Any
           ❌ move coroutine evaluator to a separate file in the coroutine project
           ❌ extract the general purpose evaluator from jobs.fs
             ❌ parameterize the event queries with a CRUD repo

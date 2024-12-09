@@ -19,10 +19,8 @@ type WebApplication with
       msg.ABId))
       .WithOpenApi() |> ignore
     app.MapGet("/ABEvents", new Func<_, _, _, _>(fun (db:BallerinaContext) (skip:int) (take:int) -> 
-      async{
-        let! values = (ABEvent db db.ABEvents).getN <@ fun _ -> true @> <@ fun e -> e.ABEventId @> (Ballerina.Range.WithinReason(skip, take))
-        return values.Include(fun x -> x.AB)
-      }
+        let values = (ABEvent db db.ABEvents).getN <@ fun _ -> true @> <@ fun e -> e.ABEventId @> (Ballerina.Range.WithinReason(skip, take))
+        values.Include(fun x -> x.AB)
       )).WithOpenApi() |> ignore
     app.MapGet("/AEvents", new Func<_, _, _, _>(fun (db:BallerinaContext) (skip:int) (take:int) -> 
       (AEvent db db.AEvents).getN <@ fun _ -> true @> <@ fun e -> e.ABEventId @> (Ballerina.Range.WithinReason(skip, take))))

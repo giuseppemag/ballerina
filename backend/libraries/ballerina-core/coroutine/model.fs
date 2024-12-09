@@ -20,7 +20,7 @@ and CoroutineResult<'a, 's, 'c, 'e> =
   | Spawn of Coroutine<Unit, 's, 'c, 'e>
   | Wait of TimeSpan * Coroutine<'a, 's, 'c, 'e>
   | On of ('e -> Option<'a>)
-  | Do of ('s -> 'a)
+  | Do of ('c -> 'a)
   | Await of Async<'a>
   // | Awaiting of Guid * Async<'a> * Task<'a>
   | Then of (Coroutine<Coroutine<'a, 's, 'c, 'e>, 's, 'c, 'e>)
@@ -80,7 +80,8 @@ type CoroutineBuilder() =
   // member _.All(ps:List<Coroutine<'a, 's, 'c, 'e>>) =
   //   Co(fun _ -> CoroutineResult.Any(ps), None, None)
   member co.YieldAfter(p:Coroutine<_,_,_,_>) =
-    co.Bind(p, fun x -> co.Bind(co.Wait(TimeSpan.FromSeconds 0.0), fun _ -> co.Return(x)))
+    // co.Bind(p, fun x -> co.Bind(co.Wait(TimeSpan.FromSeconds 0.0), fun _ -> co.Return(x)))
+    p
   member co.On(p_e:'e -> Option<'a>) =
     co.YieldAfter(Co(fun _ -> CoroutineResult.On(p_e), None, None))
   [<CustomOperation("wait", MaintainsVariableSpaceUsingBind = true) >]
@@ -224,12 +225,13 @@ type Eval<'s,'c,'e>() = class end
         //   }, None, None)
       | On(p_e) ->
         match es |> Seq.map (fun e -> p_e e.Value, e) |> Seq.tryFind (function Some _, e -> true | _ -> false) with
-        | Some(Some res,e) -> Done(res, None, Some(Map.remove e.Key))
+        | Some(Some res,e) -> 
+          Done(res, None, Some(Map.remove e.Key))
         | _ -> Active(co.On p_e, None, None)
       | Spawn(p) -> 
         Spawned([p], None, None, None)
       | Do(f) ->
-        Done(f s, None, None)
+        Done(f c, None, None)
       | Await(a:Async<'a>) ->
         let result = a |> Async.RunSynchronously
         Done(result, None, None)
