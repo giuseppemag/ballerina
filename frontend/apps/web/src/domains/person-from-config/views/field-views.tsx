@@ -1,4 +1,4 @@
-import { SharedFormState, AsyncState, FormLabel, BooleanView, NumberView, StringView, DateView, CollectionReference, EnumView, EnumMultiselectView, SearchableInfiniteStreamView, InfiniteStreamMultiselectView, BaseEnumContext, MaybeBooleanView, ListFieldView, unit } from "ballerina-core";
+import { SharedFormState, AsyncState, FormLabel, BooleanView, NumberView, StringView, DateView, CollectionReference, EnumView, EnumMultiselectView, SearchableInfiniteStreamView, InfiniteStreamMultiselectView, BaseEnumContext, MaybeBooleanView, ListFieldView, unit, Base64FileView, SecretView } from "ballerina-core";
 
 export const MostUglyValidationDebugView = (props: { context: SharedFormState }) =>
   props.context.modifiedByUser && AsyncState.Operations.isLoading(props.context.validation.sync) ?
@@ -226,5 +226,19 @@ export const PersonFieldViews = {
               props.foreignMutations.add(unit)
             }}>➕</button>
           </>
+  },
+  base64File: {
+    defaultBase64File: <Context extends FormLabel, ForeignMutationsExpected>(): Base64FileView<Context, ForeignMutationsExpected> =>
+      props => <>
+        {props.context.label && <h3>{props.context.label}</h3>}
+        <input type='text' value={props.context.value} onChange={e => props.foreignMutations.setNewValue(e.currentTarget.value)} />
+      </>
+  },
+  secret: {
+    defaultSecret: <Context extends FormLabel, ForeignMutationsExpected>(): SecretView<Context, ForeignMutationsExpected> =>
+      props => <>
+        {props.context.label && <h3>{props.context.label}</h3>}
+        <input type="password" value={props.context.value} onChange={e => props.foreignMutations.setNewValue(e.currentTarget.value)} />
+      </>
   }
 };

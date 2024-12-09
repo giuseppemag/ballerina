@@ -10,7 +10,10 @@ export const PrimitiveTypes =
     "boolean",
     "maybeBoolean",
     "Date",
-    "CollectionReference"] as const
+    "CollectionReference",
+    "base64File",
+    "secret",
+  ] as const
 export type PrimitiveType = (typeof PrimitiveTypes)[number]
 
 export const GenericTypes = [
@@ -29,7 +32,9 @@ export type ApiConverters = {
   "CollectionReference": ApiConverter<CollectionReference>
   "SingleSelection": ApiConverter<CollectionSelection<any>>
   "MultiSelection": ApiConverter<OrderedMap<string, any>>
-  "List": ApiConverter<List<any>>
+  "List": ApiConverter<List<any>>,
+  "base64File": ApiConverter<string>
+  "secret": ApiConverter<string>,
 }
 
 export type PrimitiveBuiltIn = { renderers: Set<keyof BuiltIns["renderers"]>, apiConverters: ApiConverter<any>, defaultValue: any }
@@ -48,6 +53,8 @@ export type BuiltIns = {
     streamSingleSelection: Set<string>;
     streamMultiSelection: Set<string>;
     list: Set<string>;
+    base64File: Set<string>;
+    secret: Set<string>;
   };
 };
 
@@ -60,12 +67,14 @@ export const builtInsFromFieldViews = (fieldViews: any, fieldTypeConverters: Api
       ["maybeBoolean", { renderers: Set(["maybeBoolean"]), apiConverters: fieldTypeConverters["maybeBoolean"], defaultValue: undefined }] as [string, PrimitiveBuiltIn],
       ["date", { renderers: Set(["date"]), apiConverters: fieldTypeConverters["Date"], defaultValue: new Date(Date.now()) }] as [string, PrimitiveBuiltIn],
       ["Date", { renderers: Set(["date"]), apiConverters: fieldTypeConverters["Date"], defaultValue: new Date(Date.now()) }] as [string, PrimitiveBuiltIn],
-      ["CollectionReference", { renderers: Set(["enumSingleSelection", "enumMultiSelection", "streamSingleSelection", "streamMultiSelection"]), apiConverters: fieldTypeConverters["CollectionReference"], defaultValue: CollectionReference.Default("", "") }] as [string, PrimitiveBuiltIn]
+      ["CollectionReference", { renderers: Set(["enumSingleSelection", "enumMultiSelection", "streamSingleSelection", "streamMultiSelection"]), apiConverters: fieldTypeConverters["CollectionReference"], defaultValue: CollectionReference.Default("", "") }] as [string, PrimitiveBuiltIn],
+      ["base64File", { renderers: Set(["base64File"]), apiConverters: fieldTypeConverters["base64File"], defaultValue: "" }] as [string, PrimitiveBuiltIn],
+      ["secret", { renderers: Set(["secret"]), apiConverters: fieldTypeConverters["secret"], defaultValue: "" }] as [string, PrimitiveBuiltIn],
     ]),
     "generics": Map([
       ["SingleSelection", { apiConverters: fieldTypeConverters["SingleSelection"], defaultValue: CollectionSelection().Default.right("no selection") }] as [string, GenericBuiltIn],
       ["Multiselection", { apiConverters: fieldTypeConverters["SingleSelection"], defaultValue: Map() }] as [string, GenericBuiltIn],
-      ["List", { apiConverters: fieldTypeConverters["SingleSelection"], defaultValue: List() }] as [string, GenericBuiltIn]
+      ["List", { apiConverters: fieldTypeConverters["SingleSelection"], defaultValue: List() }] as [string, GenericBuiltIn],
     ]),
     "renderers": {
       "boolean": Set(),
@@ -78,6 +87,8 @@ export const builtInsFromFieldViews = (fieldViews: any, fieldTypeConverters: Api
       "number": Set(),
       "string": Set(),
       "list": Set(),
+      "base64File": Set(),
+      "secret": Set(),
     }
   }
   Object.keys(builtins.renderers).forEach((_categoryName) => {

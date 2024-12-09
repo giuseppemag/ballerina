@@ -277,6 +277,8 @@ const entityApis: EntityApis = {
                 },
               },
             },
+            base64File: "",
+            secret: "",
           });
       }
       default: {

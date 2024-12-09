@@ -10,7 +10,7 @@ export type TypeDefinition = {
 export type Type = {
   kind: "lookup"; name: TypeName;
 } | {
-  kind: "primitive"; value: "string" | "number" | "maybeBoolean" | "boolean" | "Date" | "CollectionReference";
+  kind: "primitive"; value: "string" | "number" | "maybeBoolean" | "boolean" | "Date" | "CollectionReference" | "base64File" | "secret";
 } | {
   kind: "application"; value: TypeName; args: Array<TypeName>;
 };

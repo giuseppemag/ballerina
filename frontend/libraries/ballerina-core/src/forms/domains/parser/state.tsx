@@ -1,5 +1,5 @@
 import { List, Map, OrderedMap, OrderedSet, Set } from "immutable";
-import { BoolExpr, Unit, PromiseRepo, Guid, LeafPredicatesEvaluators, Predicate, FormsConfig, BuiltIns, FormDef, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, SharedFormState, CreateFormState, Entity, EditFormContext, CreateFormContext, MappedEntityFormTemplate, Mapping, FormValidationResult, Synchronized, simpleUpdater, PrimitiveType, GenericType, ApiConverter, TypeName, ListFieldState, ListForm, TypeDefinition, ApiConverters, defaultValue, fromAPIRawValue, toAPIRawValue, EditFormForeignMutationsExpected } from "../../../../main";
+import { BoolExpr, Unit, PromiseRepo, Guid, LeafPredicatesEvaluators, Predicate, FormsConfig, BuiltIns, FormDef, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, SharedFormState, CreateFormState, Entity, EditFormContext, CreateFormContext, MappedEntityFormTemplate, Mapping, FormValidationResult, Synchronized, simpleUpdater, PrimitiveType, GenericType, ApiConverter, TypeName, ListFieldState, ListForm, TypeDefinition, ApiConverters, defaultValue, fromAPIRawValue, toAPIRawValue, EditFormForeignMutationsExpected, Base64FileForm, SecretForm } from "../../../../main";
 import { Value } from "../../../value/state";
 import { CollectionReference } from "../collection/domains/reference/state";
 import { CollectionSelection } from "../collection/domains/selection/state";
@@ -66,12 +66,20 @@ export const FieldView = //<Context, FieldViews extends DefaultFieldViews, EnumF
       return InfiniteMultiselectDropdownForm<CollectionReference, any & FormLabel, Unit>()
         .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
         .mapContext<any & FormLabel & SharedFormState & SearchableInfiniteStreamState<CollectionReference> & Value<OrderedMap<Guid, CollectionReference>>>(_ => ({ ..._, label: label })) as any
+    if (viewType == "base64File")
+      return Base64FileForm<any & FormLabel, Unit>()
+        .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
+        .mapContext<any & FormLabel & SharedFormState & Value<string>>(_ => ({ ..._, label: label })) as any
+    if (viewType == "secret")
+      return SecretForm<any & FormLabel, Unit>()
+        .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
+        .mapContext<any & FormLabel & SharedFormState & Value<string>>(_ => ({ ..._, label: label })) as any
     return `error: the view for ${viewType as string}::${viewName as string} cannot be found`;
   }
 
 export const FieldFormState = //<Context, FieldViews extends DefaultFieldViews, InfiniteStreamSources extends {}, InfiniteStreamConfigs extends {}>() => <ViewType extends keyof FieldViews, ViewName extends keyof FieldViews[ViewType]>
   (fieldViews: any, viewType: any, viewName: any, fieldName: string, InfiniteStreamSources: any, infiniteStreamConfigs: any): any => {
-    if (viewType == "maybeBoolean" || viewType == "boolean" || viewType == "number" || viewType == "string")
+    if (viewType == "maybeBoolean" || viewType == "boolean" || viewType == "number" || viewType == "string" || viewType == "base64File" || viewType == "secret")
       return SharedFormState.Default();
     if (viewType == "date")
       return DateFormState.Default("");

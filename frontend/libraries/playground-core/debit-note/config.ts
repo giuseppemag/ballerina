@@ -253,6 +253,8 @@ export const DebitNoteHeaderConfig = {
         commitChecks: "CommitChecks",
         dashboard: "Dashboard",
         systemConfig: "SystemConfig",
+        base64File: "base64File",
+        secret: "secret",
       },
     },
   },
@@ -867,6 +869,14 @@ export const DebitNoteHeaderConfig = {
           renderer: "systemConfigForm",
           visible: { kind: "true" },
         },
+        base64File: {
+          renderer: "defaultBase64File",
+          visible: { kind: "true" },
+        },
+        secret: {
+          renderer: "defaultSecret",
+          visible: { kind: "true" },
+        },
       },
       tabs: {
         main: {
@@ -884,6 +894,15 @@ export const DebitNoteHeaderConfig = {
             SystemConfig: {
               groups: {
                 main: ["systemConfig"],
+              },
+            },
+          },
+        },
+        newTypes: {
+          columns: {
+            main: {
+              groups: {
+                main: ["base64File", "secret"],
               },
             },
           },
