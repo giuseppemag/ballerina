@@ -65,38 +65,36 @@ Todo (✅/❌)
           ✅ add environment to the ./startup-be.sh launcher, otherwise we are using the wrong appsettings!!!
           ✅ processBs
           ✅ separate state = Unit from context = ABContext
-          ❌ move coroutine evaluator to a separate file in the coroutine project
-          ❌ extract the general purpose evaluator from jobs.fs
-            ❌ parameterize the event queries with a CRUD repo
-            ❌ parameterize the coroutine queries with a CRUD repo
+          ✅ extract the general purpose evaluator from jobs.fs
+            ✅ parameterize the event queries with a CRUD repo
           ✅ endpoint to push AB events
             ✅ expose OpenAPI spec
           ✅ "blogging" context -> BallerinaContext
-          ❌ implement Repeat as a reified construct
-          ❌ test Spawn
-            ❌ remove ugly starting logic, everything is bootstrapped by the endpoint that pushes the CreateABEvent
-            ❌ create ABs from event
-            ❌ when the AB coroutine ends, it is respawned (migration-friendly strategy)
+          ✅ implement Repeat as a reified construct
           ❌ _generate_ translation of models into ef and OpenAPI
             ❌ records
             ❌ unions
             ❌ recursion
             ❌ serialization attributes
             ❌ events from (annotated) static methods or annotations on attributes with dependency on CRUD repository
+          ❌ test Spawn
+            ❌ remove ugly starting logic, everything is bootstrapped by the endpoint that pushes the CreateABEvent
+            ❌ create ABs from event
+            ❌ when the AB coroutine ends, it is respawned (migration-friendly strategy)
           ❌ add history/enqueued event endpoints
             ❌ this should be done with only the predicate + sorting parameters of the ABEvents endpoint
           ❌ fix the tracking issue
-            ✅ remove the ugly `wait 0`
+             remove the ugly `wait 0`
           ❌ fix keywords properly: `wait`, `any`, `spawn`, `repeat`, `on`, `produce`
-          ❌ fix the ugly `wait 0`
           ❌ separate Crud from AsyncCrud
+          ❌ parameterize the coroutine queries serialization/deserialization
           ✅ restore Async in Crud, run with Await
           ✅ dependent on repo's for AB and ABEvent
           ✅ co.On for ABEvent should check that the ABId matches or every ABEvent will match every co.On
           ✅ test Any
-        ❌ project refactoring
-          ❌ move all the AB-related logic to the right project 
-          ❌ rename grandeomega to web
+        ✅ project refactoring
+          ✅ move all the AB-related logic to the right project
+          ✅ rename grandeomega to web
       ❌ define sample Positions API and types
         ❌ DocEvents = SenderEvents | ReceiverEvents | BankDetailEvents
           ❌ further split by field types

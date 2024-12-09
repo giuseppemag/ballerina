@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "apps", "apps", "{9607120D-0D79-4113-A465-59A80A75CB15}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "grandeomega2", "apps\grandeomega2\grandeomega2.fsproj", "{F5BDD5D6-F85F-4412-B7B6-305E74023FC0}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "web", "apps\web\web.fsproj", "{F5BDD5D6-F85F-4412-B7B6-305E74023FC0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

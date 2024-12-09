@@ -25,6 +25,7 @@ and CoroutineResult<'a, 's, 'c, 'e> =
   // | Awaiting of Guid * Async<'a> * Task<'a>
   | Then of (Coroutine<Coroutine<'a, 's, 'c, 'e>, 's, 'c, 'e>)
   | Combine of (Coroutine<Unit, 's, 'c, 'e> * Coroutine<'a, 's, 'c, 'e>)
+  | Repeat of Coroutine<'a, 's, 'c, 'e>
   with 
     static member map<'a, 'b, 's, 'c, 'e> (f:('a -> 'b)) (p:CoroutineResult<'a, 's, 'c, 'e>) : CoroutineResult<'b, 's, 'c, 'e> = 
       match p with
@@ -56,11 +57,11 @@ and CoroutineResult<'a, 's, 'c, 'e> =
         // Then(p', k >> (Coroutine.map f))
       | Combine(p, k) -> 
         Combine(p, k |> Coroutine.map  f)
+      | Repeat(p) -> 
+        Repeat(p |> Coroutine.map f)
 
 let rec bind(p:Coroutine<'a, 's, 'c, 'e>, k:'a -> Coroutine<'b, 's, 'c, 'e>) = 
     Co(fun _ -> Then(p |> Coroutine.map k), None, None)
-and repeat (p:Coroutine<'a, 's, 'c, 'e>) = 
-  bind(p, fun _ -> repeat p)
   
 type CoroutineBuilder() = 
   member _.Zero() = 
@@ -99,8 +100,8 @@ type CoroutineBuilder() =
   //   Co(fun _ -> CoroutineResult.Awaiting(id,p,t), None, None)
   member _.Spawn(p:Coroutine<Unit,'s,'c, 'e>) =
     Co(fun _ -> CoroutineResult.Spawn(p), None, None)
-  member _.Repeat(p:Coroutine<'a, 's, 'c, 'e>) : Coroutine<Unit,'s,'c,'e> =
-    repeat p    
+  member _.Repeat(p:Coroutine<'a, 's, 'c, 'e>) : Coroutine<'a,'s,'c,'e> =
+    Co(fun (s,c,es,dt) -> CoroutineResult.Repeat(p), None, None)
   member _.GetContext() =
     Co(fun (s,c,es,dt) -> CoroutineResult.Return(c), None, None)
   member _.GetState() =
@@ -244,6 +245,8 @@ type Eval<'s,'c,'e>() = class end
       //     Done(task.Result, None, None)
       //   else 
       //     Active(co.Awaiting(id, a, task), None, None)
+      | Repeat(p) ->
+        Eval.eval (co.Bind(p, fun _ -> co.Repeat p)) ctx
 
 let rec evalMany (ps:Map<Guid, Coroutine<Unit, 's, 'c, 'e>>) ((s, c, es, dt):'s * 'c * Map<Guid, 'e> * DeltaT) : EvaluatedCoroutines<'s, 'c, 'e> * Option<U<'s>> * Option<U<Map<Guid, 'e>>> =
     let ctx = (s,c,es,dt)
