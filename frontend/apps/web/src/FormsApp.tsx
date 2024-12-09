@@ -50,8 +50,8 @@ export const FormsApp = (props: {}) => {
 			fromAPIRawValue: _ => _ == undefined ? List() : List(_),
 			toAPIRawValue: _ => _.valueSeq().toArray()
 		},
-		"base64File": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: _ => "" },
-		"secret": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: _ => _ },
+		"base64File": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: _ => _ },
+		"secret": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: _ => "" },
 
 	}
 
