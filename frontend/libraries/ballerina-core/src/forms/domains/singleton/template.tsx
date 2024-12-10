@@ -34,6 +34,13 @@ export const Form = <Entity, FieldStates, Context, ForeignMutationsExpected>() =
                       modifiedByUser:true,
                       validation:Debounced.Updaters.Template.value<FormValidatorSynchronized>(Synchronized.Updaters.value(replaceWith(unit)))(_[field].validation),
                     }) }))
+                  } else {
+                    props.setState(_ => ({ ..._,
+                      modifiedByUser: true,
+                      [field]:({
+                        ..._[field],
+                        modifiedByUser:true,
+                      }) }))
                   }
                   setTimeout(() =>
                     props.foreignMutations.onChange((current: Entity): Entity => ({
