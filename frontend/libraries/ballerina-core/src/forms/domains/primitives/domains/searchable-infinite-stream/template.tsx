@@ -8,11 +8,12 @@ import { Value } from "../../../../../value/state";
 import { CollectionReference } from "../../../collection/domains/reference/state";
 import { CollectionSelection } from "../../../collection/domains/selection/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
+import { Placeholder } from "../../../singleton/domains/placeholder/state";
 import { FieldValidation, FieldValidationWithPath, FormValidatorSynchronized, OnChange, ValidationError } from "../../../singleton/state";
 import { SearchableInfiniteStreamState, SearchableInfiniteStreamView } from "./state";
 
 
-export const SearchableInfiniteStreamForm = <Element extends CollectionReference, Context extends FormLabel, ForeignMutationsExpected>(
+export const SearchableInfiniteStreamForm = <Element extends CollectionReference, Context extends FormLabel & Placeholder, ForeignMutationsExpected>(
   validation?: BasicFun<CollectionSelection<Element>, Promise<FieldValidation>>
 ) => {
   const Co = CoTypedFactory<Context & Value<CollectionSelection<Element>> & { disabled:boolean }, SearchableInfiniteStreamState<Element>>();

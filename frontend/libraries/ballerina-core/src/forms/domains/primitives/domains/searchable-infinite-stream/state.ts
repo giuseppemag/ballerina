@@ -7,6 +7,7 @@ import { Value } from "../../../../../value/state";
 import { CollectionReference } from "../../../collection/domains/reference/state";
 import { CollectionSelection } from "../../../collection/domains/selection/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
+import { Placeholder } from "../../../singleton/domains/placeholder/state";
 import { OnChange, SharedFormState } from "../../../singleton/state";
 
 
@@ -38,7 +39,7 @@ export const SearchableInfiniteStreamState = <Element extends CollectionReferenc
     }
   }
 });
-export type SearchableInfiniteStreamView<Element extends CollectionReference, Context extends FormLabel, ForeignMutationsExpected> = 
+export type SearchableInfiniteStreamView<Element extends CollectionReference, Context extends FormLabel & Placeholder, ForeignMutationsExpected> = 
   View<
     Context & Value<CollectionSelection<Element>> & SearchableInfiniteStreamState<Element> & {
       hasMoreValues:boolean,
