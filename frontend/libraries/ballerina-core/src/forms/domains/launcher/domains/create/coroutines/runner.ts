@@ -19,7 +19,7 @@ export const createFormRunner = <E, FS>() => {
       Co.Seq([
       Co.GetState().then(current =>
         Debounce<Synchronized<Unit, Synchronized<E, ApiErrors>>, CreateFormContext<E, FS>>(
-          Synchronize<E, ApiErrors>(e => current.api.create(e), _ => "transient failure", 5, 50)
+          Synchronize<E, ApiErrors>(e => current.api.create([e, current.formState]), _ => "transient failure", 5, 50)
             .embed(
               _ => AsyncState.Operations.hasValue(_.sync) ? _.sync.value : undefined,
               _ => Synchronized.Updaters.sync<Unit, Synchronized<E, ApiErrors>>(AsyncState.Operations.map(_))

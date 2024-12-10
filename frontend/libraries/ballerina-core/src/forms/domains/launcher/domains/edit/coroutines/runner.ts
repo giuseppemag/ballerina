@@ -40,7 +40,7 @@ export const editFormRunner = <E, FS>() => {
           Synchronize<Unit, ApiErrors, EditFormWritableState<E, FS>>(
             (_) =>
               current.entity.sync.kind == "loaded"
-                ? current.api.update(current.entity.sync.value)
+                ? current.api.update([current.entity.sync.value, current.formState])
                 : Promise.resolve([]),
             (_) => "transient failure",
             5,

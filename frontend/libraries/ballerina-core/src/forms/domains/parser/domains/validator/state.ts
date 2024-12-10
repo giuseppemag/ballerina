@@ -1,5 +1,5 @@
 import { Set, Map, OrderedMap } from "immutable";
-import { BoolExpr, BuiltIns, FieldName, FormsConfigMerger, MappingPaths, Sum, Type, TypeDefinition, TypeName } from "../../../../../../main";
+import { BoolExpr, BuiltIns, FieldName, FormsConfigMerger, MappingPaths, revertKeyword, Sum, Type, TypeDefinition, TypeName } from "../../../../../../main";
 
 export type FieldConfig = {
   renderer: string;
@@ -392,17 +392,17 @@ export const FormsConfig = {
           }
           if (fieldTypeDef?.kind == "lookup") {
             if (!forms.has(fieldConfig.renderer))
-              errors.push(`field ${fieldName} of form ${formName} references non-existing form ${fieldConfig["renderer"]}`);
+              errors.push(`field ${revertKeyword(fieldName)} of form ${formName} references non-existing form ${fieldConfig["renderer"]}`);
             else {
               const otherForm = forms.get(fieldConfig.renderer)!
               if (otherForm.type != fieldTypeDef.name)
-                errors.push(`field ${fieldName} of form ${formName} references form ${fieldConfig["renderer"]}, which has type ${otherForm.type} whereas ${fieldTypeDef.name} was expected`);
+                errors.push(`field ${revertKeyword(fieldName)} of form ${formName} references form ${fieldConfig["renderer"]}, which has type ${otherForm.type} whereas ${fieldTypeDef.name} was expected`);
             }
           }
           formDef.fields = formDef.fields.set(
             fieldName, {
             renderer: fieldConfig.renderer,
-            label: fieldConfig.label ?? fieldName,
+            label: fieldConfig.label ?? revertKeyword(fieldName),
             elementRenderer: fieldConfig.elementRenderer,
             visible: BoolExpr.Default(fieldConfig.visible),
             disabled: fieldConfig.disabled != undefined ?
