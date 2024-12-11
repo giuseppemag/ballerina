@@ -12,6 +12,7 @@
     <Compile Include="queries/quotationToLinq.fs" />
     <Compile Include="crud/model.fs" />
     <Compile Include="coroutine/model.fs" />
+    <Compile Include="coroutine/runner.fs" />
   </ItemGroup>
 
   <ItemGroup>

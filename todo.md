@@ -5,9 +5,10 @@ Todo (✅/❌)
   ❌ support files
   ❌ support secrets (not re-sent, use `modified`)
   ❌ map fields
-    ❌ implement
-  ❌ delete mappers, they are not a good idea
-  ❌ combine data-sync and type-safe forms
+    ❌ args array should be correctly typed and validated: (recursive transformation of fun into application)
+    ❌ uniqueness constraint enforcement
+  ❌ show both data-sync and type-safe forms in FormsApp
+  ❌ deprecate mapping in both config and code forms, they are not a good idea
 
   GrandeOmega2
   ✅ docker
@@ -29,11 +30,10 @@ Todo (✅/❌)
       ✅ move updater U<'s> to separate file
       ❌ cleanup
         ❌ move sample coroutines
-        ❌ move sample dbcontext stuff
+        ✅ move sample dbcontext stuff
           ✅ resolve dbcontext with DI
-          ❌ pass config from appsettings.development (based on env variable)
+          ✅ pass config from appsettings.development (based on env variable)
         ✅ move AB sample
-        ❌ move sample endpoints
         ❌ add PositionOptions config with extension method on builder
         ❌ adding and configuring the dbcontext should also be done from another file, from ballerina-core perhaps
       ✅ AB events sample domain
@@ -65,36 +65,30 @@ Todo (✅/❌)
           ✅ add environment to the ./startup-be.sh launcher, otherwise we are using the wrong appsettings!!!
           ✅ processBs
           ✅ separate state = Unit from context = ABContext
-          ❌ move coroutine evaluator to a separate file in the coroutine project
-          ❌ extract the general purpose evaluator from jobs.fs
-            ❌ parameterize the event queries with a CRUD repo
-            ❌ parameterize the coroutine queries with a CRUD repo
+          ✅ extract the general purpose evaluator from jobs.fs
+            ✅ parameterize the event queries with a CRUD repo
           ✅ endpoint to push AB events
             ✅ expose OpenAPI spec
           ✅ "blogging" context -> BallerinaContext
-          ❌ implement Repeat as a reified construct
+          ✅ implement Repeat as a reified construct
+          ✅ AB jobs can be separated fully to the AB module with minimal dependencies
+          ❌ AB endpoints (code) can be separated fully to the AB module with a dependency on AB/ABEvents CRUD
+          ❌ _generate_ translation of models into ef and OpenAPI
+            ❌ records
+            ❌ unions
+            ❌ with recursion
+            ❌ with serialization attributes
           ❌ test Spawn
             ❌ remove ugly starting logic, everything is bootstrapped by the endpoint that pushes the CreateABEvent
             ❌ create ABs from event
             ❌ when the AB coroutine ends, it is respawned (migration-friendly strategy)
-          ❌ _generate_ translation of models into ef and OpenAPI
-            ❌ records
-            ❌ unions
-            ❌ recursion
-            ❌ serialization attributes
-            ❌ events from (annotated) static methods or annotations on attributes with dependency on CRUD repository
-          ❌ add history/enqueued event endpoints
-            ❌ this should be done with only the predicate + sorting parameters of the ABEvents endpoint
-          ❌ fix the tracking issue
-            ✅ remove the ugly `wait 0`
-          ❌ fix keywords properly: `wait`, `any`, `spawn`, `repeat`, `on`, `produce`
           ✅ restore Async in Crud, run with Await
           ✅ dependent on repo's for AB and ABEvent
           ✅ co.On for ABEvent should check that the ABId matches or every ABEvent will match every co.On
           ✅ test Any
-        ❌ project refactoring
-          ❌ move all the AB-related logic to the right project 
-          ❌ rename grandeomega to web
+        ✅ project refactoring
+          ✅ move all the AB-related logic to the right project
+          ✅ rename grandeomega to web
       ❌ define sample Positions API and types
         ❌ DocEvents = SenderEvents | ReceiverEvents | BankDetailEvents
           ❌ further split by field types
@@ -108,7 +102,9 @@ Todo (✅/❌)
           ❌ Post Order with OrderEvent
           ❌ GET Invoice (pretend it's only one)
           ❌ GET Order (pretend it's only one)
+        ❌ _generate_ events from (annotated) static methods or annotations on attributes with dependency on CRUD repository
         ❌ link event handlers to business rules and value defaults
+        ❌ After N edits, push to the frontend a request in the form of an event for the creation of a custom model or similar
         ✅ add OpenAPI support, see if we get luckier with C# unions and inheritance
       ❌ endpoint generation
         ❌ extend chains
@@ -158,6 +154,14 @@ Todo (✅/❌)
     ❌ refunds
     ❌ payment conditions
     ❌ discounts per client
+  ❌ improvements
+    ❌ fix the tracking issue
+        remove the ugly `wait 0`
+    ❌ fix keywords properly: `wait`, `any`, `spawn`, `repeat`, `on`, `produce`
+    ❌ separate Crud from AsyncCrud
+    ❌ parameterize the coroutine queries serialization/deserialization
+    ❌ add history/enqueued events endpoints for AB sample
+      ❌ this should be done with only the predicate + sorting parameters of the ABEvents endpoint
   ❌ support both PG and MySQL
   ❌ SPA
     ❌ from docker container

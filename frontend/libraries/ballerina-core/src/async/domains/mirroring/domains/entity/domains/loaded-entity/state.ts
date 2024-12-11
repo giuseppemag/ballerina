@@ -1,3 +1,4 @@
+import { Sum } from "../../../../../../../../main";
 import { DebouncedStatus, DirtyStatus } from "../../../../../../../debounced/state";
 import { AsyncState } from "../../../../../../state";
 import { Entity } from "../../state";
@@ -10,7 +11,7 @@ export type LoadedEntity<E> = {
   synchronizationErrors:Array<any>;
   lastUpdated: number;
   dirty: DirtyStatus;
-  status: DebouncedStatus;
+  status: Sum<DebouncedStatus, "debug off">;
 };
 export const LoadedEntity = {
   Default:{

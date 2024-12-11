@@ -7,7 +7,6 @@ import { PersonContainerFormView, PersonNestedContainerFormView, PersonShowFormS
 import { PersonFormsConfig, PersonFromConfigApis, PersonConfigFormsLeafPredicates, PersonConfig, PersonFormState, Person } from "playground-core";
 import { PersonFieldViews } from "./domains/person-from-config/views/field-views";
 import { PersonForm } from "./domains/person/template";
-import {DebitNoteHeaderConfigApi, DebitNoteHeaderConfig} from 'playground-core'
 
 const ShowFormsParsingErrors = (parsedFormsConfig: FormParsingResult) =>
 	<div style={{ border: "red" }}>
@@ -16,12 +15,11 @@ const ShowFormsParsingErrors = (parsedFormsConfig: FormParsingResult) =>
 
 export const FormsApp = (props: {}) => {
 	const [configFormsParser, setConfigFormsParser] = useState(FormsParserState.Default())
-	// const [formToShow, setFormToShow] = useState(1)
-	// const numForms = 2
-	// const [personCreateFormState, setPersonCreateFormState] = useState(FormRunnerState.Default())
-	// const [personEditFormState, setPersonEditFormState] = useState(FormRunnerState.Default())
-	const [debitNoteEditFormState, setDebitNoteEditFormState] = useState(FormRunnerState.Default())
-	// const [personState, setPersonState] = useState(Person.Default.mocked())
+	const [formToShow, setFormToShow] = useState(0)
+	const numForms = 2
+	const [personCreateFormState, setPersonCreateFormState] = useState(FormRunnerState.Default())
+	const [personEditFormState, setPersonEditFormState] = useState(FormRunnerState.Default())
+	const [personState, setPersonState] = useState(Person.Default.mocked())
 	// const [personFormState, setPersonFormState] = useState(PersonFormState.Default(""))
 	// const [personConfigState, setPersonConfigState] = useState(PersonConfig.Default())
 
@@ -30,6 +28,8 @@ export const FormsApp = (props: {}) => {
 		"number": { fromAPIRawValue: _ => typeof _ == "number" ? _ : 0, toAPIRawValue: _ => _ },
 		"boolean": { fromAPIRawValue: _ => typeof _ == "boolean" ? _ : false, toAPIRawValue: _ => _ },
 		"maybeBoolean": { fromAPIRawValue: _ => typeof _ == "boolean" ? _ : undefined, toAPIRawValue: _ => _ },
+		"base64File": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: _ => _ },
+		"secret": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: _ => "" },
 		"Date": { fromAPIRawValue: _ => typeof _ == "string" ? new Date(Date.parse(_)) : typeof _ == "number" ? new Date(_) : new Date(Date.now()), toAPIRawValue: _ => _ },
 		"CollectionReference": {
 			fromAPIRawValue: _ => CollectionReference.Default(_.id ?? "", _.displayName ?? ""),
@@ -50,15 +50,17 @@ export const FormsApp = (props: {}) => {
 			fromAPIRawValue: _ => _ == undefined ? List() : List(_),
 			toAPIRawValue: _ => _.valueSeq().toArray()
 		},
-		"base64File": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: _ => _ },
-		"secret": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: _ => "" },
-
+		"Map": {
+			fromAPIRawValue: _ => _ == undefined ? List() : List(_),
+			toAPIRawValue: _ => _.valueSeq().toArray()
+		},
 	}
 
 	console.log({
 		parser: configFormsParser,
-		runner: debitNoteEditFormState
+		runner: personEditFormState
 	})
+	const [renderParserState, renderForms] = [true, true]
 
 	return (
 		<div className="App">
@@ -120,9 +122,9 @@ export const FormsApp = (props: {}) => {
 						</tr>
 						<tr>
 							<td>
-								{/* {JSON.stringify(configFormsParser)} */}
-								{/* <button onClick={() => setFormToShow(formToShow + 1)}>Show next form</button> */}
-								{/* <FormsParserTemplate
+								{renderParserState && JSON.stringify(configFormsParser)}
+								<button onClick={() => setFormToShow(formToShow + 1)}>Show next form</button>
+								<FormsParserTemplate
 									context={{
 										...configFormsParser,
 										containerFormView: PersonContainerFormView,
@@ -138,126 +140,58 @@ export const FormsApp = (props: {}) => {
 									setState={setConfigFormsParser}
 									view={unit}
 									foreignMutations={unit}
-								/> */}
-
-								<FormsParserTemplate
-									context={{
-										...configFormsParser,
-										containerFormView: PersonContainerFormView,
-										fieldTypeConverters: fieldTypeConverters,
-										nestedContainerFormView: PersonNestedContainerFormView,
-										fieldViews: PersonFieldViews,
-										infiniteStreamSources: DebitNoteHeaderConfigApi.streamApis,
-										enumOptionsSources: DebitNoteHeaderConfigApi.enumApis,
-										entityApis: DebitNoteHeaderConfigApi.entityApis,
-										leafPredicates: PersonConfigFormsLeafPredicates,
-										getFormsConfig: () => PromiseRepo.Default.mock(() => DebitNoteHeaderConfig)
-									}}
-									setState={setConfigFormsParser}
-									view={unit}
-									foreignMutations={unit}
 								/>
-
-								{/* {JSON.stringify(configFormsParser)} */}
-
-								<FormRunnerTemplate
-									context={{
-										...configFormsParser,
-										...debitNoteEditFormState,
-										formRef: {
-											formName: "DEBIT_NOTE_HEADER_CONFIG",
-											entityId: "11112",
-											kind: "edit",
-											submitButtonWrapper: EditPersonSubmitButtonWrapper,
-											apiHandlers: {
-												success: _ => console.debug('success: ', _),
-												error: _ => console.debug('error: ', _),
-											}
-										},
-										showFormParsingErrors: ShowFormsParsingErrors,
-										extraContext: {
-											flags: Set(["BC", "X"]),
-										},
-									}}
-									setState={setDebitNoteEditFormState}
-									view={unit}
-									foreignMutations={unit}
-								/>
-
-{/* 
-									<h3>Edit person</h3>
-									<FormRunnerTemplate
-										context={{
-											...configFormsParser,
-											...personEditFormState,
-											formRef: {
-												formName: "edit-person",
-												entityId: "abcd-1234",
-												kind: "edit",
-												submitButtonWrapper: EditPersonSubmitButtonWrapper,
-											},
-											showFormParsingErrors: ShowFormsParsingErrors,
-											extraContext: {
-												flags: Set(["BC", "X"]),
-											},
-										}}
-										setState={setPersonEditFormState}
-										view={unit}
-										foreignMutations={unit}
-									/> */}
-
 								{
-									// formToShow % numForms == 0 ?
-									// 	<>
-									// 		{/* {JSON.stringify(personCreateFormState)} */}
-									// 		<h3>Create devbu</h3>
-									// 		<FormRunnerTemplate
-									// 			context={{
-									// 				...configFormsParser,
-									// 				...personCreateFormState,
-									// 				formRef: {
-									// 					formName: "create-person",
-									// 					kind: "create",
-									// 					submitButtonWrapper: PersonSubmitButtonWrapper,
-									// 					onSubmitted(_: any) {
-									// 						alert(`Submitted new person ${JSON.stringify(_)}`)
-									// 					},
-									// 				},
-									// 				showFormParsingErrors: ShowFormsParsingErrors,
-									// 				extraContext: {
-									// 					flags: Set(["BC", "X"]),
-									// 				},
-									// 			}}
-									// 			setState={setPersonCreateFormState}
-									// 			view={unit}
-									// 			foreignMutations={unit}
-									// 		/>
-									// 	</>
-									// 	: formToShow % numForms == 1 ?
-									// 		<>
-									// 			{/* {JSON.stringify(personEditFormState)} */}
-									// 			<h3>Edit person</h3>
-									// 			<FormRunnerTemplate
-									// 				context={{
-									// 					...configFormsParser,
-									// 					...personEditFormState,
-									// 					formRef: {
-									// 						formName: "edit-person",
-									// 						entityId: "abcd-1234",
-									// 						kind: "edit",
-									// 					},
-									// 					showFormParsingErrors: ShowFormsParsingErrors,
-									// 					extraContext: {
-									// 						flags: Set(["BC", "X"]),
-									// 					},
-									// 				}}
-									// 				setState={setPersonEditFormState}
-									// 				view={unit}
-									// 				foreignMutations={unit}
-									// 			/>
+									renderForms && formToShow % numForms == 0 ?
+										<>
+											<h3>Create person</h3>
+											<FormRunnerTemplate
+												context={{
+													...configFormsParser,
+													...personCreateFormState,
+													formRef: {
+														formName: "create-person",
+														kind: "create",
+														submitButtonWrapper: CreatePersonSubmitButtonWrapper,
+														onSubmitted(_: any) {
+															alert(`Submitted new person ${JSON.stringify(_)}`)
+														},
+													},
+													showFormParsingErrors: ShowFormsParsingErrors,
+													extraContext: {
+														flags: Set(["BC", "X"]),
+													},
+												}}
+												setState={setPersonCreateFormState}
+												view={unit}
+												foreignMutations={unit}
+											/>
+										</>
+										: renderForms && formToShow % numForms == 1 ?
+											<>
+												<h3>Edit person</h3>
+												<FormRunnerTemplate
+													context={{
+														...configFormsParser,
+														...personEditFormState,
+														formRef: {
+															formName: "edit-person",
+															entityId: "abcd-1234",
+															kind: "edit",
+															submitButtonWrapper: EditPersonSubmitButtonWrapper,
+														},
+														showFormParsingErrors: ShowFormsParsingErrors,
+														extraContext: {
+															flags: Set(["BC", "X"]),
+														},
+													}}
+													setState={setPersonEditFormState}
+													view={unit}
+													foreignMutations={unit}
+												/>
 
-									// 		</>
-									// 		: undefined
+											</>
+											: undefined
 								}
 							</td>
 						</tr>

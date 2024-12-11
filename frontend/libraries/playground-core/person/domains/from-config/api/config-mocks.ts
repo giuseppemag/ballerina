@@ -27,6 +27,10 @@ export const PersonFormsConfig = {
       "extends": ["CollectionReference"],
       fields: {}
     },
+    "PermissionRef": {
+      "extends": ["CollectionReference"],
+      fields: {}
+    },
     "Person": {
       fields: {
         "name": "string",
@@ -40,29 +44,11 @@ export const PersonFormsConfig = {
         "mainAddress": "Address",
         "addresses": { fun: "List", args: ["Address"] },
         "emails": { fun: "List", args: ["string"] },
-      }
-    },
-    "PersonFromAPI": {
-      fields: {
-        "name": "string",
-        "surname": "string",
-        "birthday": "Date",
-        "favoriteColor": { fun: "SingleSelection", args: ["ColorRef"] },
-        "gender": { fun: "SingleSelection", args: ["GenderRef"] },
-        "departments": { fun: "Multiselection", args: ["DepartmentRef"] },
-      }
-    },
-    "MailingFromAPI": {
-      fields: {
-        "subscribeToNewsletter": "boolean",
-        "interests": { fun: "Multiselection", args: ["InterestRef"] },
-      }
-    },
-    "PersonConfigFromAPI": {
-      fields: {
-        "person":"PersonFromAPI",
-        "mailing":"MailingFromAPI",
-        "address":"Address",
+
+        "addressesWithLabel": { fun: "Map", args: ["string", "Address"] },
+        "addressesByCity": { fun: "Map", args: [{ fun: "SingleSelection", args: ["CityRef"]}, "Address"] },
+        "addressesWithColorLabel": { fun: "Map", args: [{ fun: "SingleSelection", args: ["ColorRef"]}, "Address"] },
+        "permissions": { fun: "Map", args: [{ fun: "SingleSelection", args: ["PermissionRef"]}, "boolean"] },
       }
     }
   },
@@ -71,6 +57,7 @@ export const PersonFormsConfig = {
       "genders": "GenderRef",
       "colors": "ColorRef",
       "interests": "InterestRef",
+      "permissions": "PermissionRef",
     },
     "searchableStreams": {
       "cities": "CityRef",
@@ -84,25 +71,6 @@ export const PersonFormsConfig = {
     }
   },
   "mappings": {
-    // "personFromConfig": {
-    //   "source":"PersonConfigFromAPI",
-    //   "target":"Person",
-    //   "paths":{
-    //     "name": ["person", "name"],
-    //     "surname": ["person", "surname"],
-    //     "birthday": ["person", "birthday"],
-    //     "favoriteColor": ["person", "favoriteColor"],
-    //     "departments": ["person", "departments"],
-    //     "gender": ["person", "gender"],
-    //     "subscribeToNewsletter": ["mailing", "subscribeToNewsletter"],
-    //     "interests": ["mailing", "interests"],
-    //     "address":{
-    //         "street": ["address", "street"],
-    //         "number": ["address", "number"],
-    //         "city": ["address", "city"],
-    //     }
-    //   }
-    // }
   },
   "forms": {
     "address": {
@@ -166,6 +134,23 @@ export const PersonFormsConfig = {
         "mainAddress": { renderer: "address", visible: { "kind": "true" } },
         "addresses": { renderer: "defaultList", elementRenderer:"address", visible: { "kind": "true" } },
         "emails": { renderer: "defaultList", elementRenderer:"defaultString", visible: { "kind": "true" } },
+
+        "addressesWithLabel": { renderer: "defaultMap", 
+          keyRenderer:{ label:"address label", renderer: "defaultString", visible: { "kind": "true" } }, 
+          valueRenderer:{ renderer: "address", visible: { "kind": "true" } },
+          visible: { "kind": "true" } },
+        "addressesByCity": { renderer: "defaultMap", 
+            keyRenderer:{ renderer: "defaultInfiniteStream", stream: "cities", visible: { "kind": "true" } }, 
+            valueRenderer:{ renderer: "address", visible: { "kind": "true" } }, 
+            visible: { "kind": "true" } },
+        "addressesWithColorLabel": { renderer: "defaultMap", 
+            keyRenderer:{ renderer: "defaultEnum", options: "colors", visible: { "kind": "true" } }, 
+            valueRenderer:{ renderer: "address", visible: { "kind": "true" } }, 
+            visible: { "kind": "true" } },
+        "permissions": { renderer: "defaultMap", 
+          keyRenderer:{ renderer: "defaultEnum", options: "permissions", visible: { "kind": "true" } }, 
+          valueRenderer:{ renderer: "defaultBoolean", visible: { "kind": "true" } }, 
+          visible: { "kind": "true" } },
       },
       "tabs": {
         "main": {
@@ -184,7 +169,7 @@ export const PersonFormsConfig = {
             },
             "addresses": {
               "groups": {
-                "main": ["departments", "mainAddress", "addresses"],
+                "main": ["departments", "mainAddress", "addresses", "addressesWithLabel", "addressesByCity", "addressesWithColorLabel", "permissions"],        
               }
             }
           }

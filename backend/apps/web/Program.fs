@@ -82,7 +82,11 @@ module Program =
     let app = builder.Build()
 
     let web() = 
-      app.UseABSample()
+      app.UseABSample<BallerinaContext>(
+        (fun db -> AB db db.ABs),
+        (fun db -> ABEvent db db.ABEvents), 
+        (fun db -> AEvent db db.AEvents), 
+        (fun db -> BEvent db db.BEvents))
         .UseSwagger()
         .UseSwaggerUI()
       app.Run("http://localhost:5000")
@@ -97,7 +101,7 @@ module Program =
     rootCommand.SetHandler(Action<_>(fun (mode:LaunchMode) ->
       match mode with
       | LaunchMode.web -> web()
-      | LaunchMode.jobs -> jobs (app.Services.CreateScope)
+      | LaunchMode.jobs -> abEventLoop (app.Services.CreateScope)
       | _ -> printfn "no mode selected, exiting"
       ), mode)
     do rootCommand.Invoke(args) |> ignore

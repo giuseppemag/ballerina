@@ -17,6 +17,7 @@ export const ParentTable = (props: Parent) => (
     <Text>{props.inputString.dirty}</Text>
 
     <Text>Status</Text>
-    <Text>{props.inputString.status}</Text>
+    <Text>{props.inputString.status.value}</Text>
   </View>
 );
+
