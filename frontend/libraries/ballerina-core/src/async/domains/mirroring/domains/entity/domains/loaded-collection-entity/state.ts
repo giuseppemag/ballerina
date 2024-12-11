@@ -1,3 +1,4 @@
+import { Sum } from "../../../../../../../../main";
 import { DebouncedStatus, DirtyStatus } from "../../../../../../../debounced/state";
 import { AsyncState } from "../../../../../../state";
 import { CollectionEntity } from "../../../collection/state";
@@ -7,7 +8,7 @@ export type LoadedCollectionEntity<E> = LoadedEntity<E> & {
   isRemoved:boolean;
   lastUpdated: number;
   dirty: DirtyStatus;
-  status: DebouncedStatus;
+  status: Sum<DebouncedStatus, "debug off">;
 };
 export const LoadedCollectionEntity = {
   Default:{

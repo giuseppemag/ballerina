@@ -92,7 +92,6 @@ export const Form = <Entity, FieldStates, Context, ForeignMutationsExpected>() =
 export const ValidateRunner = <Context, FormState extends SharedFormState, ForeignMutationsExpected, Entity,>(
   validation?:BasicFun<Entity, Promise<FieldValidationWithPath>>,
 ) => {
-  console.log("running validator")
   const Co = CoTypedFactory<Context & Value<Entity> & FormState, FormState>()
   return Co.Template<ForeignMutationsExpected & { onChange: OnChange<Entity>; }>(
     validation ? Co.Repeat(
