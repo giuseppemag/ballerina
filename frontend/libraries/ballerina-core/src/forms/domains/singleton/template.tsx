@@ -1,5 +1,5 @@
 import { List, OrderedMap, OrderedSet } from "immutable"
-import { BasicUpdater, id, BasicPredicate, SimpleCallback, Unit, Debounced, Synchronized, unit, replaceWith, CoTypedFactory, Debounce, Synchronize, BasicFun, EntityFormState, EntityFormContext, EntityFormForeignMutationsExpected, EntityFormTemplate, EntityFormView, FieldTemplates, FieldValidationWithPath, FormValidatorSynchronized, OnChange, SharedFormState } from "../../../../main"
+import { BasicUpdater, id, BasicPredicate, SimpleCallback, Unit, Debounced, Synchronized, unit, replaceWith, CoTypedFactory, Debounce, Synchronize, BasicFun, EntityFormState, EntityFormContext, EntityFormForeignMutationsExpected, EntityFormTemplate, EntityFormView, FieldTemplates, FieldValidationWithPath, FormValidatorSynchronized, OnChange, SharedFormState, DirtyStatus } from "../../../../main"
 import { Template, View } from "../../../template/state"
 import { Value } from "../../../value/state"
 
@@ -88,22 +88,26 @@ export const Form = <Entity, FieldStates, Context, ForeignMutationsExpected>() =
   }
 })
 
+// TODO: Validate runner and dirty status is also used to ensure to element is initialised, but this should be further debugged with a more correct solution
 export const ValidateRunner = <Context, FormState extends SharedFormState, ForeignMutationsExpected, Entity,>(
   validation?:BasicFun<Entity, Promise<FieldValidationWithPath>>,
 ) => {
+  console.log("running validator")
   const Co = CoTypedFactory<Context & Value<Entity> & FormState, FormState>()
   return Co.Template<ForeignMutationsExpected & { onChange: OnChange<Entity>; }>(
-    Co.Repeat(
+    validation ? Co.Repeat(
       Debounce<FormValidatorSynchronized, Value<Entity>>(
         Synchronize<Unit, FieldValidationWithPath, Value<Entity>>(
           _ => validation ? validation(_.value) : Promise.resolve([]),
           () => "transient failure", 3, 50
         ), 50
-      ).embed(_ => ({..._.validation, value:_.value}), (_) => curr => ({...curr, validation:_(curr.validation)}))
-    ),
+      ).embed(_ => ({..._.validation, value:_.value}), (_) => curr => (console.log('curr', curr), ({...curr, validation:_(curr.validation)})))
+    ) :
+    Co.SetState((curr) => ({...curr, validation: Debounced.Updaters.Core.dirty(replaceWith<DirtyStatus>("not dirty"))}))
+    ,
     {
       interval:15,
-      runFilter:props => Boolean(validation) && Debounced.Operations.shouldCoroutineRun(props.context.validation)
+      runFilter:props =>  Debounced.Operations.shouldCoroutineRun(props.context.validation)
     }
   )
 }

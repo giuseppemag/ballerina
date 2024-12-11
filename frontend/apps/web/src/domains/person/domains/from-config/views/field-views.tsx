@@ -1,10 +1,10 @@
 import { SharedFormState, AsyncState, FormLabel, BooleanView, NumberView, StringView, DateView, CollectionReference, EnumView, EnumMultiselectView, SearchableInfiniteStreamView, InfiniteStreamMultiselectView, BaseEnumContext, MaybeBooleanView, ListFieldView, unit } from "ballerina-core";
 
 export const MostUglyValidationDebugView = (props: { context: SharedFormState }) =>
-  props.context.modifiedByUser && AsyncState.Operations.isLoading(props.context.validation.sync) ?
+  props.context.modifiedByUser && props.context.validation.sync && AsyncState.Operations.isLoading(props.context.validation.sync) ?
     <>🔄</>
     :
-    (props.context.modifiedByUser) && AsyncState.Operations.hasValue(props.context.validation.sync) &&
+    (props.context.modifiedByUser) && props.context.validation.sync && AsyncState.Operations.hasValue(props.context.validation.sync) &&
       props.context.validation.sync.value.length > 0 ?
       <table>
         <tr>
