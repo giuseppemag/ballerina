@@ -1,5 +1,5 @@
 import { List, Map, OrderedMap, OrderedSet, Set } from "immutable";
-import { BoolExpr, Unit, PromiseRepo, Guid, LeafPredicatesEvaluators, Predicate, FormsConfig, BuiltIns, FormDef, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, SharedFormState, CreateFormState, Entity, EditFormContext, CreateFormContext, MappedEntityFormTemplate, Mapping, FormValidationResult, Synchronized, simpleUpdater, PrimitiveType, GenericType, ApiConverter, TypeName, ListFieldState, ListForm, TypeDefinition, ApiConverters, defaultValue, fromAPIRawValue, toAPIRawValue, EditFormForeignMutationsExpected } from "../../../../main";
+import { BoolExpr, Unit, PromiseRepo, Guid, LeafPredicatesEvaluators, Predicate, FormsConfig, BuiltIns, FormDef, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, SharedFormState, CreateFormState, Entity, EditFormContext, CreateFormContext, MappedEntityFormTemplate, Mapping, FormValidationResult, Synchronized, simpleUpdater, PrimitiveType, GenericType, ApiConverter, TypeName, ListFieldState, ListForm, TypeDefinition, ApiConverters, defaultValue, fromAPIRawValue, toAPIRawValue, EditFormForeignMutationsExpected, MapFieldState, MapForm, Type, FieldConfig } from "../../../../main";
 import { Value } from "../../../value/state";
 import { CollectionReference } from "../collection/domains/reference/state";
 import { CollectionSelection } from "../collection/domains/selection/state";
@@ -24,7 +24,7 @@ const parseOptions = (leafPredicates: any, options: any) => {
 };
 
 export const FieldView = //<Context, FieldViews extends DefaultFieldViews, EnumFieldConfigs extends {}, EnumSources extends {}>() => <ViewType extends keyof FieldViews, ViewName extends keyof FieldViews[ViewType]>
-  (fieldViews: any, viewType: any, viewName: any, fieldName: string, label: string, enumFieldConfigs: EnumOptionsSources, enumSources: any, leafPredicates: any): any => // FieldView<Context, FieldViews, ViewType, ViewName> => 
+  (fieldConfig:FieldConfig, fieldViews: any, viewType: any, viewName: any, fieldName: string, label: string, enumFieldConfigs: EnumOptionsSources, enumSources: any, leafPredicates: any): any => // FieldView<Context, FieldViews, ViewType, ViewName> => 
   {
     if (viewType == "maybeBoolean")
       return MaybeBooleanForm<any & FormLabel, Unit>()
@@ -50,13 +50,16 @@ export const FieldView = //<Context, FieldViews extends DefaultFieldViews, EnumF
       return EnumForm<any & FormLabel & BaseEnumContext<any, CollectionReference>, Unit, CollectionReference>()
         .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
         .mapContext<any & EnumFormState<any & BaseEnumContext<any, CollectionReference>, CollectionReference> & Value<CollectionSelection<CollectionReference>>>(_ => ({
-          ..._, label: label, getOptions: () => ((enumFieldConfigs as any)(((enumSources as any)[fieldName]))() as Promise<any>).then(options => parseOptions(leafPredicates, options))
+          ..._, label: label, getOptions: () => {
+            // console.log(fieldConfig, fieldViews, viewType, viewName, fieldName, label, enumFieldConfigs, enumSources, leafPredicates)
+            return ((enumFieldConfigs as any)((fieldConfig as any).options ?? fieldConfig.api.enumOptions)() as Promise<any>).then(options => parseOptions(leafPredicates, options))
+          }
         })) as any
     if (viewType == "enumMultiSelection")
       return EnumMultiselectForm<any & FormLabel & BaseEnumContext<any, CollectionReference>, Unit, CollectionReference>()
         .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
         .mapContext<any & EnumFormState<any & BaseEnumContext<any, CollectionReference>, CollectionReference> & Value<OrderedMap<Guid, CollectionReference>>>(_ => ({
-          ..._, label: label, getOptions: () => ((enumFieldConfigs as any)(((enumSources as any)[fieldName]))() as Promise<any>).then(options => parseOptions(leafPredicates, options))
+          ..._, label: label, getOptions: () => ((enumFieldConfigs as any)((fieldConfig as any).options ?? fieldConfig.api.enumOptions)() as Promise<any>).then(options => parseOptions(leafPredicates, options))
         })) as any
     if (viewType == "streamSingleSelection")
       return SearchableInfiniteStreamForm<CollectionReference, any & FormLabel, Unit>()
@@ -70,7 +73,7 @@ export const FieldView = //<Context, FieldViews extends DefaultFieldViews, EnumF
   }
 
 export const FieldFormState = //<Context, FieldViews extends DefaultFieldViews, InfiniteStreamSources extends {}, InfiniteStreamConfigs extends {}>() => <ViewType extends keyof FieldViews, ViewName extends keyof FieldViews[ViewType]>
-  (fieldViews: any, viewType: any, viewName: any, fieldName: string, InfiniteStreamSources: any, infiniteStreamConfigs: any): any => {
+  (fieldConfig:FieldConfig, fieldViews: any, viewType: any, viewName: any, fieldName: string, InfiniteStreamSources: any, infiniteStreamConfigs: any): any => {
     if (viewType == "maybeBoolean" || viewType == "boolean" || viewType == "number" || viewType == "string")
       return SharedFormState.Default();
     if (viewType == "date")
@@ -79,12 +82,14 @@ export const FieldFormState = //<Context, FieldViews extends DefaultFieldViews, 
       return ({ ...EnumFormState<any, any>().Default(), ...SharedFormState.Default() });
     if (viewType == "streamSingleSelection" || viewType == "streamMultiSelection") {
       return ({
-        ...SearchableInfiniteStreamState<any>().Default("", (InfiniteStreamSources as any)((infiniteStreamConfigs as any)[fieldName])
+        ...SearchableInfiniteStreamState<any>().Default("", (InfiniteStreamSources as any)((fieldConfig as any).stream ?? fieldConfig.api.stream)
         ), ...SharedFormState.Default()
       });
     }
     if (viewType == "list")
       return ListFieldState<any, any>().Default(Map())
+    if (viewType == "map")
+      return MapFieldState<any, any, any, any>().Default(Map())
     return `error: the view for ${viewType as string}::${viewName as string} cannot be found when creating the corresponding field form state`;
   };
 
@@ -105,6 +110,8 @@ export const ParseForm = (
   otherForms: ParsedForms,
   fieldsViewsConfig: any,
   formFieldElementRenderers: any,
+  formFieldKeyRenderers: any,
+  formFieldValueRenderers: any,
   fieldsInfiniteStreamsConfig: any,
   fieldsOptionsConfig: any,
   InfiniteStreamSources: any,
@@ -112,7 +119,7 @@ export const ParseForm = (
   leafPredicates: any,
   visibleFieldsBoolExprs: any,
   disabledFieldsBoolExprs: any,
-  defaultValue: BasicFun<TypeName, any>,
+  defaultValue: BasicFun<TypeName | Type, any>,
   type: TypeDefinition
 ): ParsedForm => {
   const fieldNameToViewCategory = (fieldName: string) => {
@@ -126,9 +133,10 @@ export const ParseForm = (
     }
     throw `cannot resolve view ${viewName} of field ${fieldName}`
   };
-  const fieldNameToElementViewCategory = (fieldName: string) => {
+  const fieldNameToElementViewCategory = (formFieldKeyOrValueRenderers:any) => (fieldName: string) => {
     const fieldViewCategories = Object.keys(fieldViews)
-    const viewName = (formFieldElementRenderers as any)[fieldName];
+    let viewName = (formFieldKeyOrValueRenderers as any)[fieldName];
+    viewName = viewName?.renderer ?? viewName
     for (const categoryName of fieldViewCategories) {
       const viewCategory = (fieldViews as any)[categoryName];
       if (viewName in viewCategory) {
@@ -141,16 +149,19 @@ export const ParseForm = (
   const initialFormState: any = SharedFormState.Default();
   Object.keys(fieldsViewsConfig).forEach(fieldName => {
     const viewName = (fieldsViewsConfig as any)[fieldName];
+    const fieldConfig = formDef.fields.get(fieldName)!
     initialFormState[fieldName] =
       otherForms.get(viewName)?.initialFormState ??
-      FieldFormState(fieldViews, fieldNameToViewCategory(fieldName) as any, (fieldsViewsConfig as any)[fieldName], fieldName, InfiniteStreamSources, fieldsInfiniteStreamsConfig);
+      FieldFormState(fieldConfig, fieldViews, fieldNameToViewCategory(fieldName) as any, (fieldsViewsConfig as any)[fieldName], fieldName, InfiniteStreamSources, fieldsInfiniteStreamsConfig);
     if (typeof initialFormState[fieldName] == "string") {
       throw `cannot resolve initial state ${viewName} of field ${fieldName}`
     }
   });
   const formConfig: any = {};
-  Object.keys(fieldsViewsConfig).forEach(fieldName => {
+  const fieldNames = Object.keys(fieldsViewsConfig)
+  fieldNames.forEach(fieldName => {
     const label = formDef.fields.get(fieldName)!.label
+    const fieldConfig = formDef.fields.get(fieldName)!
     const viewName = (fieldsViewsConfig as any)[fieldName];
     const otherForm = otherForms.get(viewName)
     if (otherForm != undefined) {
@@ -171,8 +182,8 @@ export const ParseForm = (
           ).withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
             .mapContext<any>(_ => ({ ..._, label: label }))
         } else { // the list argument is a primitive
-          const elementForm = FieldView(fieldViews, fieldNameToElementViewCategory(fieldName) as any, elementRendererName, fieldName, label, EnumOptionsSources, fieldsOptionsConfig, leafPredicates)
-          const initialFormState = FieldFormState(fieldViews, fieldNameToElementViewCategory(fieldName) as any, elementRendererName, fieldName, InfiniteStreamSources, fieldsInfiniteStreamsConfig);
+          const elementForm = FieldView(fieldConfig, fieldViews, fieldNameToElementViewCategory(formFieldElementRenderers)(fieldName) as any, elementRendererName, fieldName, label, EnumOptionsSources, fieldsOptionsConfig, leafPredicates)
+          const initialFormState = FieldFormState(fieldConfig, fieldViews, fieldNameToElementViewCategory(formFieldElementRenderers)(fieldName) as any, elementRendererName, fieldName, InfiniteStreamSources, fieldsInfiniteStreamsConfig);
           formConfig[fieldName] = ListForm<any, any, any & FormLabel, Unit>(
             { Default: () => initialFormState },
             { Default: () => initialElementValue },
@@ -181,7 +192,60 @@ export const ParseForm = (
             .mapContext<any>(_ => ({ ..._, label: label }))
         }
       } else {
-        formConfig[fieldName] = FieldView(fieldViews, viewType, viewName, fieldName, label, EnumOptionsSources, fieldsOptionsConfig, leafPredicates);
+        if (viewType == "map") {
+          const field = type.fields.get(fieldName)!
+
+          const parseType = (t:any) : TypeName | Type | undefined => {
+            if (typeof t == "string") return t
+            if ("fun" in t && "args" in t && Array.isArray(t.args)) {
+              return { kind:"application", value:t.fun, args:t.args }
+            }
+            return undefined
+          }
+
+          const [keyType, valueType] = field.kind == "application" ? [parseType(field.args[0]), parseType(field.args[1])] : (() => {
+            throw `error processing field type ${JSON.stringify(field)} of ${fieldName}`
+          })()
+          if (!keyType || !valueType) {
+            throw `error processing field type ${JSON.stringify(field)} of ${fieldName}`
+          }
+          const initialKeyValue = defaultValue(keyType)
+          const initialValueValue = defaultValue(valueType)
+          const getFormAndInitialState = (elementRenderers:any, rendererName:any, fieldConfig:FieldConfig) => {
+            const formDef = otherForms.get(rendererName)
+            if (formDef != undefined) {
+              return [
+                formDef.form.withView(nestedContainerFormView),
+                formDef.initialFormState
+              ]
+            } else {
+              const categoryName = fieldNameToElementViewCategory(elementRenderers)(fieldName) as any
+              const form = FieldView(fieldConfig, fieldViews, categoryName, rendererName, fieldName, label, EnumOptionsSources, fieldsOptionsConfig, leafPredicates)
+              const initialFormState = FieldFormState(fieldConfig, fieldViews, categoryName, rendererName, fieldName, InfiniteStreamSources, fieldsInfiniteStreamsConfig);
+              return [
+                form,
+                initialFormState
+              ]
+            }
+          }
+          // alert(JSON.stringify([formFieldKeyValueRenderers[fieldName]]))
+          // alert(JSON.stringify([formFieldKeyValueRenderers]))
+          const keyRendererName = formFieldKeyRenderers[fieldName]
+          const valueRendererName = formFieldValueRenderers[fieldName]
+          const [keyForm,keyFormInitialState] = getFormAndInitialState(formFieldKeyRenderers, keyRendererName?.renderer ?? keyRendererName, keyRendererName as FieldConfig)
+          const [valueForm,valueFormInitialState] = getFormAndInitialState(formFieldValueRenderers, valueRendererName?.renderer ?? valueRendererName, keyRendererName as FieldConfig)
+          formConfig[fieldName] = MapForm<any, any, any, any, any & FormLabel, Unit>(
+            { Default: () => keyFormInitialState },
+            { Default: () => valueFormInitialState },
+            { Default: () => initialKeyValue },
+            { Default: () => initialValueValue },
+            keyForm,
+            valueForm
+          ).withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
+            .mapContext<any>(_ => ({ ..._, label: label }))
+        } else {
+          formConfig[fieldName] = FieldView(fieldConfig, fieldViews, viewType, viewName, fieldName, label, EnumOptionsSources, fieldsOptionsConfig, leafPredicates);
+        }
       }
     }
     if (typeof formConfig[fieldName] == "string") {
@@ -336,6 +400,8 @@ export const parseForms =
         const formFieldStreams = formConfig.fields.filter(field => field.api.stream != undefined).map(field => field.api.stream).toObject()
         const formFieldEnumOptions = formConfig.fields.filter(field => field.api.enumOptions != undefined).map(field => field.api.enumOptions).toObject()
         const formFieldElementRenderers = formConfig.fields.filter(field => field.elementRenderer != undefined).map(field => field.elementRenderer).toObject()
+        const formFieldKeyRenderers = formConfig.fields.filter(field => field.mapRenderer != undefined).map(field => field.mapRenderer?.keyRenderer).toObject()
+        const formFieldValueRenderers = formConfig.fields.filter(field => field.mapRenderer != undefined).map(field => field.mapRenderer?.valueRenderer).toObject()
 
         try {
           const parsedForm = ParseForm(
@@ -347,6 +413,8 @@ export const parseForms =
             parsedForms,
             formFieldRenderers,
             formFieldElementRenderers,
+            formFieldKeyRenderers,
+            formFieldValueRenderers,
             formFieldStreams,
             formFieldEnumOptions,
             infiniteStreamSources,
@@ -363,7 +431,7 @@ export const parseForms =
           }).mapContext<Unit>(_ => ({ ..._, disabledFields: parsedForm.disabledFields, visibleFields: parsedForm.visibleFields, layout: formConfig.tabs }))
           parsedForms = parsedForms.set(formName, { ...parsedForm, form })
         } catch (error: any) {
-          errors.push(error)
+          errors.push(error.message ?? error)
         }
       })
 

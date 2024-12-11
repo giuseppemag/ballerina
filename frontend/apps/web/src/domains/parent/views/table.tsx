@@ -21,7 +21,7 @@ export const ParentTable = (props: Parent) =>
 			</tr>
 			<tr>
 				<td>Status:</td>
-				<td style={{ width: "800px" }}>{props.inputString.status}</td>
+				<td style={{ width: "800px" }}>{props.inputString.status.value}</td>
 			</tr>
 		</table>
 	</>

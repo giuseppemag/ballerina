@@ -91,6 +91,8 @@ export * from "./src/forms/domains/primitives/domains/searchable-infinite-stream
 export * from "./src/forms/domains/primitives/domains/searchable-infinite-stream-multiselect/template"
 export * from "./src/forms/domains/primitives/domains/list/state"
 export * from "./src/forms/domains/primitives/domains/list/template"
+export * from "./src/forms/domains/primitives/domains/map/state"
+export * from "./src/forms/domains/primitives/domains/map/template"
 export * from "./src/forms/domains/singleton/domains/mapping/state"
 export * from "./src/forms/domains/singleton/domains/mapping/template"
 export * from "./src/forms/domains/parser/state"

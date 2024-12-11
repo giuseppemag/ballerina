@@ -6,6 +6,7 @@ export type FieldConfig = {
   label: string
   api: { stream?: string, enumOptions?: string },
   elementRenderer?: string,
+  mapRenderer?: { keyRenderer: FieldConfig, valueRenderer: FieldConfig },
   visible: BoolExpr<any>;
   disabled: BoolExpr<any>;
 };
@@ -98,8 +99,10 @@ export const FormsConfig = {
           } else if (typeof configFieldType == "object") {
             if ("fun" in configFieldType && "args" in configFieldType &&
               typeof configFieldType["fun"] == "string" &&
-              Array.isArray(configFieldType["args"]) &&
-              configFieldType["args"].every(_ => typeof (_) == "string")) {
+              Array.isArray(configFieldType["args"]) 
+              // &&
+              // configFieldType["args"].every(_ => typeof (_) == "string")
+            ) {
               const fieldType: Type = {
                 kind: "application",
                 value: configFieldType["fun"] as any,
@@ -122,10 +125,10 @@ export const FormsConfig = {
             errors.push(`field ${fieldName} of type ${typeName} is non-existent primitive type ${fieldDef.value}`);
           if (fieldDef.kind == "lookup" && !types.has(fieldDef.name))
             errors.push(`field ${fieldName} of type ${typeName} is non-existent type ${fieldDef.name}`);
-          if (fieldDef.kind == "application" && !builtIns.generics.has(fieldDef.value))
-            errors.push(`field ${fieldName} of type ${typeName} applies non-existent generic type ${fieldDef.value}`);
-          if (fieldDef.kind == "application" && fieldDef.args.some(argType => !builtIns.primitives.has(argType) && !types.has(argType)))
-            errors.push(`field ${fieldName} of type ${typeName} applies non-existent type arguments ${JSON.stringify(fieldDef.args.filter(argType => !builtIns.primitives.has(argType) && !types.has(argType)))}`);
+          // if (fieldDef.kind == "application" && !builtIns.generics.has(fieldDef.value))
+          //   errors.push(`field ${fieldName} of type ${typeName} applies non-existent generic type ${fieldDef.value}`);
+          // if (fieldDef.kind == "application" && fieldDef.args.some(argType => !builtIns.primitives.has(argType) && !types.has(argType)))
+          //   errors.push(`field ${fieldName} of type ${typeName} applies non-existent type arguments ${JSON.stringify(fieldDef.args.filter(argType => !builtIns.primitives.has(argType) && !types.has(argType)))}`);
           if (fieldDef.kind == "application" && fieldDef.value == "SingleSelection") {
             if (fieldDef.args.length != 1)
               errors.push(`field ${fieldName} in type ${typeName}: SingleSelection should have exactly one type argument, found ${JSON.stringify(fieldDef.args)}`);
@@ -259,7 +262,7 @@ export const FormsConfig = {
 
       let forms: Map<string, FormDef> = Map();
       Object.keys(formsConfig["forms"]).forEach((formName: any) => {
-        let formDef: FormDef = { name: formName, type: "", fields: Map(), tabs: Map(), typeDef:null! };
+        let formDef: FormDef = { name: formName, type: "", fields: Map(), tabs: Map(), typeDef: null! };
         forms = forms.set(formName, formDef);
         const configFormDef = formsConfig["forms"][formName];
         if ("type" in configFormDef == false) {
@@ -288,73 +291,115 @@ export const FormsConfig = {
                 errors.push(`field ${fieldName} of form ${formName} has no 'renderer' attribute`);
               }
               const fieldTypeDef = formTypeDef?.fields.get(fieldName)
-              if (fieldTypeDef?.kind == "primitive") {
-                if (fieldTypeDef.value == "maybeBoolean") {
-                  // alert(JSON.stringify(fieldConfig["renderer"]))
-                  // alert(JSON.stringify(builtIns.renderers.MaybeBooleanViews))
-                  if (!builtIns.renderers.maybeBoolean.has(fieldConfig["renderer"]))
-                    errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
-                } else if (fieldTypeDef.value == "boolean") {
-                  if (!builtIns.renderers.boolean.has(fieldConfig["renderer"]))
-                    errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
-                } else if (fieldTypeDef.value == "number") {
-                  if (!builtIns.renderers.number.has(fieldConfig["renderer"]))
-                    errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
-                } else if (fieldTypeDef.value == "string") {
-                  if (!builtIns.renderers.string.has(fieldConfig["renderer"]))
-                    errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
-                } else if (fieldTypeDef.value == "Date") {
-                  if (!builtIns.renderers.date.has(fieldConfig["renderer"])) {
-                    alert(JSON.stringify(builtIns.renderers))
-                    errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
-                  }
-                  } else {
-                  errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
-                }
-              } else if (fieldTypeDef?.kind == "application") {
-                if (fieldTypeDef?.value == "SingleSelection") {
-                  if (!builtIns.renderers.enumSingleSelection.has(fieldConfig["renderer"]) &&
-                    !builtIns.renderers.streamSingleSelection.has(fieldConfig["renderer"]))
-                    errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
-                } else if (fieldTypeDef?.value == "Multiselection") {
-                  if (!builtIns.renderers.enumMultiSelection.has(fieldConfig["renderer"]) &&
-                    !builtIns.renderers.streamMultiSelection.has(fieldConfig["renderer"]))
-                    errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
-                } else if (fieldTypeDef?.value == "List") {
-                  if (!builtIns.renderers.list.has(fieldConfig["renderer"]))
-                    errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
-                }
-                if (fieldTypeDef.args.length < 1)
-                  errors.push(`field ${fieldName} of form ${formName} should have one type argument}`);
-                else if (
-                  (builtIns.renderers.list.has(fieldConfig["renderer"])) && "elementRenderer" in fieldConfig != true)
-                  errors.push(`field ${fieldName} of form ${formName} is missing the 'elementRenderer' property`);
-                else if (
-                  (builtIns.renderers.enumMultiSelection.has(fieldConfig["renderer"]) ||
-                    builtIns.renderers.enumSingleSelection.has(fieldConfig["renderer"])) && "options" in fieldConfig != true)
-                  errors.push(`field ${fieldName} of form ${formName} is missing the 'options' property`);
-                else if (
-                  (builtIns.renderers.streamSingleSelection.has(fieldConfig["renderer"]) ||
-                    builtIns.renderers.streamMultiSelection.has(fieldConfig["renderer"])) && "stream" in fieldConfig != true)
-                  errors.push(`field ${fieldName} of form ${formName} is missing the 'stream' property`);
-                else if ((builtIns.renderers.enumMultiSelection.has(fieldConfig["renderer"]) ||
-                  builtIns.renderers.enumSingleSelection.has(fieldConfig["renderer"])) && (enums.get(fieldConfig["options"])) != fieldTypeDef.args[0]) {
-                  if (enums.has(fieldConfig["options"]))
-                    errors.push(`field ${fieldName} of form ${formName} references an enum api with type ${enums.get(fieldConfig["options"])} when ${fieldTypeDef.args[0]} was expected`);
-                  else
-                    errors.push(`field ${fieldName} of form ${formName} references a non-existing enum api`);
-                } else if ((builtIns.renderers.streamMultiSelection.has(fieldConfig["renderer"]) ||
-                  builtIns.renderers.streamSingleSelection.has(fieldConfig["renderer"])) && (streams.get(fieldConfig["stream"])) != fieldTypeDef.args[0]) {
-                  if (streams.has(fieldConfig["stream"]))
-                    errors.push(`field ${fieldName} of form ${formName} references an api with type ${streams.get(fieldConfig["stream"])} when ${fieldTypeDef.args[0]} was expected`);
-                  else
-                    errors.push(`field ${fieldName} of form ${formName} references a non-existing stream api`);
-                }
-              }
+              if (!fieldTypeDef)
+                errors.push(`field ${fieldName} of form ${formName} has no corresponding type `);
             }
           })
         }
       })
+
+      const rendererMatchesType = (formName:string, fieldName:string) => (fieldTypeDef:Type, fieldConfig:any) => {
+        if (fieldTypeDef?.kind == "primitive") {
+          if (fieldTypeDef.value == "maybeBoolean") {
+            // alert(JSON.stringify(fieldConfig["renderer"]))
+            // alert(JSON.stringify(builtIns.renderers.MaybeBooleanViews))
+            if (!builtIns.renderers.maybeBoolean.has(fieldConfig["renderer"]))
+              errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
+          } else if (fieldTypeDef.value == "boolean") {
+            if (!builtIns.renderers.boolean.has(fieldConfig["renderer"]))
+              errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
+          } else if (fieldTypeDef.value == "number") {
+            if (!builtIns.renderers.number.has(fieldConfig["renderer"]))
+              errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
+          } else if (fieldTypeDef.value == "string") {
+            if (!builtIns.renderers.string.has(fieldConfig["renderer"]))
+              errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
+          } else if (fieldTypeDef.value == "Date") {
+            if (!builtIns.renderers.date.has(fieldConfig["renderer"])) {
+              alert(JSON.stringify(builtIns.renderers))
+              errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
+            }
+          } else {
+            errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
+          }
+        } else if (fieldTypeDef?.kind == "application") {
+          if (fieldTypeDef?.value == "SingleSelection") {
+            if (!builtIns.renderers.enumSingleSelection.has(fieldConfig["renderer"]) &&
+              !builtIns.renderers.streamSingleSelection.has(fieldConfig["renderer"]))
+              errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
+          } else if (fieldTypeDef?.value == "Multiselection") {
+            if (!builtIns.renderers.enumMultiSelection.has(fieldConfig["renderer"]) &&
+              !builtIns.renderers.streamMultiSelection.has(fieldConfig["renderer"]))
+              errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
+          } else if (fieldTypeDef?.value == "List") {
+            if (!builtIns.renderers.list.has(fieldConfig["renderer"]))
+              errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
+          } else if (fieldTypeDef?.value == "Map") {
+            if (!builtIns.renderers.map.has(fieldConfig["renderer"]))
+              errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
+            if ("keyRenderer" in fieldConfig != true || "valueRenderer" in fieldConfig != true)
+              errors.push(`field ${fieldName} of form ${formName} must have both a keyRenderer and a valueRenderer`);
+            if (fieldTypeDef.args.length != 2)
+              errors.push(`field ${fieldName} of form ${formName} should have exactly two type arguments`);
+            else {
+              const typeDefToType = (typeDef:any) : Type | undefined =>
+                "fun" in typeDef == false ? undefined
+              : "args" in typeDef == false ? undefined
+              : Array.isArray(typeDef.args) == false ? undefined
+              :  Type.Default.application(typeDef.fun, typeDef.args)
+              const keyType:Type | undefined = typeof fieldTypeDef.args[0] == "string" ? Type.Operations.FromName(types, builtIns)(fieldTypeDef.args[0]) : typeDefToType(fieldTypeDef.args[0] as any)
+              const valueType:Type | undefined = typeof fieldTypeDef.args[1] == "string" ? Type.Operations.FromName(types, builtIns)(fieldTypeDef.args[1]) : typeDefToType(fieldTypeDef.args[1] as any)
+              if (!keyType) {
+                errors.push(`field ${fieldName} of form ${formName} references non-existing key type ${JSON.stringify(fieldTypeDef.args[0])}`);
+              } else if (!valueType) {
+                errors.push(`field ${fieldName} of form ${formName} references non-existing value type ${JSON.stringify(fieldTypeDef.args[1])}`);
+              } else {
+                rendererMatchesType(formName, fieldName)(keyType, fieldConfig.keyRenderer)
+                rendererMatchesType(formName, fieldName)(valueType, fieldConfig.valueRenderer)
+              }
+            }
+          }
+          if (fieldTypeDef.args.length < 1)
+            errors.push(`field ${fieldName} of form ${formName} should have one type argument}`);
+          else if (
+            (builtIns.renderers.list.has(fieldConfig["renderer"])) && "elementRenderer" in fieldConfig != true)
+            errors.push(`field ${fieldName} of form ${formName} is missing the 'elementRenderer' property`);
+          else if (
+            (builtIns.renderers.enumMultiSelection.has(fieldConfig["renderer"]) ||
+              builtIns.renderers.enumSingleSelection.has(fieldConfig["renderer"])) && "options" in fieldConfig != true)
+            errors.push(`field ${fieldName} of form ${formName} is missing the 'options' property`);
+          else if (
+            (builtIns.renderers.streamSingleSelection.has(fieldConfig["renderer"]) ||
+              builtIns.renderers.streamMultiSelection.has(fieldConfig["renderer"])) && "stream" in fieldConfig != true)
+            errors.push(`field ${fieldName} of form ${formName} is missing the 'stream' property`);
+          else if ((builtIns.renderers.enumMultiSelection.has(fieldConfig["renderer"]) ||
+            builtIns.renderers.enumSingleSelection.has(fieldConfig["renderer"])) && (enums.get(fieldConfig["options"])) != fieldTypeDef.args[0]) {
+            if (enums.has(fieldConfig["options"]))
+              errors.push(`field ${fieldName} of form ${formName} references an enum api with type ${enums.get(fieldConfig["options"])} when ${fieldTypeDef.args[0]} was expected`);
+            else
+              errors.push(`field ${fieldName} of form ${formName} references a non-existing enum api`);
+          } else if ((builtIns.renderers.streamMultiSelection.has(fieldConfig["renderer"]) ||
+            builtIns.renderers.streamSingleSelection.has(fieldConfig["renderer"])) && (streams.get(fieldConfig["stream"])) != fieldTypeDef.args[0]) {
+            if (streams.has(fieldConfig["stream"]))
+              errors.push(`field ${fieldName} of form ${formName} references an api with type ${streams.get(fieldConfig["stream"])} when ${fieldTypeDef.args[0]} was expected`);
+            else
+              errors.push(`field ${fieldName} of form ${formName} references a non-existing stream api`);
+          }
+        } else {
+          const formTypeDef = types.get(fieldTypeDef.name)
+          if (!formTypeDef) {
+            alert(JSON.stringify([fieldName, fieldTypeDef, fieldConfig]))
+            errors.push(`field ${fieldName} of form ${formName} references a non-existing type ${fieldTypeDef.name}`);
+          } else {
+            const form = forms.get(fieldConfig.renderer ?? "")
+            if (!form) {
+              errors.push(`field ${fieldName} of form ${formName} references non-existing form ${fieldConfig.renderer}`);
+            } else if (fieldTypeDef.name != form.typeDef.name) {
+              errors.push(`field ${fieldName} of form ${formName} expected renderer for ${fieldTypeDef.name} but instead found a renderer for ${form.typeDef.name}`);
+            }
+          }
+        }
+      }
 
       Object.keys(formsConfig["forms"]).forEach((formName: any) => {
         let formDef: FormDef = forms.get(formName)!
@@ -363,6 +408,8 @@ export const FormsConfig = {
         Object.keys(configFormDef["fields"]).forEach(fieldName => {
           const fieldConfig = configFormDef["fields"][fieldName]
           const fieldTypeDef = formTypeDef?.fields.get(fieldName);
+          if (fieldTypeDef)
+            rendererMatchesType(formName, fieldName)(fieldTypeDef, fieldConfig)
           if (fieldTypeDef && fieldTypeDef.kind == "application" && fieldTypeDef.value == "List" && (builtIns.renderers.list.has(fieldConfig["renderer"]))) {
             let elementRenderer = fieldConfig["elementRenderer"]
             let elementType = fieldTypeDef.args[0]
@@ -404,6 +451,10 @@ export const FormsConfig = {
             renderer: fieldConfig.renderer,
             label: fieldConfig.label ?? fieldName,
             elementRenderer: fieldConfig.elementRenderer,
+            mapRenderer: 
+              fieldConfig.keyRenderer && fieldConfig.valueRenderer ? 
+                { keyRenderer:fieldConfig.keyRenderer, valueRenderer:fieldConfig.valueRenderer } 
+              : undefined,
             visible: BoolExpr.Default(fieldConfig.visible),
             disabled: fieldConfig.disabled != undefined ?
               BoolExpr.Default(fieldConfig.disabled)

@@ -6,6 +6,12 @@ import { AddressApi } from "../../address/apis/mocks"
 import { v4 } from "uuid"
 import { PersonApi } from "../../../apis/mocks"
 
+const permissions: Array<[CollectionReference, BoolExpr<Unit>]> = [
+  [CollectionReference.Default(v4(), "create"), BoolExpr.Default.true()],
+  [CollectionReference.Default(v4(), "read"), BoolExpr.Default.true()],
+  [CollectionReference.Default(v4(), "update"), BoolExpr.Default.true()],
+  [CollectionReference.Default(v4(), "delete"), BoolExpr.Default.true()]
+]
 const colors: Array<[CollectionReference, BoolExpr<Unit>]> = [
   [CollectionReference.Default(v4(), faker.color.human()), BoolExpr.Default.true()],
   [CollectionReference.Default(v4(), faker.color.human()), BoolExpr.Default.true()],
@@ -43,8 +49,11 @@ const enumApis: EnumOptionsSources = (enumName: string) =>
   enumName == "colors" ?
     () => PromiseRepo.Default.mock(() => colors)
     :
+    enumName == "permissions" ?
+      () => PromiseRepo.Default.mock(() => permissions)
+    :
     enumName == "genders" ?
-    () => PromiseRepo.Default.mock(() => genders)
+      () => PromiseRepo.Default.mock(() => genders)
       :
       enumName == "interests" ?
         () => PromiseRepo.Default.mock(() => interests)
@@ -75,7 +84,7 @@ const entityApis: EntityApis = {
         gender: undefined,
         interests: [interests[1][0], interests[2][0]],
         departments: [],
-        mainAddress:{
+        mainAddress: {
           street: faker.location.street(),
           number: Math.floor(Math.random() * 500),
           city: Math.random() > 0.5 ?
@@ -91,8 +100,38 @@ const entityApis: EntityApis = {
             :
             City.Default(v4(), faker.location.city())
         }]),
-        emails:["john@doe.it", "johnthedon@doe.com"]
-      })
+        emails: ["john@doe.it", "johnthedon@doe.com"],
+        "addressesWithLabel": [
+          ["home", {
+            street: faker.location.street(),
+            number: Math.floor(Math.random() * 500),
+            city: Math.random() > 0.5 ?
+              undefined
+              :
+              City.Default(v4(), faker.location.city())
+          }]
+        ],
+        "addressesByCity": [
+          [City.Default(v4(), faker.location.city()), {
+            street: faker.location.street(),
+            number: Math.floor(Math.random() * 500),
+            city: Math.random() > 0.5 ?
+              undefined
+              :
+              City.Default(v4(), faker.location.city())
+          }],
+          [undefined, {
+            street: faker.location.street(),
+            number: Math.floor(Math.random() * 500),
+            city: Math.random() > 0.5 ?
+              undefined
+              :
+              City.Default(v4(), faker.location.city())
+          }]
+        ],
+        "addressesWithColorLabel": [],
+        "permissions": [],
+    })
       : (id: Guid) => {
         alert(`Cannot find entity API ${apiName} for 'get'`)
         return Promise.reject()
@@ -112,24 +151,29 @@ const entityApis: EntityApis = {
           surname: "",
           birthday: Date.now(),
           subscribeToNewsletter: false,
-          favoriteColor: undefined, 
-            // CollectionSelection<CollectionReference>().Default.right("no selection"),
-          gender: undefined, 
-            // CollectionSelection<CollectionReference>().Default.right("no selection"),
-          interests: [], 
-            // OrderedMap(),
-          departments: [], 
-            // OrderedMap(),
+          favoriteColor: undefined,
+          // CollectionSelection<CollectionReference>().Default.right("no selection"),
+          gender: undefined,
+          // CollectionSelection<CollectionReference>().Default.right("no selection"),
+          interests: [],
+          // OrderedMap(),
+          departments: [],
+          // OrderedMap(),
           mainAddress: {
             street: "",
             number: 0,
-            city: undefined, 
-              // CollectionSelection<CollectionReference>().Default.right("no selection"),
+            city: undefined,
+            // CollectionSelection<CollectionReference>().Default.right("no selection"),
           },
-          addresses: [], 
-           // List(),
-          emails: [], 
-            // List(),
+          addresses: [],
+          // List(),
+          emails: [],
+          // List(),
+
+          "addressesWithLabel": [],
+          "addressesByCity": [],
+          "addressesWithColorLabel": [],
+          "permissions": [],
         })
       }
       )

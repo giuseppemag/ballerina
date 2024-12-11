@@ -1,4 +1,4 @@
-import { SharedFormState, AsyncState, FormLabel, BooleanView, NumberView, StringView, DateView, CollectionReference, EnumView, EnumMultiselectView, SearchableInfiniteStreamView, InfiniteStreamMultiselectView, BaseEnumContext, MaybeBooleanView, ListFieldView, unit } from "ballerina-core";
+import { SharedFormState, AsyncState, FormLabel, BooleanView, NumberView, StringView, DateView, CollectionReference, EnumView, EnumMultiselectView, SearchableInfiniteStreamView, InfiniteStreamMultiselectView, BaseEnumContext, MaybeBooleanView, ListFieldView, unit, MapFieldView } from "ballerina-core";
 
 export const MostUglyValidationDebugView = (props: { context: SharedFormState }) =>
   props.context.modifiedByUser && AsyncState.Operations.isLoading(props.context.validation.sync) ?
@@ -226,5 +226,32 @@ export const PersonFieldViews = {
               props.foreignMutations.add(unit)
             }}>➕</button>
           </>
-  }
+  },
+  map: {
+    defaultMap: <K, V, KeyFormState, ValueFormState, Context extends FormLabel, ForeignMutationsExpected>():
+      MapFieldView<K, V, KeyFormState, ValueFormState, Context, ForeignMutationsExpected> =>
+      props =>
+          <>
+            {props.context.label && <h3>{props.context.label}</h3>}
+            <ul>
+              {props.context.value.map((element, elementIndex) => {
+                return (
+                <li>
+                  <button onClick={() => props.foreignMutations.remove(elementIndex)}>❌</button>
+                  {props.embeddedKeyTemplate(elementIndex)({
+                    ...props,
+                    view: unit,
+                  })}
+                  {props.embeddedValueTemplate(elementIndex)({
+                    ...props,
+                    view: unit,
+                  })}                  
+                </li>
+              )})}
+            </ul>
+            <button onClick={() => {
+              props.foreignMutations.add(unit)
+            }}>➕</button>
+          </>
+  }  
 };

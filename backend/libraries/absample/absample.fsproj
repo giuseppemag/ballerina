@@ -8,6 +8,8 @@
   <ItemGroup>
     <Compile Include="./models/models.fs" />
     <Compile Include="./models/ef-models.fs" />
+    <Compile Include="./coroutines/context.fs" />
+    <Compile Include="./coroutines/jobs.fs" />
   </ItemGroup>
 
   <ItemGroup>

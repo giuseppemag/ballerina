@@ -1,79 +1,16 @@
 module Program
 open System
-open System.CommandLine
-open System.Collections.Generic
-open System.IO
 open System.Linq
-open System.Threading.Tasks
-open Microsoft.AspNetCore
-open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.Hosting
-open Microsoft.AspNetCore.HttpsPolicy
-open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.DependencyInjection
-open Microsoft.Extensions.Hosting
-open Microsoft.Extensions.Logging
-open Microsoft.Extensions.Options
 open Ballerina.Coroutines
-open Ballerina.CRUD
 open Migrations
 open Microsoft.EntityFrameworkCore
-open MBrace.FsPickler
-open MBrace.FsPickler.Json
-open Microsoft.AspNetCore.Mvc
-open Microsoft.AspNetCore.Http.Json
-open System.Text.Json
-open System.Text.Json.Serialization
-open Ballerina.Fun
-open Ballerina.Queries
 open absample.efmodels
 open absample.repositories
-open absample.endpoints
-open Microsoft.OpenApi.Models
-open System.Threading
-
-type ABContext = { ABs:Crud<absample.efmodels.AB>; ABEvents:Crud<absample.efmodels.ABEvent> }
+open absample.coroutines.context
+open absample.coroutines.jobs
 
 let abEventLoop (createScope:Unit -> IServiceScope) =
-  let processAEvents (abId:Guid) : Coroutine<Unit, Unit, ABContext, absample.models.ABEvent> =
-    co.Repeat(
-      co.Any([
-        co{
-          let! a_e = co.On(function absample.models.ABEvent.AEvent e when e.event.ABId = abId -> Some e | _ -> None)
-          do! co.Wait(TimeSpan.FromSeconds 0.0)
-          do! co.Do(fun ctx -> ctx.ABs.update abId (fun ab -> ({ ab with ACount = ab.ACount+a_e.AStep })))
-          do! co.Wait(TimeSpan.FromSeconds 0.0)
-        }
-        co{
-          do! co.Wait (TimeSpan.FromSeconds 3.0)
-          do! co.Do(fun ctx -> ctx.ABs.update abId (fun ab -> ({ ab with AFailCount = ab.AFailCount+1 })))
-          do! co.Wait(TimeSpan.FromSeconds 0.0)
-        }
-      ])
-    )
-  let processBEvents (abId:Guid) : Coroutine<Unit, Unit, ABContext, absample.models.ABEvent> =
-    co.Repeat(
-      co.Any([
-        co{
-          let! b_e = co.On(function absample.models.ABEvent.BEvent e when e.event.ABId = abId -> Some e | _ -> None)
-          do! co.Wait(TimeSpan.FromSeconds 0.0)
-          do! co.Do(fun ctx -> ctx.ABs.update abId (fun ab -> ({ ab with BCount = ab.BCount+b_e.BStep })))
-          do! co.Wait(TimeSpan.FromSeconds 0.0)
-        }
-        co{
-          do! co.Wait (TimeSpan.FromSeconds 5.0)
-          do! co.Produce (Guid.NewGuid(), absample.models.ABEvent.AEvent { event={ ABEventId=Guid.Empty; ABId=abId; AB=Unchecked.defaultof<AB>; CreatedAt=DateTime.UtcNow; ProcessingStatus=ABEventStatus.Enqueued }; AStep=1 })
-          do! co.Wait(TimeSpan.FromSeconds 0.0)
-          do! co.Do(fun ctx -> ctx.ABs.update abId (fun ab -> ({ ab with BFailCount = ab.BFailCount+1 })))
-          do! co.Wait(TimeSpan.FromSeconds 0.0)
-        }
-      ])
-    )
-  let processAB abId = 
-    co.Any([
-      processAEvents abId
-      processBEvents abId
-    ])
 
   let init(): EvaluatedCoroutines<_,_,_> = 
     use scope = createScope()

@@ -16,7 +16,8 @@ export type PrimitiveType = (typeof PrimitiveTypes)[number]
 export const GenericTypes = [
   "SingleSelection",
   "MultiSelection",
-  "List"] as const
+  "List",
+  "Map"] as const
 export type GenericType = (typeof GenericTypes)[number]
 
 export type ApiConverter<T> = { fromAPIRawValue: BasicFun<any, T>, toAPIRawValue: BasicFun<T, any> }
@@ -30,6 +31,7 @@ export type ApiConverters = {
   "SingleSelection": ApiConverter<CollectionSelection<any>>
   "MultiSelection": ApiConverter<OrderedMap<string, any>>
   "List": ApiConverter<List<any>>
+  "Map": ApiConverter<List<[any, any]>>
 }
 
 export type PrimitiveBuiltIn = { renderers: Set<keyof BuiltIns["renderers"]>, apiConverters: ApiConverter<any>, defaultValue: any }
@@ -48,6 +50,7 @@ export type BuiltIns = {
     streamSingleSelection: Set<string>;
     streamMultiSelection: Set<string>;
     list: Set<string>;
+    map: Set<string>;
   };
 };
 
@@ -65,7 +68,8 @@ export const builtInsFromFieldViews = (fieldViews: any, fieldTypeConverters: Api
     "generics": Map([
       ["SingleSelection", { apiConverters: fieldTypeConverters["SingleSelection"], defaultValue: CollectionSelection().Default.right("no selection") }] as [string, GenericBuiltIn],
       ["Multiselection", { apiConverters: fieldTypeConverters["SingleSelection"], defaultValue: Map() }] as [string, GenericBuiltIn],
-      ["List", { apiConverters: fieldTypeConverters["SingleSelection"], defaultValue: List() }] as [string, GenericBuiltIn]
+      ["List", { apiConverters: fieldTypeConverters["SingleSelection"], defaultValue: List() }] as [string, GenericBuiltIn],
+      ["Map", { apiConverters: fieldTypeConverters["SingleSelection"], defaultValue: List() }] as [string, GenericBuiltIn]
     ]),
     "renderers": {
       "boolean": Set(),
@@ -78,6 +82,7 @@ export const builtInsFromFieldViews = (fieldViews: any, fieldTypeConverters: Api
       "number": Set(),
       "string": Set(),
       "list": Set(),
+      "map": Set(),
     }
   }
   Object.keys(builtins.renderers).forEach((_categoryName) => {
@@ -92,31 +97,53 @@ export const builtInsFromFieldViews = (fieldViews: any, fieldTypeConverters: Api
 }
 
 
-export const defaultValue = (types:Map<TypeName, TypeDefinition>, builtIns:BuiltIns) => (t: TypeName): any => {
-  let primitive = builtIns.primitives.get(t)
-  if (primitive != undefined) {
-    return primitive.defaultValue
-  } else {
-    let generic = builtIns.generics.get(t)
-    if (generic != undefined) {
-      return generic.defaultValue
+export const defaultValue = (types: Map<TypeName, TypeDefinition>, builtIns: BuiltIns) => (t: TypeName | Type): any => {
+  if (typeof t == "string") {
+    let primitive = builtIns.primitives.get(t)
+    if (primitive != undefined) {
+      return primitive.defaultValue
     } else {
-      let custom = types.get(t)
-      if (custom != undefined) {
-        let res = {} as any
-        custom.fields.forEach((field, fieldName) => {
-          res[fieldName] = defaultValue(types, builtIns)(field.kind == "primitive" ? field.value : field.kind == "lookup" ? field.name : field.value)
-        }
-        )
-        return res
+      let generic = builtIns.generics.get(t)
+      if (generic != undefined) {
+        return generic.defaultValue
       } else {
-        throw `cannot find type ${t} when resolving defaultValue`
+        let custom = types.get(t)
+        if (custom != undefined) {
+          let res = {} as any
+          custom.fields.forEach((field, fieldName) => {
+            res[fieldName] = defaultValue(types, builtIns)(field.kind == "primitive" ? field.value : field.kind == "lookup" ? field.name : field.value)
+          }
+          )
+          return res
+        } else {
+          debugger
+          throw `cannot find type ${t} when resolving defaultValue`
+        }
       }
     }
+  } else {
+    if (t.kind == "application") {
+      const generic = builtIns.generics.get(t.value)
+      if (generic) {
+        const res = generic.defaultValue
+        return res
+      }
+    }
+    debugger
+    throw `cannot find type ${t} when resolving defaultValue`
   }
 }
 
-export const fromAPIRawValue = (t:Type, types:Map<TypeName, TypeDefinition>, builtIns:BuiltIns, converters:ApiConverters, isKeywordsReplaced: boolean = false) => (raw:any) : any => {
+
+const parseTypeIShouldBePartOfFormValidation = (t:any) : TypeName | Type => {
+  if (typeof t == "string") return t
+  if ("fun" in t && "args" in t && Array.isArray(t.args)) {
+    return { kind:"application", value:t.fun, args:t.args }
+  }
+  return null!
+}
+
+export const fromAPIRawValue = (t: Type, types: Map<TypeName, TypeDefinition>, builtIns: BuiltIns, converters: ApiConverters, isKeywordsReplaced: boolean = false) => (raw: any): any => {
   // alert(JSON.stringify(t))
   if (raw == undefined) {
     console.warn(`instantiating default value for type ${JSON.stringify(t)}: the value was undefined so something is missing from the API response`)
@@ -131,25 +158,49 @@ export const fromAPIRawValue = (t:Type, types:Map<TypeName, TypeDefinition>, bui
     if (t.value == "SingleSelection" && t.args.length == 1) {
       let result = converters[t.value].fromAPIRawValue(obj)
       result = CollectionSelection().Updaters.left(
-        fromAPIRawValue({ kind:"lookup", name:t.args[0] }, types, builtIns, converters, true))(result)
+        fromAPIRawValue({ kind: "lookup", name: t.args[0] }, types, builtIns, converters, true))(result)
       return result
     }
     if ((t.value == "Multiselection" || t.value == "MultiSelection") && t.args.length == 1) {
       let result = converters["MultiSelection"].fromAPIRawValue(obj)
-      result = result.map(fromAPIRawValue({ kind:"lookup", name:t.args[0] }, types, builtIns, converters, true))
+      result = result.map(fromAPIRawValue({ kind: "lookup", name: t.args[0] }, types, builtIns, converters, true))
       return result
     }
     if (t.value == "List" && t.args.length == 1) {
       let result = converters[t.value].fromAPIRawValue(obj)
       result = result.map(fromAPIRawValue(
         PrimitiveTypes.some(_ => _ == t.args[0]) ?
-          { kind:"primitive", value:t.args[0] as PrimitiveType }
-        : { kind:"lookup", name:t.args[0] }
+          { kind: "primitive", value: t.args[0] as PrimitiveType }
+          : { kind: "lookup", name: t.args[0] }
         , types, builtIns, converters, true))
       return result
     }
+    if (t.value == "Map" && t.args.length == 2) {
+      let result = converters[t.value].fromAPIRawValue(obj)
+      let t_args = t.args.map(parseTypeIShouldBePartOfFormValidation)
+      result = result.map(keyValue => ([
+        fromAPIRawValue(
+          typeof t_args[0] == "string" ? 
+            PrimitiveTypes.some(_ => _ == t_args[0]) ?
+              { kind: "primitive", value: t_args[0] as PrimitiveType }
+            : { kind: "lookup", name: t_args[0] }
+          :
+            t_args[0], 
+            types, builtIns, converters, true)(keyValue[0]),
+        fromAPIRawValue(
+          typeof t_args[1] == "string" ? 
+            PrimitiveTypes.some(_ => _ == t_args[1]) ?
+              { kind: "primitive", value: t_args[1] as PrimitiveType }
+            : { kind: "lookup", name: t_args[1] }
+          :
+            t_args[1], 
+            types, builtIns, converters, true)(keyValue[1]),
+      ])
+      )
+      return result
+    }
   } else { // t.kind == lookup: we are dealing with a record/object
-    let result:any = {...obj}
+    let result: any = { ...obj }
     const tDef = types.get(t.name)!
     tDef.fields.forEach((fieldType, fieldName) => {
       const replacedFieldName = replaceKeyword(fieldName)
@@ -163,8 +214,8 @@ export const fromAPIRawValue = (t:Type, types:Map<TypeName, TypeDefinition>, bui
 }
 
 
-export const toAPIRawValue = (t:Type, types:Map<TypeName, TypeDefinition>, builtIns:BuiltIns, converters:ApiConverters, isKeywordsReverted: boolean = false) => (raw:any) : any => {
-  
+export const toAPIRawValue = (t: Type, types: Map<TypeName, TypeDefinition>, builtIns: BuiltIns, converters: ApiConverters, isKeywordsReverted: boolean = false) => (raw: any): any => {
+
   const obj = !isKeywordsReverted ? replaceKeywords(raw, "to api") : raw
 
   if (t.kind == "primitive") {
@@ -173,7 +224,7 @@ export const toAPIRawValue = (t:Type, types:Map<TypeName, TypeDefinition>, built
     if (t.value == "SingleSelection" && t.args.length == 1) {
       let result = converters[t.value].toAPIRawValue(obj)
       if (result != undefined && typeof result == "object")
-        result = toAPIRawValue({ kind:"lookup", name:t.args[0] }, types, builtIns, converters, true)(result)
+        result = toAPIRawValue({ kind: "lookup", name: t.args[0] }, types, builtIns, converters, true)(result)
       return result
     }
     if ((t.value == "Multiselection" || t.value == "MultiSelection") && t.args.length == 1) {
@@ -181,8 +232,8 @@ export const toAPIRawValue = (t:Type, types:Map<TypeName, TypeDefinition>, built
       let result = converters["MultiSelection"].toAPIRawValue(obj)
       // alert(`MultiSelect result1 = ${JSON.stringify(result)}`)
       // alert(`${JSON.stringify(t.args[0])}`)
-      result = result.map((_:any) => 
-        typeof _ == "object" ? toAPIRawValue({ kind:"lookup", name:t.args[0] }, types, builtIns, converters, true)(_) : _)
+      result = result.map((_: any) =>
+        typeof _ == "object" ? toAPIRawValue({ kind: "lookup", name: t.args[0] }, types, builtIns, converters, true)(_) : _)
       // alert(`MultiSelect result2 = ${JSON.stringify(result)}`)
       return result
     }
@@ -190,14 +241,41 @@ export const toAPIRawValue = (t:Type, types:Map<TypeName, TypeDefinition>, built
       let result = converters[t.value].toAPIRawValue(obj)
       result = result.map(toAPIRawValue(
         PrimitiveTypes.some(_ => _ == t.args[0]) ?
-          { kind:"primitive", value:t.args[0] as PrimitiveType }
-        : { kind:"lookup", name:t.args[0] },
+          { kind: "primitive", value: t.args[0] as PrimitiveType }
+          : { kind: "lookup", name: t.args[0] },
         // { kind:"lookup", name:t.args[0] }, 
         types, builtIns, converters, true))
       return result
     }
+    if (t.value == "Map" && t.args.length == 2) {
+      let result = converters[t.value].toAPIRawValue(obj)
+
+      let t_args = t.args.map(parseTypeIShouldBePartOfFormValidation)
+      result = result.map((keyValue: any) => ([
+        toAPIRawValue(
+          typeof t_args[0] == "string" ? 
+            PrimitiveTypes.some(_ => _ == t_args[0]) ?
+              { kind: "primitive", value: t_args[0] as PrimitiveType }
+            : { kind: "lookup", name: t_args[0] }
+          :
+            t_args[0], 
+            types, builtIns, converters, true)(keyValue[0]),
+        toAPIRawValue(
+          typeof t_args[1] == "string" ? 
+            PrimitiveTypes.some(_ => _ == t_args[1]) ?
+              { kind: "primitive", value: t_args[1] as PrimitiveType }
+            : { kind: "lookup", name: t_args[1] }
+          :
+            t_args[1], 
+          types, builtIns, converters, true)(keyValue[1]),
+      ])
+      )
+
+      return result
+    }
+
   } else { // t.kind == lookup: we are dealing with a record/object
-    let result:any = {...obj}
+    let result: any = { ...obj }
     const tDef = types.get(t.name)!
     tDef.fields.forEach((fieldType, fieldName) => {
       const revertedFieldName = revertKeyword(fieldName)
@@ -206,5 +284,5 @@ export const toAPIRawValue = (t:Type, types:Map<TypeName, TypeDefinition>, built
     })
     return result
   }
-  return defaultValue(types, builtIns)(t.value)     
+  return defaultValue(types, builtIns)(t.value)
 }
