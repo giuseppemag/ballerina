@@ -7,7 +7,7 @@ export type EditFormContext<E,FS> = {
   entityId:string,
   api:{
     get:() => Promise<E>,
-    update:BasicFun<E, Promise<ApiErrors>>
+    update:BasicFun<[E, FS], Promise<ApiErrors>>
   },
   actualForm:Template<Value<E> & FS, FS, { onChange:SimpleCallback<BasicUpdater<E>>}>
 }

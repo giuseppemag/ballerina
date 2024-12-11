@@ -7,6 +7,7 @@ import { PersonContainerFormView, PersonNestedContainerFormView, PersonShowFormS
 import { PersonFormsConfig, PersonFromConfigApis, PersonConfigFormsLeafPredicates, PersonConfig, PersonFormState, Person } from "playground-core";
 import { PersonFieldViews } from "./domains/person-from-config/views/field-views";
 import { PersonForm } from "./domains/person/template";
+import { fieldTypeConverters, modifiedDebugFieldTypeConverters } from "./domains/person/apis/field-converters";
 
 const ShowFormsParsingErrors = (parsedFormsConfig: FormParsingResult) =>
 	<div style={{ border: "red" }}>
@@ -23,44 +24,14 @@ export const FormsApp = (props: {}) => {
 	// const [personFormState, setPersonFormState] = useState(PersonFormState.Default(""))
 	// const [personConfigState, setPersonConfigState] = useState(PersonConfig.Default())
 
-	const fieldTypeConverters: ApiConverters = {
-		"string": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: _ => _ },
-		"number": { fromAPIRawValue: _ => typeof _ == "number" ? _ : 0, toAPIRawValue: _ => _ },
-		"boolean": { fromAPIRawValue: _ => typeof _ == "boolean" ? _ : false, toAPIRawValue: _ => _ },
-		"maybeBoolean": { fromAPIRawValue: _ => typeof _ == "boolean" ? _ : undefined, toAPIRawValue: _ => _ },
-		"base64File": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: _ => _ },
-		"secret": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: _ => "" },
-		"Date": { fromAPIRawValue: _ => typeof _ == "string" ? new Date(Date.parse(_)) : typeof _ == "number" ? new Date(_) : new Date(Date.now()), toAPIRawValue: _ => _ },
-		"CollectionReference": {
-			fromAPIRawValue: _ => CollectionReference.Default(_.id ?? "", _.displayName ?? ""),
-			toAPIRawValue: _ => ({ id: _.id, displayName: _.displayName })
-		},
-		"SingleSelection": {
-			fromAPIRawValue: _ => _ == undefined ? CollectionSelection().Default.right("no selection") :
-				CollectionSelection().Default.left(
-					CollectionReference.Default(_.id ?? "", _.displayName ?? "")
-				),
-			toAPIRawValue: _ => _.kind == "r" ? undefined : ({ id: _.value.id, displayName: _.value.displayName })
-		},
-		"MultiSelection": {
-			fromAPIRawValue: _ => _ == undefined ? OrderedMap() : OrderedMap(_.map((_: any) => ([_.id, _]))),
-			toAPIRawValue: _ => _.valueSeq().toArray()
-		},
-		"List": {
-			fromAPIRawValue: _ => _ == undefined ? List() : List(_),
-			toAPIRawValue: _ => _.valueSeq().toArray()
-		},
-		"Map": {
-			fromAPIRawValue: _ => _ == undefined ? List() : List(_),
-			toAPIRawValue: _ => _.valueSeq().toArray()
-		},
-	}
+	const [renderParserState, renderForms] = [true, true]
+	const debugFieldTypeConverters = true
+	const logState = false
 
-	console.log({
+	logState && console.log({
 		parser: configFormsParser,
 		runner: personEditFormState
 	})
-	const [renderParserState, renderForms] = [true, true]
 
 	return (
 		<div className="App">
@@ -128,7 +99,7 @@ export const FormsApp = (props: {}) => {
 									context={{
 										...configFormsParser,
 										containerFormView: PersonContainerFormView,
-										fieldTypeConverters: fieldTypeConverters,
+										fieldTypeConverters: debugFieldTypeConverters ? modifiedDebugFieldTypeConverters : fieldTypeConverters,
 										nestedContainerFormView: PersonNestedContainerFormView,
 										fieldViews: PersonFieldViews,
 										infiniteStreamSources: PersonFromConfigApis.streamApis,
