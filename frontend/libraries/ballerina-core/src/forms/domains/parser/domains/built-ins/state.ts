@@ -24,7 +24,8 @@ export const GenericTypes = [
 export type GenericType = (typeof GenericTypes)[number]
 
 export type ApiConverter<T> =  { fromAPIRawValue: BasicFun<any, T>, toAPIRawValue: BasicFun<[T, boolean], any> }
-export type ApiConverters = {
+export type ApiConverters = {[key: string]: ApiConverter<any> } & BuiltInApiConverters
+export type BuiltInApiConverters = {
   "string": ApiConverter<string>
   "number": ApiConverter<number>
   "boolean": ApiConverter<boolean>
@@ -160,7 +161,7 @@ const parseTypeIShouldBePartOfFormValidation = (t:any) : TypeName | Type => {
   return null!
 }
 
-export const fromAPIRawValue = (t: Type, types: Map<TypeName, TypeDefinition>, builtIns: BuiltIns, converters: ApiConverters, isKeywordsReplaced: boolean = false, injectedPrimitives?: InjectedPrimitives) => (raw: any): any => {
+export const fromAPIRawValue = (t: Type, types: Map<TypeName, TypeDefinition>, builtIns: BuiltIns, converters: BuiltInApiConverters, isKeywordsReplaced: boolean = false, injectedPrimitives?: InjectedPrimitives) => (raw: any): any => {
   // alert(JSON.stringify(t))
   if (raw == undefined) {
     console.warn(`instantiating default value for type ${JSON.stringify(t)}: the value was undefined so something is missing from the API response`)
@@ -234,7 +235,7 @@ export const fromAPIRawValue = (t: Type, types: Map<TypeName, TypeDefinition>, b
 }
 
 
-export const toAPIRawValue = (t: Type, types: Map<TypeName, TypeDefinition>, builtIns: BuiltIns, converters: ApiConverters, isKeywordsReverted: boolean = false, injectedPrimitives?: InjectedPrimitives) => (raw: any, formState: any) : any => {
+export const toAPIRawValue = (t: Type, types: Map<TypeName, TypeDefinition>, builtIns: BuiltIns, converters: BuiltInApiConverters, isKeywordsReverted: boolean = false, injectedPrimitives?: InjectedPrimitives) => (raw: any, formState: any) : any => {
   const obj = !isKeywordsReverted ? replaceKeywords(raw, "to api") : raw
 
   if (t.kind == "primitive") {

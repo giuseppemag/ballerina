@@ -76,6 +76,7 @@ const entityApis: EntityApis = {
   get: (apiName: string) =>
     apiName == "person" ?
       (id: Guid) => Promise.resolve({
+        category: "senior",
         name: faker.person.firstName(),
         surname: faker.person.lastName(),
         birthday: new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45),
@@ -111,6 +112,7 @@ const entityApis: EntityApis = {
               City.Default(v4(), faker.location.city())
           }]
         ],
+        "dependents": [],
         "addressesByCity": [
           [City.Default(v4(), faker.location.city()), {
             street: faker.location.street(),

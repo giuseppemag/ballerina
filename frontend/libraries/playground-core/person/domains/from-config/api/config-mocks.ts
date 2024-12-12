@@ -33,18 +33,21 @@ export const PersonFormsConfig = {
     },
     "Person": {
       fields: {
+        "category": "injectedCategory",
         "name": "string",
         "surname": "string",
         "birthday": "Date",
         "subscribeToNewsletter": "boolean",
         "favoriteColor": { fun: "SingleSelection", args: ["ColorRef"] },
         "gender": { fun: "SingleSelection", args: ["GenderRef"] },
+        "dependants": { fun: "Map", args: ["string", "injectedCategory"] },
+        "friendsByCategory": { fun: "Map", args: ["injectedCategory", "string"] },
+        "relatives": { fun: "List", args: ["injectedCategory"] },
         "interests": { fun: "Multiselection", args: ["InterestRef"] },
         "departments": { fun: "Multiselection", args: ["DepartmentRef"] },
         "mainAddress": "Address",
         "addresses": { fun: "List", args: ["Address"] },
         "emails": { fun: "List", args: ["string"] },
-
         "addressesWithLabel": { fun: "Map", args: ["string", "Address"] },
         "addressesByCity": { fun: "Map", args: [{ fun: "SingleSelection", args: ["CityRef"]}, "Address"] },
         "addressesWithColorLabel": { fun: "Map", args: [{ fun: "SingleSelection", args: ["ColorRef"]}, "Address"] },
@@ -105,6 +108,7 @@ export const PersonFormsConfig = {
     "person": {
       "type": "Person",
       "fields": {
+        "category": { label: "category", renderer: "defaultCategory", visible: { "kind": "true" } },
         "name": { label:"first name", renderer: "defaultString", visible: { "kind": "true" } },
         "surname": { label:"last name", renderer: "defaultString", visible: { "kind": "true" } },
         "birthday": { renderer: "defaultDate", visible: { "kind": "true" } },
@@ -120,6 +124,19 @@ export const PersonFormsConfig = {
             ]
           }
         },
+        "dependants": {
+          renderer: "defaultMap",
+          keyRenderer: { label: "name", renderer: "defaultString", visible: { "kind": "true" } },
+          valueRenderer: { renderer: "defaultCategory", visible: { "kind": "true" } },
+          visible: { "kind": "true" },
+        },
+        "friendsByCategory": {
+          renderer: "defaultMap",
+          keyRenderer: { renderer: "defaultCategory", visible: { "kind": "true" } },
+          valueRenderer: { label: "name", renderer: "defaultString", visible: { "kind": "true" } },
+          visible: { "kind": "true" },
+        },
+        "relatives": { renderer: "defaultList", elementRenderer:"defaultCategory", visible: { "kind": "true" } },
         "subscribeToNewsletter": { renderer: "defaultBoolean", visible: { "kind": "true" } },
         "interests": {
           renderer: "defaultEnumMultiselect", options: "interests",
@@ -157,9 +174,7 @@ export const PersonFormsConfig = {
           "columns": {
             "demographics": {
               "groups": {
-                "main": ["name", "surname", "birthday", "gender", "emails"
-
-                ],
+                "main": ["category", "name", "surname", "birthday", "gender", "emails", "dependants", "friendsByCategory", "relatives"],
               },
             },
             "mailing": {

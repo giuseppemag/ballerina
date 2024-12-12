@@ -100,7 +100,7 @@ export const ValidateRunner = <Context, FormState extends SharedFormState, Forei
           _ => validation ? validation(_.value) : Promise.resolve([]),
           () => "transient failure", 3, 50
         ), 50
-      ).embed(_ => ({..._.validation, value:_.value}), (_) => curr => (console.log('curr', curr), ({...curr, validation:_(curr.validation)})))
+      ).embed(_ => ({..._.validation, value:_.value}), (_) => curr => ({...curr, validation:_(curr.validation)}))
     ) :
     Co.SetState((curr) => ({...curr, validation: Debounced.Updaters.Core.dirty(replaceWith<DirtyStatus>("not dirty"))}))
     ,

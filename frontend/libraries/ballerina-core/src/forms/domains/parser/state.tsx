@@ -1,5 +1,5 @@
 import { List, Map, OrderedMap, OrderedSet, Set } from "immutable";
-import { BoolExpr, Unit, PromiseRepo, Guid, LeafPredicatesEvaluators, Predicate, FormsConfig, BuiltIns, FormDef, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, SharedFormState, CreateFormState, Entity, EditFormContext, CreateFormContext, MappedEntityFormTemplate, Mapping, FormValidationResult, Synchronized, simpleUpdater, PrimitiveType, GenericType, ApiConverter, TypeName, ListFieldState, ListForm, TypeDefinition, ApiConverters, defaultValue, fromAPIRawValue, toAPIRawValue, EditFormForeignMutationsExpected, MapFieldState, MapForm, Type, FieldConfig, Base64FileForm, SecretForm, InjectedPrimitives, Injectables } from "../../../../main";
+import { BoolExpr, Unit, PromiseRepo, Guid, LeafPredicatesEvaluators, Predicate, FormsConfig, BuiltIns, FormDef, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, SharedFormState, CreateFormState, Entity, EditFormContext, CreateFormContext, MappedEntityFormTemplate, Mapping, FormValidationResult, Synchronized, simpleUpdater, PrimitiveType, GenericType, ApiConverter, TypeName, ListFieldState, ListForm, TypeDefinition, BuiltInApiConverters, defaultValue, fromAPIRawValue, toAPIRawValue, EditFormForeignMutationsExpected, MapFieldState, MapForm, Type, FieldConfig, Base64FileForm, SecretForm, InjectedPrimitives, Injectables, ApiConverters } from "../../../../main";
 import { Value } from "../../../value/state";
 import { CollectionReference } from "../collection/domains/reference/state";
 import { CollectionSelection } from "../collection/domains/selection/state";
@@ -25,7 +25,7 @@ const parseOptions = (leafPredicates: any, options: any) => {
 
 //@jfinject
 export const FieldView = //<Context, FieldViews extends DefaultFieldViews, EnumFieldConfigs extends {}, EnumSources extends {}>() => <ViewType extends keyof FieldViews, ViewName extends keyof FieldViews[ViewType]>
-  (fieldConfig:FieldConfig, fieldViews: any, viewType: any, viewName: any, fieldName: string, label: string, enumFieldConfigs: EnumOptionsSources, enumSources: any, leafPredicates: any): any => // FieldView<Context, FieldViews, ViewType, ViewName> => 
+  (fieldConfig:FieldConfig, fieldViews: any, viewType: any, viewName: any, fieldName: string, label: string, enumFieldConfigs: EnumOptionsSources, enumSources: any, leafPredicates: any, injectedPrimitives?: InjectedPrimitives): any =>
   {
     if (viewType == "maybeBoolean")
       return MaybeBooleanForm<any & FormLabel, Unit>()
@@ -72,19 +72,27 @@ export const FieldView = //<Context, FieldViews extends DefaultFieldViews, EnumF
         .mapContext<any & FormLabel & SharedFormState & SearchableInfiniteStreamState<CollectionReference> & Value<OrderedMap<Guid, CollectionReference>>>(_ => ({ ..._, label: label })) as any
     if (viewType == "base64File")
       return Base64FileForm<any & FormLabel, Unit>()
-        .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
+      .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
         .mapContext<any & FormLabel & SharedFormState & Value<string>>(_ => ({ ..._, label: label })) as any
     if (viewType == "secret")
       return SecretForm<any & FormLabel, Unit>()
         .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
         .mapContext<any & FormLabel & SharedFormState & Value<string>>(_ => ({ ..._, label: label })) as any
+    // check injectedViews
+    if (injectedPrimitives?.injectedPrimitives.has(viewType)) {
+      const injectedPrimitive = injectedPrimitives.injectedPrimitives.get(viewType)
+      return injectedPrimitive?.fieldView(fieldViews, viewType, viewName, label) as any
+    }
     return `error: the view for ${viewType as string}::${viewName as string} cannot be found`;
   }
 
 export const FieldFormState = //<Context, FieldViews extends DefaultFieldViews, InfiniteStreamSources extends {}, InfiniteStreamConfigs extends {}>() => <ViewType extends keyof FieldViews, ViewName extends keyof FieldViews[ViewType]>
-  (fieldConfig:FieldConfig, fieldViews: any, viewType: any, viewName: any, fieldName: string, InfiniteStreamSources: any, infiniteStreamConfigs: any): any => {
-    if (viewType == "maybeBoolean" || viewType == "boolean" || viewType == "number" || viewType == "string" || viewType == "base64File" || viewType == "secret") //@jfinject -- can use the new type with union
+  (fieldConfig:FieldConfig, fieldViews: any, viewType: any, viewName: any, fieldName: string, InfiniteStreamSources: any, infiniteStreamConfigs: any, injectedPrimitives?: InjectedPrimitives): any => {
+    if (viewType == "maybeBoolean" || viewType == "boolean" || viewType == "number" || viewType == "string" || viewType == "base64File" || viewType == "secret")
       return SharedFormState.Default();
+    if( injectedPrimitives?.injectedPrimitives.has(viewType)){
+      return SharedFormState.Default();
+    }
     if (viewType == "date")
       return DateFormState.Default("");
     if (viewType == "enumSingleSelection" || viewType == "enumMultiSelection")
@@ -129,7 +137,8 @@ export const ParseForm = (
   visibleFieldsBoolExprs: any,
   disabledFieldsBoolExprs: any,
   defaultValue: BasicFun<TypeName | Type, any>,
-  type: TypeDefinition
+  type: TypeDefinition,
+  injectedPrimitives?: InjectedPrimitives
 ): ParsedForm => {
   const fieldNameToViewCategory = (fieldName: string) => {
     const fieldViewCategories = Object.keys(fieldViews)
@@ -161,7 +170,7 @@ export const ParseForm = (
     const fieldConfig = formDef.fields.get(fieldName)!
     initialFormState[fieldName] =
       otherForms.get(viewName)?.initialFormState ??
-      FieldFormState(fieldConfig, fieldViews, fieldNameToViewCategory(fieldName) as any, (fieldsViewsConfig as any)[fieldName], fieldName, InfiniteStreamSources, fieldsInfiniteStreamsConfig);
+      FieldFormState(fieldConfig, fieldViews, fieldNameToViewCategory(fieldName) as any, (fieldsViewsConfig as any)[fieldName], fieldName, InfiniteStreamSources, fieldsInfiniteStreamsConfig, injectedPrimitives);
     if (typeof initialFormState[fieldName] == "string") {
       throw `cannot resolve initial state ${viewName} of field ${fieldName}`
     }
@@ -180,7 +189,7 @@ export const ParseForm = (
       if (viewType == "list") {
         const elementRendererName = formFieldElementRenderers[fieldName]
         const field = type.fields.get(fieldName)!
-        const initialElementValue = defaultValue(field.kind == "primitive" ? field.value : field.kind == "lookup" ? field.name : field.args[0])  //@jfinject
+        const initialElementValue = defaultValue(field.kind == "primitive" ? field.value : field.kind == "lookup" ? field.name : field.args[0])
         const elementForm = otherForms.get(elementRendererName)
         if (elementForm != undefined) { // the list argument is a nested form
           const initialFormState = elementForm.initialFormState
@@ -191,9 +200,8 @@ export const ParseForm = (
           ).withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
             .mapContext<any>(_ => ({ ..._, label: label }))
         } else { // the list argument is a primitive
-          //@jfinject
-          const elementForm = FieldView(fieldConfig, fieldViews, fieldNameToElementViewCategory(formFieldElementRenderers)(fieldName) as any, elementRendererName, fieldName, label, EnumOptionsSources, fieldsOptionsConfig, leafPredicates)
-          const initialFormState = FieldFormState(fieldConfig, fieldViews, fieldNameToElementViewCategory(formFieldElementRenderers)(fieldName) as any, elementRendererName, fieldName, InfiniteStreamSources, fieldsInfiniteStreamsConfig);
+          const elementForm = FieldView(fieldConfig, fieldViews, fieldNameToElementViewCategory(formFieldElementRenderers)(fieldName) as any, elementRendererName, fieldName, label, EnumOptionsSources, fieldsOptionsConfig, leafPredicates, injectedPrimitives)
+          const initialFormState = FieldFormState(fieldConfig, fieldViews, fieldNameToElementViewCategory(formFieldElementRenderers)(fieldName) as any, elementRendererName, fieldName, InfiniteStreamSources, fieldsInfiniteStreamsConfig, injectedPrimitives);
           formConfig[fieldName] = ListForm<any, any, any & FormLabel, Unit>(
             { Default: () => initialFormState },
             { Default: () => initialElementValue },
@@ -230,8 +238,8 @@ export const ParseForm = (
               ]
             } else {
               const categoryName = fieldNameToElementViewCategory(elementRenderers)(fieldName) as any
-              const form = FieldView(fieldConfig, fieldViews, categoryName, rendererName, fieldName, label, EnumOptionsSources, fieldsOptionsConfig, leafPredicates)
-              const initialFormState = FieldFormState(fieldConfig, fieldViews, categoryName, rendererName, fieldName, InfiniteStreamSources, fieldsInfiniteStreamsConfig);
+              const form = FieldView(fieldConfig, fieldViews, categoryName, rendererName, fieldName, label, EnumOptionsSources, fieldsOptionsConfig, leafPredicates, injectedPrimitives)
+              const initialFormState = FieldFormState(fieldConfig, fieldViews, categoryName, rendererName, fieldName, InfiniteStreamSources, fieldsInfiniteStreamsConfig, injectedPrimitives);
               return [
                 form,
                 initialFormState
@@ -255,7 +263,7 @@ export const ParseForm = (
             .mapContext<any>(_ => ({ ..._, label: label }))
         } else {
           //@jfinject
-          formConfig[fieldName] = FieldView(fieldConfig, fieldViews, viewType, viewName, fieldName, label, EnumOptionsSources, fieldsOptionsConfig, leafPredicates);
+          formConfig[fieldName] = FieldView(fieldConfig, fieldViews, viewType, viewName, fieldName, label, EnumOptionsSources, fieldsOptionsConfig, leafPredicates, injectedPrimitives);
         }
       }
     }
@@ -352,7 +360,7 @@ export const parseForms =
   <LeafPredicates,>(
     builtIns: BuiltIns,
     injectedPrimitives: InjectedPrimitives | undefined,
-    apiConverters: ApiConverters,
+    apiConverters: BuiltInApiConverters,
     containerFormView: any,
     nestedContainerFormView: any,
     fieldViews: any,
@@ -436,6 +444,7 @@ export const parseForms =
             formFieldDisabled,
             defaultValue(formsConfig.types, builtIns, injectedPrimitives),
             formConfig.typeDef,
+            injectedPrimitives
           )
           const formBuilder = Form<any, any, any, any>().Default<any>()
           const form = formBuilder.template({

@@ -1,5 +1,5 @@
 import { Set, Map, OrderedMap } from "immutable";
-import { BoolExpr, BuiltIns, FieldName, FormsConfigMerger, InjectedPrimitives, MappingPaths, revertKeyword, Sum, Type, TypeDefinition, TypeName } from "../../../../../../main";
+import { ApiConverters, BoolExpr, BuiltIns, FieldName, FormsConfigMerger, InjectedPrimitives, MappingPaths, revertKeyword, Sum, Type, TypeDefinition, TypeName } from "../../../../../../main";
 
 export type FieldConfig = {
   renderer: string;
@@ -66,13 +66,19 @@ export type FormValidationError = string;
 export type FormValidationResult = Sum<FormsConfig, Array<FormValidationError>>
 export const FormsConfig = {
   Default: {
-    validateAndParseAPIResponse: (builtIns: BuiltIns, injectedPrimitives?: InjectedPrimitives) => (fc: any): FormValidationResult => {
+    validateAndParseAPIResponse: (builtIns: BuiltIns, apiConverters: ApiConverters, injectedPrimitives?: InjectedPrimitives) => (fc: any): FormValidationResult => {
       let errors: Array<FormValidationError> = [];
       const formsConfig = Array.isArray(fc) ? FormsConfigMerger.Default.merge(fc) : fc;
       let types: Map<TypeName, TypeDefinition> = Map();
       if ("types" in formsConfig == false) {
         errors.push("the formsConfig does not contain a 'types' field");
         return Sum.Default.right(errors);
+      }
+      if(injectedPrimitives){
+        injectedPrimitives?.injectedPrimitives.keySeq().toArray().some((injectedPrimitiveName) => {
+          if(!Object.keys(apiConverters).includes(injectedPrimitiveName)){
+          errors.push(`the formsConfig does not contain an Api Converter for injected primitive: ${injectedPrimitiveName}`);
+        }})
       }
       Object.keys(formsConfig["types"]).forEach((typeName: any) => {
         let typeDef: TypeDefinition = { name: typeName, extends: [], fields: OrderedMap() };
@@ -329,6 +335,10 @@ export const FormsConfig = {
           } else {
             errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
           }
+          if(injectedPrimitives?.injectedPrimitives.has(fieldTypeDef.value)){
+            if (!injectedPrimitives.renderers[fieldTypeDef.value].has(fieldConfig["renderer"]))
+              errors.push(`field ${fieldName} of form ${formName} references non-existing injected primitive 'renderer' ${fieldConfig["renderer"]}`);
+          }
         } else if (fieldTypeDef?.kind == "application") {
           if (fieldTypeDef?.value == "SingleSelection") {
             if (!builtIns.renderers.enumSingleSelection.has(fieldConfig["renderer"]) &&
@@ -339,8 +349,9 @@ export const FormsConfig = {
               !builtIns.renderers.streamMultiSelection.has(fieldConfig["renderer"]))
               errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
           } else if (fieldTypeDef?.value == "List") {
-            if (!builtIns.renderers.list.has(fieldConfig["renderer"]))
-              errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
+            if (!builtIns.renderers.list.has(fieldConfig["renderer"]) ){
+              errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`)
+            }
           } else if (fieldTypeDef?.value == "Map") {
             if (!builtIns.renderers.map.has(fieldConfig["renderer"]))
               errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
@@ -354,8 +365,8 @@ export const FormsConfig = {
               : "args" in typeDef == false ? undefined
               : Array.isArray(typeDef.args) == false ? undefined
               :  Type.Default.application(typeDef.fun, typeDef.args)
-              const keyType:Type | undefined = typeof fieldTypeDef.args[0] == "string" ? Type.Operations.FromName(types, builtIns)(fieldTypeDef.args[0]) : typeDefToType(fieldTypeDef.args[0] as any)
-              const valueType:Type | undefined = typeof fieldTypeDef.args[1] == "string" ? Type.Operations.FromName(types, builtIns)(fieldTypeDef.args[1]) : typeDefToType(fieldTypeDef.args[1] as any)
+              const keyType:Type | undefined = typeof fieldTypeDef.args[0] == "string" ? Type.Operations.FromName(types, builtIns, injectedPrimitives)(fieldTypeDef.args[0]) : typeDefToType(fieldTypeDef.args[0] as any)
+              const valueType:Type | undefined = typeof fieldTypeDef.args[1] == "string" ? Type.Operations.FromName(types, builtIns, injectedPrimitives)(fieldTypeDef.args[1]) : typeDefToType(fieldTypeDef.args[1] as any)
               if (!keyType) {
                 errors.push(`field ${fieldName} of form ${formName} references non-existing key type ${JSON.stringify(fieldTypeDef.args[0])}`);
               } else if (!valueType) {
@@ -423,10 +434,10 @@ export const FormsConfig = {
             const rendererHasType = (elementRenderer: string, elementType: string): Array<string> => {
               const primitiveRendererNames = builtIns.primitives.get(elementType)
               const injectedPrimitiveRendererNames = injectedPrimitives?.injectedPrimitives.get(elementType)
-              if (primitiveRendererNames != undefined) {
+              if (primitiveRendererNames != undefined || injectedPrimitiveRendererNames != undefined) {
                 const primitiveRenderers =
-                  Set(primitiveRendererNames.renderers.flatMap(_ => builtIns.renderers[_]).toArray()).concat(
-                    injectedPrimitives ? Set(injectedPrimitiveRendererNames?.renderers.flatMap(_ => injectedPrimitives.renderers[_])) : Set()
+                  Set(primitiveRendererNames ? primitiveRendererNames.renderers.flatMap(_ => builtIns.renderers[_]).toArray() : []).concat(
+                    injectedPrimitives ? Set(injectedPrimitiveRendererNames?.renderers.flatMap(_ => injectedPrimitives.renderers[_])).toArray() : []
                   )
                 if (!primitiveRenderers.has(elementRenderer)) {
                   return [`${elementType} cannot be rendered by primitive renderer ${elementRenderer}`]
