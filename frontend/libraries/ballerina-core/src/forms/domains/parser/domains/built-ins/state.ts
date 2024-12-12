@@ -180,7 +180,7 @@ export const fromAPIRawValue = (t: Type, types: Map<TypeName, TypeDefinition>, b
     if (t.value == "List" && t.args.length == 1) {
       let result = converters[t.value].fromAPIRawValue(obj)
       result = result.map(fromAPIRawValue(
-        PrimitiveTypes.some(_ => _ == t.args[0]) ?
+        PrimitiveTypes.some(_ => _ == t.args[0]) ?  //@jfinject
           { kind: "primitive", value: t.args[0] as PrimitiveType }
           : { kind: "lookup", name: t.args[0] }
         , types, builtIns, converters, true))
@@ -192,7 +192,7 @@ export const fromAPIRawValue = (t: Type, types: Map<TypeName, TypeDefinition>, b
       result = result.map(keyValue => ([
         fromAPIRawValue(
           typeof t_args[0] == "string" ? 
-            PrimitiveTypes.some(_ => _ == t_args[0]) ?
+            PrimitiveTypes.some(_ => _ == t_args[0]) ?  //@jfinject
               { kind: "primitive", value: t_args[0] as PrimitiveType }
             : { kind: "lookup", name: t_args[0] }
           :
@@ -252,7 +252,7 @@ export const toAPIRawValue = (t: Type, types: Map<TypeName, TypeDefinition>, bui
       const converterResult = converters[t.value].toAPIRawValue([obj, formState.modifiedByUser])
       return converterResult.map((item: any, index: number) =>
         toAPIRawValue(
-          PrimitiveTypes.some(_ => _ == t.args[0]) ?
+          PrimitiveTypes.some(_ => _ == t.args[0]) ?  //@jfinject
             { kind:"primitive", value:t.args[0] as PrimitiveType }
           : { kind:"lookup", name:t.args[0] },
           types, builtIns, converters, true)(item,
@@ -266,7 +266,7 @@ export const toAPIRawValue = (t: Type, types: Map<TypeName, TypeDefinition>, bui
       return converterResult.map((keyValue: any, index: number) => ([
         toAPIRawValue(
           typeof t_args[0] == "string" ? 
-            PrimitiveTypes.some(_ => _ == t_args[0]) ?
+            PrimitiveTypes.some(_ => _ == t_args[0]) ?  //@jfinject
               { kind: "primitive", value: t_args[0] as PrimitiveType }
             : { kind: "lookup", name: t_args[0] }
           :
@@ -275,7 +275,7 @@ export const toAPIRawValue = (t: Type, types: Map<TypeName, TypeDefinition>, bui
           ),
         toAPIRawValue(
           typeof t_args[1] == "string" ? 
-            PrimitiveTypes.some(_ => _ == t_args[1]) ?
+            PrimitiveTypes.some(_ => _ == t_args[1]) ?  //@jfinject
               { kind: "primitive", value: t_args[1] as PrimitiveType }
             : { kind: "lookup", name: t_args[1] }
           :

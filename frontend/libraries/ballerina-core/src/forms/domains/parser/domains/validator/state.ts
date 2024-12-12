@@ -91,7 +91,7 @@ export const FormsConfig = {
         Object.keys(configTypeDef["fields"]).forEach((fieldName: any) => {
           let configFieldType = configTypeDef["fields"][fieldName];
           if (typeof configFieldType == "string") {
-            if (builtIns.primitives.has(configFieldType))
+            if (builtIns.primitives.has(configFieldType)) //@jfinject
               typeDef.fields = typeDef.fields.set(fieldName, { kind: "primitive", value: configFieldType as any });
 
             else
@@ -117,11 +117,11 @@ export const FormsConfig = {
       });
       types.forEach((typeDef, typeName) => {
         typeDef.extends.forEach(extendedTypeName => {
-          if (!builtIns.primitives.has(extendedTypeName) && !types.has(extendedTypeName))
+          if (!builtIns.primitives.has(extendedTypeName) && !types.has(extendedTypeName))  //@jfinject
             errors.push(`type ${typeName} extends non-existent type ${extendedTypeName}`);
         });
         typeDef.fields.forEach((fieldDef, fieldName) => {
-          if (fieldDef.kind == "primitive" && !builtIns.primitives.has(fieldDef.value))
+          if (fieldDef.kind == "primitive" && !builtIns.primitives.has(fieldDef.value)) //@jfinject
             errors.push(`field ${fieldName} of type ${typeName} is non-existent primitive type ${fieldDef.value}`);
           if (fieldDef.kind == "lookup" && !types.has(fieldDef.name))
             errors.push(`field ${fieldName} of type ${typeName} is non-existent type ${fieldDef.name}`);
@@ -299,7 +299,7 @@ export const FormsConfig = {
       })
 
       const rendererMatchesType = (formName:string, fieldName:string) => (fieldTypeDef:Type, fieldConfig:any) => {
-        if (fieldTypeDef?.kind == "primitive") {
+        if (fieldTypeDef?.kind == "primitive") {  //@jfinject
           if (fieldTypeDef.value == "maybeBoolean") {
             // alert(JSON.stringify(fieldConfig["renderer"]))
             // alert(JSON.stringify(builtIns.renderers.MaybeBooleanViews))
@@ -414,7 +414,7 @@ export const FormsConfig = {
             let elementRenderer = fieldConfig["elementRenderer"]
             let elementType = fieldTypeDef.args[0]
             const rendererHasType = (elementRenderer: string, elementType: string): Array<string> => {
-              const primitiveRendererNames = builtIns.primitives.get(elementType)
+              const primitiveRendererNames = builtIns.primitives.get(elementType)  //@jfinject - injected renderes
               if (primitiveRendererNames != undefined) {
                 const primitiveRenderers =
                   Set(primitiveRendererNames.renderers.flatMap(_ => builtIns.renderers[_]).toArray())

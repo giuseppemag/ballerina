@@ -10,11 +10,11 @@ export const LoadValidateAndParseFormsConfig = () => {
   Synchronize<Unit, FormParsingResult>(async() => {
     const rawFormsConfig = await current.getFormsConfig();
     const formsConfig = replaceKeywords(rawFormsConfig, "from api")
-    const builtIns = builtInsFromFieldViews(current.fieldViews, current.fieldTypeConverters)
-    const validationResult = FormsConfig.Default.validateAndParseAPIResponse(builtIns)(formsConfig)
+    const builtIns = builtInsFromFieldViews(current.fieldViews, current.fieldTypeConverters)  //@jfinject
+    const validationResult = FormsConfig.Default.validateAndParseAPIResponse(builtIns)(formsConfig)  //@jfinject
     if (validationResult.kind == "r")
       return Sum.Default.right(validationResult.value)
-    return parseForms(
+    return parseForms(  //@jfinject
       builtIns,
       current.fieldTypeConverters,
       current.containerFormView,

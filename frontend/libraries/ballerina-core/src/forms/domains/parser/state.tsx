@@ -23,6 +23,7 @@ const parseOptions = (leafPredicates: any, options: any) => {
   return resultMap;
 };
 
+//@jfinject
 export const FieldView = //<Context, FieldViews extends DefaultFieldViews, EnumFieldConfigs extends {}, EnumSources extends {}>() => <ViewType extends keyof FieldViews, ViewName extends keyof FieldViews[ViewType]>
   (fieldConfig:FieldConfig, fieldViews: any, viewType: any, viewName: any, fieldName: string, label: string, enumFieldConfigs: EnumOptionsSources, enumSources: any, leafPredicates: any): any => // FieldView<Context, FieldViews, ViewType, ViewName> => 
   {
@@ -82,7 +83,7 @@ export const FieldView = //<Context, FieldViews extends DefaultFieldViews, EnumF
 
 export const FieldFormState = //<Context, FieldViews extends DefaultFieldViews, InfiniteStreamSources extends {}, InfiniteStreamConfigs extends {}>() => <ViewType extends keyof FieldViews, ViewName extends keyof FieldViews[ViewType]>
   (fieldConfig:FieldConfig, fieldViews: any, viewType: any, viewName: any, fieldName: string, InfiniteStreamSources: any, infiniteStreamConfigs: any): any => {
-    if (viewType == "maybeBoolean" || viewType == "boolean" || viewType == "number" || viewType == "string" || viewType == "base64File" || viewType == "secret")
+    if (viewType == "maybeBoolean" || viewType == "boolean" || viewType == "number" || viewType == "string" || viewType == "base64File" || viewType == "secret") //@jfinject -- can use the new type with union
       return SharedFormState.Default();
     if (viewType == "date")
       return DateFormState.Default("");
@@ -179,7 +180,7 @@ export const ParseForm = (
       if (viewType == "list") {
         const elementRendererName = formFieldElementRenderers[fieldName]
         const field = type.fields.get(fieldName)!
-        const initialElementValue = defaultValue(field.kind == "primitive" ? field.value : field.kind == "lookup" ? field.name : field.args[0])
+        const initialElementValue = defaultValue(field.kind == "primitive" ? field.value : field.kind == "lookup" ? field.name : field.args[0])  //@jfinject
         const elementForm = otherForms.get(elementRendererName)
         if (elementForm != undefined) { // the list argument is a nested form
           const initialFormState = elementForm.initialFormState
@@ -190,6 +191,7 @@ export const ParseForm = (
           ).withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
             .mapContext<any>(_ => ({ ..._, label: label }))
         } else { // the list argument is a primitive
+          //@jfinject
           const elementForm = FieldView(fieldConfig, fieldViews, fieldNameToElementViewCategory(formFieldElementRenderers)(fieldName) as any, elementRendererName, fieldName, label, EnumOptionsSources, fieldsOptionsConfig, leafPredicates)
           const initialFormState = FieldFormState(fieldConfig, fieldViews, fieldNameToElementViewCategory(formFieldElementRenderers)(fieldName) as any, elementRendererName, fieldName, InfiniteStreamSources, fieldsInfiniteStreamsConfig);
           formConfig[fieldName] = ListForm<any, any, any & FormLabel, Unit>(
@@ -199,7 +201,7 @@ export const ParseForm = (
           ).withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
             .mapContext<any>(_ => ({ ..._, label: label }))
         }
-      } else {
+      } else {  //@jfinject -- ought to have something here
         if (viewType == "map") {
           const field = type.fields.get(fieldName)!
 
@@ -252,6 +254,7 @@ export const ParseForm = (
           ).withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
             .mapContext<any>(_ => ({ ..._, label: label }))
         } else {
+          //@jfinject
           formConfig[fieldName] = FieldView(fieldConfig, fieldViews, viewType, viewName, fieldName, label, EnumOptionsSources, fieldsOptionsConfig, leafPredicates);
         }
       }
