@@ -148,6 +148,11 @@ const entityApis: EntityApis = {
     switch (apiName) {
       case "person":
         return PromiseRepo.Default.mock(() => [])
+      case 'errorPerson':
+        return Promise.reject({
+          status: 400,
+          message: "Bad Request: Invalid person data provided",
+        })
       default:
         alert(`Cannot find entity API ${apiName} for 'update'`)
         return Promise.resolve([])
