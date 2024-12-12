@@ -1,4 +1,4 @@
-import { ApiResponseChecker, AsyncState, BasicUpdater, Debounced, ForeignMutationsInput, id, SimpleCallback, simpleUpdater, Synchronized, Template, unit, Unit, Updater, Value } from "../../../../../../main"
+import { ApiResponseChecker, AsyncState, BasicUpdater, Debounced, ForeignMutationsInput, Guid, id, SimpleCallback, simpleUpdater, Synchronized, Template, unit, Unit, Updater, Value } from "../../../../../../main"
 import { BasicFun } from "../../../../../fun/state"
 
 export type ApiErrors = Array<string>
@@ -6,7 +6,7 @@ export type ApiErrors = Array<string>
 export type EditFormContext<E,FS> = {
   entityId:string,
   api:{
-    get:() => Promise<E>,
+    get:(id: Guid) => Promise<E>,
     update:BasicFun<E, Promise<ApiErrors>>
   },
   actualForm:Template<Value<E> & FS, FS, { onChange:SimpleCallback<BasicUpdater<E>>}>

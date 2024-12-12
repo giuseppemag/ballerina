@@ -23,7 +23,7 @@ export const editFormRunner = <E, FS>() => {
 
   const init = Co.GetState().then((current) =>
     Synchronize<Unit, E>(
-      () => current.api.get(),
+      () => current.api.get(current.entityId),
       (_) => "transient failure",
       5,
       50
