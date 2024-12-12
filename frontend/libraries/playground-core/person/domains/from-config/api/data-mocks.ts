@@ -73,69 +73,76 @@ const entityApis: EntityApis = {
         alert(`Cannot find entity API ${apiName} for 'create'`)
         return Promise.reject()
       }),
-  get: (apiName: string) =>
-    apiName == "person" ?
-      (id: Guid) => Promise.resolve({
-        name: faker.person.firstName(),
-        surname: faker.person.lastName(),
-        birthday: new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45),
-        subscribeToNewsletter: Math.random() > 0.5,
-        favoriteColor: Math.random() > 0.5 ? colors[0][0] : undefined,
-        gender: undefined,
-        interests: [interests[1][0], interests[2][0]],
-        departments: [],
-        mainAddress: {
-          street: faker.location.street(),
-          number: Math.floor(Math.random() * 500),
-          city: Math.random() > 0.5 ?
-            undefined
-            :
-            City.Default(v4(), faker.location.city())
-        },
-        addresses: List([{
-          street: faker.location.street(),
-          number: Math.floor(Math.random() * 500),
-          city: Math.random() > 0.5 ?
-            undefined
-            :
-            City.Default(v4(), faker.location.city())
-        }]),
-        emails: ["john@doe.it", "johnthedon@doe.com"],
-        "addressesWithLabel": [
-          ["home", {
-            street: faker.location.street(),
-            number: Math.floor(Math.random() * 500),
-            city: Math.random() > 0.5 ?
-              undefined
-              :
-              City.Default(v4(), faker.location.city())
-          }]
-        ],
-        "addressesByCity": [
-          [City.Default(v4(), faker.location.city()), {
-            street: faker.location.street(),
-            number: Math.floor(Math.random() * 500),
-            city: Math.random() > 0.5 ?
-              undefined
-              :
-              City.Default(v4(), faker.location.city())
-          }],
-          [undefined, {
-            street: faker.location.street(),
-            number: Math.floor(Math.random() * 500),
-            city: Math.random() > 0.5 ?
-              undefined
-              :
-              City.Default(v4(), faker.location.city())
-          }]
-        ],
-        "addressesWithColorLabel": [],
-        "permissions": [],
-    })
-      : (id: Guid) => {
-        alert(`Cannot find entity API ${apiName} for 'get'`)
-        return Promise.reject()
-      },
+  get: (apiName: string) => {
+    switch (apiName) {
+      case "person":
+        return (id: Guid) => {
+          console.log(`get person ${id}`)
+          return Promise.resolve({
+            name: faker.person.firstName(),
+            surname: faker.person.lastName(),
+            birthday: new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45),
+            subscribeToNewsletter: Math.random() > 0.5,
+            favoriteColor: Math.random() > 0.5 ? colors[0][0] : undefined,
+            gender: undefined,
+            interests: [interests[1][0], interests[2][0]],
+            departments: [],
+            mainAddress: {
+              street: faker.location.street(),
+              number: Math.floor(Math.random() * 500),
+              city: Math.random() > 0.5 ?
+                undefined
+                :
+                City.Default(v4(), faker.location.city())
+            },
+            addresses: List([{
+              street: faker.location.street(),
+              number: Math.floor(Math.random() * 500),
+              city: Math.random() > 0.5 ?
+                undefined
+                :
+                City.Default(v4(), faker.location.city())
+            }]),
+            emails: ["john@doe.it", "johnthedon@doe.com"],
+            "addressesWithLabel": [
+              ["home", {
+                street: faker.location.street(),
+                number: Math.floor(Math.random() * 500),
+                city: Math.random() > 0.5 ?
+                  undefined
+                  :
+                  City.Default(v4(), faker.location.city())
+              }]
+            ],
+            "addressesByCity": [
+              [City.Default(v4(), faker.location.city()), {
+                street: faker.location.street(),
+                number: Math.floor(Math.random() * 500),
+                city: Math.random() > 0.5 ?
+                  undefined
+                  :
+                  City.Default(v4(), faker.location.city())
+              }],
+              [undefined, {
+                street: faker.location.street(),
+                number: Math.floor(Math.random() * 500),
+                city: Math.random() > 0.5 ?
+                  undefined
+                  :
+                  City.Default(v4(), faker.location.city())
+              }]
+            ],
+            "addressesWithColorLabel": [],
+            "permissions": [],
+          })
+        }
+      default:
+        return (id: Guid) => {
+          alert(`Cannot find entity API ${apiName} for 'get' ${id}`)
+          return Promise.reject()
+        }
+    }
+  },
   update: (apiName: string) =>
     apiName == "person" ?
       e => PromiseRepo.Default.mock(() => []) :
