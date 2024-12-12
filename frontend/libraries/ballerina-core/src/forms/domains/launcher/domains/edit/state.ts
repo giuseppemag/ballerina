@@ -7,7 +7,7 @@ export type EditFormContext<E,FS> = {
   entityId:string,
   api:{
     get:(id: Guid) => Promise<E>,
-    update:BasicFun<E, Promise<ApiErrors>>
+    update:(id: Guid, entity:E) => Promise<ApiErrors>
   },
   actualForm:Template<Value<E> & FS, FS, { onChange:SimpleCallback<BasicUpdater<E>>}>
 }
@@ -37,7 +37,7 @@ export const EditFormState = <E,FS>() => ({
     Template:{
       toChecked: () => ApiResponseChecker.Updaters.toChecked<EditFormState<E, FS>>(),
       toUnchecked: () => ApiResponseChecker.Updaters.toUnchecked<EditFormState<E, FS>>(),
-      entity:(_:BasicUpdater<E>) : Updater<EditFormState<E,FS>> => 
+      entity:(_:BasicUpdater<E>) : Updater<EditFormState<E,FS>> =>
           EditFormState<E,FS>().Updaters.Core.entity(
             Synchronized.Updaters.sync(
               AsyncState.Operations.map(

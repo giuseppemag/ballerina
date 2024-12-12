@@ -143,13 +143,16 @@ const entityApis: EntityApis = {
         }
     }
   },
-  update: (apiName: string) =>
-    apiName == "person" ?
-      e => PromiseRepo.Default.mock(() => []) :
-      e => {
+  update: (apiName: string) => (_id: Guid, _e: any) => {
+    console.log(`update ${apiName} ${_id} ${JSON.stringify(_e)}`)
+    switch (apiName) {
+      case "person":
+        return PromiseRepo.Default.mock(() => [])
+      default:
         alert(`Cannot find entity API ${apiName} for 'update'`)
         return Promise.resolve([])
-      },
+    }
+  },
   default: (apiName: string) =>
     apiName == "person" ?
       _ => PromiseRepo.Default.mock(() => {

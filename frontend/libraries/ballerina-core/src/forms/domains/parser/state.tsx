@@ -24,7 +24,7 @@ const parseOptions = (leafPredicates: any, options: any) => {
 };
 
 export const FieldView = //<Context, FieldViews extends DefaultFieldViews, EnumFieldConfigs extends {}, EnumSources extends {}>() => <ViewType extends keyof FieldViews, ViewName extends keyof FieldViews[ViewType]>
-  (fieldConfig:FieldConfig, fieldViews: any, viewType: any, viewName: any, fieldName: string, label: string, enumFieldConfigs: EnumOptionsSources, enumSources: any, leafPredicates: any): any => // FieldView<Context, FieldViews, ViewType, ViewName> => 
+  (fieldConfig:FieldConfig, fieldViews: any, viewType: any, viewName: any, fieldName: string, label: string, enumFieldConfigs: EnumOptionsSources, enumSources: any, leafPredicates: any): any => // FieldView<Context, FieldViews, ViewType, ViewName> =>
   {
     if (viewType == "maybeBoolean")
       return MaybeBooleanForm<any & FormLabel, Unit>()
@@ -330,7 +330,7 @@ export type EntityName = string
 export type EntityApis = {
   create: BasicFun<EntityName, BasicFun<any, Promise<Unit>>>
   default: BasicFun<EntityName, BasicFun<Unit, Promise<any>>>
-  update: BasicFun<EntityName, BasicFun<any, Promise<ApiErrors>>>
+  update: BasicFun<EntityName, (id: Guid, entity: any) => Promise<ApiErrors>>
   get: BasicFun<EntityName, BasicFun<Guid, Promise<any>>>
 }
 export type EnumName = string
@@ -450,8 +450,8 @@ export const parseForms =
             const parsed = fromAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters)(raw)
             return parsed
           }),
-          update: (value: any) => 
-            entityApis.update(launcher.api)(toAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters)(value))
+          update: (id: Guid, value: any) =>
+            entityApis.update(launcher.api)(id, toAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters)(value))
         }
         parsedLaunchers.edit = parsedLaunchers.edit.set(
           launcherName,
@@ -568,7 +568,7 @@ export const replaceKeywords = (obj: any, kind: "from api" | "to api"): any => {
     );
   } else if (typeof obj === "object" && obj !== null) {
     if(OrderedMap.isOrderedMap(obj)) {
-      return obj.map((_, key) => 
+      return obj.map((_, key) =>
         replacementFn(key as string)
       )
     }
