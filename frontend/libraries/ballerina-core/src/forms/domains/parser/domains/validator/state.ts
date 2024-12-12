@@ -6,7 +6,10 @@ export type FieldConfig = {
   label: string
   api: { stream?: string, enumOptions?: string },
   elementRenderer?: string,
+  elementLabel?: string,
   mapRenderer?: { keyRenderer: FieldConfig, valueRenderer: FieldConfig },
+  keyLabel?: string,
+  valueLabel?: string,
   visible: BoolExpr<any>;
   disabled: BoolExpr<any>;
 };
@@ -472,6 +475,9 @@ export const FormsConfig = {
             renderer: fieldConfig.renderer,
             label: fieldConfig.label ?? revertKeyword(fieldName),
             elementRenderer: fieldConfig.elementRenderer,
+            elementLabel: fieldConfig.elementLabel,
+            keyLabel: fieldConfig.keyLabel,
+            valueLabel: fieldConfig.valueLabel,
             mapRenderer: 
               fieldConfig.keyRenderer && fieldConfig.valueRenderer ? 
                 { keyRenderer:fieldConfig.keyRenderer, valueRenderer:fieldConfig.valueRenderer } 
