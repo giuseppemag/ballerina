@@ -349,7 +349,7 @@ export type EntityName = string
 export type EntityApis = {
   create: BasicFun<EntityName, BasicFun<any, Promise<Unit>>>
   default: BasicFun<EntityName, BasicFun<Unit, Promise<any>>>
-  update: BasicFun<EntityName, BasicFun<any, Promise<ApiErrors>>>
+  update: BasicFun<EntityName, (id: Guid, entity: any) => Promise<ApiErrors>>
   get: BasicFun<EntityName, BasicFun<Guid, Promise<any>>>
 }
 export type EnumName = string
@@ -471,8 +471,8 @@ export const parseForms =
             const parsed = fromAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters, false, injectedPrimitives)(raw)
             return parsed
           }),
-          update: ([value, formState]: [any, any]) =>
-            entityApis.update(launcher.api)(toAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters, false, injectedPrimitives)(value, formState))
+          update: (id: Guid, value: any, formState: any) =>
+            entityApis.update(launcher.api)(id, toAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters, false, injectedPrimitives)(value, formState))
         }
         parsedLaunchers.edit = parsedLaunchers.edit.set(
           launcherName,
@@ -589,7 +589,7 @@ export const replaceKeywords = (obj: any, kind: "from api" | "to api"): any => {
     );
   } else if (typeof obj === "object" && obj !== null) {
     if(OrderedMap.isOrderedMap(obj)) {
-      return obj.map((_, key) => 
+      return obj.map((_, key) =>
         replacementFn(key as string)
       )
     }

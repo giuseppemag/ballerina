@@ -23,7 +23,7 @@ export const editFormRunner = <E, FS>() => {
 
   const init = Co.GetState().then((current) =>
     Synchronize<Unit, E>(
-      () => current.api.get(),
+      () => current.api.get(current.entityId),
       (_) => "transient failure",
       5,
       50
@@ -40,7 +40,7 @@ export const editFormRunner = <E, FS>() => {
           Synchronize<Unit, ApiErrors, EditFormWritableState<E, FS>>(
             (_) =>
               current.entity.sync.kind == "loaded"
-                ? current.api.update([current.entity.sync.value, current.formState])
+                ? current.api.update(current.entityId, current.entity.sync.value,  current.formState)
                 : Promise.resolve([]),
             (_) => "transient failure",
             5,

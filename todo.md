@@ -72,7 +72,6 @@ Todo (✅/❌)
           ✅ "blogging" context -> BallerinaContext
           ✅ implement Repeat as a reified construct
           ✅ AB jobs can be separated fully to the AB module with minimal dependencies
-          ❌ AB endpoints (code) can be separated fully to the AB module with a dependency on AB/ABEvents CRUD
           ❌ _generate_ translation of models into ef and OpenAPI
             ❌ records
             ❌ unions
@@ -114,20 +113,21 @@ Todo (✅/❌)
         ❌ security model of extension
           ❌ define User' vault data and prevent anyone from extending along User -> Vault unless they are the user themselves
         ❌ control creation of extended entities (AB inside ABEvent for example)
+      ❌ low-code platform
+        ❌ business rules (of which defaultings are a data-driven instance) should be just data 
+        ❌ workflow manager should be just data-driven coroutines
+        ❌ statements and expressions evaluator
+        ❌ data sync'er and mapper
       ✅ remove all the unused extra dependencies
       ✅ coroutine runtime engine
       ✅ fix stack overflow (flatten .Then)
       ✅ run in memory
       ✅ serialize to disk with JSON serializer
+      ❌ dbContext factory might fix the ugly `wait 0`
       ❌ update state (serialized together with coroutine in DB)
       ❌ update events
       ❌ test user registration coroutine, create events with testing endpoint
       ❌ run with intelligent suspensions
-  ❌ low-code platform
-    ❌ business rules (of which defaultings are a data-driven instance) should be just data 
-    ❌ workflow manager should be just data-driven coroutines
-    ❌ statements and expressions evaluator
-    ❌ data sync'er and mapper
   ✅ blog.fsproj
   ✅ postgres.csproj (this is the migrations project)
     ✅ dbContext (in C#)

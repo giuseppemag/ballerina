@@ -152,6 +152,14 @@ export const FormsApp = (props: {}) => {
 															entityId: "abcd-1234",
 															kind: "edit",
 															submitButtonWrapper: EditPersonSubmitButtonWrapper,
+															apiHandlers: {
+																success: (_) => {
+																	console.log({ type: 'success', 'data': _ })
+																},
+																error: (_) => {
+																	console.log({ type: 'error', 'msg': _ })
+																},
+															},
 														},
 														showFormParsingErrors: ShowFormsParsingErrors,
 														extraContext: {
