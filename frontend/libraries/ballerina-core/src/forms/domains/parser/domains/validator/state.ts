@@ -1,5 +1,5 @@
 import { Set, Map, OrderedMap } from "immutable";
-import { BoolExpr, BuiltIns, FieldName, FormsConfigMerger, MappingPaths, revertKeyword, Sum, Type, TypeDefinition, TypeName } from "../../../../../../main";
+import { BoolExpr, BuiltIns, FieldName, FormsConfigMerger, InjectedPrimitives, MappingPaths, revertKeyword, Sum, Type, TypeDefinition, TypeName } from "../../../../../../main";
 
 export type FieldConfig = {
   renderer: string;
@@ -66,7 +66,7 @@ export type FormValidationError = string;
 export type FormValidationResult = Sum<FormsConfig, Array<FormValidationError>>
 export const FormsConfig = {
   Default: {
-    validateAndParseAPIResponse: (builtIns: BuiltIns) => (fc: any): FormValidationResult => {
+    validateAndParseAPIResponse: (builtIns: BuiltIns, injectedPrimitives?: InjectedPrimitives) => (fc: any): FormValidationResult => {
       let errors: Array<FormValidationError> = [];
       const formsConfig = Array.isArray(fc) ? FormsConfigMerger.Default.merge(fc) : fc;
       let types: Map<TypeName, TypeDefinition> = Map();
@@ -91,9 +91,12 @@ export const FormsConfig = {
         Object.keys(configTypeDef["fields"]).forEach((fieldName: any) => {
           let configFieldType = configTypeDef["fields"][fieldName];
           if (typeof configFieldType == "string") {
-            if (builtIns.primitives.has(configFieldType)) //@jfinject
+            if (injectedPrimitives?.injectedPrimitives.has(configFieldType) && 
+            (builtIns.primitives.has(configFieldType) || builtIns.generics.has(configFieldType))) {
+              errors.push(`field ${fieldName} in type ${typeName}: injectedPrimitive cannot have same name as builtIn primitive`);
+            }
+            if (builtIns.primitives.has(configFieldType) || injectedPrimitives?.injectedPrimitives.has(configFieldType))
               typeDef.fields = typeDef.fields.set(fieldName, { kind: "primitive", value: configFieldType as any });
-
             else
               typeDef.fields = typeDef.fields.set(fieldName, { kind: "lookup", name: configFieldType as any });
           } else if (typeof configFieldType == "object") {
@@ -117,11 +120,11 @@ export const FormsConfig = {
       });
       types.forEach((typeDef, typeName) => {
         typeDef.extends.forEach(extendedTypeName => {
-          if (!builtIns.primitives.has(extendedTypeName) && !types.has(extendedTypeName))  //@jfinject
+          if ((!builtIns.primitives.has(extendedTypeName) && !injectedPrimitives?.injectedPrimitives.has(extendedTypeName)) && !types.has(extendedTypeName))
             errors.push(`type ${typeName} extends non-existent type ${extendedTypeName}`);
         });
         typeDef.fields.forEach((fieldDef, fieldName) => {
-          if (fieldDef.kind == "primitive" && !builtIns.primitives.has(fieldDef.value)) //@jfinject
+          if (fieldDef.kind == "primitive" && (!builtIns.primitives.has(fieldDef.value) && !injectedPrimitives?.injectedPrimitives.has(fieldDef.value) ))
             errors.push(`field ${fieldName} of type ${typeName} is non-existent primitive type ${fieldDef.value}`);
           if (fieldDef.kind == "lookup" && !types.has(fieldDef.name))
             errors.push(`field ${fieldName} of type ${typeName} is non-existent type ${fieldDef.name}`);
@@ -300,7 +303,11 @@ export const FormsConfig = {
 
       const rendererMatchesType = (formName:string, fieldName:string) => (fieldTypeDef:Type, fieldConfig:any) => {
         if (fieldTypeDef?.kind == "primitive") {  //@jfinject
-          if (fieldTypeDef.value == "maybeBoolean") {
+          if(injectedPrimitives?.injectedPrimitives.has(fieldTypeDef.value)){
+            if (!injectedPrimitives.renderers[fieldTypeDef.value].has(fieldConfig["renderer"]))
+              errors.push(`field ${fieldName} of form ${formName} references non-existing injected primitive 'renderer' ${fieldConfig["renderer"]}`);
+          }
+          else if (fieldTypeDef.value == "maybeBoolean") {
             // alert(JSON.stringify(fieldConfig["renderer"]))
             // alert(JSON.stringify(builtIns.renderers.MaybeBooleanViews))
             if (!builtIns.renderers.maybeBoolean.has(fieldConfig["renderer"]))
@@ -414,10 +421,13 @@ export const FormsConfig = {
             let elementRenderer = fieldConfig["elementRenderer"]
             let elementType = fieldTypeDef.args[0]
             const rendererHasType = (elementRenderer: string, elementType: string): Array<string> => {
-              const primitiveRendererNames = builtIns.primitives.get(elementType)  //@jfinject - injected renderes
+              const primitiveRendererNames = builtIns.primitives.get(elementType)
+              const injectedPrimitiveRendererNames = injectedPrimitives?.injectedPrimitives.get(elementType)
               if (primitiveRendererNames != undefined) {
                 const primitiveRenderers =
-                  Set(primitiveRendererNames.renderers.flatMap(_ => builtIns.renderers[_]).toArray())
+                  Set(primitiveRendererNames.renderers.flatMap(_ => builtIns.renderers[_]).toArray()).concat(
+                    injectedPrimitives ? Set(injectedPrimitiveRendererNames?.renderers.flatMap(_ => injectedPrimitives.renderers[_])) : Set()
+                  )
                 if (!primitiveRenderers.has(elementRenderer)) {
                   return [`${elementType} cannot be rendered by primitive renderer ${elementRenderer}`]
                 }

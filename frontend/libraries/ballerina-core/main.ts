@@ -115,6 +115,7 @@ export * from "./src/forms/domains/launcher/domains/merger/state"
 export * from "./src/forms/domains/launcher/coroutines/runner"
 export * from "./src/forms/domains/launcher/state"
 export * from "./src/forms/domains/launcher/template"
+export * from "./src/forms/domains/parser/domains/injectables/state"
 
 // import { simpleUpdater, simpleUpdaterWithChildren } from "./src/fun/domains/updater/domains/simpleUpdater/state"
 // import { Updater } from "./src/fun/domains/updater/state"

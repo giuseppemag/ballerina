@@ -1,5 +1,5 @@
 import { List, Map, OrderedMap, OrderedSet, Set } from "immutable";
-import { BoolExpr, Unit, PromiseRepo, Guid, LeafPredicatesEvaluators, Predicate, FormsConfig, BuiltIns, FormDef, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, SharedFormState, CreateFormState, Entity, EditFormContext, CreateFormContext, MappedEntityFormTemplate, Mapping, FormValidationResult, Synchronized, simpleUpdater, PrimitiveType, GenericType, ApiConverter, TypeName, ListFieldState, ListForm, TypeDefinition, ApiConverters, defaultValue, fromAPIRawValue, toAPIRawValue, EditFormForeignMutationsExpected, MapFieldState, MapForm, Type, FieldConfig, Base64FileForm, SecretForm } from "../../../../main";
+import { BoolExpr, Unit, PromiseRepo, Guid, LeafPredicatesEvaluators, Predicate, FormsConfig, BuiltIns, FormDef, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, SharedFormState, CreateFormState, Entity, EditFormContext, CreateFormContext, MappedEntityFormTemplate, Mapping, FormValidationResult, Synchronized, simpleUpdater, PrimitiveType, GenericType, ApiConverter, TypeName, ListFieldState, ListForm, TypeDefinition, ApiConverters, defaultValue, fromAPIRawValue, toAPIRawValue, EditFormForeignMutationsExpected, MapFieldState, MapForm, Type, FieldConfig, Base64FileForm, SecretForm, InjectedPrimitives, Injectables } from "../../../../main";
 import { Value } from "../../../value/state";
 import { CollectionReference } from "../collection/domains/reference/state";
 import { CollectionSelection } from "../collection/domains/selection/state";
@@ -351,6 +351,7 @@ export type EnumOptionsSources = BasicFun<EnumName, BasicFun<Unit, Promise<Array
 export const parseForms =
   <LeafPredicates,>(
     builtIns: BuiltIns,
+    injectedPrimitives: InjectedPrimitives | undefined,
     apiConverters: ApiConverters,
     containerFormView: any,
     nestedContainerFormView: any,
@@ -433,7 +434,7 @@ export const parseForms =
             leafPredicates,
             formFieldVisibilities,
             formFieldDisabled,
-            defaultValue(formsConfig.types, builtIns),
+            defaultValue(formsConfig.types, builtIns, injectedPrimitives),
             formConfig.typeDef,
           )
           const formBuilder = Form<any, any, any, any>().Default<any>()
@@ -458,11 +459,11 @@ export const parseForms =
           get: (id: string) => entityApis.get(launcher.api)(id).then((raw: any) => {
             // alert(JSON.stringify(raw))
             // alert(JSON.stringify(parsedForm.formDef.type))
-            const parsed = fromAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters)(raw)
+            const parsed = fromAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters, false, injectedPrimitives)(raw)
             return parsed
           }),
           update: ([value, formState]: [any, any]) =>
-            entityApis.update(launcher.api)(toAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters)(value, formState))
+            entityApis.update(launcher.api)(toAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters, false, injectedPrimitives)(value, formState))
         }
         parsedLaunchers.edit = parsedLaunchers.edit.set(
           launcherName,
@@ -488,13 +489,13 @@ export const parseForms =
           create: ([value, formState]: [any, any]) => {
             // alert(`type = ${JSON.stringify(parsedForm.formDef.type)}`)
             // alert(`value = ${JSON.stringify(value)}`)
-            const raw = toAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters)(value, formState)
+            const raw = toAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters, false, injectedPrimitives)(value, formState)
             // alert(`raw = ${JSON.stringify(raw.interests)}`)
             return entityApis.create(launcher.api)(raw)
           },
           default: (_: Unit) => entityApis.default(launcher.api)(unit)
             .then((raw: any) => {
-              const parsed = fromAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters)(raw)
+              const parsed = fromAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters, false, injectedPrimitives)(raw)
               return parsed
             })
         }
@@ -612,6 +613,7 @@ export type FormsParserContext = {
   entityApis: EntityApis,
   leafPredicates: any,
   getFormsConfig: BasicFun<void, Promise<any>>
+  injectedPrimitives?: Injectables,
 }
 export type FormsParserState = {
   formsConfig: Synchronized<Unit, FormParsingResult>
