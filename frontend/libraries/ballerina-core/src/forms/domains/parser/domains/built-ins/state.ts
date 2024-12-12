@@ -256,13 +256,14 @@ export const toAPIRawValue = (t: Type, types: Map<TypeName, TypeDefinition>, bui
             { kind:"primitive", value:t.args[0] as PrimitiveType }
           : { kind:"lookup", name:t.args[0] },
           types, builtIns, converters, true)(item,
-            PrimitiveTypes.some(_ => _ == t.args[0]) ? formState : formState.elementFormStates.toArray()[index][1]))
+            formState.elementFormStates.get(index)
+      ))
     }
     if (t.value == "Map" && t.args.length == 2) {
-      let result = converters[t.value].toAPIRawValue([obj, formState.modifiedByUser])
+      const converterResult = converters[t.value].toAPIRawValue([obj, formState.modifiedByUser])
 
       let t_args = t.args.map(parseTypeIShouldBePartOfFormValidation)
-      result = result.map((keyValue: any) => ([
+      return converterResult.map((keyValue: any, index: number) => ([
         toAPIRawValue(
           typeof t_args[0] == "string" ? 
             PrimitiveTypes.some(_ => _ == t_args[0]) ?
@@ -270,7 +271,8 @@ export const toAPIRawValue = (t: Type, types: Map<TypeName, TypeDefinition>, bui
             : { kind: "lookup", name: t_args[0] }
           :
             t_args[0], 
-            types, builtIns, converters, true)(keyValue[0], formState),
+            types, builtIns, converters, true)(keyValue[0], formState.elementFormStates.get(index).KeyFormState
+          ),
         toAPIRawValue(
           typeof t_args[1] == "string" ? 
             PrimitiveTypes.some(_ => _ == t_args[1]) ?
@@ -278,11 +280,10 @@ export const toAPIRawValue = (t: Type, types: Map<TypeName, TypeDefinition>, bui
             : { kind: "lookup", name: t_args[1] }
           :
             t_args[1], 
-          types, builtIns, converters, true)(keyValue[1], formState),
+          types, builtIns, converters, true)(keyValue[1], formState.elementFormStates.get(index).ValueFormState
+          ),
       ])
       )
-
-      return result
     }
 
   } else { // t.kind == lookup: we are dealing with a record/object

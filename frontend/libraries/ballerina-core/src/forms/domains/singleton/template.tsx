@@ -88,7 +88,7 @@ export const Form = <Entity, FieldStates, Context, ForeignMutationsExpected>() =
   }
 })
 
-// TODO: Validate runner and dirty status is also used to ensure to element is initialised, but this should be further debugged with a more correct solution
+// TODO: Validate runner and dirty status are also used to ensure to element is initialised, but this should be further debugged with a more correct solution
 export const ValidateRunner = <Context, FormState extends SharedFormState, ForeignMutationsExpected, Entity,>(
   validation?:BasicFun<Entity, Promise<FieldValidationWithPath>>,
 ) => {
@@ -106,7 +106,7 @@ export const ValidateRunner = <Context, FormState extends SharedFormState, Forei
     ,
     {
       interval:15,
-      runFilter:props =>  Debounced.Operations.shouldCoroutineRun(props.context.validation)
+      runFilter: props => Debounced.Operations.shouldCoroutineRun(props.context.validation)
     }
   )
 }
