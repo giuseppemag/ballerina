@@ -27,7 +27,7 @@ export const FormsApp = (props: {}) => {
 
 	const [renderParserState, renderForms] = [true, true]
 	const debugFieldTypeConverters = false
-	const logState = true
+	const logState = false
 
 	logState && console.log({
 		parser: configFormsParser,

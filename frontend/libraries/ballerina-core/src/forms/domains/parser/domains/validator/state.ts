@@ -8,8 +8,6 @@ export type FieldConfig = {
   elementRenderer?: string,
   elementLabel?: string,
   mapRenderer?: { keyRenderer: FieldConfig, valueRenderer: FieldConfig },
-  keyLabel?: string,
-  valueLabel?: string,
   visible: BoolExpr<any>;
   disabled: BoolExpr<any>;
 };
@@ -19,6 +17,7 @@ export type FormDef = {
   typeDef: TypeDefinition;
   fields: Map<FieldName, FieldConfig>;
   tabs: FormLayout;
+  header?: string;
 };
 export type FormLayout = OrderedMap<string, TabLayout>
 export type GroupLayout = Array<FieldName>;
@@ -311,7 +310,7 @@ export const FormsConfig = {
       })
 
       const rendererMatchesType = (formName:string, fieldName:string) => (fieldTypeDef:Type, fieldConfig:any) => {
-        if (fieldTypeDef?.kind == "primitive") {  //@jfinject
+        if (fieldTypeDef?.kind == "primitive") {
           if(injectedPrimitives?.injectedPrimitives.has(fieldTypeDef.value)){
             if (!injectedPrimitives.renderers[fieldTypeDef.value].has(fieldConfig["renderer"]))
               errors.push(`field ${fieldName} of form ${formName} references non-existing injected primitive 'renderer' ${fieldConfig["renderer"]}`);
@@ -426,6 +425,9 @@ export const FormsConfig = {
         let formDef: FormDef = forms.get(formName)!
         const formTypeDef = types.get(formDef.type)
         const configFormDef = formsConfig["forms"][formName];
+        if (formsConfig["forms"][formName].header){
+          formDef.header = formsConfig["forms"][formName].header
+        }
         Object.keys(configFormDef["fields"]).forEach(fieldName => {
           const fieldConfig = configFormDef["fields"][fieldName]
           const fieldTypeDef = formTypeDef?.fields.get(fieldName);
@@ -476,8 +478,6 @@ export const FormsConfig = {
             label: fieldConfig.label ?? revertKeyword(fieldName),
             elementRenderer: fieldConfig.elementRenderer,
             elementLabel: fieldConfig.elementLabel,
-            keyLabel: fieldConfig.keyLabel,
-            valueLabel: fieldConfig.valueLabel,
             mapRenderer: 
               fieldConfig.keyRenderer && fieldConfig.valueRenderer ? 
                 { keyRenderer:fieldConfig.keyRenderer, valueRenderer:fieldConfig.valueRenderer } 

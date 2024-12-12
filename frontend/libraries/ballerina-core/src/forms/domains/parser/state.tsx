@@ -23,7 +23,6 @@ const parseOptions = (leafPredicates: any, options: any) => {
   return resultMap;
 };
 
-//@jfinject
 export const FieldView = //<Context, FieldViews extends DefaultFieldViews, EnumFieldConfigs extends {}, EnumSources extends {}>() => <ViewType extends keyof FieldViews, ViewName extends keyof FieldViews[ViewType]>
   (fieldConfig:FieldConfig, fieldViews: any, viewType: any, viewName: any, fieldName: string, label: string, enumFieldConfigs: EnumOptionsSources, enumSources: any, leafPredicates: any, injectedPrimitives?: InjectedPrimitives): any =>
   {
@@ -197,7 +196,7 @@ export const ParseForm = (
           formConfig[fieldName] = ListForm<any, any, any & FormLabel, Unit>(
             { Default: () => ({ ...initialFormState }) },
             { Default: () => ({ ...initialElementValue }) },
-            elementForm.form.withView(nestedContainerFormView),
+            elementForm.form.withView(nestedContainerFormView).mapContext<any>(_ => ({ ..._, label: elementLabel }))
           ).withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
             .mapContext<any>(_ => ({ ..._, label }))
         } else { // the list argument is a primitive
@@ -210,7 +209,7 @@ export const ParseForm = (
           ).withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
             .mapContext<any>(_ => ({ ..._, label }))
         }
-      } else {  //@jfinject -- ought to have something here
+      } else {
         if (viewType == "map") {
           const field = type.fields.get(fieldName)!
 
@@ -230,16 +229,19 @@ export const ParseForm = (
           }
           const initialKeyValue = defaultValue(keyType)
           const initialValueValue = defaultValue(valueType)
-          const getFormAndInitialState = (elementRenderers:any, rendererName:any, fieldConfig:FieldConfig, label: string) => {
+          const getFormAndInitialState = (elementRenderers:any, rendererName:any, fieldConfig:FieldConfig) => {
+            console.log('el rend', elementRenderers)
             const formDef = otherForms.get(rendererName)
+            const elementLabel = elementRenderers[fieldName].label ?? label
             if (formDef != undefined) {
               return [
-                formDef.form.withView(nestedContainerFormView),
+                formDef.form.withView(nestedContainerFormView).mapContext<any>(_ => ({ ..._, label: elementLabel })),
                 formDef.initialFormState
               ]
             } else {
+              console.log('element label', elementLabel)
               const categoryName = fieldNameToElementViewCategory(elementRenderers)(fieldName) as any
-              const form = FieldView(fieldConfig, fieldViews, categoryName, rendererName, fieldName, label, EnumOptionsSources, fieldsOptionsConfig, leafPredicates, injectedPrimitives)
+              const form = FieldView(fieldConfig, fieldViews, categoryName, rendererName, fieldName, elementLabel, EnumOptionsSources, fieldsOptionsConfig, leafPredicates, injectedPrimitives)
               const initialFormState = FieldFormState(fieldConfig, fieldViews, categoryName, rendererName, fieldName, InfiniteStreamSources, fieldsInfiniteStreamsConfig, injectedPrimitives);
               return [
                 form,
@@ -249,13 +251,10 @@ export const ParseForm = (
           }
           // alert(JSON.stringify([formFieldKeyValueRenderers[fieldName]]))
           // alert(JSON.stringify([formFieldKeyValueRenderers]))
-          console.log("formDef", formDef.fields.get(fieldName))
-          const keyLabel = formDef.fields.get(fieldName)!.keyLabel
-          const valueLabel = formDef.fields.get(fieldName)!.valueLabel
           const keyRendererName = formFieldKeyRenderers[fieldName]
           const valueRendererName = formFieldValueRenderers[fieldName]
-          const [keyForm,keyFormInitialState] = getFormAndInitialState(formFieldKeyRenderers, keyRendererName?.renderer ?? keyRendererName, keyRendererName as FieldConfig, keyLabel ?? label)
-          const [valueForm,valueFormInitialState] = getFormAndInitialState(formFieldValueRenderers, valueRendererName?.renderer ?? valueRendererName, keyRendererName as FieldConfig, valueLabel ?? label)
+          const [keyForm,keyFormInitialState] = getFormAndInitialState(formFieldKeyRenderers, keyRendererName?.renderer ?? keyRendererName, keyRendererName as FieldConfig)
+          const [valueForm,valueFormInitialState] = getFormAndInitialState(formFieldValueRenderers, valueRendererName?.renderer ?? valueRendererName, keyRendererName as FieldConfig)
           formConfig[fieldName] = MapForm<any, any, any, any, any & FormLabel, Unit>(
             { Default: () => keyFormInitialState },
             { Default: () => valueFormInitialState },
@@ -266,7 +265,6 @@ export const ParseForm = (
           ).withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
             .mapContext<any>(_ => ({ ..._, label: label }))
         } else {
-          //@jfinject
           formConfig[fieldName] = FieldView(fieldConfig, fieldViews, viewType, viewName, fieldName, label, EnumOptionsSources, fieldsOptionsConfig, leafPredicates, injectedPrimitives);
         }
       }
