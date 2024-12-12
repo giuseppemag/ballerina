@@ -108,7 +108,6 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
   return builtins
 }
 
-
 export const defaultValue = (types: Map<TypeName, TypeDefinition>, builtIns: BuiltIns, injectedPrimitives?: InjectedPrimitives) => (t: TypeName | Type): any => {
   if (typeof t == "string") {
     let primitive = builtIns.primitives.get(t)

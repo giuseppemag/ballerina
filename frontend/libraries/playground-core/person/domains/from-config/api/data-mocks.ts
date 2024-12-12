@@ -79,7 +79,7 @@ const entityApis: EntityApis = {
         return (id: Guid) => {
           console.log(`get person ${id}`)
           return Promise.resolve({
-            category: "senior",
+            category: ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3],
             name: faker.person.firstName(),
             surname: faker.person.lastName(),
             birthday: new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45),
@@ -135,7 +135,9 @@ const entityApis: EntityApis = {
             ],
             "addressesWithColorLabel": [],
             "permissions": [],
-            "dependants": [],
+            "dependants": [[faker.person.firstName(), ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3]], [faker.person.firstName(), ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3]]],
+            "relatives": [["child", "adult", "senior"][Math.round(Math.random() * 10) % 3], ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3], ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3]],
+            "friendsByCategory": [[["child", "adult", "senior"][Math.round(Math.random() * 10) % 3], faker.person.firstName()]],
           })
         }
       default:
