@@ -291,10 +291,10 @@ const entityApis: EntityApis = {
   update: (apiName: string) => {
     switch (apiName) {
       case "debitNoteHeaderConfigApi": {
-        return (_id: Guid) => (_e: any) => PromiseRepo.Default.mock(() => []);
+        return (_id: Guid, _e: any) => PromiseRepo.Default.mock(() => []);
       }
       default: {
-        return (_id: Guid) => (_e: any) => {
+        return (_id: Guid, _e: any) => {
           alert(`Cannot find entity API ${apiName} for 'update'`);
           return Promise.resolve([]);
         };
