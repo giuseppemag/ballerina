@@ -68,7 +68,7 @@ export type FormValidationError = string;
 export type FormValidationResult = Sum<FormsConfig, Array<FormValidationError>>
 export const FormsConfig = {
   Default: {
-    validateAndParseAPIResponse: (builtIns: BuiltIns, apiConverters: ApiConverters, injectedPrimitives?: InjectedPrimitives) => (fc: any): FormValidationResult => {
+    validateAndParseAPIResponse: <T>(builtIns: BuiltIns, apiConverters: ApiConverters<T>, injectedPrimitives?: InjectedPrimitives<T>) => (fc: any): FormValidationResult => {
       let errors: Array<FormValidationError> = [];
       const formsConfig = Array.isArray(fc) ? FormsConfigMerger.Default.merge(fc) : fc;
       let types: Map<TypeName, TypeDefinition> = Map();
@@ -78,8 +78,8 @@ export const FormsConfig = {
       }
       if(injectedPrimitives){
         injectedPrimitives?.injectedPrimitives.keySeq().toArray().some((injectedPrimitiveName) => {
-          if(!Object.keys(apiConverters).includes(injectedPrimitiveName)){
-          errors.push(`the formsConfig does not contain an Api Converter for injected primitive: ${injectedPrimitiveName}`);
+          if(!Object.keys(apiConverters).includes(injectedPrimitiveName as string)){
+          errors.push(`the formsConfig does not contain an Api Converter for injected primitive: ${injectedPrimitiveName as string}`);
         }})
       }
       Object.keys(formsConfig["types"]).forEach((typeName: any) => {
@@ -99,11 +99,11 @@ export const FormsConfig = {
         Object.keys(configTypeDef["fields"]).forEach((fieldName: any) => {
           let configFieldType = configTypeDef["fields"][fieldName];
           if (typeof configFieldType == "string") {
-            if (injectedPrimitives?.injectedPrimitives.has(configFieldType) && 
+            if (injectedPrimitives?.injectedPrimitives.has(configFieldType as keyof T) && 
             (builtIns.primitives.has(configFieldType) || builtIns.generics.has(configFieldType))) {
               errors.push(`field ${fieldName} in type ${typeName}: injectedPrimitive cannot have same name as builtIn primitive`);
             }
-            if (builtIns.primitives.has(configFieldType) || injectedPrimitives?.injectedPrimitives.has(configFieldType))
+            if (builtIns.primitives.has(configFieldType) || injectedPrimitives?.injectedPrimitives.has(configFieldType as keyof T))
               typeDef.fields = typeDef.fields.set(fieldName, { kind: "primitive", value: configFieldType as any });
             else
               typeDef.fields = typeDef.fields.set(fieldName, { kind: "lookup", name: configFieldType as any });
@@ -128,11 +128,11 @@ export const FormsConfig = {
       });
       types.forEach((typeDef, typeName) => {
         typeDef.extends.forEach(extendedTypeName => {
-          if ((!builtIns.primitives.has(extendedTypeName) && !injectedPrimitives?.injectedPrimitives.has(extendedTypeName)) && !types.has(extendedTypeName))
+          if ((!builtIns.primitives.has(extendedTypeName) && !injectedPrimitives?.injectedPrimitives.has(extendedTypeName as keyof T)) && !types.has(extendedTypeName))
             errors.push(`type ${typeName} extends non-existent type ${extendedTypeName}`);
         });
         typeDef.fields.forEach((fieldDef, fieldName) => {
-          if (fieldDef.kind == "primitive" && (!builtIns.primitives.has(fieldDef.value) && !injectedPrimitives?.injectedPrimitives.has(fieldDef.value) ))
+          if (fieldDef.kind == "primitive" && (!builtIns.primitives.has(fieldDef.value) && !injectedPrimitives?.injectedPrimitives.has(fieldDef.value as keyof T) ))
             errors.push(`field ${fieldName} of type ${typeName} is non-existent primitive type ${fieldDef.value}`);
           if (fieldDef.kind == "lookup" && !types.has(fieldDef.name))
             errors.push(`field ${fieldName} of type ${typeName} is non-existent type ${fieldDef.name}`);
@@ -311,8 +311,8 @@ export const FormsConfig = {
 
       const rendererMatchesType = (formName:string, fieldName:string) => (fieldTypeDef:Type, fieldConfig:any) => {
         if (fieldTypeDef?.kind == "primitive") {
-          if(injectedPrimitives?.injectedPrimitives.has(fieldTypeDef.value)){
-            if (!injectedPrimitives.renderers[fieldTypeDef.value].has(fieldConfig["renderer"]))
+          if(injectedPrimitives?.injectedPrimitives.has(fieldTypeDef.value as keyof T)){
+            if (!injectedPrimitives.renderers[fieldTypeDef.value as keyof T].has(fieldConfig["renderer"]))
               errors.push(`field ${fieldName} of form ${formName} references non-existing injected primitive 'renderer' ${fieldConfig["renderer"]}`);
           }
           else if (fieldTypeDef.value == "maybeBoolean") {
@@ -337,8 +337,8 @@ export const FormsConfig = {
           } else {
             errors.push(`field ${fieldName} of form ${formName} references non-existing ${fieldTypeDef.value} 'renderer' ${fieldConfig["renderer"]}`);
           }
-          if(injectedPrimitives?.injectedPrimitives.has(fieldTypeDef.value)){
-            if (!injectedPrimitives.renderers[fieldTypeDef.value].has(fieldConfig["renderer"]))
+          if(injectedPrimitives?.injectedPrimitives.has(fieldTypeDef.value as keyof T)){
+            if (!injectedPrimitives.renderers[fieldTypeDef.value as keyof T].has(fieldConfig["renderer"]))
               errors.push(`field ${fieldName} of form ${formName} references non-existing injected primitive 'renderer' ${fieldConfig["renderer"]}`);
           }
         } else if (fieldTypeDef?.kind == "application") {
@@ -438,7 +438,7 @@ export const FormsConfig = {
             let elementType = fieldTypeDef.args[0]
             const rendererHasType = (elementRenderer: string, elementType: string): Array<string> => {
               const primitiveRendererNames = builtIns.primitives.get(elementType)
-              const injectedPrimitiveRendererNames = injectedPrimitives?.injectedPrimitives.get(elementType)
+              const injectedPrimitiveRendererNames = injectedPrimitives?.injectedPrimitives.get(elementType as keyof T)
               if (primitiveRendererNames != undefined || injectedPrimitiveRendererNames != undefined) {
                 const primitiveRenderers =
                   Set(primitiveRendererNames ? primitiveRendererNames.renderers.flatMap(_ => builtIns.renderers[_]).toArray() : []).concat(

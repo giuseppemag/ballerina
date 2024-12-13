@@ -24,7 +24,7 @@ export const GenericTypes = [
 export type GenericType = (typeof GenericTypes)[number]
 
 export type ApiConverter<T> =  { fromAPIRawValue: BasicFun<any, T>, toAPIRawValue: BasicFun<[T, boolean], any> }
-export type ApiConverters = {[key: string]: ApiConverter<any> } & BuiltInApiConverters
+export type ApiConverters<U> = {[key in keyof U]: ApiConverter<U[key]> } & BuiltInApiConverters
 export type BuiltInApiConverters = {
   "string": ApiConverter<string>
   "number": ApiConverter<number>
@@ -108,10 +108,10 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
   return builtins
 }
 
-export const defaultValue = (types: Map<TypeName, TypeDefinition>, builtIns: BuiltIns, injectedPrimitives?: InjectedPrimitives) => (t: TypeName | Type): any => {
+export const defaultValue = <T>(types: Map<TypeName, TypeDefinition>, builtIns: BuiltIns, injectedPrimitives?: InjectedPrimitives<T>) => (t: TypeName | Type): any => {
   if (typeof t == "string") {
     let primitive = builtIns.primitives.get(t)
-    let injectedPrimitive = injectedPrimitives?.injectedPrimitives.get(t)
+    let injectedPrimitive = injectedPrimitives?.injectedPrimitives.get(t as keyof T)
     if(primitive && injectedPrimitive) {
       throw `both primitive and injected primitive are defined for ${t}`
     }
@@ -160,7 +160,7 @@ const parseTypeIShouldBePartOfFormValidation = (t:any) : TypeName | Type => {
   return null!
 }
 
-export const fromAPIRawValue = (t: Type, types: Map<TypeName, TypeDefinition>, builtIns: BuiltIns, converters: BuiltInApiConverters, isKeywordsReplaced: boolean = false, injectedPrimitives?: InjectedPrimitives) => (raw: any): any => {
+export const fromAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, builtIns: BuiltIns, converters: BuiltInApiConverters, isKeywordsReplaced: boolean = false, injectedPrimitives?: InjectedPrimitives<T>) => (raw: any): any => {
   // alert(JSON.stringify(t))
   if (raw == undefined) {
     console.warn(`instantiating default value for type ${JSON.stringify(t)}: the value was undefined so something is missing from the API response`)
@@ -185,7 +185,7 @@ export const fromAPIRawValue = (t: Type, types: Map<TypeName, TypeDefinition>, b
     }
     if (t.value == "List" && t.args.length == 1) {
       let result = converters[t.value].fromAPIRawValue(obj)
-      const isPrimitive = PrimitiveTypes.some(_ => _ == t.args[0]) || injectedPrimitives?.injectedPrimitives.has(t.args[0]) 
+      const isPrimitive = PrimitiveTypes.some(_ => _ == t.args[0]) || injectedPrimitives?.injectedPrimitives.has(t.args[0] as keyof T) 
       result = result.map(fromAPIRawValue(
         isPrimitive ?
           { kind: "primitive", value: t.args[0] as PrimitiveType }
@@ -196,8 +196,8 @@ export const fromAPIRawValue = (t: Type, types: Map<TypeName, TypeDefinition>, b
     if (t.value == "Map" && t.args.length == 2) {
       let result = converters[t.value].fromAPIRawValue(obj)
       let t_args = t.args.map(parseTypeIShouldBePartOfFormValidation)
-      const isKeyPrimitive = PrimitiveTypes.some(_ => _ == t.args[0]) || injectedPrimitives?.injectedPrimitives.has(t.args[0]) 
-      const isValuePrimitive = PrimitiveTypes.some(_ => _ == t.args[1]) || injectedPrimitives?.injectedPrimitives.has(t.args[1]) 
+      const isKeyPrimitive = PrimitiveTypes.some(_ => _ == t.args[0]) || injectedPrimitives?.injectedPrimitives.has(t.args[0] as keyof T) 
+      const isValuePrimitive = PrimitiveTypes.some(_ => _ == t.args[1]) || injectedPrimitives?.injectedPrimitives.has(t.args[1] as keyof T) 
       result = result.map(keyValue => ([
         fromAPIRawValue(
           typeof t_args[0] == "string" ? 
@@ -234,7 +234,7 @@ export const fromAPIRawValue = (t: Type, types: Map<TypeName, TypeDefinition>, b
 }
 
 
-export const toAPIRawValue = (t: Type, types: Map<TypeName, TypeDefinition>, builtIns: BuiltIns, converters: BuiltInApiConverters, isKeywordsReverted: boolean = false, injectedPrimitives?: InjectedPrimitives) => (raw: any, formState: any) : any => {
+export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, builtIns: BuiltIns, converters: BuiltInApiConverters, isKeywordsReverted: boolean = false, injectedPrimitives?: InjectedPrimitives<T>) => (raw: any, formState: any) : any => {
   const obj = !isKeywordsReverted ? replaceKeywords(raw, "to api") : raw
 
   if (t.kind == "primitive") {
@@ -259,7 +259,7 @@ export const toAPIRawValue = (t: Type, types: Map<TypeName, TypeDefinition>, bui
     }
     if (t.value == "List" && t.args.length == 1) {
       const converterResult = converters[t.value].toAPIRawValue([obj, formState.modifiedByUser])
-      const isPrimitive = PrimitiveTypes.some(_ => _ == t.args[0]) || injectedPrimitives?.injectedPrimitives.has(t.args[0]) 
+      const isPrimitive = PrimitiveTypes.some(_ => _ == t.args[0]) || injectedPrimitives?.injectedPrimitives.has(t.args[0] as keyof T) 
       return converterResult.map((item: any, index: number) =>
         toAPIRawValue(
           isPrimitive ?
@@ -271,8 +271,8 @@ export const toAPIRawValue = (t: Type, types: Map<TypeName, TypeDefinition>, bui
     }
     if (t.value == "Map" && t.args.length == 2) {
       const converterResult = converters[t.value].toAPIRawValue([obj, formState.modifiedByUser])
-      const isKeyPrimitive = PrimitiveTypes.some(_ => _ == t.args[0]) || injectedPrimitives?.injectedPrimitives.has(t.args[0])
-      const isValuePrimitive = PrimitiveTypes.some(_ => _ == t.args[1]) || injectedPrimitives?.injectedPrimitives.has(t.args[1])
+      const isKeyPrimitive = PrimitiveTypes.some(_ => _ == t.args[0]) || injectedPrimitives?.injectedPrimitives.has(t.args[0] as keyof T)
+      const isValuePrimitive = PrimitiveTypes.some(_ => _ == t.args[1]) || injectedPrimitives?.injectedPrimitives.has(t.args[1] as keyof T)
       let t_args = t.args.map(parseTypeIShouldBePartOfFormValidation)
       return converterResult.map((keyValue: any, index: number) => ([
         toAPIRawValue(

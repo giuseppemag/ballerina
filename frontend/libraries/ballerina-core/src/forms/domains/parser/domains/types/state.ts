@@ -32,10 +32,10 @@ export const Type = {
             fst.args.length == snd.args.length &&
             fst.args.every((v, i) => v == snd.args[i]) :
             false,
-    FromName: (types: Map<string, TypeDefinition>, builtIns: BuiltIns, injectedPrimitives?: InjectedPrimitives) => (typeName: string): Type | undefined => {
+    FromName: <T>(types: Map<string, TypeDefinition>, builtIns: BuiltIns, injectedPrimitives?: InjectedPrimitives<T>) => (typeName: string): Type | undefined => {
       const recordTypeName = types.get(typeName)?.name
       if (recordTypeName) return Type.Default.lookup(recordTypeName)
-      const primitiveTypeName = (builtIns.primitives.get(typeName) && typeName)  ?? (injectedPrimitives?.injectedPrimitives.get(typeName) && typeName)
+      const primitiveTypeName = (builtIns.primitives.get(typeName) && typeName)  ?? (injectedPrimitives?.injectedPrimitives.get(typeName as keyof T) && typeName)
       if (primitiveTypeName) return Type.Default.primitive(primitiveTypeName as any)
       return undefined
     }

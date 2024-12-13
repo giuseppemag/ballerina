@@ -1,7 +1,8 @@
 import { ApiConverters, BuiltInApiConverters, CollectionReference, CollectionSelection } from "ballerina-core";
 import { List, OrderedMap } from "immutable";
+import { PersonFormInjectedTypes } from "src/domains/person-from-config/injected-forms/category";
 
-export const fieldTypeConverters: ApiConverters = {
+export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
 	"injectedCategory": { fromAPIRawValue: _ => _ , toAPIRawValue: ([_, __]) => _ },
     "string": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: ([_, __]) => _ },
     "number": { fromAPIRawValue: _ => typeof _ == "number" ? _ : 0, toAPIRawValue: ([_, __])  => _ },
@@ -40,7 +41,7 @@ const logWrapper = ([_, __]: any) => {
 	return _
 }
 
-export const modifiedDebugFieldTypeConverters: ApiConverters = {
+export const modifiedDebugFieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
 	"injectedCategory": { fromAPIRawValue: _ => _ , toAPIRawValue: ([_, __]) => logWrapper([_, __]) },
 	"string": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: ([_, __]) => logWrapper([_, __]) },
 	"number": { fromAPIRawValue: _ => typeof _ == "number" ? _ : 0, toAPIRawValue: ([_, __])  => logWrapper([_, __]) },

@@ -8,12 +8,14 @@ import { PersonFormsConfig, PersonFromConfigApis, PersonConfigFormsLeafPredicate
 import { PersonFieldViews } from "./domains/person-from-config/views/field-views";
 import { PersonForm } from "./domains/person/template";
 import { fieldTypeConverters, modifiedDebugFieldTypeConverters } from "./domains/person/apis/field-converters";
-import { categoryForm } from "./domains/person-from-config/injected-forms/category";
+import { categoryForm, PersonFormInjectedTypes } from "./domains/person-from-config/injected-forms/category";
 
 const ShowFormsParsingErrors = (parsedFormsConfig: FormParsingResult) =>
 	<div style={{ border: "red" }}>
 		{parsedFormsConfig.kind == "r" && JSON.stringify(parsedFormsConfig.value)}
 	</div>
+
+const InstantiedPersonFormsParserTemplate = FormsParserTemplate<PersonFormInjectedTypes>()
 
 export const FormsApp = (props: {}) => {
 	const [configFormsParser, setConfigFormsParser] = useState(FormsParserState.Default())
@@ -96,7 +98,7 @@ export const FormsApp = (props: {}) => {
 							<td>
 								{renderParserState && JSON.stringify(configFormsParser)}
 								<button onClick={() => setFormToShow(formToShow + 1)}>Show next form</button>
-								<FormsParserTemplate
+								<InstantiedPersonFormsParserTemplate
 									context={{
 										...configFormsParser,
 										containerFormView: PersonContainerFormView,

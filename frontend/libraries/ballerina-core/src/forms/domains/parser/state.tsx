@@ -24,7 +24,7 @@ const parseOptions = (leafPredicates: any, options: any) => {
 };
 
 export const FieldView = //<Context, FieldViews extends DefaultFieldViews, EnumFieldConfigs extends {}, EnumSources extends {}>() => <ViewType extends keyof FieldViews, ViewName extends keyof FieldViews[ViewType]>
-  (fieldConfig:FieldConfig, fieldViews: any, viewType: any, viewName: any, fieldName: string, label: string, enumFieldConfigs: EnumOptionsSources, enumSources: any, leafPredicates: any, injectedPrimitives?: InjectedPrimitives): any =>
+  <T,>(fieldConfig:FieldConfig, fieldViews: any, viewType: any, viewName: any, fieldName: string, label: string, enumFieldConfigs: EnumOptionsSources, enumSources: any, leafPredicates: any, injectedPrimitives?: InjectedPrimitives<T>): any =>
   {
     if (viewType == "maybeBoolean")
       return MaybeBooleanForm<any & FormLabel, Unit>()
@@ -86,7 +86,7 @@ export const FieldView = //<Context, FieldViews extends DefaultFieldViews, EnumF
   }
 
 export const FieldFormState = //<Context, FieldViews extends DefaultFieldViews, InfiniteStreamSources extends {}, InfiniteStreamConfigs extends {}>() => <ViewType extends keyof FieldViews, ViewName extends keyof FieldViews[ViewType]>
-  (fieldConfig:FieldConfig, fieldViews: any, viewType: any, viewName: any, fieldName: string, InfiniteStreamSources: any, infiniteStreamConfigs: any, injectedPrimitives?: InjectedPrimitives): any => {
+  <T,>(fieldConfig:FieldConfig, fieldViews: any, viewType: any, viewName: any, fieldName: string, InfiniteStreamSources: any, infiniteStreamConfigs: any, injectedPrimitives?: InjectedPrimitives<T>): any => {
     if (viewType == "maybeBoolean" || viewType == "boolean" || viewType == "number" || viewType == "string" || viewType == "base64File" || viewType == "secret")
       return SharedFormState.Default();
     if( injectedPrimitives?.injectedPrimitives.has(viewType)){
@@ -117,7 +117,7 @@ export type ParsedForm = {
   visibleFields: any,
   disabledFields: any,
 }
-export const ParseForm = (
+export const ParseForm = <T,>(
   formName: string,
   formDef: FormDef,
   containerFormView: any,
@@ -137,7 +137,7 @@ export const ParseForm = (
   disabledFieldsBoolExprs: any,
   defaultValue: BasicFun<TypeName | Type, any>,
   type: TypeDefinition,
-  injectedPrimitives?: InjectedPrimitives
+  injectedPrimitives?: InjectedPrimitives<T>
 ): ParsedForm => {
   const fieldNameToViewCategory = (fieldName: string) => {
     const fieldViewCategories = Object.keys(fieldViews)
@@ -359,9 +359,9 @@ export type EnumName = string
 
 export type EnumOptionsSources = BasicFun<EnumName, BasicFun<Unit, Promise<Array<[CollectionReference, BoolExpr<Unit>]>>>>
 export const parseForms =
-  <LeafPredicates,>(
+  <LeafPredicates, T,>(
     builtIns: BuiltIns,
-    injectedPrimitives: InjectedPrimitives | undefined,
+    injectedPrimitives: InjectedPrimitives<T> | undefined,
     apiConverters: BuiltInApiConverters,
     containerFormView: any,
     nestedContainerFormView: any,
@@ -614,17 +614,17 @@ export const replaceKeywords = (obj: any, kind: "from api" | "to api"): any => {
   return obj;
 };
 
-export type FormsParserContext = {
+export type FormsParserContext<T> = {
   containerFormView: any,
   nestedContainerFormView: any,
   fieldViews: any,
-  fieldTypeConverters: ApiConverters,
+  fieldTypeConverters: ApiConverters<T>,
   infiniteStreamSources: InfiniteStreamSources,
   enumOptionsSources: EnumOptionsSources,
   entityApis: EntityApis,
   leafPredicates: any,
   getFormsConfig: BasicFun<void, Promise<any>>
-  injectedPrimitives?: Injectables,
+  injectedPrimitives?: Injectables<T>,
 }
 export type FormsParserState = {
   formsConfig: Synchronized<Unit, FormParsingResult>
