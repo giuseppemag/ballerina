@@ -8,7 +8,7 @@ import { PersonFormsConfig, PersonFromConfigApis, PersonConfigFormsLeafPredicate
 import { PersonFieldViews } from "./domains/person-from-config/views/field-views";
 import { PersonForm } from "./domains/person/template";
 import { fieldTypeConverters, modifiedDebugFieldTypeConverters } from "./domains/person/apis/field-converters";
-import { categoryForm, PersonFormInjectedTypes } from "./domains/person-from-config/injected-forms/category";
+import { categoryForm, CategoryState, PersonFormInjectedTypes } from "./domains/person-from-config/injected-forms/category";
 
 const ShowFormsParsingErrors = (parsedFormsConfig: FormParsingResult) =>
 	<div style={{ border: "red" }}>
@@ -29,11 +29,11 @@ export const FormsApp = (props: {}) => {
 
 	const [renderParserState, renderForms] = [true, true]
 	const debugFieldTypeConverters = false
-	const logState = false
+	const logState = true
 
 	logState && console.log({
 		parser: configFormsParser,
-		runner: personEditFormState
+		runner: formToShow % numForms == 0 ? personCreateFormState : personEditFormState
 	})
 
 	return (
@@ -110,7 +110,7 @@ export const FormsApp = (props: {}) => {
 										entityApis: PersonFromConfigApis.entityApis,
 										leafPredicates: PersonConfigFormsLeafPredicates,
 										getFormsConfig: () => PromiseRepo.Default.mock(() => PersonFormsConfig),
-										injectedPrimitives: Map([["injectedCategory", {fieldView: categoryForm, defaultValue: "adult" }]]),
+										injectedPrimitives: Map([["injectedCategory", {fieldView: categoryForm, defaultValue: "adult", defaultState: CategoryState.Default() }]]),
 									}}
 									setState={setConfigFormsParser}
 									view={unit}

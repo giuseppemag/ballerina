@@ -90,7 +90,13 @@ export const FieldFormState = //<Context, FieldViews extends DefaultFieldViews, 
     if (viewType == "maybeBoolean" || viewType == "boolean" || viewType == "number" || viewType == "string" || viewType == "base64File" || viewType == "secret")
       return SharedFormState.Default();
     if( injectedPrimitives?.injectedPrimitives.has(viewType)){
-      return SharedFormState.Default();
+      const injectedPrimitiveDefaultState = injectedPrimitives.injectedPrimitives.get(viewType)?.defaultState;
+      return injectedPrimitiveDefaultState != undefined ?
+      ({
+        ...injectedPrimitiveDefaultState,
+        ...SharedFormState.Default()
+      }) : SharedFormState.Default();
+      return SharedFormState.Default()
     }
     if (viewType == "date")
       return DateFormState.Default("");
@@ -230,7 +236,6 @@ export const ParseForm = <T,>(
           const initialKeyValue = defaultValue(keyType)
           const initialValueValue = defaultValue(valueType)
           const getFormAndInitialState = (elementRenderers:any, rendererName:any, fieldConfig:FieldConfig) => {
-            console.log('el rend', elementRenderers)
             const formDef = otherForms.get(rendererName)
             const elementLabel = elementRenderers[fieldName].label ?? label
             if (formDef != undefined) {
@@ -239,7 +244,6 @@ export const ParseForm = <T,>(
                 formDef.initialFormState
               ]
             } else {
-              console.log('element label', elementLabel)
               const categoryName = fieldNameToElementViewCategory(elementRenderers)(fieldName) as any
               const form = FieldView(fieldConfig, fieldViews, categoryName, rendererName, fieldName, elementLabel, EnumOptionsSources, fieldsOptionsConfig, leafPredicates, injectedPrimitives)
               const initialFormState = FieldFormState(fieldConfig, fieldViews, categoryName, rendererName, fieldName, InfiniteStreamSources, fieldsInfiniteStreamsConfig, injectedPrimitives);

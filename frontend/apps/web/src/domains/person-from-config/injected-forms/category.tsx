@@ -1,19 +1,34 @@
-import { FormLabel, View, Value, SharedFormState, OnChange, SimpleCallback, BasicFun, FieldValidation, Template, replaceWith, ValidateRunner, FieldValidationWithPath, Unit } from "ballerina-core";
+import { FormLabel, View, Value, SharedFormState, OnChange, SimpleCallback, BasicFun, FieldValidation, Template, replaceWith, ValidateRunner, FieldValidationWithPath, Unit, simpleUpdater } from "ballerina-core";
 import { List } from "immutable";
 
 export type Category = "child" | "adult" | "senior"
 
+export type CategoryState = {
+  likelyOutdated: boolean;
+}
+
+export const CategoryState = ({
+  Default: (): CategoryState => ({
+    likelyOutdated: false
+  }),
+  Updaters: {
+    Core: {
+      ...simpleUpdater<CategoryState>()("likelyOutdated")
+    }
+  }
+})
+
 export type CategoryView<Context extends FormLabel, ForeignMutationsExpected> = 
   View<
     Context & Value<Category> & SharedFormState & { disabled:boolean }, 
-    SharedFormState, 
+    SharedFormState & CategoryState, 
     ForeignMutationsExpected & { onChange: OnChange<Category>; setNewValue: SimpleCallback<Category> }
   >;
 
 
 export const CategoryForm = <Context extends FormLabel, ForeignMutationsExpected>(
   validation?:BasicFun<Category, Promise<FieldValidation>>) => {
-  return Template.Default<Context & Value<Category> & { disabled:boolean }, SharedFormState, ForeignMutationsExpected & { onChange: OnChange<Category>; }, CategoryView<Context, ForeignMutationsExpected>>(props => <>
+  return Template.Default<Context & Value<Category> & { disabled:boolean }, SharedFormState & CategoryState, ForeignMutationsExpected & { onChange: OnChange<Category>; }, CategoryView<Context, ForeignMutationsExpected>>(props => <>
     <props.view {...props}
       foreignMutations={{
         ...props.foreignMutations,
@@ -21,7 +36,7 @@ export const CategoryForm = <Context extends FormLabel, ForeignMutationsExpected
       }} />
   </>
   ).any([
-    ValidateRunner<Context & { disabled:boolean }, SharedFormState, ForeignMutationsExpected, Category>(
+    ValidateRunner<Context & { disabled:boolean }, SharedFormState & CategoryState, ForeignMutationsExpected, Category>(
       validation ? _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation) : undefined
     ),
   ])
