@@ -24,7 +24,7 @@ export const GenericTypes = [
 export type GenericType = (typeof GenericTypes)[number]
 
 export type ApiConverter<T> =  { fromAPIRawValue: BasicFun<any, T>, toAPIRawValue: BasicFun<[T, boolean], any> }
-export type ApiConverters<U> = {[key in keyof U]: ApiConverter<U[key]> } & BuiltInApiConverters
+export type ApiConverters<U extends {[key in keyof U]: {type: any, state: any}}> = {[key in keyof U]: ApiConverter<U[key]["type"]> } & BuiltInApiConverters
 export type BuiltInApiConverters = {
   "string": ApiConverter<string>
   "number": ApiConverter<number>
