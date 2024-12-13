@@ -54,7 +54,7 @@ export const SharedFormState = {
 export type EntityFormState<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> =
   { [f in Fields]: FieldStates[f] & SharedFormState } & SharedFormState
 export type EntityFormContext<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> =
-  Context & EntityFormState<Entity, Fields, FieldStates, Context, ForeignMutationsExpected> & { visibleFields: OrderedMap<Fields, BasicPredicate<Context>>, disabledFields: OrderedMap<Fields, BasicPredicate<Context>> } & Value<Entity>
+  Context & EntityFormState<Entity, Fields, FieldStates, Context, ForeignMutationsExpected> & { visibleFields: OrderedMap<Fields, BasicPredicate<Context>>, disabledFields: OrderedMap<Fields, BasicPredicate<Context>>, header?: string } & Value<Entity>
 export type OnChange<Entity> = (updater: BasicUpdater<Entity>, path: List<string>) => void
 export type EntityFormForeignMutationsExpected<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> =
   ForeignMutationsExpected & { onChange: OnChange<Entity> }

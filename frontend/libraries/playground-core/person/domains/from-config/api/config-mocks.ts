@@ -33,18 +33,21 @@ export const PersonFormsConfig = {
     },
     "Person": {
       fields: {
+        "category": "injectedCategory",
         "name": "string",
         "surname": "string",
         "birthday": "Date",
         "subscribeToNewsletter": "boolean",
         "favoriteColor": { fun: "SingleSelection", args: ["ColorRef"] },
         "gender": { fun: "SingleSelection", args: ["GenderRef"] },
+        "dependants": { fun: "Map", args: ["string", "injectedCategory"] },
+        "friendsByCategory": { fun: "Map", args: ["injectedCategory", "string"] },
+        "relatives": { fun: "List", args: ["injectedCategory"] },
         "interests": { fun: "Multiselection", args: ["InterestRef"] },
         "departments": { fun: "Multiselection", args: ["DepartmentRef"] },
         "mainAddress": "Address",
         "addresses": { fun: "List", args: ["Address"] },
         "emails": { fun: "List", args: ["string"] },
-
         "addressesWithLabel": { fun: "Map", args: ["string", "Address"] },
         "addressesByCity": { fun: "Map", args: [{ fun: "SingleSelection", args: ["CityRef"]}, "Address"] },
         "addressesWithColorLabel": { fun: "Map", args: [{ fun: "SingleSelection", args: ["ColorRef"]}, "Address"] },
@@ -105,8 +108,9 @@ export const PersonFormsConfig = {
     "person": {
       "type": "Person",
       "fields": {
-        "name": { label:"first name", renderer: "defaultString", visible: { "kind": "true" } },
-        "surname": { label:"last name", renderer: "defaultString", visible: { "kind": "true" } },
+        "category": { label: "category", renderer: "defaultCategory", visible: { "kind": "true" } },
+        "name": { label: "first name", renderer: "defaultString", visible: { "kind": "true" } },
+        "surname": { label: "last name", renderer: "defaultString", visible: { "kind": "true" } },
         "birthday": { renderer: "defaultDate", visible: { "kind": "true" } },
         "favoriteColor": {
           renderer: "defaultEnum", options: "colors", visible: { "kind": "true" }
@@ -120,6 +124,19 @@ export const PersonFormsConfig = {
             ]
           }
         },
+        "dependants": {
+          renderer: "defaultMap",
+          keyRenderer: { label: "name", renderer: "defaultString", visible: { "kind": "true" } },
+          valueRenderer: { label: "category", renderer: "defaultCategory", visible: { "kind": "true" } },
+          visible: { "kind": "true" },
+        },
+        "friendsByCategory": {
+          renderer: "defaultMap",
+          keyRenderer: { label: "category", renderer: "defaultCategory", visible: { "kind": "true" } },
+          valueRenderer: { label: "name", renderer: "defaultString", visible: { "kind": "true" } },
+          visible: { "kind": "true" },
+        },
+        "relatives": { label: "relatives", elementLabel: "relative", renderer: "defaultList", elementRenderer:"defaultCategory", visible: { "kind": "true" } },
         "subscribeToNewsletter": { renderer: "defaultBoolean", visible: { "kind": "true" } },
         "interests": {
           renderer: "defaultEnumMultiselect", options: "interests",
@@ -131,35 +148,36 @@ export const PersonFormsConfig = {
           disabled: //{ "kind": "true" }
             { "kind": "leaf", "operation": "field", "arguments": { "location": "local", "field": "subscribeToNewsletter", "value": false } }
         },
-        "mainAddress": { renderer: "address", visible: { "kind": "true" } },
-        "addresses": { renderer: "defaultList", elementRenderer:"address", visible: { "kind": "true" } },
-        "emails": { renderer: "defaultList", elementRenderer:"defaultString", visible: { "kind": "true" } },
-
-        "addressesWithLabel": { renderer: "defaultMap", 
-          keyRenderer:{ label:"address label", renderer: "defaultString", visible: { "kind": "true" } }, 
-          valueRenderer:{ renderer: "address", visible: { "kind": "true" } },
+        "mainAddress": { label: "main address", renderer: "address", visible: { "kind": "true" }},
+        "addresses": { label: "other addresses", renderer: "defaultList", elementLabel: "address", elementRenderer:"address", visible: { "kind": "true" } },
+        "emails": { renderer: "defaultList", elementLabel: "email", elementRenderer:"defaultString", visible: { "kind": "true" } },
+        "addressesWithLabel": {
+          renderer: "defaultMap",
+          keyRenderer:{ label: "label", renderer: "defaultString", visible: { "kind": "true" } },
+          valueRenderer:{ label: "address X", renderer: "address", visible: { "kind": "true" } },
           visible: { "kind": "true" } },
-        "addressesByCity": { renderer: "defaultMap", 
-            keyRenderer:{ renderer: "defaultInfiniteStream", stream: "cities", visible: { "kind": "true" } }, 
-            valueRenderer:{ renderer: "address", visible: { "kind": "true" } }, 
+        "addressesByCity": {
+            renderer: "defaultMap",
+            keyRenderer:{ label: "city", renderer: "defaultInfiniteStream", stream: "cities", visible: { "kind": "true" } }, 
+            valueRenderer:{label: "address", renderer: "address", visible: { "kind": "true" } }, 
             visible: { "kind": "true" } },
-        "addressesWithColorLabel": { renderer: "defaultMap", 
-            keyRenderer:{ renderer: "defaultEnum", options: "colors", visible: { "kind": "true" } }, 
-            valueRenderer:{ renderer: "address", visible: { "kind": "true" } }, 
+        "addressesWithColorLabel": {
+            renderer: "defaultMap",
+            keyRenderer:{ label:"color", renderer: "defaultEnum", options: "colors", visible: { "kind": "true" } }, 
+            valueRenderer:{ label: "address", renderer: "address", visible: { "kind": "true" } }, 
             visible: { "kind": "true" } },
-        "permissions": { renderer: "defaultMap", 
-          keyRenderer:{ renderer: "defaultEnum", options: "permissions", visible: { "kind": "true" } }, 
-          valueRenderer:{ renderer: "defaultBoolean", visible: { "kind": "true" } }, 
-          visible: { "kind": "true" } },
+        "permissions": {
+            renderer: "defaultMap",
+            keyRenderer:{ label: "permission", renderer: "defaultEnum", options: "permissions", visible: { "kind": "true" } },
+            valueRenderer:{ label: "granted", renderer: "defaultBoolean", visible: { "kind": "true" } },
+            visible: { "kind": "true" } },
       },
       "tabs": {
         "main": {
           "columns": {
             "demographics": {
               "groups": {
-                "main": ["name", "surname", "birthday", "gender", "emails"
-
-                ],
+                "main": ["category", "name", "surname", "birthday", "gender", "emails", "dependants", "friendsByCategory", "relatives"],
               },
             },
             "mailing": {

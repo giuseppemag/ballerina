@@ -1,9 +1,9 @@
 import { List } from "immutable";
-import { SimpleCallback, BasicFun, Unit, ValidateRunner, Updater, BasicUpdater, MapRepo, ListRepo } from "../../../../../../main";
+import { SimpleCallback, BasicFun, Unit, ValidateRunner, Updater, BasicUpdater, MapRepo, ListRepo, CoTypedFactory, Debounce, Synchronize} from "../../../../../../main";
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
-import { FieldValidation, FieldValidationWithPath, OnChange } from "../../../singleton/state";
+import { FieldValidation, FieldValidationWithPath, FormValidatorSynchronized, OnChange, SharedFormState } from "../../../singleton/state";
 import { ListFieldState, ListFieldView } from "./state";
 
 export const ListForm = <Element, ElementFormState, Context extends FormLabel, ForeignMutationsExpected>(
@@ -19,20 +19,20 @@ export const ListForm = <Element, ElementFormState, Context extends FormLabel, F
 ) => {
   const embeddedElementTemplate = (elementIndex:number) =>
       elementTemplate
-        .mapForeignMutations((_ : ForeignMutationsExpected & {
-            onChange: OnChange<List<Element>>;
-            add: SimpleCallback<Unit>;
-            remove: SimpleCallback<number>;
-          }) : ForeignMutationsExpected & {
-            onChange: OnChange<Element>;
-          } => ({
-          ..._,
-          onChange: (elementUpdater, path) => {
-            _.onChange(Updater((elements:List<Element>) => elements.update(elementIndex, (_:Element | undefined) => _ == undefined ? _ : elementUpdater(_))), path)
-          },
-          add: (newElement: Element) => { },
-          remove: (elementIndex: number) => { }
-        }))
+        .mapForeignMutationsFromProps<ForeignMutationsExpected & {
+          onChange: OnChange<List<Element>>;
+          add: SimpleCallback<Unit>;
+          remove: SimpleCallback<number>;}>((props): ForeignMutationsExpected & {onChange: OnChange<Element>} => ({
+        ...props.foreignMutations,
+        onChange: (elementUpdater, path) => {
+          props.foreignMutations.onChange(Updater((elements:List<Element>) =>
+            elements.update(elementIndex, (_:Element | undefined) => _ == undefined ? _ : elementUpdater(_))), path)
+          props.setState(_ => ({..._,
+             modifiedByUser:true,
+            })) },
+        add: (newElement: Element) => { },
+        remove: (elementIndex: number) => { }
+      }))
         .mapContext((_: Context & Value<List<Element>> & ListFieldState<Element, ElementFormState>) : (Context & Value<Element> & ElementFormState) | undefined => {
           const element = _.value.get(elementIndex)
           if (element == undefined) return undefined
