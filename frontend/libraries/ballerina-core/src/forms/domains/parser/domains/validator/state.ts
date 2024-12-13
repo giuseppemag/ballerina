@@ -68,7 +68,7 @@ export type FormValidationError = string;
 export type FormValidationResult = Sum<FormsConfig, Array<FormValidationError>>
 export const FormsConfig = {
   Default: {
-    validateAndParseAPIResponse: <T>(builtIns: BuiltIns, apiConverters: ApiConverters<T>, injectedPrimitives?: InjectedPrimitives<T>) => (fc: any): FormValidationResult => {
+    validateAndParseAPIResponse: <T extends {[key in keyof T]: {type: any, state: any}}>(builtIns: BuiltIns, apiConverters: ApiConverters<T>, injectedPrimitives?: InjectedPrimitives<T>) => (fc: any): FormValidationResult => {
       let errors: Array<FormValidationError> = [];
       const formsConfig = Array.isArray(fc) ? FormsConfigMerger.Default.merge(fc) : fc;
       let types: Map<TypeName, TypeDefinition> = Map();
