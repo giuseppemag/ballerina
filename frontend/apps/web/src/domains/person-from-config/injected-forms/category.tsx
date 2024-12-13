@@ -42,9 +42,9 @@ export const CategoryForm = <Context extends FormLabel, ForeignMutationsExpected
   ])
 }
 
-export const categoryForm = (fieldViews: any, viewType: any, viewName: any, label: string) => CategoryForm<any & FormLabel, Unit>()
+export const categoryForm = (fieldViews: any, viewType: any, viewName: any, label: string, tooltip?: string) => CategoryForm<any & FormLabel, Unit>()
   .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
-  .mapContext<any & SharedFormState & Value<Category>>(_ => ({ ..._, label: label })) as any
+  .mapContext<any & SharedFormState & Value<Category>>(_ => ({ ..._, label, tooltip })) as any
 
 export type PersonFormInjectedTypes = {
   injectedCategory: { type: Category, state: CategoryState }

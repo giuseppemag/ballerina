@@ -26,6 +26,7 @@ export const PersonFieldViews = {
       props =>
         <>
             {props.context.label && <h3>{props.context.label}</h3>}
+            {props.context.tooltip && <p>{props.context.tooltip}</p>}
             <button style={props.context.value == "child" ? {borderColor: "red"} : {}} onClick={_ => props.foreignMutations.setNewValue("child")}>child</button>
             <button style={props.context.value == "adult" ? {borderColor: "red"} : {}} onClick={_ => props.foreignMutations.setNewValue("adult")}>adult</button>
             <button style={props.context.value == "senior" ? {borderColor: "red"} : {}} onClick={_ => props.foreignMutations.setNewValue("senior")}>senior</button>
@@ -76,6 +77,7 @@ export const PersonFieldViews = {
       props =>
         <>
           {props.context.label && <h3>{props.context.label}</h3>}
+          {props.context.tooltip && <p>{props.context.tooltip}</p>}
           <input disabled={props.context.disabled} value={props.context.value}
             onChange={e => props.foreignMutations.setNewValue(e.currentTarget.value)} />
           <MostUglyValidationDebugView {...props} />
@@ -86,6 +88,7 @@ export const PersonFieldViews = {
       props =>
         <>
           {props.context.label && <h3>{props.context.label}</h3>}
+          {props.context.tooltip && <p>{props.context.tooltip}</p>}
           <input disabled={props.context.disabled} value={props.context.possiblyInvalidInput}
             onChange={e => props.foreignMutations.setNewValue(e.currentTarget.value)
             } />
@@ -142,6 +145,7 @@ export const PersonFieldViews = {
       props =>
         <>
           {props.context.label && <h3>{props.context.label}</h3>}
+          {props.context.tooltip && <p>{props.context.tooltip}</p>}
           <button disabled={props.context.disabled} onClick={() => props.foreignMutations.toggleOpen()}>
             {props.context.value.kind == "l" && props.context.value.value.displayName} {props.context.status == "open" ? "➖" : "➕"}
           </button>
@@ -221,6 +225,7 @@ export const PersonFieldViews = {
       props =>
           <>
             {props.context.label && <h3>{props.context.label}</h3>}
+            {props.context.tooltip && <p>{props.context.tooltip}</p>}
             <ul>
               {props.context.value.map((element, elementIndex) => {
                 return (
@@ -258,6 +263,7 @@ export const PersonFieldViews = {
       props =>
           <>
             {props.context.label && <h3>{props.context.label}</h3>}
+            {props.context.tooltip && <p>{props.context.tooltip}</p>}
             <ul>
               {props.context.value.map((element, elementIndex) => {
                 return (

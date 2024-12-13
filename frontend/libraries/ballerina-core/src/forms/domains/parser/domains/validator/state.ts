@@ -3,11 +3,13 @@ import { ApiConverters, BoolExpr, BuiltIns, FieldName, FormsConfigMerger, Inject
 
 export type FieldConfig = {
   renderer: string;
-  label: string
-  api: { stream?: string, enumOptions?: string },
-  elementRenderer?: string,
-  elementLabel?: string,
-  mapRenderer?: { keyRenderer: FieldConfig, valueRenderer: FieldConfig },
+  label: string;
+  tooltip?: string;
+  api: { stream?: string, enumOptions?: string };
+  elementRenderer?: string;
+  elementLabel?: string;
+  elementTooltip?: string;
+  mapRenderer?: { keyRenderer: FieldConfig, valueRenderer: FieldConfig };
   visible: BoolExpr<any>;
   disabled: BoolExpr<any>;
 };
@@ -476,6 +478,8 @@ export const FormsConfig = {
             fieldName, {
             renderer: fieldConfig.renderer,
             label: fieldConfig.label ?? revertKeyword(fieldName),
+            tooltip: fieldConfig.tooltip,
+            elementTooltip: fieldConfig.elementTooltip,
             elementRenderer: fieldConfig.elementRenderer,
             elementLabel: fieldConfig.elementLabel,
             mapRenderer: 
