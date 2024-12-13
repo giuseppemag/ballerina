@@ -109,9 +109,9 @@ export const PersonFormsConfig = {
       "type": "Person",
       "fields": {
         "category": { label: "category", renderer: "defaultCategory", visible: { "kind": "true" } },
-        "name": { label: "first name", renderer: "defaultString", visible: { "kind": "true" } },
+        "name": { label: "first name", tooltip: "Any name will do", renderer: "defaultString", visible: { "kind": "true" } },
         "surname": { label: "last name", renderer: "defaultString", visible: { "kind": "true" } },
-        "birthday": { renderer: "defaultDate", visible: { "kind": "true" } },
+        "birthday": { renderer: "defaultDate", tooltip: "happy birthday!", visible: { "kind": "true" } },
         "favoriteColor": {
           renderer: "defaultEnum", options: "colors", visible: { "kind": "true" }
         },
@@ -126,8 +126,9 @@ export const PersonFormsConfig = {
         },
         "dependants": {
           renderer: "defaultMap",
-          keyRenderer: { label: "name", renderer: "defaultString", visible: { "kind": "true" } },
-          valueRenderer: { label: "category", renderer: "defaultCategory", visible: { "kind": "true" } },
+          tooltip: "someone who depends on you",
+          keyRenderer: { label: "name", tooltip: "their name", renderer: "defaultString", visible: { "kind": "true" } },
+          valueRenderer: { label: "category", tooltip: "their category", renderer: "defaultCategory", visible: { "kind": "true" } },
           visible: { "kind": "true" },
         },
         "friendsByCategory": {
@@ -136,7 +137,7 @@ export const PersonFormsConfig = {
           valueRenderer: { label: "name", renderer: "defaultString", visible: { "kind": "true" } },
           visible: { "kind": "true" },
         },
-        "relatives": { label: "relatives", elementLabel: "relative", renderer: "defaultList", elementRenderer:"defaultCategory", visible: { "kind": "true" } },
+        "relatives": { label: "relatives", tooltip: "someone who you are related to", elementTooltip: "one relative", elementLabel: "relative", renderer: "defaultList", elementRenderer:"defaultCategory", visible: { "kind": "true" } },
         "subscribeToNewsletter": { renderer: "defaultBoolean", visible: { "kind": "true" } },
         "interests": {
           renderer: "defaultEnumMultiselect", options: "interests",
@@ -158,7 +159,7 @@ export const PersonFormsConfig = {
           visible: { "kind": "true" } },
         "addressesByCity": {
             renderer: "defaultMap",
-            keyRenderer:{ label: "city", renderer: "defaultInfiniteStream", stream: "cities", visible: { "kind": "true" } }, 
+            keyRenderer:{ label: "city", tooltip: "a nice place to live", renderer: "defaultInfiniteStream", stream: "cities", visible: { "kind": "true" } }, 
             valueRenderer:{label: "address", renderer: "address", visible: { "kind": "true" } }, 
             visible: { "kind": "true" } },
         "addressesWithColorLabel": {
