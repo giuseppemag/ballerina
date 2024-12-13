@@ -2,10 +2,10 @@ import { FormLabel, CollectionReference, DateView, EnumView, EnumMultiselectView
 import { PersonFormPredicateContext } from "playground-core";
 
 export const MostUglyValidationDebugView = (props: { context: { showAllErrors: boolean } & SharedFormState }) =>
-  props.context.modifiedByUser && AsyncState.Operations.isLoading(props.context.validation.sync) ?
+  props.context.modifiedByUser && props.context.validation.sync && AsyncState.Operations.isLoading(props.context.validation.sync) ?
     <>🔄</>
     :
-    (props.context.showAllErrors || props.context.modifiedByUser) && AsyncState.Operations.hasValue(props.context.validation.sync) &&
+    (props.context.showAllErrors || props.context.modifiedByUser) && props.context.validation.sync && AsyncState.Operations.hasValue(props.context.validation.sync) &&
       props.context.validation.sync.value.length > 0 ?
       <table>
         <tr>

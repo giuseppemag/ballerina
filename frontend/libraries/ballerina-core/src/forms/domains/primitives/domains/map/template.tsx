@@ -27,17 +27,17 @@ export const MapForm = <K, V, KeyFormState, ValueFormState, Context extends Form
 ) => {
   const embeddedKeyTemplate = (elementIndex: number) =>
     keyTemplate
-      .mapForeignMutations((_: ForeignMutationsExpected & {
+      .mapForeignMutationsFromProps<ForeignMutationsExpected & {
         onChange: OnChange<List<[K, V]>>;
         add: SimpleCallback<Unit>;
         remove: SimpleCallback<number>;
-      }): ForeignMutationsExpected & {
-        onChange: OnChange<K>;
-      } =>
+      }>((props): ForeignMutationsExpected & {
+        onChange: OnChange<K>; } =>
       ({
-        ..._,
+        ...props.foreignMutations,
         onChange: (elementUpdater, path) => {
-          _.onChange(Updater((elements: List<[K, V]>) => elements.update(elementIndex, (_: [K, V] | undefined) => _ == undefined ? _ : [elementUpdater(_[0]), _[1]])), path)
+          props.foreignMutations.onChange(Updater((elements: List<[K, V]>) => elements.update(elementIndex, (_: [K, V] | undefined) => _ == undefined ? _ : [elementUpdater(_[0]), _[1]])), path)
+          props.setState(_ => ({ ..._, modifiedByUser: true }))
         },
         add: (newElement: [K, V]) => { },
         remove: (elementIndex: number) => { }
@@ -56,17 +56,18 @@ export const MapForm = <K, V, KeyFormState, ValueFormState, Context extends Form
         ))
   const embeddedValueTemplate = (elementIndex: number) =>
     valueTemplate
-      .mapForeignMutations((_: ForeignMutationsExpected & {
+      .mapForeignMutationsFromProps<ForeignMutationsExpected & {
         onChange: OnChange<List<[K, V]>>;
         add: SimpleCallback<Unit>;
         remove: SimpleCallback<number>;
-      }): ForeignMutationsExpected & {
+      }>((props): ForeignMutationsExpected & {
         onChange: OnChange<V>;
       } =>
       ({
-        ..._,
+        ...props.foreignMutations,
         onChange: (elementUpdater, path) => {
-          _.onChange(Updater((elements: List<[K, V]>) => elements.update(elementIndex, (_: [K, V] | undefined) => _ == undefined ? _ : [_[0], elementUpdater(_[1])])), path)
+          props.foreignMutations.onChange(Updater((elements: List<[K, V]>) => elements.update(elementIndex, (_: [K, V] | undefined) => _ == undefined ? _ : [_[0], elementUpdater(_[1])])), path)
+          props.setState(_ => ({ ..._, modifiedByUser: true }))
         },
         add: (newElement: [K, V]) => { },
         remove: (elementIndex: number) => { }

@@ -1,5 +1,6 @@
 import { Map, OrderedMap } from "immutable";
 import { BuiltIns } from "../built-ins/state";
+import { InjectedPrimitives } from "../injectables/state";
 
 export type FieldName = string;
 export type TypeName = string;
@@ -8,7 +9,7 @@ export type TypeDefinition = {
   name: TypeName;
   fields: OrderedMap<FieldName, Type>;
 };
-export type PrimitiveTypeName = "string" | "number" | "maybeBoolean" | "boolean" | "Date" | "CollectionReference"
+export type PrimitiveTypeName = "string" | "number" | "maybeBoolean" | "boolean" | "Date" | "CollectionReference" | "base64File" | "secret";
 export type Type = {
   kind: "lookup"; name: TypeName;
 } | {
@@ -31,10 +32,10 @@ export const Type = {
             fst.args.length == snd.args.length &&
             fst.args.every((v, i) => v == snd.args[i]) :
             false,
-    FromName: (types: Map<string, TypeDefinition>, builtIns: BuiltIns) => (typeName: string): Type | undefined => {
+    FromName: <T>(types: Map<string, TypeDefinition>, builtIns: BuiltIns, injectedPrimitives?: InjectedPrimitives<T>) => (typeName: string): Type | undefined => {
       const recordTypeName = types.get(typeName)?.name
       if (recordTypeName) return Type.Default.lookup(recordTypeName)
-      const primitiveTypeName = builtIns.primitives.get(typeName) && typeName
+      const primitiveTypeName = (builtIns.primitives.get(typeName) && typeName)  ?? (injectedPrimitives?.injectedPrimitives.get(typeName as keyof T) && typeName)
       if (primitiveTypeName) return Type.Default.primitive(primitiveTypeName as any)
       return undefined
     }

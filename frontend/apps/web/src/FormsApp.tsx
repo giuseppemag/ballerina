@@ -1,17 +1,21 @@
 import { useState } from "react";
 import "./App.css";
-import { unit, FormsConfig, parseForms, FormParsingResult, Sum, builtInsFromFieldViews, FormValidationResult, EditLauncherContext, CreateLauncherContext, FormsParserState, FormRunnerState, FormsParserTemplate, PromiseRepo, FormRunnerTemplate, ApiConverters, CollectionReference, CollectionSelection } from "ballerina-core";
-import { List, OrderedMap, Set } from "immutable";
+import { unit, FormsConfig, parseForms, FormParsingResult, Sum, builtInsFromFieldViews, FormValidationResult, EditLauncherContext, CreateLauncherContext, FormsParserState, FormRunnerState, FormsParserTemplate, PromiseRepo, FormRunnerTemplate, BuiltInApiConverters, CollectionReference, CollectionSelection } from "ballerina-core";
+import { List, OrderedMap, Set, Map } from "immutable";
 import { PersonView } from "./domains/person/views/main-view";
 import { PersonContainerFormView, PersonNestedContainerFormView, PersonShowFormSetupErrors, CreatePersonSubmitButtonWrapper, EditPersonSubmitButtonWrapper } from "./domains/person/domains/from-config/views/wrappers";
 import { PersonFormsConfig, PersonFromConfigApis, PersonConfigFormsLeafPredicates, PersonConfig, PersonFormState, Person } from "playground-core";
 import { PersonFieldViews } from "./domains/person-from-config/views/field-views";
 import { PersonForm } from "./domains/person/template";
+import { fieldTypeConverters, modifiedDebugFieldTypeConverters } from "./domains/person/apis/field-converters";
+import { categoryForm, CategoryState, PersonFormInjectedTypes } from "./domains/person-from-config/injected-forms/category";
 
 const ShowFormsParsingErrors = (parsedFormsConfig: FormParsingResult) =>
 	<div style={{ border: "red" }}>
 		{parsedFormsConfig.kind == "r" && JSON.stringify(parsedFormsConfig.value)}
 	</div>
+
+const InstantiedPersonFormsParserTemplate = FormsParserTemplate<PersonFormInjectedTypes>()
 
 export const FormsApp = (props: {}) => {
 	const [configFormsParser, setConfigFormsParser] = useState(FormsParserState.Default())
@@ -23,42 +27,14 @@ export const FormsApp = (props: {}) => {
 	// const [personFormState, setPersonFormState] = useState(PersonFormState.Default(""))
 	// const [personConfigState, setPersonConfigState] = useState(PersonConfig.Default())
 
-	const fieldTypeConverters: ApiConverters = {
-		"string": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: _ => _ },
-		"number": { fromAPIRawValue: _ => typeof _ == "number" ? _ : 0, toAPIRawValue: _ => _ },
-		"boolean": { fromAPIRawValue: _ => typeof _ == "boolean" ? _ : false, toAPIRawValue: _ => _ },
-		"maybeBoolean": { fromAPIRawValue: _ => typeof _ == "boolean" ? _ : undefined, toAPIRawValue: _ => _ },
-		"Date": { fromAPIRawValue: _ => typeof _ == "string" ? new Date(Date.parse(_)) : typeof _ == "number" ? new Date(_) : new Date(Date.now()), toAPIRawValue: _ => _ },
-		"CollectionReference": {
-			fromAPIRawValue: _ => CollectionReference.Default(_.id ?? "", _.displayName ?? ""),
-			toAPIRawValue: _ => ({ id: _.id, displayName: _.displayName })
-		},
-		"SingleSelection": {
-			fromAPIRawValue: _ => _ == undefined ? CollectionSelection().Default.right("no selection") :
-				CollectionSelection().Default.left(
-					CollectionReference.Default(_.id ?? "", _.displayName ?? "")
-				),
-			toAPIRawValue: _ => _.kind == "r" ? undefined : ({ id: _.value.id, displayName: _.value.displayName })
-		},
-		"MultiSelection": {
-			fromAPIRawValue: _ => _ == undefined ? OrderedMap() : OrderedMap(_.map((_: any) => ([_.id, _]))),
-			toAPIRawValue: _ => _.valueSeq().toArray()
-		},
-		"List": {
-			fromAPIRawValue: _ => _ == undefined ? List() : List(_),
-			toAPIRawValue: _ => _.valueSeq().toArray()
-		},
-		"Map": {
-			fromAPIRawValue: _ => _ == undefined ? List() : List(_),
-			toAPIRawValue: _ => _.valueSeq().toArray()
-		},
-	}
-
-	console.log({
-		parser: configFormsParser,
-		runner: personEditFormState
-	})
 	const [renderParserState, renderForms] = [true, true]
+	const debugFieldTypeConverters = false
+	const logState = true
+
+	logState && console.log({
+		parser: configFormsParser,
+		runner: formToShow % numForms == 0 ? personCreateFormState : personEditFormState
+	})
 
 	return (
 		<div className="App">
@@ -122,18 +98,19 @@ export const FormsApp = (props: {}) => {
 							<td>
 								{renderParserState && JSON.stringify(configFormsParser)}
 								<button onClick={() => setFormToShow(formToShow + 1)}>Show next form</button>
-								<FormsParserTemplate
+								<InstantiedPersonFormsParserTemplate
 									context={{
 										...configFormsParser,
 										containerFormView: PersonContainerFormView,
-										fieldTypeConverters: fieldTypeConverters,
+										fieldTypeConverters: debugFieldTypeConverters ? modifiedDebugFieldTypeConverters : fieldTypeConverters,
 										nestedContainerFormView: PersonNestedContainerFormView,
 										fieldViews: PersonFieldViews,
 										infiniteStreamSources: PersonFromConfigApis.streamApis,
 										enumOptionsSources: PersonFromConfigApis.enumApis,
 										entityApis: PersonFromConfigApis.entityApis,
 										leafPredicates: PersonConfigFormsLeafPredicates,
-										getFormsConfig: () => PromiseRepo.Default.mock(() => PersonFormsConfig)
+										getFormsConfig: () => PromiseRepo.Default.mock(() => PersonFormsConfig),
+										injectedPrimitives: Map([["injectedCategory", {fieldView: categoryForm, defaultValue: "adult", defaultState: CategoryState.Default() }]]),
 									}}
 									setState={setConfigFormsParser}
 									view={unit}

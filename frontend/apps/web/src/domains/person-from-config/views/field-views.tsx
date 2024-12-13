@@ -1,10 +1,11 @@
-import { SharedFormState, AsyncState, FormLabel, BooleanView, NumberView, StringView, DateView, CollectionReference, EnumView, EnumMultiselectView, SearchableInfiniteStreamView, InfiniteStreamMultiselectView, BaseEnumContext, MaybeBooleanView, ListFieldView, unit, MapFieldView } from "ballerina-core";
+import { SharedFormState, AsyncState, FormLabel, BooleanView, NumberView, StringView, DateView, CollectionReference, EnumView, EnumMultiselectView, SearchableInfiniteStreamView, InfiniteStreamMultiselectView, BaseEnumContext, MaybeBooleanView, ListFieldView, unit, MapFieldView, Base64FileView, SecretView } from "ballerina-core";
+import { CategoryView } from "../injected-forms/category";
 
 export const MostUglyValidationDebugView = (props: { context: SharedFormState }) =>
-  props.context.modifiedByUser && AsyncState.Operations.isLoading(props.context.validation.sync) ?
+  props.context.modifiedByUser && props.context.validation.sync && AsyncState.Operations.isLoading(props.context.validation.sync) ?
     <>🔄</>
     :
-    (props.context.modifiedByUser) && AsyncState.Operations.hasValue(props.context.validation.sync) &&
+    (props.context.modifiedByUser) &&  props.context.validation.sync && AsyncState.Operations.hasValue(props.context.validation.sync) &&
       props.context.validation.sync.value.length > 0 ?
       <table>
         <tr>
@@ -19,8 +20,18 @@ export const MostUglyValidationDebugView = (props: { context: SharedFormState })
       :
       <></>
 
-
 export const PersonFieldViews = {
+  injectedCategory: {
+    defaultCategory: <Context extends FormLabel, ForeignMutationsExpected>(): CategoryView<Context, ForeignMutationsExpected> =>
+      props =>
+        <>
+            {props.context.label && <h3>{props.context.label}</h3>}
+            <button style={props.context.value == "child" ? {borderColor: "red"} : {}} onClick={_ => props.foreignMutations.setNewValue("child")}>child</button>
+            <button style={props.context.value == "adult" ? {borderColor: "red"} : {}} onClick={_ => props.foreignMutations.setNewValue("adult")}>adult</button>
+            <button style={props.context.value == "senior" ? {borderColor: "red"} : {}} onClick={_ => props.foreignMutations.setNewValue("senior")}>senior</button>
+          <MostUglyValidationDebugView {...props} />
+        </>,
+  },
   maybeBoolean: {
     defaultMaybeBoolean: <Context extends FormLabel, ForeignMutationsExpected>(): MaybeBooleanView<Context, ForeignMutationsExpected> =>
       props =>
@@ -226,6 +237,20 @@ export const PersonFieldViews = {
               props.foreignMutations.add(unit)
             }}>➕</button>
           </>
+  },
+  base64File: {
+    defaultBase64File: <Context extends FormLabel, ForeignMutationsExpected>(): Base64FileView<Context, ForeignMutationsExpected> =>
+      props => <>
+        {props.context.label && <h3>{props.context.label}</h3>}
+        <input type='text' value={props.context.value} onChange={e => props.foreignMutations.setNewValue(e.currentTarget.value)} />
+      </>
+  },
+  secret: {
+    defaultSecret: <Context extends FormLabel, ForeignMutationsExpected>(): SecretView<Context, ForeignMutationsExpected> =>
+      props => <>
+        {props.context.label && <h3>{props.context.label}</h3>}
+        <input type="password" value={props.context.value} onChange={e => props.foreignMutations.setNewValue(e.currentTarget.value)} />
+      </>
   },
   map: {
     defaultMap: <K, V, KeyFormState, ValueFormState, Context extends FormLabel, ForeignMutationsExpected>():
