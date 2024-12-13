@@ -47,5 +47,5 @@ export const categoryForm = (fieldViews: any, viewType: any, viewName: any, labe
   .mapContext<any & SharedFormState & Value<Category>>(_ => ({ ..._, label: label })) as any
 
 export type PersonFormInjectedTypes = {
-  injectedCategory: Category
+  injectedCategory: { type: Category, state: CategoryState }
 }

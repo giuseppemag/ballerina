@@ -2,7 +2,7 @@ import { Map, Set } from 'immutable';
 import { Unit } from '../../../../../../main';
 
 export type InjectablePrimitive<T, U = Unit> = {
-    defaultValue: T[keyof T];
+    defaultValue: T;
     fieldView: any;
     defaultState?: U;
 }
@@ -14,7 +14,7 @@ export type InjectedPrimitive<T> = {
     defaultState: any;
 }
 
-export type Injectables<T> = Map<keyof T, InjectablePrimitive<T>>;
+export type Injectables<T extends {[key in keyof T] : {type: any, state: any}}> = Map<keyof T, InjectablePrimitive<T[keyof T]["type"], T[keyof T]["state"]>>;
 
 export type InjectedPrimitives<T> =
 {
@@ -24,7 +24,7 @@ export type InjectedPrimitives<T> =
   }
 }
   
-export const injectablesFromFieldViews = <T>(fieldViews: any, injectables: Injectables<T>): InjectedPrimitives<T> => {
+export const injectablesFromFieldViews = <T extends {[key in keyof T] : {type: any, state: any}}>(fieldViews: any, injectables: Injectables<T>): InjectedPrimitives<T> => {
   let result = {injectedPrimitives: Map<string, InjectedPrimitive<T>>(), renderers: {}} as InjectedPrimitives<T>;
   result.injectedPrimitives = injectables.map(((injectable, key) =>
     ({ renderers: Set([key]), defaultValue: injectable.defaultValue, fieldView: injectable.fieldView, defaultState: injectable.defaultState }) as InjectedPrimitive<T>

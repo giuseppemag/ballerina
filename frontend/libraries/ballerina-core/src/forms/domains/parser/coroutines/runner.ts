@@ -2,7 +2,7 @@ import { AsyncState, builtInsFromFieldViews, FormsConfig, injectablesFromFieldVi
 import { CoTypedFactory } from "../../../../coroutines/builder"
 import { FormParsingResult, FormsParserContext, FormsParserState, parseForms, replaceKeywords } from "../state"
 
-export const LoadValidateAndParseFormsConfig = <T>() => {
+export const LoadValidateAndParseFormsConfig = <T extends {[key in keyof T] : {type: any, state: any}}>() => {
   const Co = CoTypedFactory<FormsParserContext<T>, FormsParserState>()
 
  return Co.Template<Unit>(

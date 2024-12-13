@@ -618,7 +618,7 @@ export const replaceKeywords = (obj: any, kind: "from api" | "to api"): any => {
   return obj;
 };
 
-export type FormsParserContext<T> = {
+export type FormsParserContext<T extends {[key in keyof T] : {type: any, state: any}}> = {
   containerFormView: any,
   nestedContainerFormView: any,
   fieldViews: any,
