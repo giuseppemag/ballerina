@@ -89,6 +89,23 @@ Todo (✅/❌)
           ✅ move all the AB-related logic to the right project
           ✅ rename grandeomega to web
       ❌ define sample Positions API and types
+        ❌ pre-prototype
+          ❌ fill schema with constant seeds, including GUIDs
+          ❌ expose OpenAPI with business objects
+            ❌ enums to strings
+          ❌ define coroutines for processing events
+          ❌ define expr evaluator
+          ❌ define business rule for subtotals of CD.Count inside an AB (make AB-CD 1-N)
+            ❌ the rule triggers on single ref set
+            ❌ the rule triggers on `all` ref set
+          ❌ isolate field descriptors and expr to Ballerina-core
+          ❌ persist the entities to Elasticsearch
+          ❌ persist the entities to Postgres
+            ❌ enums to strings
+          ❌ json fields, in particular metadata, expr, assignment
+          ❌ add an `EventDesc` to `FieldEvent`
+            ❌ useful for pre/post event actions and conditions, it defines that which is passed to co.On plus a pre- and post-condition coroutine
+            ❌ it is polymorphic and distributed over the concrete instances (ie `SetIntField of IntEventDesc`, ...)
         ❌ DocEvents = SenderEvents | ReceiverEvents | BankDetailEvents
           ❌ further split by field types
         ❌ InvoiceEvents = DocEvents | InvoiceEvents

@@ -16,6 +16,7 @@
     <ProjectReference Include="..\..\libraries\migrations\migrations.csproj" />
     <ProjectReference Include="..\..\libraries\users\users.fsproj" />
     <ProjectReference Include="..\..\libraries\absample\absample.fsproj" />
+    <ProjectReference Include="..\..\libraries\positions\positions.fsproj" />
   </ItemGroup>
 
   <ItemGroup>

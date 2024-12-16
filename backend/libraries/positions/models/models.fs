@@ -1,62 +1,55 @@
-module positions.model 
+module positions.model
+open System
+open Ballerina.Fun
 
-/*
-ENTITIES
-document = order-confirmation | invoice
-documentBase = id, etc.
-invoice = { documentBase, header, positions }
-invoiceHeader = { purchaseOrderNumber }
-positions = { header, lines:List<position> }
-positionsHeader = { total }
-position = { id, idFields, numberFields, stringFields, valutaFields, ... }
-vat = { id, percentage }
-product = { id, price }
+type AB = { 
+  ABId:Guid; 
+  ACount:int; ACountMetadata:IntFieldMetadata
+  BCount:int; BCountMetadata:IntFieldMetadata
+  CD:CD; CDMetadata:RefFieldMetadata
+}
+and CD = { 
+  CDId:Guid; 
+  CCount:int; CCountMetadata:IntFieldMetadata
+}
 
+and FieldMetadata = { FieldMetadataId:Guid; Approval:bool; CurrentEditPrio:EditPriority }
+and IntFieldMetadata = { Self:FieldMetadata; Field:IntFieldDescriptor }
+and RefFieldMetadata = { Self:FieldMetadata; Field:RefFieldDescriptor }
+and ReadonlyIntFieldMetadata = { Self:FieldMetadata; Field:ReadonlyIntFieldDescriptor }
+and SingletonIntFieldMetadata = { Self:FieldMetadata; Field:SingletonIntFieldDescriptor }
 
-EVENTS
-TenantEvent of (TenantEventBase = tenantId) * (Source = User | (System of predecessorId))
-  | DocumentCreatedEvent of TenantEventBase * DocumentCreation
-  | InvoiceEvent of TenantEventBase * UpdatePositions
-DocumentCreation = DeliveryNoteCreated of PurchaseOrderNumber * EventDescriptorId
+and FieldDescriptor = { FieldDescriptorId:Guid }
+and IntFieldDescriptor = { Self:FieldDescriptor; Update:EntitiesIdentifiers -> Updater<int> -> Unit }
+and RefFieldDescriptor = { Self:FieldDescriptor; Update:EntitiesIdentifiers -> Updater<Guid> -> Unit }
+and ReadonlyIntFieldDescriptor = { Self:FieldDescriptor }
+and SingletonIntFieldDescriptor = { Self:FieldDescriptor; Update:EntityIdentifier -> Updater<int> -> Unit }
 
-UpdatePositions = 
-  | UpdateSingle<Positions, PositionsIdFields, PositionsStringFields, PositionsNumberFields, ..., TenantEvent>
-  | UpdatePosition of 
-  | UpdateSingle<Position, PositionIdFields, PositionStringFields, PositionNumberFields, ..., TenantEvent>
-  | UpdateBatch<Position, PositionIdBatchFields, PositionStringBatchFields, PositionNumberBatchFields, ..., TenantEvent>
+and FieldEvent = { FieldEventId:Guid; Updater:Expr }
 
-UpdateSingle<Entity, ..., ProducedEvent> = EventDescriptorId<Entity, ProducedEvent> * ...
-UpdateBatch<Entity, ..., ProducedEvent> = EventDescriptorId<Entity, ProducedEvent> * ...
+and BusinessRule = { BusinessRuleId:Guid; Name:string; Priority:BusinessRulePriority; Condition:Expr; Actions:List<Assignment> }
+and Assignment = { Entity:EntitiesIdentifiers; Field:FieldDescriptor; Value:Expr }
+and Expr = 
+  | ConstInt of int | ConstFloat of float | ConstString of string
+  | Binary of BinaryOperator * Expr * Expr
+  | Field of FieldDescriptor
+  | Var of string
+  | Exists of string * FieldDescriptor * EntitiesIdentifiers * Expr
+  | SumBy of string * FieldDescriptor * EntitiesIdentifiers * Expr
+and BinaryOperator = Plus | Minus | GreaterThan | Equals | GreaterThanEquals | Times | DividedBy | And | Or
 
-EVENT-DESCRIPTORS
-EventDescriptor<Entity, Event> = Id
-dependencies:
-  // the chain of Ids of the specific nesting,  the current entity to a series of (synthetic) events to enqueue
-  Map<List<EventDescriptorId>,                  Entity -> Array<Event>>
+and EntitiesIdentifiers = All | Some of Set<Guid>
+and EntityIdentifier = One of Guid
+and EditPriority = | None = 0 | Predictions = 1 | CustomBusinessRule = 2 | SystemBusinessRule = 3 | User = 4
+and BusinessRulePriority = Custom = 0 | System = 1
 
-FIELD-DESCRIPTORS
-type FieldDescriptor<E,F> = id, (path:...the same hierarchy as the updaters that guarantees to get an F from an E incl. setter, ex. docId, posId, fieldName...)
-dependencies:
-  Map<FieldPath<E, F>, E -> Array<BusinessRule>
-
-BusinessRule = BoolExpr (defined in terms of comparisons of FieldPaths and Constants) * Array<Assignment>
-Assignment = Array<FieldPath * Expr (defined in terms of comparisons of FieldPaths and Constants)>
-
-
-EVENT-HANDLERS
-invoiceJobs = 
-  co.Any([
-    co.On(DeliveryNoteCreated, fun e -> 
-      ...
-    )
-    co.On(InvoiceEvent(docId, UpdatePositionsField x N per positions field type T(fieldDescriptor, newValue:T)
-      // UpdatePosition(UpdateSingle(positionId, UpdateSingle(UpdateId(newId, fieldName))))
-      )), fun e -> 
-      co.Do(fun ctx -> ctx.Invoices.update(
-        fieldDescriptor.path = [docId, positionId, fieldName], // fieldPath, a polymorphic thingy
-        newId
-      )) // the update writes immediately to the database and adds to the state the post rules
-    ) // the matched event has a chain of EventDescriptorId's, the post events are enqueued afterwards
-  ])
-*/
-
+and Schema = {
+  AB:{| ACount:IntFieldDescriptor; BCount:IntFieldDescriptor; CD:RefFieldDescriptor |}
+  CD:{| CCount:IntFieldDescriptor |}
+}
+and Context = {
+  AB1:AB; AB2: AB; CDs:Map<Guid, CD>;
+  ActiveEvents:List<FieldEvent>; PastEvents:List<FieldEvent>;
+  BusinessRules:Map<Guid, BusinessRule>;
+  Schema:Schema
+}

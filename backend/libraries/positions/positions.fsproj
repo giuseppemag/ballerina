@@ -9,4 +9,8 @@
     <Compile Include="models/models.fs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ballerina-core\ballerina-core.fsproj" />
+  </ItemGroup>
+
 </Project>
