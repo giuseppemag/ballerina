@@ -4,13 +4,13 @@ open Ballerina.Fun
 
 type AB = { 
   ABId:Guid; 
-  ACount:int; ACountMetadata:IntFieldMetadata
-  BCount:int; BCountMetadata:IntFieldMetadata
+  ACount:int; ACountMetadata:SingletonIntFieldMetadata
+  BCount:int; BCountMetadata:SingletonIntFieldMetadata
   CD:CD; CDMetadata:RefFieldMetadata
 }
 and CD = { 
   CDId:Guid; 
-  CCount:int; CCountMetadata:IntFieldMetadata
+  CCount:int; CCountMetadata:SingletonIntFieldMetadata
 }
 
 and FieldMetadata = { FieldMetadataId:Guid; Approval:bool; CurrentEditPrio:EditPriority }
@@ -44,11 +44,11 @@ and EditPriority = | None = 0 | Predictions = 1 | CustomBusinessRule = 2 | Syste
 and BusinessRulePriority = Custom = 0 | System = 1
 
 and Schema = {
-  AB:{| ACount:IntFieldDescriptor; BCount:IntFieldDescriptor; CD:RefFieldDescriptor |}
-  CD:{| CCount:IntFieldDescriptor |}
+  AB:{| ACount:SingletonIntFieldDescriptor; BCount:SingletonIntFieldDescriptor; CD:RefFieldDescriptor |}
+  CD:{| CCount:SingletonIntFieldDescriptor |}
 }
 and Context = {
-  AB1:AB; AB2: AB; CDs:Map<Guid, CD>;
+  AB1:Unit -> AB; AB2: Unit -> AB; CDs:Unit -> Map<Guid, CD>;
   ActiveEvents:List<FieldEvent>; PastEvents:List<FieldEvent>;
   BusinessRules:Map<Guid, BusinessRule>;
   Schema:Schema

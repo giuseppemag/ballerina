@@ -10,7 +10,6 @@ Todo (✅/❌)
   ❌ show both data-sync and type-safe forms in FormsApp
   ❌ deprecate mapping in both config and code forms, they are not a good idea
 
-  GrandeOmega2
   ✅ docker
     ✅ PG
     ✅ PG-admin
@@ -29,7 +28,7 @@ Todo (✅/❌)
       ✅ move CRUD 'a to separate project
       ✅ move updater U<'s> to separate file
       ❌ cleanup
-        ❌ move sample coroutines
+        ✅ move sample coroutines
         ✅ move sample dbcontext stuff
           ✅ resolve dbcontext with DI
           ✅ pass config from appsettings.development (based on env variable)
@@ -91,6 +90,8 @@ Todo (✅/❌)
       ❌ define sample Positions API and types
         ❌ pre-prototype
           ❌ fill schema with constant seeds, including GUIDs
+            ✅ the schema `updater` implementations are empty, they should actually save the data
+            ❌ fill schema with business rules
           ❌ expose OpenAPI with business objects
             ❌ enums to strings
           ❌ define coroutines for processing events
@@ -98,14 +99,16 @@ Todo (✅/❌)
           ❌ define business rule for subtotals of CD.Count inside an AB (make AB-CD 1-N)
             ❌ the rule triggers on single ref set
             ❌ the rule triggers on `all` ref set
+            ❌ business rules are triggered after a fieldId in the business rule expression is assigned
           ❌ isolate field descriptors and expr to Ballerina-core
-          ❌ persist the entities to Elasticsearch
-          ❌ persist the entities to Postgres
-            ❌ enums to strings
-          ❌ json fields, in particular metadata, expr, assignment
           ❌ add an `EventDesc` to `FieldEvent`
             ❌ useful for pre/post event actions and conditions, it defines that which is passed to co.On plus a pre- and post-condition coroutine
             ❌ it is polymorphic and distributed over the concrete instances (ie `SetIntField of IntEventDesc`, ...)
+          ❌ move the whole thing to a separate `jobs` file
+          ❌ persist the entities to Elasticsearch
+          ❌ persist the entities to Postgres
+            ❌ enums to strings
+            ❌ json fields, in particular metadata, expr, assignment
         ❌ DocEvents = SenderEvents | ReceiverEvents | BankDetailEvents
           ❌ further split by field types
         ❌ InvoiceEvents = DocEvents | InvoiceEvents

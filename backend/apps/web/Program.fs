@@ -38,6 +38,7 @@ open System.Threading
 
 module Program =
   open Program
+  open positions.model
   type PositionOptions() = 
     member val Title:string = "" with get, set
     member val Name:string = "" with get, set
@@ -105,5 +106,61 @@ module Program =
       | _ -> printfn "no mode selected, exiting"
       ), mode)
     do rootCommand.Invoke(args) |> ignore
+
+    let abcdEventLoop() = 
+      let mutable AB1 = Guid("8fba2a7c-e2da-43bd-b8ee-ddaa774d081d")
+      let mutable AB2 = Guid("91620c12-cd9e-4e66-9df3-58f4b1a50b1f")
+      let mutable ABs:Map<Guid,AB> = Map.empty
+      let mutable CDs:Map<Guid,CD> = Map.empty
+      let schema:Schema = {
+        AB = {| 
+            ACount = { Self = { FieldDescriptorId=Guid.NewGuid() }; Update = fun (One entityId) updater -> ABs <- ABs |> Map.change entityId (Option.map (fun e -> { e with ACount = updater(e.ACount)} ))}; 
+            BCount = { Self = { FieldDescriptorId=Guid.NewGuid() }; Update = fun (One entityId) updater -> ABs <- ABs |> Map.change entityId (Option.map (fun e -> { e with BCount = updater(e.BCount)} ))}; 
+            CD = { 
+              Self = { FieldDescriptorId=Guid.NewGuid() }; 
+              Update = fun entitiesIdentifier updater -> 
+                match entitiesIdentifier with 
+                | All -> 
+                  ABs <- ABs |> Map.map (fun key -> (fun e -> { e with CD = CDs.[updater(e.CD.CDId)]} )) 
+                | Some abIds ->  
+                  ABs <- ABs |> Map.map (fun key -> if abIds |> Set.contains key then (fun e -> { e with CD = CDs.[updater(e.CD.CDId)]}) else id)
+              };  
+            |}
+        CD = {| 
+          CCount = { Self = { FieldDescriptorId=Guid.NewGuid() }; 
+          Update = fun (One entityId) updater -> CDs <- CDs |> Map.change entityId (Option.map (fun e -> { e with CCount = updater(e.CCount)} ))};
+        |}
+      }
+      CDs <- 
+        [
+          {
+            CDId = Guid("d8ff0920-2b47-499f-9f7b-cb07a1f8f3a4"); 
+            CCount = 0 ; CCountMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = schema.CD.CCount }
+          }
+          {
+            CDId = Guid("69f182db-84ba-4e81-91c5-d3becd029a6b"); 
+            CCount = 0 ; CCountMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = schema.CD.CCount }
+          }
+        ] |> Seq.map (fun e -> (e.CDId, e)) |> Map.ofSeq
+      ABs <- 
+        [
+          {
+            ABId = AB1; 
+            ACount = 0 ; ACountMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = schema.AB.ACount }
+            BCount = 0 ; BCountMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = schema.AB.BCount }
+            CD = CDs |> Map.values |> Seq.randomChoice; CDMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = schema.AB.CD }
+          }
+        ] |> Seq.map (fun e -> (e.ABId, e)) |> Map.ofSeq
+
+      let mutable context:Context = {
+        AB1 = (fun () -> ABs.[AB1])
+        AB2 = (fun () -> ABs.[AB2])
+        CDs = (fun () -> CDs)
+        ActiveEvents = [] // :List<FieldEvent>; 
+        PastEvents = [] // :List<FieldEvent>;
+        BusinessRules = Map.empty;
+        Schema = schema
+      }
+      ()
 
     exitCode
