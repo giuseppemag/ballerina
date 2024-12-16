@@ -131,6 +131,7 @@ export const PersonFieldViews = {
       props =>
         <>
           {props.context.label && <h3>{props.context.label}</h3>}
+          {props.context.tooltip && <p>{props.context.tooltip}</p>}
           <button disabled={props.context.disabled} onClick={() => props.foreignMutations.toggleOpen()}>
             {props.context.value.kind == "l" && props.context.value.value.displayName} {props.context.status == "open" ? "➖" : "➕"}
           </button>
