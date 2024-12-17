@@ -71,11 +71,7 @@ Todo (✅/❌)
           ✅ "blogging" context -> BallerinaContext
           ✅ implement Repeat as a reified construct
           ✅ AB jobs can be separated fully to the AB module with minimal dependencies
-          ❌ _generate_ translation of models into ef and OpenAPI
-            ❌ records
-            ❌ unions
-            ❌ with recursion
-            ❌ with serialization attributes
+          ❌ BUG ALERT if translating to production! The Map of events will likely cause events not to be processed in create-order
           ❌ test Spawn
             ❌ remove ugly starting logic, everything is bootstrapped by the endpoint that pushes the CreateABEvent
             ❌ create ABs from event
@@ -89,22 +85,47 @@ Todo (✅/❌)
           ✅ rename grandeomega to web
       ❌ define sample Positions API and types
         ❌ pre-prototype
-          ❌ fill schema with constant seeds, including GUIDs
+          ✅ fill schema with constant seeds, including GUIDs
             ✅ the schema `updater` implementations are empty, they should actually save the data
-            ❌ fill schema with business rules
-          ❌ expose OpenAPI with business objects
-            ❌ enums to strings
-          ❌ define coroutines for processing events
+            ✅ fill schema with business rules
+              ✅ define business rule for subtotals of AB.TotalABC = ACount+BCount+CCount
+                ✅ actions are wrong, redesign 
+                  ✅ rules need a starting scope entity (`AB`/`CD`)
+                  ✅ an entity descriptor is needed
+          ❌ define coroutines for processing events and applying field set operations
           ❌ define expr evaluator
-          ❌ define business rule for subtotals of CD.Count inside an AB (make AB-CD 1-N)
-            ❌ the rule triggers on single ref set
-            ❌ the rule triggers on `all` ref set
-            ❌ business rules are triggered after a fieldId in the business rule expression is assigned
-          ❌ isolate field descriptors and expr to Ballerina-core
+            ✅ basic eval expr
+            ❌ basic eval assignment
+            ❌ define business rules changed by field update
+            ❌ after field updates occur in a coroutine iteration, track this in the state
+              ❌ `Set<EntityType x (EntityId | Set<EntityId> | All) x FieldDescriptorId>`
+              ❌ track the evaluation candidates `Map<FieldDescriptorId, Set<BusinessRuleId>>`
+            ❌ when evaluating a field lookup, we can do much faster than a switch-case with a multi-field lookup map (a dynamic representation of the schema)
+              ❌ eval lookup needs to become much smarter
+              ❌ the lookup of fields from ABs and CDs is particularly bad
+              ❌ the assignment of fields to ABs and CDs is particularly bad
+              ❌ fields should be able to GET and SET automatically from the entityId and the context
+          ❌ testing scenario
+            ❌ add a setA event, see that the Total changes
+            ❌ add a setCDRef event, see that the Total changes
+            ❌ add a setC event, see that the Total changes (nasty because of the AB-CD relation)
+            ❌ each event adds all candidate business rules (Ids) to the rules queue in the coroutine state, not events
+              ❌ the rules queue tracks EntityId x BusinessRuleId, or we have a separate Set of those
+              ❌ when the same entry is added to the Set, stop and log an error
+              ❌ after an evaluation iteration, process the rules, and add the business rules to the queue as synthetic events 
+          ❌ events
+            ❌ change ACount/BCount
+            ❌ change all `CD` refs inside a given `AB`
+              ❌ the schema for `CD` then needs a `RefsField`
           ❌ add an `EventDesc` to `FieldEvent`
             ❌ useful for pre/post event actions and conditions, it defines that which is passed to co.On plus a pre- and post-condition coroutine
             ❌ it is polymorphic and distributed over the concrete instances (ie `SetIntField of IntEventDesc`, ...)
+          ❌ add the scenario of multiple Positions, so that the events can also be EntityEvents such as `Add`, `Delete`, `Move`, etc.
           ❌ move the whole thing to a separate `jobs` file
+          ❌ isolate field descriptors and expr to Ballerina-core
+            ❌ also eval all sorts of `eval` functions
+          ❌ expose OpenAPI with business objects
+            ❌ enums to strings
           ❌ persist the entities to Elasticsearch
           ❌ persist the entities to Postgres
             ❌ enums to strings
@@ -125,6 +146,11 @@ Todo (✅/❌)
         ❌ link event handlers to business rules and value defaults
         ❌ After N edits, push to the frontend a request in the form of an event for the creation of a custom model or similar
         ✅ add OpenAPI support, see if we get luckier with C# unions and inheritance
+      ❌ _generate_ translation of models into ef and OpenAPI
+        ❌ records
+        ❌ unions
+        ❌ with recursion
+        ❌ with serialization attributes
       ❌ endpoint generation
         ❌ extend chains
         ❌ filter parameter (over extended entity)
