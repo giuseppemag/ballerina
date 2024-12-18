@@ -32,8 +32,8 @@ export const Synchronize = <value, syncResult, context = Unit>(
 };
 
 export const SynchronizeWithValueUpdater = <value, syncResult, context = Unit>(
-	p: BasicFun<value & context, Promise<[syncResult, BasicUpdater<value>]>>, errorProcessor: BasicFun<any, ErrorPermanenceStatus>,
-	maxAttempts: number, delayBetweenAttemptsInMs: number): 
+	p: BasicFun<value & context, Promise<[syncResult, BasicUpdater<value>]>>, errorProcessor: BasicFun<any, ErrorPermanenceStatus> = () => "transient failure",
+	maxAttempts: number = 2, delayBetweenAttemptsInMs: number = 250): 
 		Coroutine<Synchronized<value, syncResult> & context, Synchronized<value, syncResult>, ApiResultStatus> => {
 	const Co = CoTypedFactory<context, Synchronized<value, syncResult>>();
 	return Co.SetState(Synchronized.Updaters.sync(AsyncState.Updaters.toReloading())).then(() => 
