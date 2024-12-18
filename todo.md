@@ -92,39 +92,61 @@ Todo (✅/❌)
                 ✅ actions are wrong, redesign 
                   ✅ rules need a starting scope entity (`AB`/`CD`)
                   ✅ an entity descriptor is needed
-          ❌ define coroutines for processing events and applying field set operations
           ❌ define expr evaluator
             ✅ basic eval expr
-            ❌ basic eval assignment
-            ❌ define business rules changed by field update
-            ❌ after field updates occur in a coroutine iteration, track this in the state
-              ❌ `Set<EntityType x (EntityId | Set<EntityId> | All) x FieldDescriptorId>`
-              ❌ track the evaluation candidates `Map<FieldDescriptorId, Set<BusinessRuleId>>`
+            ✅ basic eval assignment
+            ❌ activate business rules after a field update
+              ❌ define coroutines for processing events and applying field set operations
+                ✅ implement the ugly switch-case for the event application after event matching
+                ✅ actual setting of the `Active` coroutines
+                ✅ actual execution of the step
+                ✅ saving and resetting the state
+                ✅ define int-processing coroutine
+                ❌ then the business rules are evaluated
+                  ❌ we maintain the loop checker `Set<BusinessRuleId>` - the same `BusinessRuleId` cannot enter the set again
+                    ❌ a `BusinessRule` enters the set when its `condition` evaluates to `true`, not just as a candidate
+                  ❌ we evaluate the business rules
+                    ✅ naively: all of them in a loop
+                    ❌ efficiently: with pre-caching of the FREE-VARS of both condition and expression value
+                    ❌ after field updates occur in a coroutine iteration, track this in the state
+                      ❌ `Set<EntityType x (EntityId | Set<EntityId> | All) x FieldDescriptorId>`
+                      ❌ track the evaluation candidates `Map<FieldDescriptorId, Set<BusinessRuleId>>`
+                    ❌ prepare a `co.Any` where each coroutine returns a different `fieldDescriptor x (Target = One | Multiple | All)`
+                    ❌ the subsequent step is to save this value with `co.SetState` in the queue of edited fields
+                      ❌ the queue needs merging: `All + x = x + All = All, One + Multiple = Multiple + One = Multple + Multiple = One + One = Multiple`
+                    ❌ every business rule' assignment causes a new set of updated fields
+                      ❌ when this set is empty, we stop
+                      ❌ otherwise, we repeat the process
             ❌ when evaluating a field lookup, we can do much faster than a switch-case with a multi-field lookup map (a dynamic representation of the schema)
-              ❌ eval lookup needs to become much smarter
+              ❌ any comparison to `schema.AB.Event`, `schema.AB.ACount.Event` and so on should be removed
+              ❌ any iteration of all `ABs` or `CDs` should be removed
               ❌ the lookup of fields from ABs and CDs is particularly bad
               ❌ the assignment of fields to ABs and CDs is particularly bad
+              ❌ the application of a field update after the coroutine triggers on the event is particularly bad
               ❌ fields should be able to GET and SET automatically from the entityId and the context
           ❌ testing scenario
             ❌ add a setA event, see that the Total changes
+            ❌ add a setB event, see that the Total changes
             ❌ add a setCDRef event, see that the Total changes
             ❌ add a setC event, see that the Total changes (nasty because of the AB-CD relation)
             ❌ each event adds all candidate business rules (Ids) to the rules queue in the coroutine state, not events
               ❌ the rules queue tracks EntityId x BusinessRuleId, or we have a separate Set of those
               ❌ when the same entry is added to the Set, stop and log an error
               ❌ after an evaluation iteration, process the rules, and add the business rules to the queue as synthetic events 
-          ❌ events
-            ❌ change ACount/BCount
             ❌ change all `CD` refs inside a given `AB`
               ❌ the schema for `CD` then needs a `RefsField`
+              ❌ complete the scenario of multiple CDs, so that the events can also be EntityEvents such as `Add`, `Delete`, `Move`, etc.
+          ❌ allow approval, with associated business rules
+          ❌ extend the `ABCDEvent` definition to include a processed state and a created time
           ❌ add an `EventDesc` to `FieldEvent`
             ❌ useful for pre/post event actions and conditions, it defines that which is passed to co.On plus a pre- and post-condition coroutine
             ❌ it is polymorphic and distributed over the concrete instances (ie `SetIntField of IntEventDesc`, ...)
-          ❌ add the scenario of multiple Positions, so that the events can also be EntityEvents such as `Add`, `Delete`, `Move`, etc.
+          ❌ define custom rules and make the priority of assignments actually count
           ❌ move the whole thing to a separate `jobs` file
           ❌ isolate field descriptors and expr to Ballerina-core
             ❌ also eval all sorts of `eval` functions
-          ❌ expose OpenAPI with business objects
+          ❌ expose OpenAPI 
+            ❌ ideally with F#-style domain objects, not C#-style serializable objects
             ❌ enums to strings
           ❌ persist the entities to Elasticsearch
           ❌ persist the entities to Postgres

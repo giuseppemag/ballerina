@@ -172,7 +172,22 @@ module Program =
       let mutable context:Context = {
         ABs = (fun () -> ABs)
         CDs = (fun () -> CDs)
-        ActiveEvents = [] // :List<FieldEvent>; 
+        ActiveEvents = [
+          ABCDEvent.SetField(
+            SetFieldEvent.SingletonIntFieldEvent 
+              { 
+                Self = { 
+                  FieldEventId = Guid.NewGuid(); 
+                  EntityDescriptor = schema.AB.Entity;
+                  Assignment = {
+                    Variable = (Expr.VarLookup "this") => (Expr.Value(Value.Field schema.AB.ACount.Self))
+                    Value=((Expr.VarLookup "this") => Expr.Value(Value.Field schema.AB.ACount.Self))
+                      + (Expr.Value(Value.ConstInt 10))
+                  }
+                }; 
+                Target = One (ABs.First().Key)
+              })
+              ] // :List<FieldEvent>; 
         PastEvents = [] // :List<FieldEvent>;
         BusinessRules = businessRules
         Schema = schema
@@ -237,6 +252,18 @@ module Program =
                   context.Schema.AB.TotalABC.Update (One entityId) (replaceWith i)
                   Option.Some()
                 | _ -> None
+              else if fieldDescriptor.FieldDescriptorId = context.Schema.AB.ACount.Self.FieldDescriptorId then
+                match v with
+                | Value.ConstInt i ->
+                  context.Schema.AB.ACount.Update (One entityId) (replaceWith i)
+                  Option.Some()
+                | _ -> None
+              else if fieldDescriptor.FieldDescriptorId = context.Schema.AB.BCount.Self.FieldDescriptorId then
+                match v with
+                | Value.ConstInt i ->
+                  context.Schema.AB.BCount.Update (One entityId) (replaceWith i)
+                  Option.Some()
+                | _ -> None
               else 
                 None
             else
@@ -250,9 +277,89 @@ module Program =
           "this", (context.Schema.AB.Entity, (context.ABs() |> Map.values |> Seq.head).ABId |> One)
         ] |> Map.ofList
 
-      printfn "%A" (eval context vars totalABC.Actions.Head.Value)
-      printfn "%A" (execute context vars totalABC.Actions.Head)
-      printfn "%A" (context.ABs() |> Map.values |> Seq.map (fun ab -> {| A = ab.ACount; B = ab.BCount; CD = {| C = ab.CD.CCount |}; Total = ab.TotalABC |}) |> Seq.toArray)
+      // printfn "%A" (eval context vars totalABC.Actions.Head.Value)
+      // printfn "%A" (execute context vars totalABC.Actions.Head)
+      // printfn "%A" (context.ABs() |> Map.values |> Seq.map (fun ab -> {| A = ab.ACount; B = ab.BCount; CD = {| C = ab.CD.CCount |}; Total = ab.TotalABC |}) |> Seq.toArray)
+
+      let processABCD (abId:Guid) : Coroutine<Unit, JobsState, Context, ABCDEvent> = 
+        co.Repeat(
+          co{
+            let! e = co.On(
+              function 
+              | ABCDEvent.SetField(SetFieldEvent.SingletonIntFieldEvent e) when e.Target = One abId -> 
+                Option.Some e
+              | _ -> Option.None)
+            do! co.Wait(TimeSpan.FromSeconds 0.0)
+            let! context = co.GetContext()
+            if e.Self.EntityDescriptor.EntityDescriptorId = context.Schema.AB.Entity.EntityDescriptorId then
+              let vars:Vars = 
+                [
+                  "this", (context.Schema.AB.Entity, e.Target)
+                ] |> Map.ofList
+              do! co.Do(fun ctx -> execute ctx vars e.Self.Assignment |> ignore)
+              // for each business rules, prepare its Vars with this as each entity of the type of the business rule, then execute the rules one by one
+              let! context = co.GetContext()
+              for businessRule in context.BusinessRules |> Map.values do
+                if businessRule.Entity = context.Schema.AB.Entity then
+                  for ab in context.ABs() |> Map.values do
+                    let vars:Vars = 
+                      [
+                        "this", (context.Schema.AB.Entity, One ab.ABId)
+                      ] |> Map.ofList
+                    for a in businessRule.Actions do
+                      do execute context vars a
+                      return ()
+            else
+              return ()
+          }
+        )
+
+      let init(): EvaluatedCoroutines<_,_,_> =         
+        { 
+          active = context.ABs() |> Map.values |> Seq.map (fun e -> e.ABId) |> Seq.map (fun abId -> (abId, processABCD abId)) |> Map.ofSeq;
+          waiting = Map.empty;
+          waitingOrListening = Map.empty;
+          listening = Map.empty;
+          stopped = Set.empty;
+        }      
+      let getSnapshot() =
+        // state, context, active events, () [= Db x Scope]
+        { edits = Set.empty }, 
+        context, 
+        context.ActiveEvents |> Seq.map (
+          function 
+          | (ABCDEvent.SetField(SetFieldEvent.SingletonIntFieldEvent inner)) as e -> inner.Self.FieldEventId, e
+          | (ABCDEvent.SetField(SetFieldEvent.IntFieldEvent inner)) as e -> inner.Self.FieldEventId, e)
+          |> Map.ofSeq, 
+        ()
+      let updateEvents (dataSource:Unit) events u_e =
+        let events' = u_e events
+        let added =   events' |> Map.filter (fun e'_id e' -> events |> Map.containsKey e'_id |> not)
+                              |> Map.values
+                              |> List.ofSeq
+        let removed = events |> Map.filter (fun e_id e -> events' |> Map.containsKey e_id |> not)
+                              |> Map.toSeq
+                              |> Seq.map snd
+                              |> Set.ofSeq
+        context <- { 
+          context with 
+            ActiveEvents = (context.ActiveEvents |> List.filter (fun e -> removed |> Set.contains e |> not)) @ added 
+          }
+        // remove all the removed events from context.Active
+        // add all the removed events to context.Processed
+        // add all the added events to context.Active
+        ()
+      let updateState u_s = 
+        let newState = u_s { edits = Set.empty }
+        // run the whole process of business rules based on the edits, with loop avoidance
+        ()
+      let log (dataSource:Unit) =
+        Console.Clear() |> ignore
+        printfn "%A" (context.ABs() |> Map.values |> Seq.map (fun ab -> {| ACount = ab.ACount; BCount = ab.BCount; CCount = ab.CD.CCount; Total = ab.TotalABC |}))
+      let releaseSnapshot (_:Unit) =
+        ()
+      Ballerina.CoroutinesRunner.runLoop init getSnapshot updateState updateEvents log releaseSnapshot
+        
       ()
 
     rootCommand.SetHandler(Action<_>(fun (mode:LaunchMode) ->

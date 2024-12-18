@@ -57,4 +57,4 @@ let abEventLoop (createScope:Unit -> IServiceScope) =
   let releaseSnapshot ((db,scope):BallerinaContext * IServiceScope) =
     db.Dispose()
     scope.Dispose()
-  Ballerina.CoroutinesRunner.runLoop init getSnapshot updateEvents log releaseSnapshot
+  Ballerina.CoroutinesRunner.runLoop init getSnapshot (fun u_s -> ()) updateEvents log releaseSnapshot

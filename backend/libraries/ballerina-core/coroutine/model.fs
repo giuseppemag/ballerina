@@ -90,6 +90,10 @@ type CoroutineBuilder() =
     co.Bind(p, fun x -> 
       Co(fun _ -> CoroutineResult.Wait(t x, co.Return()), None, None)
     )
+  member co.For(seq, body) =
+    let seq:seq<Coroutine<Unit,_,_,_>> = seq |> Seq.map body
+    seq |> Seq.fold (fun acc p -> co.Combine(acc, p)) (co.Return())
+    // Co(fun _ -> CoroutineResult.For(seq, body), None, None)
   member co.Wait(t) =
     Co(fun _ -> CoroutineResult.Wait(t, co.Return()), None, None)
   member co.Do(f : 's -> 'a) =

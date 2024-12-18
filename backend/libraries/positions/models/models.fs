@@ -29,7 +29,11 @@ and RefFieldDescriptor = { Self:FieldDescriptor; Update:EntitiesIdentifiers -> U
 and ReadonlyIntFieldDescriptor = { Self:FieldDescriptor; Update:EntityIdentifier -> Updater<int> -> Unit }
 and SingletonIntFieldDescriptor = { Self:FieldDescriptor; Update:EntityIdentifier -> Updater<int> -> Unit }
 
-and FieldEvent = { FieldEventId:Guid; Updater:Expr }
+and FieldEventBase = { FieldEventId:Guid; EntityDescriptor:EntityDescriptor; Assignment:Assignment }
+and IntFieldEvent = { Self:FieldEventBase; Targets:EntitiesIdentifiers }
+and SingletonIntFieldEvent = { Self:FieldEventBase; Target:EntityIdentifier }
+and SetFieldEvent = IntFieldEvent of IntFieldEvent | SingletonIntFieldEvent of SingletonIntFieldEvent
+and ABCDEvent = SetField of SetFieldEvent
 
 and BusinessRule = { BusinessRuleId:Guid; Name:string; Priority:BusinessRulePriority; Entity:EntityDescriptor; Condition:Expr; Actions:List<Assignment> }
 and Assignment = { Variable:Expr; Value:Expr }
@@ -71,7 +75,11 @@ and Schema = {
 }
 and Context = {
   ABs:Unit -> Map<Guid, AB>; CDs:Unit -> Map<Guid, CD>;
-  ActiveEvents:List<FieldEvent>; PastEvents:List<FieldEvent>;
+  ActiveEvents:List<ABCDEvent>; PastEvents:List<ABCDEvent>;
   BusinessRules:Map<Guid, BusinessRule>;
   Schema:Schema
+}
+and Edit = FieldEdit of {| entityId:Guid; fieldDescriptorId:Guid |}
+and JobsState = {
+  edits:Set<Edit>
 }

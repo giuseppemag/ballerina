@@ -3,7 +3,7 @@ open Ballerina.Coroutines
 open System
 open System.Threading
 
-let runLoop init getSnapshot updateEvents log releaseSnapshot = 
+let runLoop init getSnapshot updateState updateEvents log releaseSnapshot = 
   let mutable initialEvals = init()
   let mutable lastT = DateTime.Now
   while true do
@@ -24,7 +24,7 @@ let runLoop init getSnapshot updateEvents log releaseSnapshot =
       ()
     | _ -> ()
     match u_s with
-    | Some u_s -> () // the state here is not really a state, no update to perform          
+    | Some u_s -> updateState u_s
     | None -> ()
     let newWaiting = evals'.waiting |> Seq.map (fun w -> w.Key,w.Value) |> Seq.toList
     let newWaiting = newWaiting @ (stillWaiting |> Seq.map (fun w -> w.Key,w.Value) |> Seq.toList)
