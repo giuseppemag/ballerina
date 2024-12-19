@@ -107,6 +107,8 @@ Todo (✅/❌)
                     ❌ a `BusinessRule` enters the set when its `condition` evaluates to `true`, not just as a candidate
                   ❌ we evaluate the business rules
                     ✅ naively: all of them in a loop
+                    ❌ only mark a field as dirty if the field value has actually changed
+                    ❌ when the candidate business rules are evaluating, restrict the entities they are evaluated on - for now, we are using the whole collection!
                     ❌ efficiently: with pre-caching of the FREE-VARS of both condition and expression value
                     ❌ after field updates occur in a coroutine iteration, track this in the state
                       ❌ `Set<EntityType x (EntityId | Set<EntityId> | All) x FieldDescriptorId>`

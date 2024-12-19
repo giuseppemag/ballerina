@@ -238,7 +238,7 @@ module Program =
           | Option.Some(Value.ConstInt i1), Option.Some(Value.ConstInt i2) -> Option.Some(i1,i2)
           | _ -> Option.None
         eval
-      let execute (context:Context) (vars:Vars) (assignment:Assignment) =
+      let execute (context:Context) (vars:Vars) (assignment:Assignment) :Map<{| FieldDescriptorId:Guid |}, {| Target:EntitiesIdentifiers |}> =
         match assignment.Variable, eval context vars assignment.Value with
         | Expr.Binary(Dot, e, Expr.Value(Value.Field fieldDescriptor)), Option.Some(v) ->
           match eval context vars e with
@@ -249,34 +249,102 @@ module Program =
               if fieldDescriptor.FieldDescriptorId = context.Schema.AB.TotalABC.Self.FieldDescriptorId then
                 match v with
                 | Value.ConstInt i ->
-                  context.Schema.AB.TotalABC.Update (One entityId) (replaceWith i)
-                  Option.Some()
-                | _ -> None
+                  do context.Schema.AB.TotalABC.Update (One entityId) (replaceWith i)
+                  [({| FieldDescriptorId=fieldDescriptor.FieldDescriptorId |}, {| Target=Multiple(Set.singleton entityId); |})] |> Map.ofList
+                | _ -> Map.empty
               else if fieldDescriptor.FieldDescriptorId = context.Schema.AB.ACount.Self.FieldDescriptorId then
                 match v with
                 | Value.ConstInt i ->
                   context.Schema.AB.ACount.Update (One entityId) (replaceWith i)
-                  Option.Some()
-                | _ -> None
+                  [({| FieldDescriptorId=fieldDescriptor.FieldDescriptorId |}, {| Target=Multiple(Set.singleton entityId); |})] |> Map.ofList
+                | _ -> Map.empty
               else if fieldDescriptor.FieldDescriptorId = context.Schema.AB.BCount.Self.FieldDescriptorId then
                 match v with
                 | Value.ConstInt i ->
                   context.Schema.AB.BCount.Update (One entityId) (replaceWith i)
-                  Option.Some()
-                | _ -> None
+                  [({| FieldDescriptorId=fieldDescriptor.FieldDescriptorId |}, {| Target=Multiple(Set.singleton entityId); |})] |> Map.ofList
+                | _ -> Map.empty
               else 
-                None
+                Map.empty
             else
-              None
+              Map.empty
           | _ ->
-            None
-        | _ -> None
+            Map.empty
+        | _ -> Map.empty
 
-      let vars:Vars = 
-        [
-          "this", (context.Schema.AB.Entity, (context.ABs() |> Map.values |> Seq.head).ABId |> One)
-        ] |> Map.ofList
+      let rec lookedUpFieldDescriptors (e:Expr) = 
+        let (!) e = lookedUpFieldDescriptors e
+        match e with
+        | Expr.Value(Value.Field f) -> Set.singleton {| FieldDescriptorId=f.FieldDescriptorId |}
+        | Expr.Binary(_, e1, e2) -> !e1 |> Set.union !e2
+        | Expr.SumBy(_,_,e)
+        | Expr.Exists(_,_,e) -> !e
+        | _ -> Set.empty
 
+      let getCandidateRules 
+        (context:Context)
+        (modifiedFields:Set<{| FieldDescriptorId:Guid |}>) = 
+        seq{
+          for br in context.BusinessRules |> Map.values do
+            let fields = 
+              Set.unionMany(seq{
+                yield lookedUpFieldDescriptors br.Condition
+                for a in br.Actions do
+                  yield lookedUpFieldDescriptors a.Value
+              })
+            if fields |> Set.intersect modifiedFields |> Set.isEmpty |> not then
+              yield br
+        } |> Seq.toList
+
+      let mergeEntitiesIdentifiers (entities1:EntitiesIdentifiers) (entities2:EntitiesIdentifiers) = 
+        match entities1, entities2 with
+        | All, _ -> All
+        | _, All -> All
+        | Multiple ids1, Multiple ids2 -> Multiple(Set.union ids1 ids2)
+
+      let rec executeRulesTransitively 
+        (context:Context)
+        (executedRules:Set<{| Target:EntitiesIdentifiers; BusinessRuleId:Guid |}>) 
+        (modifiedFields:Map<{| FieldDescriptorId:Guid |}, {| Target:EntitiesIdentifiers |}>) = 
+        let candidateRules = getCandidateRules context (modifiedFields |> Map.keys |> Set.ofSeq)
+        // let modifiedEntities = modifiedFields |> Set.map (fun f -> f.Target)
+        let mutable modifiedFields':Map<{| FieldDescriptorId:Guid |}, {| Target:EntitiesIdentifiers |}> = 
+          Map.empty
+        let mutable executedRules':Set<{| Target:EntitiesIdentifiers; BusinessRuleId:Guid |}> = Set.empty
+        for businessRule in candidateRules do
+          if businessRule.Entity = context.Schema.AB.Entity then
+            for ab in context.ABs() |> Map.values do
+              let vars:Vars = 
+                [
+                  "this", (context.Schema.AB.Entity, One ab.ABId)
+                ] |> Map.ofList
+              match eval context vars businessRule.Condition with
+              | Some(Value.ConstBool true) ->
+                for a in businessRule.Actions do
+                  let modifiedFieldsByRule = execute context vars a
+                  if modifiedFieldsByRule |> Map.isEmpty |> not then
+                    // TODO: add businessRule to executedRules' 
+                    // TODO: also merge the Target, turn the executedRules and executedRules' into maps from BusinessRuleId
+                    ()
+                  for modifiedField in modifiedFieldsByRule do
+                    if modifiedFields' |> Map.containsKey {| FieldDescriptorId=modifiedField.Key.FieldDescriptorId |} |> not then
+                      modifiedFields' <- 
+                        modifiedFields' |> Map.add {| FieldDescriptorId=modifiedField.Key.FieldDescriptorId |} {| Target=modifiedField.Value.Target |}
+                    else 
+                      let mergedTarget = mergeEntitiesIdentifiers (modifiedFields'.[modifiedField.Key].Target) modifiedField.Value.Target
+                      modifiedFields' <- 
+                        modifiedFields' |> Map.add {| FieldDescriptorId=modifiedField.Key.FieldDescriptorId |} {| Target=mergedTarget |}                
+                    ()
+                  ()
+              | _ -> ()
+        // TODO: check that there is NO OVERLAP between executedRules and executedRules'
+        // TODO: executedRules' <- merge executedRules and executedRules'
+        executeRulesTransitively context executedRules' modifiedFields'
+
+      // let vars:Vars = 
+      //   [
+      //     "this", (context.Schema.AB.Entity, (context.ABs() |> Map.values |> Seq.head).ABId |> One)
+      //   ] |> Map.ofList
       // printfn "%A" (eval context vars totalABC.Actions.Head.Value)
       // printfn "%A" (execute context vars totalABC.Actions.Head)
       // printfn "%A" (context.ABs() |> Map.values |> Seq.map (fun ab -> {| A = ab.ACount; B = ab.BCount; CD = {| C = ab.CD.CCount |}; Total = ab.TotalABC |}) |> Seq.toArray)
@@ -296,19 +364,8 @@ module Program =
                 [
                   "this", (context.Schema.AB.Entity, e.Target)
                 ] |> Map.ofList
-              do! co.Do(fun ctx -> execute ctx vars e.Self.Assignment |> ignore)
-              // for each business rules, prepare its Vars with this as each entity of the type of the business rule, then execute the rules one by one
-              let! context = co.GetContext()
-              for businessRule in context.BusinessRules |> Map.values do
-                if businessRule.Entity = context.Schema.AB.Entity then
-                  for ab in context.ABs() |> Map.values do
-                    let vars:Vars = 
-                      [
-                        "this", (context.Schema.AB.Entity, One ab.ABId)
-                      ] |> Map.ofList
-                    for a in businessRule.Actions do
-                      do execute context vars a
-                      return ()
+              let! modifiedFields = co.Do(fun ctx -> execute ctx vars e.Self.Assignment)
+              do! co.Do(fun ctx -> executeRulesTransitively ctx Set.empty modifiedFields)
             else
               return ()
           }
