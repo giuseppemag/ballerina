@@ -238,7 +238,7 @@ module Program =
           | Option.Some(Value.ConstInt i1), Option.Some(Value.ConstInt i2) -> Option.Some(i1,i2)
           | _ -> Option.None
         eval
-      let execute (context:Context) (vars:Vars) (assignment:Assignment) :Map<{| FieldDescriptorId:Guid |}, {| Target:EntitiesIdentifiers |}> =
+      let execute (context:Context) (vars:Vars) (assignment:Assignment) : Map<{| FieldDescriptorId:Guid |}, {| Target:EntitiesIdentifiers |}> =
         match assignment.Variable, eval context vars assignment.Value with
         | Expr.Binary(Dot, e, Expr.Value(Value.Field fieldDescriptor)), Option.Some(v) ->
           match eval context vars e with
@@ -302,15 +302,54 @@ module Program =
         | _, All -> All
         | Multiple ids1, Multiple ids2 -> Multiple(Set.union ids1 ids2)
 
+      let rec overlap (rules1:Map<{| BusinessRuleId:Guid |}, {| Target:EntitiesIdentifiers |}>)
+        (rules2:Map<{| BusinessRuleId:Guid |}, {| Target:EntitiesIdentifiers |}>) = 
+        if rules2 |> Map.isEmpty then false
+        else 
+          let first = rules1 |> Seq.tryHead
+          match first with
+          | Some first ->
+            let rules1 = rules1 |> Map.remove first.Key
+            let target1 = first.Value.Target
+            match rules2 |> Map.tryFind first.Key with
+            | Some target2 ->
+              let target2 = target2.Target
+              match target1, target2 with
+              | All, _ | _,All -> true
+              | Multiple target1, Multiple target2 -> 
+                if Set.intersect target1 target2 |> Set.isEmpty then
+                  overlap rules1 rules2
+                else
+                  true
+            | None -> overlap rules1 rules2
+          | None -> false
+
+      let rec mergeExecutedRules (rules1:Map<{| BusinessRuleId:Guid |}, {| Target:EntitiesIdentifiers |}>)
+        (rules2:Map<{| BusinessRuleId:Guid |}, {| Target:EntitiesIdentifiers |}>) = 
+        if rules2 |> Map.isEmpty then rules1
+        else 
+          let first = rules1 |> Seq.tryHead
+          match first with
+          | Some first ->
+            let rules1 = rules1 |> Map.remove first.Key
+            let mergedTargets = 
+              seq{
+                yield first.Value.Target
+                for target in rules2 |> Map.tryFind first.Key |> Option.toList do
+                  yield target.Target
+              } |> Seq.reduce mergeEntitiesIdentifiers
+            let rules2 = rules1 |> Map.add first.Key {| Target=mergedTargets |}
+            mergeExecutedRules rules1 rules2
+          | None -> rules2
+
       let rec executeRulesTransitively 
         (context:Context)
-        (executedRules:Set<{| Target:EntitiesIdentifiers; BusinessRuleId:Guid |}>) 
+        (executedRules:Map<{| BusinessRuleId:Guid |}, {| Target:EntitiesIdentifiers |}>) 
         (modifiedFields:Map<{| FieldDescriptorId:Guid |}, {| Target:EntitiesIdentifiers |}>) = 
         let candidateRules = getCandidateRules context (modifiedFields |> Map.keys |> Set.ofSeq)
-        // let modifiedEntities = modifiedFields |> Set.map (fun f -> f.Target)
         let mutable modifiedFields':Map<{| FieldDescriptorId:Guid |}, {| Target:EntitiesIdentifiers |}> = 
           Map.empty
-        let mutable executedRules':Set<{| Target:EntitiesIdentifiers; BusinessRuleId:Guid |}> = Set.empty
+        let mutable executedRules':Map<{| BusinessRuleId:Guid |}, {| Target:EntitiesIdentifiers |}> = Map.empty
         for businessRule in candidateRules do
           if businessRule.Entity = context.Schema.AB.Entity then
             for ab in context.ABs() |> Map.values do
@@ -318,14 +357,20 @@ module Program =
                 [
                   "this", (context.Schema.AB.Entity, One ab.ABId)
                 ] |> Map.ofList
+              let businessRuleId = {| BusinessRuleId=businessRule.BusinessRuleId |}
               match eval context vars businessRule.Condition with
               | Some(Value.ConstBool true) ->
                 for a in businessRule.Actions do
-                  let modifiedFieldsByRule = execute context vars a
-                  if modifiedFieldsByRule |> Map.isEmpty |> not then
-                    // TODO: add businessRule to executedRules' 
-                    // TODO: also merge the Target, turn the executedRules and executedRules' into maps from BusinessRuleId
-                    ()
+                  let modifiedFieldsByRule:Map<{| FieldDescriptorId:Guid |}, {| Target:EntitiesIdentifiers |}> = 
+                    execute context vars a
+                  let allModifiedTargets = 
+                    seq{
+                      if executedRules' |> Map.containsKey businessRuleId then
+                        yield executedRules'.[businessRuleId].Target
+                      for modifiedField in modifiedFieldsByRule do
+                        yield modifiedField.Value.Target 
+                    } |> Seq.reduce mergeEntitiesIdentifiers
+                  executedRules' <- executedRules' |> Map.add businessRuleId {| Target=allModifiedTargets |}
                   for modifiedField in modifiedFieldsByRule do
                     if modifiedFields' |> Map.containsKey {| FieldDescriptorId=modifiedField.Key.FieldDescriptorId |} |> not then
                       modifiedFields' <- 
@@ -337,9 +382,13 @@ module Program =
                     ()
                   ()
               | _ -> ()
-        // TODO: check that there is NO OVERLAP between executedRules and executedRules'
-        // TODO: executedRules' <- merge executedRules and executedRules'
-        executeRulesTransitively context executedRules' modifiedFields'
+        if overlap executedRules executedRules' then
+          None
+        else
+          if modifiedFields' |> Map.isEmpty then
+            Some()
+          else
+            executeRulesTransitively context (mergeExecutedRules executedRules executedRules') modifiedFields'
 
       // let vars:Vars = 
       //   [
@@ -365,7 +414,10 @@ module Program =
                   "this", (context.Schema.AB.Entity, e.Target)
                 ] |> Map.ofList
               let! modifiedFields = co.Do(fun ctx -> execute ctx vars e.Self.Assignment)
-              do! co.Do(fun ctx -> executeRulesTransitively ctx Set.empty modifiedFields)
+              do! co.Do(fun ctx -> 
+                match executeRulesTransitively ctx Map.empty modifiedFields with
+                | Some() -> ()
+                | None -> printfn "Error, rule execution resulted in a possible loop that was interrupted")
             else
               return ()
           }
@@ -402,9 +454,6 @@ module Program =
           context with 
             ActiveEvents = (context.ActiveEvents |> List.filter (fun e -> removed |> Set.contains e |> not)) @ added 
           }
-        // remove all the removed events from context.Active
-        // add all the removed events to context.Processed
-        // add all the added events to context.Active
         ()
       let updateState u_s = 
         let newState = u_s { edits = Set.empty }

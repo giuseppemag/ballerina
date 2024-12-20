@@ -103,11 +103,13 @@ Todo (✅/❌)
                 ✅ saving and resetting the state
                 ✅ define int-processing coroutine
                 ❌ then the business rules are evaluated
+                  ❌ only mark a field as dirty if the field value has actually changed
+                  ❌ verify that there is no loop
+                  ❌ the rules are applied everywhere, but this should be limited in scope
                   ❌ we maintain the loop checker `Set<BusinessRuleId>` - the same `BusinessRuleId` cannot enter the set again
                     ❌ a `BusinessRule` enters the set when its `condition` evaluates to `true`, not just as a candidate
                   ❌ we evaluate the business rules
                     ✅ naively: all of them in a loop
-                    ❌ only mark a field as dirty if the field value has actually changed
                     ❌ when the candidate business rules are evaluating, restrict the entities they are evaluated on - for now, we are using the whole collection!
                     ❌ efficiently: with pre-caching of the FREE-VARS of both condition and expression value
                     ❌ after field updates occur in a coroutine iteration, track this in the state
@@ -119,6 +121,7 @@ Todo (✅/❌)
                     ❌ every business rule' assignment causes a new set of updated fields
                       ❌ when this set is empty, we stop
                       ❌ otherwise, we repeat the process
+            ❌ move eval, all merge*, and the whole abcdjobs to ballerina-core
             ❌ when evaluating a field lookup, we can do much faster than a switch-case with a multi-field lookup map (a dynamic representation of the schema)
               ❌ any comparison to `schema.AB.Event`, `schema.AB.ACount.Event` and so on should be removed
               ❌ any iteration of all `ABs` or `CDs` should be removed
@@ -144,9 +147,7 @@ Todo (✅/❌)
             ❌ useful for pre/post event actions and conditions, it defines that which is passed to co.On plus a pre- and post-condition coroutine
             ❌ it is polymorphic and distributed over the concrete instances (ie `SetIntField of IntEventDesc`, ...)
           ❌ define custom rules and make the priority of assignments actually count
-          ❌ move the whole thing to a separate `jobs` file
           ❌ isolate field descriptors and expr to Ballerina-core
-            ❌ also eval all sorts of `eval` functions
           ❌ expose OpenAPI 
             ❌ ideally with F#-style domain objects, not C#-style serializable objects
             ❌ enums to strings
