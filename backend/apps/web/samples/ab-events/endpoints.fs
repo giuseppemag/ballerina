@@ -8,7 +8,7 @@ open absample.repositories
 open Ballerina.CRUD
 
 type WebApplication with 
-  member app.UseABSample<'DB>(repoAB:'DB -> Crud<AB>, repoABEvent:'DB -> Crud<ABEvent>, repoAEvent:'DB -> Crud<AEvent>, repoBEvent:'DB -> Crud<BEvent>) = 
+  member app.UseABSample<'DB>(repoAB:'DB -> CrudSeq<AB>, repoABEvent:'DB -> CrudSeq<ABEvent>, repoAEvent:'DB -> CrudSeq<AEvent>, repoBEvent:'DB -> CrudSeq<BEvent>) = 
     app.MapGet("/ABs", new Func<_, _, _, _>(fun (db:'DB) (skip:int) (take:int) -> 
       (repoAB db).getN <@ fun _ -> true @> <@ fun e -> e.ABId @> (Ballerina.Range.WithinReason(skip, take))
       )).WithOpenApi() |> ignore

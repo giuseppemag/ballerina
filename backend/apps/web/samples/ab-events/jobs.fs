@@ -1,4 +1,4 @@
-module Program
+module absample.eventLoop
 open System
 open System.Linq
 open Microsoft.Extensions.DependencyInjection
@@ -31,7 +31,7 @@ let abEventLoop (createScope:Unit -> IServiceScope) =
   let getSnapshot() =
     let scope = createScope()
     let db = scope.ServiceProvider.GetService<BallerinaContext>()
-    (), { ABs = AB db (db.ABs); ABEvents = ABEvent db (db.ABEvents) }, db.ABEvents.AsNoTracking().Where(fun e -> e.ProcessingStatus = ABEventStatus.Enqueued).OrderBy(fun e -> (e.CreatedAt, e.ABEventId)).ToArray() |> Seq.map (fun e -> e.ABEventId, e |> absample.efmodels.ABEvent.ToUnion) |> Map.ofSeq, (db, scope)
+    (), { ABs = abrepos.logical.AB db (db.ABs); ABEvents = abrepos.logical.ABEvent db (db.ABEvents) }, db.ABEvents.AsNoTracking().Where(fun e -> e.ProcessingStatus = ABEventStatus.Enqueued).OrderBy(fun e -> (e.CreatedAt, e.ABEventId)).ToArray() |> Seq.map (fun e -> e.ABEventId, e |> absample.efmodels.ABEvent.ToUnion) |> Map.ofSeq, (db, scope)
   let updateEvents (dataSource:BallerinaContext * IServiceScope) events u_e =
     let db = dataSource |> fst
     let events' = u_e events

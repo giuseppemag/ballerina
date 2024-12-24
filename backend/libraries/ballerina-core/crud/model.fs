@@ -12,8 +12,11 @@ type Crud<'a> =
   abstract member create:'a -> Guid
   abstract member delete:Guid -> Unit
   abstract member get:Guid -> Option<'a>
-  abstract member getN:Quotations.Expr<'a -> bool> -> Quotations.Expr<'a -> 'key> -> Ballerina.Range -> Linq.IQueryable<'a>
   abstract member update:Guid -> Updater<'a> -> Unit
+
+type CrudSeq<'a> = 
+  inherit Crud<'a>
+  abstract member getN:Quotations.Expr<'a -> bool> -> Quotations.Expr<'a -> 'key> -> Ballerina.Range -> Linq.IQueryable<'a>
 
 type Crud<'a> with
   static member FromDbSet (dbSet:DbSet<'e>) (entity:{| setId:Guid -> Updater<'e>; getId:Guid -> Quotations.Expr<'e -> bool> |}) (db:DbContext)  : Crud<'e> =
@@ -36,10 +39,21 @@ type Crud<'a> with
         member this.get id =
           let es = dbSet.Where(entity.getId id |> ToLinq).ToList()
           es |> Seq.tryHead
+    }
+
+type CrudSeq<'a> with
+  static member FromDbSetToSeq (dbSet:DbSet<'e>) (entity:{| setId:Guid -> Updater<'e>; getId:Guid -> Quotations.Expr<'e -> bool> |}) (db:DbContext)  : CrudSeq<'e> =
+    let crud = Crud<'a>.FromDbSet dbSet entity db
+    { new CrudSeq<'e> with
+        member this.setId id = crud.setId id
+        member this.getId e = crud.getId e
+        member this.create e = crud.create e
+        member this.delete id = crud.delete id
+        member this.update id u = crud.update id u
+        member this.get id = crud.get id
         member this.getN predicate ordering range = 
           dbSet.Where(ToLinq predicate).OrderBy(ToLinq ordering).Skip(range.skip).Take(range.take)
     }
-
 
 // type Crud<'a> = 
 //   abstract member setId:Guid -> Updater<'a>

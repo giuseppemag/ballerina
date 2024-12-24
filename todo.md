@@ -1,12 +1,6 @@
 Todo (✅/❌)
-  ✅ add label override in field renderer
   ❌ make validator partial
-  ❌ add optional "info" field to form fields
-  ❌ support files
-  ❌ support secrets (not re-sent, use `modified`)
-  ❌ map fields
-    ❌ args array should be correctly typed and validated: (recursive transformation of fun into application)
-    ❌ uniqueness constraint enforcement
+  ❌ key-values: uniqueness constraint enforcement
   ❌ show both data-sync and type-safe forms in FormsApp
   ❌ deprecate mapping in both config and code forms, they are not a good idea
 
@@ -103,37 +97,93 @@ Todo (✅/❌)
                 ✅ saving and resetting the state
                 ✅ define int-processing coroutine
                 ❌ then the business rules are evaluated
-                  ❌ only mark a field as dirty if the field value has actually changed
-                  ❌ verify that there is no loop
-                  ❌ the rules are applied everywhere, but this should be limited in scope
+                  ✅ only mark a field as dirty if the field value has actually changed
+                    ✅ do this in field description' `update`
+                  ✅ add an `Exists` predicate and remove the `TargetEntity` from the business rules
+                  ✅ let rec getLookups (e:Expr) : Set<Var x List<FieldDescriptor>> = ...
+                  ✅ let's turn the lookup into a Var x List<FieldDescriptor>
+                  ❌ verify that there actually is no loop
+                    ❌ loops involve same rule, same entity, same field
+                    ❌ test with an actual loop
+                  ❌ the rules are applied to all entities of a given type, but this must be limited in scope to the entities that actually changed in the target
+
+```
+Rules = [
+  Rule1 = 
+    when
+      exists ab:AB -> true
+    do
+      ab.Target := ab.A + ab.B + ab.CD.C + ab.CD.EF.E
+]
+
+type BusinessRule with 
+  member rule.Dependencies : RuleDependencies = 
+    entity of each assigned variable x list of lookup chains
+
+Dependencies.[Rule1] = [
+  Dep1 = { EntityDesc = AB; EntityVariable = "ab"; Path = [] } <- the entity variable is always the first step of the expression lookup
+  Dep2 = { EntityDesc = CD; EntityVariable = "ab"; Path = [".CD"] }
+  Dep3 = { EntityDesc = EF; EntityVariable = "ab"; Path = [".CD", ".EF"] }
+]
+
+Changes
+  Delta1 = ab1.A := ... = { EntityDesc = AB; EntityId = ab1.ABId }
+  Delta2 = cd1.A := ... = { EntityDesc = CD; EntityId = cd1.CDId }
+  Delta3 = ed1.A := ... = { EntityDesc = EF; EntityId = ef1.EFId }
+
+Delta1 activates rule Rule1 on Dep1 because
+  Dep1.EntityDesc = Delta1.EntityDesc <- lookups by EntityDesc thus means Map<EntityDesc, ...>
+  Dep1.EntityVariable is constrained to ABs().Where(fun ab -> ab.ABId = Delta1.EntityVariable.ABId)
+
+Delta2 activates rule Rule1 on Dep2 because
+  Dep2.EntityDesc = Delta2.EntityDesc
+  Dep2.EntityVariable is constrained to ABs().Where(fun ab -> ab.CD.CDId = Delta2.EntityVariable.CDId)
+
+Delta3 activates rule Rule1 on Dep3 because
+  Dep3.EntityDesc = Delta3.EntityDesc
+  Dep3.EntityVariable is constrained to ABs().Where(fun ab -> ab.CD.EF.EFId = Delta3.EntityVariable.EDId)
+
+WHEN MERGING, MERGE THE CONDITIONS OF THE FILTER PREDICATES WITH (||)
+```
+
+                    ❌ a rule has a scope: ReadEntity x ReadField -> { Path x WrittenEntity(var name in conditional) x WrittenField }
+                    ❌ when a field change is found, we match it against the read entities and read fields from the scope of each rule
+                    ❌ the entity of the field change is then traversed to find the SET of written entities that are connected to it 
+                    ❌ the evaluation of the conditional with the same name (so no shadowing!!!) is restricted only to the SET of entities found, instead of getting all possible entities of that type as the candidates
                   ❌ we maintain the loop checker `Set<BusinessRuleId>` - the same `BusinessRuleId` cannot enter the set again
-                    ❌ a `BusinessRule` enters the set when its `condition` evaluates to `true`, not just as a candidate
-                  ❌ we evaluate the business rules
-                    ✅ naively: all of them in a loop
-                    ❌ when the candidate business rules are evaluating, restrict the entities they are evaluated on - for now, we are using the whole collection!
                     ❌ efficiently: with pre-caching of the FREE-VARS of both condition and expression value
-                    ❌ after field updates occur in a coroutine iteration, track this in the state
-                      ❌ `Set<EntityType x (EntityId | Set<EntityId> | All) x FieldDescriptorId>`
-                      ❌ track the evaluation candidates `Map<FieldDescriptorId, Set<BusinessRuleId>>`
                     ❌ prepare a `co.Any` where each coroutine returns a different `fieldDescriptor x (Target = One | Multiple | All)`
-                    ❌ the subsequent step is to save this value with `co.SetState` in the queue of edited fields
-                      ❌ the queue needs merging: `All + x = x + All = All, One + Multiple = Multiple + One = Multple + Multiple = One + One = Multiple`
-                    ❌ every business rule' assignment causes a new set of updated fields
-                      ❌ when this set is empty, we stop
-                      ❌ otherwise, we repeat the process
-            ❌ move eval, all merge*, and the whole abcdjobs to ballerina-core
+                  ✅ we evaluate the business rules
+                    ✅ naively: all of them in a loop
+                    ✅ a `BusinessRule` enters the set when its `condition` evaluates to `true`, not just as a candidate
+                    ✅ when the candidate business rules are evaluating, restrict the entities they are evaluated on - for now, we are using the whole collection!
+                    ✅ after field updates occur in a coroutine iteration, track this in the state
+                      ✅ `Set<EntityType x (EntityId | Set<EntityId> | All) x FieldDescriptorId>`
+                      ✅ track the evaluation candidates `Map<FieldDescriptorId, Set<BusinessRuleId>>`
+                    ✅ the subsequent step is to save this value with `co.SetState` in the queue of edited fields
+                      ✅ the queue needs merging: `All + x = x + All = All, One + Multiple = Multiple + One = Multple + Multiple = One + One = Multiple`
+                    ✅ every business rule' assignment causes a new set of updated fields
+                      ✅ when this set is empty, we stop
+                      ✅ otherwise, we repeat the process
             ❌ when evaluating a field lookup, we can do much faster than a switch-case with a multi-field lookup map (a dynamic representation of the schema)
+              ❌ `Expr::execute` does not take into account more than one field lookup on the assigned variable, extend
               ❌ any comparison to `schema.AB.Event`, `schema.AB.ACount.Event` and so on should be removed
               ❌ any iteration of all `ABs` or `CDs` should be removed
               ❌ the lookup of fields from ABs and CDs is particularly bad
               ❌ the assignment of fields to ABs and CDs is particularly bad
               ❌ the application of a field update after the coroutine triggers on the event is particularly bad
               ❌ fields should be able to GET and SET automatically from the entityId and the context
+              ❌ the anonymous records shuold become statically typed `XId` records
+              ❌ the setup of the `schema`, and in particular the `GetId` and `Lookup` methods, looks like crap
+              ❌ even more transactional: maintain cache of reads and writes, execute to DB at the last moment
+            ❌ remove every single instance of mutation
+            ❌ move eval, all merge*, and the whole abcdjobs to ballerina-core
           ❌ testing scenario
-            ❌ add a setA event, see that the Total changes
+            ✅ add a setA event, see that the Total changes
             ❌ add a setB event, see that the Total changes
             ❌ add a setCDRef event, see that the Total changes
             ❌ add a setC event, see that the Total changes (nasty because of the AB-CD relation)
+            ❌ add a setE event, see that the Total changes
             ❌ each event adds all candidate business rules (Ids) to the rules queue in the coroutine state, not events
               ❌ the rules queue tracks EntityId x BusinessRuleId, or we have a separate Set of those
               ❌ when the same entry is added to the Set, stop and log an error
@@ -142,12 +192,12 @@ Todo (✅/❌)
               ❌ the schema for `CD` then needs a `RefsField`
               ❌ complete the scenario of multiple CDs, so that the events can also be EntityEvents such as `Add`, `Delete`, `Move`, etc.
           ❌ allow approval, with associated business rules
+          ❌ separate EF as a different package
           ❌ extend the `ABCDEvent` definition to include a processed state and a created time
           ❌ add an `EventDesc` to `FieldEvent`
             ❌ useful for pre/post event actions and conditions, it defines that which is passed to co.On plus a pre- and post-condition coroutine
             ❌ it is polymorphic and distributed over the concrete instances (ie `SetIntField of IntEventDesc`, ...)
           ❌ define custom rules and make the priority of assignments actually count
-          ❌ isolate field descriptors and expr to Ballerina-core
           ❌ expose OpenAPI 
             ❌ ideally with F#-style domain objects, not C#-style serializable objects
             ❌ enums to strings
