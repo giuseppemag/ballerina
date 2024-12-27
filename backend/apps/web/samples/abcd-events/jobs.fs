@@ -26,7 +26,7 @@ let abcdEventLoop() =
         if e.Self.EntityDescriptorId = context.Schema.AB.Entity.EntityDescriptorId then
           let vars:Vars = 
             [
-              "this", ({ EntityDescriptorId=context.Schema.AB.Entity.EntityDescriptorId }, e.Target)
+              "this", ({ EntityDescriptorId=context.Schema.AB.Entity.EntityDescriptorId; EntityName="AB" }, e.Target)
             ] |> Map.ofList
           let! modifiedFields = co.Do(fun ctx -> execute ctx vars e.Self.Assignment)
           do printfn "modifiedFields %A" modifiedFields

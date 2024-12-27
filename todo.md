@@ -105,47 +105,9 @@ Todo (✅/❌)
                   ❌ verify that there actually is no loop
                     ❌ loops involve same rule, same entity, same field
                     ❌ test with an actual loop
+                  ❌ how does `getCandidateRules` behave when dealing with an update on an intermediate field lookup of a long chain, like `this.Total:=this.A+this.B+this.CD.EF.E`?
                   ❌ the rules are applied to all entities of a given type, but this must be limited in scope to the entities that actually changed in the target
-
-```
-Rules = [
-  Rule1 = 
-    when
-      exists ab:AB -> true
-    do
-      ab.Target := ab.A + ab.B + ab.CD.C + ab.CD.EF.E
-]
-
-type BusinessRule with 
-  member rule.Dependencies : RuleDependencies = 
-    entity of each assigned variable x list of lookup chains
-
-Dependencies.[Rule1] = [
-  Dep1 = { EntityDesc = AB; EntityVariable = "ab"; Path = [] } <- the entity variable is always the first step of the expression lookup
-  Dep2 = { EntityDesc = CD; EntityVariable = "ab"; Path = [".CD"] }
-  Dep3 = { EntityDesc = EF; EntityVariable = "ab"; Path = [".CD", ".EF"] }
-]
-
-Changes
-  Delta1 = ab1.A := ... = { EntityDesc = AB; EntityId = ab1.ABId }
-  Delta2 = cd1.A := ... = { EntityDesc = CD; EntityId = cd1.CDId }
-  Delta3 = ed1.A := ... = { EntityDesc = EF; EntityId = ef1.EFId }
-
-Delta1 activates rule Rule1 on Dep1 because
-  Dep1.EntityDesc = Delta1.EntityDesc <- lookups by EntityDesc thus means Map<EntityDesc, ...>
-  Dep1.EntityVariable is constrained to ABs().Where(fun ab -> ab.ABId = Delta1.EntityVariable.ABId)
-
-Delta2 activates rule Rule1 on Dep2 because
-  Dep2.EntityDesc = Delta2.EntityDesc
-  Dep2.EntityVariable is constrained to ABs().Where(fun ab -> ab.CD.CDId = Delta2.EntityVariable.CDId)
-
-Delta3 activates rule Rule1 on Dep3 because
-  Dep3.EntityDesc = Delta3.EntityDesc
-  Dep3.EntityVariable is constrained to ABs().Where(fun ab -> ab.CD.EF.EFId = Delta3.EntityVariable.EDId)
-
-WHEN MERGING, MERGE THE CONDITIONS OF THE FILTER PREDICATES WITH (||)
-```
-
+                  ❌ `execute` of `Assignment` does not take into account assignments like `this.CD.EF.E = this.A - this.B`
                     ❌ a rule has a scope: ReadEntity x ReadField -> { Path x WrittenEntity(var name in conditional) x WrittenField }
                     ❌ when a field change is found, we match it against the read entities and read fields from the scope of each rule
                     ❌ the entity of the field change is then traversed to find the SET of written entities that are connected to it 

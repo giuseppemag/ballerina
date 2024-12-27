@@ -1,8 +1,11 @@
 module abcdsample.context
+#nowarn 40
 
 open System
 open System.Linq
 open positions.model
+open abcdsample.typeCheck
+open abcdsample.eval
 open Ballerina.Fun
 open Ballerina.Coroutines
 
@@ -155,10 +158,10 @@ let init_abcdContext() =
     { 
       BusinessRuleId = Guid.NewGuid(); 
       Name = "Total = A+B+C"; Priority = BusinessRulePriority.System; 
-      Condition = Expr.Exists("this", { EntityDescriptorId=schema.AB.Entity.EntityDescriptorId }, Expr.Value (Value.ConstBool true)); 
+      Condition = Expr.Exists("this", { EntityDescriptorId=schema.AB.Entity.EntityDescriptorId; EntityName="AB" }, Expr.Value (Value.ConstBool true)); 
       Actions=[
         { 
-          Variable = "this" => [schema.AB.TotalABC.Self]
+          Variable = "this", [schema.AB.TotalABC.Self]
           Value=("this" => [schema.AB.ACount.Self])
             + ("this" => [schema.AB.BCount.Self])
             + ("this" => [schema.AB.CD.Self; schema.CD.CCount.Self])
@@ -181,7 +184,7 @@ let init_abcdContext() =
               FieldEventId = Guid.NewGuid(); 
               EntityDescriptorId = schema.AB.Entity.EntityDescriptorId
               Assignment = {
-                Variable = ("this" => [schema.AB.ACount.Self])
+                Variable = ("this", [schema.AB.ACount.Self])
                 Value=("this" => [schema.AB.ACount.Self]) + (Expr.Value(Value.ConstInt 10))
               }
             }; 
@@ -193,16 +196,25 @@ let init_abcdContext() =
     Schema = schema
   }
 
-  let firstAB = context.ABs() |> Map.values |> Seq.head
-  do printfn "ABs[0].CD.Id = %A" (Option.bind schema.CD.Entity.GetId (schema.AB.Entity.Lookup(firstAB :> obj, [schema.AB.CD.Self])))
+  // let firstAB = context.ABs() |> Map.values |> Seq.head
+  // do printfn "ABs[0].CD.Id = %A" (Option.bind schema.CD.Entity.GetId (schema.AB.Entity.Lookup(firstAB :> obj, [schema.AB.CD.Self])))
+  // do Console.ReadLine() |> ignore
+  // do printfn "ABs[0].CD = %A" (schema.AB.Entity.Lookup(firstAB :> obj, [schema.AB.CD.Self]))
+  // do Console.ReadLine() |> ignore
+  // do printfn "ABs[0].Id = %A" (schema.AB.Entity.GetId(firstAB :> obj))
+  // do Console.ReadLine() |> ignore
+  // let firstCD = context.CDs() |> Map.values |> Seq.head
+  // do printfn "CDs[0].Id = %A" (schema.CD.Entity.GetId(firstCD :> obj))
+  // do Console.ReadLine() |> ignore
+  // let conditionType = typeCheck context Map.empty totalABC.Condition
+  // do printfn "Type(Rules[0].Condition) = %A" conditionType   
+  // do Console.ReadLine() |> ignore
+  // match conditionType with
+  // | Some(_, vars) ->
+  //   do printfn "Type(Rules[0].Actions[0].Value) = %A" (typeCheck context vars totalABC.Actions.Head.Value)
+  //   do Console.ReadLine() |> ignore
+  // | _ -> ()
+  do printfn "dependencies(totalABC) = %A" (totalABC.Dependencies context)
   do Console.ReadLine() |> ignore
-  do printfn "ABs[0].CD = %A" (schema.AB.Entity.Lookup(firstAB :> obj, [schema.AB.CD.Self]))
-  do Console.ReadLine() |> ignore
-  do printfn "ABs[0].Id = %A" (schema.AB.Entity.GetId(firstAB :> obj))
-  do Console.ReadLine() |> ignore
-  let firstCD = context.CDs() |> Map.values |> Seq.head
-  do printfn "CDs[0].Id = %A" (schema.CD.Entity.GetId(firstCD :> obj))
-  do Console.ReadLine() |> ignore
-  
 
   context

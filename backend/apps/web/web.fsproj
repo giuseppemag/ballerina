@@ -8,9 +8,10 @@
     <Compile Include=".\samples\ab-events\repositories.fs" />
     <Compile Include=".\samples\ab-events\endpoints.fs" />
     <Compile Include=".\samples\ab-events\jobs.fs" />
-    <Compile Include=".\samples\abcd-events\context.fs" />
+    <Compile Include=".\samples\abcd-events\expr\typeCheck.fs" />
     <Compile Include=".\samples\abcd-events\expr\eval.fs" />
     <Compile Include=".\samples\abcd-events\expr\execute.fs" />
+    <Compile Include=".\samples\abcd-events\context.fs" />
     <Compile Include=".\samples\abcd-events\business-rules\preprocess.fs" />
     <Compile Include=".\samples\abcd-events\business-rules\execute.fs" />
     <Compile Include=".\samples\abcd-events\jobs.fs" />

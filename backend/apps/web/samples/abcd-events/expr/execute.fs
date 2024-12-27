@@ -5,15 +5,14 @@ open System.Linq
 open positions.model
 open Ballerina.Fun
 open Ballerina.Coroutines
-open context
 open eval
 
 let execute (context:Context) (vars:Vars) (assignment:Assignment) : list<Map<{| FieldDescriptorId:Guid |}, {| Target:EntitiesIdentifiers |}>> =
   match assignment.Variable, eval context vars assignment.Value with
-  | Expr.FieldLookup(e, [fieldDescriptor]), values ->
+  | (assignedVar, [fieldDescriptor]), values ->
     [
       for (vars, value) in values do
-        let variants = eval context vars e
+        let variants = eval context vars (Expr.VarLookup assignedVar)
         for (_, res) in variants do
           match res with
           | Value.Var(entityDescriptor, One entityId) ->

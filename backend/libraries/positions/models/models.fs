@@ -58,13 +58,17 @@ and SingletonIntFieldEvent = { Self:FieldEventBase; Target:EntityIdentifier }
 and SetFieldEvent = IntFieldEvent of IntFieldEvent | SingletonIntFieldEvent of SingletonIntFieldEvent
 
 and BusinessRule = { BusinessRuleId:Guid; Name:string; Priority:BusinessRulePriority; Condition:Expr; Actions:List<Assignment> }
-and RuleDependency = { ChangedEntityType:EntityDescriptor; RestrictedVariable:string; RestrictedVariableType:EntityDescriptor; PathFromVariableToChange:List<FieldDescriptor> }
-and RuleDepencies = Map<EntityDescriptorId, List<RuleDependency>>
+and RuleDependency = { ChangedEntityType:EntityDescriptor; RestrictedVariable:string; RestrictedVariableType:EntityDescriptor; PathFromVariableToChange:List<FieldDescriptor>; ChangedField:FieldDescriptor }
+and RuleDependencies = Map<EntityDescriptorId * FieldDescriptor, List<RuleDependency>>
 
-and Assignment = { Variable:Expr; Value:Expr }
+and Assignment = { Variable:string * List<FieldDescriptor>; Value:Expr }
+and VarName = { VarName:string }
+and ExprType = LookupType of EntityDescriptorId | PrimitiveType of PrimitiveType
+and VarTypes = Map<string, ExprType>
 and Vars = Map<string, Var>
-and EntityDescriptorId = { EntityDescriptorId:Guid }
+and EntityDescriptorId = { EntityDescriptorId:Guid; EntityName:string }
 and Var = EntityDescriptorId * EntityIdentifier
+and PrimitiveType = IntType | FloatType | StringType | BoolType | GuidType of EntityDescriptorId
 and Value = ConstInt of int | ConstFloat of float | ConstString of string | ConstBool of bool | ConstGuid of Guid | Var of Var 
 // | Field of FieldDescriptor
 and Expr = 
@@ -99,3 +103,4 @@ type RuleDependency with
       match Option.bind dep.ChangedEntityType.GetId (dep.RestrictedVariableType.Lookup(restrictedVariable, dep.PathFromVariableToChange)) with
       | Some id -> changedEntitiesIds |> Set.contains id
       | None -> false
+
