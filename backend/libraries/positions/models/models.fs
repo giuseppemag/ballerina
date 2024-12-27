@@ -58,7 +58,7 @@ and SingletonIntFieldEvent = { Self:FieldEventBase; Target:EntityIdentifier }
 and SetFieldEvent = IntFieldEvent of IntFieldEvent | SingletonIntFieldEvent of SingletonIntFieldEvent
 
 and BusinessRule = { BusinessRuleId:Guid; Name:string; Priority:BusinessRulePriority; Condition:Expr; Actions:List<Assignment> }
-and RuleDependency = { ChangedEntityType:EntityDescriptor; RestrictedVariable:string; RestrictedVariableType:EntityDescriptor; PathFromVariableToChange:List<FieldDescriptor>; ChangedField:FieldDescriptor }
+and RuleDependency = { ChangedEntityType:EntityDescriptorId; RestrictedVariable:string; RestrictedVariableType:EntityDescriptorId; PathFromVariableToChange:List<FieldDescriptor>; ChangedField:FieldDescriptor }
 and RuleDependencies = Map<EntityDescriptorId * FieldDescriptor, List<RuleDependency>>
 
 and Assignment = { Variable:string * List<FieldDescriptor>; Value:Expr }
@@ -98,9 +98,10 @@ and JobsState = {
 }
 
 type RuleDependency with
-  member dep.Predicate (changedEntitiesIds:Set<Guid>) =
+  member dep.Predicate (context:Context) (changedEntitiesIds:Set<Guid>) =
     fun (restrictedVariable:obj) -> 
-      match Option.bind dep.ChangedEntityType.GetId (dep.RestrictedVariableType.Lookup(restrictedVariable, dep.PathFromVariableToChange)) with
-      | Some id -> changedEntitiesIds |> Set.contains id
-      | None -> false
+      failwith "not implemented yet"
+      // match Option.bind dep.ChangedEntityType.GetId (dep.RestrictedVariableType.Lookup(restrictedVariable, dep.PathFromVariableToChange)) with
+      // | Some id -> changedEntitiesIds |> Set.contains id
+      // | None -> false
 

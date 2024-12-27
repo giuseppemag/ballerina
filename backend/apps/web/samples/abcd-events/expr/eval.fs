@@ -145,21 +145,19 @@ type BusinessRule with
   // WHEN MERGING, MERGE THE CONDITIONS OF THE FILTER PREDICATES WITH (||)
 
   member rule.Dependencies : Context -> RuleDependencies = fun context ->
-    // entity of each assigned variable x list of lookup chains
     let variables = scope rule.Condition |> Seq.map (fun v -> v.varName, v.entityType) |> Map.ofSeq
     let conditionType = typeCheck context Map.empty rule.Condition
     match conditionType with
     | None -> failwithf "Condition %A does not type check" (rule.Condition)
     | Some (_,vars) ->
-      let assignmentsByVariable = [
+      let dependencies = [
         for action in rule.Actions do
           let fieldLookups = fieldLookups action.Value
           // printfn "fieldLookups %A" fieldLookups
           // Console.ReadLine() |> ignore
           for (varName, fields) in fieldLookups do
             match typeCheck context vars (Expr.VarLookup varName) with
-            | None -> failwithf "Cannot typecheck varName %A" (Expr.VarLookup varName) 
-            | Some (varType, _) ->
+            | Some (LookupType varType, _) ->
               let rec lookupPrefixes = 
                 function
                 | [] -> []
@@ -173,14 +171,23 @@ type BusinessRule with
               let allLookups = lookupPrefixes fields
               for (lookupFields, lastField) in allLookups do
                 match typeCheck context vars (Expr.FieldLookup(Expr.VarLookup varName, lookupFields)) with
-                | None -> failwithf "Cannot typecheck lookup path %A" (Expr.FieldLookup(Expr.VarLookup varName, lookupFields)) 
-                | Some (lookupType, _) ->
-                  printfn "lookupType (%A:%A).%A %A" varName varType lookupFields lookupType
-                  Console.ReadLine() |> ignore
+                | Some (LookupType lookupType, _) ->
+                  let dependency:RuleDependency = {
+                    ChangedEntityType = lookupType
+                    ChangedField = lastField
+                    RestrictedVariable = varName
+                    RestrictedVariableType = varType
+                    PathFromVariableToChange = lookupFields
+                  }
+                  yield dependency
+                | _ -> failwithf "Cannot typecheck lookup path %A" (Expr.FieldLookup(Expr.VarLookup varName, lookupFields)) 
                 // and RuleDependency = { ChangedEntityType:EntityDescriptor; RestrictedVariable:string; RestrictedVariableType:EntityDescriptor; PathFromVariableToChange:List<FieldDescriptor> }
                 // and RuleDependencies = Map<EntityDescriptorId * FieldDescriptor, List<RuleDependency>>
                 // for each prefix of fields
                   // the type is the type of the varName + path, thus excluding the last fieldName
               ()
+            | _ -> failwithf "Cannot typecheck varName %A" (Expr.VarLookup varName) 
       ]
-      failwith "result not assembled yet"
+      let byEntityAndField:RuleDependencies = 
+        dependencies |> Seq.groupBy (fun dep -> dep.ChangedEntityType, dep.ChangedField) |> Map.ofSeq |> Map.map (fun k -> List.ofSeq)
+      in byEntityAndField 
