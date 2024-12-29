@@ -99,16 +99,25 @@ and JobsState = {
   edits:Set<Edit>
 }
 
+type EntityDescriptor with 
+  member this.ToEntityDescriptorId = 
+    { EntityDescriptorId=this.EntityDescriptorId; EntityName=this.EntityName }
+
 type RuleDependency with
   member dep.Predicate (context:Context) (changedEntitiesIds:Set<Guid>) =
     fun (restrictedVariable:obj) -> 
       option{
         let! changedEntityType = context.Schema.tryFindEntity dep.ChangedEntityType
+        // do printfn "changedEntityType = %A" (changedEntityType.ToEntityDescriptorId)
+        // do Console.ReadLine() |> ignore
         let! restrictedVariableType = context.Schema.tryFindEntity dep.RestrictedVariableType
+        // do printfn "restrictedVariableType = %A" (restrictedVariableType.ToEntityDescriptorId)
+        // do Console.ReadLine() |> ignore
         let! variableValue = restrictedVariableType.Lookup(restrictedVariable, dep.PathFromVariableToChange)
-        return! changedEntityType.GetId variableValue
-      }
-
-type EntityDescriptor with 
-  member this.ToEntityDescriptorId = 
-    { EntityDescriptorId=this.EntityDescriptorId; EntityName=this.EntityName }
+        // do printfn "variableValue = %A" (variableValue)
+        // do Console.ReadLine() |> ignore
+        let! variableValueId = changedEntityType.GetId variableValue
+        // do printfn "variableValueId = %A" (variableValueId)
+        // do Console.ReadLine() |> ignore
+        return changedEntitiesIds |> Set.contains variableValueId
+      } |> Option.defaultValue false

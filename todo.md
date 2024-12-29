@@ -133,6 +133,7 @@ Todo (✅/❌)
               ❌ the assignment of fields to ABs and CDs is particularly bad
               ❌ the application of a field update after the coroutine triggers on the event is particularly bad
               ❌ fields should be able to GET and SET automatically from the entityId and the context
+              ❌ RuleDependency::Predicate is inefficienct, a lot of things can be precomputed
               ❌ the anonymous records should become statically typed `XId` records
               ❌ the type `VarName` should be used everywhere instead of `string`
               ❌ the setup of the `schema`, and in particular the `GetId` and `Lookup` methods, looks like crap

@@ -139,12 +139,14 @@ let init_abcdContext() =
       CDId = id; Metadata = { EntityMetadataId = Guid.NewGuid(); Approval = false; Entity = schema.CD.Entity }
       CCount = 3; CCountMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = schema.CD.CCount }
     }
+  let cd1 = createCD (Guid("d8ff0920-2b47-499f-9f7b-cb07a1f8f3a4"))
+  let cd2 = createCD (Guid("69f182db-84ba-4e81-91c5-d3becd029a6b"))
   CDs <- 
     [
-      createCD (Guid("d8ff0920-2b47-499f-9f7b-cb07a1f8f3a4"))
-      createCD (Guid("69f182db-84ba-4e81-91c5-d3becd029a6b"))
+      cd1
+      cd2
     ] |> Seq.map (fun e -> (e.CDId, e)) |> Map.ofSeq
-  let createAB id = 
+  let createAB id cd = 
       {
         ABId = id; Metadata = { EntityMetadataId = Guid.NewGuid(); Approval = false; Entity = schema.CD.Entity }
         ACount = 1 ; ACountMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = schema.AB.ACount }
@@ -152,10 +154,13 @@ let init_abcdContext() =
         TotalABC = 0 ; TotalABCMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = schema.AB.TotalABC }
         CD = CDs |> Map.values |> Seq.randomChoice; CDMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = schema.AB.CD }
       }
+  let ab1 = createAB (Guid("8fba2a7c-e2da-43bd-b8ee-ddaa774d081d")) cd1
+  let ab2 = createAB (Guid("91620c12-cd9e-4e66-9df3-58f4b1a50b1f")) cd2
+
   ABs <- 
     [
-      createAB (Guid("8fba2a7c-e2da-43bd-b8ee-ddaa774d081d"))
-      createAB (Guid("91620c12-cd9e-4e66-9df3-58f4b1a50b1f"))
+      ab1
+      ab2
     ] |> Seq.map (fun e -> (e.ABId, e)) |> Map.ofSeq
 
   let (=>) (varname:string) (fields:List<FieldDescriptor>) =
@@ -202,7 +207,11 @@ let init_abcdContext() =
     Schema = schema
   }
 
-  // let firstAB = context.ABs() |> Map.values |> Seq.head
+  do printfn "ab1.Id = %A" ab1.ABId
+  do printfn "ab1.CD.Id = %A" ab1.CD.CDId
+  do printfn "ab2.Id = %A" ab2.ABId
+  do printfn "ab2.CD.Id = %A" ab2.CD.CDId
+  do Console.ReadLine() |> ignore
   // do printfn "ABs[0].CD.Id = %A" (Option.bind schema.CD.Entity.GetId (schema.AB.Entity.Lookup(firstAB :> obj, [schema.AB.CD.Self])))
   // do Console.ReadLine() |> ignore
   // do printfn "ABs[0].CD = %A" (schema.AB.Entity.Lookup(firstAB :> obj, [schema.AB.CD.Self]))
@@ -220,7 +229,34 @@ let init_abcdContext() =
   //   do printfn "Type(Rules[0].Actions[0].Value) = %A" (typeCheck context vars totalABC.Actions.Head.Value)
   //   do Console.ReadLine() |> ignore
   // | _ -> ()
-  do printfn "dependencies(totalABC) = %A" (totalABC.Dependencies context)
+  // do printfn "dependencies(totalABC) = %A" (totalABC.Dependencies context)
+  // do Console.ReadLine() |> ignore
+  let CDEntity = schema.CD.Entity.ToEntityDescriptorId
+  let CCountField = schema.CD.CCount.Self
+  let testedDependencies = (totalABC.Dependencies context).[CDEntity, CCountField]
+  // do printfn "dependencies that trigger on CD.CCount = %A" (testedDependencies)
+  // do Console.ReadLine() |> ignore
+
+  let (||.) = fun p1 p2 -> fun (o:obj) -> p1 o || p2 o
+  let changedEntitiesIds:Set<Guid> = Set.empty |> Set.add ab1.CD.CDId
+  do printfn "changedEntitiesIds = %A" (changedEntitiesIds)
+  do Console.ReadLine() |> ignore
+  let predicate = 
+    testedDependencies 
+      |> Seq.map (fun dep -> dep.Predicate context changedEntitiesIds) 
+      |> Seq.fold (||.) (fun (o:obj) -> false)
+  let restrictedABs = context.ABs().Values |> Seq.filter (fun ab -> ab :> obj |> predicate)
+  do printfn "restrictedABs = %A" (restrictedABs |> Seq.map (fun ab -> ab.ABId))
+  do Console.ReadLine() |> ignore
+  let changedEntitiesIds:Set<Guid> = Set.empty |> Set.add ab2.CD.CDId
+  do printfn "changedEntitiesIds = %A" (changedEntitiesIds)
+  do Console.ReadLine() |> ignore
+  let predicate = 
+    testedDependencies 
+      |> Seq.map (fun dep -> dep.Predicate context changedEntitiesIds) 
+      |> Seq.fold (||.) (fun (o:obj) -> false)
+  let restrictedABs = context.ABs().Values |> Seq.filter (fun ab -> ab :> obj |> predicate)
+  do printfn "restrictedABs = %A" (restrictedABs |> Seq.map (fun ab -> ab.ABId))
   do Console.ReadLine() |> ignore
 
   context
