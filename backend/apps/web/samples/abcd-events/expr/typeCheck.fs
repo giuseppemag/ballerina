@@ -10,18 +10,10 @@ let typeCheck (context:Context) (vars:VarTypes) : Expr -> Option<ExprType * VarT
   let rec eval (vars:VarTypes) (e:positions.model.Expr) : Option<ExprType * VarTypes> =
     match e with
     | positions.model.Expr.Exists(varName, entityDescriptor, condition) -> 
-      if entityDescriptor.EntityDescriptorId = context.Schema.AB.Entity.EntityDescriptorId then
-        option{
-          let vars' = vars |> Map.add varName (ExprType.LookupType { EntityDescriptorId=context.Schema.AB.Entity.EntityDescriptorId; EntityName="AB" })
-          return! eval vars' condition
-        }
-      else if entityDescriptor.EntityDescriptorId = context.Schema.CD.Entity.EntityDescriptorId then
-        option{
-          let vars' = vars |> Map.add varName (ExprType.LookupType { EntityDescriptorId=context.Schema.CD.Entity.EntityDescriptorId; EntityName="CD" })
-          return! eval vars' condition
-        }
-      else
-        failwith "only entities AB and CD supported for now"
+      option{
+        let vars' = vars |> Map.add varName (ExprType.LookupType entityDescriptor)
+        return! eval vars' condition
+      }
     | positions.model.Expr.VarLookup v -> 
       option{
         let! varType = vars |> Map.tryFind v

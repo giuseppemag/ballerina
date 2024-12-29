@@ -1,6 +1,7 @@
 module positions.model
 open System
 open Ballerina.Fun
+open Ballerina.Option
 
 type AB = { 
   ABId:Guid; Metadata:EntityMetadata
@@ -26,6 +27,7 @@ and Schema = {
     Entity:EntityDescriptor
     CCount:SingletonIntFieldDescriptor 
   |}
+  tryFindEntity:EntityDescriptorId -> Option<EntityDescriptor>
 }
 and Context = {
   ABs:Unit -> Map<Guid, AB>; CDs:Unit -> Map<Guid, CD>;
@@ -52,7 +54,7 @@ and RefFieldDescriptor = { Self:FieldDescriptor; Update:EntitiesIdentifiers -> U
 and ReadonlyIntFieldDescriptor = { Self:FieldDescriptor; Update:EntityIdentifier -> Updater<int> -> FieldUpdateResult }
 and SingletonIntFieldDescriptor = { Self:FieldDescriptor; Update:EntityIdentifier -> Updater<int> -> FieldUpdateResult }
 
-and FieldEventBase = { FieldEventId:Guid; EntityDescriptorId:Guid; Assignment:Assignment }
+and FieldEventBase = { FieldEventId:Guid; EntityDescriptorId:EntityDescriptorId; Assignment:Assignment }
 and IntFieldEvent = { Self:FieldEventBase; Targets:EntitiesIdentifiers }
 and SingletonIntFieldEvent = { Self:FieldEventBase; Target:EntityIdentifier }
 and SetFieldEvent = IntFieldEvent of IntFieldEvent | SingletonIntFieldEvent of SingletonIntFieldEvent
@@ -100,8 +102,13 @@ and JobsState = {
 type RuleDependency with
   member dep.Predicate (context:Context) (changedEntitiesIds:Set<Guid>) =
     fun (restrictedVariable:obj) -> 
-      failwith "not implemented yet"
-      // match Option.bind dep.ChangedEntityType.GetId (dep.RestrictedVariableType.Lookup(restrictedVariable, dep.PathFromVariableToChange)) with
-      // | Some id -> changedEntitiesIds |> Set.contains id
-      // | None -> false
+      option{
+        let! changedEntityType = context.Schema.tryFindEntity dep.ChangedEntityType
+        let! restrictedVariableType = context.Schema.tryFindEntity dep.RestrictedVariableType
+        let! variableValue = restrictedVariableType.Lookup(restrictedVariable, dep.PathFromVariableToChange)
+        return! changedEntityType.GetId variableValue
+      }
 
+type EntityDescriptor with 
+  member this.ToEntityDescriptorId = 
+    { EntityDescriptorId=this.EntityDescriptorId; EntityName=this.EntityName }

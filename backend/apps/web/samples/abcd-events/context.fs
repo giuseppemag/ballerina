@@ -8,6 +8,7 @@ open abcdsample.typeCheck
 open abcdsample.eval
 open Ballerina.Fun
 open Ballerina.Coroutines
+open Ballerina.Option
 
 let init_abcdContext() = 
   let mutable ABs:Map<Guid,AB> = Map.empty
@@ -127,6 +128,11 @@ let init_abcdContext() =
             (One entityId) updater
       };
     |}
+    tryFindEntity = fun (entityDescriptorId:EntityDescriptorId) ->
+      option{
+        if entityDescriptorId.EntityDescriptorId = schema.AB.Entity.EntityDescriptorId then return schema.AB.Entity
+        else if entityDescriptorId.EntityDescriptorId = schema.CD.Entity.EntityDescriptorId then return schema.CD.Entity
+      }
   }
   let createCD id = 
     {
@@ -182,7 +188,7 @@ let init_abcdContext() =
           { 
             Self = { 
               FieldEventId = Guid.NewGuid(); 
-              EntityDescriptorId = schema.AB.Entity.EntityDescriptorId
+              EntityDescriptorId = schema.AB.Entity.ToEntityDescriptorId
               Assignment = {
                 Variable = ("this", [schema.AB.ACount.Self])
                 Value=("this" => [schema.AB.ACount.Self]) + (Expr.Value(Value.ConstInt 10))

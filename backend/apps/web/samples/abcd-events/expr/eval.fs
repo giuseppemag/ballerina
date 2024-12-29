@@ -115,35 +115,6 @@ let rec fieldLookups (e:Expr) =
   | _ -> Set.empty
 
 type BusinessRule with
-  // Rules = [
-  //   Rule1 = 
-  //     when
-  //       exists ab:AB -> true
-  //     do
-  //       ab.Target := ab.A + ab.B + ab.CD.C
-  // ]
-  // Dependencies.[Rule1] = [
-  //   Dep1 = { EntityDesc = AB; EntityVariable = "ab"; Path = []; Field = ".A" } <- the entity variable is always the first step of the expression lookup
-  //   Dep2 = { EntityDesc = AB; EntityVariable = "ab"; Path = []; Field = ".B" } <- the entity variable is always the first step of the expression lookup
-  //   Dep3 = { EntityDesc = AB; EntityVariable = "ab"; Path = []; Field = ".CD" }
-  //   Dep4 = { EntityDesc = CD; EntityVariable = "ab"; Path = [".CD"]; Field = ".C" }
-  // ]
-  // Changes
-  //   Delta1 = ab1.A := ... = { EntityDesc = AB; EntityId = ab1.ABId; fieldId = "A" }
-  //   Delta2 = cd1.C := ... = { EntityDesc = CD; EntityId = cd1.CDId; FieldId = "C" }
-  //   Delta3 = ab1.CD := ... = { EntityDesc = CD; EntityId = ab1.ABId; FieldId = "CD" }
-
-  // Delta1 activates rule Rule1 on Dep1 because
-  //   Dep1.EntityDesc = Delta1.EntityDesc <- lookups by EntityDesc thus means Map<EntityDesc, ...>
-  //   Dep1.FieldId = Delta1.FieldId
-  //   Dep1.EntityVariable is constrained to ABs().Where(fun ab -> ab.ABId = Delta1.EntityVariable.ABId)
-
-  // Delta2 activates rule Rule1 on Dep4 because
-  //   Dep4.EntityDesc = Delta2.EntityDesc
-  //   Dep4.FieldId = Delta2.FieldId
-  //   Dep4.EntityVariable is constrained to ABs().Where(fun ab -> ab.CD.CDId = Delta2.EntityVariable.CDId)
-  // WHEN MERGING, MERGE THE CONDITIONS OF THE FILTER PREDICATES WITH (||)
-
   member rule.Dependencies : Context -> RuleDependencies = fun context ->
     let variables = scope rule.Condition |> Seq.map (fun v -> v.varName, v.entityType) |> Map.ofSeq
     let conditionType = typeCheck context Map.empty rule.Condition

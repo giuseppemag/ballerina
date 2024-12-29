@@ -108,11 +108,9 @@ Todo (✅/❌)
                   ❌ how does `getCandidateRules` behave when dealing with an update on an intermediate field lookup of a long chain, like `this.Total:=this.A+this.B+this.CD.EF.E`?
                   ❌ the rules are applied to all entities of a given type, but this must be limited in scope to the entities that actually changed in the target
                   ❌ `execute` of `Assignment` does not take into account assignments like `this.CD.EF.E = this.A - this.B`
-                    ❌ a rule has a scope: ReadEntity x ReadField -> { Path x WrittenEntity(var name in conditional) x WrittenField }
-                    ❌ when a field change is found, we match it against the read entities and read fields from the scope of each rule
-                    ❌ the entity of the field change is then traversed to find the SET of written entities that are connected to it 
-                    ❌ the evaluation of the conditional with the same name (so no shadowing!!!) is restricted only to the SET of entities found, instead of getting all possible entities of that type as the candidates
-                  ❌ we maintain the loop checker `Set<BusinessRuleId>` - the same `BusinessRuleId` cannot enter the set again
+                    ✅ a rule has a scope: ReadEntity x ReadField -> { Path x WrittenEntity(var name in conditional) x WrittenField }
+                    ❌ when a field change is found, we restrict the variables of the existentials to a pre-filtered subset based on the conditions of the rule dependencies, in (||)
+                  ❌ we maintain the loop checker `Set<BusinessRuleId x EntityId x FieldDescriptorId>` - the same `BusinessRuleId` cannot enter the set again
                     ❌ efficiently: with pre-caching of the FREE-VARS of both condition and expression value
                     ❌ prepare a `co.Any` where each coroutine returns a different `fieldDescriptor x (Target = One | Multiple | All)`
                   ✅ we evaluate the business rules
@@ -127,15 +125,16 @@ Todo (✅/❌)
                     ✅ every business rule' assignment causes a new set of updated fields
                       ✅ when this set is empty, we stop
                       ✅ otherwise, we repeat the process
-            ❌ when evaluating a field lookup, we can do much faster than a switch-case with a multi-field lookup map (a dynamic representation of the schema)
+            ❌ when evaluating a field lookup, we can do much faster and cleaner than a switch-case with a multi-field lookup map (a dynamic representation of the schema)
               ❌ `Expr::execute` does not take into account more than one field lookup on the assigned variable, extend
-              ❌ any comparison to `schema.AB.Event`, `schema.AB.ACount.Event` and so on should be removed
+              ❌ any comparison to `schema.AB.Entity`, `schema.CD.Entity` and so on should be removed
               ❌ any iteration of all `ABs` or `CDs` should be removed
               ❌ the lookup of fields from ABs and CDs is particularly bad
               ❌ the assignment of fields to ABs and CDs is particularly bad
               ❌ the application of a field update after the coroutine triggers on the event is particularly bad
               ❌ fields should be able to GET and SET automatically from the entityId and the context
-              ❌ the anonymous records shuold become statically typed `XId` records
+              ❌ the anonymous records should become statically typed `XId` records
+              ❌ the type `VarName` should be used everywhere instead of `string`
               ❌ the setup of the `schema`, and in particular the `GetId` and `Lookup` methods, looks like crap
               ❌ even more transactional: maintain cache of reads and writes, execute to DB at the last moment
             ❌ remove every single instance of mutation
@@ -153,16 +152,19 @@ Todo (✅/❌)
             ❌ change all `CD` refs inside a given `AB`
               ❌ the schema for `CD` then needs a `RefsField`
               ❌ complete the scenario of multiple CDs, so that the events can also be EntityEvents such as `Add`, `Delete`, `Move`, etc.
+          ❌ expose OpenAPI 
+            ❌ ideally with F#-style domain objects, not C#-style serializable objects
+            ❌ enums to strings
           ❌ allow approval, with associated business rules
-          ❌ separate EF as a different package
+          ❌ -----at this point, the prototype can be considered reasonably done-----
+          ❌ separate DB serialization as a different EF package
+            ❌ represent Expr as JSON
+            ❌ represent Expr as a recursive structure looked up with a recursive query
           ❌ extend the `ABCDEvent` definition to include a processed state and a created time
           ❌ add an `EventDesc` to `FieldEvent`
             ❌ useful for pre/post event actions and conditions, it defines that which is passed to co.On plus a pre- and post-condition coroutine
             ❌ it is polymorphic and distributed over the concrete instances (ie `SetIntField of IntEventDesc`, ...)
           ❌ define custom rules and make the priority of assignments actually count
-          ❌ expose OpenAPI 
-            ❌ ideally with F#-style domain objects, not C#-style serializable objects
-            ❌ enums to strings
           ❌ persist the entities to Elasticsearch
           ❌ persist the entities to Postgres
             ❌ enums to strings
@@ -286,7 +288,7 @@ Todo (✅/❌)
     ❌ delete user
     ❌ run with docker-compose: coroutines container vs webapi container
     ❌ accept events from a single POST endpoint
-  ❌ setup pg docker container
+  ✅ setup pg docker container
   ❌ define model-first database
     ❌ coroutines
     ❌ events
@@ -331,8 +333,8 @@ Todo (✅/❌)
 
   Backend
   ❌ coroutines
-    ❌ main definition
-    ❌ test program in apps
+    ✅ main definition
+    ✅ test program in apps
     ❌ generic events and their kind
     ❌ serialized suspension
     ❌ serialization interface to Postgres and volume
@@ -437,6 +439,5 @@ Todo (✅/❌)
   ❌ OData-style queries
   ❌ Some sort of scaffolder and query-generator connected to endpoints and based on coroutines
   ❌ Entities, relations, and permissions scaffolder
-  ❌ Expressjs and some ORM
   ❌ Endpoints scaffolder
   ❌ Language-independent backend framework
