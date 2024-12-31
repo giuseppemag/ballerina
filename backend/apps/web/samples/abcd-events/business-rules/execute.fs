@@ -10,16 +10,17 @@ open abcdsample.rules.preprocess
 open abcdsample.eval
 
 let rec executeRulesTransitively 
-  (context:Context)
+  (allBusinessRules:Map<Guid, BusinessRule>)
+  (schema:Schema)
   (executedRules:Map<{| BusinessRuleId:Guid |}, {| Target:EntitiesIdentifiers |}>) 
   (modifiedFields:Map<{| FieldDescriptorId:Guid |}, {| Target:EntitiesIdentifiers |}>) = 
-  let candidateRules = getCandidateRules context (modifiedFields |> Map.keys |> Set.ofSeq)
+  let candidateRules = getCandidateRules allBusinessRules (modifiedFields |> Map.keys |> Set.ofSeq)
   let mutable modifiedFields':Map<{| FieldDescriptorId:Guid |}, {| Target:EntitiesIdentifiers |}> = 
     Map.empty
   let mutable executedRules':Map<{| BusinessRuleId:Guid |}, {| Target:EntitiesIdentifiers |}> = Map.empty
   for (businessRule, relevantModifiedFieldIds) in candidateRules do
     let businessRuleId = {| BusinessRuleId=businessRule.BusinessRuleId |}
-    let ruleDependencies = businessRule.Dependencies context.Schema (modifiedFields |> Map.keys |> Set.ofSeq)
+    let ruleDependencies = businessRule.Dependencies schema (modifiedFields |> Map.keys |> Set.ofSeq)
     // do printfn "ruleDependencies = %A" ruleDependencies
     // do Console.ReadLine() |> ignore
     let changedIds = 
@@ -33,7 +34,7 @@ let rec executeRulesTransitively
       match changedIds with
       | All -> Map.empty
       | Multiple changedIds ->
-        ruleDependencies.PredicatesByRestrictedVariable context.Schema changedIds
+        ruleDependencies.PredicatesByRestrictedVariable schema changedIds
     // do printfn "predicatesByRestrictedVariable = %A" predicatesByRestrictedVariable
     // do Console.ReadLine() |> ignore
     let firstVar = scopeSeq businessRule.Condition |> Seq.tryHead |> Option.map(fun v -> { VarName = v.varName })
@@ -42,12 +43,12 @@ let rec executeRulesTransitively
     let firstRestriction:Option<VarName * (obj -> bool)> = firstVar |> Option.map (fun v -> predicatesByRestrictedVariable |> Map.tryFind v.VarName |> Option.map (fun predicate -> v, predicate)) |> Option.flatten
     // do printfn "firstRestriction = %A" firstRestriction
     // do Console.ReadLine() |> ignore
-    let results = eval firstRestriction context Map.empty businessRule.Condition
+    let results = eval firstRestriction schema Map.empty businessRule.Condition
     for (vars,result) in results do
       match result with
       | Value.ConstBool true ->
         for a in businessRule.Actions do
-          let modifiedFieldsByRuleVariants:list<Map<{| FieldDescriptorId:Guid |}, {| Target:EntitiesIdentifiers |}>> = execute context vars a
+          let modifiedFieldsByRuleVariants:list<Map<{| FieldDescriptorId:Guid |}, {| Target:EntitiesIdentifiers |}>> = execute schema vars a
           for modifiedFieldsByRule in modifiedFieldsByRuleVariants do
             let allModifiedTargets = 
               seq{
@@ -74,4 +75,4 @@ let rec executeRulesTransitively
     if modifiedFields' |> Map.isEmpty then
       Some()
     else
-      executeRulesTransitively context (mergeExecutedRules executedRules executedRules') modifiedFields'
+      executeRulesTransitively allBusinessRules schema (mergeExecutedRules executedRules executedRules') modifiedFields'

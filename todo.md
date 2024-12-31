@@ -89,36 +89,26 @@ Todo (✅/❌)
           ❌ define expr evaluator
             ✅ basic eval expr
             ✅ basic eval assignment
-            ❌ when evaluating a field lookup, we can do much faster and cleaner than a switch-case with a multi-field lookup map (a dynamic representation of the schema)
-              ❌ all rules should be applied on all entities after creation of a new entity
+            ❌ cleanup
               ❌ there are various places where we assume `One entityId`, is this always reasonable?
-              ❌ introduce list monad with errors for eval/execute
-                ❌ return useful error messages
               ❌ rename `positions` to `abcd`
               ❌ `executeRulesTransitively` uses poorly defined (read: inline records) `XId` entities, refactor to proper records
               ✅ introduce a `FieldDescriptorId`
               ❌ distribute the various field updaters along the typed `XFieldDescriptor`, every entity should have the map of fields by type
-              ❌ do not commit the updates to the context immediately, output a set of field value changes
-                ❌ the context becomes a cache of operations
-                ❌ output the applied rules for the visibility/explainability/logging
               ✅ remove schema.AB, schema.CD and only use the tryFindEntity, tryFindField methods
-              ❌ remove any reference to the context, only use the schema when evaluating or executing
+              ✅ remove any reference to the context, only use the schema when evaluating or executing
               ❌ the field descriptor definitions should use the operations from other field descriptors, and not perform any comparisons to entity descriptors Ids
+                ❌ the lookup of fields from ABs and CDs in the definition of the AB/CD entity schema is particularly bad
+                ❌ the assignment of fields to ABs and CDs in the definition of the AB/CD entity schema is particularly bad
               ❌ `Expr::execute` does not take into account more than one field lookup on the assigned variable, extend
               ✅ any comparison to `schema.AB.Entity`, `schema.CD.Entity` and so on should be removed
-              ❌ any iteration of all `ABs` or `CDs` should be removed
-              ❌ the lookup of fields from ABs and CDs in the definition of the AB/CD entity schema is particularly bad
-              ❌ the assignment of fields to ABs and CDs in the definition of the AB/CD entity schema is particularly bad
+              ✅ any iteration of all `ABs` or `CDs` should be removed
               ✅ the application of a field update after the coroutine triggers on the event is particularly bad
               ✅ fields should be able to GET from the entityId and the context
               ❌ fields should be able to SET from the entityId and the context
               ✅ RuleDependency::Predicate is inefficienct, a lot of things can be precomputed
               ❌ the type `VarName` should be used everywhere instead of `string`
               ❌ the setup of the `schema`, and in particular the `GetId` and `Lookup` methods, looks like crap
-              ❌ implement lazy fields in the schema
-              ❌ even more transactional: maintain cache of reads and writes, execute to DB at the last moment
-              ❌ improve DSL for type-safe business rule and expression definition in F#
-                ❌ group field definitions and entity definitions under anonymous records for aesthetics and scoping in case of multiple fields with the same name in a different entity
             ❌ activate business rules after a field update
               ❌ define coroutines for processing events and applying field set operations
                 ✅ implement the ugly switch-case for the event application after event matching
@@ -163,15 +153,27 @@ Todo (✅/❌)
             ❌ add a setB event, see that the Total changes
             ❌ add a setCDRef event, see that the Total changes
             ❌ add a setC event, see that the Total changes (nasty because of the AB-CD relation)
+            ❌ extend the schema: CD - EF, CD also has a DCount
+            ❌ rename `XCount`, etc. to just `X`
             ❌ add a setE event, see that the Total changes
-            ❌ each event adds all candidate business rules (Ids) to the rules queue in the coroutine state, not events
-              ❌ the rules queue tracks EntityId x BusinessRuleId, or we have a separate Set of those
-              ❌ when the same entry is added to the Set, stop and log an error
-              ❌ after an evaluation iteration, process the rules, and add the business rules to the queue as synthetic events 
             ❌ change all `CD` refs inside a given `AB`
               ❌ the schema for `CD` then needs a `RefsField`
               ❌ complete the scenario of multiple CDs, so that the events can also be EntityEvents such as `Add`, `Delete`, `Move`, etc.
-          ❌ expose OpenAPI 
+          ❌ make it production-ready
+            ❌ all rules should be applied on all entities after creation of a new entity
+            ❌ introduce list monad with errors for eval/execute
+              ❌ return useful error messages
+            ❌ do not commit the updates to the context immediately, output a set of field value changes
+              ❌ the context becomes a cache of operations
+              ❌ output the applied rules for the visibility/explainability/logging
+            ❌ expose OpenAPI
+            ❌ implement lazy fields in the schema
+              ❌ this requires a coroutine-mediated protocol
+              ❌ openSession(schema) -> operations | closeSession()
+              ❌ when the schema is fully dynamic, get/update operations work with reflection/`Dynamic` CLR type
+            ❌ even more transactional: maintain cache of reads and writes, execute to DB at the last moment
+            ❌ improve DSL for type-safe business rule and expression definition in F#
+              ❌ group field definitions and entity definitions under anonymous records for aesthetics and scoping in case of multiple fields with the same name in a different entity          
             ❌ ideally with F#-style domain objects, not C#-style serializable objects
             ❌ enums to strings
           ❌ allow approval, with associated business rules

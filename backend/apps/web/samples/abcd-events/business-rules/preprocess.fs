@@ -10,10 +10,10 @@ open execute
 open abcdsample.eval
 
 let getCandidateRules 
-  (context:Context)
+  (allBusinessRules:Map<Guid, BusinessRule>)
   (modifiedFields:Set<{| FieldDescriptorId:Guid |}>) = 
   seq{
-    for br in context.BusinessRules |> Map.values do
+    for br in allBusinessRules |> Map.values do
       let fields = 
         Set.unionMany(seq{
           yield lookedUpFieldDescriptors br.Condition

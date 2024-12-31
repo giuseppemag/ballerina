@@ -7,15 +7,15 @@ open Ballerina.Fun
 open Ballerina.Coroutines
 open eval
 
-let execute (context:Context) (vars:Vars) (assignment:Assignment) : list<Map<{| FieldDescriptorId:Guid |}, {| Target:EntitiesIdentifiers |}>> =
-  match assignment.Variable, eval None context vars assignment.Value with
+let execute (schema:Schema) (vars:Vars) (assignment:Assignment) : list<Map<{| FieldDescriptorId:Guid |}, {| Target:EntitiesIdentifiers |}>> =
+  match assignment.Variable, eval None schema vars assignment.Value with
   | (assignedVar, [fieldDescriptorId]), values ->
     [
       // do printfn "assigning values %A (=%A)" values assignment.Value
       // do Console.ReadLine() |> ignore
-      for fieldDescriptor in context.Schema.tryFindField fieldDescriptorId |> Option.toList do
+      for fieldDescriptor in schema.tryFindField fieldDescriptorId |> Option.toList do
       for (vars, value) in values do
-        let variants = eval None context vars (Expr.VarLookup assignedVar)
+        let variants = eval None schema vars (Expr.VarLookup assignedVar)
         // do printfn "assigning variants %A" variants
         // do Console.ReadLine() |> ignore
         for (_, res) in variants do

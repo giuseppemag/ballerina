@@ -27,12 +27,12 @@ let abcdEventLoop() =
           [
             "this", (e.Self.EntityDescriptorId, e.Target)
           ] |> Map.ofList
-        let! modifiedFields = co.Do(fun ctx -> execute ctx vars e.Self.Assignment)
+        let! modifiedFields = co.Do(fun ctx -> execute ctx.Schema vars e.Self.Assignment)
         do printfn "modifiedFields %A" modifiedFields
         do Console.ReadLine() |> ignore
         do! co.Do(fun ctx -> 
           for vars in modifiedFields do
-            match executeRulesTransitively ctx Map.empty vars with
+            match executeRulesTransitively ctx.BusinessRules ctx.Schema Map.empty vars with
             | Some() -> ()
             | None -> printfn "Error, rule execution resulted in a possible loop that was interrupted")
       }

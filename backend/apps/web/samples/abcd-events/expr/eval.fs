@@ -8,7 +8,7 @@ open Ballerina.Fun
 open Ballerina.Coroutines
 open Ballerina.Option
 
-let eval (variableRestriction:Option<VarName * (obj -> bool)>) (context:Context) (vars:Vars) : Expr -> list<Vars * Value> =
+let eval (variableRestriction:Option<VarName * (obj -> bool)>) (schema:Schema) (vars:Vars) : Expr -> list<Vars * Value> =
   let rec eval (vars:Vars) (e:positions.model.Expr) : list<Vars * Value> =
     match e with
     | positions.model.Expr.Exists(varName, entityDescriptorId, condition) -> 
@@ -18,7 +18,7 @@ let eval (variableRestriction:Option<VarName * (obj -> bool)>) (context:Context)
           predicate
         | _ -> fun o -> true
       [
-        for entityDescriptor in context.Schema.tryFindEntity entityDescriptorId |> Option.toList do
+        for entityDescriptor in schema.tryFindEntity entityDescriptorId |> Option.toList do
         let values = entityDescriptor.GetEntities() |> Seq.filter restriction
         yield! [
           for value in values do
@@ -36,7 +36,7 @@ let eval (variableRestriction:Option<VarName * (obj -> bool)>) (context:Context)
     | positions.model.Expr.FieldLookup(var, field::fields) -> 
       let remainingLookup (vars,e) = eval vars (Expr.FieldLookup(e, fields))
       [
-        for fieldDescriptor in context.Schema.tryFindField field |> Option.toList do
+        for fieldDescriptor in schema.tryFindField field |> Option.toList do
         for res1 in eval vars var do
           match res1 with
           | (vars', Value.Var (_, One entityId))
