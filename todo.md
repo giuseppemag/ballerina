@@ -89,6 +89,29 @@ Todo (✅/❌)
           ❌ define expr evaluator
             ✅ basic eval expr
             ✅ basic eval assignment
+            ❌ when evaluating a field lookup, we can do much faster and cleaner than a switch-case with a multi-field lookup map (a dynamic representation of the schema)
+              ❌ rename `positions` to `abcd`
+              ❌ `executeRulesTransitively` uses poorly defined (read: inline records) `XId` entities, refactor to proper records
+              ✅ introduce a `FieldDescriptorId`
+              ❌ implement lazy fields in the schema
+              ❌ do not commit the updates to the context immediately, output a set of field value changes
+                ❌ the context becomes a cache of operations
+                ❌ output the applied rules for the visibility/explainability/logging
+              ❌ improve the quality of the error messages
+              ❌ `Expr::execute` does not take into account more than one field lookup on the assigned variable, extend
+              ❌ remove schema.AB, schema.CD and only use the tryFindEntity, tryFindField methods
+              ❌ any comparison to `schema.AB.Entity`, `schema.CD.Entity` and so on should be removed
+              ❌ any iteration of all `ABs` or `CDs` should be removed
+              ❌ the lookup of fields from ABs and CDs is particularly bad
+              ❌ the assignment of fields to ABs and CDs is particularly bad
+              ❌ the application of a field update after the coroutine triggers on the event is particularly bad              
+              ✅ fields should be able to GET from the entityId and the context
+              ❌ fields should be able to SET from the entityId and the context
+              ❌ RuleDependency::Predicate is inefficienct, a lot of things can be precomputed
+              ❌ the anonymous records should become statically typed `XId` records
+              ❌ the type `VarName` should be used everywhere instead of `string`
+              ❌ the setup of the `schema`, and in particular the `GetId` and `Lookup` methods, looks like crap
+              ❌ even more transactional: maintain cache of reads and writes, execute to DB at the last moment
             ❌ activate business rules after a field update
               ❌ define coroutines for processing events and applying field set operations
                 ✅ implement the ugly switch-case for the event application after event matching
@@ -106,11 +129,12 @@ Todo (✅/❌)
                     ❌ loops involve same rule, same entity, same field
                     ❌ test with an actual loop
                   ❌ how does `getCandidateRules` behave when dealing with an update on an intermediate field lookup of a long chain, like `this.Total:=this.A+this.B+this.CD.EF.E`?
-                  ❌ the rules are applied to all entities of a given type, but this must be limited in scope to the entities that actually changed in the target
-                  ❌ `execute` of `Assignment` does not take into account assignments like `this.CD.EF.E = this.A - this.B`
+                  ✅ the rules are applied to all entities of a given type, but this must be limited in scope to the entities that actually changed in the target
+                  ✅ `execute` of `Assignment` does not take into account assignments like `this.CD.EF.E = this.A - this.B`
                     ✅ a rule has a scope: ReadEntity x ReadField -> { Path x WrittenEntity(var name in conditional) x WrittenField }
-                    ❌ when a field change is found, we restrict the variables of the existentials to a pre-filtered subset based on the conditions of the rule dependencies, in (||)
-                  ❌ we maintain the loop checker `Set<BusinessRuleId x EntityId x FieldDescriptorId>` - the same `BusinessRuleId` cannot enter the set again
+                    ✅ when a field change is found, we restrict the variables of the existentials to a pre-filtered subset based on the conditions of the rule dependencies, in (||)
+                    ✅ some dependencies cannot be generated from restrictions: when orthogonal variables are part of an assignment but not in a chain. In that case, the rule dependency cannot be created, but it is unclear how this might lift other related restrictions
+                  ✅ we maintain the loop checker `Set<BusinessRuleId x EntityId x FieldDescriptorId>` - the same `BusinessRuleId` cannot enter the set again
                     ❌ efficiently: with pre-caching of the FREE-VARS of both condition and expression value
                     ❌ prepare a `co.Any` where each coroutine returns a different `fieldDescriptor x (Target = One | Multiple | All)`
                   ✅ we evaluate the business rules
@@ -125,19 +149,6 @@ Todo (✅/❌)
                     ✅ every business rule' assignment causes a new set of updated fields
                       ✅ when this set is empty, we stop
                       ✅ otherwise, we repeat the process
-            ❌ when evaluating a field lookup, we can do much faster and cleaner than a switch-case with a multi-field lookup map (a dynamic representation of the schema)
-              ❌ `Expr::execute` does not take into account more than one field lookup on the assigned variable, extend
-              ❌ any comparison to `schema.AB.Entity`, `schema.CD.Entity` and so on should be removed
-              ❌ any iteration of all `ABs` or `CDs` should be removed
-              ❌ the lookup of fields from ABs and CDs is particularly bad
-              ❌ the assignment of fields to ABs and CDs is particularly bad
-              ❌ the application of a field update after the coroutine triggers on the event is particularly bad
-              ❌ fields should be able to GET and SET automatically from the entityId and the context
-              ❌ RuleDependency::Predicate is inefficienct, a lot of things can be precomputed
-              ❌ the anonymous records should become statically typed `XId` records
-              ❌ the type `VarName` should be used everywhere instead of `string`
-              ❌ the setup of the `schema`, and in particular the `GetId` and `Lookup` methods, looks like crap
-              ❌ even more transactional: maintain cache of reads and writes, execute to DB at the last moment
             ❌ remove every single instance of mutation
             ❌ move eval, all merge*, and the whole abcdjobs to ballerina-core
           ❌ testing scenario

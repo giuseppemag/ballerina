@@ -6,7 +6,7 @@ open positions.model
 open Ballerina.Fun
 open Ballerina.Option
 
-let typeCheck (context:Context) (vars:VarTypes) : Expr -> Option<ExprType * VarTypes> =
+let typeCheck (schema:Schema) (vars:VarTypes) : Expr -> Option<ExprType * VarTypes> =
   let rec eval (vars:VarTypes) (e:positions.model.Expr) : Option<ExprType * VarTypes> =
     match e with
     | positions.model.Expr.Exists(varName, entityDescriptor, condition) -> 
@@ -25,15 +25,15 @@ let typeCheck (context:Context) (vars:VarTypes) : Expr -> Option<ExprType * VarT
         let! varType,vars' = eval vars var
         match varType with
         | LookupType entityDescriptor -> 
-          if entityDescriptor.EntityDescriptorId = context.Schema.AB.Entity.EntityDescriptorId then
-            if field.FieldDescriptorId = context.Schema.AB.ACount.Self.FieldDescriptorId then
+          if entityDescriptor.EntityDescriptorId = schema.AB.Entity.EntityDescriptorId then
+            if field.FieldDescriptorId = schema.AB.ACount.Self.FieldDescriptorId then
               return PrimitiveType IntType, vars'
-            else if field.FieldDescriptorId = context.Schema.AB.BCount.Self.FieldDescriptorId then
+            else if field.FieldDescriptorId = schema.AB.BCount.Self.FieldDescriptorId then
               return PrimitiveType IntType, vars'
-            else if field.FieldDescriptorId = context.Schema.AB.CD.Self.FieldDescriptorId then
-              return LookupType { EntityDescriptorId=context.Schema.CD.Entity.EntityDescriptorId; EntityName="CD" }, vars'
-          else if entityDescriptor.EntityDescriptorId = context.Schema.CD.Entity.EntityDescriptorId then
-            if field.FieldDescriptorId = context.Schema.CD.CCount.Self.FieldDescriptorId then
+            else if field.FieldDescriptorId = schema.AB.CD.Self.FieldDescriptorId then
+              return LookupType { EntityDescriptorId=schema.CD.Entity.EntityDescriptorId; EntityName="CD" }, vars'
+          else if entityDescriptor.EntityDescriptorId = schema.CD.Entity.EntityDescriptorId then
+            if field.FieldDescriptorId = schema.CD.CCount.Self.FieldDescriptorId then
               return PrimitiveType IntType, vars'
           else
             failwith "only entities AB and CD supported for now"

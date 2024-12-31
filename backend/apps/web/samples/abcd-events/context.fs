@@ -28,6 +28,30 @@ let init_abcdContext() =
     | None -> 
       FieldUpdateResult.Failure
   
+  let ACount = { 
+    FieldDescriptorId=Guid.NewGuid(); 
+    FieldName = "ACount"; 
+    Get = fun id -> ABs |> Map.tryFind id |> Option.map(fun e -> e.ACount |> Value.ConstInt) }; 
+  let BCount = { 
+    FieldDescriptorId=Guid.NewGuid(); 
+    FieldName = "BCount"; 
+    Get = fun id -> ABs |> Map.tryFind id |> Option.map(fun e -> e.BCount |> Value.ConstInt) }; 
+  let TotalABC = { 
+    FieldDescriptorId=Guid.NewGuid(); 
+    FieldName = "TotalABC"; 
+    Get = fun id -> ABs |> Map.tryFind id |> Option.map(fun e -> e.TotalABC |> Value.ConstInt) }; 
+  let CD = { 
+    FieldDescriptorId=Guid.NewGuid(); 
+    FieldName = "CD"; 
+    Get = fun id -> ABs |> Map.tryFind id |> Option.map(fun e -> e.CD.CDId |> Value.ConstGuid) }; 
+  let CCount = { 
+    FieldDescriptorId=Guid.NewGuid(); 
+    FieldName = "CCount"; 
+    Get = fun id -> CDs |> Map.tryFind id |> Option.map(fun e -> e.CCount |> Value.ConstInt) }; 
+  let allFields = 
+    [
+      ACount; BCount; TotalABC; CD; CCount
+    ] |> Seq.map (fun f -> f.FieldDescriptorId, f) |> Map.ofSeq
   let rec schema:Schema = {
     AB = {| 
       Entity = { EntityDescriptorId = Guid.NewGuid(); EntityName = "AB"; 
@@ -49,10 +73,12 @@ let init_abcdContext() =
                 schema.CD.Entity.Lookup(e.CD :> obj, fields)
               else
                 None
-          | _ -> None)
+          | _ -> None);
+        GetEntities = fun () -> ABs |> Map.values |> Seq.map (fun e -> e :> obj) |> List.ofSeq
       }
       ACount = { 
-        Self = { FieldDescriptorId=Guid.NewGuid(); FieldName = "ACount" }; 
+        Self = ACount
+        Get = function | :? AB as v -> Option.Some v.ACount | _ -> None;
         Update = fun (One entityId) updater -> 
           updateSingleField 
             (fun entityId -> ABs |> Map.tryFind entityId) (fun e' entityId -> ABs <- ABs |> Map.add entityId e')
@@ -60,7 +86,8 @@ let init_abcdContext() =
             (One entityId) updater
       }; 
       BCount = { 
-        Self = { FieldDescriptorId=Guid.NewGuid(); FieldName = "BCount" }; 
+        Self = BCount; 
+        Get = function | :? AB as v -> Option.Some v.BCount | _ -> None;
         Update = fun (One entityId) updater -> 
           updateSingleField 
             (fun entityId -> ABs |> Map.tryFind entityId) (fun e' entityId -> ABs <- ABs |> Map.add entityId e')
@@ -68,7 +95,8 @@ let init_abcdContext() =
             (One entityId) updater
       }; 
       TotalABC = { 
-        Self = { FieldDescriptorId=Guid.NewGuid(); FieldName = "TotalABC" }; 
+        Self = TotalABC; 
+        Get = function | :? AB as v -> Option.Some v.TotalABC | _ -> None;
         Update = fun (One entityId) updater -> 
           updateSingleField 
             (fun entityId -> ABs |> Map.tryFind entityId) (fun e' entityId -> ABs <- ABs |> Map.add entityId e')
@@ -76,7 +104,8 @@ let init_abcdContext() =
             (One entityId) updater
         }; 
       CD = { 
-        Self = { FieldDescriptorId=Guid.NewGuid(); FieldName = "CD" }; 
+        Self = CD; 
+        Get = function | :? AB as v -> Option.Some v.CD.CDId | _ -> None;
         Update = fun entitiesIdentifier updater -> 
           match entitiesIdentifier with 
           | All -> 
@@ -117,10 +146,12 @@ let init_abcdContext() =
                 Some(e.CCount :> obj)
               else
                 None
-          | _ -> None)
+          | _ -> None);
+        GetEntities = fun () -> CDs |> Map.values |> Seq.map (fun e -> e :> obj) |> List.ofSeq
       }
       CCount = { 
-        Self = { FieldDescriptorId=Guid.NewGuid(); FieldName = "CCount" }; 
+        Self = CCount
+        Get = function | :? CD as v -> Option.Some v.CCount | _ -> None;
         Update = fun (One entityId) updater -> 
           updateSingleField 
             (fun entityId -> CDs |> Map.tryFind entityId) (fun e' entityId -> CDs <- CDs |> Map.add entityId e')
@@ -133,6 +164,7 @@ let init_abcdContext() =
         if entityDescriptorId.EntityDescriptorId = schema.AB.Entity.EntityDescriptorId then return schema.AB.Entity
         else if entityDescriptorId.EntityDescriptorId = schema.CD.Entity.EntityDescriptorId then return schema.CD.Entity
       }
+    tryFindField = fun (fieldDescriptorId:FieldDescriptorId) -> allFields |> Map.tryFind fieldDescriptorId.FieldDescriptorId
   }
   let createCD id = 
     {
@@ -163,19 +195,20 @@ let init_abcdContext() =
       ab2
     ] |> Seq.map (fun e -> (e.ABId, e)) |> Map.ofSeq
 
-  let (=>) (varname:string) (fields:List<FieldDescriptor>) =
+  let (=>) (varname:string) (fields:List<FieldDescriptorId>) =
       FieldLookup(Expr.VarLookup varname, fields)
   let totalABC:BusinessRule = 
     { 
       BusinessRuleId = Guid.NewGuid(); 
       Name = "Total = A+B+C"; Priority = BusinessRulePriority.System; 
-      Condition = Expr.Exists("this", { EntityDescriptorId=schema.AB.Entity.EntityDescriptorId; EntityName="AB" }, Expr.Value (Value.ConstBool true)); 
+      Condition = Expr.Exists("this", schema.AB.Entity.ToEntityDescriptorId, Expr.Value (Value.ConstBool true)); 
       Actions=[
         { 
-          Variable = "this", [schema.AB.TotalABC.Self]
-          Value=("this" => [schema.AB.ACount.Self])
-            + ("this" => [schema.AB.BCount.Self])
-            + ("this" => [schema.AB.CD.Self; schema.CD.CCount.Self])
+          // this.TotalABC := this.ACount + this.BCount + this.CD.CCount
+          Variable = "this", [schema.AB.TotalABC.Self.ToFieldDescriptorId]
+          Value=("this" => [schema.AB.ACount.Self.ToFieldDescriptorId])
+            + ("this" => [schema.AB.BCount.Self.ToFieldDescriptorId])
+            + ("this" => [schema.AB.CD.Self.ToFieldDescriptorId; schema.CD.CCount.Self.ToFieldDescriptorId])
         }
       ]
     }
@@ -195,8 +228,8 @@ let init_abcdContext() =
               FieldEventId = Guid.NewGuid(); 
               EntityDescriptorId = schema.AB.Entity.ToEntityDescriptorId
               Assignment = {
-                Variable = ("this", [schema.AB.ACount.Self])
-                Value=("this" => [schema.AB.ACount.Self]) + (Expr.Value(Value.ConstInt 10))
+                Variable = ("this", [schema.AB.ACount.Self.ToFieldDescriptorId])
+                Value=("this" => [schema.AB.ACount.Self.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 10))
               }
             }; 
             Target = One (ABs.First().Key)
@@ -207,11 +240,11 @@ let init_abcdContext() =
     Schema = schema
   }
 
-  do printfn "ab1.Id = %A" ab1.ABId
-  do printfn "ab1.CD.Id = %A" ab1.CD.CDId
-  do printfn "ab2.Id = %A" ab2.ABId
-  do printfn "ab2.CD.Id = %A" ab2.CD.CDId
-  do Console.ReadLine() |> ignore
+  // do printfn "ab1.Id = %A" ab1.ABId
+  // do printfn "ab1.CD.Id = %A" ab1.CD.CDId
+  // do printfn "ab2.Id = %A" ab2.ABId
+  // do printfn "ab2.CD.Id = %A" ab2.CD.CDId
+  // do Console.ReadLine() |> ignore
   // do printfn "ABs[0].CD.Id = %A" (Option.bind schema.CD.Entity.GetId (schema.AB.Entity.Lookup(firstAB :> obj, [schema.AB.CD.Self])))
   // do Console.ReadLine() |> ignore
   // do printfn "ABs[0].CD = %A" (schema.AB.Entity.Lookup(firstAB :> obj, [schema.AB.CD.Self]))
@@ -231,32 +264,32 @@ let init_abcdContext() =
   // | _ -> ()
   // do printfn "dependencies(totalABC) = %A" (totalABC.Dependencies context)
   // do Console.ReadLine() |> ignore
-  let CDEntity = schema.CD.Entity.ToEntityDescriptorId
-  let CCountField = schema.CD.CCount.Self
-  let testedDependencies = (totalABC.Dependencies context).[CDEntity, CCountField]
+  // let CDEntity = schema.CD.Entity.ToEntityDescriptorId
+  // let CCountField = schema.CD.CCount.Self
+  // let testedDependencies = (totalABC.Dependencies context.Schema).dependencies.[CDEntity, CCountField]
   // do printfn "dependencies that trigger on CD.CCount = %A" (testedDependencies)
   // do Console.ReadLine() |> ignore
 
-  let (||.) = fun p1 p2 -> fun (o:obj) -> p1 o || p2 o
-  let changedEntitiesIds:Set<Guid> = Set.empty |> Set.add ab1.CD.CDId
-  do printfn "changedEntitiesIds = %A" (changedEntitiesIds)
-  do Console.ReadLine() |> ignore
-  let predicate = 
-    testedDependencies 
-      |> Seq.map (fun dep -> dep.Predicate context changedEntitiesIds) 
-      |> Seq.fold (||.) (fun (o:obj) -> false)
-  let restrictedABs = context.ABs().Values |> Seq.filter (fun ab -> ab :> obj |> predicate)
-  do printfn "restrictedABs = %A" (restrictedABs |> Seq.map (fun ab -> ab.ABId))
-  do Console.ReadLine() |> ignore
-  let changedEntitiesIds:Set<Guid> = Set.empty |> Set.add ab2.CD.CDId
-  do printfn "changedEntitiesIds = %A" (changedEntitiesIds)
-  do Console.ReadLine() |> ignore
-  let predicate = 
-    testedDependencies 
-      |> Seq.map (fun dep -> dep.Predicate context changedEntitiesIds) 
-      |> Seq.fold (||.) (fun (o:obj) -> false)
-  let restrictedABs = context.ABs().Values |> Seq.filter (fun ab -> ab :> obj |> predicate)
-  do printfn "restrictedABs = %A" (restrictedABs |> Seq.map (fun ab -> ab.ABId))
-  do Console.ReadLine() |> ignore
+  // let (||.) = fun p1 p2 -> fun (o:obj) -> p1 o || p2 o
+  // let changedEntitiesIds:Set<Guid> = Set.empty |> Set.add ab1.CD.CDId
+  // do printfn "changedEntitiesIds = %A" (changedEntitiesIds)
+  // do Console.ReadLine() |> ignore
+  // let predicate = 
+  //   testedDependencies 
+  //     |> Seq.map (fun dep -> dep.Predicate context changedEntitiesIds) 
+  //     |> Seq.fold (||.) (fun (o:obj) -> false)
+  // let restrictedABs = context.ABs().Values |> Seq.filter (fun ab -> ab :> obj |> predicate)
+  // do printfn "restrictedABs = %A" (restrictedABs |> Seq.map (fun ab -> ab.ABId))
+  // do Console.ReadLine() |> ignore
+  // let changedEntitiesIds:Set<Guid> = Set.empty |> Set.add ab2.CD.CDId
+  // do printfn "changedEntitiesIds = %A" (changedEntitiesIds)
+  // do Console.ReadLine() |> ignore
+  // let predicate = 
+  //   testedDependencies 
+  //     |> Seq.map (fun dep -> dep.Predicate context changedEntitiesIds) 
+  //     |> Seq.fold (||.) (fun (o:obj) -> false)
+  // let restrictedABs = context.ABs().Values |> Seq.filter (fun ab -> ab :> obj |> predicate)
+  // do printfn "restrictedABs = %A" (restrictedABs |> Seq.map (fun ab -> ab.ABId))
+  // do Console.ReadLine() |> ignore
 
   context

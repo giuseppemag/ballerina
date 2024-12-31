@@ -8,16 +8,18 @@ open Ballerina.Coroutines
 open eval
 
 let execute (context:Context) (vars:Vars) (assignment:Assignment) : list<Map<{| FieldDescriptorId:Guid |}, {| Target:EntitiesIdentifiers |}>> =
-  match assignment.Variable, eval context vars assignment.Value with
+  match assignment.Variable, eval None context vars assignment.Value with
   | (assignedVar, [fieldDescriptor]), values ->
     [
+      // do printfn "assigning values %A (=%A)" values assignment.Value
+      // do Console.ReadLine() |> ignore
       for (vars, value) in values do
-        let variants = eval context vars (Expr.VarLookup assignedVar)
+        let variants = eval None context vars (Expr.VarLookup assignedVar)
+        // do printfn "assigning variants %A" variants
+        // do Console.ReadLine() |> ignore
         for (_, res) in variants do
           match res with
           | Value.Var(entityDescriptor, One entityId) ->
-            let ABs = context.ABs()
-            let CDs = context.CDs()
             if entityDescriptor.EntityDescriptorId = context.Schema.AB.Entity.EntityDescriptorId then
               if fieldDescriptor.FieldDescriptorId = context.Schema.AB.TotalABC.Self.FieldDescriptorId then
                 match value with

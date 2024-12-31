@@ -20,8 +20,9 @@ let getCandidateRules
           for a in br.Actions do
             yield lookedUpFieldDescriptors a.Value
         }) |> Set.map (fun e -> {| FieldDescriptorId = e.FieldDescriptorId |})
-      if fields |> Set.intersect modifiedFields |> Set.isEmpty |> not then
-        yield br
+      let intersectingFields = fields |> Set.intersect modifiedFields
+      if intersectingFields |> Set.isEmpty |> not then
+        yield br, intersectingFields
   } |> Seq.toList
 
 let mergeEntitiesIdentifiers (entities1:EntitiesIdentifiers) (entities2:EntitiesIdentifiers) = 

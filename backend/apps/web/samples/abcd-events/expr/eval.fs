@@ -6,54 +6,50 @@ open positions.model
 open typeCheck
 open Ballerina.Fun
 open Ballerina.Coroutines
+open Ballerina.Option
 
-let eval (context:Context) (vars:Vars) : Expr -> list<Vars * Value> =
+let eval (variableRestriction:Option<VarName * (obj -> bool)>) (context:Context) (vars:Vars) : Expr -> list<Vars * Value> =
   let rec eval (vars:Vars) (e:positions.model.Expr) : list<Vars * Value> =
     match e with
-    | positions.model.Expr.Exists(varName, entityDescriptor, condition) -> 
-      if entityDescriptor.EntityDescriptorId = context.Schema.AB.Entity.EntityDescriptorId then
-        let ABs = context.ABs() |> Map.values
-        [
-          for ab in ABs do
-          let vars' = vars |> Map.add varName (entityDescriptor, One ab.ABId)
+    | positions.model.Expr.Exists(varName, entityDescriptorId, condition) -> 
+      let restriction = 
+        match variableRestriction with
+        | Some(restrictedVarName, predicate) when varName = restrictedVarName.VarName -> 
+          predicate
+        | _ -> fun o -> true
+      [
+        for entityDescriptor in context.Schema.tryFindEntity entityDescriptorId |> Option.toList do
+        let values = entityDescriptor.GetEntities() |> Seq.filter restriction
+        yield! [
+          for value in values do
+          for valueId in entityDescriptor.GetId value |> Option.toList do
+          let vars' = vars |> Map.add varName (entityDescriptorId, One valueId)
           for res in eval vars' condition do
             match res with
             | vars'', ConstBool true -> yield res
             | _ -> ()
         ]
-      else
-        failwith "positions.model.Expr.Exists(CD) not implemented"
+      ]
     | positions.model.Expr.VarLookup v when vars |> Map.containsKey v -> 
       [vars, (Value.Var (vars.[v]))]
     | positions.model.Expr.FieldLookup(var, []) -> eval vars var
     | positions.model.Expr.FieldLookup(var, field::fields) -> 
       let remainingLookup (vars,e) = eval vars (Expr.FieldLookup(e, fields))
       [
+        for fieldDescriptor in context.Schema.tryFindField field |> Option.toList do
         for res1 in eval vars var do
           match res1 with
-          | (vars', Value.Var (entityDescriptor, One entityId)) ->
-            let ABs = context.ABs()
-            let CDs = context.CDs()
-            if entityDescriptor.EntityDescriptorId = context.Schema.AB.Entity.EntityDescriptorId &&
-              ABs |> Map.containsKey entityId then
-              if field.FieldDescriptorId = context.Schema.AB.ACount.Self.FieldDescriptorId then
-                yield! (vars', (Value.ConstInt(ABs.[entityId].ACount)) |> Expr.Value) |> remainingLookup
-              else if field.FieldDescriptorId = context.Schema.AB.BCount.Self.FieldDescriptorId then
-                yield! (vars', (Value.ConstInt(ABs.[entityId].BCount)) |> Expr.Value) |> remainingLookup
-              else if field.FieldDescriptorId = context.Schema.AB.CD.Self.FieldDescriptorId then
-                let ab = ABs.[entityId]
-                yield! (vars', (Value.Var({ EntityDescriptorId=context.Schema.CD.Entity.EntityDescriptorId; EntityName="CD" }, One ab.CD.CDId)) |> Expr.Value) |> remainingLookup
-              else
-                ()
-            else if entityDescriptor.EntityDescriptorId = context.Schema.CD.Entity.EntityDescriptorId &&
-              CDs |> Map.containsKey entityId then
-              if field.FieldDescriptorId = context.Schema.CD.CCount.Self.FieldDescriptorId then
-                yield! (vars', (Value.ConstInt(CDs.[entityId].CCount)) |> Expr.Value) |> remainingLookup
-              else
-                ()
-            else 
-              ()
-          | _ -> ()
+          | (vars', Value.Var (_, One entityId))
+          | (vars', Value.ConstGuid (entityId)) ->
+            for value in fieldDescriptor.Get entityId |> Option.toList do
+              let res = (vars', value |> Expr.Value) |> remainingLookup
+              do printfn "field lookup %A -> %A" ([e,fields]) res
+              do Console.ReadLine() |> ignore
+              yield! res
+          | _ -> 
+            do printfn "unsupported field lookup %A -> %A" ([e,fields]) res1
+            do Console.ReadLine() |> ignore
+            ()
       ]
     | positions.model.Expr.Value v -> [vars, v]
     | positions.model.Expr.Binary(Plus, e1, e2) -> 
@@ -101,6 +97,23 @@ let rec scope (e:Expr) =
   | Expr.Binary(_, e1, e2) -> !e1 |> Set.union !e2
   | _ -> Set.empty
 
+let rec scopeSeq (e:Expr) = 
+  let (!) e = scopeSeq e
+  match e with
+  | Expr.Exists(varName,entityType,e) -> 
+    seq{
+      yield {| varName=varName; entityType=entityType |}
+      yield! !e
+    }
+  | Expr.FieldLookup(e, _)
+  | Expr.SumBy(_,_,e) -> !e
+  | Expr.Binary(_, e1, e2) -> 
+    seq{
+      yield! !e1
+      yield! !e2
+    }
+  | _ -> Seq.empty
+
 let rec fieldLookups (e:Expr) = 
   let (!) e = fieldLookups e
   match e with
@@ -115,9 +128,9 @@ let rec fieldLookups (e:Expr) =
   | _ -> Set.empty
 
 type BusinessRule with
-  member rule.Dependencies : Context -> RuleDependencies = fun context ->
-    let variables = scope rule.Condition |> Seq.map (fun v -> v.varName, v.entityType) |> Map.ofSeq
-    let conditionType = typeCheck context Map.empty rule.Condition
+  member rule.Dependencies : Schema -> Set<{| FieldDescriptorId:Guid |}> -> RuleDependencies = fun schema changedFields ->
+    // let variables = scope rule.Condition |> Seq.map (fun v -> v.varName, v.entityType) |> Map.ofSeq
+    let conditionType = typeCheck schema Map.empty rule.Condition
     match conditionType with
     | None -> failwithf "Condition %A does not type check" (rule.Condition)
     | Some (_,vars) ->
@@ -127,7 +140,7 @@ type BusinessRule with
           // printfn "fieldLookups %A" fieldLookups
           // Console.ReadLine() |> ignore
           for (varName, fields) in fieldLookups do
-            match typeCheck context vars (Expr.VarLookup varName) with
+            match typeCheck schema vars (Expr.VarLookup varName) with
             | Some (LookupType varType, _) ->
               let rec lookupPrefixes = 
                 function
@@ -141,7 +154,7 @@ type BusinessRule with
                   ]
               let allLookups = lookupPrefixes fields
               for (lookupFields, lastField) in allLookups do
-                match typeCheck context vars (Expr.FieldLookup(Expr.VarLookup varName, lookupFields)) with
+                match typeCheck schema vars (Expr.FieldLookup(Expr.VarLookup varName, lookupFields)) with
                 | Some (LookupType lookupType, _) ->
                   let dependency:RuleDependency = {
                     ChangedEntityType = lookupType
@@ -150,7 +163,8 @@ type BusinessRule with
                     RestrictedVariableType = varType
                     PathFromVariableToChange = lookupFields
                   }
-                  yield dependency
+                  if changedFields |> Set.contains {| FieldDescriptorId=dependency.ChangedField.FieldDescriptorId |} then
+                    yield dependency
                 | _ -> failwithf "Cannot typecheck lookup path %A" (Expr.FieldLookup(Expr.VarLookup varName, lookupFields)) 
                 // and RuleDependency = { ChangedEntityType:EntityDescriptor; RestrictedVariable:string; RestrictedVariableType:EntityDescriptor; PathFromVariableToChange:List<FieldDescriptor> }
                 // and RuleDependencies = Map<EntityDescriptorId * FieldDescriptor, List<RuleDependency>>
@@ -160,5 +174,7 @@ type BusinessRule with
             | _ -> failwithf "Cannot typecheck varName %A" (Expr.VarLookup varName) 
       ]
       let byEntityAndField:RuleDependencies = 
-        dependencies |> Seq.groupBy (fun dep -> dep.ChangedEntityType, dep.ChangedField) |> Map.ofSeq |> Map.map (fun k -> List.ofSeq)
+        { 
+          dependencies=dependencies |> Seq.groupBy (fun dep -> dep.ChangedEntityType, dep.ChangedField) |> Map.ofSeq |> Map.map (fun k -> List.ofSeq)
+        }
       in byEntityAndField 

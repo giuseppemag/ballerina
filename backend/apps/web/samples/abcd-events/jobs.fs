@@ -65,8 +65,8 @@ let abcdEventLoop() =
                           |> Map.toSeq
                           |> Seq.map snd
                           |> Set.ofSeq
-    context <- { 
-      context with 
+    context <- {
+      context with
         ActiveEvents = (context.ActiveEvents |> List.filter (fun e -> removed |> Set.contains e |> not)) @ added 
       }
     ()
