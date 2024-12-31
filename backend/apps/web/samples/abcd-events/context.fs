@@ -28,85 +28,64 @@ let init_abcdContext() =
     | None -> 
       FieldUpdateResult.Failure
   
-  let ACount = { 
+  let rec ACount = { 
     FieldDescriptorId=Guid.NewGuid(); 
     FieldName = "ACount"; 
-    Get = fun id -> ABs |> Map.tryFind id |> Option.map(fun e -> e.ACount |> Value.ConstInt) }; 
-  let BCount = { 
-    FieldDescriptorId=Guid.NewGuid(); 
-    FieldName = "BCount"; 
-    Get = fun id -> ABs |> Map.tryFind id |> Option.map(fun e -> e.BCount |> Value.ConstInt) }; 
-  let TotalABC = { 
-    FieldDescriptorId=Guid.NewGuid(); 
-    FieldName = "TotalABC"; 
-    Get = fun id -> ABs |> Map.tryFind id |> Option.map(fun e -> e.TotalABC |> Value.ConstInt) }; 
-  let CD = { 
-    FieldDescriptorId=Guid.NewGuid(); 
-    FieldName = "CD"; 
-    Get = fun id -> ABs |> Map.tryFind id |> Option.map(fun e -> e.CD.CDId |> Value.ConstGuid) }; 
-  let CCount = { 
-    FieldDescriptorId=Guid.NewGuid(); 
-    FieldName = "CCount"; 
-    Get = fun id -> CDs |> Map.tryFind id |> Option.map(fun e -> e.CCount |> Value.ConstInt) }; 
-  let allFields = 
-    [
-      ACount; BCount; TotalABC; CD; CCount
-    ] |> Seq.map (fun f -> f.FieldDescriptorId, f) |> Map.ofSeq
-  let rec schema:Schema = {
-    AB = {| 
-      Entity = { EntityDescriptorId = Guid.NewGuid(); EntityName = "AB"; 
-        GetId = 
-          (function
-          | :? AB as e ->  Some e.ABId
-          | _ -> None);
-        Lookup = (fun (obj, fields) -> 
-          match obj with
-          | :? AB as e -> 
-            match fields with
-            | [] -> Some obj
-            | field::fields ->
-              if field.FieldDescriptorId = schema.AB.ACount.Self.FieldDescriptorId then
-                Some(e.ACount :> obj)
-              else if field.FieldDescriptorId = schema.AB.BCount.Self.FieldDescriptorId then
-                Some(e.BCount :> obj)
-              else if field.FieldDescriptorId = schema.AB.CD.Self.FieldDescriptorId then
-                schema.CD.Entity.Lookup(e.CD :> obj, fields)
-              else
-                None
-          | _ -> None);
-        GetEntities = fun () -> ABs |> Map.values |> Seq.map (fun e -> e :> obj) |> List.ofSeq
-      }
-      ACount = { 
-        Self = ACount
-        Get = function | :? AB as v -> Option.Some v.ACount | _ -> None;
-        Update = fun (One entityId) updater -> 
+    Type = fun () -> ExprType.PrimitiveType IntType
+    Get = fun id -> ABs |> Map.tryFind id |> Option.map(fun e -> e.ACount |> Value.ConstInt);
+    Update = {|
+      AsInt = 
+        fun (One entityId) updater -> 
           updateSingleField 
             (fun entityId -> ABs |> Map.tryFind entityId) (fun e' entityId -> ABs <- ABs |> Map.add entityId e')
             (fun e -> e.ACount) (fun e f -> { e with ACount = f })
-            (One entityId) updater
-      }; 
-      BCount = { 
-        Self = BCount; 
-        Get = function | :? AB as v -> Option.Some v.BCount | _ -> None;
-        Update = fun (One entityId) updater -> 
+            (One entityId) updater;
+      AsRef = (fun _ _ -> FieldUpdateResult.Failure);
+      AsRefs = (fun _ _ -> FieldUpdateResult.Failure);
+    |};
+  }
+  and BCount = { 
+    FieldDescriptorId=Guid.NewGuid(); 
+    FieldName = "BCount"; 
+    Type = fun () -> ExprType.PrimitiveType IntType
+    Get = fun id -> ABs |> Map.tryFind id |> Option.map(fun e -> e.BCount |> Value.ConstInt) 
+    Update = {|
+      AsInt = 
+        fun (One entityId) updater -> 
           updateSingleField 
             (fun entityId -> ABs |> Map.tryFind entityId) (fun e' entityId -> ABs <- ABs |> Map.add entityId e')
             (fun e -> e.BCount) (fun e f -> { e with BCount = f })
-            (One entityId) updater
-      }; 
-      TotalABC = { 
-        Self = TotalABC; 
-        Get = function | :? AB as v -> Option.Some v.TotalABC | _ -> None;
-        Update = fun (One entityId) updater -> 
+            (One entityId) updater;
+      AsRef = (fun _ _ -> FieldUpdateResult.Failure);
+      AsRefs = (fun _ _ -> FieldUpdateResult.Failure);
+    |};    
+  }
+  and TotalABC = { 
+    FieldDescriptorId=Guid.NewGuid(); 
+    FieldName = "TotalABC"; 
+    Type = fun () -> ExprType.PrimitiveType IntType
+    Get = fun id -> ABs |> Map.tryFind id |> Option.map(fun e -> e.TotalABC |> Value.ConstInt) 
+    Update = {|
+      AsInt = 
+        fun (One entityId) updater -> 
           updateSingleField 
             (fun entityId -> ABs |> Map.tryFind entityId) (fun e' entityId -> ABs <- ABs |> Map.add entityId e')
             (fun e -> e.TotalABC) (fun e f -> { e with TotalABC = f })
-            (One entityId) updater
-        }; 
-      CD = { 
-        Self = CD; 
-        Get = function | :? AB as v -> Option.Some v.CD.CDId | _ -> None;
-        Update = fun entitiesIdentifier updater -> 
+            (One entityId) updater;
+      AsRef = (fun _ _ -> FieldUpdateResult.Failure);
+      AsRefs = (fun _ _ -> FieldUpdateResult.Failure);
+    |}
+  }
+  and CD = { 
+    FieldDescriptorId=Guid.NewGuid(); 
+    FieldName = "CD"; 
+    Type = fun () -> ExprType.LookupType CDEntity.ToEntityDescriptorId
+    Get = fun id -> ABs |> Map.tryFind id |> Option.map(fun e -> e.CD.CDId |> Value.ConstGuid)
+    Update = {|
+      AsInt = (fun _ _ -> FieldUpdateResult.Failure);
+      AsRef = (fun _ _ -> FieldUpdateResult.Failure);
+      AsRefs = 
+        fun entitiesIdentifier updater -> 
           match entitiesIdentifier with 
           | All -> 
             let mutable changes = 0
@@ -128,10 +107,52 @@ let init_abcdContext() =
               else id)
             if changes > 0 then FieldUpdateResult.ValueChanged
             else FieldUpdateResult.ValueStayedTheSame
-        };  
-      |}
-    CD = {| 
-      Entity = { EntityDescriptorId = Guid.NewGuid(); EntityName = "CD";
+    |}
+  }
+  and CCount = { 
+    FieldDescriptorId=Guid.NewGuid(); 
+    FieldName = "CCount"; 
+    Type = fun () -> ExprType.PrimitiveType IntType
+    Get = fun id -> CDs |> Map.tryFind id |> Option.map(fun e -> e.CCount |> Value.ConstInt);
+    Update = {|
+      AsInt = 
+        fun (One entityId) updater -> 
+          updateSingleField 
+            (fun entityId -> CDs |> Map.tryFind entityId) (fun e' entityId -> CDs <- CDs |> Map.add entityId e')
+            (fun e -> e.CCount) (fun e f -> { e with CCount = f })
+            (One entityId) updater;
+      AsRef = (fun _ _ -> FieldUpdateResult.Failure);
+      AsRefs = (fun _ _ -> FieldUpdateResult.Failure);
+    |}
+  }
+  and allFields = 
+    [
+      ACount; BCount; TotalABC; CD; CCount
+    ] |> Seq.map (fun f -> f.FieldDescriptorId, f) |> Map.ofSeq
+  and ABEntity = 
+    { EntityDescriptorId = Guid.NewGuid(); EntityName = "AB"; 
+      GetId = 
+        (function
+        | :? AB as e ->  Some e.ABId
+        | _ -> None);
+      Lookup = (fun (obj, fields) -> 
+        match obj with
+        | :? AB as e -> 
+          match fields with
+          | [] -> Some obj
+          | field::fields ->
+            if field.FieldDescriptorId = ACount.FieldDescriptorId then
+              Some(e.ACount :> obj)
+            else if field.FieldDescriptorId = BCount.FieldDescriptorId then
+              Some(e.BCount :> obj)
+            else if field.FieldDescriptorId = CD.FieldDescriptorId then
+              CDEntity.Lookup(e.CD :> obj, fields)
+            else
+              None
+        | _ -> None);
+      GetEntities = fun () -> ABs |> Map.values |> Seq.map (fun e -> e :> obj) |> List.ofSeq
+    }
+  and CDEntity:EntityDescriptor = { EntityDescriptorId = Guid.NewGuid(); EntityName = "CD";
         GetId = 
           (function
           | :? CD as e ->  Some e.CDId
@@ -142,34 +163,26 @@ let init_abcdContext() =
             match fields with
             | [] -> Some obj
             | field::fields ->
-              if field.FieldDescriptorId = schema.CD.CCount.Self.FieldDescriptorId then
+              if field.FieldDescriptorId = CCount.FieldDescriptorId then
                 Some(e.CCount :> obj)
               else
                 None
           | _ -> None);
         GetEntities = fun () -> CDs |> Map.values |> Seq.map (fun e -> e :> obj) |> List.ofSeq
       }
-      CCount = { 
-        Self = CCount
-        Get = function | :? CD as v -> Option.Some v.CCount | _ -> None;
-        Update = fun (One entityId) updater -> 
-          updateSingleField 
-            (fun entityId -> CDs |> Map.tryFind entityId) (fun e' entityId -> CDs <- CDs |> Map.add entityId e')
-            (fun e -> e.CCount) (fun e f -> { e with CCount = f })
-            (One entityId) updater
-      };
-    |}
+  and allEntities = 
+    [
+      ABEntity; CDEntity
+    ] |> Seq.map (fun e -> e.EntityDescriptorId, e) |> Map.ofSeq
+  and schema:Schema = {
     tryFindEntity = fun (entityDescriptorId:EntityDescriptorId) ->
-      option{
-        if entityDescriptorId.EntityDescriptorId = schema.AB.Entity.EntityDescriptorId then return schema.AB.Entity
-        else if entityDescriptorId.EntityDescriptorId = schema.CD.Entity.EntityDescriptorId then return schema.CD.Entity
-      }
+      allEntities |> Map.tryFind entityDescriptorId.EntityDescriptorId
     tryFindField = fun (fieldDescriptorId:FieldDescriptorId) -> allFields |> Map.tryFind fieldDescriptorId.FieldDescriptorId
   }
   let createCD id = 
     {
-      CDId = id; Metadata = { EntityMetadataId = Guid.NewGuid(); Approval = false; Entity = schema.CD.Entity }
-      CCount = 3; CCountMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = schema.CD.CCount }
+      CDId = id; Metadata = { EntityMetadataId = Guid.NewGuid(); Approval = false; Entity = CDEntity }
+      CCount = 3; CCountMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = CCount.ToFieldDescriptorId }
     }
   let cd1 = createCD (Guid("d8ff0920-2b47-499f-9f7b-cb07a1f8f3a4"))
   let cd2 = createCD (Guid("69f182db-84ba-4e81-91c5-d3becd029a6b"))
@@ -180,11 +193,11 @@ let init_abcdContext() =
     ] |> Seq.map (fun e -> (e.CDId, e)) |> Map.ofSeq
   let createAB id cd = 
       {
-        ABId = id; Metadata = { EntityMetadataId = Guid.NewGuid(); Approval = false; Entity = schema.CD.Entity }
-        ACount = 1 ; ACountMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = schema.AB.ACount }
-        BCount = 2 ; BCountMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = schema.AB.BCount }
-        TotalABC = 0 ; TotalABCMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = schema.AB.TotalABC }
-        CD = CDs |> Map.values |> Seq.randomChoice; CDMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = schema.AB.CD }
+        ABId = id; Metadata = { EntityMetadataId = Guid.NewGuid(); Approval = false; Entity = ABEntity }
+        ACount = 1 ; ACountMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = ACount.ToFieldDescriptorId }
+        BCount = 2 ; BCountMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = BCount.ToFieldDescriptorId }
+        TotalABC = 0 ; TotalABCMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = TotalABC.ToFieldDescriptorId }
+        CD = CDs |> Map.values |> Seq.randomChoice; CDMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = CD.ToFieldDescriptorId }
       }
   let ab1 = createAB (Guid("8fba2a7c-e2da-43bd-b8ee-ddaa774d081d")) cd1
   let ab2 = createAB (Guid("91620c12-cd9e-4e66-9df3-58f4b1a50b1f")) cd2
@@ -201,14 +214,14 @@ let init_abcdContext() =
     { 
       BusinessRuleId = Guid.NewGuid(); 
       Name = "Total = A+B+C"; Priority = BusinessRulePriority.System; 
-      Condition = Expr.Exists("this", schema.AB.Entity.ToEntityDescriptorId, Expr.Value (Value.ConstBool true)); 
+      Condition = Expr.Exists("this", ABEntity.ToEntityDescriptorId, Expr.Value (Value.ConstBool true)); 
       Actions=[
         { 
           // this.TotalABC := this.ACount + this.BCount + this.CD.CCount
-          Variable = "this", [schema.AB.TotalABC.Self.ToFieldDescriptorId]
-          Value=("this" => [schema.AB.ACount.Self.ToFieldDescriptorId])
-            + ("this" => [schema.AB.BCount.Self.ToFieldDescriptorId])
-            + ("this" => [schema.AB.CD.Self.ToFieldDescriptorId; schema.CD.CCount.Self.ToFieldDescriptorId])
+          Variable = "this", [TotalABC.ToFieldDescriptorId]
+          Value=("this" => [ACount.ToFieldDescriptorId])
+            + ("this" => [BCount.ToFieldDescriptorId])
+            + ("this" => [CD.ToFieldDescriptorId; CCount.ToFieldDescriptorId])
         }
       ]
     }
@@ -226,10 +239,10 @@ let init_abcdContext() =
           { 
             Self = { 
               FieldEventId = Guid.NewGuid(); 
-              EntityDescriptorId = schema.AB.Entity.ToEntityDescriptorId
+              EntityDescriptorId = ABEntity.ToEntityDescriptorId
               Assignment = {
-                Variable = ("this", [schema.AB.ACount.Self.ToFieldDescriptorId])
-                Value=("this" => [schema.AB.ACount.Self.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 10))
+                Variable = ("this", [ACount.ToFieldDescriptorId])
+                Value=("this" => [ACount.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 10))
               }
             }; 
             Target = One (ABs.First().Key)

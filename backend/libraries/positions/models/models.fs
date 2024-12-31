@@ -17,17 +17,6 @@ and CD = {
 }
 and ABCDEvent = SetField of SetFieldEvent
 and Schema = {
-  AB:{| 
-    Entity:EntityDescriptor
-    ACount:SingletonIntFieldDescriptor; 
-    BCount:SingletonIntFieldDescriptor; 
-    TotalABC:ReadonlyIntFieldDescriptor 
-    CD:RefFieldDescriptor 
-  |}
-  CD:{| 
-    Entity:EntityDescriptor
-    CCount:SingletonIntFieldDescriptor 
-  |}
   tryFindEntity:EntityDescriptorId -> Option<EntityDescriptor>
   tryFindField:FieldDescriptorId -> Option<FieldDescriptor>
 }
@@ -38,8 +27,6 @@ and Context = {
   Schema:Schema
 }
 
-
-
 and EntityMetadata = { EntityMetadataId:Guid; Approval:bool; Entity:EntityDescriptor }
 and EntityDescriptor = { 
   EntityDescriptorId:Guid; 
@@ -49,39 +36,36 @@ and EntityDescriptor = {
   GetEntities:Unit -> List<obj> }
 
 and FieldMetadata = { FieldMetadataId:Guid; Approval:bool; CurrentEditPrio:EditPriority }
-and IntFieldMetadata = { Self:FieldMetadata; Field:IntFieldDescriptor }
-and RefFieldMetadata = { Self:FieldMetadata; Field:RefFieldDescriptor }
-and ReadonlyIntFieldMetadata = { Self:FieldMetadata; Field:ReadonlyIntFieldDescriptor }
-and SingletonIntFieldMetadata = { Self:FieldMetadata; Field:SingletonIntFieldDescriptor }
+and IntFieldMetadata = { Self:FieldMetadata; Field:FieldDescriptorId }
+and RefFieldMetadata = { Self:FieldMetadata; Field:FieldDescriptorId }
+and ReadonlyIntFieldMetadata = { Self:FieldMetadata; Field:FieldDescriptorId }
+and SingletonIntFieldMetadata = { Self:FieldMetadata; Field:FieldDescriptorId }
 
 and FieldDescriptorId = { FieldDescriptorId:Guid; FieldName:string }
 and FieldDescriptor = { 
   FieldDescriptorId:Guid; 
   FieldName:string;
+  Type:Unit -> ExprType
   Get:Guid -> Option<Value>; 
-  // GetAsInt:Guid -> Option<int>; 
-  // GetAsRef:Guid -> Option<Guid>; 
+  Update:{| 
+    AsInt:EntityIdentifier -> Updater<int> -> FieldUpdateResult;
+    AsRef:EntityIdentifier -> Updater<Guid> -> FieldUpdateResult;
+    AsRefs:EntitiesIdentifiers -> Updater<Guid> -> FieldUpdateResult;
+ |}
 }
 and FieldUpdateResult = | ValueChanged = 0 | ValueStayedTheSame = 1 | Failure = 2
-and IntFieldDescriptor = { 
-  Self:FieldDescriptor; 
-  Get:obj -> Option<int>; 
-  Update:EntitiesIdentifiers -> Updater<int> -> FieldUpdateResult }
-and RefFieldDescriptor = { 
-  Self:FieldDescriptor; 
-  Get:obj -> Option<Guid>; 
-  Update:EntitiesIdentifiers -> Updater<Guid> -> FieldUpdateResult 
-}
-and ReadonlyIntFieldDescriptor = { 
-  Self:FieldDescriptor; 
-  Get:obj -> Option<int>; 
-  Update:EntityIdentifier -> Updater<int> -> FieldUpdateResult 
-}
-and SingletonIntFieldDescriptor = { 
-  Self:FieldDescriptor; 
-  Get:obj -> Option<int>; 
-  Update:EntityIdentifier -> Updater<int> -> FieldUpdateResult 
-}
+// and IntFieldDescriptor = { 
+//   Self:FieldDescriptor; 
+// }
+// and RefFieldDescriptor = { 
+//   Self:FieldDescriptor; 
+// }
+// and ReadonlyIntFieldDescriptor = { 
+//   Self:FieldDescriptor; 
+// }
+// and SingletonIntFieldDescriptor = { 
+//   Self:FieldDescriptor; 
+// }
 
 and FieldEventBase = { FieldEventId:Guid; EntityDescriptorId:EntityDescriptorId; Assignment:Assignment }
 and IntFieldEvent = { Self:FieldEventBase; Targets:EntitiesIdentifiers }
@@ -109,13 +93,6 @@ and Expr =
   | FieldLookup of Expr * List<FieldDescriptorId>
   | Exists of string * EntityDescriptorId * Expr
   | SumBy of string * EntityDescriptorId * Expr
-  with 
-    static member (+) (e1:Expr, e2:Expr) =
-      Binary(Plus, e1, e2)
-    static member (=>) (varname:string, fields:List<FieldDescriptorId>) =
-      FieldLookup(Expr.VarLookup varname, fields)
-    static member op_GreaterThan (e1:Expr, e2:Expr) =
-      Binary(GreaterThan, e1, e2)
 and BinaryOperator = Plus | Minus | GreaterThan | Equals | GreaterThanEquals | Times | DividedBy | And | Or
 
 and EntitiesIdentifiers = All | Multiple of Set<Guid>
@@ -128,6 +105,14 @@ and JobsState = {
   edits:Set<Edit>
 }
 
+type Expr with 
+  static member (+) (e1:Expr, e2:Expr) =
+    Binary(Plus, e1, e2)
+  static member (=>) (varname:string, fields:List<FieldDescriptorId>) =
+    FieldLookup(Expr.VarLookup varname, fields)
+  static member op_GreaterThan (e1:Expr, e2:Expr) =
+    Binary(GreaterThan, e1, e2)
+
 type FieldDescriptor with
   member this.ToFieldDescriptorId : FieldDescriptorId = 
     { FieldDescriptorId = this.FieldDescriptorId; FieldName = this.FieldName }
@@ -137,12 +122,12 @@ type EntityDescriptor with
     { EntityDescriptorId=this.EntityDescriptorId; EntityName=this.EntityName }
 
 type RuleDependency with
-  member dep.Predicate (context:Context) (changedEntitiesIds:Set<Guid>) =
+  member dep.Predicate (schema:Schema) (changedEntitiesIds:Set<Guid>) =
     option{
-      let! changedEntityType = context.Schema.tryFindEntity dep.ChangedEntityType
+      let! changedEntityType = schema.tryFindEntity dep.ChangedEntityType
       // do printfn "changedEntityType = %A" (changedEntityType.ToEntityDescriptorId)
       // do Console.ReadLine() |> ignore
-      let! restrictedVariableType = context.Schema.tryFindEntity dep.RestrictedVariableType
+      let! restrictedVariableType = schema.tryFindEntity dep.RestrictedVariableType
       // do printfn "restrictedVariableType = %A" (restrictedVariableType.ToEntityDescriptorId)
       // do Console.ReadLine() |> ignore
       return fun (restrictedVariable:obj) -> 
@@ -161,14 +146,14 @@ type RuleDependency with
 
 
 type RuleDependencies with
-  member deps.PredicatesByRestrictedVariable (context:Context) (changedEntitiesIds:Set<Guid>) =
+  member deps.PredicatesByRestrictedVariable (schema:Schema) (changedEntitiesIds:Set<Guid>) =
     let (||.) = fun p1 p2 -> fun (o:obj) -> p1 o || p2 o
     let dependencies = deps.dependencies |> Map.values
     let dependencies = 
       seq{
         for depsByChangeType in dependencies do
         for dep in depsByChangeType do
-        yield [dep.RestrictedVariable, [dep.Predicate context changedEntitiesIds]] |> Map.ofList
+        yield [dep.RestrictedVariable, [dep.Predicate schema changedEntitiesIds]] |> Map.ofList
       } 
     dependencies
       |> Map.mergeMany (fun l1 l2 -> l1 @ l2)

@@ -43,8 +43,6 @@ let eval (variableRestriction:Option<VarName * (obj -> bool)>) (context:Context)
           | (vars', Value.ConstGuid (entityId)) ->
             for value in fieldDescriptor.Get entityId |> Option.toList do
               let res = (vars', value |> Expr.Value) |> remainingLookup
-              do printfn "field lookup %A -> %A" ([e,fields]) res
-              do Console.ReadLine() |> ignore
               yield! res
           | _ -> 
             do printfn "unsupported field lookup %A -> %A" ([e,fields]) res1

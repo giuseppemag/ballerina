@@ -33,7 +33,7 @@ let rec executeRulesTransitively
       match changedIds with
       | All -> Map.empty
       | Multiple changedIds ->
-        ruleDependencies.PredicatesByRestrictedVariable context changedIds
+        ruleDependencies.PredicatesByRestrictedVariable context.Schema changedIds
     // do printfn "predicatesByRestrictedVariable = %A" predicatesByRestrictedVariable
     // do Console.ReadLine() |> ignore
     let firstVar = scopeSeq businessRule.Condition |> Seq.tryHead |> Option.map(fun v -> { VarName = v.varName })

@@ -25,18 +25,8 @@ let typeCheck (schema:Schema) (vars:VarTypes) : Expr -> Option<ExprType * VarTyp
         let! varType,vars' = eval vars var
         match varType with
         | LookupType entityDescriptor -> 
-          if entityDescriptor.EntityDescriptorId = schema.AB.Entity.EntityDescriptorId then
-            if field.FieldDescriptorId = schema.AB.ACount.Self.FieldDescriptorId then
-              return PrimitiveType IntType, vars'
-            else if field.FieldDescriptorId = schema.AB.BCount.Self.FieldDescriptorId then
-              return PrimitiveType IntType, vars'
-            else if field.FieldDescriptorId = schema.AB.CD.Self.FieldDescriptorId then
-              return LookupType { EntityDescriptorId=schema.CD.Entity.EntityDescriptorId; EntityName="CD" }, vars'
-          else if entityDescriptor.EntityDescriptorId = schema.CD.Entity.EntityDescriptorId then
-            if field.FieldDescriptorId = schema.CD.CCount.Self.FieldDescriptorId then
-              return PrimitiveType IntType, vars'
-          else
-            failwith "only entities AB and CD supported for now"
+          let! fieldDescriptor = schema.tryFindField field
+          return fieldDescriptor.Type(), vars'
         | PrimitiveType _ -> ()
       }
     | positions.model.Expr.FieldLookup(var, field::fields) -> 
