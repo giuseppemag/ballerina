@@ -90,14 +90,7 @@ Todo (✅/❌)
             ✅ basic eval expr
             ✅ basic eval assignment
             ❌ cleanup
-              ❌ move eval, all merge*, and the whole abcdjobs to ballerina-core
-                ❌ including the folder business-rules
-              ❌ `mergeExecutedRules` is just an instantiation of `Map.merge`
               ❌ move the various merge* utilities to extension methods
-              ❌ `executeRulesTransitively` uses poorly defined (read: inline records) `XId` entities, refactor to proper records
-              ✅ introduce a `FieldDescriptorId`
-              ✅ remove schema.AB, schema.CD and only use the tryFindEntity, tryFindField methods
-              ✅ remove any reference to the context, only use the schema when evaluating or executing
               ❌ the field descriptor definitions should use the operations from other field descriptors, and not perform any comparisons to entity descriptors Ids
                 ❌ the lookup of fields from ABs and CDs in the definition of the AB/CD entity schema is particularly bad
                 ❌ the assignment of fields to ABs and CDs in the definition of the AB/CD entity schema is particularly bad
@@ -105,6 +98,13 @@ Todo (✅/❌)
                 ❌ in particular, `Expr::execute` does not take into account more than one field lookup on the assigned variable, extend
               ❌ distribute the various field updaters along the typed `XFieldDescriptor`, every entity should have the map of fields by type
               ❌ rename `positions` to `abcd`
+              ✅ move eval, all merge*, and the whole abcdjobs to ballerina-core
+                ✅ including the folder business-rules
+              ✅ `mergeExecutedRules` is just an instantiation of `Map.merge`
+              ✅ `executeRulesTransitively` uses poorly defined (read: inline records) `XId` entities, refactor to proper records
+              ✅ introduce a `FieldDescriptorId`
+              ✅ remove schema.AB, schema.CD and only use the tryFindEntity, tryFindField methods
+              ✅ remove any reference to the context, only use the schema when evaluating or executing
               ✅ any comparison to `schema.AB.Entity`, `schema.CD.Entity` and so on should be removed
               ✅ any iteration of all `ABs` or `CDs` should be removed
               ✅ the application of a field update after the coroutine triggers on the event is particularly bad
@@ -120,15 +120,15 @@ Todo (✅/❌)
                 ✅ saving and resetting the state
                 ✅ define int-processing coroutine
                 ❌ then the business rules are evaluated
+                  ❌ verify that there actually is no loop
+                    ❌ loops involve same rule, same entity, same field
+                    ❌ test with an actual loop
+                  ❌ how does `getCandidateRules` behave when dealing with an update on an intermediate field lookup of a long chain, like `this.Total:=this.A+this.B+this.CD.EF.E`?
                   ✅ only mark a field as dirty if the field value has actually changed
                     ✅ do this in field description' `update`
                   ✅ add an `Exists` predicate and remove the `TargetEntity` from the business rules
                   ✅ let rec getLookups (e:Expr) : Set<Var x List<FieldDescriptor>> = ...
                   ✅ let's turn the lookup into a Var x List<FieldDescriptor>
-                  ❌ verify that there actually is no loop
-                    ❌ loops involve same rule, same entity, same field
-                    ❌ test with an actual loop
-                  ❌ how does `getCandidateRules` behave when dealing with an update on an intermediate field lookup of a long chain, like `this.Total:=this.A+this.B+this.CD.EF.E`?
                   ✅ the rules are applied to all entities of a given type, but this must be limited in scope to the entities that actually changed in the target
                   ✅ `execute` of `Assignment` does not take into account assignments like `this.CD.EF.E = this.A - this.B`
                     ✅ a rule has a scope: ReadEntity x ReadField -> { Path x WrittenEntity(var name in conditional) x WrittenField }

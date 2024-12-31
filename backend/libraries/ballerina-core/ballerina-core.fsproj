@@ -19,6 +19,8 @@
     <Compile Include="business rule engine/expr/typeCheck.fs" />
     <Compile Include="business rule engine/expr/eval.fs" />
     <Compile Include="business rule engine/expr/execute.fs" />
+    <Compile Include="business rule engine/rule/preprocess.fs" />
+    <Compile Include="business rule engine/rule/execute.fs" />
   </ItemGroup>
 
   <ItemGroup>

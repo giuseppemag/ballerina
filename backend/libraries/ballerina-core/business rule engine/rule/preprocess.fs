@@ -1,13 +1,12 @@
-module abcdsample.rules.preprocess
+module Ballerina.BusinessRulePreprocessor
 
 open System
 open System.Linq
-open positions.model
 open Ballerina.Fun
 open Ballerina.Coroutines
 open Ballerina.BusinessRules
 open Ballerina.BusinessRuleEvaluation
-open abcdsample
+open Ballerina.Collections.Map
 
 let getCandidateRules 
   (allBusinessRules:Map<Guid, BusinessRule>)
@@ -55,18 +54,4 @@ let rec overlap (rules1:Map<BusinessRuleId, EntitiesIdentifiers>)
 
 let rec mergeExecutedRules (rules1:Map<BusinessRuleId, EntitiesIdentifiers>)
   (rules2:Map<BusinessRuleId, EntitiesIdentifiers>) = 
-  if rules2 |> Map.isEmpty then rules1
-  else 
-    let first = rules1 |> Seq.tryHead
-    match first with
-    | Some first ->
-      let rules1 = rules1 |> Map.remove first.Key
-      let mergedTargets = 
-        seq{
-          yield first.Value
-          for target in rules2 |> Map.tryFind first.Key |> Option.toList do
-            yield target
-        } |> Seq.reduce mergeEntitiesIdentifiers
-      let rules2 = rules1 |> Map.add first.Key mergedTargets
-      mergeExecutedRules rules1 rules2
-    | None -> rules2
+  rules1 |> Map.merge rules2 mergeEntitiesIdentifiers

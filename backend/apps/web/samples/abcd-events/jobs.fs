@@ -7,8 +7,7 @@ open Ballerina.Coroutines
 open Ballerina.BusinessRules
 open Ballerina.BusinessRuleExecution
 open context
-open abcdsample
-open abcdsample.rules.execute
+open Ballerina.BusinessRuleTransitiveExecution
 
 let abcdEventLoop() = 
   let mutable context:Context = init_abcdContext()

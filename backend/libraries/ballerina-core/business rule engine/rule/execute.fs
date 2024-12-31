@@ -1,14 +1,12 @@
-module abcdsample.rules.execute
+module Ballerina.BusinessRuleTransitiveExecution
 open System
 open System.Linq
-open positions.model
 open Ballerina.Fun
 open Ballerina.Coroutines
 open Ballerina.BusinessRules
 open Ballerina.BusinessRuleExecution
 open Ballerina.BusinessRuleEvaluation
-open abcdsample
-open abcdsample.rules.preprocess
+open Ballerina.BusinessRulePreprocessor
 
 let rec executeRulesTransitively 
   (allBusinessRules:Map<Guid, BusinessRule>)
