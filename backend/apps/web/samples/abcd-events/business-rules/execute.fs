@@ -4,29 +4,29 @@ open System.Linq
 open positions.model
 open Ballerina.Fun
 open Ballerina.Coroutines
+open Ballerina.BusinessRules
+open Ballerina.BusinessRuleExecution
+open Ballerina.BusinessRuleEvaluation
 open abcdsample
-open execute
 open abcdsample.rules.preprocess
-open abcdsample.eval
 
 let rec executeRulesTransitively 
   (allBusinessRules:Map<Guid, BusinessRule>)
   (schema:Schema)
-  (executedRules:Map<{| BusinessRuleId:Guid |}, {| Target:EntitiesIdentifiers |}>) 
-  (modifiedFields:Map<{| FieldDescriptorId:Guid |}, {| Target:EntitiesIdentifiers |}>) = 
+  (executedRules:Map<BusinessRuleId, EntitiesIdentifiers>) 
+  (modifiedFields:Map<FieldDescriptorId, EntitiesIdentifiers>) = 
   let candidateRules = getCandidateRules allBusinessRules (modifiedFields |> Map.keys |> Set.ofSeq)
-  let mutable modifiedFields':Map<{| FieldDescriptorId:Guid |}, {| Target:EntitiesIdentifiers |}> = 
-    Map.empty
-  let mutable executedRules':Map<{| BusinessRuleId:Guid |}, {| Target:EntitiesIdentifiers |}> = Map.empty
+  let mutable modifiedFields':Map<FieldDescriptorId, EntitiesIdentifiers> = Map.empty
+  let mutable executedRules':Map<BusinessRuleId, EntitiesIdentifiers> = Map.empty
   for (businessRule, relevantModifiedFieldIds) in candidateRules do
-    let businessRuleId = {| BusinessRuleId=businessRule.BusinessRuleId |}
+    let businessRuleId = businessRule.ToBusinessRuleId
     let ruleDependencies = businessRule.Dependencies schema (modifiedFields |> Map.keys |> Set.ofSeq)
     // do printfn "ruleDependencies = %A" ruleDependencies
     // do Console.ReadLine() |> ignore
     let changedIds = 
       seq{
         for relevantModifiedFieldId in relevantModifiedFieldIds do
-        yield! modifiedFields |> Map.tryFind relevantModifiedFieldId |> Option.map (fun e -> e.Target) |> Option.toList
+        yield! modifiedFields |> Map.tryFind relevantModifiedFieldId |> Option.toList
       } |> Seq.fold mergeEntitiesIdentifiers (EntitiesIdentifiers.Multiple Set.empty)    
     // do printfn "changedIds = %A" changedIds
     // do Console.ReadLine() |> ignore
@@ -37,10 +37,10 @@ let rec executeRulesTransitively
         ruleDependencies.PredicatesByRestrictedVariable schema changedIds
     // do printfn "predicatesByRestrictedVariable = %A" predicatesByRestrictedVariable
     // do Console.ReadLine() |> ignore
-    let firstVar = scopeSeq businessRule.Condition |> Seq.tryHead |> Option.map(fun v -> { VarName = v.varName })
+    let firstVar = scopeSeq businessRule.Condition |> Seq.tryHead
     // do printfn "firstVar = %A" firstVar
     // do Console.ReadLine() |> ignore
-    let firstRestriction:Option<VarName * (obj -> bool)> = firstVar |> Option.map (fun v -> predicatesByRestrictedVariable |> Map.tryFind v.VarName |> Option.map (fun predicate -> v, predicate)) |> Option.flatten
+    let firstRestriction:Option<VarName * (obj -> bool)> = firstVar |> Option.map (fun v -> predicatesByRestrictedVariable |> Map.tryFind v.varName |> Option.map (fun predicate -> v.varName, predicate)) |> Option.flatten
     // do printfn "firstRestriction = %A" firstRestriction
     // do Console.ReadLine() |> ignore
     let results = eval firstRestriction schema Map.empty businessRule.Condition
@@ -48,24 +48,24 @@ let rec executeRulesTransitively
       match result with
       | Value.ConstBool true ->
         for a in businessRule.Actions do
-          let modifiedFieldsByRuleVariants:list<Map<{| FieldDescriptorId:Guid |}, {| Target:EntitiesIdentifiers |}>> = execute schema vars a
+          let modifiedFieldsByRuleVariants:list<Map<FieldDescriptorId, EntitiesIdentifiers>> = execute schema vars a
           for modifiedFieldsByRule in modifiedFieldsByRuleVariants do
             let allModifiedTargets = 
               seq{
                 if executedRules' |> Map.containsKey businessRuleId then
-                  yield executedRules'.[businessRuleId].Target
+                  yield executedRules'.[businessRuleId]
                 for modifiedField in modifiedFieldsByRule do
-                  yield modifiedField.Value.Target 
+                  yield modifiedField.Value
               } |> Seq.reduce mergeEntitiesIdentifiers
-            executedRules' <- executedRules' |> Map.add businessRuleId {| Target=allModifiedTargets |}
+            executedRules' <- executedRules' |> Map.add businessRuleId allModifiedTargets
             for modifiedField in modifiedFieldsByRule do
-              if modifiedFields' |> Map.containsKey {| FieldDescriptorId=modifiedField.Key.FieldDescriptorId |} |> not then
+              if modifiedFields' |> Map.containsKey modifiedField.Key |> not then
                 modifiedFields' <- 
-                  modifiedFields' |> Map.add {| FieldDescriptorId=modifiedField.Key.FieldDescriptorId |} {| Target=modifiedField.Value.Target |}
+                  modifiedFields' |> Map.add modifiedField.Key modifiedField.Value
               else 
-                let mergedTarget = mergeEntitiesIdentifiers (modifiedFields'.[modifiedField.Key].Target) modifiedField.Value.Target
+                let mergedTarget = mergeEntitiesIdentifiers (modifiedFields'.[modifiedField.Key]) modifiedField.Value
                 modifiedFields' <- 
-                  modifiedFields' |> Map.add {| FieldDescriptorId=modifiedField.Key.FieldDescriptorId |} {| Target=mergedTarget |}                
+                  modifiedFields' |> Map.add modifiedField.Key mergedTarget
               ()
             ()
       | _ -> ()

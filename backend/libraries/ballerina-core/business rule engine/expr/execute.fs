@@ -1,13 +1,13 @@
-module abcdsample.execute
+module Ballerina.BusinessRuleExecution
 
 open System
 open System.Linq
-open positions.model
 open Ballerina.Fun
 open Ballerina.Coroutines
-open eval
+open Ballerina.BusinessRules
+open Ballerina.BusinessRuleEvaluation
 
-let execute (schema:Schema) (vars:Vars) (assignment:Assignment) : list<Map<{| FieldDescriptorId:Guid |}, {| Target:EntitiesIdentifiers |}>> =
+let execute (schema:Schema) (vars:Vars) (assignment:Assignment) : list<Map<FieldDescriptorId, EntitiesIdentifiers>> =
   match assignment.Variable, eval None schema vars assignment.Value with
   | (assignedVar, [fieldDescriptorId]), values ->
     [
@@ -24,10 +24,10 @@ let execute (schema:Schema) (vars:Vars) (assignment:Assignment) : list<Map<{| Fi
             match value with
             | Value.ConstInt i ->
               if fieldDescriptor.Update.AsInt (One entityId) (replaceWith i) = FieldUpdateResult.ValueChanged then
-                yield [({| FieldDescriptorId=fieldDescriptorId.FieldDescriptorId |}, {| Target=Multiple(Set.singleton entityId); |})] |> Map.ofList
+                yield [(fieldDescriptorId, Multiple(Set.singleton entityId))] |> Map.ofList
             | Value.ConstGuid id ->
               if fieldDescriptor.Update.AsRef (One entityId) (replaceWith id) = FieldUpdateResult.ValueChanged then
-                yield [({| FieldDescriptorId=fieldDescriptorId.FieldDescriptorId |}, {| Target=Multiple(Set.singleton entityId); |})] |> Map.ofList
+                yield [(fieldDescriptorId, Multiple(Set.singleton entityId))] |> Map.ofList
             | _ -> ()
           | _ -> ()
     ]

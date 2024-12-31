@@ -1,20 +1,20 @@
-module abcdsample.eval
+module Ballerina.BusinessRuleEvaluation
 
 open System
 open System.Linq
-open positions.model
-open typeCheck
 open Ballerina.Fun
 open Ballerina.Coroutines
 open Ballerina.Option
+open Ballerina.BusinessRules
+open Ballerina.BusinessRuleTypeChecking
 
 let eval (variableRestriction:Option<VarName * (obj -> bool)>) (schema:Schema) (vars:Vars) : Expr -> list<Vars * Value> =
-  let rec eval (vars:Vars) (e:positions.model.Expr) : list<Vars * Value> =
+  let rec eval (vars:Vars) (e:Expr) : list<Vars * Value> =
     match e with
-    | positions.model.Expr.Exists(varName, entityDescriptorId, condition) -> 
+    | Exists(varName, entityDescriptorId, condition) -> 
       let restriction = 
         match variableRestriction with
-        | Some(restrictedVarName, predicate) when varName = restrictedVarName.VarName -> 
+        | Some(restrictedVarName, predicate) when varName = restrictedVarName -> 
           predicate
         | _ -> fun o -> true
       [
@@ -30,10 +30,10 @@ let eval (variableRestriction:Option<VarName * (obj -> bool)>) (schema:Schema) (
             | _ -> ()
         ]
       ]
-    | positions.model.Expr.VarLookup v when vars |> Map.containsKey v -> 
+    | VarLookup v when vars |> Map.containsKey v -> 
       [vars, (Value.Var (vars.[v]))]
-    | positions.model.Expr.FieldLookup(var, []) -> eval vars var
-    | positions.model.Expr.FieldLookup(var, field::fields) -> 
+    | FieldLookup(var, []) -> eval vars var
+    | FieldLookup(var, field::fields) -> 
       let remainingLookup (vars,e) = eval vars (Expr.FieldLookup(e, fields))
       [
         for fieldDescriptor in schema.tryFindField field |> Option.toList do
@@ -49,8 +49,8 @@ let eval (variableRestriction:Option<VarName * (obj -> bool)>) (schema:Schema) (
             do Console.ReadLine() |> ignore
             ()
       ]
-    | positions.model.Expr.Value v -> [vars, v]
-    | positions.model.Expr.Binary(Plus, e1, e2) -> 
+    | Value v -> [vars, v]
+    | Binary(Plus, e1, e2) -> 
       [
         for vars', (i1,i2) in eval2AsInt vars e1 e2 do
           yield vars', Value.ConstInt(i1+i2)
@@ -74,7 +74,7 @@ let rec lookedUpFieldDescriptors (e:Expr) =
   | Expr.FieldLookup(e, []) -> !e
   | Expr.FieldLookup((Expr.VarLookup varname) as e, f::fs) -> 
     seq{
-        yield Set.singleton {| VarName=varname; FieldDescriptorId=f.FieldDescriptorId |}
+        yield Set.singleton {| VarName=varname; FieldDescriptorId=f |}
         yield !Expr.FieldLookup(e, fs)
     } |> Set.unionMany
   | Expr.Binary(_, e1, e2) -> !e1 |> Set.union !e2
@@ -126,7 +126,7 @@ let rec fieldLookups (e:Expr) =
   | _ -> Set.empty
 
 type BusinessRule with
-  member rule.Dependencies : Schema -> Set<{| FieldDescriptorId:Guid |}> -> RuleDependencies = fun schema changedFields ->
+  member rule.Dependencies : Schema -> Set<FieldDescriptorId> -> RuleDependencies = fun schema changedFields ->
     // let variables = scope rule.Condition |> Seq.map (fun v -> v.varName, v.entityType) |> Map.ofSeq
     let conditionType = typeCheck schema Map.empty rule.Condition
     match conditionType with
@@ -161,7 +161,7 @@ type BusinessRule with
                     RestrictedVariableType = varType
                     PathFromVariableToChange = lookupFields
                   }
-                  if changedFields |> Set.contains {| FieldDescriptorId=dependency.ChangedField.FieldDescriptorId |} then
+                  if changedFields |> Set.contains dependency.ChangedField then
                     yield dependency
                 | _ -> failwithf "Cannot typecheck lookup path %A" (Expr.FieldLookup(Expr.VarLookup varName, lookupFields)) 
                 // and RuleDependency = { ChangedEntityType:EntityDescriptor; RestrictedVariable:string; RestrictedVariableType:EntityDescriptor; PathFromVariableToChange:List<FieldDescriptor> }

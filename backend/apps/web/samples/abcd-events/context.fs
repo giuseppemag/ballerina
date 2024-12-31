@@ -4,11 +4,12 @@ module abcdsample.context
 open System
 open System.Linq
 open positions.model
-open abcdsample.typeCheck
-open abcdsample.eval
 open Ballerina.Fun
 open Ballerina.Coroutines
 open Ballerina.Option
+open Ballerina.BusinessRules
+open Ballerina.BusinessRuleEvaluation
+open Ballerina.BusinessRuleTypeChecking
 
 let init_abcdContext() = 
   let mutable ABs:Map<Guid,AB> = Map.empty
@@ -208,17 +209,18 @@ let init_abcdContext() =
       ab2
     ] |> Seq.map (fun e -> (e.ABId, e)) |> Map.ofSeq
 
+  let (!) (varname:string) = { VarName = varname }
   let (=>) (varname:string) (fields:List<FieldDescriptorId>) =
-      FieldLookup(Expr.VarLookup varname, fields)
+      FieldLookup(Expr.VarLookup !varname, fields)
   let totalABC:BusinessRule = 
     { 
       BusinessRuleId = Guid.NewGuid(); 
       Name = "Total = A+B+C"; Priority = BusinessRulePriority.System; 
-      Condition = Expr.Exists("this", ABEntity.ToEntityDescriptorId, Expr.Value (Value.ConstBool true)); 
+      Condition = Expr.Exists(!"this", ABEntity.ToEntityDescriptorId, Expr.Value (Value.ConstBool true)); 
       Actions=[
         { 
           // this.TotalABC := this.ACount + this.BCount + this.CD.CCount
-          Variable = "this", [TotalABC.ToFieldDescriptorId]
+          Variable = !"this", [TotalABC.ToFieldDescriptorId]
           Value=("this" => [ACount.ToFieldDescriptorId])
             + ("this" => [BCount.ToFieldDescriptorId])
             + ("this" => [CD.ToFieldDescriptorId; CCount.ToFieldDescriptorId])
@@ -241,7 +243,7 @@ let init_abcdContext() =
               FieldEventId = Guid.NewGuid(); 
               EntityDescriptorId = ABEntity.ToEntityDescriptorId
               Assignment = {
-                Variable = ("this", [ACount.ToFieldDescriptorId])
+                Variable = (!"this", [ACount.ToFieldDescriptorId])
                 Value=("this" => [ACount.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 10))
               }
             }; 

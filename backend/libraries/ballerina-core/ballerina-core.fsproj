@@ -15,6 +15,10 @@
     <Compile Include="collections/map/model.fs" />
     <Compile Include="coroutine/model.fs" />
     <Compile Include="coroutine/runner.fs" />
+    <Compile Include="business rule engine/model.fs" />
+    <Compile Include="business rule engine/expr/typeCheck.fs" />
+    <Compile Include="business rule engine/expr/eval.fs" />
+    <Compile Include="business rule engine/expr/execute.fs" />
   </ItemGroup>
 
   <ItemGroup>

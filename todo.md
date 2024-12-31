@@ -90,25 +90,28 @@ Todo (✅/❌)
             ✅ basic eval expr
             ✅ basic eval assignment
             ❌ cleanup
-              ❌ there are various places where we assume `One entityId`, is this always reasonable?
-              ❌ rename `positions` to `abcd`
+              ❌ move eval, all merge*, and the whole abcdjobs to ballerina-core
+                ❌ including the folder business-rules
+              ❌ `mergeExecutedRules` is just an instantiation of `Map.merge`
+              ❌ move the various merge* utilities to extension methods
               ❌ `executeRulesTransitively` uses poorly defined (read: inline records) `XId` entities, refactor to proper records
               ✅ introduce a `FieldDescriptorId`
-              ❌ distribute the various field updaters along the typed `XFieldDescriptor`, every entity should have the map of fields by type
               ✅ remove schema.AB, schema.CD and only use the tryFindEntity, tryFindField methods
               ✅ remove any reference to the context, only use the schema when evaluating or executing
               ❌ the field descriptor definitions should use the operations from other field descriptors, and not perform any comparisons to entity descriptors Ids
                 ❌ the lookup of fields from ABs and CDs in the definition of the AB/CD entity schema is particularly bad
                 ❌ the assignment of fields to ABs and CDs in the definition of the AB/CD entity schema is particularly bad
-              ❌ `Expr::execute` does not take into account more than one field lookup on the assigned variable, extend
+              ❌ there are various places where we assume `One entityId`, is this always reasonable?
+                ❌ in particular, `Expr::execute` does not take into account more than one field lookup on the assigned variable, extend
+              ❌ distribute the various field updaters along the typed `XFieldDescriptor`, every entity should have the map of fields by type
+              ❌ rename `positions` to `abcd`
               ✅ any comparison to `schema.AB.Entity`, `schema.CD.Entity` and so on should be removed
               ✅ any iteration of all `ABs` or `CDs` should be removed
               ✅ the application of a field update after the coroutine triggers on the event is particularly bad
               ✅ fields should be able to GET from the entityId and the context
-              ❌ fields should be able to SET from the entityId and the context
+              ✅ fields should be able to SET from the entityId and the context
               ✅ RuleDependency::Predicate is inefficienct, a lot of things can be precomputed
-              ❌ the type `VarName` should be used everywhere instead of `string`
-              ❌ the setup of the `schema`, and in particular the `GetId` and `Lookup` methods, looks like crap
+              ✅ the type `VarName` should be used everywhere instead of `string`
             ❌ activate business rules after a field update
               ❌ define coroutines for processing events and applying field set operations
                 ✅ implement the ugly switch-case for the event application after event matching
@@ -147,7 +150,6 @@ Todo (✅/❌)
                       ✅ when this set is empty, we stop
                       ✅ otherwise, we repeat the process
             ❌ remove every single instance of mutation
-            ❌ move eval, all merge*, and the whole abcdjobs to ballerina-core
           ❌ testing scenario
             ✅ add a setA event, see that the Total changes
             ❌ add a setB event, see that the Total changes

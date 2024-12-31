@@ -4,10 +4,10 @@ open System.Linq
 open positions.model
 open Ballerina.Fun
 open Ballerina.Coroutines
+open Ballerina.BusinessRules
+open Ballerina.BusinessRuleExecution
 open context
-open eval
 open abcdsample
-open execute
 open abcdsample.rules.execute
 
 let abcdEventLoop() = 
@@ -25,7 +25,7 @@ let abcdEventLoop() =
         let! context = co.GetContext()
         let vars:Vars = 
           [
-            "this", (e.Self.EntityDescriptorId, e.Target)
+            { VarName = "this" }, (e.Self.EntityDescriptorId, e.Target)
           ] |> Map.ofList
         let! modifiedFields = co.Do(fun ctx -> execute ctx.Schema vars e.Self.Assignment)
         do printfn "modifiedFields %A" modifiedFields

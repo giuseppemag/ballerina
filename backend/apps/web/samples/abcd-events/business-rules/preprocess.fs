@@ -5,13 +5,13 @@ open System.Linq
 open positions.model
 open Ballerina.Fun
 open Ballerina.Coroutines
+open Ballerina.BusinessRules
+open Ballerina.BusinessRuleEvaluation
 open abcdsample
-open execute
-open abcdsample.eval
 
 let getCandidateRules 
   (allBusinessRules:Map<Guid, BusinessRule>)
-  (modifiedFields:Set<{| FieldDescriptorId:Guid |}>) = 
+  (modifiedFields:Set<FieldDescriptorId>) = 
   seq{
     for br in allBusinessRules |> Map.values do
       let fields = 
@@ -19,7 +19,7 @@ let getCandidateRules
           yield lookedUpFieldDescriptors br.Condition
           for a in br.Actions do
             yield lookedUpFieldDescriptors a.Value
-        }) |> Set.map (fun e -> {| FieldDescriptorId = e.FieldDescriptorId |})
+        }) |> Set.map (fun e -> e.FieldDescriptorId)
       let intersectingFields = fields |> Set.intersect modifiedFields
       if intersectingFields |> Set.isEmpty |> not then
         yield br, intersectingFields
@@ -31,18 +31,18 @@ let mergeEntitiesIdentifiers (entities1:EntitiesIdentifiers) (entities2:Entities
   | _, All -> All
   | Multiple ids1, Multiple ids2 -> Multiple(Set.union ids1 ids2)
 
-let rec overlap (rules1:Map<{| BusinessRuleId:Guid |}, {| Target:EntitiesIdentifiers |}>)
-  (rules2:Map<{| BusinessRuleId:Guid |}, {| Target:EntitiesIdentifiers |}>) = 
+let rec overlap (rules1:Map<BusinessRuleId, EntitiesIdentifiers>)
+  (rules2:Map<BusinessRuleId, EntitiesIdentifiers>) = 
   if rules2 |> Map.isEmpty then false
   else 
     let first = rules1 |> Seq.tryHead
     match first with
     | Some first ->
       let rules1 = rules1 |> Map.remove first.Key
-      let target1 = first.Value.Target
+      let target1 = first.Value
       match rules2 |> Map.tryFind first.Key with
       | Some target2 ->
-        let target2 = target2.Target
+        let target2 = target2
         match target1, target2 with
         | All, _ | _,All -> true
         | Multiple target1, Multiple target2 -> 
@@ -53,8 +53,8 @@ let rec overlap (rules1:Map<{| BusinessRuleId:Guid |}, {| Target:EntitiesIdentif
       | None -> overlap rules1 rules2
     | None -> false
 
-let rec mergeExecutedRules (rules1:Map<{| BusinessRuleId:Guid |}, {| Target:EntitiesIdentifiers |}>)
-  (rules2:Map<{| BusinessRuleId:Guid |}, {| Target:EntitiesIdentifiers |}>) = 
+let rec mergeExecutedRules (rules1:Map<BusinessRuleId, EntitiesIdentifiers>)
+  (rules2:Map<BusinessRuleId, EntitiesIdentifiers>) = 
   if rules2 |> Map.isEmpty then rules1
   else 
     let first = rules1 |> Seq.tryHead
@@ -63,10 +63,10 @@ let rec mergeExecutedRules (rules1:Map<{| BusinessRuleId:Guid |}, {| Target:Enti
       let rules1 = rules1 |> Map.remove first.Key
       let mergedTargets = 
         seq{
-          yield first.Value.Target
+          yield first.Value
           for target in rules2 |> Map.tryFind first.Key |> Option.toList do
-            yield target.Target
+            yield target
         } |> Seq.reduce mergeEntitiesIdentifiers
-      let rules2 = rules1 |> Map.add first.Key {| Target=mergedTargets |}
+      let rules2 = rules1 |> Map.add first.Key mergedTargets
       mergeExecutedRules rules1 rules2
     | None -> rules2
