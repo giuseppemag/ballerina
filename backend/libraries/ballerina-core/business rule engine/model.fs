@@ -11,7 +11,9 @@ and EntityDescriptor = {
   EntityName:string; 
   GetId:obj -> Option<Guid>; 
   Lookup:obj * List<FieldDescriptorId> -> Option<obj>;
-  GetEntities:Unit -> List<obj> }
+  GetEntities:Unit -> List<obj> 
+  GetFieldDescriptors:Unit -> List<FieldDescriptor>
+}
 
 and FieldMetadata = { FieldMetadataId:Guid; Approval:bool; CurrentEditPrio:EditPriority }
 and IntFieldMetadata = { Self:FieldMetadata; Field:FieldDescriptorId }
@@ -24,6 +26,7 @@ and FieldDescriptor = {
   FieldDescriptorId:Guid; 
   FieldName:string;
   Type:Unit -> ExprType
+  Lookup:obj -> Option<Value>; 
   Get:Guid -> Option<Value>; 
   Update:{| 
     AsInt:EntityIdentifier -> Updater<int> -> FieldUpdateResult;

@@ -25,7 +25,7 @@ let rec executeRulesTransitively
       seq{
         for relevantModifiedFieldId in relevantModifiedFieldIds do
         yield! modifiedFields |> Map.tryFind relevantModifiedFieldId |> Option.toList
-      } |> Seq.fold mergeEntitiesIdentifiers (EntitiesIdentifiers.Multiple Set.empty)    
+      } |> Seq.fold EntitiesIdentifiers.merge (EntitiesIdentifiers.Multiple Set.empty)    
     // do printfn "changedIds = %A" changedIds
     // do Console.ReadLine() |> ignore
     let predicatesByRestrictedVariable = 
@@ -54,23 +54,23 @@ let rec executeRulesTransitively
                   yield executedRules'.[businessRuleId]
                 for modifiedField in modifiedFieldsByRule do
                   yield modifiedField.Value
-              } |> Seq.reduce mergeEntitiesIdentifiers
+              } |> Seq.reduce EntitiesIdentifiers.merge
             executedRules' <- executedRules' |> Map.add businessRuleId allModifiedTargets
             for modifiedField in modifiedFieldsByRule do
               if modifiedFields' |> Map.containsKey modifiedField.Key |> not then
                 modifiedFields' <- 
                   modifiedFields' |> Map.add modifiedField.Key modifiedField.Value
               else 
-                let mergedTarget = mergeEntitiesIdentifiers (modifiedFields'.[modifiedField.Key]) modifiedField.Value
+                let mergedTarget = EntitiesIdentifiers.merge (modifiedFields'.[modifiedField.Key]) modifiedField.Value
                 modifiedFields' <- 
                   modifiedFields' |> Map.add modifiedField.Key mergedTarget
               ()
             ()
       | _ -> ()
-  if overlap executedRules executedRules' then
+  if BusinessRule.overlap executedRules executedRules' then
     None
   else
     if modifiedFields' |> Map.isEmpty then
       Some()
     else
-      executeRulesTransitively allBusinessRules schema (mergeExecutedRules executedRules executedRules') modifiedFields'
+      executeRulesTransitively allBusinessRules schema (BusinessRule.mergeExecutedRules executedRules executedRules') modifiedFields'

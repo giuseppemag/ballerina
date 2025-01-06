@@ -75,7 +75,7 @@ let abcdEventLoop() =
     ()
   let log (dataSource:Unit) =
     Console.Clear() |> ignore
-    printfn "%A" (context.ABs() |> Map.values |> Seq.map (fun ab -> {| ACount = ab.ACount; BCount = ab.BCount; CCount = ab.CD.CCount; Total = ab.TotalABC |}))
+    printfn "%A" (context.ABs() |> Map.values |> Seq.map (fun ab -> {| ACount = ab.A; BCount = ab.B; CCount = ab.CD.C; Total = ab.TotalABC |}))
   let releaseSnapshot (_:Unit) =
     ()
   Ballerina.CoroutinesRunner.runLoop init getSnapshot updateState updateEvents log releaseSnapshot

@@ -3,6 +3,13 @@ open Ballerina.Fun
 open System
 open System.Threading.Tasks
 
+type Option<'a> with
+  static member fromObject : obj -> Option<'a> =
+    function 
+    | null -> None
+    | :? 'a as a -> Some a
+    | _ -> None
+
 type OptionBuilder() = 
   member _.Zero() = 
     Option.None

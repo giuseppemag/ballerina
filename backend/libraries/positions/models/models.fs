@@ -7,14 +7,14 @@ open Ballerina.BusinessRules
 
 type AB = { 
   ABId:Guid; Metadata:EntityMetadata
-  ACount:int; ACountMetadata:SingletonIntFieldMetadata
-  BCount:int; BCountMetadata:SingletonIntFieldMetadata
+  A:int; ACountMetadata:SingletonIntFieldMetadata
+  B:int; BCountMetadata:SingletonIntFieldMetadata
   TotalABC:int; TotalABCMetadata:ReadonlyIntFieldMetadata
   CD:CD; CDMetadata:RefFieldMetadata
 }
 and CD = { 
   CDId:Guid; Metadata:EntityMetadata 
-  CCount:int; CCountMetadata:SingletonIntFieldMetadata
+  C:int; CCountMetadata:SingletonIntFieldMetadata
 }
 and ABCDEvent = SetField of SetFieldEvent
 and Context = {

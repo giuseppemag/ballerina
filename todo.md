@@ -65,6 +65,7 @@ Todo (✅/❌)
           ✅ "blogging" context -> BallerinaContext
           ✅ implement Repeat as a reified construct
           ✅ AB jobs can be separated fully to the AB module with minimal dependencies
+          ❌ refactor `async` to `task`
           ❌ BUG ALERT if translating to production! The Map of events will likely cause events not to be processed in create-order
           ❌ test Spawn
             ❌ remove ugly starting logic, everything is bootstrapped by the endpoint that pushes the CreateABEvent
@@ -90,78 +91,37 @@ Todo (✅/❌)
             ✅ basic eval expr
             ✅ basic eval assignment
             ❌ cleanup
-              ❌ move the various merge* utilities to extension methods
+              ✅ the schema definition should be in a separate file than the context
+              ✅ allFields should be the flattening of allFields of each entity
+              ✅ move the various merge* utilities to extension methods
+              ✅ rename `XCount`, etc. to just `X`
               ❌ the field descriptor definitions should use the operations from other field descriptors, and not perform any comparisons to entity descriptors Ids
-                ❌ the lookup of fields from ABs and CDs in the definition of the AB/CD entity schema is particularly bad
-                ❌ the assignment of fields to ABs and CDs in the definition of the AB/CD entity schema is particularly bad
+                ✅ Get should be based on Lookup
+                ❌ AB and CD should be based on generic containers of fields and nested entities, not real types
+                  ❌ the lookup of fields from ABs and CDs in the definition of the AB/CD entity schema should use the field definition lookup recursively
+                  ❌ the assignment of fields to ABs and CDs in the definition of the AB/CD entity schema should use the field definition assignment recursively
               ❌ there are various places where we assume `One entityId`, is this always reasonable?
                 ❌ in particular, `Expr::execute` does not take into account more than one field lookup on the assigned variable, extend
               ❌ distribute the various field updaters along the typed `XFieldDescriptor`, every entity should have the map of fields by type
               ❌ rename `positions` to `abcd`
-              ✅ move eval, all merge*, and the whole abcdjobs to ballerina-core
-                ✅ including the folder business-rules
-              ✅ `mergeExecutedRules` is just an instantiation of `Map.merge`
-              ✅ `executeRulesTransitively` uses poorly defined (read: inline records) `XId` entities, refactor to proper records
-              ✅ introduce a `FieldDescriptorId`
-              ✅ remove schema.AB, schema.CD and only use the tryFindEntity, tryFindField methods
-              ✅ remove any reference to the context, only use the schema when evaluating or executing
-              ✅ any comparison to `schema.AB.Entity`, `schema.CD.Entity` and so on should be removed
-              ✅ any iteration of all `ABs` or `CDs` should be removed
-              ✅ the application of a field update after the coroutine triggers on the event is particularly bad
-              ✅ fields should be able to GET from the entityId and the context
-              ✅ fields should be able to SET from the entityId and the context
-              ✅ RuleDependency::Predicate is inefficienct, a lot of things can be precomputed
-              ✅ the type `VarName` should be used everywhere instead of `string`
-            ❌ activate business rules after a field update
-              ❌ define coroutines for processing events and applying field set operations
-                ✅ implement the ugly switch-case for the event application after event matching
-                ✅ actual setting of the `Active` coroutines
-                ✅ actual execution of the step
-                ✅ saving and resetting the state
-                ✅ define int-processing coroutine
-                ❌ then the business rules are evaluated
-                  ❌ verify that there actually is no loop
-                    ❌ loops involve same rule, same entity, same field
-                    ❌ test with an actual loop
-                  ❌ how does `getCandidateRules` behave when dealing with an update on an intermediate field lookup of a long chain, like `this.Total:=this.A+this.B+this.CD.EF.E`?
-                  ✅ only mark a field as dirty if the field value has actually changed
-                    ✅ do this in field description' `update`
-                  ✅ add an `Exists` predicate and remove the `TargetEntity` from the business rules
-                  ✅ let rec getLookups (e:Expr) : Set<Var x List<FieldDescriptor>> = ...
-                  ✅ let's turn the lookup into a Var x List<FieldDescriptor>
-                  ✅ the rules are applied to all entities of a given type, but this must be limited in scope to the entities that actually changed in the target
-                  ✅ `execute` of `Assignment` does not take into account assignments like `this.CD.EF.E = this.A - this.B`
-                    ✅ a rule has a scope: ReadEntity x ReadField -> { Path x WrittenEntity(var name in conditional) x WrittenField }
-                    ✅ when a field change is found, we restrict the variables of the existentials to a pre-filtered subset based on the conditions of the rule dependencies, in (||)
-                    ✅ some dependencies cannot be generated from restrictions: when orthogonal variables are part of an assignment but not in a chain. In that case, the rule dependency cannot be created, but it is unclear how this might lift other related restrictions
-                  ✅ we maintain the loop checker `Set<BusinessRuleId x EntityId x FieldDescriptorId>` - the same `BusinessRuleId` cannot enter the set again
-                    ❌ efficiently: with pre-caching of the FREE-VARS of both condition and expression value
-                    ❌ prepare a `co.Any` where each coroutine returns a different `fieldDescriptor x (Target = One | Multiple | All)`
-                  ✅ we evaluate the business rules
-                    ✅ naively: all of them in a loop
-                    ✅ a `BusinessRule` enters the set when its `condition` evaluates to `true`, not just as a candidate
-                    ✅ when the candidate business rules are evaluating, restrict the entities they are evaluated on - for now, we are using the whole collection!
-                    ✅ after field updates occur in a coroutine iteration, track this in the state
-                      ✅ `Set<EntityType x (EntityId | Set<EntityId> | All) x FieldDescriptorId>`
-                      ✅ track the evaluation candidates `Map<FieldDescriptorId, Set<BusinessRuleId>>`
-                    ✅ the subsequent step is to save this value with `co.SetState` in the queue of edited fields
-                      ✅ the queue needs merging: `All + x = x + All = All, One + Multiple = Multiple + One = Multple + Multiple = One + One = Multiple`
-                    ✅ every business rule' assignment causes a new set of updated fields
-                      ✅ when this set is empty, we stop
-                      ✅ otherwise, we repeat the process
-            ❌ remove every single instance of mutation
+              ❌ verify that there actually is no loop
+                ❌ loops involve same rule, same entity, same field
+                ❌ test with an actual loop
+              ❌ how does `getCandidateRules` behave when dealing with an update on an intermediate field lookup of a long chain, like `this.Total:=this.A+this.B+this.CD.EF.E`?
           ❌ testing scenario
             ✅ add a setA event, see that the Total changes
             ❌ add a setB event, see that the Total changes
             ❌ add a setCDRef event, see that the Total changes
             ❌ add a setC event, see that the Total changes (nasty because of the AB-CD relation)
             ❌ extend the schema: CD - EF, CD also has a DCount
-            ❌ rename `XCount`, etc. to just `X`
             ❌ add a setE event, see that the Total changes
             ❌ change all `CD` refs inside a given `AB`
               ❌ the schema for `CD` then needs a `RefsField`
               ❌ complete the scenario of multiple CDs, so that the events can also be EntityEvents such as `Add`, `Delete`, `Move`, etc.
           ❌ make it production-ready
+            ❌ efficiently: with pre-caching of the FREE-VARS of both condition and expression value
+            ❌ prepare a `co.Any` where each coroutine returns a different `fieldDescriptor x (Target = One | Multiple | All)`
+            ❌ BUG ALERT if translating to production! The Map of events will likely cause events not to be processed in create-order
             ❌ all rules should be applied on all entities after creation of a new entity
             ❌ introduce list monad with errors for eval/execute
               ❌ return useful error messages
@@ -169,6 +129,8 @@ Todo (✅/❌)
               ❌ the context becomes a cache of operations
               ❌ output the applied rules for the visibility/explainability/logging
             ❌ expose OpenAPI
+              ❌ add API to set the schema, and cache it in a JSON file
+                ❌ wait for the SetSchema event, or the schema to be available in the context
             ❌ implement lazy fields in the schema
               ❌ this requires a coroutine-mediated protocol
               ❌ openSession(schema) -> operations | closeSession()
@@ -178,8 +140,9 @@ Todo (✅/❌)
               ❌ group field definitions and entity definitions under anonymous records for aesthetics and scoping in case of multiple fields with the same name in a different entity          
             ❌ ideally with F#-style domain objects, not C#-style serializable objects
             ❌ enums to strings
+            ❌ remove every single instance of mutation
           ❌ allow approval, with associated business rules
-          ❌ -----at this point, the prototype can be considered reasonably done-----
+          ❌ -----at this point, the prototype can be considered reasonably done and could go live as a microservice-----
           ❌ separate DB serialization as a different EF package
             ❌ represent Expr as JSON
             ❌ represent Expr as a recursive structure looked up with a recursive query
