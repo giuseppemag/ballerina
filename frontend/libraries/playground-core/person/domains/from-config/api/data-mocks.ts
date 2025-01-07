@@ -148,7 +148,7 @@ const entityApis: EntityApis = {
     }
   },
   update: (apiName: string) => (_id: Guid, _e: any) => {
-    console.log(`update ${apiName} ${_id} ${JSON.stringify(_e)}`)
+    console.log(`update ${apiName} ${_id}`, JSON.stringify(_e, undefined, 2))
     switch (apiName) {
       case "person":
         return PromiseRepo.Default.mock(() => [])

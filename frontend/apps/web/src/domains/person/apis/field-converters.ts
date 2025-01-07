@@ -1,5 +1,6 @@
 import { ApiConverters, BuiltInApiConverters, CollectionReference, CollectionSelection } from "ballerina-core";
-import { List, OrderedMap } from "immutable";
+import { List, OrderedMap, Map } from "immutable";
+import { t } from "node_modules/i18next";
 import { Category, PersonFormInjectedTypes } from "src/domains/person-from-config/injected-forms/category";
 
 export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
@@ -31,9 +32,18 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
         toAPIRawValue: ([_, __]) => _.valueSeq().toArray()
     },
     "Map": {
-        fromAPIRawValue: _ => _ == undefined ? List() : List(_),
-        toAPIRawValue: ([_, __]) => _.valueSeq().toArray()
-    },
+		fromAPIRawValue: _ => _ == undefined ? List() : List(_),
+        toAPIRawValue: ([_, __]) => {
+			if (typeof _.get(0)?.[0] == "object" && _.get(0)?.[0].kind == "category") {
+				return _.map(([k, v]) => ([(k as Category).category, v]))
+			}
+			else if( typeof _.get(0)?.[0] == "object" && "value" in _.get(0)?.[0] && "id" in _.get(0)?.[0]["value"]) {
+				return _.map(([k, v]) => ([k["value"]["id"], v]))
+			} else {
+				return _
+			}
+		}
+	}
 }
 
 const logWrapper = ([_, __]: any) => {
@@ -81,9 +91,16 @@ export const modifiedDebugFieldTypeConverters: ApiConverters<PersonFormInjectedT
 	},
 	"Map": {
 		fromAPIRawValue: _ => _ == undefined ? List() : List(_),
-		toAPIRawValue: ([_, __]) =>  {
+        toAPIRawValue: ([_, __]) => {
 			if(__) console.log({value: _.valueSeq().toArray(), isModified: __})
-			return _.valueSeq().toArray()
-			},
+			if (typeof _.get(0)?.[0] == "object" && _.get(0)?.[0].kind == "category") {
+				return _.map(([k, v]) => ([(k as Category).category, v]))
+			}
+			else if( typeof _.get(0)?.[0] == "object" && "value" in _.get(0)?.[0] && "id" in _.get(0)?.[0]["value"]) {
+				return _.map(([k, v]) => ([k["value"]["id"], v]))
+			} else {
+				return _
+			}
 		}
+	}
 }

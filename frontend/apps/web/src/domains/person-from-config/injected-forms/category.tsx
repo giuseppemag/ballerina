@@ -1,7 +1,7 @@
 import { FormLabel, View, Value, SharedFormState, OnChange, SimpleCallback, BasicFun, FieldValidation, Template, replaceWith, ValidateRunner, FieldValidationWithPath, Unit, simpleUpdater } from "ballerina-core";
 import { List } from "immutable";
 
-export type Category = "child" | "adult" | "senior"
+export type Category = { category: "child" | "adult" | "senior", kind: "category"}
 
 export type CategoryState = {
   likelyOutdated: boolean;
