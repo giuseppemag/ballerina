@@ -12,7 +12,7 @@ and EntityDescriptor = {
   GetId:obj -> Option<Guid>; 
   Lookup:obj * List<FieldDescriptorId> -> Option<obj>;
   GetEntities:Unit -> List<obj> 
-  GetFieldDescriptors:Unit -> List<FieldDescriptor>
+  GetFieldDescriptors:Unit -> Map<FieldDescriptorId,FieldDescriptor>
 }
 
 and FieldMetadata = { FieldMetadataId:Guid; Approval:bool; CurrentEditPrio:EditPriority }
@@ -91,6 +91,16 @@ and Schema = {
   tryFindField:FieldDescriptorId -> Option<FieldDescriptor>
 }
 
+type Value with
+  member self.toObject = 
+    match self with
+    | Value.ConstInt v -> Some(v :> obj)
+    | Value.ConstBool v -> Some(v :> obj)
+    | Value.ConstFloat v -> Some(v :> obj)
+    | Value.ConstGuid v -> Some(v :> obj)
+    | Value.ConstString v -> Some(v :> obj)
+    | _ -> None    
+
 type Expr with 
   static member (+) (e1:Expr, e2:Expr) =
     Binary(Plus, e1, e2)
@@ -147,3 +157,21 @@ type RuleDependencies with
 
 type BusinessRule with
   member this.ToBusinessRuleId = { BusinessRuleId = this.BusinessRuleId }
+
+type EntityDescriptor with
+  static member GenericLookup:EntityDescriptor -> Map<EntityDescriptorId, EntityDescriptor> -> obj * List<FieldDescriptorId> -> Option<obj> = 
+    fun self allEntities (obj, fieldIds) ->
+      option{
+        match fieldIds with
+        | [] -> return obj
+        | fieldId::fieldIds -> 
+            let! fieldDescriptor = self.GetFieldDescriptors() |> Map.tryFind fieldId
+            let! fieldValue = fieldDescriptor.Lookup obj
+            match fieldDescriptor.Type(), fieldValue with
+            | ExprType.LookupType entityDescriptorId, Value.ConstGuid id ->
+              let! entityDescriptor = allEntities |> Map.tryFind entityDescriptorId
+              let! fieldValue = entityDescriptor.GetId id
+              return! entityDescriptor.Lookup (fieldValue, fieldIds)
+            | _ -> 
+              return! fieldValue.toObject
+      }

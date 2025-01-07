@@ -37,19 +37,9 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
             (function
             | :? CD as e ->  Some e.CDId
             | _ -> None);
-          Lookup = (fun (obj, fields) -> 
-            match obj with
-            | :? CD as e -> 
-              match fields with
-              | [] -> Some obj
-              | field::fields ->
-                if field.FieldDescriptorId = descriptors.CD.C.FieldDescriptorId then
-                  Some(e.C :> obj)
-                else
-                  None
-            | _ -> None);
+          Lookup = fun (obj, fields) -> EntityDescriptor.GenericLookup descriptors.CD.Entity.Descriptor allEntities (obj, fields)
           GetEntities = fun () -> allCDs.contents |> Map.values |> Seq.map (fun e -> e :> obj) |> List.ofSeq
-          GetFieldDescriptors = fun () -> [descriptors.CD.C]
+          GetFieldDescriptors = fun () -> [descriptors.CD.C] |> Seq.map (fun (fd:FieldDescriptor) -> fd.ToFieldDescriptorId, fd) |> Map.ofSeq
         }
         UpdateSingleField =
           updateSingleField
@@ -82,23 +72,9 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
               (function
               | :? AB as e ->  Some e.ABId
               | _ -> None);
-            Lookup = (fun (obj, fields) -> 
-              match obj with
-              | :? AB as e -> 
-                match fields with
-                | [] -> Some obj
-                | field::fields ->
-                  if field.FieldDescriptorId = descriptors.AB.A.FieldDescriptorId then
-                    Some(e.A :> obj)
-                  else if field.FieldDescriptorId = descriptors.AB.B.FieldDescriptorId then
-                    Some(e.B :> obj)
-                  else if field.FieldDescriptorId = descriptors.AB.CD.FieldDescriptorId then
-                    descriptors.CD.Entity.Descriptor.Lookup(e.CD :> obj, fields)
-                  else
-                    None
-              | _ -> None);
+            Lookup = fun (obj, fields) -> EntityDescriptor.GenericLookup descriptors.AB.Entity.Descriptor allEntities (obj, fields)
             GetEntities = fun () -> allABs.contents |> Map.values |> Seq.map (fun e -> e :> obj) |> List.ofSeq
-            GetFieldDescriptors = fun () -> [descriptors.AB.A; descriptors.AB.B; descriptors.AB.CD; descriptors.AB.TotalABC]
+            GetFieldDescriptors = fun () -> [descriptors.AB.A; descriptors.AB.B; descriptors.AB.CD; descriptors.AB.TotalABC] |> Seq.map (fun (fd:FieldDescriptor) -> fd.ToFieldDescriptorId, fd) |> Map.ofSeq
           }      
         UpdateSingleField = 
           updateSingleField
@@ -190,13 +166,13 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
       }
     |}
   |}
-  let rec allEntities = 
+  and allEntities = 
     [
       descriptors.AB.Entity.Descriptor; descriptors.CD.Entity.Descriptor
-    ] |> Seq.map (fun e -> e.EntityDescriptorId, e) |> Map.ofSeq
+    ] |> Seq.map (fun e -> e.ToEntityDescriptorId, e) |> Map.ofSeq
   and allFields = 
     [
       for e in allEntities |> Map.values do
-      yield! e.GetFieldDescriptors(); 
-    ] |> Seq.map (fun f -> f.FieldDescriptorId, f) |> Map.ofSeq
+      yield! e.GetFieldDescriptors() |> Map.values; 
+    ] |> Seq.map (fun f -> f.ToFieldDescriptorId, f) |> Map.ofSeq
   descriptors, allEntities, allFields

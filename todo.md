@@ -98,16 +98,12 @@ Todo (✅/❌)
               ❌ the field descriptor definitions should use the operations from other field descriptors, and not perform any comparisons to entity descriptors Ids
                 ✅ Get should be based on Lookup
                 ❌ AB and CD should be based on generic containers of fields and nested entities, not real types
-                  ❌ the lookup of fields from ABs and CDs in the definition of the AB/CD entity schema should use the field definition lookup recursively
-                  ❌ the assignment of fields to ABs and CDs in the definition of the AB/CD entity schema should use the field definition assignment recursively
+                  ✅ the lookup of fields from ABs and CDs in the definition of the AB/CD entity schema should use the field definition lookup recursively
+                  ❌ the assignment (`Update`) of fields to ABs and CDs in the definition of the AB/CD entity schema should use the field definition assignment recursively
               ❌ there are various places where we assume `One entityId`, is this always reasonable?
                 ❌ in particular, `Expr::execute` does not take into account more than one field lookup on the assigned variable, extend
               ❌ distribute the various field updaters along the typed `XFieldDescriptor`, every entity should have the map of fields by type
               ❌ rename `positions` to `abcd`
-              ❌ verify that there actually is no loop
-                ❌ loops involve same rule, same entity, same field
-                ❌ test with an actual loop
-              ❌ how does `getCandidateRules` behave when dealing with an update on an intermediate field lookup of a long chain, like `this.Total:=this.A+this.B+this.CD.EF.E`?
           ❌ testing scenario
             ✅ add a setA event, see that the Total changes
             ❌ add a setB event, see that the Total changes
@@ -115,33 +111,37 @@ Todo (✅/❌)
             ❌ add a setC event, see that the Total changes (nasty because of the AB-CD relation)
             ❌ extend the schema: CD - EF, CD also has a DCount
             ❌ add a setE event, see that the Total changes
+            ❌ verify that there actually is no loop
+              ❌ loops involve same rule, same entity, same field
+              ❌ test with an actual loop
+              ❌ add orthogonal rules on the same entity-set
             ❌ change all `CD` refs inside a given `AB`
               ❌ the schema for `CD` then needs a `RefsField`
               ❌ complete the scenario of multiple CDs, so that the events can also be EntityEvents such as `Add`, `Delete`, `Move`, etc.
           ❌ make it production-ready
-            ❌ efficiently: with pre-caching of the FREE-VARS of both condition and expression value
-            ❌ prepare a `co.Any` where each coroutine returns a different `fieldDescriptor x (Target = One | Multiple | All)`
-            ❌ BUG ALERT if translating to production! The Map of events will likely cause events not to be processed in create-order
-            ❌ all rules should be applied on all entities after creation of a new entity
-            ❌ introduce list monad with errors for eval/execute
-              ❌ return useful error messages
             ❌ do not commit the updates to the context immediately, output a set of field value changes
               ❌ the context becomes a cache of operations
               ❌ output the applied rules for the visibility/explainability/logging
+              ❌ monadically
             ❌ expose OpenAPI
               ❌ add API to set the schema, and cache it in a JSON file
                 ❌ wait for the SetSchema event, or the schema to be available in the context
+            ❌ all rules should be applied on all entities after creation of a new entity
+            ❌ prepare a `co.Any` where each coroutine returns a different `fieldDescriptor x (Target = One | Multiple | All)`
+            ❌ BUG ALERT if translating to production! The Map of events will likely cause events not to be processed in create-order
+            ❌ allow approval, with associated business rules
+            ❌ introduce list monad with errors for eval/execute
+              ❌ return useful error messages
             ❌ implement lazy fields in the schema
               ❌ this requires a coroutine-mediated protocol
               ❌ openSession(schema) -> operations | closeSession()
               ❌ when the schema is fully dynamic, get/update operations work with reflection/`Dynamic` CLR type
-            ❌ even more transactional: maintain cache of reads and writes, execute to DB at the last moment
+            ❌ efficiently: with pre-caching of the FREE-VARS of both condition and expression value
             ❌ improve DSL for type-safe business rule and expression definition in F#
               ❌ group field definitions and entity definitions under anonymous records for aesthetics and scoping in case of multiple fields with the same name in a different entity          
             ❌ ideally with F#-style domain objects, not C#-style serializable objects
             ❌ enums to strings
             ❌ remove every single instance of mutation
-          ❌ allow approval, with associated business rules
           ❌ -----at this point, the prototype can be considered reasonably done and could go live as a microservice-----
           ❌ separate DB serialization as a different EF package
             ❌ represent Expr as JSON

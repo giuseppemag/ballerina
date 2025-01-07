@@ -19,8 +19,8 @@ let init_abcdContext() =
   let descriptors, allEntities, allFields = createABCDSchema ABs CDs
   
   let schema:Schema = {
-    tryFindEntity = fun (entityDescriptorId:EntityDescriptorId) -> allEntities |> Map.tryFind entityDescriptorId.EntityDescriptorId
-    tryFindField = fun (fieldDescriptorId:FieldDescriptorId) -> allFields |> Map.tryFind fieldDescriptorId.FieldDescriptorId
+    tryFindEntity = fun (entityDescriptorId:EntityDescriptorId) -> allEntities |> Map.tryFind entityDescriptorId
+    tryFindField = fun (fieldDescriptorId:FieldDescriptorId) -> allFields |> Map.tryFind fieldDescriptorId
   }
   
   let createCD id = 
