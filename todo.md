@@ -106,9 +106,11 @@ Todo (✅/❌)
               ❌ rename `positions` to `abcd`
           ❌ testing scenario
             ✅ add a setA event, see that the Total changes
-            ❌ add a setB event, see that the Total changes
-            ❌ add a setCDRef event, see that the Total changes
+            ✅ add a setB event, see that the Total changes
             ❌ add a setC event, see that the Total changes (nasty because of the AB-CD relation)
+              ✅ the CD values are cached inside the entity, they should be lazy
+              ❌ the propagation to TotalABC does not work
+            ❌ add a setCDRef event, see that the Total changes
             ❌ extend the schema: CD - EF, CD also has a DCount
             ❌ add a setE event, see that the Total changes
             ❌ verify that there actually is no loop

@@ -12,14 +12,15 @@ open Ballerina.BusinessRuleTransitiveExecution
 let abcdEventLoop() = 
   let mutable context:Context = init_abcdContext()
 
-  let processABCD (abId:Guid) : Coroutine<Unit, JobsState, Context, ABCDEvent> = 
+  let processABCD : Coroutine<Unit, JobsState, Context, ABCDEvent> = 
     co.Repeat(
       co{
         let! e = co.On(
           function 
-          | ABCDEvent.SetField(SetFieldEvent.SingletonIntFieldEvent e) when e.Target = One abId -> 
+          | ABCDEvent.SetField(SetFieldEvent.SingletonIntFieldEvent e) -> 
             Option.Some e
-          | _ -> Option.None)
+          | discarded -> 
+            Option.None)
         do! co.Wait(TimeSpan.FromSeconds 0.0)
         let! context = co.GetContext()
         let vars:Vars = 
@@ -39,7 +40,7 @@ let abcdEventLoop() =
 
   let init(): EvaluatedCoroutines<_,_,_> =         
     { 
-      active = context.ABs() |> Map.values |> Seq.map (fun e -> e.ABId) |> Seq.map (fun abId -> (abId, processABCD abId)) |> Map.ofSeq;
+      active = [Guid.NewGuid(), processABCD] |> Map.ofSeq;
       waiting = Map.empty;
       waitingOrListening = Map.empty;
       listening = Map.empty;
@@ -75,7 +76,7 @@ let abcdEventLoop() =
     ()
   let log (dataSource:Unit) =
     Console.Clear() |> ignore
-    printfn "%A" (context.ABs() |> Map.values |> Seq.map (fun ab -> {| ACount = ab.A; BCount = ab.B; CCount = ab.CD.C; Total = ab.TotalABC |}))
+    printfn "%A" (context.ABs() |> Map.values |> Seq.map (fun ab -> {| A = ab.A; B = ab.B; CD = {| C = (context.CDs()).[ab.CDId].C |}; Total = ab.TotalABC |}))
   let releaseSnapshot (_:Unit) =
     ()
   Ballerina.CoroutinesRunner.runLoop init getSnapshot updateState updateEvents log releaseSnapshot

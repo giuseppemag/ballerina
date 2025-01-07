@@ -10,7 +10,7 @@ type AB = {
   A:int; ACountMetadata:SingletonIntFieldMetadata
   B:int; BCountMetadata:SingletonIntFieldMetadata
   TotalABC:int; TotalABCMetadata:ReadonlyIntFieldMetadata
-  CD:CD; CDMetadata:RefFieldMetadata
+  CDId:Guid; CDMetadata:RefFieldMetadata
 }
 and CD = { 
   CDId:Guid; Metadata:EntityMetadata 

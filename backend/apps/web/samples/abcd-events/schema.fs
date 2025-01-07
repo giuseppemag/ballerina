@@ -134,7 +134,7 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
         FieldDescriptorId=Guid.NewGuid(); 
         FieldName = "CD"; 
         Type = fun () -> ExprType.LookupType descriptors.CD.Entity.Descriptor.ToEntityDescriptorId
-        Lookup = Option<AB>.fromObject >> Option.map(fun e -> e.CD.CDId |> Value.ConstGuid)
+        Lookup = Option<AB>.fromObject >> Option.map(fun e -> e.CDId |> Value.ConstGuid)
         Get = fun id -> descriptors.AB.Entity.TryFind id |> Option.bind descriptors.AB.CD.Lookup;
         Update = {|
           AsInt = (fun _ _ -> FieldUpdateResult.Failure);
@@ -145,8 +145,8 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
               | All -> 
                 let mutable changes = 0
                 allABs .contents <- allABs.contents |> Map.map (fun key -> (fun e -> 
-                  let e' = { e with CD = allCDs.contents.[updater(e.CD.CDId)]}
-                  if e.CD.CDId <> e'.CD.CDId then changes <- changes + 1
+                  let e' = { e with CDId = updater(e.CDId)}
+                  if e.CDId <> e'.CDId then changes <- changes + 1
                   e')) 
                 if changes > 0 then FieldUpdateResult.ValueChanged
                 else FieldUpdateResult.ValueStayedTheSame
@@ -155,8 +155,8 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
                 allABs .contents <- allABs.contents |> Map.map (fun key -> 
                   if abIds |> Set.contains key then 
                     (fun e -> 
-                      let e' = { e with CD = allCDs.contents.[updater(e.CD.CDId)]}
-                      if e.CD.CDId <> e'.CD.CDId then changes <- changes + 1
+                      let e' = { e with CDId = updater(e.CDId)}
+                      if e.CDId <> e'.CDId then changes <- changes + 1
                       e'
                     ) 
                   else id)

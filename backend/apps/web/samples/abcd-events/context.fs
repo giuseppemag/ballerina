@@ -41,7 +41,8 @@ let init_abcdContext() =
         A = 1 ; ACountMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = descriptors.AB.A.ToFieldDescriptorId }
         B = 2 ; BCountMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = descriptors.AB.B.ToFieldDescriptorId }
         TotalABC = 0 ; TotalABCMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = descriptors.AB.TotalABC.ToFieldDescriptorId }
-        CD = CDs.contents |> Map.values |> Seq.randomChoice; CDMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = descriptors.AB.CD.ToFieldDescriptorId }
+        CDId = CDs.contents |> Map.values |> Seq.randomChoice |> (fun cd -> cd.CDId); 
+        CDMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = descriptors.AB.CD.ToFieldDescriptorId }
       }
   let ab1 = createAB (Guid("8fba2a7c-e2da-43bd-b8ee-ddaa774d081d")) cd1
   let ab2 = createAB (Guid("91620c12-cd9e-4e66-9df3-58f4b1a50b1f")) cd2
@@ -78,20 +79,34 @@ let init_abcdContext() =
     ABs = (fun () -> ABs.contents)
     CDs = (fun () -> CDs.contents)
     ActiveEvents = [
+      // ABCDEvent.SetField(
+      //   SetFieldEvent.SingletonIntFieldEvent 
+      //     { 
+      //       Self = { 
+      //         FieldEventId = Guid.NewGuid(); 
+      //         EntityDescriptorId = descriptors.AB.Entity.Descriptor.ToEntityDescriptorId
+      //         Assignment = {
+      //           Variable = (!"this", [descriptors.AB.A.ToFieldDescriptorId])
+      //           Value=("this" => [descriptors.AB.A.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 10))
+      //         }
+      //       }; 
+      //       Target = One (ABs.contents.First().Key)
+      //     })
       ABCDEvent.SetField(
         SetFieldEvent.SingletonIntFieldEvent 
           { 
             Self = { 
               FieldEventId = Guid.NewGuid(); 
-              EntityDescriptorId = descriptors.AB.Entity.Descriptor.ToEntityDescriptorId
+              EntityDescriptorId = descriptors.CD.Entity.Descriptor.ToEntityDescriptorId
               Assignment = {
-                Variable = (!"this", [descriptors.AB.A.ToFieldDescriptorId])
-                Value=("this" => [descriptors.AB.A.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 10))
+                Variable = (!"this", [descriptors.CD.C.ToFieldDescriptorId])
+                Value=("this" => [descriptors.CD.C.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 20))
               }
             }; 
-            Target = One (ABs.contents.First().Key)
+            Target = One (CDs.contents.First().Key)
           })
-          ] // :List<FieldEvent>; 
+
+    ] // :List<FieldEvent>; 
     PastEvents = [] // :List<FieldEvent>;
     BusinessRules = businessRules
     Schema = schema
