@@ -114,16 +114,22 @@ Todo (✅/❌)
             ✅ add a setCDRef event, see that the Total changes
             ✅ add a setD event, for symmetry
             ❌ extend the schema: CD - EF
-            ❌ add a setE event, see that the Total changes
+              ❌ add setE, setF events, see that the Total changes
             ❌ verify that there actually is no loop
               ❌ loops involve same rule, same entity, same field
               ❌ test with an actual loop
-              ❌ add orthogonal rules on the same entity-set
+              ✅ add orthogonal rules on the same entity-set
+                ✅ A, B, ..., Total
+                ✅ alpha, beta, ..., Sigma
+                ✅ cyrillic variants, ..., (BEC')
             ❌ add `CDs` to `AB`, so not just one
               ❌ change all `CD` refs inside a given `AB`
                 ❌ the schema for `CD` then needs a `RefsField`
                 ❌ complete the scenario of multiple CDs, so that the events can also be EntityEvents such as `Add`, `Delete`, `Move`, etc.
           ❌ make it production-ready
+            ❌ test with 
+              ❌ a few thousands ABs, CDs, EFs
+              ❌ a dozen rules on many field "clusters"
             ❌ do not commit the updates to the context immediately, output a set of field value changes
               ❌ the context becomes a cache of operations
               ❌ output the applied rules for the visibility/explainability/logging

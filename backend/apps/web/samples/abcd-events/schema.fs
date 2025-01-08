@@ -27,7 +27,27 @@ let private updateSingleField<'a,'f when 'f : equality> (getE:Guid -> Option<'a>
   | None -> 
     FieldUpdateResult.Failure
 
+let private createIntFieldDescriptor entityName (tryFindEntity:Guid -> Option<'e>) setEntity getField setField = 
+  { 
+    FieldDescriptorId=Guid.NewGuid(); 
+    FieldName = entityName; 
+    Type = fun () -> ExprType.PrimitiveType IntType
+    Lookup = Option<'e>.fromObject >> Option.map(getField >> Value.ConstInt);
+    Get = fun id -> tryFindEntity id |> Option.map(getField >> Value.ConstInt);
+    Update = {|
+      AsInt = 
+        fun (One entityId) updater -> 
+            updateSingleField
+              tryFindEntity setEntity
+              getField setField
+              (One entityId) updater;
+      AsRef = (fun _ _ -> FieldUpdateResult.Failure);
+      AsRefs = (fun _ _ -> FieldUpdateResult.Failure);
+    |};
+  }  
+
 let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
+
   let rec descriptors = {|
     CD = {|
       Entity = {|
@@ -44,42 +64,12 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
         }
         TryFind = fun id -> allCDs.contents |> Map.tryFind id |> Option.map(fun e -> e :> obj);
       |}
-      C = { 
-        FieldDescriptorId=Guid.NewGuid(); 
-        FieldName = "C"; 
-        Type = fun () -> ExprType.PrimitiveType IntType
-        Lookup = Option<AB>.fromObject >> Option.map(fun e -> e.C |> Value.ConstInt)
-        Get = fun id -> descriptors.CD.Entity.TryFind id |> Option.bind descriptors.CD.C.Lookup;
-        Update = {|
-          AsInt = 
-            fun (One entityId) updater -> 
-              updateSingleField
-                (fun entityId -> allCDs.contents |> Map.tryFind entityId)
-                (fun e' entityId -> allCDs.contents <- allCDs.contents |> Map.add entityId e')
-                (fun e -> e.C) (fun e f -> { e with C = f })
-                (One entityId) updater;
-          AsRef = (fun _ _ -> FieldUpdateResult.Failure);
-          AsRefs = (fun _ _ -> FieldUpdateResult.Failure);
-        |}
-      }
-      D = { 
-        FieldDescriptorId=Guid.NewGuid(); 
-        FieldName = "D"; 
-        Type = fun () -> ExprType.PrimitiveType IntType
-        Lookup = Option<AB>.fromObject >> Option.map(fun e -> e.D |> Value.ConstInt)
-        Get = fun id -> descriptors.CD.Entity.TryFind id |> Option.bind descriptors.CD.D.Lookup;
-        Update = {|
-          AsInt = 
-            fun (One entityId) updater -> 
-              updateSingleField
-                (fun entityId -> allCDs.contents |> Map.tryFind entityId)
-                (fun e' entityId -> allCDs.contents <- allCDs.contents |> Map.add entityId e')
-                (fun e -> e.D) (fun e f -> { e with D = f })
-                (One entityId) updater;
-          AsRef = (fun _ _ -> FieldUpdateResult.Failure);
-          AsRefs = (fun _ _ -> FieldUpdateResult.Failure);
-        |}
-      }
+      C = createIntFieldDescriptor "C" (fun id -> allCDs.contents |> Map.tryFind id) 
+        (fun (e':CD) entityId -> allCDs.contents <- allCDs.contents |> Map.add entityId e') 
+        (fun e -> e.C) (fun (e:CD) f -> { e with C = f })
+      D = createIntFieldDescriptor "D" (fun id -> allCDs.contents |> Map.tryFind id) 
+        (fun (e':CD) entityId -> allCDs.contents <- allCDs.contents |> Map.add entityId e') 
+        (fun e -> e.D) (fun (e:CD) f -> { e with D = f })
     |}
     AB = {|
       Entity = {|
@@ -92,64 +82,37 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
               | _ -> None);
             Lookup = fun (obj, fields) -> EntityDescriptor.GenericLookup descriptors.AB.Entity.Descriptor allEntities (obj, fields)
             GetEntities = fun () -> allABs.contents |> Map.values |> Seq.map (fun e -> e :> obj) |> List.ofSeq
-            GetFieldDescriptors = fun () -> [descriptors.AB.A; descriptors.AB.B; descriptors.AB.CD; descriptors.AB.Total] |> Seq.map (fun (fd:FieldDescriptor) -> fd.ToFieldDescriptorId, fd) |> Map.ofSeq
+            GetFieldDescriptors = fun () -> [descriptors.AB.A1; descriptors.AB.B1; descriptors.AB.CD; descriptors.AB.Total1; descriptors.AB.А2; descriptors.AB.Б2; descriptors.AB.Весь2; descriptors.AB.Α3; descriptors.AB.Β3; descriptors.AB.Σ3] |> Seq.map (fun (fd:FieldDescriptor) -> fd.ToFieldDescriptorId, fd) |> Map.ofSeq
           }      
         TryFind = fun id -> allABs.contents |> Map.tryFind id |> Option.map(fun e -> e :> obj);
       |}
-      A = { 
-        FieldDescriptorId=Guid.NewGuid(); 
-        FieldName = "A"; 
-        Type = fun () -> ExprType.PrimitiveType IntType
-        Lookup = Option<AB>.fromObject >> Option.map(fun e -> e.A |> Value.ConstInt);
-        Get = fun id -> descriptors.AB.Entity.TryFind id |> Option.bind descriptors.AB.A.Lookup;
-        Update = {|
-          AsInt = 
-            fun (One entityId) updater -> 
-                updateSingleField
-                  (fun entityId -> allABs.contents |> Map.tryFind entityId) 
-                  (fun e' entityId -> allABs .contents <- allABs.contents |> Map.add entityId e')
-                  (fun e -> e.A) (fun e f -> { e with A = f })
-                  (One entityId) updater;
-          AsRef = (fun _ _ -> FieldUpdateResult.Failure);
-          AsRefs = (fun _ _ -> FieldUpdateResult.Failure);
-        |};
-      }
-      B = { 
-        FieldDescriptorId=Guid.NewGuid(); 
-        FieldName = "B"; 
-        Type = fun () -> ExprType.PrimitiveType IntType
-        Lookup = Option<AB>.fromObject >> Option.map(fun e -> e.B |> Value.ConstInt) 
-        Get = fun id -> descriptors.AB.Entity.TryFind id |> Option.bind descriptors.AB.B.Lookup;
-        Update = {|
-          AsInt = 
-            fun (One entityId) updater -> 
-              updateSingleField
-                (fun entityId -> allABs.contents |> Map.tryFind entityId) 
-                (fun e' entityId -> allABs .contents <- allABs.contents |> Map.add entityId e')
-                (fun e -> e.B) (fun e f -> { e with B = f })
-                (One entityId) updater;
-          AsRef = (fun _ _ -> FieldUpdateResult.Failure);
-          AsRefs = (fun _ _ -> FieldUpdateResult.Failure);
-        |};    
-      }
-      Total = { 
-        FieldDescriptorId=Guid.NewGuid(); 
-        FieldName = "TotalABC"; 
-        Type = fun () -> ExprType.PrimitiveType IntType
-        Lookup = Option<AB>.fromObject >> Option.map(fun e -> e.Total |> Value.ConstInt) 
-        Get = fun id -> descriptors.AB.Entity.TryFind id |> Option.bind descriptors.AB.Total.Lookup;
-        Update = {|
-          AsInt = 
-            fun (One entityId) updater -> 
-              updateSingleField
-                (fun entityId -> allABs.contents |> Map.tryFind entityId) 
-                (fun e' entityId -> allABs .contents <- allABs.contents |> Map.add entityId e')
-                (fun e -> e.Total) (fun e f -> { e with Total = f })
-                (One entityId) updater;
-          AsRef = (fun _ _ -> FieldUpdateResult.Failure);
-          AsRefs = (fun _ _ -> FieldUpdateResult.Failure);
-        |}
-      }
+      A1 = createIntFieldDescriptor "A1" (fun id -> allABs.contents |> Map.tryFind id) 
+        (fun e' entityId -> allABs.contents <- allABs.contents |> Map.add entityId e') 
+        (fun e -> e.A1) (fun e f -> { e with A1 = f })
+      B1 = createIntFieldDescriptor "B1" (fun id -> allABs.contents |> Map.tryFind id) 
+        (fun e' entityId -> allABs.contents <- allABs.contents |> Map.add entityId e') 
+        (fun e -> e.B1) (fun e f -> { e with B1 = f })
+      Total1 = createIntFieldDescriptor "Total1" (fun id -> allABs.contents |> Map.tryFind id) 
+        (fun e' entityId -> allABs.contents <- allABs.contents |> Map.add entityId e') 
+        (fun e -> e.Total1) (fun e f -> { e with Total1 = f })
+      А2 = createIntFieldDescriptor "А2" (fun id -> allABs.contents |> Map.tryFind id) 
+        (fun e' entityId -> allABs.contents <- allABs.contents |> Map.add entityId e') 
+        (fun e -> e.А2) (fun e f -> { e with А2 = f })
+      Б2 = createIntFieldDescriptor "Б2" (fun id -> allABs.contents |> Map.tryFind id) 
+        (fun e' entityId -> allABs.contents <- allABs.contents |> Map.add entityId e') 
+        (fun e -> e.Б2) (fun e f -> { e with Б2 = f })
+      Весь2 = createIntFieldDescriptor "Весь2" (fun id -> allABs.contents |> Map.tryFind id) 
+        (fun e' entityId -> allABs.contents <- allABs.contents |> Map.add entityId e') 
+        (fun e -> e.Весь2) (fun e f -> { e with Весь2 = f })
+      Α3 = createIntFieldDescriptor "Α3" (fun id -> allABs.contents |> Map.tryFind id) 
+        (fun e' entityId -> allABs.contents <- allABs.contents |> Map.add entityId e') 
+        (fun e -> e.Α3) (fun e f -> { e with Α3 = f })
+      Β3 = createIntFieldDescriptor "Β3" (fun id -> allABs.contents |> Map.tryFind id) 
+        (fun e' entityId -> allABs.contents <- allABs.contents |> Map.add entityId e') 
+        (fun e -> e.Β3) (fun e f -> { e with Β3 = f })
+      Σ3 = createIntFieldDescriptor "Σ3" (fun id -> allABs.contents |> Map.tryFind id) 
+        (fun e' entityId -> allABs.contents <- allABs.contents |> Map.add entityId e') 
+        (fun e -> e.Σ3) (fun e f -> { e with Σ3 = f })
       CD = { 
         FieldDescriptorId=Guid.NewGuid(); 
         FieldName = "CD"; 

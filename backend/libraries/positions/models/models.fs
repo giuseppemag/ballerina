@@ -6,10 +6,17 @@ open Ballerina.Collections.Map
 open Ballerina.BusinessRules
 
 type AB = { 
-  ABId:Guid;  A:int;
-  B:int;
-  Total:int;
+  ABId:Guid;  
+  A1:int;
+  B1:int;
   CDId:Guid;
+  Total1:int;
+  А2:int;
+  Б2:int;
+  Весь2:int;
+  Α3: int;
+  Β3: int;
+  Σ3: int;
 }
 and CD = { 
   CDId:Guid;
