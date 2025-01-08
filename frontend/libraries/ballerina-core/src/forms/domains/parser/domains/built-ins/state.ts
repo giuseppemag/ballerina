@@ -2,7 +2,7 @@ import { Map, List, Set, OrderedMap } from "immutable"
 import { CollectionReference } from "../../../collection/domains/reference/state";
 import { CollectionSelection } from "../../../collection/domains/selection/state";
 import { BasicFun } from "../../../../../fun/state";
-import { InjectedPrimitives, replaceKeyword, replaceKeywords, revertKeyword, Type, TypeDefinition, TypeName } from "../../../../../../main";
+import { InjectedPrimitives, replaceKeyword, replaceKeywords, revertKeyword, Type, TypeDefinition, TypeName, Unit } from "../../../../../../main";
 
 export const PrimitiveTypes =
   ["string",
@@ -271,29 +271,23 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
     }
     if (t.value == "Map" && t.args.length == 2) {
       const converterResult = converters[t.value].toAPIRawValue([obj, formState.modifiedByUser])
-      const isKeyPrimitive = PrimitiveTypes.some(_ => _ == t.args[0]) || injectedPrimitives?.injectedPrimitives.has(t.args[0] as keyof T)
       const isValuePrimitive = PrimitiveTypes.some(_ => _ == t.args[1]) || injectedPrimitives?.injectedPrimitives.has(t.args[1] as keyof T)
       let t_args = t.args.map(parseTypeIShouldBePartOfFormValidation)
-      return converterResult.map((keyValue: any, index: number) => ([
-        toAPIRawValue(
-          typeof t_args[0] == "string" ? 
-            isKeyPrimitive ?
-              { kind: "primitive", value: t_args[0] as PrimitiveType }
-            : { kind: "lookup", name: t_args[0] }
-          :
-            t_args[0], 
-            types, builtIns, converters, true, injectedPrimitives)(keyValue[0], formState.elementFormStates.get(index).KeyFormState
-          ),
-        toAPIRawValue(
+      return (converterResult as List<[any, any]>).reduce((acc: Record<any, any>, [k, v]: [any, any], index: number) => { 
+        if(typeof k != "string" && typeof k != "number") {
+          throw new Error(`key ${k} is not a valid javascript object key (string, number), it is ${typeof k} check field converters.`)
+        }
+        const value = toAPIRawValue(
           typeof t_args[1] == "string" ? 
             isValuePrimitive ?
               { kind: "primitive", value: t_args[1] as PrimitiveType }
             : { kind: "lookup", name: t_args[1] }
           :
             t_args[1], 
-          types, builtIns, converters, true, injectedPrimitives)(keyValue[1], formState.elementFormStates.get(index).ValueFormState
-          ),
-      ])
+          types, builtIns, converters, true, injectedPrimitives)(v, formState.elementFormStates.get(index).ValueFormState);
+        acc[k] = value;
+        return acc;
+        }, {} as Record<any, any>
       )
     }
 
