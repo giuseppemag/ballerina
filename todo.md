@@ -112,7 +112,7 @@ Todo (✅/❌)
               ✅ the propagation to TotalABC does not work
               ✅ the predicate is not restricting
             ✅ add a setCDRef event, see that the Total changes
-            ❌ add a setD event, for symmetry
+            ✅ add a setD event, for symmetry
             ❌ extend the schema: CD - EF
             ❌ add a setE event, see that the Total changes
             ❌ verify that there actually is no loop
@@ -131,6 +131,8 @@ Todo (✅/❌)
             ❌ expose OpenAPI
               ❌ add API to set the schema, and cache it in a JSON file
                 ❌ wait for the SetSchema event, or the schema to be available in the context
+            ❌ the construction of field descriptors in the schema could be streamlined
+            ❌ the metadata entities belong to the model, not to Ballerina
             ❌ all rules should be applied on all entities after creation of a new entity
             ❌ prepare a `co.Any` where each coroutine returns a different `fieldDescriptor x (Target = One | Multiple | All)`
             ❌ BUG ALERT if translating to production! The Map of events will likely cause events not to be processed in create-order

@@ -45,6 +45,8 @@ let rec executeRulesTransitively
     // do printfn "firstRestriction = %A" firstRestriction
     // do Console.ReadLine() |> ignore
     let results = eval firstRestriction schema Map.empty businessRule.Condition
+    // do printfn "results = %A" results
+    // do Console.ReadLine() |> ignore
     for (vars,result) in results do
       match result with
       | Value.ConstBool true ->

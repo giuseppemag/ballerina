@@ -5,8 +5,7 @@ open Ballerina.Fun
 open Ballerina.Option
 open Ballerina.Collections.Map
 
-type EntityMetadata = { EntityMetadataId:Guid; Approval:bool; Entity:EntityDescriptor }
-and EntityDescriptor = { 
+type EntityDescriptor = { 
   EntityDescriptorId:Guid; 
   EntityName:string; 
   TryFind:Guid -> Option<obj>; 
@@ -15,12 +14,6 @@ and EntityDescriptor = {
   GetEntities:Unit -> List<obj> 
   GetFieldDescriptors:Unit -> Map<FieldDescriptorId,FieldDescriptor>
 }
-
-and FieldMetadata = { FieldMetadataId:Guid; Approval:bool; CurrentEditPrio:EditPriority }
-and IntFieldMetadata = { Self:FieldMetadata; Field:FieldDescriptorId }
-and RefFieldMetadata = { Self:FieldMetadata; Field:FieldDescriptorId }
-and ReadonlyIntFieldMetadata = { Self:FieldMetadata; Field:FieldDescriptorId }
-and SingletonIntFieldMetadata = { Self:FieldMetadata; Field:FieldDescriptorId }
 
 and FieldDescriptorId = { FieldDescriptorId:Guid; FieldName:string }
 and FieldDescriptor = { 
@@ -58,7 +51,7 @@ and SetFieldEvent = IntFieldEvent of IntFieldEvent | SingletonIntFieldEvent of S
 and BusinessRuleId = { BusinessRuleId:Guid }
 and BusinessRule = { BusinessRuleId:Guid; Name:string; Priority:BusinessRulePriority; Condition:Expr; Actions:List<Assignment> }
 and RuleDependency = { ChangedEntityType:EntityDescriptorId; RestrictedVariable:VarName; RestrictedVariableType:EntityDescriptorId; PathFromVariableToChange:List<FieldDescriptorId>; ChangedField:FieldDescriptorId }
-and RuleDependencies = { dependencies:Map<EntityDescriptorId * FieldDescriptorId, List<RuleDependency>> }
+and RuleDependencies = { dependencies:Map<EntityDescriptorId * FieldDescriptorId, Set<RuleDependency>> }
 
 and Assignment = { Variable:VarName * List<FieldDescriptorId>; Value:Expr }
 and VarName = { VarName:string }

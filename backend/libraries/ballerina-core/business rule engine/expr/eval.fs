@@ -173,6 +173,6 @@ type BusinessRule with
       ]
       let byEntityAndField:RuleDependencies = 
         { 
-          dependencies=dependencies |> Seq.groupBy (fun dep -> dep.ChangedEntityType, dep.ChangedField) |> Map.ofSeq |> Map.map (fun k -> List.ofSeq)
+          dependencies=dependencies |> Seq.groupBy (fun dep -> dep.ChangedEntityType, dep.ChangedField) |> Map.ofSeq |> Map.map (fun k -> Set.ofSeq)
         }
       in byEntityAndField 

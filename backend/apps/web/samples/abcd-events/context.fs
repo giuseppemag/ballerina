@@ -23,29 +23,29 @@ let init_abcdContext() =
     tryFindField = fun (fieldDescriptorId:FieldDescriptorId) -> allFields |> Map.tryFind fieldDescriptorId
   }
   
-  let createCD id C = 
+  let createCD id C D = 
     {
-      CDId = id; Metadata = { EntityMetadataId = Guid.NewGuid(); Approval = false; Entity = descriptors.CD.Entity.Descriptor }
-      C = C; CCountMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = descriptors.CD.C.ToFieldDescriptorId }
+      CDId = id;
+      C = C;
+      D = D;
     }
-  let cd1 = createCD (Guid("d8ff0920-2b47-499f-9f7b-cb07a1f8f3a4")) 3
-  let cd2 = createCD (Guid("69f182db-84ba-4e81-91c5-d3becd029a6b")) 30
+  let cd1 = createCD (Guid("d8ff0920-2b47-499f-9f7b-cb07a1f8f3a4")) 3 4
+  let cd2 = createCD (Guid("69f182db-84ba-4e81-91c5-d3becd029a6b")) 30 40
   CDs .contents <-
     [
       cd1
       cd2
     ] |> Seq.map (fun e -> (e.CDId, e)) |> Map.ofSeq
-  let createAB id cd = 
+  let createAB id cd A B = 
       {
-        ABId = id; Metadata = { EntityMetadataId = Guid.NewGuid(); Approval = false; Entity = descriptors.AB.Entity.Descriptor }
-        A = 1 ; ACountMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = descriptors.AB.A.ToFieldDescriptorId }
-        B = 2 ; BCountMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = descriptors.AB.B.ToFieldDescriptorId }
-        TotalABC = 0 ; TotalABCMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = descriptors.AB.TotalABC.ToFieldDescriptorId }
+        ABId = id;
+        A = A ;
+        B = B ;
+        Total = 0 ;
         CDId = cd.CDId; 
-        CDMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = descriptors.AB.CD.ToFieldDescriptorId }
       }
-  let ab1 = createAB (Guid("8fba2a7c-e2da-43bd-b8ee-ddaa774d081d")) cd1
-  let ab2 = createAB (Guid("91620c12-cd9e-4e66-9df3-58f4b1a50b1f")) cd2
+  let ab1 = createAB (Guid("8fba2a7c-e2da-43bd-b8ee-ddaa774d081d")) cd1 1 2
+  let ab2 = createAB (Guid("91620c12-cd9e-4e66-9df3-58f4b1a50b1f")) cd2 10 20
 
   ABs .contents <- [
       ab1
@@ -63,10 +63,11 @@ let init_abcdContext() =
       Actions=[
         {
           // this.TotalABC := this.ACount + this.BCount + this.CD.CCount
-          Variable = !"this", [descriptors.AB.TotalABC.ToFieldDescriptorId]
+          Variable = !"this", [descriptors.AB.Total.ToFieldDescriptorId]
           Value=("this" => [descriptors.AB.A.ToFieldDescriptorId])
             + ("this" => [descriptors.AB.B.ToFieldDescriptorId])
             + ("this" => [descriptors.AB.CD.ToFieldDescriptorId; descriptors.CD.C.ToFieldDescriptorId])
+            + ("this" => [descriptors.AB.CD.ToFieldDescriptorId; descriptors.CD.D.ToFieldDescriptorId])
         }
       ]
     }

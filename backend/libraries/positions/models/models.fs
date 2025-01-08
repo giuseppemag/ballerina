@@ -6,15 +6,15 @@ open Ballerina.Collections.Map
 open Ballerina.BusinessRules
 
 type AB = { 
-  ABId:Guid; Metadata:EntityMetadata
-  A:int; ACountMetadata:SingletonIntFieldMetadata
-  B:int; BCountMetadata:SingletonIntFieldMetadata
-  TotalABC:int; TotalABCMetadata:ReadonlyIntFieldMetadata
-  CDId:Guid; CDMetadata:RefFieldMetadata
+  ABId:Guid;  A:int;
+  B:int;
+  Total:int;
+  CDId:Guid;
 }
 and CD = { 
-  CDId:Guid; Metadata:EntityMetadata 
-  C:int; CCountMetadata:SingletonIntFieldMetadata
+  CDId:Guid;
+  C:int;
+  D:int;
 }
 and ABCDEvent = SetField of SetFieldEvent
 and Context = {

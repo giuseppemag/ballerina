@@ -40,7 +40,7 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
             | _ -> None);
           Lookup = fun (obj, fields) -> EntityDescriptor.GenericLookup descriptors.CD.Entity.Descriptor allEntities (obj, fields)
           GetEntities = fun () -> allCDs.contents |> Map.values |> Seq.map (fun e -> e :> obj) |> List.ofSeq
-          GetFieldDescriptors = fun () -> [descriptors.CD.C] |> Seq.map (fun (fd:FieldDescriptor) -> fd.ToFieldDescriptorId, fd) |> Map.ofSeq
+          GetFieldDescriptors = fun () -> [descriptors.CD.D; descriptors.CD.C] |> Seq.map (fun (fd:FieldDescriptor) -> fd.ToFieldDescriptorId, fd) |> Map.ofSeq
         }
         TryFind = fun id -> allCDs.contents |> Map.tryFind id |> Option.map(fun e -> e :> obj);
       |}
@@ -62,6 +62,24 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
           AsRefs = (fun _ _ -> FieldUpdateResult.Failure);
         |}
       }
+      D = { 
+        FieldDescriptorId=Guid.NewGuid(); 
+        FieldName = "D"; 
+        Type = fun () -> ExprType.PrimitiveType IntType
+        Lookup = Option<AB>.fromObject >> Option.map(fun e -> e.D |> Value.ConstInt)
+        Get = fun id -> descriptors.CD.Entity.TryFind id |> Option.bind descriptors.CD.D.Lookup;
+        Update = {|
+          AsInt = 
+            fun (One entityId) updater -> 
+              updateSingleField
+                (fun entityId -> allCDs.contents |> Map.tryFind entityId)
+                (fun e' entityId -> allCDs.contents <- allCDs.contents |> Map.add entityId e')
+                (fun e -> e.D) (fun e f -> { e with D = f })
+                (One entityId) updater;
+          AsRef = (fun _ _ -> FieldUpdateResult.Failure);
+          AsRefs = (fun _ _ -> FieldUpdateResult.Failure);
+        |}
+      }
     |}
     AB = {|
       Entity = {|
@@ -74,7 +92,7 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
               | _ -> None);
             Lookup = fun (obj, fields) -> EntityDescriptor.GenericLookup descriptors.AB.Entity.Descriptor allEntities (obj, fields)
             GetEntities = fun () -> allABs.contents |> Map.values |> Seq.map (fun e -> e :> obj) |> List.ofSeq
-            GetFieldDescriptors = fun () -> [descriptors.AB.A; descriptors.AB.B; descriptors.AB.CD; descriptors.AB.TotalABC] |> Seq.map (fun (fd:FieldDescriptor) -> fd.ToFieldDescriptorId, fd) |> Map.ofSeq
+            GetFieldDescriptors = fun () -> [descriptors.AB.A; descriptors.AB.B; descriptors.AB.CD; descriptors.AB.Total] |> Seq.map (fun (fd:FieldDescriptor) -> fd.ToFieldDescriptorId, fd) |> Map.ofSeq
           }      
         TryFind = fun id -> allABs.contents |> Map.tryFind id |> Option.map(fun e -> e :> obj);
       |}
@@ -114,19 +132,19 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
           AsRefs = (fun _ _ -> FieldUpdateResult.Failure);
         |};    
       }
-      TotalABC = { 
+      Total = { 
         FieldDescriptorId=Guid.NewGuid(); 
         FieldName = "TotalABC"; 
         Type = fun () -> ExprType.PrimitiveType IntType
-        Lookup = Option<AB>.fromObject >> Option.map(fun e -> e.TotalABC |> Value.ConstInt) 
-        Get = fun id -> descriptors.AB.Entity.TryFind id |> Option.bind descriptors.AB.TotalABC.Lookup;
+        Lookup = Option<AB>.fromObject >> Option.map(fun e -> e.Total |> Value.ConstInt) 
+        Get = fun id -> descriptors.AB.Entity.TryFind id |> Option.bind descriptors.AB.Total.Lookup;
         Update = {|
           AsInt = 
             fun (One entityId) updater -> 
               updateSingleField
                 (fun entityId -> allABs.contents |> Map.tryFind entityId) 
                 (fun e' entityId -> allABs .contents <- allABs.contents |> Map.add entityId e')
-                (fun e -> e.TotalABC) (fun e f -> { e with TotalABC = f })
+                (fun e -> e.Total) (fun e f -> { e with Total = f })
                 (One entityId) updater;
           AsRef = (fun _ _ -> FieldUpdateResult.Failure);
           AsRefs = (fun _ _ -> FieldUpdateResult.Failure);
