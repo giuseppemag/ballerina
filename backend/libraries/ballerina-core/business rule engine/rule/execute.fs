@@ -4,6 +4,7 @@ open System.Linq
 open Ballerina.Fun
 open Ballerina.Coroutines
 open Ballerina.BusinessRules
+open Ballerina.BusinessRulesRestrictionPredicates
 open Ballerina.BusinessRuleExecution
 open Ballerina.BusinessRuleEvaluation
 open Ballerina.BusinessRulePreprocessor
@@ -14,6 +15,8 @@ let rec executeRulesTransitively
   (executedRules:Map<BusinessRuleId, EntitiesIdentifiers>) 
   (modifiedFields:Map<FieldDescriptorId, EntitiesIdentifiers>) = 
   let candidateRules = getCandidateRules allBusinessRules (modifiedFields |> Map.keys |> Set.ofSeq)
+  // do printfn "candidateRules = %A" candidateRules
+  // do Console.ReadLine() |> ignore
   let mutable modifiedFields':Map<FieldDescriptorId, EntitiesIdentifiers> = Map.empty
   let mutable executedRules':Map<BusinessRuleId, EntitiesIdentifiers> = Map.empty
   for (businessRule, relevantModifiedFieldIds) in candidateRules do

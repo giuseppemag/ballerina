@@ -33,6 +33,7 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
       Entity = {|
         Descriptor = { 
           EntityDescriptorId = Guid.NewGuid(); EntityName = "CD";
+          TryFind = fun id -> allCDs.contents |> Map.tryFind id |> Option.map(fun e -> e :> obj)
           GetId = 
             (function
             | :? CD as e ->  Some e.CDId
@@ -68,6 +69,7 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
       Entity = {|
         Descriptor = 
           { EntityDescriptorId = Guid.NewGuid(); EntityName = "AB"; 
+            TryFind = fun id -> allABs.contents |> Map.tryFind id |> Option.map(fun e -> e :> obj)
             GetId = 
               (function
               | :? AB as e ->  Some e.ABId
@@ -134,7 +136,8 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
         FieldDescriptorId=Guid.NewGuid(); 
         FieldName = "CD"; 
         Type = fun () -> ExprType.LookupType descriptors.CD.Entity.Descriptor.ToEntityDescriptorId
-        Lookup = Option<AB>.fromObject >> Option.map(fun e -> e.CDId |> Value.ConstGuid)
+        Lookup = 
+          Option<positions.model.AB>.fromObject >> Option.map(fun (e:positions.model.AB) -> e.CDId |> Value.ConstGuid)
         Get = fun id -> descriptors.AB.Entity.TryFind id |> Option.bind descriptors.AB.CD.Lookup;
         Update = {|
           AsInt = (fun _ _ -> FieldUpdateResult.Failure);

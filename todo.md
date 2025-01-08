@@ -107,10 +107,12 @@ Todo (✅/❌)
           ❌ testing scenario
             ✅ add a setA event, see that the Total changes
             ✅ add a setB event, see that the Total changes
-            ❌ add a setC event, see that the Total changes (nasty because of the AB-CD relation)
+            ✅ add a setC event, see that the Total changes (nasty because of the AB-CD relation)
               ✅ the CD values are cached inside the entity, they should be lazy
-              ❌ the propagation to TotalABC does not work
+              ✅ the propagation to TotalABC does not work
+              ✅ the predicate is not restricting
             ❌ add a setCDRef event, see that the Total changes
+            ❌ add a setD event, for symmetry
             ❌ extend the schema: CD - EF, CD also has a DCount
             ❌ add a setE event, see that the Total changes
             ❌ verify that there actually is no loop
@@ -132,6 +134,7 @@ Todo (✅/❌)
             ❌ prepare a `co.Any` where each coroutine returns a different `fieldDescriptor x (Target = One | Multiple | All)`
             ❌ BUG ALERT if translating to production! The Map of events will likely cause events not to be processed in create-order
             ❌ allow approval, with associated business rules
+            ❌ deal with missing references
             ❌ introduce list monad with errors for eval/execute
               ❌ return useful error messages
             ❌ implement lazy fields in the schema
@@ -139,12 +142,15 @@ Todo (✅/❌)
               ❌ openSession(schema) -> operations | closeSession()
               ❌ when the schema is fully dynamic, get/update operations work with reflection/`Dynamic` CLR type
             ❌ efficiently: with pre-caching of the FREE-VARS of both condition and expression value
-            ❌ improve DSL for type-safe business rule and expression definition in F#
-              ❌ group field definitions and entity definitions under anonymous records for aesthetics and scoping in case of multiple fields with the same name in a different entity          
-            ❌ ideally with F#-style domain objects, not C#-style serializable objects
             ❌ enums to strings
-            ❌ remove every single instance of mutation
+          ❌ PROTOTYPE 2 - DB in PG with CRUD OpenAPI
+            ❌ performance test
+            ❌ add memcache after write operations
           ❌ -----at this point, the prototype can be considered reasonably done and could go live as a microservice-----
+          ❌ improve DSL for type-safe business rule and expression definition in F#
+            ❌ group field definitions and entity definitions under anonymous records for aesthetics and scoping in case of multiple fields with the same name in a different entity          
+          ❌ ideally with F#-style domain objects, not C#-style serializable objects
+          ❌ remove every single instance of mutation
           ❌ separate DB serialization as a different EF package
             ❌ represent Expr as JSON
             ❌ represent Expr as a recursive structure looked up with a recursive query

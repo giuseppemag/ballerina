@@ -9,6 +9,7 @@ type EntityMetadata = { EntityMetadataId:Guid; Approval:bool; Entity:EntityDescr
 and EntityDescriptor = { 
   EntityDescriptorId:Guid; 
   EntityName:string; 
+  TryFind:Guid -> Option<obj>; 
   GetId:obj -> Option<Guid>; 
   Lookup:obj * List<FieldDescriptorId> -> Option<obj>;
   GetEntities:Unit -> List<obj> 
@@ -117,44 +118,6 @@ type EntityDescriptor with
   member this.ToEntityDescriptorId = 
     { EntityDescriptorId=this.EntityDescriptorId; EntityName=this.EntityName }
 
-type RuleDependency with
-  member dep.Predicate (schema:Schema) (changedEntitiesIds:Set<Guid>) =
-    option{
-      let! changedEntityType = schema.tryFindEntity dep.ChangedEntityType
-      // do printfn "changedEntityType = %A" (changedEntityType.ToEntityDescriptorId)
-      // do Console.ReadLine() |> ignore
-      let! restrictedVariableType = schema.tryFindEntity dep.RestrictedVariableType
-      // do printfn "restrictedVariableType = %A" (restrictedVariableType.ToEntityDescriptorId)
-      // do Console.ReadLine() |> ignore
-      return fun (restrictedVariable:obj) -> 
-        option{
-            // do printfn "restrictedVariable = %A" (restrictedVariable)
-            // do Console.ReadLine() |> ignore
-            let! variableValue = restrictedVariableType.Lookup(restrictedVariable, dep.PathFromVariableToChange)
-            // do printfn "variableValue = %A" (variableValue)
-            // do Console.ReadLine() |> ignore
-            let! variableValueId = changedEntityType.GetId variableValue
-            // do printfn "variableValueId = %A" (variableValueId)
-            // do Console.ReadLine() |> ignore
-            return changedEntitiesIds |> Set.contains variableValueId
-          } |> Option.defaultValue true
-        } |> Option.defaultValue (fun o -> true)
-
-
-type RuleDependencies with
-  member deps.PredicatesByRestrictedVariable (schema:Schema) (changedEntitiesIds:Set<Guid>) =
-    let (||.) = fun p1 p2 -> fun (o:obj) -> p1 o || p2 o
-    let dependencies = deps.dependencies |> Map.values
-    let dependencies = 
-      seq{
-        for depsByChangeType in dependencies do
-        for dep in depsByChangeType do
-        yield [dep.RestrictedVariable, [dep.Predicate schema changedEntitiesIds]] |> Map.ofList
-      } 
-    dependencies
-      |> Map.mergeMany (fun l1 l2 -> l1 @ l2)
-      |> Map.map (fun k ps -> ps |> Seq.reduce (||.))
-
 type BusinessRule with
   member this.ToBusinessRuleId = { BusinessRuleId = this.BusinessRuleId }
 
@@ -162,16 +125,30 @@ type EntityDescriptor with
   static member GenericLookup:EntityDescriptor -> Map<EntityDescriptorId, EntityDescriptor> -> obj * List<FieldDescriptorId> -> Option<obj> = 
     fun self allEntities (obj, fieldIds) ->
       option{
+        // do printfn "lookup = %A" (obj, fieldIds)
+        // do Console.ReadLine() |> ignore
         match fieldIds with
         | [] -> return obj
         | fieldId::fieldIds -> 
             let! fieldDescriptor = self.GetFieldDescriptors() |> Map.tryFind fieldId
+            // do printfn "fieldDescriptor = %A" fieldDescriptor
+            // do Console.ReadLine() |> ignore
             let! fieldValue = fieldDescriptor.Lookup obj
+            // do printfn "fieldValue = %A" fieldValue
+            // do Console.ReadLine() |> ignore
             match fieldDescriptor.Type(), fieldValue with
             | ExprType.LookupType entityDescriptorId, Value.ConstGuid id ->
               let! entityDescriptor = allEntities |> Map.tryFind entityDescriptorId
-              let! fieldValue = entityDescriptor.GetId id
-              return! entityDescriptor.Lookup (fieldValue, fieldIds)
+              // do printfn "entityDescriptor = %A" entityDescriptor
+              // do Console.ReadLine() |> ignore
+              let! fieldValue = entityDescriptor.TryFind id
+              // do printfn "fieldValue = %A" fieldValue
+              // do Console.ReadLine() |> ignore
+              let! result = entityDescriptor.Lookup (fieldValue, fieldIds)
+              return result
             | _ -> 
-              return! fieldValue.toObject
+              let! result = fieldValue.toObject
+              // do printfn "result = %A" fieldValue
+              // do Console.ReadLine() |> ignore
+              return result
       }

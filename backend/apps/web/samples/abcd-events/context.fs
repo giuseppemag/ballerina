@@ -103,7 +103,7 @@ let init_abcdContext() =
                 Value=("this" => [descriptors.CD.C.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 20))
               }
             }; 
-            Target = One (CDs.contents.First().Key)
+            Target = One (CDs.contents.[ABs.contents.First().Value.CDId].CDId)
           })
 
     ] // :List<FieldEvent>; 
