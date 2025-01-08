@@ -111,17 +111,18 @@ Todo (✅/❌)
               ✅ the CD values are cached inside the entity, they should be lazy
               ✅ the propagation to TotalABC does not work
               ✅ the predicate is not restricting
-            ❌ add a setCDRef event, see that the Total changes
+            ✅ add a setCDRef event, see that the Total changes
             ❌ add a setD event, for symmetry
-            ❌ extend the schema: CD - EF, CD also has a DCount
+            ❌ extend the schema: CD - EF
             ❌ add a setE event, see that the Total changes
             ❌ verify that there actually is no loop
               ❌ loops involve same rule, same entity, same field
               ❌ test with an actual loop
               ❌ add orthogonal rules on the same entity-set
-            ❌ change all `CD` refs inside a given `AB`
-              ❌ the schema for `CD` then needs a `RefsField`
-              ❌ complete the scenario of multiple CDs, so that the events can also be EntityEvents such as `Add`, `Delete`, `Move`, etc.
+            ❌ add `CDs` to `AB`, so not just one
+              ❌ change all `CD` refs inside a given `AB`
+                ❌ the schema for `CD` then needs a `RefsField`
+                ❌ complete the scenario of multiple CDs, so that the events can also be EntityEvents such as `Add`, `Delete`, `Move`, etc.
           ❌ make it production-ready
             ❌ do not commit the updates to the context immediately, output a set of field value changes
               ❌ the context becomes a cache of operations

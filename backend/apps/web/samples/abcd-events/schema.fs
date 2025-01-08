@@ -42,10 +42,6 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
           GetEntities = fun () -> allCDs.contents |> Map.values |> Seq.map (fun e -> e :> obj) |> List.ofSeq
           GetFieldDescriptors = fun () -> [descriptors.CD.C] |> Seq.map (fun (fd:FieldDescriptor) -> fd.ToFieldDescriptorId, fd) |> Map.ofSeq
         }
-        UpdateSingleField =
-          updateSingleField
-            (fun entityId -> allCDs.contents |> Map.tryFind entityId)
-            (fun e' entityId -> allCDs.contents <- allCDs.contents |> Map.add entityId e')
         TryFind = fun id -> allCDs.contents |> Map.tryFind id |> Option.map(fun e -> e :> obj);
       |}
       C = { 
@@ -57,7 +53,9 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
         Update = {|
           AsInt = 
             fun (One entityId) updater -> 
-              descriptors.CD.Entity.UpdateSingleField
+              updateSingleField
+                (fun entityId -> allCDs.contents |> Map.tryFind entityId)
+                (fun e' entityId -> allCDs.contents <- allCDs.contents |> Map.add entityId e')
                 (fun e -> e.C) (fun e f -> { e with C = f })
                 (One entityId) updater;
           AsRef = (fun _ _ -> FieldUpdateResult.Failure);
@@ -78,10 +76,6 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
             GetEntities = fun () -> allABs.contents |> Map.values |> Seq.map (fun e -> e :> obj) |> List.ofSeq
             GetFieldDescriptors = fun () -> [descriptors.AB.A; descriptors.AB.B; descriptors.AB.CD; descriptors.AB.TotalABC] |> Seq.map (fun (fd:FieldDescriptor) -> fd.ToFieldDescriptorId, fd) |> Map.ofSeq
           }      
-        UpdateSingleField = 
-          updateSingleField
-            (fun entityId -> allABs.contents |> Map.tryFind entityId) 
-            (fun e' entityId -> allABs .contents <- allABs.contents |> Map.add entityId e')      
         TryFind = fun id -> allABs.contents |> Map.tryFind id |> Option.map(fun e -> e :> obj);
       |}
       A = { 
@@ -93,7 +87,9 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
         Update = {|
           AsInt = 
             fun (One entityId) updater -> 
-                descriptors.AB.Entity.UpdateSingleField
+                updateSingleField
+                  (fun entityId -> allABs.contents |> Map.tryFind entityId) 
+                  (fun e' entityId -> allABs .contents <- allABs.contents |> Map.add entityId e')
                   (fun e -> e.A) (fun e f -> { e with A = f })
                   (One entityId) updater;
           AsRef = (fun _ _ -> FieldUpdateResult.Failure);
@@ -109,7 +105,9 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
         Update = {|
           AsInt = 
             fun (One entityId) updater -> 
-              descriptors.AB.Entity.UpdateSingleField
+              updateSingleField
+                (fun entityId -> allABs.contents |> Map.tryFind entityId) 
+                (fun e' entityId -> allABs .contents <- allABs.contents |> Map.add entityId e')
                 (fun e -> e.B) (fun e f -> { e with B = f })
                 (One entityId) updater;
           AsRef = (fun _ _ -> FieldUpdateResult.Failure);
@@ -125,7 +123,9 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
         Update = {|
           AsInt = 
             fun (One entityId) updater -> 
-              descriptors.AB.Entity.UpdateSingleField
+              updateSingleField
+                (fun entityId -> allABs.contents |> Map.tryFind entityId) 
+                (fun e' entityId -> allABs .contents <- allABs.contents |> Map.add entityId e')
                 (fun e -> e.TotalABC) (fun e f -> { e with TotalABC = f })
                 (One entityId) updater;
           AsRef = (fun _ _ -> FieldUpdateResult.Failure);
@@ -141,9 +141,17 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
         Get = fun id -> descriptors.AB.Entity.TryFind id |> Option.bind descriptors.AB.CD.Lookup;
         Update = {|
           AsInt = (fun _ _ -> FieldUpdateResult.Failure);
-          AsRef = (fun _ _ -> FieldUpdateResult.Failure);
+          AsRef = 
+            fun (One entityId) updater -> 
+              updateSingleField
+                (fun entityId -> allABs.contents |> Map.tryFind entityId) 
+                (fun e' entityId -> allABs .contents <- allABs.contents |> Map.add entityId e')
+                (fun e -> e.CDId) (fun e f -> { e with CDId = f })
+                (One entityId) updater;          
           AsRefs = 
             fun entitiesIdentifier updater -> 
+              do printfn "Updating AB::CD over %A" entitiesIdentifier
+              do Console.ReadLine() |> ignore
               match entitiesIdentifier with 
               | All -> 
                 let mutable changes = 0

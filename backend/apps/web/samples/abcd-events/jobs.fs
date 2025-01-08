@@ -17,8 +17,9 @@ let abcdEventLoop() =
       co{
         let! e = co.On(
           function 
-          | ABCDEvent.SetField(SetFieldEvent.SingletonIntFieldEvent e) -> 
-            Option.Some e
+          | ABCDEvent.SetField(SetFieldEvent.SingletonIntFieldEvent { Target = target; Self = self })
+          | ABCDEvent.SetField(SetFieldEvent.SingletonRefFieldEvent { Target = target; Self = self }) -> 
+            Option.Some ({| Self=self; Target=target |})
           | discarded -> 
             Option.None)
         do! co.Wait(TimeSpan.FromSeconds 0.0)
@@ -53,6 +54,7 @@ let abcdEventLoop() =
     context.ActiveEvents |> Seq.map (
       function 
       | (ABCDEvent.SetField(SetFieldEvent.SingletonIntFieldEvent inner)) as e -> inner.Self.FieldEventId, e
+      | (ABCDEvent.SetField(SetFieldEvent.SingletonRefFieldEvent inner)) as e -> inner.Self.FieldEventId, e
       | (ABCDEvent.SetField(SetFieldEvent.IntFieldEvent inner)) as e -> inner.Self.FieldEventId, e)
       |> Map.ofSeq, 
     ()

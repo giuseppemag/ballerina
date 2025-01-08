@@ -23,13 +23,13 @@ let init_abcdContext() =
     tryFindField = fun (fieldDescriptorId:FieldDescriptorId) -> allFields |> Map.tryFind fieldDescriptorId
   }
   
-  let createCD id = 
+  let createCD id C = 
     {
       CDId = id; Metadata = { EntityMetadataId = Guid.NewGuid(); Approval = false; Entity = descriptors.CD.Entity.Descriptor }
-      C = 3; CCountMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = descriptors.CD.C.ToFieldDescriptorId }
+      C = C; CCountMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = descriptors.CD.C.ToFieldDescriptorId }
     }
-  let cd1 = createCD (Guid("d8ff0920-2b47-499f-9f7b-cb07a1f8f3a4"))
-  let cd2 = createCD (Guid("69f182db-84ba-4e81-91c5-d3becd029a6b"))
+  let cd1 = createCD (Guid("d8ff0920-2b47-499f-9f7b-cb07a1f8f3a4")) 3
+  let cd2 = createCD (Guid("69f182db-84ba-4e81-91c5-d3becd029a6b")) 30
   CDs .contents <-
     [
       cd1
@@ -41,7 +41,7 @@ let init_abcdContext() =
         A = 1 ; ACountMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = descriptors.AB.A.ToFieldDescriptorId }
         B = 2 ; BCountMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = descriptors.AB.B.ToFieldDescriptorId }
         TotalABC = 0 ; TotalABCMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = descriptors.AB.TotalABC.ToFieldDescriptorId }
-        CDId = CDs.contents |> Map.values |> Seq.randomChoice |> (fun cd -> cd.CDId); 
+        CDId = cd.CDId; 
         CDMetadata = { Self = { FieldMetadataId = Guid.NewGuid(); Approval = false; CurrentEditPrio = EditPriority.None }; Field = descriptors.AB.CD.ToFieldDescriptorId }
       }
   let ab1 = createAB (Guid("8fba2a7c-e2da-43bd-b8ee-ddaa774d081d")) cd1
@@ -92,18 +92,31 @@ let init_abcdContext() =
       //       }; 
       //       Target = One (ABs.contents.First().Key)
       //     })
+      // ABCDEvent.SetField(
+      //   SetFieldEvent.SingletonIntFieldEvent 
+      //     { 
+      //       Self = { 
+      //         FieldEventId = Guid.NewGuid(); 
+      //         EntityDescriptorId = descriptors.CD.Entity.Descriptor.ToEntityDescriptorId
+      //         Assignment = {
+      //           Variable = (!"this", [descriptors.CD.C.ToFieldDescriptorId])
+      //           Value=("this" => [descriptors.CD.C.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 20))
+      //         }
+      //       }; 
+      //       Target = One (CDs.contents.[ABs.contents.First().Value.CDId].CDId)
+      //     })
       ABCDEvent.SetField(
-        SetFieldEvent.SingletonIntFieldEvent 
+        SetFieldEvent.SingletonRefFieldEvent 
           { 
             Self = { 
               FieldEventId = Guid.NewGuid(); 
-              EntityDescriptorId = descriptors.CD.Entity.Descriptor.ToEntityDescriptorId
+              EntityDescriptorId = descriptors.AB.Entity.Descriptor.ToEntityDescriptorId
               Assignment = {
-                Variable = (!"this", [descriptors.CD.C.ToFieldDescriptorId])
-                Value=("this" => [descriptors.CD.C.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 20))
+                Variable = (!"this", [descriptors.AB.CD.ToFieldDescriptorId])
+                Value=Expr.Value(Value.ConstGuid(cd2.CDId))
               }
             }; 
-            Target = One (CDs.contents.[ABs.contents.First().Value.CDId].CDId)
+            Target = One (ab1.ABId)
           })
 
     ] // :List<FieldEvent>; 

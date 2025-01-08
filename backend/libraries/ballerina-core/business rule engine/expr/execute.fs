@@ -15,12 +15,16 @@ let execute (schema:Schema) (vars:Vars) (assignment:Assignment) : list<Map<Field
       // do Console.ReadLine() |> ignore
       for fieldDescriptor in schema.tryFindField fieldDescriptorId |> Option.toList do
       for (vars, value) in values do
+        // do printfn "assigning value %A" value
+        // do Console.ReadLine() |> ignore
         let variants = eval None schema vars (Expr.VarLookup assignedVar)
         // do printfn "assigning variants %A" variants
         // do Console.ReadLine() |> ignore
         for (_, res) in variants do
           match res with
           | Value.Var(entityDescriptor, One entityId) ->
+            // do printfn "assigning variant %A" res
+            // do Console.ReadLine() |> ignore
             match value with
             | Value.ConstInt i ->
               if fieldDescriptor.Update.AsInt (One entityId) (replaceWith i) = FieldUpdateResult.ValueChanged then
