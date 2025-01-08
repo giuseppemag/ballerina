@@ -102,7 +102,6 @@ Todo (✅/❌)
                   ❌ the assignment (`Update`) of fields to ABs and CDs in the definition of the AB/CD entity schema should use the field definition assignment recursively
               ❌ there are various places where we assume `One entityId`, is this always reasonable?
                 ❌ in particular, `Expr::execute` does not take into account more than one field lookup on the assigned variable, extend
-              ❌ distribute the various field updaters along the typed `XFieldDescriptor`, every entity should have the map of fields by type
               ❌ rename `positions` to `abcd`
           ❌ testing scenario
             ✅ add a setA event, see that the Total changes
@@ -115,18 +114,20 @@ Todo (✅/❌)
             ✅ add a setD event, for symmetry
             ❌ extend the schema: CD - EF
               ❌ add setE, setF events, see that the Total changes
-            ❌ verify that there actually is no loop
-              ❌ loops involve same rule, same entity, same field
-              ❌ test with an actual loop
+            ✅ verify that there actually is no loop
+              ✅ loops involve same rule, same entity, same field
+                ❌ show the loop
+              ✅ test with an actual loop
               ✅ add orthogonal rules on the same entity-set
-                ✅ A, B, ..., Total
-                ✅ alpha, beta, ..., Sigma
-                ✅ cyrillic variants, ..., (BEC')
+                ✅ A, B, ...
+                ✅ alpha, beta, ...
+                ✅ cyrillic variants, ...
             ❌ add `CDs` to `AB`, so not just one
               ❌ change all `CD` refs inside a given `AB`
                 ❌ the schema for `CD` then needs a `RefsField`
                 ❌ complete the scenario of multiple CDs, so that the events can also be EntityEvents such as `Add`, `Delete`, `Move`, etc.
           ❌ make it production-ready
+            ❌ drop the distinction between singleton and group field, it is not really relevant
             ❌ test with 
               ❌ a few thousands ABs, CDs, EFs
               ❌ a dozen rules on many field "clusters"

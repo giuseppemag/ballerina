@@ -104,9 +104,40 @@ let init_abcdContext() =
         }
       ]
     }
-  let businessRules = 
+
+  let totalsLoop = 
     [
-      total1; total2; total3
+     { 
+        BusinessRuleId = Guid.NewGuid(); 
+        Name = "Total2 = Total1+1+Total3"; Priority = BusinessRulePriority.System; 
+        Condition = Expr.Exists(!"this", descriptors.AB.Entity.Descriptor.ToEntityDescriptorId, Expr.Value (Value.ConstBool true)); 
+        Actions=[
+          {
+            Variable = !"this", [descriptors.AB.Весь2.ToFieldDescriptorId]
+            Value=("this" => [descriptors.AB.Total1.ToFieldDescriptorId])
+              + Expr.Value(Value.ConstInt 1) 
+              + ("this" => [descriptors.AB.Σ3.ToFieldDescriptorId])
+          }
+        ]
+      }
+     { 
+        BusinessRuleId = Guid.NewGuid(); 
+        Name = "Total3 = Total2+1"; Priority = BusinessRulePriority.System; 
+        Condition = Expr.Exists(!"this", descriptors.AB.Entity.Descriptor.ToEntityDescriptorId, Expr.Value (Value.ConstBool true)); 
+        Actions=[
+          {
+            Variable = !"this", [descriptors.AB.Σ3.ToFieldDescriptorId]
+            Value=("this" => [descriptors.AB.Весь2.ToFieldDescriptorId])
+              + Expr.Value(Value.ConstInt 1)
+          }
+        ]
+      }
+    ]
+
+  let businessRules = 
+    // totalsLoop @ 
+    [
+      total1; total2; total3; 
     ] |> Seq.map (fun br -> br.BusinessRuleId, br) |> Map.ofSeq
 
   let context = {

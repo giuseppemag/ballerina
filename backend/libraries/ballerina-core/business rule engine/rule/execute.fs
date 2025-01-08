@@ -73,6 +73,8 @@ let rec executeRulesTransitively
             ()
       | _ -> ()
   if BusinessRule.overlap executedRules executedRules' then
+    do printfn "loop detected, stopping now"
+    do Console.ReadLine() |> ignore
     None
   else
     if modifiedFields' |> Map.isEmpty then
