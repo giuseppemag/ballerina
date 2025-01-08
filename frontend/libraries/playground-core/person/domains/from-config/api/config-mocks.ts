@@ -52,6 +52,7 @@ export const PersonFormsConfig = {
         "addressesByCity": { fun: "Map", args: [{ fun: "SingleSelection", args: ["CityRef"]}, "Address"] },
         "addressesWithColorLabel": { fun: "Map", args: [{ fun: "SingleSelection", args: ["ColorRef"]}, "Address"] },
         "permissions": { fun: "Map", args: [{ fun: "SingleSelection", args: ["PermissionRef"]}, "boolean"] },
+        "test": { fun: "Map", args: [{fun: "SingleSelection", args: ["DepartmentRef"]}, {fun: "SingleSelection", args: ["CityRef"]}] },
       }
     }
   },
@@ -172,6 +173,11 @@ export const PersonFormsConfig = {
             keyRenderer:{ label: "permission", renderer: "defaultEnum", options: "permissions", visible: { "kind": "true" } },
             valueRenderer:{ label: "granted", renderer: "defaultBoolean", visible: { "kind": "true" } },
             visible: { "kind": "true" } },
+        "test": {
+            renderer: "defaultMap",
+            keyRenderer:{ label: "department", renderer: "defaultInfiniteStream", stream: "departments", visible: { "kind": "true" } },
+            valueRenderer:{ label: "city", renderer: "defaultInfiniteStream", stream: "cities", visible: { "kind": "true" } },
+            visible: { "kind": "true" } },
       },
       "tabs": {
         "main": {
@@ -188,7 +194,7 @@ export const PersonFormsConfig = {
             },
             "addresses": {
               "groups": {
-                "main": ["departments", "mainAddress", "addresses", "addressesWithLabel", "addressesByCity", "addressesWithColorLabel", "permissions"],        
+                "main": ["departments", "mainAddress", "addresses", "addressesWithLabel", "addressesByCity", "addressesWithColorLabel", "permissions", "test"],        
               }
             }
           }
