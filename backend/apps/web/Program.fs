@@ -40,6 +40,7 @@ open positions.model
 module Program =
   open abcdsample.eventLoop
   open absample.eventLoop
+  open Oauth.EntryPoint
   type PositionOptions() = 
     member val Title:string = "" with get, set
     member val Name:string = "" with get, set
@@ -61,6 +62,7 @@ module Program =
   | web = 1
   | jobs = 2
   | abcdjobs = 3
+  | oauth = 4
 
   [<EntryPoint>]
   let main args =
@@ -106,6 +108,7 @@ module Program =
       | LaunchMode.web -> web()
       | LaunchMode.jobs -> abEventLoop (app.Services.CreateScope)
       | LaunchMode.abcdjobs -> abcdEventLoop ()
+      | LaunchMode.oauth -> oauthEventLoop()
       | _ -> printfn "no mode selected, exiting"
       ), mode)
     do rootCommand.Invoke(args) |> ignore

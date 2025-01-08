@@ -8,6 +8,7 @@
     <Compile Include=".\samples\ab-events\repositories.fs" />
     <Compile Include=".\samples\ab-events\endpoints.fs" />
     <Compile Include=".\samples\ab-events\jobs.fs" />
+    <Compile Include=".\samples\oauth\jobs.fs" />
     <Compile Include=".\samples\abcd-events\schema.fs" />
     <Compile Include=".\samples\abcd-events\context.fs" />
     <Compile Include=".\samples\abcd-events\jobs.fs" />
@@ -19,6 +20,7 @@
     <ProjectReference Include="..\..\libraries\migrations\migrations.csproj" />
     <ProjectReference Include="..\..\libraries\users\users.fsproj" />
     <ProjectReference Include="..\..\libraries\absample\absample.fsproj" />
+    <ProjectReference Include="..\..\libraries\oauth2\oauth2.fsproj" />
     <ProjectReference Include="..\..\libraries\positions\positions.fsproj" />
   </ItemGroup>
 
