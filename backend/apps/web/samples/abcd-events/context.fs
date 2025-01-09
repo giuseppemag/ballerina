@@ -135,7 +135,7 @@ let init_abcdContext() =
     ]
 
   let businessRules = 
-    totalsLoop @ 
+    // totalsLoop @ 
     [
       total1; total2; total3; 
     ] |> Seq.map (fun br -> br.BusinessRuleId, br) |> Map.ofSeq

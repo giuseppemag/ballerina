@@ -123,9 +123,8 @@ Todo (✅/❌)
                     ✅ accumulate a stack of business rule executions
                     ✅ accumulate the merged business rule executions
                     ✅ throw an error with the right loop
-                    ❌ make `addCurrentModifiedFields` more type safe
-                    ❌ `CurrentExecutedRules` should be renamed to `AllExecutedRules`
-                      ❌ does it actually need to be cleared? If possible, do not clear
+                    ✅ make `addCurrentModifiedFields` more type safe
+                    ✅ we need both `CurrentExecutedRules` and `AllExecutedRules`
                 ✅ show the loop
               ✅ test with an actual loop
               ✅ add orthogonal rules on the same entity-set

@@ -2,6 +2,7 @@ module Ballerina.BusinessRuleTransitiveExecution
 open System
 open System.Linq
 open Ballerina.Fun
+open Ballerina.Collections.Map
 open Ballerina.State
 open Ballerina.Coroutines
 open Ballerina.BusinessRules
@@ -14,6 +15,7 @@ type TraceFrame = { ExecutedRules:Map<BusinessRuleId, EntitiesIdentifiers>; Modi
 type BusinessRuleExecutionError = Loop of List<TraceFrame>
 type BusinessRuleExecutionContext = { AllRules:Map<Guid, BusinessRule>; Schema:Schema }
 type BusinessRuleExecutionState = { 
+  AllExecutedRules:Map<BusinessRuleId, EntitiesIdentifiers>; 
   CurrentExecutedRules:Map<BusinessRuleId, EntitiesIdentifiers>; 
   CurrentModifiedFields:Map<FieldDescriptorId, EntitiesIdentifiers>
   Trace:List<TraceFrame>
@@ -23,21 +25,17 @@ type BusinessRuleExecutionState = {
   static member addCurrentExecutedRule businessRuleId allModifiedTargets = fun s -> 
     { s with CurrentExecutedRules = s.CurrentExecutedRules |> Map.add businessRuleId allModifiedTargets }
   static member addCurrentModifiedFields k v = fun s ->     
-    let modifiedFields' = s.CurrentModifiedFields
-    if modifiedFields' |> Map.containsKey k |> not then
-      { s with CurrentModifiedFields = modifiedFields' |> Map.add k v }
-    else 
-      let mergedTarget = EntitiesIdentifiers.merge (modifiedFields'.[k]) v
-      { s with CurrentModifiedFields = modifiedFields' |> Map.add k mergedTarget }
+    { s with CurrentModifiedFields = s.CurrentModifiedFields |> Map.update k (fun () -> v) (EntitiesIdentifiers.merge v) }
   static member updaters = 
     {|
       CurrentExecutedRules = fun u s -> { s with CurrentExecutedRules=u(s.CurrentExecutedRules)}
+      AllExecutedRules = fun u s -> { s with AllExecutedRules=u(s.AllExecutedRules)}
     |}
 
 let rec executeRulesTransitively() : State<_,BusinessRuleExecutionContext, BusinessRuleExecutionState, BusinessRuleExecutionError> = 
   state{
     let! { AllRules=allBusinessRules; Schema=schema } = state.GetContext()
-    let! { CurrentExecutedRules=executedRules; CurrentModifiedFields=modifiedFields } = state.GetState()
+    let! { AllExecutedRules=executedRules; CurrentModifiedFields=modifiedFields } = state.GetState()
     // do printfn "executedRules = %A" executedRules
     // do Console.ReadLine() |> ignore
     // do printfn "modifiedFields = %A" modifiedFields
@@ -107,19 +105,19 @@ let rec executeRulesTransitively() : State<_,BusinessRuleExecutionContext, Busin
                 // do Console.ReadLine() |> ignore
         | _ -> return ()
     let! { CurrentExecutedRules=executedRules' } = state.GetState()
+    let! { CurrentModifiedFields=modifiedFields' } = state.GetState()
+    do! state.SetState (BusinessRuleExecutionState.trace executedRules' modifiedFields')
     // do printfn "final executedRules' = %A" executedRules'
     // do Console.ReadLine() |> ignore
     if BusinessRule.overlap executedRules executedRules' then
       let! { Trace=trace } = state.GetState()
       return! state.Throw (Loop trace)
     else
-      let! { CurrentModifiedFields=modifiedFields' } = state.GetState()
       // do printfn "final modifiedFields' = %A" modifiedFields'
       // do Console.ReadLine() |> ignore
       if modifiedFields' |> Map.isEmpty then
         return ()
       else
-        do! state.SetState (BusinessRuleExecutionState.trace executedRules' modifiedFields')
-        do! state.SetState (BusinessRuleExecutionState.updaters.CurrentExecutedRules(replaceWith(BusinessRule.mergeExecutedRules executedRules executedRules')))
+        do! state.SetState (BusinessRuleExecutionState.updaters.AllExecutedRules(BusinessRule.mergeExecutedRules executedRules'))
         return! executeRulesTransitively()
   }

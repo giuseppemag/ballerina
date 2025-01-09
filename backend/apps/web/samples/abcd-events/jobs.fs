@@ -35,6 +35,7 @@ let abcdEventLoop() =
           for vars in modifiedFields do
             let businessRulesExecutionContext = { AllRules=ctx.BusinessRules; Schema=ctx.Schema }
             let businessRulesExecutionState = { 
+              AllExecutedRules=Map.empty
               CurrentExecutedRules=Map.empty;
               CurrentModifiedFields=vars;
               Trace=[]
