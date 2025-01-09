@@ -114,7 +114,7 @@ Todo (✅/❌)
             ✅ add a setD event, for symmetry
             ✅ extend the schema: CD - EF
               ✅ add setE, setF events
-                ❌ Total3 does not change
+                ✅ Total3 does not change
             ✅ verify that there actually is no loop
               ✅ loops involve same rule, same entity, same field
                 ✅ redefine the transitive execution of business rules with the state monad

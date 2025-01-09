@@ -193,32 +193,32 @@ let init_abcdContext() =
       //       }; 
       //       Target = One (cd2.CDId)
       //     })
-      // ABCDEvent.SetField(
-      //   SetFieldEvent.SingletonRefFieldEvent 
-      //     { 
-      //       Self = { 
-      //         FieldEventId = Guid.NewGuid(); 
-      //         EntityDescriptorId = descriptors.AB.Entity.Descriptor.ToEntityDescriptorId
-      //         Assignment = {
-      //           Variable = (!"this", [descriptors.AB.CD.ToFieldDescriptorId])
-      //           Value=Expr.Value(Value.ConstGuid(cd2.CDId))
-      //         }
-      //       }; 
-      //       Target = One (ab1.ABId)
-      //     })
       ABCDEvent.SetField(
         SetFieldEvent.SingletonRefFieldEvent 
           { 
             Self = { 
               FieldEventId = Guid.NewGuid(); 
-              EntityDescriptorId = descriptors.EF.Entity.Descriptor.ToEntityDescriptorId
+              EntityDescriptorId = descriptors.AB.Entity.Descriptor.ToEntityDescriptorId
               Assignment = {
-                Variable = (!"this", [descriptors.EF.E.ToFieldDescriptorId])
-                Value=(!!"this" => [descriptors.EF.E.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 10))
+                Variable = (!"this", [descriptors.AB.CD.ToFieldDescriptorId])
+                Value=Expr.Value(Value.ConstGuid(cd2.CDId))
               }
             }; 
-            Target = One (ef1.EFId)
+            Target = One (ab1.ABId)
           })
+      // ABCDEvent.SetField(
+      //   SetFieldEvent.SingletonRefFieldEvent 
+      //     { 
+      //       Self = { 
+      //         FieldEventId = Guid.NewGuid(); 
+      //         EntityDescriptorId = descriptors.EF.Entity.Descriptor.ToEntityDescriptorId
+      //         Assignment = {
+      //           Variable = (!"this", [descriptors.EF.E.ToFieldDescriptorId])
+      //           Value=(!!"this" => [descriptors.EF.E.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 10))
+      //         }
+      //       }; 
+      //       Target = One (ef1.EFId)
+      //     })
 
     ] // :List<FieldEvent>; 
     PastEvents = [] // :List<FieldEvent>;
@@ -226,56 +226,7 @@ let init_abcdContext() =
     Schema = schema
   }
 
-  // do printfn "ab1.Id = %A" ab1.ABId
-  // do printfn "ab1.CD.Id = %A" ab1.CD.CDId
-  // do printfn "ab2.Id = %A" ab2.ABId
-  // do printfn "ab2.CD.Id = %A" ab2.CD.CDId
-  // do Console.ReadLine() |> ignore
-  // do printfn "ABs[0].CD.Id = %A" (Option.bind schema.CD.Entity.GetId (schema.entities.AB.Entity.Lookup(firstAB :> obj, [schema.entities.AB.CD.Self])))
-  // do Console.ReadLine() |> ignore
-  // do printfn "ABs[0].CD = %A" (schema.entities.AB.Entity.Lookup(firstAB :> obj, [schema.entities.AB.CD.Self]))
-  // do Console.ReadLine() |> ignore
-  // do printfn "ABs[0].Id = %A" (schema.entities.AB.Entity.GetId(firstAB :> obj))
-  // do Console.ReadLine() |> ignore
-  // let firstCD = context.CDs() |> Map.values |> Seq.head
-  // do printfn "CDs[0].Id = %A" (schema.CD.Entity.GetId(firstCD :> obj))
-  // do Console.ReadLine() |> ignore
-  // let conditionType = typeCheck context Map.empty totalABC.Condition
-  // do printfn "Type(Rules[0].Condition) = %A" conditionType   
-  // do Console.ReadLine() |> ignore
-  // match conditionType with
-  // | Some(_, vars) ->
-  //   do printfn "Type(Rules[0].Actions[0].Value) = %A" (typeCheck context vars totalABC.Actions.Head.Value)
-  //   do Console.ReadLine() |> ignore
-  // | _ -> ()
-  // do printfn "dependencies(totalABC) = %A" (totalABC.Dependencies context)
-  // do Console.ReadLine() |> ignore
-  // let CDEntity = schema.CD.Entity.ToEntityDescriptorId
-  // let CCountField = schema.CD.CCount.Self
-  // let testedDependencies = (totalABC.Dependencies context.Schema).dependencies.[CDEntity, CCountField]
-  // do printfn "dependencies that trigger on CD.CCount = %A" (testedDependencies)
-  // do Console.ReadLine() |> ignore
-
-  // let (||.) = fun p1 p2 -> fun (o:obj) -> p1 o || p2 o
-  // let changedEntitiesIds:Set<Guid> = Set.empty |> Set.add ab1.CD.CDId
-  // do printfn "changedEntitiesIds = %A" (changedEntitiesIds)
-  // do Console.ReadLine() |> ignore
-  // let predicate = 
-  //   testedDependencies 
-  //     |> Seq.map (fun dep -> dep.Predicate context changedEntitiesIds) 
-  //     |> Seq.fold (||.) (fun (o:obj) -> false)
-  // let restrictedABs = context.ABs().Values |> Seq.filter (fun ab -> ab :> obj |> predicate)
-  // do printfn "restrictedABs = %A" (restrictedABs |> Seq.map (fun ab -> entities.AB.ABId))
-  // do Console.ReadLine() |> ignore
-  // let changedEntitiesIds:Set<Guid> = Set.empty |> Set.add ab2.CD.CDId
-  // do printfn "changedEntitiesIds = %A" (changedEntitiesIds)
-  // do Console.ReadLine() |> ignore
-  // let predicate = 
-  //   testedDependencies 
-  //     |> Seq.map (fun dep -> dep.Predicate context changedEntitiesIds) 
-  //     |> Seq.fold (||.) (fun (o:obj) -> false)
-  // let restrictedABs = context.ABs().Values |> Seq.filter (fun ab -> ab :> obj |> predicate)
-  // do printfn "restrictedABs = %A" (restrictedABs |> Seq.map (fun ab -> entities.AB.ABId))
+  // do printfn "lookedUpFieldDescriptors total3.Actions[0] %A" (lookedUpFieldDescriptors total3.Actions.Head.Value)
   // do Console.ReadLine() |> ignore
 
   context

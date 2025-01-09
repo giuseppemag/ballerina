@@ -68,12 +68,11 @@ let eval (variableRestriction:Option<VarName * (obj -> bool)>) (schema:Schema) (
 let rec lookedUpFieldDescriptors (e:Expr) = 
   let (!) e = lookedUpFieldDescriptors e
   match e with
-  | Expr.FieldLookup((Expr.VarLookup varname) as e, f) -> 
+  | Expr.FieldLookup(e, f) ->   
     seq{
-        yield Set.singleton {| VarName=varname; FieldDescriptorId=f |}
+        yield Set.singleton {| FieldDescriptorId=f |}
         yield !e
     } |> Set.unionMany
-  | Expr.FieldLookup(e, f) -> !e
   | Expr.Binary(_, e1, e2) -> !e1 |> Set.union !e2
   | Expr.SumBy(_,_,e)
   | Expr.Exists(_,_,e) -> !e
