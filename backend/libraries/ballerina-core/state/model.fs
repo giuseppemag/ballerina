@@ -1,7 +1,7 @@
 module Ballerina.State
 open Ballerina.Fun
 
-type State<'a,'c,'s,'e> = State of ('c * 's -> Choice<'a * Option<Updater<'s>>, 'e>)
+type State<'a,'c,'s,'e> = State of ('c * 's -> Choice<'a * Option<'s>, 'e>)
 with 
   member this.run = let (State p) = this in p
   static member map<'b> (f:'a -> 'b) ((State p):State<'a,'c,'s,'e>) : State<'b,'c,'s,'e> =
@@ -14,10 +14,10 @@ with
   static member flatten ((State p):State<State<'a,'c,'s,'e>,'c,'s,'e>) : State<'a,'c,'s,'e> = 
     State(fun (c,s0) ->
       match p (c,s0) with
-      | Choice1Of2 (State p',u_s) -> 
-        match p' (match u_s with None -> c,s0 | Some u_s -> c,u_s s0) with
-        | Choice1Of2 (res,u_s') -> 
-          Choice1Of2(res, u_s >>? u_s')
+      | Choice1Of2 (State p',s1) -> 
+        match p' (match s1 with None -> c,s0 | Some s1 -> c,s1) with
+        | Choice1Of2 (res,s2) -> 
+          Choice1Of2(res, match s2,s1 with | Some _,_ -> s2 | None,Some _ -> s1 | _ -> None)
         | Choice2Of2 e -> Choice2Of2 e  
       | Choice2Of2 e -> Choice2Of2 e
     )
@@ -47,7 +47,7 @@ type StateBuilder() =
   member _.GetState() =
     State(fun (c,s) -> Choice1Of2(s,None))
   member _.SetState(u:U<'s>) =
-    State(fun _ -> Choice1Of2((), Some u))
+    State(fun (_,s) -> Choice1Of2((), Some(u s)))
   member state.ReturnFrom(p:State<'a,'c,'s,'e>) = 
     state{
       let! res = p
