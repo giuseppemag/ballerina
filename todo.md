@@ -116,6 +116,14 @@ Todo (✅/❌)
               ❌ add setE, setF events, see that the Total changes
             ✅ verify that there actually is no loop
               ✅ loops involve same rule, same entity, same field
+                ❌ redefine the transitive execution of business rules with the state monad
+                  ❌ define the state monad
+                  ❌ define the state runner
+                  ❌ restructure the transitive execution in terms of the state monad
+                    ❌ accumulate a stack of business rule executions
+                    ❌ accumulate the merged business rule executions
+                    ❌ throw an error when 
+                  ❌ evaluate the State x List monad as a possible further improvement
                 ❌ show the loop
               ✅ test with an actual loop
               ✅ add orthogonal rules on the same entity-set

@@ -13,6 +13,7 @@
     <Compile Include="crud/model.fs" />
     <Compile Include="collections/option/model.fs" />
     <Compile Include="collections/map/model.fs" />
+    <Compile Include="state/model.fs" />
     <Compile Include="coroutine/model.fs" />
     <Compile Include="coroutine/runner.fs" />
     <Compile Include="business rule engine/model.fs" />

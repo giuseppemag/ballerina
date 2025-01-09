@@ -2,12 +2,22 @@ module Ballerina.BusinessRuleTransitiveExecution
 open System
 open System.Linq
 open Ballerina.Fun
+open Ballerina.State
 open Ballerina.Coroutines
 open Ballerina.BusinessRules
 open Ballerina.BusinessRulesRestrictionPredicates
 open Ballerina.BusinessRuleExecution
 open Ballerina.BusinessRuleEvaluation
 open Ballerina.BusinessRulePreprocessor
+
+type BusinessRuleExecutionContext = { AllRules:Map<Guid, BusinessRule>; Schema:Schema }
+type BusinessRuleExecutionState = { 
+  AllExecutedRules:Map<BusinessRuleId, EntitiesIdentifiers>; 
+  AllModifiedFields:Map<FieldDescriptorId, EntitiesIdentifiers>;
+  Trace:List<
+    {|  ExecutedRules:Map<BusinessRuleId, EntitiesIdentifiers>; 
+        ModifiedFields:Map<FieldDescriptorId, EntitiesIdentifiers>; |}>
+}
 
 let rec executeRulesTransitively 
   (allBusinessRules:Map<Guid, BusinessRule>)
