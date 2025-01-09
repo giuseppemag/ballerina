@@ -102,7 +102,7 @@ Todo (✅/❌)
                   ❌ the assignment (`Update`) of fields to ABs and CDs in the definition of the AB/CD entity schema should use the field definition assignment recursively
               ❌ there are various places where we assume `One entityId`, is this always reasonable?
                 ❌ in particular, `Expr::execute` does not take into account more than one field lookup on the assigned variable, extend
-              ❌ rename `positions` to `abcd`
+          ❌ rename `positions` to `abcd`
           ❌ testing scenario
             ✅ add a setA event, see that the Total changes
             ✅ add a setB event, see that the Total changes
@@ -116,15 +116,17 @@ Todo (✅/❌)
               ❌ add setE, setF events, see that the Total changes
             ✅ verify that there actually is no loop
               ✅ loops involve same rule, same entity, same field
-                ❌ redefine the transitive execution of business rules with the state monad
-                  ❌ define the state monad
-                  ❌ define the state runner
-                  ❌ restructure the transitive execution in terms of the state monad
-                    ❌ accumulate a stack of business rule executions
-                    ❌ accumulate the merged business rule executions
-                    ❌ throw an error when 
-                  ❌ evaluate the State x List monad as a possible further improvement
-                ❌ show the loop
+                ✅ redefine the transitive execution of business rules with the state monad
+                  ✅ define the state monad
+                  ✅ define the state runner
+                  ✅ restructure the transitive execution in terms of the state monad
+                    ✅ accumulate a stack of business rule executions
+                    ✅ accumulate the merged business rule executions
+                    ✅ throw an error with the right loop
+                    ❌ make `addCurrentModifiedFields` more type safe
+                    ❌ `CurrentExecutedRules` should be renamed to `AllExecutedRules`
+                      ❌ does it actually need to be cleared? If possible, do not clear
+                ✅ show the loop
               ✅ test with an actual loop
               ✅ add orthogonal rules on the same entity-set
                 ✅ A, B, ...
@@ -152,9 +154,10 @@ Todo (✅/❌)
             ❌ prepare a `co.Any` where each coroutine returns a different `fieldDescriptor x (Target = One | Multiple | All)`
             ❌ BUG ALERT if translating to production! The Map of events will likely cause events not to be processed in create-order
             ❌ allow approval, with associated business rules
-            ❌ deal with missing references
+            ❌ deal with missing references (GUIDs that do not match an existing entity)
             ❌ introduce list monad with errors for eval/execute
               ❌ return useful error messages
+            ❌ -----at this point, the prototype can be considered reasonably done and could go live as a microservice-----
             ❌ implement lazy fields in the schema
               ❌ this requires a coroutine-mediated protocol
               ❌ openSession(schema) -> operations | closeSession()
@@ -164,7 +167,7 @@ Todo (✅/❌)
           ❌ PROTOTYPE 2 - DB in PG with CRUD OpenAPI
             ❌ performance test
             ❌ add memcache after write operations
-          ❌ -----at this point, the prototype can be considered reasonably done and could go live as a microservice-----
+          ❌ -----at this point, the second prototype can be considered reasonably done and could go live as a microservice-----
           ❌ improve DSL for type-safe business rule and expression definition in F#
             ❌ group field definitions and entity definitions under anonymous records for aesthetics and scoping in case of multiple fields with the same name in a different entity          
           ❌ ideally with F#-style domain objects, not C#-style serializable objects

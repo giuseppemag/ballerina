@@ -33,9 +33,20 @@ let abcdEventLoop() =
         do Console.ReadLine() |> ignore
         do! co.Do(fun ctx -> 
           for vars in modifiedFields do
-            match executeRulesTransitively ctx.BusinessRules ctx.Schema Map.empty vars with
-            | Some() -> ()
-            | None -> printfn "Error, rule execution resulted in a possible loop that was interrupted")
+            let businessRulesExecutionContext = { AllRules=ctx.BusinessRules; Schema=ctx.Schema }
+            let businessRulesExecutionState = { 
+              CurrentExecutedRules=Map.empty;
+              CurrentModifiedFields=vars;
+              Trace=[]
+             }
+            match executeRulesTransitively().run(businessRulesExecutionContext,businessRulesExecutionState) with
+            | Choice1Of2 _ -> 
+              do printfn "Transitive execution completed successfully"
+              do Console.ReadLine() |> ignore
+            | Choice2Of2 e -> 
+              do printfn "Error %A, rule execution resulted in a possible loop that was interrupted" e
+              do Console.ReadLine() |> ignore
+        )
       }
     )
 

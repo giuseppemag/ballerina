@@ -3,6 +3,7 @@ open Ballerina.Fun
 
 type State<'a,'c,'s,'e> = State of ('c * 's -> Choice<'a * Option<Updater<'s>>, 'e>)
 with 
+  member this.run = let (State p) = this in p
   static member map<'b> (f:'a -> 'b) ((State p):State<'a,'c,'s,'e>) : State<'b,'c,'s,'e> =
     State(fun s0 ->
       match p s0 with
@@ -13,7 +14,11 @@ with
   static member flatten ((State p):State<State<'a,'c,'s,'e>,'c,'s,'e>) : State<'a,'c,'s,'e> = 
     State(fun (c,s0) ->
       match p (c,s0) with
-      | Choice1Of2 (State p',u_s) -> p' (match u_s with None -> c,s0 | Some u_s -> c,u_s s0)
+      | Choice1Of2 (State p',u_s) -> 
+        match p' (match u_s with None -> c,s0 | Some u_s -> c,u_s s0) with
+        | Choice1Of2 (res,u_s') -> 
+          Choice1Of2(res, u_s >>? u_s')
+        | Choice2Of2 e -> Choice2Of2 e  
       | Choice2Of2 e -> Choice2Of2 e
     )
   static member bind (p:State<'a,'c,'s,'e>) (k:'a -> State<'b,'c,'s,'e>) : State<'b,'c,'s,'e> = 
@@ -35,14 +40,11 @@ type StateBuilder() =
 //     Co(fun _ -> CoroutineResult.Any(ps), None, None)
 //   // member _.All(ps:List<Coroutine<'a, 's, 'c, 'e>>) =
 //   //   Co(fun _ -> CoroutineResult.Any(ps), None, None)
-  member state.For(seq, body) =
-    let seq:seq<State<Unit,_,_,_>> = seq |> Seq.map body
-    seq |> Seq.fold (fun acc p -> state.Combine(acc, p)) (state.Return())
   member state.Repeat(p:State<'a,'c,'s,'e>) : State<'a,'c,'s,'e> =
     state.Bind(p, fun _ -> state.Repeat(p))
-  member _.GetContext =
+  member _.GetContext() =
     State(fun (c,s) -> Choice1Of2(c,None))
-  member _.GetState =
+  member _.GetState() =
     State(fun (c,s) -> Choice1Of2(s,None))
   member _.SetState(u:U<'s>) =
     State(fun _ -> Choice1Of2((), Some u))
@@ -53,5 +55,12 @@ type StateBuilder() =
     }
   member _.Throw (e:'e) =
     State(fun _ -> Choice2Of2 e)
-    
+  member state.Delay p = 
+    state.Bind ((state.Return ()), p)
+  member state.For(seq, body:_ -> State<Unit,_,_,_>) =
+    match seq |> Seq.tryHead with
+    | Some first -> 
+      state.Combine(body first, state.For(seq |> Seq.tail, body))
+    | None -> state{ return () }
+
 let state = StateBuilder()
