@@ -15,22 +15,38 @@ open abcdsample.schema
 let init_abcdContext() = 
   let ABs:ref<Map<Guid,AB>> = ref Map.empty
   let CDs:ref<Map<Guid,CD>> = ref Map.empty
+  let EFs:ref<Map<Guid,EF>> = ref Map.empty
 
-  let descriptors, allEntities, allFields = createABCDSchema ABs CDs
+  let descriptors, allEntities, allFields = createABCDSchema ABs CDs EFs
   
   let schema:Schema = {
     tryFindEntity = fun (entityDescriptorId:EntityDescriptorId) -> allEntities |> Map.tryFind entityDescriptorId
     tryFindField = fun (fieldDescriptorId:FieldDescriptorId) -> allFields |> Map.tryFind fieldDescriptorId
   }
-  
-  let createCD id C D = 
+
+  let createEF id E F =  
+    {
+      EFId = id;
+      E = E;
+      F = F
+    }
+  let ef1 = createEF (Guid("6b3b39dc-24e8-425f-8bf3-7abd248f522f")) 3 4
+  let ef2 = createEF (Guid("2a2356f1-f220-450c-abcb-a9baf0f4094d")) 5 7
+  EFs .contents <-
+    [
+      ef1
+      ef2
+    ] |> Seq.map (fun e -> (e.EFId, e)) |> Map.ofSeq
+
+  let createCD id C D ef =  
     {
       CDId = id;
       C = C;
       D = D;
+      EFId = ef.EFId
     }
-  let cd1 = createCD (Guid("d8ff0920-2b47-499f-9f7b-cb07a1f8f3a4")) 3 4
-  let cd2 = createCD (Guid("69f182db-84ba-4e81-91c5-d3becd029a6b")) 30 40
+  let cd1 = createCD (Guid("d8ff0920-2b47-499f-9f7b-cb07a1f8f3a4")) 3 4 ef1
+  let cd2 = createCD (Guid("69f182db-84ba-4e81-91c5-d3becd029a6b")) 30 40 ef2
   CDs .contents <-
     [
       cd1
@@ -59,8 +75,12 @@ let init_abcdContext() =
     ] |> Seq.map (fun e -> (e.ABId, e)) |> Map.ofSeq
 
   let (!) (varname:string) = { VarName = varname }
-  let (=>) (varname:string) (fields:List<FieldDescriptorId>) =
-      FieldLookup(Expr.VarLookup !varname, fields)
+  let (!!) (varname:string) = !varname |> Expr.VarLookup
+  let rec (=>) (e:Expr) (fields:List<FieldDescriptorId>) =
+    match fields with
+    | [] -> e
+    | field::fields -> 
+      FieldLookup(e, field) => fields
   let total1:BusinessRule = 
     { 
       BusinessRuleId = Guid.NewGuid(); 
@@ -69,10 +89,10 @@ let init_abcdContext() =
       Actions=[
         {
           Variable = !"this", [descriptors.AB.Total1.ToFieldDescriptorId]
-          Value=("this" => [descriptors.AB.A1.ToFieldDescriptorId])
-            + ("this" => [descriptors.AB.B1.ToFieldDescriptorId])
-            + ("this" => [descriptors.AB.CD.ToFieldDescriptorId; descriptors.CD.C.ToFieldDescriptorId])
-            + ("this" => [descriptors.AB.CD.ToFieldDescriptorId; descriptors.CD.D.ToFieldDescriptorId])
+          Value=(!!"this" => [descriptors.AB.A1.ToFieldDescriptorId])
+            + (!!"this" => [descriptors.AB.B1.ToFieldDescriptorId])
+            + (!!"this" => [descriptors.AB.CD.ToFieldDescriptorId; descriptors.CD.C.ToFieldDescriptorId])
+            + (!!"this" => [descriptors.AB.CD.ToFieldDescriptorId; descriptors.CD.D.ToFieldDescriptorId])
         }
       ]
     }
@@ -84,23 +104,25 @@ let init_abcdContext() =
       Actions=[
         {
           Variable = !"this", [descriptors.AB.Весь2.ToFieldDescriptorId]
-          Value=("this" => [descriptors.AB.А2.ToFieldDescriptorId])
-            + ("this" => [descriptors.AB.Б2.ToFieldDescriptorId])
-            + ("this" => [descriptors.AB.CD.ToFieldDescriptorId; descriptors.CD.C.ToFieldDescriptorId])
-            + ("this" => [descriptors.AB.CD.ToFieldDescriptorId; descriptors.CD.D.ToFieldDescriptorId])
+          Value=(!!"this" => [descriptors.AB.А2.ToFieldDescriptorId])
+            + (!!"this" => [descriptors.AB.Б2.ToFieldDescriptorId])
+            + (!!"this" => [descriptors.AB.CD.ToFieldDescriptorId; descriptors.CD.C.ToFieldDescriptorId])
+            + (!!"this" => [descriptors.AB.CD.ToFieldDescriptorId; descriptors.CD.D.ToFieldDescriptorId])
         }
       ]
     }
   let total3:BusinessRule = 
     { 
       BusinessRuleId = Guid.NewGuid(); 
-      Name = "Total3 = A3+B3"; Priority = BusinessRulePriority.System; 
+      Name = "Total3 = A3+B3+E+F"; Priority = BusinessRulePriority.System; 
       Condition = Expr.Exists(!"this", descriptors.AB.Entity.Descriptor.ToEntityDescriptorId, Expr.Value (Value.ConstBool true)); 
       Actions=[
         {
           Variable = !"this", [descriptors.AB.Σ3.ToFieldDescriptorId]
-          Value=("this" => [descriptors.AB.Α3.ToFieldDescriptorId])
-            + ("this" => [descriptors.AB.Β3.ToFieldDescriptorId])
+          Value=(!!"this" => [descriptors.AB.Α3.ToFieldDescriptorId])
+            + (!!"this" => [descriptors.AB.Β3.ToFieldDescriptorId])
+            + (!!"this" => [descriptors.AB.CD.ToFieldDescriptorId; descriptors.CD.EF.ToFieldDescriptorId; descriptors.EF.E.ToFieldDescriptorId])
+            + (!!"this" => [descriptors.AB.CD.ToFieldDescriptorId; descriptors.CD.EF.ToFieldDescriptorId; descriptors.EF.F.ToFieldDescriptorId])
         }
       ]
     }
@@ -114,9 +136,9 @@ let init_abcdContext() =
         Actions=[
           {
             Variable = !"this", [descriptors.AB.Весь2.ToFieldDescriptorId]
-            Value=("this" => [descriptors.AB.Total1.ToFieldDescriptorId])
+            Value=(!!"this" => [descriptors.AB.Total1.ToFieldDescriptorId])
               + Expr.Value(Value.ConstInt 1) 
-              + ("this" => [descriptors.AB.Σ3.ToFieldDescriptorId])
+              + (!!"this" => [descriptors.AB.Σ3.ToFieldDescriptorId])
           }
         ]
       }
@@ -127,7 +149,7 @@ let init_abcdContext() =
         Actions=[
           {
             Variable = !"this", [descriptors.AB.Σ3.ToFieldDescriptorId]
-            Value=("this" => [descriptors.AB.Весь2.ToFieldDescriptorId])
+            Value=(!!"this" => [descriptors.AB.Весь2.ToFieldDescriptorId])
               + Expr.Value(Value.ConstInt 1)
           }
         ]
@@ -143,6 +165,7 @@ let init_abcdContext() =
   let context = {
     ABs = (fun () -> ABs.contents)
     CDs = (fun () -> CDs.contents)
+    EFs = (fun () -> EFs.contents)
     ActiveEvents = [
       // ABCDEvent.SetField(
       //   SetFieldEvent.SingletonIntFieldEvent 
@@ -152,7 +175,7 @@ let init_abcdContext() =
       //         EntityDescriptorId = descriptors.AB.Entity.Descriptor.ToEntityDescriptorId
       //         Assignment = {
       //           Variable = (!"this", [descriptors.AB.A.ToFieldDescriptorId])
-      //           Value=("this" => [descriptors.AB.A.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 10))
+      //           Value=(!!"this" => [descriptors.AB.A.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 10))
       //         }
       //       }; 
       //       Target = One (ABs.contents.First().Key)
@@ -165,23 +188,36 @@ let init_abcdContext() =
       //         EntityDescriptorId = descriptors.CD.Entity.Descriptor.ToEntityDescriptorId
       //         Assignment = {
       //           Variable = (!"this", [descriptors.CD.C.ToFieldDescriptorId])
-      //           Value=("this" => [descriptors.CD.C.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 20))
+      //           Value=(!!"this" => [descriptors.CD.C.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 20))
       //         }
       //       }; 
       //       Target = One (cd2.CDId)
+      //     })
+      // ABCDEvent.SetField(
+      //   SetFieldEvent.SingletonRefFieldEvent 
+      //     { 
+      //       Self = { 
+      //         FieldEventId = Guid.NewGuid(); 
+      //         EntityDescriptorId = descriptors.AB.Entity.Descriptor.ToEntityDescriptorId
+      //         Assignment = {
+      //           Variable = (!"this", [descriptors.AB.CD.ToFieldDescriptorId])
+      //           Value=Expr.Value(Value.ConstGuid(cd2.CDId))
+      //         }
+      //       }; 
+      //       Target = One (ab1.ABId)
       //     })
       ABCDEvent.SetField(
         SetFieldEvent.SingletonRefFieldEvent 
           { 
             Self = { 
               FieldEventId = Guid.NewGuid(); 
-              EntityDescriptorId = descriptors.AB.Entity.Descriptor.ToEntityDescriptorId
+              EntityDescriptorId = descriptors.EF.Entity.Descriptor.ToEntityDescriptorId
               Assignment = {
-                Variable = (!"this", [descriptors.AB.CD.ToFieldDescriptorId])
-                Value=Expr.Value(Value.ConstGuid(cd2.CDId))
+                Variable = (!"this", [descriptors.EF.E.ToFieldDescriptorId])
+                Value=(!!"this" => [descriptors.EF.E.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 10))
               }
             }; 
-            Target = One (ab1.ABId)
+            Target = One (ef1.EFId)
           })
 
     ] // :List<FieldEvent>; 

@@ -22,10 +22,16 @@ and CD = {
   CDId:Guid;
   C:int;
   D:int;
+  EFId:Guid;
+}
+and EF = { 
+  EFId:Guid;
+  E:int;
+  F:int;
 }
 and ABCDEvent = SetField of SetFieldEvent
 and Context = {
-  ABs:Unit -> Map<Guid, AB>; CDs:Unit -> Map<Guid, CD>;
+  ABs:Unit -> Map<Guid, AB>; CDs:Unit -> Map<Guid, CD>; EFs:Unit -> Map<Guid, EF>;
   ActiveEvents:List<ABCDEvent>; PastEvents:List<ABCDEvent>;
   BusinessRules:Map<Guid, BusinessRule>;
   Schema:Schema

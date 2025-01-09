@@ -112,8 +112,9 @@ Todo (✅/❌)
               ✅ the predicate is not restricting
             ✅ add a setCDRef event, see that the Total changes
             ✅ add a setD event, for symmetry
-            ❌ extend the schema: CD - EF
-              ❌ add setE, setF events, see that the Total changes
+            ✅ extend the schema: CD - EF
+              ✅ add setE, setF events
+                ❌ Total3 does not change
             ✅ verify that there actually is no loop
               ✅ loops involve same rule, same entity, same field
                 ✅ redefine the transitive execution of business rules with the state monad

@@ -30,6 +30,9 @@ type OptionBuilder() =
   // member co.For(seq, body) =
   //   let seq:seq<Option<_>> = seq |> Seq.map body
   //   seq |> Seq.fold (fun acc p -> co.Combine(acc, p)) (co.Return())
-    
+  member opt.Delay p = 
+    opt.Bind ((opt.Return ()), p)
+
+
 let option = OptionBuilder()
 

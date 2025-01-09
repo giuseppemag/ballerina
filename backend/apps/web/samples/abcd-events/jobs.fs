@@ -94,13 +94,16 @@ let abcdEventLoop() =
       printf """{|
   Id = %s
   A1 = %d; B1 = %d; Total1 = %d;
-    CD = {| Id = %s; C = %d; D = %d |}; 
+    CD = {| Id = %s; C = %d; D = %d 
+            EF = {| Id = %s; E = %d; F = %d |}
+         |}; 
   А2 = %d; Б2 = %d; Total2 = %d;
   Α3 = %d; Β3 = %d; Σ3 = %d;
 |}
 """
         (ab.ABId.ToString().Substring(0, 4))
         ab.A1 ab.B1 ab.Total1 ((context.CDs()).[ab.CDId].CDId.ToString().Substring(0,4)) (context.CDs()).[ab.CDId].C (context.CDs()).[ab.CDId].D 
+        (context.EFs().[((context.CDs()).[ab.CDId].EFId)].EFId.ToString().Substring(0,4)) (context.EFs().[((context.CDs()).[ab.CDId].EFId)].E) (context.EFs().[((context.CDs()).[ab.CDId].EFId)].F)
         ab.А2 ab.Б2 ab.Весь2
         ab.Α3 ab.Β3 ab.Σ3
       

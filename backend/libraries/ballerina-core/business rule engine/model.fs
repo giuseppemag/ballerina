@@ -67,7 +67,7 @@ and Expr =
   | Value of Value
   | Binary of BinaryOperator * Expr * Expr
   | VarLookup of VarName
-  | FieldLookup of Expr * List<FieldDescriptorId>
+  | FieldLookup of Expr * FieldDescriptorId
   | Exists of VarName * EntityDescriptorId * Expr
   | SumBy of VarName * EntityDescriptorId * Expr
 and BinaryOperator = Plus | Minus | GreaterThan | Equals | GreaterThanEquals | Times | DividedBy | And | Or
@@ -99,8 +99,12 @@ type Value with
 type Expr with 
   static member (+) (e1:Expr, e2:Expr) =
     Binary(Plus, e1, e2)
-  static member (=>) (varname:VarName, fields:List<FieldDescriptorId>) =
-    FieldLookup(Expr.VarLookup varname, fields)
+  static member (=>>) (e:Expr, fields:List<FieldDescriptorId>) =
+    match fields with
+    | [] -> e
+    | f::fs -> Expr.FieldLookup(e, f) =>> fs
+  static member (=>) (varname:VarName, field:FieldDescriptorId) =
+    FieldLookup(Expr.VarLookup varname, field)
   static member op_GreaterThan (e1:Expr, e2:Expr) =
     Binary(GreaterThan, e1, e2)
 

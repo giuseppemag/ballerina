@@ -46,9 +46,31 @@ let private createIntFieldDescriptor entityName (tryFindEntity:Guid -> Option<'e
     |};
   }  
 
-let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
+let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) (allEFs:ref<Map<Guid,EF>>) =
 
   let rec descriptors = {|
+    EF = {|
+      Entity = {|
+        Descriptor = { 
+          EntityDescriptorId = Guid.NewGuid(); EntityName = "EF";
+          TryFind = fun id -> allEFs.contents |> Map.tryFind id |> Option.map(fun e -> e :> obj)
+          GetId = 
+            (function
+            | :? EF as e ->  Some e.EFId
+            | _ -> None);
+          Lookup = fun (obj, fields) -> EntityDescriptor.GenericLookup descriptors.EF.Entity.Descriptor allEntities (obj, fields)
+          GetEntities = fun () -> allEFs.contents |> Map.values |> Seq.map (fun e -> e :> obj) |> List.ofSeq
+          GetFieldDescriptors = fun () -> [descriptors.EF.F; descriptors.EF.E] |> Seq.map (fun (fd:FieldDescriptor) -> fd.ToFieldDescriptorId, fd) |> Map.ofSeq
+        }
+        TryFind = fun id -> allEFs.contents |> Map.tryFind id |> Option.map(fun e -> e :> obj);
+      |}
+      E = createIntFieldDescriptor "E" (fun id -> allEFs.contents |> Map.tryFind id) 
+        (fun (e':EF) entityId -> allEFs.contents <- allEFs.contents |> Map.add entityId e') 
+        (fun e -> e.E) (fun (e:EF) f -> { e with E = f })
+      F = createIntFieldDescriptor "F" (fun id -> allEFs.contents |> Map.tryFind id) 
+        (fun (e':EF) entityId -> allEFs.contents <- allEFs.contents |> Map.add entityId e') 
+        (fun e -> e.F) (fun (e:EF) f -> { e with F = f })
+    |}
     CD = {|
       Entity = {|
         Descriptor = { 
@@ -60,7 +82,7 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
             | _ -> None);
           Lookup = fun (obj, fields) -> EntityDescriptor.GenericLookup descriptors.CD.Entity.Descriptor allEntities (obj, fields)
           GetEntities = fun () -> allCDs.contents |> Map.values |> Seq.map (fun e -> e :> obj) |> List.ofSeq
-          GetFieldDescriptors = fun () -> [descriptors.CD.D; descriptors.CD.C] |> Seq.map (fun (fd:FieldDescriptor) -> fd.ToFieldDescriptorId, fd) |> Map.ofSeq
+          GetFieldDescriptors = fun () -> [descriptors.CD.D; descriptors.CD.C; descriptors.CD.EF] |> Seq.map (fun (fd:FieldDescriptor) -> fd.ToFieldDescriptorId, fd) |> Map.ofSeq
         }
         TryFind = fun id -> allCDs.contents |> Map.tryFind id |> Option.map(fun e -> e :> obj);
       |}
@@ -70,6 +92,49 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
       D = createIntFieldDescriptor "D" (fun id -> allCDs.contents |> Map.tryFind id) 
         (fun (e':CD) entityId -> allCDs.contents <- allCDs.contents |> Map.add entityId e') 
         (fun e -> e.D) (fun (e:CD) f -> { e with D = f })
+      EF = { 
+        FieldDescriptorId=Guid.NewGuid(); 
+        FieldName = "EF"; 
+        Type = fun () -> ExprType.LookupType descriptors.EF.Entity.Descriptor.ToEntityDescriptorId
+        Lookup = 
+          Option<positions.model.CD>.fromObject >> Option.map(fun (e:positions.model.CD) -> e.EFId |> Value.ConstGuid)
+        Get = fun id -> descriptors.CD.Entity.TryFind id |> Option.bind descriptors.CD.EF.Lookup;
+        Update = {|
+          AsInt = (fun _ _ -> FieldUpdateResult.Failure);
+          AsRef = 
+            fun (One entityId) updater -> 
+              updateSingleField
+                (fun entityId -> allCDs.contents |> Map.tryFind entityId) 
+                (fun e' entityId -> allCDs .contents <- allCDs.contents |> Map.add entityId e')
+                (fun e -> e.EFId) (fun e f -> { e with EFId = f })
+                (One entityId) updater;          
+          AsRefs = 
+            fun entitiesIdentifier updater -> 
+              do printfn "Updating AB::EF over %A" entitiesIdentifier
+              do Console.ReadLine() |> ignore
+              match entitiesIdentifier with 
+              | All -> 
+                let mutable changes = 0
+                allCDs .contents <- allCDs.contents |> Map.map (fun key -> (fun e -> 
+                  let e' = { e with EFId = updater(e.EFId)}
+                  if e.EFId <> e'.EFId then changes <- changes + 1
+                  e')) 
+                if changes > 0 then FieldUpdateResult.ValueChanged
+                else FieldUpdateResult.ValueStayedTheSame
+              | Multiple abIds ->  
+                let mutable changes = 0
+                allCDs .contents <- allCDs.contents |> Map.map (fun key -> 
+                  if abIds |> Set.contains key then 
+                    (fun e -> 
+                      let e' = { e with EFId = updater(e.EFId)}
+                      if e.EFId <> e'.EFId then changes <- changes + 1
+                      e'
+                    ) 
+                  else id)
+                if changes > 0 then FieldUpdateResult.ValueChanged
+                else FieldUpdateResult.ValueStayedTheSame
+        |}
+      }
     |}
     AB = {|
       Entity = {|
@@ -160,7 +225,7 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) =
   |}
   and allEntities = 
     [
-      descriptors.AB.Entity.Descriptor; descriptors.CD.Entity.Descriptor
+      descriptors.AB.Entity.Descriptor; descriptors.CD.Entity.Descriptor; descriptors.EF.Entity.Descriptor
     ] |> Seq.map (fun e -> e.ToEntityDescriptorId, e) |> Map.ofSeq
   and allFields = 
     [
