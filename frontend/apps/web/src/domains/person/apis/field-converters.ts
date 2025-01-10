@@ -14,14 +14,14 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
     "Date": { fromAPIRawValue: _ => typeof _ == "string" ? new Date(Date.parse(_)) : typeof _ == "number" ? new Date(_) : new Date(Date.now()), toAPIRawValue: ([_, __])  => _ },
     "CollectionReference": {
         fromAPIRawValue: _ => CollectionReference.Default(_.id ?? "", _.displayName ?? ""),
-        toAPIRawValue: ([_, __]) => ({ id: _.id, displayName: _.displayName })
+        toAPIRawValue: ([_, __]) => _.source == "enum" ? _.id : { id: _.id, displayName: _.displayName }
     },
     "SingleSelection": {
         fromAPIRawValue: _ => _ == undefined ? CollectionSelection().Default.right("no selection") :
             CollectionSelection().Default.left(
                 CollectionReference.Default(_.id ?? "", _.displayName ?? "")
             ),
-        toAPIRawValue: ([_, __]) => _.kind == "r" ? undefined : ({ id: _.value.id, displayName: _.value.displayName })
+        toAPIRawValue: ([_, __]) => _.kind == "r" ? undefined : _
     },
     "MultiSelection": {
         fromAPIRawValue: _ => _ == undefined ? OrderedMap() : OrderedMap(_.map((_: any) => ([_.id, _]))),
@@ -64,9 +64,9 @@ export const modifiedDebugFieldTypeConverters: ApiConverters<PersonFormInjectedT
 		fromAPIRawValue: _ => CollectionReference.Default(_.id ?? "", _.displayName ?? ""),
 		toAPIRawValue: ([_, __]) =>  {
 			if(__) console.log({value: { id: _.id, displayName: _.displayName },  isModified:  __})
-			return { id: _.id, displayName: _.displayName }}
+			return _.source == "enum" ? _.id : { id: _.id, displayName: _.displayName }
+		}
 	},
-
 	"SingleSelection": {
 		fromAPIRawValue: _ => _ == undefined ? CollectionSelection().Default.right("no selection") :
 			CollectionSelection().Default.left(
@@ -74,7 +74,7 @@ export const modifiedDebugFieldTypeConverters: ApiConverters<PersonFormInjectedT
 			),
 		toAPIRawValue: ([_, __]) => {
 			if (__) console.log({value: { id: _.value.id, displayName: _.value.displayName },  isModified:  __})
-			return _.kind == "r" ? undefined : ({ id: _.value.id, displayName: _.value.displayName })}
+			return _.kind == "r" ? undefined : _}
 	},
 	"MultiSelection": {
 		fromAPIRawValue: _ => _ == undefined ? OrderedMap() : OrderedMap(_.map((_: any) => ([_.id, _]))),
