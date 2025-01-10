@@ -193,32 +193,32 @@ let init_abcdContext() =
       //       }; 
       //       Target = One (cd2.CDId)
       //     })
-      ABCDEvent.SetField(
-        SetFieldEvent.SingletonRefFieldEvent 
-          { 
-            Self = { 
-              FieldEventId = Guid.NewGuid(); 
-              EntityDescriptorId = descriptors.AB.Entity.Descriptor.ToEntityDescriptorId
-              Assignment = {
-                Variable = (!"this", [descriptors.AB.CD.ToFieldDescriptorId])
-                Value=Expr.Value(Value.ConstGuid(cd2.CDId))
-              }
-            }; 
-            Target = One (ab1.ABId)
-          })
       // ABCDEvent.SetField(
       //   SetFieldEvent.SingletonRefFieldEvent 
       //     { 
       //       Self = { 
       //         FieldEventId = Guid.NewGuid(); 
-      //         EntityDescriptorId = descriptors.EF.Entity.Descriptor.ToEntityDescriptorId
+      //         EntityDescriptorId = descriptors.AB.Entity.Descriptor.ToEntityDescriptorId
       //         Assignment = {
-      //           Variable = (!"this", [descriptors.EF.E.ToFieldDescriptorId])
-      //           Value=(!!"this" => [descriptors.EF.E.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 10))
+      //           Variable = (!"this", [descriptors.AB.CD.ToFieldDescriptorId])
+      //           Value=Expr.Value(Value.ConstGuid(cd2.CDId))
       //         }
       //       }; 
-      //       Target = One (ef1.EFId)
+      //       Target = One (ab1.ABId)
       //     })
+      ABCDEvent.SetField(
+        SetFieldEvent.SingletonRefFieldEvent 
+          { 
+            Self = { 
+              FieldEventId = Guid.NewGuid(); 
+              EntityDescriptorId = descriptors.EF.Entity.Descriptor.ToEntityDescriptorId
+              Assignment = {
+                Variable = (!"this", [descriptors.EF.E.ToFieldDescriptorId])
+                Value=(!!"this" => [descriptors.EF.E.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 10))
+              }
+            }; 
+            Target = One (ef1.EFId)
+          })
 
     ] // :List<FieldEvent>; 
     PastEvents = [] // :List<FieldEvent>;
