@@ -128,7 +128,7 @@ export const defaultValue = <T>(types: Map<TypeName, TypeDefinition>, builtIns: 
         if (custom != undefined) {
           let res = {} as any
           custom.fields.forEach((field, fieldName) => {
-            res[fieldName] = defaultValue(types, builtIns)(field.kind == "primitive" ? field.value : field.kind == "lookup" ? field.name : field.value)
+            res[fieldName] = defaultValue(types, builtIns, injectedPrimitives)(field.kind == "primitive" ? field.value : field.kind == "lookup" ? field.name : field.value)
           }
           )
           return res
@@ -301,5 +301,5 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
     })
     return result
   }
-  return defaultValue(types, builtIns)(t.value)
+  return defaultValue(types, builtIns, injectedPrimitives)(t.value)
 }
