@@ -301,5 +301,5 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
     })
     return result
   }
-  return defaultValue(types, builtIns)(t.value)
+  return defaultValue(types, builtIns, injectedPrimitives)(t.value)
 }
