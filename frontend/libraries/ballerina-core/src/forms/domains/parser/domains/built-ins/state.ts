@@ -233,10 +233,8 @@ export const fromAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>
   return obj
 }
 
-
 export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, builtIns: BuiltIns, converters: BuiltInApiConverters, isKeywordsReverted: boolean = false, injectedPrimitives?: InjectedPrimitives<T>) => (raw: any, formState: any) : any => {
   const obj = !isKeywordsReverted ? replaceKeywords(raw, "to api") : raw
-
   if (t.kind == "primitive") {
     return converters[t.value].toAPIRawValue([obj, formState.modifiedByUser] as never)
   } else if (t.kind == "application") { // application here means "generic type application"
@@ -291,9 +289,12 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
       )
     }
 
-  } else { // t.kind == lookup: we are dealing with a record/object
+  } else { // t.kind == lookup: we are dealing with a record/object or extended type 
     let result: any = { ...obj }
     const tDef = types.get(t.name)!
+    if("extends" in tDef && tDef.extends.length == 1) {
+      return converters[(tDef.extends[0] as keyof BuiltInApiConverters)].toAPIRawValue([obj, formState.modifiedByUser] as never)
+    }
     tDef.fields.forEach((fieldType, fieldName) => {
       const revertedFieldName = revertKeyword(fieldName)
       const fieldValue = obj[revertedFieldName]

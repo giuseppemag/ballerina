@@ -53,6 +53,7 @@ export const PersonFormsConfig = {
         "addressesWithColorLabel": { fun: "Map", args: [{ fun: "SingleSelection", args: ["ColorRef"]}, "Address"] },
         "permissions": { fun: "Map", args: [{ fun: "SingleSelection", args: ["PermissionRef"]}, "boolean"] },
         "test": { fun: "Map", args: [{fun: "SingleSelection", args: ["DepartmentRef"]}, {fun: "SingleSelection", args: ["CityRef"]}] },
+        "multiColorsTest": {fun: "Multiselection", args: ["ColorRef"]},
       }
     }
   },
@@ -178,6 +179,9 @@ export const PersonFormsConfig = {
             keyRenderer:{ label: "department", renderer: "defaultInfiniteStream", stream: "departments", visible: { "kind": "true" } },
             valueRenderer:{ label: "city", renderer: "defaultInfiniteStream", stream: "cities", visible: { "kind": "true" } },
             visible: { "kind": "true" } },
+        "multiColorsTest": {
+            renderer: "defaultEnumMultiselect", options: "colors", visible: { "kind": "true" }
+          }
       },
       "tabs": {
         "main": {
@@ -194,7 +198,7 @@ export const PersonFormsConfig = {
             },
             "addresses": {
               "groups": {
-                "main": ["departments", "mainAddress", "addresses", "addressesWithLabel", "addressesByCity", "addressesWithColorLabel", "permissions", "test"],        
+                "main": ["departments", "mainAddress", "addresses", "addressesWithLabel", "addressesByCity", "addressesWithColorLabel", "permissions", "test", "multiColorsTest"],        
               }
             }
           }
