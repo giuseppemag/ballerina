@@ -124,7 +124,7 @@ const entityApis: EntityApis = {
                   :
                   City.Default(v4(), faker.location.city())
               }],
-              [undefined, {
+              [City.Default(v4(), faker.location.city()), {
                 street: faker.location.street(),
                 number: Math.floor(Math.random() * 500),
                 city: Math.random() > 0.5 ?

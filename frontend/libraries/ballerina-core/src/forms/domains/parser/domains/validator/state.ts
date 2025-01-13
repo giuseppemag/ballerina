@@ -3,7 +3,7 @@ import { ApiConverters, BoolExpr, BuiltIns, FieldName, FormsConfigMerger, Inject
 
 export type FieldConfig = {
   renderer: string;
-  label: string;
+  label?: string;
   tooltip?: string;
   api: { stream?: string, enumOptions?: string };
   elementRenderer?: string;
@@ -478,7 +478,7 @@ export const FormsConfig = {
           formDef.fields = formDef.fields.set(
             fieldName, {
             renderer: fieldConfig.renderer,
-            label: fieldConfig.label ?? revertKeyword(fieldName),
+            label: fieldConfig.label,
             tooltip: fieldConfig.tooltip,
             elementTooltip: fieldConfig.elementTooltip,
             elementRenderer: fieldConfig.elementRenderer,
