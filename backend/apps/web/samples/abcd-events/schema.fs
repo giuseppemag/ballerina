@@ -45,6 +45,23 @@ let private createIntFieldDescriptor entityName (tryFindEntity:Guid -> Option<'e
       AsRefs = (fun _ _ -> FieldUpdateResult.Failure);
     |};
   }  
+let private createRefFieldDescriptor () guid entityName (targetEntityDescriptorId:EntityDescriptorId) (tryFindEntity:Guid -> Option<'e>) setEntity getField setField = 
+  { 
+    FieldDescriptorId=guid; 
+    FieldName = entityName; 
+    Type = fun () -> ExprType.PrimitiveType (GuidType targetEntityDescriptorId)
+    Lookup = Option<'e>.fromObject >> Option.map(getField >> Value.ConstGuid);
+    Get = fun id -> tryFindEntity id |> Option.map(getField >> Value.ConstGuid);
+    Update = {|
+      AsInt = (fun _ _ -> FieldUpdateResult.Failure);
+      AsRef = fun (One entityId) updater -> 
+            updateSingleField
+              tryFindEntity setEntity
+              getField setField
+              (One entityId) updater;
+      AsRefs = (fun _ _ -> FieldUpdateResult.Failure);
+    |};
+  }  
 
 let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) (allEFs:ref<Map<Guid,EF>>) =
 
@@ -60,10 +77,15 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) (allE
             | _ -> None);
           Lookup = fun (obj, fields) -> EntityDescriptor.GenericLookup descriptors.EF.Entity.Descriptor allEntities (obj, fields)
           GetEntities = fun () -> allEFs.contents |> Map.values |> Seq.map (fun e -> e :> obj) |> List.ofSeq
-          GetFieldDescriptors = fun () -> [descriptors.EF.F; descriptors.EF.E] |> Seq.map (fun (fd:FieldDescriptor) -> fd.ToFieldDescriptorId, fd) |> Map.ofSeq
+          GetFieldDescriptors = fun () -> [descriptors.EF.EFId(); descriptors.EF.F; descriptors.EF.E] |> Seq.map (fun (fd:FieldDescriptor) -> fd.ToFieldDescriptorId, fd) |> Map.ofSeq
         }
         TryFind = fun id -> allEFs.contents |> Map.tryFind id |> Option.map(fun e -> e :> obj);
       |}
+      EFId = let guid = Guid.NewGuid() in fun () -> 
+        createRefFieldDescriptor () guid "EFId" descriptors.EF.Entity.Descriptor.ToEntityDescriptorId 
+          (fun id -> allEFs.contents |> Map.tryFind id) 
+          (fun (e':EF) entityId -> allEFs.contents <- allEFs.contents |> Map.add entityId e') 
+          (fun e -> e.EFId) (fun (e:EF) f -> { e with EFId = f })
       E = createIntFieldDescriptor "E" (fun id -> allEFs.contents |> Map.tryFind id) 
         (fun (e':EF) entityId -> allEFs.contents <- allEFs.contents |> Map.add entityId e') 
         (fun e -> e.E) (fun (e:EF) f -> { e with E = f })

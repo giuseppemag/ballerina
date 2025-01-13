@@ -132,10 +132,18 @@ Todo (✅/❌)
                 ✅ A, B, ...
                 ✅ alpha, beta, ...
                 ✅ cyrillic variants, ...
+            ❌ `createIntFieldDescriptor` belongs to _core_
+              ❌ and so does `createRefFieldDescriptor`
+            ❌ add all `XId` field descriptors, and return them in `GetFieldDescriptors
+            ❌ improve the quality of the description of the various rules for documentation
             ❌ add `CDs` to `AB`, so not just one
-              ❌ change all `CD` refs inside a given `AB`
-                ❌ the schema for `CD` then needs a `RefsField`
-                ❌ complete the scenario of multiple CDs, so that the events can also be EntityEvents such as `Add`, `Delete`, `Move`, etc.
+              ✅ use business rules for field setting
+              ✅ test the conditions, not always `Exists ... true`
+              ❌ introduce .System -> .User as prio, apply it to the set field events
+              ❌ modify all field events to the new structure
+              ❌ identify EF through a nested existential over AB 
+              ❌ remove `AsRefs`, only one is sufficient
+              ❌ complete the scenario of multiple CDs, so that the events can also be EntityEvents such as `Add`, `Delete`, `Move`, etc.
           ❌ make it production-ready
             ❌ drop the distinction between singleton and group field, it is not really relevant
             ❌ test with 
@@ -157,6 +165,7 @@ Todo (✅/❌)
             ❌ deal with missing references (GUIDs that do not match an existing entity)
             ❌ introduce list monad with errors for eval/execute
               ❌ return useful error messages
+            ❌ the resolution of top-level existentials like `exists ab in AB | ab.ABId = CONSTGUID` should be resolved much faster
             ❌ -----at this point, the prototype can be considered reasonably done and could go live as a microservice-----
             ❌ implement lazy fields in the schema
               ❌ this requires a coroutine-mediated protocol

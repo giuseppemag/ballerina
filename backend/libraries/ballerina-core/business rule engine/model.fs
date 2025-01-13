@@ -42,12 +42,6 @@ and FieldUpdateResult = | ValueChanged = 0 | ValueStayedTheSame = 1 | Failure = 
 //   Self:FieldDescriptor; 
 // }
 
-and FieldEventBase = { FieldEventId:Guid; EntityDescriptorId:EntityDescriptorId; Assignment:Assignment }
-and IntFieldEvent = { Self:FieldEventBase; Targets:EntitiesIdentifiers }
-and SingletonIntFieldEvent = { Self:FieldEventBase; Target:EntityIdentifier }
-and SingletonRefFieldEvent = { Self:FieldEventBase; Target:EntityIdentifier }
-and SetFieldEvent = IntFieldEvent of IntFieldEvent | SingletonIntFieldEvent of SingletonIntFieldEvent | SingletonRefFieldEvent of SingletonRefFieldEvent
-
 and BusinessRuleId = { BusinessRuleId:Guid }
 and BusinessRule = { BusinessRuleId:Guid; Name:string; Priority:BusinessRulePriority; Condition:Expr; Actions:List<Assignment> }
 and RuleDependency = { ChangedEntityType:EntityDescriptorId; RestrictedVariable:VarName; RestrictedVariableType:EntityDescriptorId; PathFromVariableToChange:List<FieldDescriptorId>; ChangedField:FieldDescriptorId }

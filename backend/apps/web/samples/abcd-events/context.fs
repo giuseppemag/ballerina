@@ -206,19 +206,36 @@ let init_abcdContext() =
       //       }; 
       //       Target = One (ab1.ABId)
       //     })
-      ABCDEvent.SetField(
-        SetFieldEvent.SingletonRefFieldEvent 
-          { 
-            Self = { 
-              FieldEventId = Guid.NewGuid(); 
-              EntityDescriptorId = descriptors.EF.Entity.Descriptor.ToEntityDescriptorId
-              Assignment = {
-                Variable = (!"this", [descriptors.EF.E.ToFieldDescriptorId])
-                Value=(!!"this" => [descriptors.EF.E.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 10))
-              }
-            }; 
-            Target = One (ef1.EFId)
-          })
+      ABCDEvent.Edit(
+        {
+          BusinessRuleId = Guid.NewGuid(); 
+          Name = "this.E := this.E + 10"; Priority = BusinessRulePriority.System; 
+          Condition = Expr.Exists(!"this", descriptors.EF.Entity.Descriptor.ToEntityDescriptorId, 
+            Expr.Binary(
+              BinaryOperator.Equals, 
+                !!"this" => [descriptors.EF.EFId().ToFieldDescriptorId], 
+                Expr.Value (Value.ConstGuid ef1.EFId))
+          ); 
+          Actions=[
+            {
+              Variable = !"this", [descriptors.EF.E.ToFieldDescriptorId]
+              Value=(!!"this" => [descriptors.EF.E.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 10))
+            }
+          ]          
+        }
+      )        
+        // SetFieldEvent.SingletonRefFieldEvent 
+        //   { 
+        //     Self = { 
+        //       FieldEventId = Guid.NewGuid(); 
+        //       EntityDescriptorId = descriptors.EF.Entity.Descriptor.ToEntityDescriptorId
+        //       Assignment = {
+        //         Variable = (!"this", [descriptors.EF.E.ToFieldDescriptorId])
+        //         Value=(!!"this" => [descriptors.EF.E.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 10))
+        //       }
+        //     }; 
+        //     Target = One (ef1.EFId)
+        //   })
 
     ] // :List<FieldEvent>; 
     PastEvents = [] // :List<FieldEvent>;

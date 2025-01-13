@@ -52,6 +52,12 @@ let eval (variableRestriction:Option<VarName * (obj -> bool)>) (schema:Schema) (
         for vars', (i1,i2) in eval2AsInt vars e1 e2 do
           yield vars', Value.ConstInt(i1+i2)
       ]
+    | Binary(Equals, e1, e2) -> 
+      [
+        for vars', res1 in eval vars e1 do
+          for vars'', res2 in eval vars' e2 do
+            yield vars'', Value.ConstBool (res1 = res2)
+      ]
     | e -> 
       printfn "not implemented Expr evaluator for %A" e
       []
