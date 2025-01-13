@@ -37,7 +37,7 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
 			if (typeof _.get(0)?.[0] == "object" && _.get(0)?.[0].kind == "category") {
 				return _.map(([k, v]) => ([(k as Category).category, v]))
 			}
-			else if( typeof _.get(0)?.[0] == "object" && "value" in _.get(0)?.[0] && "id" in _.get(0)?.[0]["value"]) {
+			else if( typeof _.get(0)?.[0] == "object" && "value" in _.get(0)?.[0] && typeof _.get(0)?.[0]["value"] == "object" && "id" in _.get(0)?.[0]["value"]) {
 				return _.map(([k, v]) => ([k["value"]["id"], v]))
 			} else {
 				return _
@@ -96,7 +96,7 @@ export const modifiedDebugFieldTypeConverters: ApiConverters<PersonFormInjectedT
 			if (typeof _.get(0)?.[0] == "object" && _.get(0)?.[0].kind == "category") {
 				return _.map(([k, v]) => ([(k as Category).category, v]))
 			}
-			else if( typeof _.get(0)?.[0] == "object" && "value" in _.get(0)?.[0] && "id" in _.get(0)?.[0]["value"]) {
+			else if( typeof _.get(0)?.[0] == "object" && "value" in _.get(0)?.[0] && typeof _.get(0)?.[0]["value"] == "object" && "id" in _.get(0)?.[0]["value"]) {
 				return _.map(([k, v]) => ([k["value"]["id"], v]))
 			} else {
 				return _
