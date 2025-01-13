@@ -24,7 +24,7 @@ const parseOptions = (leafPredicates: any, options: any) => {
 };
 
 export const FieldView = //<Context, FieldViews extends DefaultFieldViews, EnumFieldConfigs extends {}, EnumSources extends {}>() => <ViewType extends keyof FieldViews, ViewName extends keyof FieldViews[ViewType]>
-  <T,>(fieldConfig:FieldConfig, fieldViews: any, viewType: any, viewName: any, fieldName: string, label: string, tooltip: string | undefined, enumFieldConfigs: EnumOptionsSources, enumSources: any, leafPredicates: any, injectedPrimitives?: InjectedPrimitives<T>): any =>
+  <T,>(fieldConfig:FieldConfig, fieldViews: any, viewType: any, viewName: any, fieldName: string, label: string | undefined, tooltip: string | undefined, enumFieldConfigs: EnumOptionsSources, enumSources: any, leafPredicates: any, injectedPrimitives?: InjectedPrimitives<T>): any =>
   {
     if (viewType == "maybeBoolean")
       return MaybeBooleanForm<any & FormLabel, Unit>()
@@ -208,7 +208,7 @@ export const ParseForm = <T,>(
           ).withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
             .mapContext<any>(_ => ({ ..._, label, tooltip }))
         } else { // the list argument is a primitive
-          const elementForm = FieldView(fieldConfig, fieldViews, fieldNameToElementViewCategory(formFieldElementRenderers)(fieldName) as any, elementRendererName, fieldName, elementLabel ?? label, elementTooltip, EnumOptionsSources, fieldsOptionsConfig, leafPredicates, injectedPrimitives)
+          const elementForm = FieldView(fieldConfig, fieldViews, fieldNameToElementViewCategory(formFieldElementRenderers)(fieldName) as any, elementRendererName, fieldName, elementLabel ?? fieldName, elementTooltip, EnumOptionsSources, fieldsOptionsConfig, leafPredicates, injectedPrimitives)
           const initialFormState = FieldFormState(fieldConfig, fieldViews, fieldNameToElementViewCategory(formFieldElementRenderers)(fieldName) as any, elementRendererName, fieldName, InfiniteStreamSources, fieldsInfiniteStreamsConfig, injectedPrimitives);
           formConfig[fieldName] = ListForm<any, any, any & FormLabel, Unit>(
             { Default: () => initialFormState },
