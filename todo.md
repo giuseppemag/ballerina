@@ -142,14 +142,16 @@ Todo (✅/❌)
             ❌ add `CDs` to `AB`, so not just one
               ✅ use business rules for field setting
               ✅ test the conditions, not always `Exists ... true`
-              ❌ introduce .System -> .User as prio, apply it to the set field events
+              ✅ introduce .System -> .User as prio, apply it to the set field events
               ❌ modify all field events to the new structure based on business rule payloads
               ❌ identify EF through a nested existential over CD-AB 
               ❌ complete the scenario of multiple CDs
+                ❌ make some totals dependent on the sumBy operator
                 ❌ add collection events such as `Add`, `Remove`
                 ❌ implement `Move`
             ❌ rename `positions` to `abcd`
             ❌ add an enum parameter to pick the edit to test
+            ❌ define the values of AB, CD, etc. as a reflected definition
           ❌ make it production-ready
             ❌ test with 
               ❌ a few thousands ABs, CDs, EFs

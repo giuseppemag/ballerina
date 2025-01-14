@@ -206,42 +206,42 @@ let init_abcdContext() =
       //       }; 
       //       Target = One (ab1.ABId)
       //     })
+      // ABCDEvent.Edit(
+      //   {
+      //     BusinessRuleId = Guid.CreateVersion7(); 
+      //     Name = "this.CDId := cd2.CDId"; Priority = BusinessRulePriority.User; 
+      //     Condition = Expr.Exists(!"this", descriptors.AB.Entity.Descriptor.ToEntityDescriptorId, 
+      //       Expr.Binary(
+      //         BinaryOperator.Equals, 
+      //           !!"this" => [descriptors.AB.ABId().ToFieldDescriptorId], 
+      //           Expr.Value (Value.ConstGuid ab1.ABId))
+      //     ); 
+      //     Actions=[
+      //       {
+      //         Variable = !"this", [descriptors.AB.CD.ToFieldDescriptorId]
+      //         Value=(Expr.Value(Value.ConstGuid cd2.CDId))
+      //       }
+      //     ]          
+      //   }
+      // )
       ABCDEvent.Edit(
         {
           BusinessRuleId = Guid.CreateVersion7(); 
-          Name = "this.CDId := cd2.CDId"; Priority = BusinessRulePriority.User; 
-          Condition = Expr.Exists(!"this", descriptors.AB.Entity.Descriptor.ToEntityDescriptorId, 
+          Name = "this.E := this.E + 10"; Priority = BusinessRulePriority.User; 
+          Condition = Expr.Exists(!"this", descriptors.EF.Entity.Descriptor.ToEntityDescriptorId, 
             Expr.Binary(
               BinaryOperator.Equals, 
-                !!"this" => [descriptors.AB.ABId().ToFieldDescriptorId], 
-                Expr.Value (Value.ConstGuid ab1.ABId))
+                !!"this" => [descriptors.EF.EFId().ToFieldDescriptorId], 
+                Expr.Value (Value.ConstGuid ef1.EFId))
           ); 
           Actions=[
             {
-              Variable = !"this", [descriptors.AB.CD.ToFieldDescriptorId]
-              Value=(Expr.Value(Value.ConstGuid cd2.CDId))
+              Variable = !"this", [descriptors.EF.E.ToFieldDescriptorId]
+              Value=(!!"this" => [descriptors.EF.E.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 10))
             }
           ]          
         }
       )        
-      // ABCDEvent.Edit(
-      //   {
-      //     BusinessRuleId = Guid.CreateVersion7(); 
-      //     Name = "this.E := this.E + 10"; Priority = BusinessRulePriority.User; 
-      //     Condition = Expr.Exists(!"this", descriptors.EF.Entity.Descriptor.ToEntityDescriptorId, 
-      //       Expr.Binary(
-      //         BinaryOperator.Equals, 
-      //           !!"this" => [descriptors.EF.EFId().ToFieldDescriptorId], 
-      //           Expr.Value (Value.ConstGuid ef1.EFId))
-      //     ); 
-      //     Actions=[
-      //       {
-      //         Variable = !"this", [descriptors.EF.E.ToFieldDescriptorId]
-      //         Value=(!!"this" => [descriptors.EF.E.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 10))
-      //       }
-      //     ]          
-      //   }
-      // )        
 
     ] // :List<FieldEvent>; 
     PastEvents = [] // :List<FieldEvent>;
