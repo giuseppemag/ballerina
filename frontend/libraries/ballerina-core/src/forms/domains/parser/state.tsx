@@ -600,6 +600,9 @@ export const revertKeyword = (fieldName: string): string => {
 
 export const replaceKeywords = (obj: any, kind: "from api" | "to api"): any => {
   const replacementFn = kind == "from api" ? replaceKeyword : revertKeyword;
+  if(obj instanceof Date && !isNaN(obj.valueOf())) {
+    return obj;
+  }
   if (Array.isArray(obj) || List.isList(obj)) {
     return obj.map((item) =>
       typeof item == "string"
