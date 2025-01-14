@@ -21,7 +21,7 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
             CollectionSelection().Default.left(
                 CollectionReference.Default(_.id ?? "", _.displayName ?? "")
             ),
-        toAPIRawValue: ([_, __]) => (console.log('single selection', _), _.kind == "r" ? undefined : _)
+        toAPIRawValue: ([_, __]) => _.kind == "r" ? undefined : _
     },
     "MultiSelection": {
         fromAPIRawValue: _ => _ == undefined ? OrderedMap() : OrderedMap(_.map((_: any) => ([_.id, _]))),

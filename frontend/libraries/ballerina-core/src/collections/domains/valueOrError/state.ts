@@ -9,7 +9,7 @@ export const ValueOrError = {
     value: <v, e>(_: v): ValueOrError<v, e> => ({
       ...Value.Default(_),
       kind: "value",
-    }),
+    }) ,
     errors: <v, e>(_: e[]): ValueOrError<v, e> => ({
       errors: _,
       kind: "errors",
