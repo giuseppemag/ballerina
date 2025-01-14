@@ -138,18 +138,23 @@ Todo (✅/❌)
             ✅ remove `EditPriority`, there is no difference anymore
             ✅ improve the quality of the description of the various rules for documentation
             ✅ remove `AsRefs`, only one ref updater is sufficient
-            ❌ EF inside CD, CD inside AB should be created as lookup fields
+            ✅ EF inside CD, CD inside AB should be created as lookup fields
             ❌ add `CDs` to `AB`, so not just one
               ✅ use business rules for field setting
               ✅ test the conditions, not always `Exists ... true`
               ✅ introduce .System -> .User as prio, apply it to the set field events
-              ❌ modify all field events to the new structure based on business rule payloads
+              ✅ modify all field events to the new structure based on business rule payloads
               ❌ complete the scenario of multiple CDs
-                ❌ add `ABId` to `CD`, remove `CDId` from `AB`, adjust the seeds accordingly
-                ❌ make all totals add over `CDs`
-                ❌ add an edit that changes all `EF`s inside `ab1` to `ef2`
-                ❌ add collection events such as `Create`, `Remove`
-                ❌ implement `Move` by defining an `AB_CD` relation entity
+                ❌ fix the wrong order of processing of events
+                ❌ add `AB_CD` relation entity, remove direct `AB-CD` references
+                  ❌ `AB_CD = { AB_CDId; ABId; CDId; IndexOfCDInAB }`
+                ❌ `Exists ab_cd in AB_CD | ab_cd.ABId = <ab1.ABId> && Exists cd in CD | cd.CDId = ab_cd.CDId |= [cd.EF := <ef1.EFId>]`
+                ❌ the `&&` operator propagates variables from both operands
+                ❌ the `||` operator propagates the intersection of variables with the same type from both operands
+                ❌ `Exists ab in AB | true |= [ab.Total1 := sumBy(Exists ab_cd in AB_CD | ab_cd.ABId = <ab1.ABId> && Exists cd in CD | cd.C + cd.D)]`
+                ❌ `Exists cd = new CD(...) | Exists ab_cd = new AB_CD(<ab1.ABId>, cd.CDId) | true |= []`
+                  ❌ all fields of new entities are marked as modified
+                ❌ `Exists ab_cd1 | ab_cd1.ABId = <ab1.ABId> && ab_cd1.CDId = <cd1.CDId> && Exists ab_cd2 | ab_cd2.ABId = <ab1.ABId> && ab_cd1.CDId = <cd2.CDId> | true |= [ab_cd1.IndexOfCDInAB = 2; ab_cd2.IndexOfCDInAB = 1]`
             ❌ we don't need `One` anymore, do we? Let's move all to `Multiple`
             ❌ rename `positions` to `abcd`
             ❌ add an enum parameter to pick the edit to test
@@ -161,8 +166,7 @@ Todo (✅/❌)
               ❌ monadically
             ❌ expose OpenAPI
                 ❌ https://www.nuget.org/packages/FSharp.SystemTextJson.Swagger
-                ❌ add API to set the schema, and cache it in a JSON file
-                ❌ wait for the SetSchema event, or the schema to be available in the context
+                ❌ use the dynamic schema internally, but a statically typed `Expr` schema externally
             ❌ test with 
               ❌ a few thousands ABs, CDs, EFs
               ❌ a dozen rules on many field "clusters"
@@ -181,6 +185,7 @@ Todo (✅/❌)
               ❌ when the schema is fully dynamic, get/update operations work with reflection/`Dynamic` CLR type
             ❌ consider flipping the relations around, using arrays/maps instead of relations
             ❌ -----at this point, the prototype can be considered reasonably done and could go live as a microservice-----
+            ❌ the evaluation of existentials with conditions over foreign keys can be ran very quickly with lookup tables
             ❌ efficiently: with pre-caching of the FREE-VARS of both condition and expression value
             ❌ enums to strings
           ❌ PROTOTYPE 2 - DB in PG with CRUD OpenAPI

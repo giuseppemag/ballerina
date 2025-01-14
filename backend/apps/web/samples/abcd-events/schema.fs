@@ -69,28 +69,10 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) (allE
         (fun e -> e.D) (fun (e:CD) f -> { e with D = f })
       EF =  let guid = Guid.CreateVersion7()
             fun () ->
-              { 
-                FieldDescriptorId=guid; 
-                FieldName = "EF"; 
-                Type = fun () -> ExprType.LookupType descriptors.EF.Entity.Descriptor.ToEntityDescriptorId
-                Lookup = 
-                  Option<positions.model.CD>.fromObject >> Option.map(fun (e:positions.model.CD) -> e.EFId |> Value.ConstGuid)
-                Get = fun id -> descriptors.CD.Entity.TryFind id |> Option.bind (descriptors.CD.EF().Lookup);
-                Update = {|
-                  AsInt = (fun _ _ -> FieldUpdateResult.Failure);
-                  AsRef = 
-                    fun (One entityId) updater -> 
-                      FieldDescriptor.UpdateSingleField
-                        (fun entityId -> allCDs.contents |> Map.tryFind entityId) 
-                        (fun e' entityId -> allCDs .contents <- allCDs.contents |> Map.add entityId e')
-                        (fun e -> e.EFId) (fun e f -> { e with EFId = f })
-                        (One entityId) updater;
-                |}
-              }
-              // FieldDescriptor.Default().LookupField guid "EF" descriptors.EF.Entity.Descriptor.ToEntityDescriptorId 
-              //   (fun id -> allEFs.contents |> Map.tryFind id) 
-              //   (fun (e':EF) entityId -> allEFs.contents <- allEFs.contents |> Map.add entityId e') 
-              //   (fun e -> e.EFId) (fun (e:EF) f -> { e with EFId = f })
+              FieldDescriptor.Default().LookupField guid "EF" descriptors.EF.Entity.Descriptor.ToEntityDescriptorId 
+                (fun id -> allCDs.contents |> Map.tryFind id) 
+                (fun (e':CD) entityId -> allCDs.contents <- allCDs.contents |> Map.add entityId e') 
+                (fun e -> e.EFId) (fun (e:CD) f -> { e with EFId = f })
     |}
     AB = {|
       Entity = {|
@@ -141,28 +123,10 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) (allE
         (fun e -> e.Σ3) (fun e f -> { e with Σ3 = f })
       CD =  let guid = Guid.CreateVersion7()
             fun () -> 
-              { 
-                FieldDescriptorId=guid; 
-                FieldName = "CD"; 
-                Type = fun () -> ExprType.LookupType descriptors.CD.Entity.Descriptor.ToEntityDescriptorId
-                Lookup = 
-                  Option<positions.model.AB>.fromObject >> Option.map(fun (e:positions.model.AB) -> e.CDId |> Value.ConstGuid)
-                Get = fun id -> descriptors.AB.Entity.TryFind id |> Option.bind (descriptors.AB.CD().Lookup);
-                Update = {|
-                  AsInt = (fun _ _ -> FieldUpdateResult.Failure);
-                  AsRef = 
-                    fun (One entityId) updater -> 
-                      FieldDescriptor.UpdateSingleField
-                        (fun entityId -> allABs.contents |> Map.tryFind entityId) 
-                        (fun e' entityId -> allABs .contents <- allABs.contents |> Map.add entityId e')
-                        (fun e -> e.CDId) (fun e f -> { e with CDId = f })
-                        (One entityId) updater;
-                |}
-              }            
-              // FieldDescriptor.Default().LookupField guid "CD" descriptors.CD.Entity.Descriptor.ToEntityDescriptorId 
-              //   (fun id -> allCDs.contents |> Map.tryFind id) 
-              //   (fun (e':CD) entityId -> allCDs.contents <- allCDs.contents |> Map.add entityId e') 
-              //   (fun e -> e.CDId) (fun (e:CD) f -> { e with CDId = f })
+              FieldDescriptor.Default().LookupField guid "CD" descriptors.CD.Entity.Descriptor.ToEntityDescriptorId 
+                (fun id -> allABs.contents |> Map.tryFind id) 
+                (fun (e':AB) entityId -> allABs.contents <- allABs.contents |> Map.add entityId e') 
+                (fun e -> e.CDId) (fun (e:AB) f -> { e with CDId = f })
     |}
   |}
   and allEntities = 

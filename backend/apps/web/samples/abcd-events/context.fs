@@ -167,60 +167,60 @@ let init_abcdContext() =
     CDs = (fun () -> CDs.contents)
     EFs = (fun () -> EFs.contents)
     ActiveEvents = [
-      // ABCDEvent.Edit(
-      //   {
-      //     BusinessRuleId = Guid.CreateVersion7(); 
-      //     Name = "ab1.A1 := ab1.A1+10"; Priority = BusinessRulePriority.User; 
-      //     Condition = Expr.Exists(!"ab1", descriptors.AB.Entity.Descriptor.ToEntityDescriptorId, 
-      //       Expr.Binary(
-      //         BinaryOperator.Equals, 
-      //           !!"ab1" => [descriptors.AB.ABId().ToFieldDescriptorId], 
-      //           Expr.Value (Value.ConstGuid ab1.ABId))
-      //     ); 
-      //     Actions=[
-      //       {
-      //         Variable = !"ab1", [descriptors.AB.A1.ToFieldDescriptorId]
-      //         Value=(!!"ab1" => [descriptors.AB.A1.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 10))
-      //       }
-      //     ]          
-      //   }
-      // )
-      // ABCDEvent.Edit(
-      //   {
-      //     BusinessRuleId = Guid.CreateVersion7(); 
-      //     Name = "cd2.C := cd2.C+20"; Priority = BusinessRulePriority.User; 
-      //     Condition = Expr.Exists(!"cd2", descriptors.CD.Entity.Descriptor.ToEntityDescriptorId, 
-      //       Expr.Binary(
-      //         BinaryOperator.Equals, 
-      //           !!"cd2" => [descriptors.CD.CDId().ToFieldDescriptorId], 
-      //           Expr.Value (Value.ConstGuid cd2.CDId))
-      //     ); 
-      //     Actions=[
-      //       {
-      //         Variable = !"cd2", [descriptors.CD.C.ToFieldDescriptorId]
-      //         Value=(!!"cd2" => [descriptors.CD.C.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 20))
-      //       }
-      //     ]          
-      //   }
-      // )
-      // ABCDEvent.Edit(
-      //   {
-      //     BusinessRuleId = Guid.CreateVersion7(); 
-      //     Name = "ab1.CD := cd2"; Priority = BusinessRulePriority.User; 
-      //     Condition = Expr.Exists(!"ab1", descriptors.AB.Entity.Descriptor.ToEntityDescriptorId, 
-      //       Expr.Binary(
-      //         BinaryOperator.Equals, 
-      //           !!"ab1" => [descriptors.AB.ABId().ToFieldDescriptorId], 
-      //           Expr.Value (Value.ConstGuid ab1.ABId))
-      //     ); 
-      //     Actions=[
-      //       {
-      //         Variable = !"ab1", [descriptors.AB.CD().ToFieldDescriptorId]
-      //         Value=(Expr.Value(Value.ConstGuid cd2.CDId))
-      //       }
-      //     ]          
-      //   }
-      // )
+      ABCDEvent.Edit(
+        {
+          BusinessRuleId = Guid.CreateVersion7(); 
+          Name = "ab1.A1 := ab1.A1+10"; Priority = BusinessRulePriority.User; 
+          Condition = Expr.Exists(!"ab1", descriptors.AB.Entity.Descriptor.ToEntityDescriptorId, 
+            Expr.Binary(
+              BinaryOperator.Equals, 
+                !!"ab1" => [descriptors.AB.ABId().ToFieldDescriptorId], 
+                Expr.Value (Value.ConstGuid ab1.ABId))
+          ); 
+          Actions=[
+            {
+              Variable = !"ab1", [descriptors.AB.A1.ToFieldDescriptorId]
+              Value=(!!"ab1" => [descriptors.AB.A1.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 10))
+            }
+          ]          
+        }
+      )
+      ABCDEvent.Edit(
+        {
+          BusinessRuleId = Guid.CreateVersion7(); 
+          Name = "cd2.C := cd2.C+20"; Priority = BusinessRulePriority.User; 
+          Condition = Expr.Exists(!"cd2", descriptors.CD.Entity.Descriptor.ToEntityDescriptorId, 
+            Expr.Binary(
+              BinaryOperator.Equals, 
+                !!"cd2" => [descriptors.CD.CDId().ToFieldDescriptorId], 
+                Expr.Value (Value.ConstGuid cd2.CDId))
+          ); 
+          Actions=[
+            {
+              Variable = !"cd2", [descriptors.CD.C.ToFieldDescriptorId]
+              Value=(!!"cd2" => [descriptors.CD.C.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 20))
+            }
+          ]          
+        }
+      )
+      ABCDEvent.Edit(
+        {
+          BusinessRuleId = Guid.CreateVersion7(); 
+          Name = "ab1.CD := cd2"; Priority = BusinessRulePriority.User; 
+          Condition = Expr.Exists(!"ab1", descriptors.AB.Entity.Descriptor.ToEntityDescriptorId, 
+            Expr.Binary(
+              BinaryOperator.Equals, 
+                !!"ab1" => [descriptors.AB.ABId().ToFieldDescriptorId], 
+                Expr.Value (Value.ConstGuid ab1.ABId))
+          ); 
+          Actions=[
+            {
+              Variable = !"ab1", [descriptors.AB.CD().ToFieldDescriptorId]
+              Value=(Expr.Value(Value.ConstGuid cd2.CDId))
+            }
+          ]          
+        }
+      )
       ABCDEvent.Edit(
         {
           BusinessRuleId = Guid.CreateVersion7(); 
