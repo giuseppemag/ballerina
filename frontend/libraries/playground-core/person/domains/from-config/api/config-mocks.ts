@@ -54,6 +54,8 @@ export const PersonFormsConfig = {
         "permissions": { fun: "Map", args: [{ fun: "SingleSelection", args: ["PermissionRef"]}, "boolean"] },
         "cityByDepartment": { fun: "Map", args: [{fun: "SingleSelection", args: ["DepartmentRef"]}, {fun: "SingleSelection", args: ["CityRef"]}] },
         "shoeColours": {fun: "Multiselection", args: ["ColorRef"]},
+        "friendsBirthdays": { fun: "Map", args: ["string", "Date"] },
+        "holidays": {fun: "List", args: ["Date"]}
       }
     }
   },
@@ -193,14 +195,28 @@ export const PersonFormsConfig = {
         "shoeColours": {
             label: "shoe colours",
             renderer: "defaultEnumMultiselect", options: "colors", visible: { "kind": "true" }
-          }
+          },
+        "friendsBirthdays": {
+            renderer: "defaultMap",
+            label: "friends birthdays",
+            keyRenderer:{ label: "name", renderer: "defaultString", visible: { "kind": "true" } },
+            valueRenderer:{ label: "birthday", renderer: "defaultDate", visible: { "kind": "true" } },
+            visible: { "kind": "true" }
+          },
+        "holidays": {
+            label: "holidays",
+            renderer: "defaultList",
+            elementLabel: "holiday",
+            elementRenderer: "defaultDate",
+            visible: { "kind": "true" }
+        }
       },
       "tabs": {
         "main": {
           "columns": {
             "demographics": {
               "groups": {
-                "main": ["category", "name", "surname", "birthday", "gender", "emails", "dependants", "friendsByCategory", "relatives"],
+                "main": ["category", "name", "surname", "birthday", "gender", "emails", "dependants", "friendsByCategory", "relatives", "friendsBirthdays", "shoeColours"],
               },
             },
             "mailing": {
@@ -210,7 +226,7 @@ export const PersonFormsConfig = {
             },
             "addresses": {
               "groups": {
-                "main": ["departments", "mainAddress", "addresses", "addressesWithLabel", "addressesByCity", "addressesWithColorLabel", "permissions", "cityByDepartment", "shoeColours"],
+                "main": ["departments", "mainAddress", "addresses", "addressesWithLabel", "addressesByCity", "addressesWithColorLabel", "permissions", "cityByDepartment", "holidays"],
               }
             }
           }
