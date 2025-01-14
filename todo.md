@@ -135,16 +135,16 @@ Todo (✅/❌)
             ✅ `createIntFieldDescriptor` belongs to _core_
               ✅ and so does `createRefFieldDescriptor`
             ✅ add all `XId` field descriptors, and return them in `GetFieldDescriptors
+            ✅ remove `EditPriority`, there is no difference anymore
+            ✅ improve the quality of the description of the various rules for documentation
+            ✅ remove `AsRefs`, only one ref updater is sufficient
             ❌ EF inside CD, CD inside AB should be created as reference fields
-            ❌ remove `EditPriority`, there is no difference anymore
-            ❌ improve the quality of the description of the various rules for documentation
             ❌ add `CDs` to `AB`, so not just one
               ✅ use business rules for field setting
               ✅ test the conditions, not always `Exists ... true`
               ❌ introduce .System -> .User as prio, apply it to the set field events
               ❌ modify all field events to the new structure based on business rule payloads
               ❌ identify EF through a nested existential over CD-AB 
-              ❌ remove `AsRefs`, only one ref updater is sufficient
               ❌ complete the scenario of multiple CDs
                 ❌ add collection events such as `Add`, `Remove`
                 ❌ implement `Move`

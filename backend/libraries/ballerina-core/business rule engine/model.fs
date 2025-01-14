@@ -25,7 +25,6 @@ and FieldDescriptor = {
   Update:{| 
     AsInt:EntityIdentifier -> Updater<int> -> FieldUpdateResult;
     AsRef:EntityIdentifier -> Updater<Guid> -> FieldUpdateResult;
-    AsRefs:EntitiesIdentifiers -> Updater<Guid> -> FieldUpdateResult;
  |}
 }
 and FieldUpdateResult = | ValueChanged = 0 | ValueStayedTheSame = 1 | Failure = 2
@@ -68,7 +67,6 @@ and BinaryOperator = Plus | Minus | GreaterThan | Equals | GreaterThanEquals | T
 
 and EntitiesIdentifiers = All | Multiple of Set<Guid>
 and EntityIdentifier = One of Guid
-and EditPriority = | None = 0 | Predictions = 1 | CustomBusinessRule = 2 | SystemBusinessRule = 3 | User = 4
 and BusinessRulePriority = Custom = 0 | System = 1 | User = 2
 
 and Edit = FieldEdit of {| entityId:Guid; fieldDescriptorId:Guid |}
@@ -179,7 +177,6 @@ type FieldDescriptor with
                     getField setField
                     (One entityId) updater;
             AsRef = (fun _ _ -> FieldUpdateResult.Failure);
-            AsRefs = (fun _ _ -> FieldUpdateResult.Failure);
           |};
         }  
       RefField = fun guid entityName (targetEntityDescriptorId:EntityDescriptorId) (tryFindEntity:Guid -> Option<'e>) setEntity getField setField ->
@@ -196,7 +193,6 @@ type FieldDescriptor with
                     tryFindEntity setEntity
                     getField setField
                     (One entityId) updater;
-            AsRefs = (fun _ _ -> FieldUpdateResult.Failure);
           |};
         }  
 

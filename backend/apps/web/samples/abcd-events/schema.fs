@@ -83,31 +83,6 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) (allE
                 (fun e' entityId -> allCDs .contents <- allCDs.contents |> Map.add entityId e')
                 (fun e -> e.EFId) (fun e f -> { e with EFId = f })
                 (One entityId) updater;          
-          AsRefs = 
-            fun entitiesIdentifier updater -> 
-              do printfn "Updating AB::EF over %A" entitiesIdentifier
-              do Console.ReadLine() |> ignore
-              match entitiesIdentifier with 
-              | All -> 
-                let mutable changes = 0
-                allCDs .contents <- allCDs.contents |> Map.map (fun key -> (fun e -> 
-                  let e' = { e with EFId = updater(e.EFId)}
-                  if e.EFId <> e'.EFId then changes <- changes + 1
-                  e')) 
-                if changes > 0 then FieldUpdateResult.ValueChanged
-                else FieldUpdateResult.ValueStayedTheSame
-              | Multiple abIds ->  
-                let mutable changes = 0
-                allCDs .contents <- allCDs.contents |> Map.map (fun key -> 
-                  if abIds |> Set.contains key then 
-                    (fun e -> 
-                      let e' = { e with EFId = updater(e.EFId)}
-                      if e.EFId <> e'.EFId then changes <- changes + 1
-                      e'
-                    ) 
-                  else id)
-                if changes > 0 then FieldUpdateResult.ValueChanged
-                else FieldUpdateResult.ValueStayedTheSame
         |}
       }
     |}
@@ -174,31 +149,6 @@ let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) (allE
                 (fun e' entityId -> allABs .contents <- allABs.contents |> Map.add entityId e')
                 (fun e -> e.CDId) (fun e f -> { e with CDId = f })
                 (One entityId) updater;          
-          AsRefs = 
-            fun entitiesIdentifier updater -> 
-              do printfn "Updating AB::CD over %A" entitiesIdentifier
-              do Console.ReadLine() |> ignore
-              match entitiesIdentifier with 
-              | All -> 
-                let mutable changes = 0
-                allABs .contents <- allABs.contents |> Map.map (fun key -> (fun e -> 
-                  let e' = { e with CDId = updater(e.CDId)}
-                  if e.CDId <> e'.CDId then changes <- changes + 1
-                  e')) 
-                if changes > 0 then FieldUpdateResult.ValueChanged
-                else FieldUpdateResult.ValueStayedTheSame
-              | Multiple abIds ->  
-                let mutable changes = 0
-                allABs .contents <- allABs.contents |> Map.map (fun key -> 
-                  if abIds |> Set.contains key then 
-                    (fun e -> 
-                      let e' = { e with CDId = updater(e.CDId)}
-                      if e.CDId <> e'.CDId then changes <- changes + 1
-                      e'
-                    ) 
-                  else id)
-                if changes > 0 then FieldUpdateResult.ValueChanged
-                else FieldUpdateResult.ValueStayedTheSame
         |}
       }
     |}
