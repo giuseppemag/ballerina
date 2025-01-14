@@ -17,8 +17,8 @@ let abEventLoop (createScope:Unit -> IServiceScope) =
     use db = scope.ServiceProvider.GetService<BallerinaContext>()
     db.ABEvents.RemoveRange(db.ABEvents)
     // db.ABs.RemoveRange(db.ABs)
-    // db.ABs.Add({ ABId=Guid.NewGuid(); ACount=0; BCount=0; AFailCount=0; BFailCount=0 }) |> ignore
-    // db.ABs.Add({ ABId=Guid.NewGuid(); ACount=0; BCount=0; AFailCount=0; BFailCount=0 }) |> ignore
+    // db.ABs.Add({ ABId=Guid.CreateVersion7(); ACount=0; BCount=0; AFailCount=0; BFailCount=0 }) |> ignore
+    // db.ABs.Add({ ABId=Guid.CreateVersion7(); ACount=0; BCount=0; AFailCount=0; BFailCount=0 }) |> ignore
     db.SaveChanges() |> ignore
     db.ChangeTracker.Clear()
     { 

@@ -69,7 +69,7 @@ and BinaryOperator = Plus | Minus | GreaterThan | Equals | GreaterThanEquals | T
 and EntitiesIdentifiers = All | Multiple of Set<Guid>
 and EntityIdentifier = One of Guid
 and EditPriority = | None = 0 | Predictions = 1 | CustomBusinessRule = 2 | SystemBusinessRule = 3 | User = 4
-and BusinessRulePriority = Custom = 0 | System = 1
+and BusinessRulePriority = Custom = 0 | System = 1 | User = 2
 
 and Edit = FieldEdit of {| entityId:Guid; fieldDescriptorId:Guid |}
 and JobsState = {
@@ -144,3 +144,60 @@ type EntityDescriptor with
               // do Console.ReadLine() |> ignore
               return result
       }
+
+type FieldDescriptor with
+  static member UpdateSingleField<'a,'f when 'f : equality> (getE:Guid -> Option<'a>) (setE:'a -> Guid -> unit) 
+      (getField:'a -> 'f) (setField:'a -> 'f -> 'a) (One entityId) (updater:Updater<'f>) =
+    let e = getE entityId
+    match e with 
+    | Some e ->
+      let f = getField e
+      let f' = updater f
+      let e' = setField e f'
+      if f <> f' then
+        setE e' entityId
+        FieldUpdateResult.ValueChanged
+      else
+        FieldUpdateResult.ValueStayedTheSame
+    | None -> 
+      FieldUpdateResult.Failure
+
+  static member Default<'e>() = 
+    {|
+      IntField = fun entityName (tryFindEntity:Guid -> Option<'e>) setEntity getField setField ->
+        { 
+          FieldDescriptorId=Guid.CreateVersion7(); 
+          FieldName = entityName; 
+          Type = fun () -> ExprType.PrimitiveType IntType
+          Lookup = Option<'e>.fromObject >> Option.map(getField >> Value.ConstInt);
+          Get = fun id -> tryFindEntity id |> Option.map(getField >> Value.ConstInt);
+          Update = {|
+            AsInt = 
+              fun (One entityId) updater -> 
+                  FieldDescriptor.UpdateSingleField
+                    tryFindEntity setEntity
+                    getField setField
+                    (One entityId) updater;
+            AsRef = (fun _ _ -> FieldUpdateResult.Failure);
+            AsRefs = (fun _ _ -> FieldUpdateResult.Failure);
+          |};
+        }  
+      RefField = fun guid entityName (targetEntityDescriptorId:EntityDescriptorId) (tryFindEntity:Guid -> Option<'e>) setEntity getField setField ->
+        { 
+          FieldDescriptorId=guid; 
+          FieldName = entityName; 
+          Type = fun () -> ExprType.PrimitiveType (GuidType targetEntityDescriptorId)
+          Lookup = Option<'e>.fromObject >> Option.map(getField >> Value.ConstGuid);
+          Get = fun id -> tryFindEntity id |> Option.map(getField >> Value.ConstGuid);
+          Update = {|
+            AsInt = (fun _ _ -> FieldUpdateResult.Failure);
+            AsRef = fun (One entityId) updater -> 
+                  FieldDescriptor.UpdateSingleField
+                    tryFindEntity setEntity
+                    getField setField
+                    (One entityId) updater;
+            AsRefs = (fun _ _ -> FieldUpdateResult.Failure);
+          |};
+        }  
+
+    |}

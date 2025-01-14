@@ -83,8 +83,8 @@ let init_abcdContext() =
       FieldLookup(e, field) => fields
   let total1:BusinessRule = 
     { 
-      BusinessRuleId = Guid.NewGuid(); 
-      Name = "Total1 = A1+B1+C+D"; Priority = BusinessRulePriority.System; 
+      BusinessRuleId = Guid.CreateVersion7(); 
+      Name = "Total1 = A1+B1+CD.C+CD.D"; Priority = BusinessRulePriority.System; 
       Condition = Expr.Exists(!"this", descriptors.AB.Entity.Descriptor.ToEntityDescriptorId, Expr.Value (Value.ConstBool true)); 
       Actions=[
         {
@@ -98,8 +98,8 @@ let init_abcdContext() =
     }
   let total2:BusinessRule = 
     { 
-      BusinessRuleId = Guid.NewGuid(); 
-      Name = "Total2 = A2+B2+C+D"; Priority = BusinessRulePriority.System; 
+      BusinessRuleId = Guid.CreateVersion7(); 
+      Name = "Total2 = A2+B2+CD.C+CD.D"; Priority = BusinessRulePriority.System; 
       Condition = Expr.Exists(!"this", descriptors.AB.Entity.Descriptor.ToEntityDescriptorId, Expr.Value (Value.ConstBool true)); 
       Actions=[
         {
@@ -113,8 +113,8 @@ let init_abcdContext() =
     }
   let total3:BusinessRule = 
     { 
-      BusinessRuleId = Guid.NewGuid(); 
-      Name = "Total3 = A3+B3+E+F"; Priority = BusinessRulePriority.System; 
+      BusinessRuleId = Guid.CreateVersion7(); 
+      Name = "Total3 = A3+B3+CD.EF.E+CD.EF.F"; Priority = BusinessRulePriority.System; 
       Condition = Expr.Exists(!"this", descriptors.AB.Entity.Descriptor.ToEntityDescriptorId, Expr.Value (Value.ConstBool true)); 
       Actions=[
         {
@@ -130,7 +130,7 @@ let init_abcdContext() =
   let totalsLoop = 
     [
      { 
-        BusinessRuleId = Guid.NewGuid(); 
+        BusinessRuleId = Guid.CreateVersion7(); 
         Name = "Total2 = Total1+1+Total3"; Priority = BusinessRulePriority.System; 
         Condition = Expr.Exists(!"this", descriptors.AB.Entity.Descriptor.ToEntityDescriptorId, Expr.Value (Value.ConstBool true)); 
         Actions=[
@@ -143,7 +143,7 @@ let init_abcdContext() =
         ]
       }
      { 
-        BusinessRuleId = Guid.NewGuid(); 
+        BusinessRuleId = Guid.CreateVersion7(); 
         Name = "Total3 = Total2+1"; Priority = BusinessRulePriority.System; 
         Condition = Expr.Exists(!"this", descriptors.AB.Entity.Descriptor.ToEntityDescriptorId, Expr.Value (Value.ConstBool true)); 
         Actions=[
@@ -171,7 +171,7 @@ let init_abcdContext() =
       //   SetFieldEvent.SingletonIntFieldEvent 
       //     { 
       //       Self = { 
-      //         FieldEventId = Guid.NewGuid(); 
+      //         FieldEventId = Guid.CreateVersion7(); 
       //         EntityDescriptorId = descriptors.AB.Entity.Descriptor.ToEntityDescriptorId
       //         Assignment = {
       //           Variable = (!"this", [descriptors.AB.A.ToFieldDescriptorId])
@@ -184,7 +184,7 @@ let init_abcdContext() =
       //   SetFieldEvent.SingletonIntFieldEvent 
       //     { 
       //       Self = { 
-      //         FieldEventId = Guid.NewGuid(); 
+      //         FieldEventId = Guid.CreateVersion7(); 
       //         EntityDescriptorId = descriptors.CD.Entity.Descriptor.ToEntityDescriptorId
       //         Assignment = {
       //           Variable = (!"this", [descriptors.CD.C.ToFieldDescriptorId])
@@ -197,7 +197,7 @@ let init_abcdContext() =
       //   SetFieldEvent.SingletonRefFieldEvent 
       //     { 
       //       Self = { 
-      //         FieldEventId = Guid.NewGuid(); 
+      //         FieldEventId = Guid.CreateVersion7(); 
       //         EntityDescriptorId = descriptors.AB.Entity.Descriptor.ToEntityDescriptorId
       //         Assignment = {
       //           Variable = (!"this", [descriptors.AB.CD.ToFieldDescriptorId])
@@ -208,34 +208,40 @@ let init_abcdContext() =
       //     })
       ABCDEvent.Edit(
         {
-          BusinessRuleId = Guid.NewGuid(); 
-          Name = "this.E := this.E + 10"; Priority = BusinessRulePriority.System; 
-          Condition = Expr.Exists(!"this", descriptors.EF.Entity.Descriptor.ToEntityDescriptorId, 
+          BusinessRuleId = Guid.CreateVersion7(); 
+          Name = "this.CDId := cd2.CDId"; Priority = BusinessRulePriority.User; 
+          Condition = Expr.Exists(!"this", descriptors.AB.Entity.Descriptor.ToEntityDescriptorId, 
             Expr.Binary(
               BinaryOperator.Equals, 
-                !!"this" => [descriptors.EF.EFId().ToFieldDescriptorId], 
-                Expr.Value (Value.ConstGuid ef1.EFId))
+                !!"this" => [descriptors.AB.ABId().ToFieldDescriptorId], 
+                Expr.Value (Value.ConstGuid ab1.ABId))
           ); 
           Actions=[
             {
-              Variable = !"this", [descriptors.EF.E.ToFieldDescriptorId]
-              Value=(!!"this" => [descriptors.EF.E.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 10))
+              Variable = !"this", [descriptors.AB.CD.ToFieldDescriptorId]
+              Value=(Expr.Value(Value.ConstGuid cd2.CDId))
             }
           ]          
         }
       )        
-        // SetFieldEvent.SingletonRefFieldEvent 
-        //   { 
-        //     Self = { 
-        //       FieldEventId = Guid.NewGuid(); 
-        //       EntityDescriptorId = descriptors.EF.Entity.Descriptor.ToEntityDescriptorId
-        //       Assignment = {
-        //         Variable = (!"this", [descriptors.EF.E.ToFieldDescriptorId])
-        //         Value=(!!"this" => [descriptors.EF.E.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 10))
-        //       }
-        //     }; 
-        //     Target = One (ef1.EFId)
-        //   })
+      // ABCDEvent.Edit(
+      //   {
+      //     BusinessRuleId = Guid.CreateVersion7(); 
+      //     Name = "this.E := this.E + 10"; Priority = BusinessRulePriority.User; 
+      //     Condition = Expr.Exists(!"this", descriptors.EF.Entity.Descriptor.ToEntityDescriptorId, 
+      //       Expr.Binary(
+      //         BinaryOperator.Equals, 
+      //           !!"this" => [descriptors.EF.EFId().ToFieldDescriptorId], 
+      //           Expr.Value (Value.ConstGuid ef1.EFId))
+      //     ); 
+      //     Actions=[
+      //       {
+      //         Variable = !"this", [descriptors.EF.E.ToFieldDescriptorId]
+      //         Value=(!!"this" => [descriptors.EF.E.ToFieldDescriptorId]) + (Expr.Value(Value.ConstInt 10))
+      //       }
+      //     ]          
+      //   }
+      // )        
 
     ] // :List<FieldEvent>; 
     PastEvents = [] // :List<FieldEvent>;

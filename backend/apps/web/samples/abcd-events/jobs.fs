@@ -64,7 +64,7 @@ let abcdEventLoop() =
 
   let init(): EvaluatedCoroutines<_,_,_> =         
     { 
-      active = [Guid.NewGuid(), processABCD] |> Map.ofSeq;
+      active = [Guid.CreateVersion7(), processABCD] |> Map.ofSeq;
       waiting = Map.empty;
       waitingOrListening = Map.empty;
       listening = Map.empty;

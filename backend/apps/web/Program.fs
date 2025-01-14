@@ -36,6 +36,9 @@ open absample.endpoints
 open Microsoft.OpenApi.Models
 open System.Threading
 open positions.model
+open System.Text.Json
+open System.Text.Json.Serialization
+open FSharp.SystemTextJson.Swagger
 
 module Program =
   open abcdsample.eventLoop
@@ -61,14 +64,22 @@ module Program =
   | web = 1
   | jobs = 2
   | abcdjobs = 3
+  | testunions = 4
+
+  type MyBool = True | False
+  type EFOrError = Inl of EF | Inr of string
 
   [<EntryPoint>]
   let main args =
     let builder = WebApplication.CreateBuilder(args)
     builder.Services.Configure<PositionOptions>(builder.Configuration.GetSection(PositionOptions.Position))
+    let fsOptions = JsonFSharpOptions() // setup options here 
     builder.Services.Configure<JsonOptions>(fun (options:JsonOptions) -> 
       options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+      options.SerializerOptions.Converters.Add(JsonFSharpConverter(fsOptions))
     )
+
+    builder.Services.AddSwaggerForSystemTextJson(fsOptions)
 
     builder.Services.AddDbContext<BallerinaContext>(fun opt -> 
       opt.UseNpgsql(
@@ -76,13 +87,29 @@ module Program =
         ) |> ignore)
     builder.Services
         .AddEndpointsApiExplorer()
-        .AddSwaggerGen(fun options ->
-            options.UseOneOfForPolymorphism()
-            options.SelectDiscriminatorNameUsing(fun _ -> "$type")
-          )
+        // .AddSwaggerGen(fun options ->
+        //     options.UseOneOfForPolymorphism()
+        //     options.SelectDiscriminatorNameUsing(fun _ -> "$type")
+        //   )
 
     // app.UseHttpsRedirection()
     let app = builder.Build()
+    app .UseSwagger()
+        .UseSwaggerUI()
+    
+    let testunions() = 
+      app.MapPost("/TestUnions", new Func<MyBool, EFOrError>(fun input -> 
+        let r = System.Random()
+        if input.IsTrue then
+            Inl {
+              EFId = Guid.CreateVersion7();
+              E = r.Next() % 10;
+              F = r.Next() % 10
+            }
+        else
+            Inr "Greetings!"
+      )).WithOpenApi() |> ignore
+      app.Run("http://localhost:5000")
 
     let web() = 
       app.UseABSample<BallerinaContext>(
@@ -103,6 +130,7 @@ module Program =
 
     rootCommand.SetHandler(Action<_>(fun (mode:LaunchMode) ->
       match mode with
+      | LaunchMode.testunions -> testunions()
       | LaunchMode.web -> web()
       | LaunchMode.jobs -> abEventLoop (app.Services.CreateScope)
       | LaunchMode.abcdjobs -> abcdEventLoop ()

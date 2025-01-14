@@ -31,7 +31,7 @@ let processBEvents (abId:Guid) : Coroutine<Unit, Unit, ABContext, absample.model
       }
       co{
         do! co.Wait (TimeSpan.FromSeconds 5.0)
-        do! co.Produce (Guid.NewGuid(), absample.models.ABEvent.AEvent { event={ ABEventId=Guid.Empty; ABId=abId; AB=Unchecked.defaultof<AB>; CreatedAt=DateTime.UtcNow; ProcessingStatus=ABEventStatus.Enqueued }; AStep=1 })
+        do! co.Produce (Guid.CreateVersion7(), absample.models.ABEvent.AEvent { event={ ABEventId=Guid.Empty; ABId=abId; AB=Unchecked.defaultof<AB>; CreatedAt=DateTime.UtcNow; ProcessingStatus=ABEventStatus.Enqueued }; AStep=1 })
         do! co.Wait(TimeSpan.FromSeconds 0.0)
         do! co.Do(fun ctx -> ctx.ABs.update abId (fun ab -> ({ ab with BFailCount = ab.BFailCount+1 })))
         do! co.Wait(TimeSpan.FromSeconds 0.0)

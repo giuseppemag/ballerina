@@ -6,7 +6,7 @@ open Ballerina.Fun
 type [<CLIMutable>] Token = { TokenId:Guid; Token:string }
 let Token = {|
   Zero = { TokenId=Guid.Empty; Token="" }
-  Create = fun () -> async{ return { TokenId = Guid.NewGuid(); Token=BCrypt.Net.BCrypt.GenerateSalt() } }
+  Create = fun () -> async{ return { TokenId = Guid.CreateVersion7(); Token=BCrypt.Net.BCrypt.GenerateSalt() } }
 |} 
   
 

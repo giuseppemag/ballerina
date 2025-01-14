@@ -102,7 +102,6 @@ Todo (✅/❌)
                   ❌ the assignment (`Update`) of fields to ABs and CDs in the definition of the AB/CD entity schema should use the field definition assignment recursively
               ❌ there are various places where we assume `One entityId`, is this always reasonable?
                 ❌ in particular, `Expr::execute` does not take into account more than one field lookup on the assigned variable, extend
-          ❌ rename `positions` to `abcd`
           ❌ testing scenario
             ✅ add a setA event, see that the Total changes
             ✅ add a setB event, see that the Total changes
@@ -132,20 +131,26 @@ Todo (✅/❌)
                 ✅ A, B, ...
                 ✅ alpha, beta, ...
                 ✅ cyrillic variants, ...
-            ❌ `createIntFieldDescriptor` belongs to _core_
-              ❌ and so does `createRefFieldDescriptor`
-            ❌ add all `XId` field descriptors, and return them in `GetFieldDescriptors
+            ✅ replace every `Guid.CreateVersion7` with `CreateVersion7` 
+            ✅ `createIntFieldDescriptor` belongs to _core_
+              ✅ and so does `createRefFieldDescriptor`
+            ✅ add all `XId` field descriptors, and return them in `GetFieldDescriptors
+            ❌ EF inside CD, CD inside AB should be created as reference fields
+            ❌ remove `EditPriority`, there is no difference anymore
             ❌ improve the quality of the description of the various rules for documentation
             ❌ add `CDs` to `AB`, so not just one
               ✅ use business rules for field setting
               ✅ test the conditions, not always `Exists ... true`
               ❌ introduce .System -> .User as prio, apply it to the set field events
-              ❌ modify all field events to the new structure
-              ❌ identify EF through a nested existential over AB 
-              ❌ remove `AsRefs`, only one is sufficient
-              ❌ complete the scenario of multiple CDs, so that the events can also be EntityEvents such as `Add`, `Delete`, `Move`, etc.
+              ❌ modify all field events to the new structure based on business rule payloads
+              ❌ identify EF through a nested existential over CD-AB 
+              ❌ remove `AsRefs`, only one ref updater is sufficient
+              ❌ complete the scenario of multiple CDs
+                ❌ add collection events such as `Add`, `Remove`
+                ❌ implement `Move`
+            ❌ rename `positions` to `abcd`
+            ❌ add an enum parameter to pick the edit to test
           ❌ make it production-ready
-            ❌ drop the distinction between singleton and group field, it is not really relevant
             ❌ test with 
               ❌ a few thousands ABs, CDs, EFs
               ❌ a dozen rules on many field "clusters"
@@ -154,23 +159,24 @@ Todo (✅/❌)
               ❌ output the applied rules for the visibility/explainability/logging
               ❌ monadically
             ❌ expose OpenAPI
-              ❌ add API to set the schema, and cache it in a JSON file
+                ❌ https://www.nuget.org/packages/FSharp.SystemTextJson.Swagger
+                ❌ add API to set the schema, and cache it in a JSON file
                 ❌ wait for the SetSchema event, or the schema to be available in the context
             ❌ the construction of field descriptors in the schema could be streamlined
             ❌ the metadata entities belong to the model, not to Ballerina
             ❌ all rules should be applied on all entities after creation of a new entity
-            ❌ prepare a `co.Any` where each coroutine returns a different `fieldDescriptor x (Target = One | Multiple | All)`
             ❌ BUG ALERT if translating to production! The Map of events will likely cause events not to be processed in create-order
             ❌ allow approval, with associated business rules
             ❌ deal with missing references (GUIDs that do not match an existing entity)
             ❌ introduce list monad with errors for eval/execute
               ❌ return useful error messages
             ❌ the resolution of top-level existentials like `exists ab in AB | ab.ABId = CONSTGUID` should be resolved much faster
-            ❌ -----at this point, the prototype can be considered reasonably done and could go live as a microservice-----
             ❌ implement lazy fields in the schema
               ❌ this requires a coroutine-mediated protocol
               ❌ openSession(schema) -> operations | closeSession()
               ❌ when the schema is fully dynamic, get/update operations work with reflection/`Dynamic` CLR type
+            ❌ consider flipping the relations around, using arrays/maps instead of relations
+            ❌ -----at this point, the prototype can be considered reasonably done and could go live as a microservice-----
             ❌ efficiently: with pre-caching of the FREE-VARS of both condition and expression value
             ❌ enums to strings
           ❌ PROTOTYPE 2 - DB in PG with CRUD OpenAPI
