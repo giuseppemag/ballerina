@@ -27,6 +27,13 @@ export const ValueOrError = {
         }
         return ValueOrError.Default.value(f(_.value));
       }),
+    mapErrors: <e>(f: BasicFun<e, e>): BasicFun<ValueOrError<unknown, e>, ValueOrError<unknown, e>> =>
+      Fun((_) => {
+        if (_.kind == "errors") {
+          return ValueOrError.Default.errors(_.errors.map(f));
+        }
+        return _;
+      }),
     flatten: <a, e>(): Fun<
       ValueOrError<ValueOrError<a, e>, e>,
       ValueOrError<a, e>

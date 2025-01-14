@@ -129,7 +129,7 @@ export const FormsApp = (props: {}) => {
 														kind: "create",
 														submitButtonWrapper: CreatePersonSubmitButtonWrapper,
 														onSubmitted(_: any) {
-															alert(`Submitted new person ${JSON.stringify(_)}`)
+															// alert(`Submitted new person ${JSON.stringify(_)}`)
 														},
 													},
 													showFormParsingErrors: ShowFormsParsingErrors,

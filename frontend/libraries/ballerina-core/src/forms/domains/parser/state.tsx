@@ -487,6 +487,7 @@ export const parseForms =
             // alert(JSON.stringify(raw))
             // alert(JSON.stringify(parsedForm.formDef.type))
             const parsed = fromAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters, false, injectedPrimitives)(raw)
+
             return parsed
           }),
           update: (id: Guid, value: any, formState: any) => 
@@ -514,11 +515,11 @@ export const parseForms =
         const initialState = parsedForm.initialFormState
         const api = {
           create: ([value, formState]: [any, any]) => {
-            // alert(`type = ${JSON.stringify(parsedForm.formDef.type)}`)
-            // alert(`value = ${JSON.stringify(value)}`)
             const raw = toAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters, false, injectedPrimitives)(value, formState)
-            // alert(`raw = ${JSON.stringify(raw.interests)}`)
-            console.log('raw', JSON.stringify(raw))
+            if(raw.kind == "errors") {
+              alert(JSON.stringify(raw.errors, undefined, 2))
+              return Promise.resolve(unit)
+            }
             return entityApis.create(launcher.api)(raw)
           },
           default: (_: Unit) => entityApis.default(launcher.api)(unit)
