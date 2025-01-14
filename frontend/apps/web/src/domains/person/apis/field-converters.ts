@@ -33,16 +33,7 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
     },
     "Map": {
 		fromAPIRawValue: _ => _ == undefined ? List() : List(_),
-        toAPIRawValue: ([_, __]) => {
-			if (typeof _.get(0)?.[0] == "object" && _.get(0)?.[0].kind == "category") {
-				return _.map(([k, v]) => ([(k as Category).category, v]))
-			}
-			else if( typeof _.get(0)?.[0] == "object" && "value" in _.get(0)?.[0] && typeof _.get(0)?.[0]["value"] == "object" && "id" in _.get(0)?.[0]["value"]) {
-				return _.map(([k, v]) => ([k["value"]["id"], v]))
-			} else {
-				return _
-			}
-		}
+        toAPIRawValue: ([_, __]) => _.valueSeq().toArray()
 	}
 }
 
@@ -93,14 +84,7 @@ export const modifiedDebugFieldTypeConverters: ApiConverters<PersonFormInjectedT
 		fromAPIRawValue: _ => _ == undefined ? List() : List(_),
         toAPIRawValue: ([_, __]) => {
 			if(__) console.log({value: _.valueSeq().toArray(), isModified: __})
-			if (typeof _.get(0)?.[0] == "object" && _.get(0)?.[0].kind == "category") {
-				return _.map(([k, v]) => ([(k as Category).category, v]))
-			}
-			else if( typeof _.get(0)?.[0] == "object" && "value" in _.get(0)?.[0] && typeof _.get(0)?.[0]["value"] == "object" && "id" in _.get(0)?.[0]["value"]) {
-				return _.map(([k, v]) => ([k["value"]["id"], v]))
-			} else {
-				return _
-			}
+			return _.valueSeq().toArray()
 		}
 	}
 }

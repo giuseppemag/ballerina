@@ -2,7 +2,7 @@ import { Map, List, Set, OrderedMap } from "immutable"
 import { CollectionReference } from "../../../collection/domains/reference/state";
 import { CollectionSelection } from "../../../collection/domains/selection/state";
 import { BasicFun } from "../../../../../fun/state";
-import { InjectedPrimitives, replaceKeyword, replaceKeywords, revertKeyword, Type, TypeDefinition, TypeName, Unit } from "../../../../../../main";
+import { InjectedPrimitives, replaceKeyword, replaceKeywords, revertKeyword, Type, TypeDefinition, TypeName, Unit, Value } from "../../../../../../main";
 import { ValueOrError } from "../../../../../collections/domains/valueOrError/state";
 
 export const PrimitiveTypes =
@@ -268,7 +268,9 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
       const isKeyPrimitive = PrimitiveTypes.some(_ => _ == t.args[0]) || injectedPrimitives?.injectedPrimitives.has(t.args[0] as keyof T)
       const isValuePrimitive = PrimitiveTypes.some(_ => _ == t.args[1]) || injectedPrimitives?.injectedPrimitives.has(t.args[1] as keyof T)
       let t_args = t.args.map(parseTypeIShouldBePartOfFormValidation)
+
       const parsedMap = converterResult.map((keyValue: any, index: number) => {
+        
         const key = toAPIRawValue(
           typeof t_args[0] == "string" ? 
             isKeyPrimitive ?
@@ -279,25 +281,30 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
             types, builtIns, converters, true, injectedPrimitives)(keyValue[0], formState.elementFormStates.get(index).KeyFormState
           )
 
-          if(key.kind == "value" && key.value == undefined) {
-            return ValueOrError.Operations.throw(`A mapped key is undefined for type ${JSON.stringify(t.args[0])}`)
-          }
+       if(key.kind == "value" && (key.value == undefined || key.value == null || key.value == "")) // TODO; do we want to allow empty string?
+             return ValueOrError.Operations.throw(`A mapped key is undefined for type ${JSON.stringify(t.args[0])}`)
 
-          const value = toAPIRawValue(
-            typeof t_args[1] == "string" ? 
-              isValuePrimitive ?
-                { kind: "primitive", value: t_args[1] as PrimitiveType }
-              : { kind: "lookup", name: t_args[1] }
-            :
-              t_args[1], 
-            types, builtIns, converters, true, injectedPrimitives)(keyValue[1], formState.elementFormStates.get(index).ValueFormState
-            )
+        const value = toAPIRawValue(
+          typeof t_args[1] == "string" ? 
+            isValuePrimitive ?
+              { kind: "primitive", value: t_args[1] as PrimitiveType }
+            : { kind: "lookup", name: t_args[1] }
+          :
+            t_args[1], 
+          types, builtIns, converters, true, injectedPrimitives)(keyValue[1], formState.elementFormStates.get(index).ValueFormState)
 
-        return [key, value]}
+        return ValueOrError.Operations.return([key, value])}
       )
-      const allKeysStringified = parsedMap.map(([key, __]: [key: any, __: any]) => JSON.stringify(key))
+
+
+
+      if(parsedMap.length > 0 && parsedMap.some((valueOrError: ValueOrError<any, any>) => valueOrError.kind == "errors")) {
+        return ValueOrError.Operations.all(parsedMap)
+      }
+      const allKeysStringified = parsedMap.map((valueOrError: Value<any> & {kind: "value"}) =>  JSON.stringify(valueOrError.value[0].value))
       const allKeysUnique = Set(allKeysStringified).size == allKeysStringified.length
-      if(!allKeysUnique) {
+
+      if(allKeysStringified.length > 0 && !allKeysUnique) {
         return ValueOrError.Operations.throw(`Keys in the map are not unique: ${JSON.stringify(allKeysStringified)}`)
       }
       return ValueOrError.Operations.all(parsedMap)
@@ -307,15 +314,7 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
     const tDef = types.get(t.name)!
     if("extends" in tDef && tDef.extends.length == 1) {
       return ValueOrError.Operations.return(converters[(tDef.extends[0] as keyof BuiltInApiConverters)].toAPIRawValue([obj, formState.modifiedByUser] as never))
-    }
-    // let result: any = { ...obj }
-    // tDef.fields.forEach((fieldType, fieldName) => {
-    //   const revertedFieldName = revertKeyword(fieldName)
-    //   const fieldValue = obj[revertedFieldName]
-    //   result[revertedFieldName] = toAPIRawValue(fieldType, types, builtIns, converters, true, injectedPrimitives)(fieldValue, formState[fieldName])
-    // })
-    // return result
-    
+    }    
     return ValueOrError.Operations.all<any[], any>(
       tDef.fields.map((fieldType, fieldName) => 
         ValueOrError.Operations.map((_) => ([revertKeyword(fieldName), _]))(toAPIRawValue(fieldType, types, builtIns, converters, true, injectedPrimitives)(obj[revertKeyword(fieldName)], formState[fieldName]))
