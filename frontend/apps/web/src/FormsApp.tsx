@@ -24,6 +24,7 @@ export const FormsApp = (props: {}) => {
 	const [personCreateFormState, setPersonCreateFormState] = useState(FormRunnerState.Default())
 	const [personEditFormState, setPersonEditFormState] = useState(FormRunnerState.Default())
 	const [personState, setPersonState] = useState(Person.Default.mocked())
+	const [formErrors, setFormErrors] = useState<string[]>([])
 	// const [personFormState, setPersonFormState] = useState(PersonFormState.Default(""))
 	// const [personConfigState, setPersonConfigState] = useState(PersonConfig.Default())
 
@@ -110,6 +111,7 @@ export const FormsApp = (props: {}) => {
 										entityApis: PersonFromConfigApis.entityApis,
 										leafPredicates: PersonConfigFormsLeafPredicates,
 										getFormsConfig: () => PromiseRepo.Default.mock(() => PersonFormsConfig),
+										errorHandler: ((_) => setFormErrors(() => _)),
 										injectedPrimitives: Map([["injectedCategory", {fieldView: categoryForm, defaultValue: {category: "adult", kind: "category"}, defaultState: CategoryState.Default() }]]),
 									}}
 									setState={setConfigFormsParser}
@@ -120,6 +122,12 @@ export const FormsApp = (props: {}) => {
 									renderForms && formToShow % numForms == 0 ?
 										<>
 											<h3>Create person</h3>
+											{formErrors.length > 0 &&
+											 	<div style={{ border: "2px solid red" }}>
+													<p style={{ color: "red" }}>Errors</p>													<ul>
+														{formErrors.map((_, i) => <li key={i}>{_}</li>)}
+													</ul>
+												</div>}
 											<FormRunnerTemplate
 												context={{
 													...configFormsParser,
@@ -145,6 +153,13 @@ export const FormsApp = (props: {}) => {
 										: renderForms && formToShow % numForms == 1 ?
 											<>
 												<h3>Edit person</h3>
+												{formErrors.length > 0 &&
+											 	<div style={{ border: "2px solid red" }}>
+													<p style={{ color: "red" }}>Errors</p>
+													<ul>
+														{formErrors.map((_, i) => <li key={i}>{_}</li>)}
+													</ul>
+												</div>}
 												<FormRunnerTemplate
 													context={{
 														...configFormsParser,

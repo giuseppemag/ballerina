@@ -322,7 +322,6 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
       return [revertedFieldName, converted]
     })
     if(convertedMap.some((valueOrError) => valueOrError.kind == "errors")) {
-      console.log("convertedMap", convertedMap.toJSON())
       const propertiesWithErrors = convertedMap.filter((valueOrError) => valueOrError.kind == "errors")
       const namedErrors = propertiesWithErrors.map((value, key) => ValueOrError.Operations.mapErrors((_) => `${key}: ${_}`)(value))
       return ValueOrError.Operations.all<any, any>(namedErrors.valueSeq().toArray())
