@@ -409,6 +409,15 @@ export const parseForms =
               if (formsConfig.forms.has(field.elementRenderer))
                 traverse(formsConfig.forms.get(field.elementRenderer)!)
             }
+            if (fieldType?.kind == "application" && fieldType?.value == "Map" && fieldType?.args.length == 2 && field.mapRenderer != undefined) {
+              const mapRenderer = field.mapRenderer
+              if (mapRenderer && formsConfig.forms.has(mapRenderer.keyRenderer.renderer)) {
+                traverse(formsConfig.forms.get(mapRenderer.keyRenderer.renderer)!)
+              }
+              if (mapRenderer && formsConfig.forms.has(mapRenderer.valueRenderer.renderer)) {
+                traverse(formsConfig.forms.get(mapRenderer.valueRenderer.renderer)!)
+              }
+            }
           } catch (error) {
             errors.push(`unhandled error: ${JSON.stringify(error)} -> ${formDef.name}`)
           }
