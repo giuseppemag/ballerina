@@ -138,24 +138,23 @@ Todo (✅/❌)
             ✅ remove `EditPriority`, there is no difference anymore
             ✅ improve the quality of the description of the various rules for documentation
             ✅ remove `AsRefs`, only one ref updater is sufficient
-            ❌ EF inside CD, CD inside AB should be created as reference fields
+            ❌ EF inside CD, CD inside AB should be created as lookup fields
             ❌ add `CDs` to `AB`, so not just one
               ✅ use business rules for field setting
               ✅ test the conditions, not always `Exists ... true`
               ✅ introduce .System -> .User as prio, apply it to the set field events
               ❌ modify all field events to the new structure based on business rule payloads
-              ❌ identify EF through a nested existential over CD-AB 
               ❌ complete the scenario of multiple CDs
-                ❌ make some totals dependent on the sumBy operator
-                ❌ add collection events such as `Add`, `Remove`
-                ❌ implement `Move`
+                ❌ add `ABId` to `CD`, remove `CDId` from `AB`, adjust the seeds accordingly
+                ❌ make all totals add over `CDs`
+                ❌ add an edit that changes all `EF`s inside `ab1` to `ef2`
+                ❌ add collection events such as `Create`, `Remove`
+                ❌ implement `Move` by defining an `AB_CD` relation entity
+            ❌ we don't need `One` anymore, do we? Let's move all to `Multiple`
             ❌ rename `positions` to `abcd`
             ❌ add an enum parameter to pick the edit to test
-            ❌ define the values of AB, CD, etc. as a reflected definition
           ❌ make it production-ready
-            ❌ test with 
-              ❌ a few thousands ABs, CDs, EFs
-              ❌ a dozen rules on many field "clusters"
+            ❌ define the values of AB, CD, etc. as a reflected definition
             ❌ do not commit the updates to the context immediately, output a set of field value changes
               ❌ the context becomes a cache of operations
               ❌ output the applied rules for the visibility/explainability/logging
@@ -164,6 +163,9 @@ Todo (✅/❌)
                 ❌ https://www.nuget.org/packages/FSharp.SystemTextJson.Swagger
                 ❌ add API to set the schema, and cache it in a JSON file
                 ❌ wait for the SetSchema event, or the schema to be available in the context
+            ❌ test with 
+              ❌ a few thousands ABs, CDs, EFs
+              ❌ a dozen rules on many field "clusters"
             ❌ the construction of field descriptors in the schema could be streamlined
             ❌ the metadata entities belong to the model, not to Ballerina
             ❌ all rules should be applied on all entities after creation of a new entity

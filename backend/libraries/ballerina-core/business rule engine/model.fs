@@ -179,7 +179,7 @@ type FieldDescriptor with
             AsRef = (fun _ _ -> FieldUpdateResult.Failure);
           |};
         }  
-      RefField = fun guid entityName (targetEntityDescriptorId:EntityDescriptorId) (tryFindEntity:Guid -> Option<'e>) setEntity getField setField ->
+      IdField = fun guid entityName (targetEntityDescriptorId:EntityDescriptorId) (tryFindEntity:Guid -> Option<'e>) setEntity getField setField ->
         { 
           FieldDescriptorId=guid; 
           FieldName = entityName; 
@@ -195,5 +195,20 @@ type FieldDescriptor with
                     (One entityId) updater;
           |};
         }  
-
+      // LookupField = fun guid entityName (targetEntityDescriptorId:EntityDescriptorId) (tryFindEntity:Guid -> Option<'e>) setEntity getField setField ->
+      //   { 
+      //     FieldDescriptorId=guid; 
+      //     FieldName = entityName; 
+      //     Type = fun () -> ExprType.LookupType targetEntityDescriptorId
+      //     Lookup = Option<'e>.fromObject >> Option.map(getField >> Value.ConstGuid);
+      //     Get = fun id -> tryFindEntity id |> Option.map(getField >> Value.ConstGuid);
+      //     Update = {|
+      //       AsInt = (fun _ _ -> FieldUpdateResult.Failure);
+      //       AsRef = fun (One entityId) updater -> 
+      //             FieldDescriptor.UpdateSingleField
+      //               tryFindEntity setEntity
+      //               getField setField
+      //               (One entityId) updater;
+      //     |};
+      //   }
     |}
