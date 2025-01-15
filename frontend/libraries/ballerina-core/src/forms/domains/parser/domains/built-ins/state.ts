@@ -32,7 +32,7 @@ export type BuiltInApiConverters = {
   "maybeBoolean": ApiConverter<boolean | undefined>
   "base64File": ApiConverter<string>
   "secret": ApiConverter<string>,
-  "Date": ApiConverter<Date>
+  "Date": ApiConverter<Maybe<Date>>
   "CollectionReference": ApiConverter<CollectionReference>
   "SingleSelection": ApiConverter<CollectionSelection<any>>
   "MultiSelection": ApiConverter<OrderedMap<string, any>>
