@@ -96,10 +96,9 @@ export const FieldFormState = //<Context, FieldViews extends DefaultFieldViews, 
         ...injectedPrimitiveDefaultState,
         ...SharedFormState.Default()
       }) : SharedFormState.Default();
-      return SharedFormState.Default()
     }
     if (viewType == "date")
-      return DateFormState.Default("");
+      return DateFormState.Default();
     if (viewType == "enumSingleSelection" || viewType == "enumMultiSelection")
       return ({ ...EnumFormState<any, any>().Default(), ...SharedFormState.Default() });
     if (viewType == "streamSingleSelection" || viewType == "streamMultiSelection") {
