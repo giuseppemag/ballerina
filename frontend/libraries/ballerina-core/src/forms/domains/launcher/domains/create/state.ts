@@ -1,4 +1,4 @@
-import { ApiErrors, AsyncState, BasicUpdater, Debounced, ForeignMutationsInput, id, replaceWith, SimpleCallback, simpleUpdater, Synchronized, Template, unit, Unit, Updater, Value } from "../../../../../../main"
+import { ApiErrors, AsyncState, BasicUpdater, Debounced, ForeignMutationsInput, FormRefApiHandlers, id, replaceWith, SimpleCallback, simpleUpdater, Synchronized, Template, unit, Unit, Updater, Value } from "../../../../../../main"
 import { BasicFun } from "../../../../../fun/state"
 
 export type CreateFormContext<E,FS> = {
@@ -68,4 +68,4 @@ export const CreateFormState = <E,FS>() => ({
 
 export type CreateFormWritableState<E,FS> = CreateFormState<E,FS>
 export type CreateFormForeignMutationsExposed<E,FS> = ReturnType<ReturnType<typeof CreateFormState<E,FS>>["ForeignMutations"]>
-export type CreateFormForeignMutationsExpected<E,FS> = { onSubmitted:SimpleCallback<E> }
+export type CreateFormForeignMutationsExpected<E,FS> = { apiHandlers: FormRefApiHandlers<E> }

@@ -1,9 +1,9 @@
-import { ApiErrors, AsyncState, Debounce, Debounced, CreateFormForeignMutationsExpected, CreateFormState, Synchronize, Synchronized, Unit, SimpleCallback, unit, replaceWith } from "../../../../../../../main"
+import { ApiErrors, AsyncState, Debounce, Debounced, CreateFormForeignMutationsExpected, CreateFormState, Synchronize, Synchronized, Unit, SimpleCallback, unit, replaceWith, FormRefApiHandlers } from "../../../../../../../main"
 import { CoTypedFactory } from "../../../../../../coroutines/builder"
 import { CreateFormContext, CreateFormWritableState } from "../state"
 
 export const createFormRunner = <E, FS>() => {
-  const Co = CoTypedFactory<CreateFormContext<E, FS> & { onSubmitted:SimpleCallback<E> }, CreateFormWritableState<E, FS>>()
+  const Co = CoTypedFactory<CreateFormContext<E, FS> & {apiHandlers: FormRefApiHandlers<E>}, CreateFormWritableState<E, FS>>()
 
   const init =
     Co.GetState().then(current =>
@@ -30,16 +30,32 @@ export const createFormRunner = <E, FS>() => {
           _ => CreateFormState<E, FS>().Updaters.Core.entity(_)
         )
       ),
-      Co.GetState().then(current =>
-        AsyncState.Operations.hasValue(current.entity.sync) && AsyncState.Operations.hasValue(current.entity.sync.value.sync) && current.notifySubmitAfterSync ?
-          Co.Seq([
+      Co.GetState().then(current => {
+        if (!AsyncState.Operations.hasValue(current.entity.sync) || !current.notifySubmitAfterSync) {
+          return Co.Return(unit)
+        }
+
+        if (AsyncState.Operations.hasValue(current.entity.sync.value.sync)) {
+          return Co.Seq([
             Co.Do(() => {
               if (AsyncState.Operations.hasValue(current.entity.sync) && AsyncState.Operations.hasValue(current.entity.sync.value.sync))
-                current.onSubmitted(current.entity.sync.value)
+                current.apiHandlers.success?.(current.entity.sync.value)
             }),
             Co.SetState(CreateFormState<E,FS>().Updaters.Core.notifySubmitAfterSync(replaceWith(false)))
           ])
-        : Co.Return(unit)
+        }
+
+        if (current.entity.sync.value.sync.kind === "error") {
+          return Co.Seq([
+            Co.Do(() => {
+              if (AsyncState.Operations.hasValue(current.entity.sync) && current.entity.sync.value.sync.kind === "error") 
+              current.apiHandlers.error?.(current.entity.sync.value.sync.error);
+            }),
+          ])
+        }
+
+        return Co.Return(unit)
+      }
       )
     ])
     )
