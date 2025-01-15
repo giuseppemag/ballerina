@@ -51,6 +51,7 @@ export const createFormRunner = <E, FS>() => {
               if (AsyncState.Operations.hasValue(current.entity.sync) && current.entity.sync.value.sync.kind === "error") 
               current.apiHandlers.error?.(current.entity.sync.value.sync.error);
             }),
+            Co.SetState(CreateFormState<E,FS>().Updaters.Core.notifySubmitAfterSync(replaceWith(false)))
           ])
         }
 
