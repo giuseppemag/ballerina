@@ -1,23 +1,81 @@
 import { BasicFun, Fun } from "../../../fun/state";
 import { Value } from "../../../value/state";
 
-export type ValueOrError<v, e> =
+export type ValueOrError<v, e> = (
   | (Value<v> & { kind: "value" })
-  | { errors: e[]; kind: "errors" };
+  | { errors: e[]; kind: "errors" }
+) & {
+  map: <a, b, e>(
+    this: ValueOrError<a, e>,
+    f: BasicFun<a, b>
+  ) => ValueOrError<b, e>;
+  mapErrors: <a, e>(
+    this: ValueOrError<a, e>,
+    f: BasicFun<e, e>
+  ) => ValueOrError<a, e>;
+  flatten: <a, e>(
+    this: ValueOrError<ValueOrError<a, e>, e>
+  ) => ValueOrError<a, e>;
+  then: <a, b, e>(
+    this: ValueOrError<a, e>,
+    k: BasicFun<a, ValueOrError<b, e>>
+  ) => ValueOrError<b, e>;
+};
+
+const operations = {
+  map: function <a, b, e>(
+    this: ValueOrError<a, e>,
+    f: BasicFun<a, b>
+  ): ValueOrError<b, e> {
+    if (this.kind == "errors") {
+      return this;
+    }
+    return ValueOrError.Default.return(f(this.value));
+  },
+  mapErrors: function <a, e>(
+    this: ValueOrError<a, e>,
+    f: BasicFun<e, e>
+  ): ValueOrError<a, e> {
+    if (this.kind == "errors") {
+      return ValueOrError.Default.throw(this.errors.map(f));
+    }
+    return this;
+  },
+  flatten: function <a, e>(
+    this: ValueOrError<ValueOrError<a, e>, e>
+  ): ValueOrError<a, e> {
+    if (this.kind == "errors") {
+      return this;
+    } else if (this.value.kind == "errors") {
+      return ValueOrError.Default.throw(this.value.errors);
+    } else {
+      return this.value;
+    }
+  },
+  then: function <a, b, e>(
+    this: ValueOrError<a, e>,
+    k: BasicFun<a, ValueOrError<b, e>>
+  ): ValueOrError<b, e> {
+    return this.map(k).flatten();
+  },
+};
+
 export const ValueOrError = {
   Default: {
-    value: <v, e>(_: v): ValueOrError<v, e> => ({
+    return: <v, e>(_: v): ValueOrError<v, e> => ({
       ...Value.Default(_),
       kind: "value",
-    }) ,
-    errors: <v, e>(_: e[]): ValueOrError<v, e> => ({
+      ...operations,
+    }),
+    throw: <v, e>(_: e[]): ValueOrError<v, e> => ({
       errors: _,
       kind: "errors",
+      ...operations,
     }),
   },
   Operations: {
-    return: <v, e>(_: v): ValueOrError<v, e> => ValueOrError.Default.value(_),
-    throw: <v, e>(_: e): ValueOrError<v, e> => ValueOrError.Default.errors([_]),
+    return: <v, e>(_: v): ValueOrError<v, e> => ValueOrError.Default.return(_),
+    throw: <v, e>(_: e): ValueOrError<v, e> => ValueOrError.Default.throw([_]),
     map: <a, b, e>(
       f: BasicFun<a, b>
     ): Fun<ValueOrError<a, e>, ValueOrError<b, e>> =>
@@ -25,12 +83,14 @@ export const ValueOrError = {
         if (_.kind == "errors") {
           return _;
         }
-        return ValueOrError.Default.value(f(_.value));
+        return ValueOrError.Default.return(f(_.value));
       }),
-    mapErrors: <e>(f: BasicFun<e, e>): BasicFun<ValueOrError<unknown, e>, ValueOrError<unknown, e>> =>
+    mapErrors: <a, e>(
+      f: BasicFun<e, e>
+    ): BasicFun<ValueOrError<a, e>, ValueOrError<a, e>> =>
       Fun((_) => {
         if (_.kind == "errors") {
-          return ValueOrError.Default.errors(_.errors.map(f));
+          return ValueOrError.Default.throw(_.errors.map(f));
         }
         return _;
       }),
@@ -42,7 +102,7 @@ export const ValueOrError = {
         if (_.kind == "errors") {
           return _;
         } else if (_.value.kind == "errors") {
-          return ValueOrError.Default.errors(_.value.errors);
+          return ValueOrError.Default.throw(_.value.errors);
         } else {
           return _.value;
         }
@@ -57,15 +117,10 @@ export const ValueOrError = {
       ),
     all: <v, e>(_: ValueOrError<v, e>[]): ValueOrError<v[], e> => {
       if (_.every((_) => _.kind == "value")) {
-        return ValueOrError.Default.value(_.map((_) => _.value));
+        return ValueOrError.Default.return(_.flatMap((_) => _.value));
       }
-      return ValueOrError.Default.errors(
-        _.reduce((acc, curr) => {
-          if (curr.kind == "errors") {
-            return [...acc, ...curr.errors];
-          }
-          return acc;
-        }, [] as e[])
+      return ValueOrError.Default.throw(
+        _.flatMap((_) => (_.kind == "errors" ? _.errors : []))
       );
     },
   },
