@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { CollectionReference, CollectionSelection, Guid, FormStateFromEntity, DateFormState, EnumFormState, FormLabel, BaseEnumContext, SearchableInfiniteStreamState, SharedFormState, Predicate, ListFieldState } from "ballerina-core";
+import { CollectionReference, CollectionSelection, Guid, FormStateFromEntity, DateFormState, EnumFormState, FormLabel, BaseEnumContext, SearchableInfiniteStreamState, SharedFormState, Predicate, ListFieldState, Maybe } from "ballerina-core";
 import { Map, List, OrderedMap } from "immutable";
 import { v4 } from "uuid";
 import { Interest, PersonApi } from "./apis/mocks";
@@ -14,7 +14,7 @@ export const Department = CollectionReference;
 export type Person = {
   name: string;
   surname: string;
-  birthday: Date;
+  birthday: Maybe<Date>;
   subscribeToNewsletter: boolean;
   gender: CollectionSelection<Gender>;
   interests: OrderedMap<Guid, Interest>;
@@ -72,12 +72,12 @@ export type PersonFormState = FormStateFromEntity<Person, {
   address: ListFieldState<Address, AddressFormState>;
 }>;
 export const PersonFormState = {
-  Default: (birthday: string): PersonFormState => ({
+  Default: (): PersonFormState => ({
     ...SharedFormState.Default(),
     name: SharedFormState.Default(),
     surname: SharedFormState.Default(),
     subscribeToNewsletter: SharedFormState.Default(),
-    birthday: ({ ...DateFormState.Default(birthday), ...SharedFormState.Default() }),
+    birthday: ({ ...DateFormState.Default(), ...SharedFormState.Default() }),
     gender: ({ ...EnumFormState<PersonFormPredicateContext & FormLabel & BaseEnumContext<PersonFormPredicateContext, Gender>, Gender>().Default(), ...SharedFormState.Default() }),
     interests: ({ ...EnumFormState<PersonFormPredicateContext & FormLabel & BaseEnumContext<PersonFormPredicateContext, Interest>, Interest>().Default(), ...SharedFormState.Default() }),
     departments: ({ ...SearchableInfiniteStreamState<Department>().Default("", PersonApi.getDepartments()), ...SharedFormState.Default() }),
