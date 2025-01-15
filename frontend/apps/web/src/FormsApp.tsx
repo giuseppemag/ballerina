@@ -128,9 +128,14 @@ export const FormsApp = (props: {}) => {
 														formName: "create-person",
 														kind: "create",
 														submitButtonWrapper: CreatePersonSubmitButtonWrapper,
-														onSubmitted(_: any) {
-															alert(`Submitted new person ${JSON.stringify(_)}`)
-														},
+														apiHandlers: {
+															success: (_) => {
+																alert(`Submitted new person ${JSON.stringify(_)}`)
+															},
+															error: (_) => {
+																alert(`Error submitting new person ${JSON.stringify(_)}`)
+															}
+														}
 													},
 													showFormParsingErrors: ShowFormsParsingErrors,
 													extraContext: {
