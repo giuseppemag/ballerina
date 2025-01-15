@@ -14,7 +14,7 @@ export type CreateFormState<E,FS> = {
   // first sync is GET (returns E), second is UPDATE (accepts E)
   entity:Debounced<Synchronized<Unit, Synchronized<E, ApiErrors>>>
   formState:FS,
-  notifySubmitAfterSync:boolean
+  handleResponseAfterSync:boolean
 }
 
 export const CreateFormState = <E,FS>() => ({
@@ -23,11 +23,11 @@ export const CreateFormState = <E,FS>() => ({
       Synchronized.Default(unit)
     ),
     formState:initialFormState,
-    notifySubmitAfterSync:false
+    handleResponseAfterSync:false
   }),
   Updaters:{
     Core:{      
-      ...simpleUpdater<CreateFormState<E,FS>>()("notifySubmitAfterSync"),
+      ...simpleUpdater<CreateFormState<E,FS>>()("handleResponseAfterSync"),
       ...simpleUpdater<CreateFormState<E,FS>>()("entity"),
       ...simpleUpdater<CreateFormState<E,FS>>()("formState"),
     },
@@ -56,7 +56,7 @@ export const CreateFormState = <E,FS>() => ({
               )
             )
           ).then(
-            CreateFormState<E,FS>().Updaters.Core.notifySubmitAfterSync(replaceWith(true))
+            CreateFormState<E,FS>().Updaters.Core.handleResponseAfterSync(replaceWith(true))
           )
   
     }

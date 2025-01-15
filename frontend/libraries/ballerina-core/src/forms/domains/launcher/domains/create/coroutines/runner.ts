@@ -31,7 +31,7 @@ export const createFormRunner = <E, FS>() => {
         )
       ),
       Co.GetState().then(current => {
-        if (!AsyncState.Operations.hasValue(current.entity.sync) || !current.notifySubmitAfterSync) {
+        if (!AsyncState.Operations.hasValue(current.entity.sync) || !current.handleResponseAfterSync) {
           return Co.Return(unit)
         }
 
@@ -41,7 +41,7 @@ export const createFormRunner = <E, FS>() => {
               if (AsyncState.Operations.hasValue(current.entity.sync) && AsyncState.Operations.hasValue(current.entity.sync.value.sync))
                 current.apiHandlers.success?.(current.entity.sync.value)
             }),
-            Co.SetState(CreateFormState<E,FS>().Updaters.Core.notifySubmitAfterSync(replaceWith(false)))
+            Co.SetState(CreateFormState<E,FS>().Updaters.Core.handleResponseAfterSync(replaceWith(false)))
           ])
         }
 
@@ -51,7 +51,7 @@ export const createFormRunner = <E, FS>() => {
               if (AsyncState.Operations.hasValue(current.entity.sync) && current.entity.sync.value.sync.kind === "error") 
               current.apiHandlers.error?.(current.entity.sync.value.sync.error);
             }),
-            Co.SetState(CreateFormState<E,FS>().Updaters.Core.notifySubmitAfterSync(replaceWith(false)))
+            Co.SetState(CreateFormState<E,FS>().Updaters.Core.handleResponseAfterSync(replaceWith(false)))
           ])
         }
 
@@ -70,7 +70,7 @@ export const createFormRunner = <E, FS>() => {
     Co.Template<CreateFormForeignMutationsExpected<E, FS>>(
       synchronize, {
       interval: 15,
-      runFilter: props => Debounced.Operations.shouldCoroutineRun(props.context.entity) || props.context.notifySubmitAfterSync
+      runFilter: props => Debounced.Operations.shouldCoroutineRun(props.context.entity) || props.context.handleResponseAfterSync
     }
     )
   ])
