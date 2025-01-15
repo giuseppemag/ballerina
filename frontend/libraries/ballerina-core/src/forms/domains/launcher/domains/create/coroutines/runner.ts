@@ -38,7 +38,7 @@ export const createFormRunner = <E, FS>() => {
         HandleApiResponse<
           CreateFormWritableState<E, FS>,
           CreateFormContext<E, FS>,
-          unknown // could be Synchronized<E, ApiErrors> or ApiErrors
+          Synchronized<E, ApiErrors> | ApiErrors
         >((_) => AsyncState.Operations.hasValue(_.entity.sync) ? _.entity.sync.value.sync : _.entity.sync, {
           handleSuccess: current.apiHandlers?.success,
           handleError: current.apiHandlers?.error,
