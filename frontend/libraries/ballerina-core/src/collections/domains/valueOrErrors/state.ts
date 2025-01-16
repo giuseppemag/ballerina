@@ -12,7 +12,7 @@ export type ValueOrErrors<v, e> = (
   ) => ValueOrErrors<b, e>;
   mapErrors: <a, e, e2>(
     this: ValueOrErrors<a, e>,
-    f: BasicFun<e, e2>
+    f: BasicFun<List<e>, List<e2>>
   ) => ValueOrErrors<a, e2>;
   flatten: <a, e>(
     this: ValueOrErrors<ValueOrErrors<a, e>, e>
@@ -35,10 +35,10 @@ const operations = {
   },
   mapErrors: function <a, e, e2>(
     this: ValueOrErrors<a, e>,
-    f: BasicFun<e, e2>
+    f: BasicFun<List<e>, List<e2>>
   ): ValueOrErrors<a, e2> {
     if (this.kind == "errors") {
-      return ValueOrErrors.Default.throw(this.errors.map(f));
+      return ValueOrErrors.Default.throw(f(this.errors));
     }
     return this;
   },
@@ -88,11 +88,11 @@ export const ValueOrErrors = {
         return ValueOrErrors.Default.return(f(_.value));
       }),
     mapErrors: <a, e, e2>(
-      f: BasicFun<e, e2>
+      f: BasicFun<List<e>, List<e2>>
     ): BasicFun<ValueOrErrors<a, e>, ValueOrErrors<a, e2>> =>
       Fun((_) => {
         if (_.kind == "errors") {
-          return ValueOrErrors.Default.throw(_.errors.map(f));
+          return ValueOrErrors.Default.throw(f(_.errors));
         }
         return _;
       }),
@@ -122,10 +122,10 @@ export const ValueOrErrors = {
             (v: v) =>
               reduction.kind == "errors"
                 ? reduction
-                : ValueOrErrors.Default.return(List<v>([v])),
+                : reduction.map(_ => _.concat(v)),
             (es: List<e>) =>
               reduction.kind == "errors"
-                ? ValueOrErrors.Default.throw(es.concat(reduction.errors))
+                ? reduction.mapErrors(_ => _ .concat(es))
                 : ValueOrErrors.Default.throw(es)
           )(value),
         ValueOrErrors.Default.return(List<v>())
