@@ -142,6 +142,7 @@ export const FormsApp = (props: {}) => {
 														apiHandlers: {
 															success: (_) => {
 																setFormSuccess(true)
+																setFormErrors(List())
 																console.log(`Successfully submitted`)
 															},
 															error: (_) => {

@@ -323,7 +323,7 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
     })
     if(convertedMap.some((valueOrError) => valueOrError.kind == "errors")) {
       const propertiesWithErrors = convertedMap.filter((valueOrError) => valueOrError.kind == "errors")
-      const namedErrors = propertiesWithErrors.map((value, key) => value.mapErrors((_: string) => `${key}: ${_}`))
+      const namedErrors = propertiesWithErrors.map((value, key) => value.mapErrors(_ => _.map((_: string) => `${key}: ${_}`)))
       return ValueOrErrors.Operations.all(List<ValueOrErrors<any, string>>(namedErrors.valueSeq().toList()))
     }
     return ValueOrErrors.Operations.return(convertedMap.map(valueOrError => valueOrError.kind == "value" ? valueOrError.value : valueOrError.errors).toJS())
