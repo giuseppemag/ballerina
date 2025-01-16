@@ -66,7 +66,7 @@ const entityApis: EntityApis = {
   create: (apiName: string) =>
     apiName == "person" ?
       ((e: any) => PromiseRepo.Default.mock(() => {
-        // console.log("person created")
+        console.log("person create api post body", JSON.stringify(e, undefined, 2))
         return unit
       }))
       : ((e: any) => {
