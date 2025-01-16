@@ -2,8 +2,8 @@ import { Map, List, Set, OrderedMap } from "immutable"
 import { CollectionReference } from "../../../collection/domains/reference/state";
 import { CollectionSelection } from "../../../collection/domains/selection/state";
 import { BasicFun } from "../../../../../fun/state";
-import { InjectedPrimitives, replaceKeyword, replaceKeywords, revertKeyword, Type, TypeDefinition, TypeName, Unit, Value } from "../../../../../../main";
-import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
+import { InjectedPrimitives, Maybe, replaceKeyword, replaceKeywords, revertKeyword, Type, TypeDefinition, TypeName, Unit, Value } from "../../../../../../main";
+import { ValueOrError, ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 
 export const PrimitiveTypes =
   ["string",
@@ -33,7 +33,7 @@ export type BuiltInApiConverters = {
   "maybeBoolean": ApiConverter<boolean | undefined>
   "base64File": ApiConverter<string>
   "secret": ApiConverter<string>,
-  "Date": ApiConverter<Date>
+  "Date": ApiConverter<Maybe<Date>>
   "CollectionReference": ApiConverter<CollectionReference>
   "SingleSelection": ApiConverter<CollectionSelection<any>>
   "MultiSelection": ApiConverter<OrderedMap<string, any>>
