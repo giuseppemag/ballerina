@@ -25,6 +25,7 @@ export const FormsApp = (props: {}) => {
 	const [personEditFormState, setPersonEditFormState] = useState(FormRunnerState.Default())
 	const [personState, setPersonState] = useState(Person.Default.mocked())
 	const [formErrors, setFormErrors] = useState<List<string>>(List())
+	const [formSuccess, setFormSuccess] = useState(false)
 	// const [personFormState, setPersonFormState] = useState(PersonFormState.Default(""))
 	// const [personConfigState, setPersonConfigState] = useState(PersonConfig.Default())
 
@@ -111,7 +112,6 @@ export const FormsApp = (props: {}) => {
 										entityApis: PersonFromConfigApis.entityApis,
 										leafPredicates: PersonConfigFormsLeafPredicates,
 										getFormsConfig: () => PromiseRepo.Default.mock(() => PersonFormsConfig),
-										errorHandler: ((_) => setFormErrors(() => _)),
 										injectedPrimitives: Map([["injectedCategory", {fieldView: categoryForm, defaultValue: {category: "adult", kind: "category"}, defaultState: CategoryState.Default() }]]),
 									}}
 									setState={setConfigFormsParser}
@@ -124,10 +124,13 @@ export const FormsApp = (props: {}) => {
 											<h3>Create person</h3>
 											{formErrors.size > 0 &&
 											 	<div style={{ border: "2px solid red" }}>
-													<p style={{ color: "red" }}>Errors</p>													<ul>
+													<p style={{ color: "red" }}>Errors</p>
+													<ul>
 														{formErrors.map((_, i) => <li key={i}>{_}</li>)}
 													</ul>
 												</div>}
+											{formSuccess && <div style={{ border: "2px solid green" }}>
+												Form successfully submitted</div>}
 											<FormRunnerTemplate
 												context={{
 													...configFormsParser,
@@ -138,10 +141,13 @@ export const FormsApp = (props: {}) => {
 														submitButtonWrapper: CreatePersonSubmitButtonWrapper,
 														apiHandlers: {
 															success: (_) => {
-																alert(`Submitted new person ${JSON.stringify(_)}`)
+																setFormSuccess(true)
+																console.log(`Successfully submitted`)
 															},
 															error: (_) => {
-																alert(`Error submitting new person ${JSON.stringify(_)}`)
+																setFormSuccess(false)
+																setFormErrors(_)
+																console.log(`Error submitting new person ${JSON.stringify(_)}`)
 															}
 														}
 													},

@@ -16,6 +16,7 @@ import { SearchableInfiniteStreamForm } from "../primitives/domains/searchable-i
 import { StringForm } from "../primitives/domains/string/template";
 import { FormLabel } from "../singleton/domains/form-label/state";
 import { Form } from "../singleton/template";
+import { ValueOrErrors } from "../../../collections/domains/valueOrErrors/state";
 
 const parseOptions = (leafPredicates: any, options: any) => {
   const result = options.map((_: any) => ([_[0].id, [_[0], (_[1] as BoolExpr<any>).eval<any>(leafPredicates)]]));
@@ -375,7 +376,6 @@ export const parseForms =
     infiniteStreamSources: InfiniteStreamSources,
     enumOptionsSources: EnumOptionsSources,
     entityApis: EntityApis,
-    errorHandler: (errors: List<string>) => void,
     leafPredicates: LeafPredicates) =>
     (formsConfig: FormsConfig):
       FormParsingResult => {
@@ -484,21 +484,11 @@ export const parseForms =
         const initialState = parsedForm.initialFormState
         const api = {
           get: (id: string) => entityApis.get(launcher.api)(id).then((raw: any) => {
-            // alert(JSON.stringify(raw))
-            // alert(JSON.stringify(parsedForm.formDef.type))
-            const parsed = fromAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters, false, injectedPrimitives)(raw)
-
-            return parsed
+            return fromAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters, false, injectedPrimitives)(raw)
           }),
           update: (id: Guid, value: any, formState: any) => {
-            errorHandler(List())
             const raw = toAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters, false, injectedPrimitives)(value, formState)
-            if(raw.kind == "errors") {
-              errorHandler(raw.errors)
-              return Promise.resolve(unit)
-            }
-            return entityApis.update(launcher.api)(id, raw.value)
-            
+            return raw.kind == "errors" ? Promise.reject(raw.errors) : entityApis.update(launcher.api)(id, raw.value)  
           }
         }
         parsedLaunchers.edit = parsedLaunchers.edit.set(
@@ -523,13 +513,8 @@ export const parseForms =
         const initialState = parsedForm.initialFormState
         const api = {
           create: ([value, formState]: [any, any]) => {
-            errorHandler(List())
             const raw = toAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters, false, injectedPrimitives)(value, formState)
-            if(raw.kind == "errors") {
-              errorHandler(raw.errors)
-              return Promise.resolve(unit)
-            }
-            return entityApis.create(launcher.api)(raw.value)
+            return raw.kind == "errors" ? Promise.reject(raw.errors) : entityApis.create(launcher.api)(raw.value)
           },
           default: (_: Unit) => entityApis.default(launcher.api)(unit)
             .then((raw: any) => {
@@ -654,7 +639,6 @@ export type FormsParserContext<T extends {[key in keyof T] : {type: any, state: 
   entityApis: EntityApis,
   leafPredicates: any,
   getFormsConfig: BasicFun<void, Promise<any>>
-  errorHandler: (errors: List<string>) => void,
   injectedPrimitives?: Injectables<T>,
 }
 export type FormsParserState = {

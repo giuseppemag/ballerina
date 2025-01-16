@@ -31,14 +31,14 @@ const operations = {
     if (this.kind == "errors") {
       return this;
     }
-    return ValueOrError.Default.return(f(this.value));
+    return ValueOrErrors.Default.return(f(this.value));
   },
   mapErrors: function <a, e, e2>(
     this: ValueOrErrors<a, e>,
     f: BasicFun<e, e2>
   ): ValueOrErrors<a, e2> {
     if (this.kind == "errors") {
-      return ValueOrError.Default.throw(this.errors.map(f));
+      return ValueOrErrors.Default.throw(this.errors.map(f));
     }
     return this;
   },
@@ -48,7 +48,7 @@ const operations = {
     if (this.kind == "errors") {
       return this;
     } else if (this.value.kind == "errors") {
-      return ValueOrError.Default.throw(this.value.errors);
+      return ValueOrErrors.Default.throw(this.value.errors);
     } else {
       return this.value;
     }
@@ -61,7 +61,7 @@ const operations = {
   },
 };
 
-export const ValueOrError = {
+export const ValueOrErrors = {
   Default: {
     return: <v, e>(_: v): ValueOrErrors<v, e> => ({
       ...Value.Default(_),
@@ -75,9 +75,9 @@ export const ValueOrError = {
     }),
   },
   Operations: {
-    return: <v, e>(_: v): ValueOrErrors<v, e> => ValueOrError.Default.return(_),
+    return: <v, e>(_: v): ValueOrErrors<v, e> => ValueOrErrors.Default.return(_),
     throw: <v, e>(_: e): ValueOrErrors<v, e> =>
-      ValueOrError.Default.throw(List([_])),
+      ValueOrErrors.Default.throw(List([_])),
     map: <a, b, e>(
       f: BasicFun<a, b>
     ): Fun<ValueOrErrors<a, e>, ValueOrErrors<b, e>> =>
@@ -85,14 +85,14 @@ export const ValueOrError = {
         if (_.kind == "errors") {
           return _;
         }
-        return ValueOrError.Default.return(f(_.value));
+        return ValueOrErrors.Default.return(f(_.value));
       }),
     mapErrors: <a, e, e2>(
       f: BasicFun<e, e2>
     ): BasicFun<ValueOrErrors<a, e>, ValueOrErrors<a, e2>> =>
       Fun((_) => {
         if (_.kind == "errors") {
-          return ValueOrError.Default.throw(_.errors.map(f));
+          return ValueOrErrors.Default.throw(_.errors.map(f));
         }
         return _;
       }),
@@ -104,54 +104,31 @@ export const ValueOrError = {
         if (_.kind == "errors") {
           return _;
         } else if (_.value.kind == "errors") {
-          return ValueOrError.Default.throw(_.value.errors);
+          return ValueOrErrors.Default.throw(_.value.errors);
         } else {
           return _.value;
         }
       }),
-    // fold: <v, e>(
-    //   f: BasicFun2<
-    //     ValueOrError<v, e>,
-    //     ValueOrError<List<v>, e>,
-    //     ValueOrError<List<v>, e>
-    //   >,
-    //   b: ValueOrError<List<v>, e>
-    // ): Fun<List<ValueOrError<v, e>>, ValueOrError<List<v>, e>> =>
-    //   Fun((_) =>
-    //     _.isEmpty()
-    //       ? b
-    //       : f(_.first(), ValueOrError.Operations.fold(f, b)(_.rest()))
-    //   ),
-    // then: <a, b, e>(
-    //   k: BasicFun<a, ValueOrError<b, e>>
-    // ): BasicFun<ValueOrError<a, e>, ValueOrError<b, e>> =>
-    //   Fun((_) =>
-    //     ValueOrError.Operations.map<a, ValueOrError<b, e>, e>(k).then(
-    //       ValueOrError.Operations.flatten<b, e>()
-    //     )(_)
-    //   ),
     fold: <v, e, c>(
       l: BasicFun<v, c>,
-      r: BasicFun<List<e>, c>):  Fun<ValueOrErrors<v, List<e>>, c>=> {
-          return Fun((_) => (_.kind == "value" ? l(_.value) : r(_.errors)))
-      },
+      r: BasicFun<List<e>, c>
+    ): Fun<ValueOrErrors<v, e>, c> => {
+      return Fun((_) => (_.kind == "value" ? l(_.value) : r(_.errors)));
+    },
     all: <v, e>(_: List<ValueOrErrors<v, e>>): ValueOrErrors<List<v>, e> =>
-      _.reduce((b, a) => {
-        ValueOrError.Operations.fold(
-          (v: v) => List<v>([v]),
-          (e: List<e>) => (List<e>([e]))
-        )
-          
-        // if (a.kind == "errors" && b.kind == "errors") {
-        //   return ValueOrError.Default.throw(b.errors.concat(a.errors));
-        // } else if (a.kind == "errors") {
-        //   return ValueOrError.Default.throw(a.errors);
-        // } else if (b.kind == "errors") {
-        //   return ValueOrError.Default.throw(b.errors);
-        // } else {
-        //   return ValueOrError.Default.return(b.value.concat(a.value));
-        // }
-
-      }, ValueOrError.Default.return(List<v>())),
+      _.reduce(
+        (reduction, value) =>
+          ValueOrErrors.Operations.fold<v, e, ValueOrErrors<List<v>, e>>(
+            (v: v) =>
+              reduction.kind == "errors"
+                ? reduction
+                : ValueOrErrors.Default.return(List<v>([v])),
+            (es: List<e>) =>
+              reduction.kind == "errors"
+                ? ValueOrErrors.Default.throw(es.concat(reduction.errors))
+                : ValueOrErrors.Default.throw(es)
+          )(value),
+        ValueOrErrors.Default.return(List<v>())
+      ),
   },
 };

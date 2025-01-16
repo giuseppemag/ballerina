@@ -25,7 +25,6 @@ export const LoadValidateAndParseFormsConfig = <T extends {[key in keyof T] : {t
       current.infiniteStreamSources,
       current.enumOptionsSources,
       current.entityApis,
-      current.errorHandler,
       current.leafPredicates,)(validationResult.value)
   }, _ => "transient failure", 5, 50)
     .embed(
