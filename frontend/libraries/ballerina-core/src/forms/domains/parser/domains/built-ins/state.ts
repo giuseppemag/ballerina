@@ -2,7 +2,7 @@ import { Map, List, Set, OrderedMap } from "immutable"
 import { CollectionReference } from "../../../collection/domains/reference/state";
 import { CollectionSelection } from "../../../collection/domains/selection/state";
 import { BasicFun } from "../../../../../fun/state";
-import { InjectedPrimitives, replaceKeyword, replaceKeywords, revertKeyword, Type, TypeDefinition, TypeName, Unit } from "../../../../../../main";
+import { InjectedPrimitives, Maybe, replaceKeyword, replaceKeywords, revertKeyword, Type, TypeDefinition, TypeName, Unit } from "../../../../../../main";
 
 export const PrimitiveTypes =
   ["string",
