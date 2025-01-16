@@ -49,17 +49,19 @@ export const FormRunnerTemplate =
               if (props.context.formRef.kind == "map")
                 props.context.formRef.onChange(_, _path)
             },
-            onSubmitted: (_: any) => {
-              if (props.context.formRef.kind == "create")
-                props.context.formRef.onSubmitted(_)
-            },
             apiHandlers: {
               success: (_: any) => {
-                if (props.context.formRef.kind === 'edit')
+                if (
+                  props.context.formRef.kind === 'edit' ||
+                  props.context.formRef.kind === 'create'
+                )
                   props.context.formRef.apiHandlers?.success?.(_)
               },
               error: (_: any) => {
-                if (props.context.formRef.kind === 'edit')
+                if (
+                  props.context.formRef.kind === 'edit' ||
+                  props.context.formRef.kind === 'create'
+                )
                   props.context.formRef.apiHandlers?.error?.(_)
               }
             }

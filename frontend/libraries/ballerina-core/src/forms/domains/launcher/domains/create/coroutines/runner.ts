@@ -1,9 +1,12 @@
-import { ApiErrors, AsyncState, Debounce, Debounced, CreateFormForeignMutationsExpected, CreateFormState, Synchronize, Synchronized, Unit, SimpleCallback, unit, replaceWith } from "../../../../../../../main"
+import { ApiErrors, AsyncState, Debounce, Debounced, CreateFormForeignMutationsExpected, CreateFormState, Synchronize, Synchronized, Unit, HandleApiResponse, ApiResponseChecker } from "../../../../../../../main"
 import { CoTypedFactory } from "../../../../../../coroutines/builder"
 import { CreateFormContext, CreateFormWritableState } from "../state"
 
 export const createFormRunner = <E, FS>() => {
-  const Co = CoTypedFactory<CreateFormContext<E, FS> & { onSubmitted:SimpleCallback<E> }, CreateFormWritableState<E, FS>>()
+  const Co = CoTypedFactory<
+    CreateFormContext<E, FS> & CreateFormForeignMutationsExpected<E, FS>,
+    CreateFormWritableState<E, FS>
+  >()
 
   const init =
     Co.GetState().then(current =>
@@ -16,8 +19,11 @@ export const createFormRunner = <E, FS>() => {
 
   const synchronize =
     Co.Repeat(
-      Co.Seq([
       Co.GetState().then(current =>
+      Co.Seq([
+        Co.SetState(
+          CreateFormState<E, FS>().Updaters.Template.toUnchecked()
+        ),
         Debounce<Synchronized<Unit, Synchronized<E, ApiErrors>>, CreateFormContext<E, FS>>(
           Synchronize<E, ApiErrors>(e => current.api.create([e, current.formState]), _ => "transient failure", 5, 50)
             .embed(
@@ -28,21 +34,18 @@ export const createFormRunner = <E, FS>() => {
         ).embed(
           _ => ({ ..._, ..._.entity }),
           _ => CreateFormState<E, FS>().Updaters.Core.entity(_)
-        )
+        ),
+        HandleApiResponse<
+          CreateFormWritableState<E, FS>,
+          CreateFormContext<E, FS>,
+          Synchronized<E, ApiErrors> | ApiErrors
+        >((_) => AsyncState.Operations.hasValue(_.entity.sync) ? _.entity.sync.value.sync : _.entity.sync, {
+          handleSuccess: current.apiHandlers?.success,
+          handleError: current.apiHandlers?.error,
+        }),
+      ]
       ),
-      Co.GetState().then(current =>
-        AsyncState.Operations.hasValue(current.entity.sync) && AsyncState.Operations.hasValue(current.entity.sync.value.sync) && current.notifySubmitAfterSync ?
-          Co.Seq([
-            Co.Do(() => {
-              if (AsyncState.Operations.hasValue(current.entity.sync) && AsyncState.Operations.hasValue(current.entity.sync.value.sync))
-                current.onSubmitted(current.entity.sync.value)
-            }),
-            Co.SetState(CreateFormState<E,FS>().Updaters.Core.notifySubmitAfterSync(replaceWith(false)))
-          ])
-        : Co.Return(unit)
-      )
-    ])
-    )
+    ))
 
   return Co.Template<CreateFormForeignMutationsExpected<E, FS>>(
     init, {
@@ -53,7 +56,10 @@ export const createFormRunner = <E, FS>() => {
     Co.Template<CreateFormForeignMutationsExpected<E, FS>>(
       synchronize, {
       interval: 15,
-      runFilter: props => Debounced.Operations.shouldCoroutineRun(props.context.entity) || props.context.notifySubmitAfterSync
+      runFilter: props =>
+        props.context.entity.sync.kind === "loaded" &&
+        (Debounced.Operations.shouldCoroutineRun(props.context.entity) ||
+        !ApiResponseChecker.Operations.checked(props.context))
     }
     )
   ])

@@ -1,15 +1,15 @@
-import { SimpleCallback, simpleUpdater } from "../../../../../../main";
+import { Maybe, SimpleCallback, simpleUpdater } from "../../../../../../main";
 import { View } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import { OnChange, SharedFormState } from "../../../singleton/state";
 
 export type DateFormState = SharedFormState & 
-  { possiblyInvalidInput: string; };
+  { possiblyInvalidInput: Maybe<string>; };
 export const DateFormState = {
-  Default: (possiblyInvalidInput: string): DateFormState => ({
+  Default: (): DateFormState => ({
     ...SharedFormState.Default(),
-    possiblyInvalidInput 
+    possiblyInvalidInput: Maybe.Default(undefined)
   }),
   Updaters: {
     ...simpleUpdater<DateFormState>()("possiblyInvalidInput")
@@ -17,7 +17,7 @@ export const DateFormState = {
 };
 export type DateView<Context extends FormLabel, ForeignMutationsExpected> = 
   View<
-    Context & Value<Date> & DateFormState & { disabled:boolean }, 
+    Context & Value<Maybe<Date>> & DateFormState & { disabled:boolean }, 
     DateFormState, 
-    ForeignMutationsExpected & { onChange: OnChange<Date>; setNewValue: SimpleCallback<string> }
+    ForeignMutationsExpected & { onChange: OnChange<Maybe<Date>>; setNewValue: SimpleCallback<Maybe<string>> }
   >;

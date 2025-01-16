@@ -168,7 +168,7 @@ const entityApis: EntityApis = {
         return ({
           name: "",
           surname: "",
-          birthday: Date.now(),
+          birthday: undefined,
           subscribeToNewsletter: false,
           favoriteColor: undefined,
           // CollectionSelection<CollectionReference>().Default.right("no selection"),
