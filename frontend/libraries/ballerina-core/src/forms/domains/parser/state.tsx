@@ -376,7 +376,7 @@ export const parseForms =
     infiniteStreamSources: InfiniteStreamSources,
     enumOptionsSources: EnumOptionsSources,
     entityApis: EntityApis,
-    errorHandler: (errors: string[]) => void,
+    errorHandler: (errors: List<string>) => void,
     leafPredicates: LeafPredicates) =>
     (formsConfig: FormsConfig):
       FormParsingResult => {
@@ -492,7 +492,7 @@ export const parseForms =
             return parsed
           }),
           update: (id: Guid, value: any, formState: any) => {
-            errorHandler([])
+            errorHandler(List())
             const raw = toAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters, false, injectedPrimitives)(value, formState)
             if(raw.kind == "errors") {
               errorHandler(raw.errors)
@@ -524,7 +524,7 @@ export const parseForms =
         const initialState = parsedForm.initialFormState
         const api = {
           create: ([value, formState]: [any, any]) => {
-            errorHandler([])
+            errorHandler(List())
             const raw = toAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters, false, injectedPrimitives)(value, formState)
             if(raw.kind == "errors") {
               errorHandler(raw.errors)
@@ -655,7 +655,7 @@ export type FormsParserContext<T extends {[key in keyof T] : {type: any, state: 
   entityApis: EntityApis,
   leafPredicates: any,
   getFormsConfig: BasicFun<void, Promise<any>>
-  errorHandler: (errors: string[]) => void,
+  errorHandler: (errors: List<string>) => void,
   injectedPrimitives?: Injectables<T>,
 }
 export type FormsParserState = {

@@ -24,7 +24,7 @@ export const FormsApp = (props: {}) => {
 	const [personCreateFormState, setPersonCreateFormState] = useState(FormRunnerState.Default())
 	const [personEditFormState, setPersonEditFormState] = useState(FormRunnerState.Default())
 	const [personState, setPersonState] = useState(Person.Default.mocked())
-	const [formErrors, setFormErrors] = useState<string[]>([])
+	const [formErrors, setFormErrors] = useState<List<string>>(List())
 	// const [personFormState, setPersonFormState] = useState(PersonFormState.Default(""))
 	// const [personConfigState, setPersonConfigState] = useState(PersonConfig.Default())
 
@@ -122,7 +122,7 @@ export const FormsApp = (props: {}) => {
 									renderForms && formToShow % numForms == 0 ?
 										<>
 											<h3>Create person</h3>
-											{formErrors.length > 0 &&
+											{formErrors.size > 0 &&
 											 	<div style={{ border: "2px solid red" }}>
 													<p style={{ color: "red" }}>Errors</p>													<ul>
 														{formErrors.map((_, i) => <li key={i}>{_}</li>)}
@@ -153,7 +153,7 @@ export const FormsApp = (props: {}) => {
 										: renderForms && formToShow % numForms == 1 ?
 											<>
 												<h3>Edit person</h3>
-												{formErrors.length > 0 &&
+												{formErrors.size > 0 &&
 											 	<div style={{ border: "2px solid red" }}>
 													<p style={{ color: "red" }}>Errors</p>
 													<ul>
