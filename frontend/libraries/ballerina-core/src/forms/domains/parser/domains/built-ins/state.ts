@@ -3,7 +3,7 @@ import { CollectionReference } from "../../../collection/domains/reference/state
 import { CollectionSelection } from "../../../collection/domains/selection/state";
 import { BasicFun } from "../../../../../fun/state";
 import { InjectedPrimitives, replaceKeyword, replaceKeywords, revertKeyword, Type, TypeDefinition, TypeName, Unit, Value } from "../../../../../../main";
-import { ValueOrError } from "../../../../../collections/domains/valueOrError/state";
+import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 
 export const PrimitiveTypes =
   ["string",
@@ -234,7 +234,7 @@ export const fromAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>
   return obj
 }
 
-export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, builtIns: BuiltIns, converters: BuiltInApiConverters, isKeywordsReverted: boolean = false, injectedPrimitives?: InjectedPrimitives<T>) => (raw: any, formState: any) : ValueOrError<any, string> => {
+export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, builtIns: BuiltIns, converters: BuiltInApiConverters, isKeywordsReverted: boolean = false, injectedPrimitives?: InjectedPrimitives<T>) => (raw: any, formState: any) : ValueOrErrors<any, string> => {
   const obj = !isKeywordsReverted ? replaceKeywords(raw, "to api") : raw
   if (t.kind == "primitive") {
     return ValueOrError.Operations.return(converters[t.value].toAPIRawValue([obj, formState.modifiedByUser] as never))
@@ -248,13 +248,13 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
     if ((t.value == "Multiselection" || t.value == "MultiSelection") && t.args.length == 1) {
       const result = converters["MultiSelection"].toAPIRawValue([obj, formState.modifiedByUser])
 
-      return ValueOrError.Operations.all(List<ValueOrError<any, string>>(result.map((_:any) =>
+      return ValueOrError.Operations.all(List<ValueOrErrors<any, string>>(result.map((_:any) =>
         typeof _ == "object" ? toAPIRawValue({ kind:"lookup", name: t.args[0] }, types, builtIns, converters, true, injectedPrimitives)(_, formState) : ValueOrError.Operations.return(_))))
     }
     if (t.value == "List" && t.args.length == 1) {
       const converterResult = converters[t.value].toAPIRawValue([obj, formState.modifiedByUser])
       const isPrimitive = PrimitiveTypes.some(_ => _ == t.args[0]) || injectedPrimitives?.injectedPrimitives.has(t.args[0] as keyof T) 
-      return ValueOrError.Operations.all(List<ValueOrError<any, string>>(converterResult.map((item: any, index: number) =>
+      return ValueOrError.Operations.all(List<ValueOrErrors<any, string>>(converterResult.map((item: any, index: number) =>
         toAPIRawValue(
           isPrimitive ?
             { kind:"primitive", value:t.args[0] as PrimitiveType }
@@ -298,8 +298,8 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
 
 
 
-      if(parsedMap.length > 0 && parsedMap.some((valueOrError: ValueOrError<any, any>) => valueOrError.kind == "errors")) {
-        return ValueOrError.Operations.all(List<ValueOrError<any, string>>(parsedMap))
+      if(parsedMap.length > 0 && parsedMap.some((valueOrError: ValueOrErrors<any, any>) => valueOrError.kind == "errors")) {
+        return ValueOrError.Operations.all(List<ValueOrErrors<any, string>>(parsedMap))
       }
       const allKeysStringified = parsedMap.map((valueOrError: Value<any> & {kind: "value"}) =>  JSON.stringify(valueOrError.value[0].value))
       const allKeysUnique = Set(allKeysStringified).size == allKeysStringified.length
@@ -307,7 +307,7 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
       if(allKeysStringified.length > 0 && !allKeysUnique) {
         return ValueOrError.Operations.throw(`Keys in the map are not unique: ${JSON.stringify(allKeysStringified)}`)
       }
-      return ValueOrError.Operations.all(List<ValueOrError<any, string>>(parsedMap))
+      return ValueOrError.Operations.all(List<ValueOrErrors<any, string>>(parsedMap))
 
     }
   } else { // t.kind == lookup: we are dealing with a record/object or extended type 
@@ -324,7 +324,7 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
     if(convertedMap.some((valueOrError) => valueOrError.kind == "errors")) {
       const propertiesWithErrors = convertedMap.filter((valueOrError) => valueOrError.kind == "errors")
       const namedErrors = propertiesWithErrors.map((value, key) => value.mapErrors((_: string) => `${key}: ${_}`))
-      return ValueOrError.Operations.all(List<ValueOrError<any, string>>(namedErrors.valueSeq().toList()))
+      return ValueOrError.Operations.all(List<ValueOrErrors<any, string>>(namedErrors.valueSeq().toList()))
     }
     return ValueOrError.Operations.return(convertedMap.map(valueOrError => valueOrError.kind == "value" ? valueOrError.value : valueOrError.errors).toJS())
   }
