@@ -43,7 +43,7 @@ let requestToken tenant clientId secret = task {
   let! response = httpClient.SendAsync(request)
   match response.StatusCode with
   | HttpStatusCode.OK ->
-      let resultContent = response.Content.ReadAsStringAsync().Result
+      let! resultContent = response.Content.ReadAsStringAsync()
       let deserializedContent = JsonSerializer.Deserialize<MSOauthResponse>(resultContent)
       return Choice2Of2({| AccessToken = deserializedContent.AccessToken; Duration = deserializedContent.Duration |}, ())        
   | _ -> return Choice1Of2()
@@ -56,7 +56,7 @@ let getUsers (limit : int) (accessToken : string) = task {
   let! response = httpClient.SendAsync(request)
   match response.StatusCode with
   | HttpStatusCode.OK ->
-      let resultContent = response.Content.ReadAsStringAsync().Result
+      let! resultContent = response.Content.ReadAsStringAsync()
       let deserializedContent = JsonSerializer.Deserialize<OdataUserResult>(resultContent)
       return Choice2Of2 (deserializedContent.Value)
   | _ -> return Choice1Of2 response.StatusCode
