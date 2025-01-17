@@ -3,6 +3,14 @@ import { Map, OrderedMap } from "immutable";
 import "./App.css";
 import { Sum, unit, Unit } from "ballerina-core";
 
+type ValueEdit =
+	| { kind: "number", value: number }
+	| { kind: "string", value: string }
+	| { kind: "stringWithApproval", value: Sum<string, boolean> }
+	| { kind: "nested", value: [FieldIdentifier, ValueEdit] }
+	| { kind: "table", value: [number, ValueEdit] }
+type FieldEdit = { fieldPath:FieldPath, valueEdit:ValueEdit }
+
 type FieldIdentifier = string
 type WithApproval<v> = { value: v, approved: boolean }
 type Value =
@@ -32,6 +40,21 @@ const Value = {
 }
 
 type FieldPath = Array<FieldIdentifier | number>
+
+type CardField = { kind: "section", card: CardConfig } | { kind: "field lookup", pathToField: FieldPath, disabled?: true }
+const CardField = {
+	Default: {
+		Section: (card: CardConfig): CardField => ({ kind: "section", card }),
+		FieldLookup: (pathToField: FieldPath, disabled?: true): CardField => ({ kind: "field lookup", pathToField, disabled }),
+	}
+}
+type CardConfig = {
+	header: string
+	fields: Array<CardField>
+}
+const Card = {
+	Default: (header: string, fields: Array<CardField>): CardConfig => ({ header, fields })
+}
 
 const entityFromAPI: Value = Value.Default.Nested(
 	Map([
@@ -67,26 +90,11 @@ const entityFromAPI: Value = Value.Default.Nested(
 		])],
 	])
 )
-
-type CardField = { kind:"section", card:CardConfig } | { kind:"field lookup", pathToField:FieldPath }
-const CardField = {
-	Default: {
-		Section:(card:CardConfig) : CardField => ({ kind:"section", card }),
-		FieldLookup: (pathToField: FieldPath): CardField => ({ kind: "field lookup", pathToField }),
-	}
-}
-type CardConfig = {
-	header: string
-	fields: Array<CardField>
-}
-const Card = {
-	Default: (header: string, fields: Array<CardField>): CardConfig => ({ header, fields })
-}
 const cardsConfigFromAPI: Array<CardConfig> =
 	[
 		Card.Default("About me", [
 			CardField.Default.FieldLookup(["name"]),
-			CardField.Default.FieldLookup(["surname"]),
+			CardField.Default.FieldLookup(["surname"], true),
 			CardField.Default.FieldLookup(["age"])
 		]),
 		Card.Default("Address", [
@@ -146,24 +154,26 @@ export const CardRenderer = (props: { cardConfig: CardConfig, entity: Value }) =
 			{
 				props.cardConfig.fields.map(fieldPath => {
 					if (fieldPath.kind == "field lookup") {
-					const fieldValue = Value.Operations.TryFind(fieldPath.pathToField)(props.entity)
-					return fieldValue.kind == "l" ?
-					<>
-						Error: cannot find field ${JSON.stringify(fieldPath)}
-					</>
-					: <ValueRenderer value={fieldValue.value} />
+						const fieldValue = Value.Operations.TryFind(fieldPath.pathToField)(props.entity)
+						return fieldValue.kind == "l" ?
+							<>
+								Error: cannot find field ${JSON.stringify(fieldPath)}
+							</>
+							: <>
+								{fieldPath.disabled == true ? "disabled" : undefined}
+								<ValueRenderer value={fieldValue.value} />
+							</>
 					} else {
 						return <CardRenderer cardConfig={fieldPath.card} entity={props.entity} />
 					}
 				})
 			}
-		</ul>
+		</ul >
 	</>
 }
 
 
 /*
-- allow nested card sections
 - define neat domains with synchronized and such
 */
 
