@@ -269,8 +269,7 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
       const isValuePrimitive = PrimitiveTypes.some(_ => _ == t.args[1]) || injectedPrimitives?.injectedPrimitives.has(t.args[1] as keyof T)
       let t_args = t.args.map(parseTypeIShouldBePartOfFormValidation)
 
-      const parsedMap = converterResult.map((keyValue: any, index: number) => {
-        
+      const parsedMap: ValueOrErrors<{key: ValueOrErrors<any, any>, value: ValueOrErrors<any, any>}, any>[] = converterResult.map((keyValue: any, index: number) => {
         const key = toAPIRawValue(
           typeof t_args[0] == "string" ? 
             isKeyPrimitive ?
@@ -280,35 +279,41 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
             t_args[0], 
             types, builtIns, converters, true, injectedPrimitives)(keyValue[0], formState.elementFormStates.get(index).KeyFormState
           )
-        // can probably now just set this as the value 
-       if(key.kind == "value" && (key.value == undefined || key.value == null || key.value == "")) // TODO; do we want to allow empty string?
-             return ValueOrErrors.Operations.throw([`A mapped key is undefined for type ${JSON.stringify(t.args[0])}`])
 
-        const value = toAPIRawValue(
-          typeof t_args[1] == "string" ? 
-            isValuePrimitive ?
-              { kind: "primitive", value: t_args[1] as PrimitiveType }
-            : { kind: "lookup", name: t_args[1] }
-          :
-            t_args[1], 
-          types, builtIns, converters, true, injectedPrimitives)(keyValue[1], formState.elementFormStates.get(index).ValueFormState)
+          if(key.kind == "value" && (key.value == undefined || key.value == null)) {
+            return ValueOrErrors.Operations.throw([`A mapped key is undefined for type ${JSON.stringify(t.args[0])}`])
+          } else if ( key.kind == "errors"){
+            return key
+          }
 
-        return ValueOrErrors.Operations.return({key, value})}
+          const value = toAPIRawValue(
+            typeof t_args[1] == "string" ? 
+              isValuePrimitive ?
+                { kind: "primitive", value: t_args[1] as PrimitiveType }
+              : { kind: "lookup", name: t_args[1] }
+            :
+              t_args[1], 
+            types, builtIns, converters, true, injectedPrimitives)(keyValue[1], formState.elementFormStates.get(index).ValueFormState)
+
+          if(value.kind == "errors") return value
+
+          return ValueOrErrors.Operations.return({key, value})
+        }
       )
 
-
-      // check this
-      if(parsedMap.length > 0 && parsedMap.some((valueOrError: ValueOrErrors<any, any>) => valueOrError.kind == "errors")) {
-        return ValueOrErrors.Operations.all(List<ValueOrErrors<any, string>>(parsedMap))
+      if(parsedMap.length > 0 && parsedMap.some((_: ValueOrErrors<any, any>) => _.kind == "errors")) {
+        return ValueOrErrors.Operations.all(List(parsedMap))
       }
-      const allKeysStringified = parsedMap.map((valueOrError: Value<any> & {kind: "value"}) =>  JSON.stringify(valueOrError.value[0].value))
+      // TODO this needs improvement
+      const allKeysStringified = parsedMap.map((_) => _.kind == "value" ? JSON.stringify((_.value.key as any).value) : "")
       const allKeysUnique = Set(allKeysStringified).size == allKeysStringified.length
 
       if(allKeysStringified.length > 0 && !allKeysUnique) {
         return ValueOrErrors.Operations.throw(`Keys in the map are not unique: ${JSON.stringify(allKeysStringified)}`)
       }
-      // ensure this is a list of key value pair objects
-      return ValueOrErrors.Operations.all(List<ValueOrErrors<any, string>>(parsedMap))
+      
+      // return ValueOrErrors.Operations.return(parsedMap.map(_ => _.flatten()))
+      return ValueOrErrors.Operations.return(parsedMap.map(_ => (_ as any).map(({key, value}: {key: any, value: any}) => ({key: key.value, value: value.value}))).map((_: any) => _.value))
 
     }
   } else { // t.kind == lookup: we are dealing with a record/object or extended type 
@@ -316,7 +321,6 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
     if("extends" in tDef && tDef.extends.length == 1) {
       return ValueOrErrors.Operations.return(converters[(tDef.extends[0] as keyof BuiltInApiConverters)].toAPIRawValue([obj, formState.modifiedByUser] as never))
     }    
-    // elegant solution for collating errors?
     const convertedMap = tDef.fields.mapEntries(([fieldName, fieldType] ) => {
       const revertedFieldName = revertKeyword(fieldName)
       const fieldValue = obj[revertedFieldName]
