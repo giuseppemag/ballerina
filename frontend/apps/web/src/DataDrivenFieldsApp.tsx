@@ -114,40 +114,41 @@ const cardsConfigFromAPI: Array<CardConfig> =
 		]),
 	]
 
-const NumberRenderer = (props: { value: number }): JSX.Element =>
+const NumberRenderer = (props: { value: number, onNewValue:(edit:ValueEdit) => void }): JSX.Element =>
 	<>
 		<h2>Number</h2>
 		{props.value}
 	</>
-const StringRenderer = (props: { value: string }): JSX.Element =>
+const StringRenderer = (props: { value: string, onNewValue:(edit:ValueEdit) => void }): JSX.Element =>
 	<>
 		<h2>String</h2>
 		{props.value}
 	</>
-const StringWithApprovalRenderer = (props: { value: WithApproval<string> }): JSX.Element =>
+const StringWithApprovalRenderer = (props: { value: WithApproval<string>, onNewValue:(edit:ValueEdit) => void }): JSX.Element =>
 	<>
 		<h2>String with approval</h2>
 		{props.value.value}
 		{props.value.approved ? "approved" : "not approved"}
 	</>
-const NestedRenderer = (props: { value: OrderedMap<FieldIdentifier, Value> }): JSX.Element =>
+const NestedRenderer = (props: { value: OrderedMap<FieldIdentifier, Value>, onNewValue:(edit:ValueEdit) => void }): JSX.Element =>
 	<>
 		<h2>Nested</h2>
-		{props.value.valueSeq().map(value => ValueRenderer({ value }))}
+		{props.value.map((value, fieldname) => ValueRenderer({ value, onNewValue:edit => 
+			props.onNewValue({ kind:"nested", value:[fieldname, edit] as [FieldIdentifier, ValueEdit] }) })).valueSeq()}
 	</>
-const TableRenderer = (props: { value: Array<Value> }): JSX.Element =>
+const TableRenderer = (props: { value: Array<Value>, onNewValue:(edit:ValueEdit) => void }): JSX.Element =>
 	<>
 		<h2>Table</h2>
-		{props.value.map(value => ValueRenderer({ value }))}
+		{props.value.map((value,index) => ValueRenderer({ value, onNewValue:edit => props.onNewValue({ kind:"table", value:[index, edit]}) }))}
 	</>
-const ValueRenderer = (props: { value: Value }): JSX.Element =>
-	props.value.kind == "number" ? <NumberRenderer value={props.value.value} />
-		: props.value.kind == "string" ? <StringRenderer value={props.value.value} />
-			: props.value.kind == "stringWithApproval" ? <StringWithApprovalRenderer value={props.value.value} />
-				: props.value.kind == "nested" ? <NestedRenderer value={props.value.value} />
-					: <TableRenderer value={props.value.value} />
+const ValueRenderer = (props: { value: Value, onNewValue:(edit:ValueEdit) => void }): JSX.Element =>
+	props.value.kind == "number" ? <NumberRenderer value={props.value.value} onNewValue={props.onNewValue} />
+		: props.value.kind == "string" ? <StringRenderer value={props.value.value} onNewValue={props.onNewValue} />
+			: props.value.kind == "stringWithApproval" ? <StringWithApprovalRenderer value={props.value.value} onNewValue={props.onNewValue} />
+				: props.value.kind == "nested" ? <NestedRenderer value={props.value.value} onNewValue={props.onNewValue} />
+					: <TableRenderer value={props.value.value} onNewValue={props.onNewValue} />
 
-export const CardRenderer = (props: { cardConfig: CardConfig, entity: Value }) => {
+export const CardRenderer = (props: { cardConfig: CardConfig, entity: Value, onNewField:(edit:FieldEdit) => void }) => {
 	return <>
 		<h1>{props.cardConfig.header}</h1>
 		<ul>
@@ -161,10 +162,10 @@ export const CardRenderer = (props: { cardConfig: CardConfig, entity: Value }) =
 							</>
 							: <>
 								{fieldPath.disabled == true ? "disabled" : undefined}
-								<ValueRenderer value={fieldValue.value} />
+								<ValueRenderer value={fieldValue.value} onNewValue={valueEdit => props.onNewField({ fieldPath:fieldPath.pathToField, valueEdit }) } />
 							</>
 					} else {
-						return <CardRenderer cardConfig={fieldPath.card} entity={props.entity} />
+						return <CardRenderer {...props} cardConfig={fieldPath.card} />
 					}
 				})
 			}
@@ -189,7 +190,7 @@ export const DataDrivenFieldsApp = (props: {}) => {
 							{
 								cardsConfigFromAPI.map(cardConfig =>
 									<td>
-										<CardRenderer cardConfig={cardConfig} entity={entityFromAPI} />
+										<CardRenderer cardConfig={cardConfig} entity={entityFromAPI} onNewField={fieldEdit => alert(JSON.stringify(fieldEdit))} />
 									</td>
 								)
 							}
