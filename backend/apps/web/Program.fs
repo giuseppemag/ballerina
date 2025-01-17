@@ -40,7 +40,8 @@ open positions.model
 module Program =
   open abcdsample.eventLoop
   open absample.eventLoop
-  open Oauth.EntryPoint
+  open Oauth.Mocked
+  open Oauth.MSGraph
   type PositionOptions() = 
     member val Title:string = "" with get, set
     member val Name:string = "" with get, set
@@ -62,7 +63,8 @@ module Program =
   | web = 1
   | jobs = 2
   | abcdjobs = 3
-  | oauth = 4
+  | mocked = 4
+  | msgraph = 5
 
   [<EntryPoint>]
   let main args =
@@ -99,18 +101,27 @@ module Program =
     let mode = new Option<LaunchMode>(
             name= "mode",
             description= "Start the application in web or jobs mode.");
+    let tenantArg = new Option<Guid>(name = "tenant", description = "Tenant Id")
+    let clientArg = new Option<Guid>(name = "client", description = "Client Id")
+    let secretArg = new Option<string>(name = "secret", description = "Application secret")
+
 
     let rootCommand = new RootCommand("Sample app for System.CommandLine");
     rootCommand.AddOption(mode)
 
-    rootCommand.SetHandler(Action<_>(fun (mode:LaunchMode) ->
+    rootCommand.AddOption(tenantArg)
+    rootCommand.AddOption(clientArg)
+    rootCommand.AddOption(secretArg)
+
+    rootCommand.SetHandler(Action<LaunchMode, Guid, Guid, string>(fun (mode:LaunchMode) (tenant : Guid) (client : Guid) (secret : string) ->
       match mode with
       | LaunchMode.web -> web()
       | LaunchMode.jobs -> abEventLoop (app.Services.CreateScope)
       | LaunchMode.abcdjobs -> abcdEventLoop ()
-      | LaunchMode.oauth -> oauthEventLoop()
+      | LaunchMode.mocked -> oauthEventLoop()
+      | LaunchMode.msgraph -> msGraphEventLoop tenant client secret
       | _ -> printfn "no mode selected, exiting"
-      ), mode)
+      ), mode, tenantArg, clientArg, secretArg)
     do rootCommand.Invoke(args) |> ignore
 
     exitCode

@@ -1,11 +1,14 @@
-module Oauth.EntryPoint
+module Oauth.Mocked
 
 open System
 open OAuth.Coroutine
 open OAuth.Models
 open Ballerina.Coroutines
+open System.Net.Http
 
 let random = new Random()
+let httpClient = new HttpClient()
+
 let init(): EvaluatedCoroutines<_,_,_> =
   {
     active = Map.empty.Add(Guid.NewGuid(), processToken (TimeSpan.FromMinutes(1.)))
