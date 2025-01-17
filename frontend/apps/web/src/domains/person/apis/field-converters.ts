@@ -4,7 +4,7 @@ import { t } from "node_modules/i18next";
 import { Category, PersonFormInjectedTypes } from "src/domains/person-from-config/injected-forms/category";
 
 export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
-	"injectedCategory": { fromAPIRawValue: _ => _, toAPIRawValue: ([_, __]) => _ },
+	"injectedCategory": { fromAPIRawValue: _ => _, toAPIRawValue: ([_, __]) => _.category },
     "string": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: ([_, __]) => _ },
     "number": { fromAPIRawValue: _ => typeof _ == "number" ? _ : 0, toAPIRawValue: ([_, __])  => _ },
     "boolean": { fromAPIRawValue: _ => typeof _ == "boolean" ? _ : false, toAPIRawValue: ([_, __])  => _ },
@@ -21,7 +21,8 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
             CollectionSelection().Default.left(
                 CollectionReference.Default(_.id ?? "", _.displayName ?? "")
             ),
-        toAPIRawValue: ([_, __]) => _.kind == "r" ? undefined : _
+        toAPIRawValue: ([_, __]) => {
+			return _.kind == "r" ? undefined : _.value}
     },
     "MultiSelection": {
         fromAPIRawValue: _ => _ == undefined ? OrderedMap() : OrderedMap(_.map((_: any) => ([_.id, _]))),
@@ -33,16 +34,7 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
     },
     "Map": {
 		fromAPIRawValue: _ => _ == undefined ? List() : List(_),
-        toAPIRawValue: ([_, __]) => {
-			if (typeof _.get(0)?.[0] == "object" && _.get(0)?.[0].kind == "category") {
-				return _.map(([k, v]) => ([(k as Category).category, v]))
-			}
-			else if( typeof _.get(0)?.[0] == "object" && "value" in _.get(0)?.[0] && typeof _.get(0)?.[0]["value"] == "object" && "id" in _.get(0)?.[0]["value"]) {
-				return _.map(([k, v]) => ([k["value"]["id"], v]))
-			} else {
-				return _
-			}
-		}
+        toAPIRawValue: ([_, __]) => _.valueSeq().toArray()
 	}
 }
 
@@ -52,7 +44,7 @@ const logWrapper = ([_, __]: any) => {
 }
 
 export const modifiedDebugFieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
-	"injectedCategory": { fromAPIRawValue: _ => _ , toAPIRawValue: ([_, __]) => logWrapper([_, __]) },
+	"injectedCategory": { fromAPIRawValue: _ => _ , toAPIRawValue: ([_, __]) => logWrapper([_.category, __]) },
 	"string": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: ([_, __]) => logWrapper([_, __]) },
 	"number": { fromAPIRawValue: _ => typeof _ == "number" ? _ : 0, toAPIRawValue: ([_, __])  => logWrapper([_, __]) },
 	"boolean": { fromAPIRawValue: _ => typeof _ == "boolean" ? _ : false, toAPIRawValue: ([_, __])  => logWrapper([_, __]) },
@@ -93,14 +85,7 @@ export const modifiedDebugFieldTypeConverters: ApiConverters<PersonFormInjectedT
 		fromAPIRawValue: _ => _ == undefined ? List() : List(_),
         toAPIRawValue: ([_, __]) => {
 			if(__) console.log({value: _.valueSeq().toArray(), isModified: __})
-			if (typeof _.get(0)?.[0] == "object" && _.get(0)?.[0].kind == "category") {
-				return _.map(([k, v]) => ([(k as Category).category, v]))
-			}
-			else if( typeof _.get(0)?.[0] == "object" && "value" in _.get(0)?.[0] && typeof _.get(0)?.[0]["value"] == "object" && "id" in _.get(0)?.[0]["value"]) {
-				return _.map(([k, v]) => ([k["value"]["id"], v]))
-			} else {
-				return _
-			}
+			return _.valueSeq().toArray()
 		}
 	}
 }

@@ -24,6 +24,8 @@ export const FormsApp = (props: {}) => {
 	const [personCreateFormState, setPersonCreateFormState] = useState(FormRunnerState.Default())
 	const [personEditFormState, setPersonEditFormState] = useState(FormRunnerState.Default())
 	const [personState, setPersonState] = useState(Person.Default.mocked())
+	const [formErrors, setFormErrors] = useState<List<string>>(List())
+	const [formSuccess, setFormSuccess] = useState(false)
 	// const [personFormState, setPersonFormState] = useState(PersonFormState.Default(""))
 	// const [personConfigState, setPersonConfigState] = useState(PersonConfig.Default())
 
@@ -120,6 +122,15 @@ export const FormsApp = (props: {}) => {
 									renderForms && formToShow % numForms == 0 ?
 										<>
 											<h3>Create person</h3>
+											{formErrors.size > 0 &&
+											 	<div style={{ border: "2px solid red" }}>
+													<p style={{ color: "red" }}>Errors</p>
+													<ul>
+														{formErrors.map((_, i) => <li key={i}>{_}</li>)}
+													</ul>
+												</div>}
+											{formSuccess && <div style={{ border: "2px solid green" }}>
+												Form successfully submitted</div>}
 											<FormRunnerTemplate
 												context={{
 													...configFormsParser,
@@ -130,10 +141,14 @@ export const FormsApp = (props: {}) => {
 														submitButtonWrapper: CreatePersonSubmitButtonWrapper,
 														apiHandlers: {
 															success: (_) => {
-																alert(`Submitted new person ${JSON.stringify(_)}`)
+																setFormSuccess(true)
+																setFormErrors(List())
+																console.log(`Successfully submitted`)
 															},
 															error: (_) => {
-																alert(`Error submitting new person ${JSON.stringify(_)}`)
+																setFormSuccess(false)
+																setFormErrors(_)
+																console.log(`Error submitting new person ${JSON.stringify(_)}`)
 															}
 														}
 													},
@@ -150,6 +165,13 @@ export const FormsApp = (props: {}) => {
 										: renderForms && formToShow % numForms == 1 ?
 											<>
 												<h3>Edit person</h3>
+												{formErrors.size > 0 &&
+											 	<div style={{ border: "2px solid red" }}>
+													<p style={{ color: "red" }}>Errors</p>
+													<ul>
+														{formErrors.map((_, i) => <li key={i}>{_}</li>)}
+													</ul>
+												</div>}
 												<FormRunnerTemplate
 													context={{
 														...configFormsParser,
