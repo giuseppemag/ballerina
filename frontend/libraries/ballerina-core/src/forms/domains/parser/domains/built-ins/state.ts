@@ -280,7 +280,7 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
             t_args[0], 
             types, builtIns, converters, true, injectedPrimitives)(keyValue[0], formState.elementFormStates.get(index).KeyFormState
           )
-
+        // can probably now just set this as the value 
        if(key.kind == "value" && (key.value == undefined || key.value == null || key.value == "")) // TODO; do we want to allow empty string?
              return ValueOrErrors.Operations.throw([`A mapped key is undefined for type ${JSON.stringify(t.args[0])}`])
 
@@ -293,11 +293,11 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
             t_args[1], 
           types, builtIns, converters, true, injectedPrimitives)(keyValue[1], formState.elementFormStates.get(index).ValueFormState)
 
-        return ValueOrErrors.Operations.return([key, value])}
+        return ValueOrErrors.Operations.return({key, value})}
       )
 
 
-
+      // check this
       if(parsedMap.length > 0 && parsedMap.some((valueOrError: ValueOrErrors<any, any>) => valueOrError.kind == "errors")) {
         return ValueOrErrors.Operations.all(List<ValueOrErrors<any, string>>(parsedMap))
       }
@@ -307,6 +307,7 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
       if(allKeysStringified.length > 0 && !allKeysUnique) {
         return ValueOrErrors.Operations.throw(`Keys in the map are not unique: ${JSON.stringify(allKeysStringified)}`)
       }
+      // ensure this is a list of key value pair objects
       return ValueOrErrors.Operations.all(List<ValueOrErrors<any, string>>(parsedMap))
 
     }
@@ -315,6 +316,7 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
     if("extends" in tDef && tDef.extends.length == 1) {
       return ValueOrErrors.Operations.return(converters[(tDef.extends[0] as keyof BuiltInApiConverters)].toAPIRawValue([obj, formState.modifiedByUser] as never))
     }    
+    // elegant solution for collating errors?
     const convertedMap = tDef.fields.mapEntries(([fieldName, fieldType] ) => {
       const revertedFieldName = revertKeyword(fieldName)
       const fieldValue = obj[revertedFieldName]
