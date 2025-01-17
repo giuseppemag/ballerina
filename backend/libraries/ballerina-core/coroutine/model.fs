@@ -98,6 +98,12 @@ type CoroutineBuilder() =
     Co(fun _ -> CoroutineResult.Wait(t, co.Return()), None, None)
   member co.Do(f : 's -> 'a) =
     co.YieldAfter(Co(fun _ -> CoroutineResult.Do(f), None, None))
+
+  member co.DoAsync (f : 'c -> Task<'a>) : Coroutine<'a, 's, 'c, 'e> = co {
+    let! task = co.Do f
+    return! co.Await(Async.AwaitTask task)
+  }
+  
   member co.Await(p : Async<'a>) =    
     co.YieldAfter(Co(fun _ -> CoroutineResult.Await(p), None, None))
   // member _.Awaiting(id:Guid, p : Async<'a>, t:Task<'a>) =

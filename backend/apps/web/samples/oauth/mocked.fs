@@ -5,6 +5,7 @@ open OAuth.Coroutine
 open OAuth.Models
 open Ballerina.Coroutines
 open System.Net.Http
+open System.Threading.Tasks
 
 let random = new Random()
 let httpClient = new HttpClient()
@@ -26,21 +27,22 @@ let getSnapshot(): unit * OAuthContext<_, _> * Map<Guid, OAuthError> * unit =
         do printfn "Getting Access Token..." 
         do Console.ReadLine() |> ignore
         if (random.NextDouble() < 0.1) then
-          Choice1Of2 ()
+          Choice1Of2 () |> Task.FromResult
         else
-          Choice2Of2 ({| AccessToken = DateTime.UtcNow |}, {| RefreshToken = DateTime.UtcNow |})
+          Choice2Of2 ({| AccessToken = DateTime.UtcNow |}, {| RefreshToken = DateTime.UtcNow |}) |> Task.FromResult
     SaveAccessToken = 
       fun accessToken ->
         do printfn "Saving Access Token: %A" accessToken 
         do Console.ReadLine() |> ignore
+        Task.FromResult()
     RefreshToken =
       fun refreshToken ->
         do printfn "Refreshings with Refresh Token: %A" refreshToken 
         do Console.ReadLine() |> ignore
         if (random.NextDouble() < 0.1) then
-          Choice1Of2 ()
+          Choice1Of2 () |> Task.FromResult
         else
-          Choice2Of2 ({| AccessToken = DateTime.UtcNow |}, {| RefreshToken = DateTime.UtcNow |})
+          Choice2Of2 ({| AccessToken = DateTime.UtcNow |}, {| RefreshToken = DateTime.UtcNow |}) |> Task.FromResult
     GetExpiration =
       fun _ -> TimeSpan.FromSeconds 30.
   },
