@@ -5,8 +5,9 @@ import { ParentLayout2 } from "./domains/parent/views/parentLayout2";
 import { UncleLayout } from "./domains/uncle/views/uncleLayout";
 import { FormsApp } from "./FormsApp";
 import { parse } from "ballerina-core";
+import { DataDrivenFieldsApp } from "./DataDrivenFieldsApp";
 
-function App(props: { showForms:boolean }) {
+function App(props: { app:"regular"|"forms"|"data-driven-fields" }) {
 	const [uncle, setUncle] = useState(Uncle.Default())
 	const [parent, setParent] = useState(Parent.Default())
 	const uncleForeignMutations = Uncle.ForeignMutations({ setState:setUncle, context:uncle })
@@ -14,7 +15,8 @@ function App(props: { showForms:boolean }) {
 	type P = { name:string, surname:string, age:number, married:boolean, address:{ city:string, street:string, number:number } }
 	const p:any = { name:"Pippo", surname:"Schmidt", age:35, married:true, address:{ city:"Amsterdam", street:"Balatonmeerlaan", number:21 } }
 	const p_wrong:any = { name:"Pippo", surname:"Schmidt", age:35, married:true, address:{ city:"Amsterdam", street:"Balatonmeerlaan" } }
-	if (props.showForms) return FormsApp({})
+	if (props.app == "forms") return FormsApp({})
+		if (props.app == "data-driven-fields") return DataDrivenFieldsApp({})
 	return (
 		<div className="App">
 			<h1>Ballerina 🩰</h1>
