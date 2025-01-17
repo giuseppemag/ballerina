@@ -75,27 +75,22 @@ export const ValueOrErrors = {
     }),
   },
   Operations: {
-    return: <v, e>(_: v): ValueOrErrors<v, e> => ValueOrErrors.Default.return(_),
+    return: <v, e>(_: v): ValueOrErrors<v, e> =>
+      ValueOrErrors.Default.return(_),
     throw: <v, e>(_: e): ValueOrErrors<v, e> =>
       ValueOrErrors.Default.throw(List([_])),
     map: <a, b, e>(
       f: BasicFun<a, b>
     ): Fun<ValueOrErrors<a, e>, ValueOrErrors<b, e>> =>
-      Fun((_) => {
-        if (_.kind == "errors") {
-          return _;
-        }
-        return ValueOrErrors.Default.return(f(_.value));
-      }),
+      Fun((_) =>
+        _.kind == "errors" ? _ : ValueOrErrors.Default.return(f(_.value))
+      ),
     mapErrors: <a, e, e2>(
       f: BasicFun<List<e>, List<e2>>
     ): BasicFun<ValueOrErrors<a, e>, ValueOrErrors<a, e2>> =>
-      Fun((_) => {
-        if (_.kind == "errors") {
-          return ValueOrErrors.Default.throw(f(_.errors));
-        }
-        return _;
-      }),
+      Fun((_) =>
+        _.kind == "errors" ? ValueOrErrors.Default.throw(f(_.errors)) : _
+      ),
     flatten: <a, e>(): Fun<
       ValueOrErrors<ValueOrErrors<a, e>, e>,
       ValueOrErrors<a, e>
@@ -109,12 +104,19 @@ export const ValueOrErrors = {
           return _.value;
         }
       }),
+    then: <a, b, e>(
+      k: BasicFun<a, ValueOrErrors<b, e>>
+    ): Fun<ValueOrErrors<a, e>, ValueOrErrors<b, e>> =>
+      Fun((_: ValueOrErrors<a, e>) =>
+        ValueOrErrors.Operations.flatten<b, e>()(
+          ValueOrErrors.Operations.map<a, ValueOrErrors<b, e>, e>(k)(_)
+        )
+      ),
     fold: <v, e, c>(
       l: BasicFun<v, c>,
       r: BasicFun<List<e>, c>
-    ): Fun<ValueOrErrors<v, e>, c> => {
-      return Fun((_) => (_.kind == "value" ? l(_.value) : r(_.errors)));
-    },
+    ): Fun<ValueOrErrors<v, e>, c> =>
+      Fun((_) => (_.kind == "value" ? l(_.value) : r(_.errors))),
     all: <v, e>(_: List<ValueOrErrors<v, e>>): ValueOrErrors<List<v>, e> =>
       _.reduce(
         (reduction, value) =>
@@ -122,10 +124,10 @@ export const ValueOrErrors = {
             (v: v) =>
               reduction.kind == "errors"
                 ? reduction
-                : reduction.map(_ => _.concat(v)),
+                : reduction.map((_) => _.concat(v)),
             (es: List<e>) =>
               reduction.kind == "errors"
-                ? reduction.mapErrors(_ => _ .concat(es))
+                ? reduction.mapErrors((_) => _.concat(es))
                 : ValueOrErrors.Default.throw(es)
           )(value),
         ValueOrErrors.Default.return(List<v>())
