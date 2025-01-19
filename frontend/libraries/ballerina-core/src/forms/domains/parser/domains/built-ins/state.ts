@@ -2,7 +2,7 @@ import { Map, List, Set, OrderedMap } from "immutable"
 import { CollectionReference } from "../../../collection/domains/reference/state";
 import { CollectionSelection } from "../../../collection/domains/selection/state";
 import { BasicFun } from "../../../../../fun/state";
-import { InjectedPrimitives, Maybe, replaceKeyword, replaceKeywords, revertKeyword, Type, TypeDefinition, TypeName, Unit, Value } from "../../../../../../main";
+import { InjectedPrimitives, Maybe, replaceKeyword, replaceKeywords, revertKeyword, Sum, Type, TypeDefinition, TypeName, Unit, Value } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 
 export const PrimitiveTypes =
@@ -264,13 +264,13 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
       ))))
     }
     if (t.value == "Map" && t.args.length == 2) {
-      const converterResult = converters[t.value].toAPIRawValue([obj, formState.modifiedByUser])
+      const [converterResult, toIdentiferAndDisplayName] = converters[t.value].toAPIRawValue([obj, formState.modifiedByUser])
       const isKeyPrimitive = PrimitiveTypes.some(_ => _ == t.args[0]) || injectedPrimitives?.injectedPrimitives.has(t.args[0] as keyof T)
       const isValuePrimitive = PrimitiveTypes.some(_ => _ == t.args[1]) || injectedPrimitives?.injectedPrimitives.has(t.args[1] as keyof T)
       let t_args = t.args.map(parseTypeIShouldBePartOfFormValidation)
 
-      const parsedMap: ValueOrErrors<{key: ValueOrErrors<any, any>, value: ValueOrErrors<any, any>}, any>[] = converterResult.map((keyValue: any, index: number) => {
-        const key = toAPIRawValue(
+      const parsedMap: List<ValueOrErrors<{key: any, value: any}, string>> = converterResult.map((keyValue: any, index: number) => {
+        const possiblyUndefinedKey = toAPIRawValue(
           typeof t_args[0] == "string" ? 
             isKeyPrimitive ?
               { kind: "primitive", value: t_args[0] as PrimitiveType }
@@ -280,13 +280,14 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
             types, builtIns, converters, true, injectedPrimitives)(keyValue[0], formState.elementFormStates.get(index).KeyFormState
           )
 
-          if(key.kind == "value" && (key.value == undefined || key.value == null)) {
-            return ValueOrErrors.Operations.throw([`A mapped key is undefined for type ${JSON.stringify(t.args[0])}`])
-          } else if ( key.kind == "errors"){
-            return key
-          }
+          const key: ValueOrErrors<any, string> = (() => {
+            if(possiblyUndefinedKey.kind == "value" && (possiblyUndefinedKey.value == undefined || possiblyUndefinedKey.value == null || possiblyUndefinedKey.value == "" || (typeof possiblyUndefinedKey.value == "object" && Object.keys(possiblyUndefinedKey.value).length == 0))) {
+              return ValueOrErrors.Operations.throw(List([`A mapped key is undefined for type ${JSON.stringify(t.args[0])}`]))
+            }
+            return possiblyUndefinedKey
+          })()
 
-          const value = toAPIRawValue(
+          const value: ValueOrErrors<any, string> = toAPIRawValue(
             typeof t_args[1] == "string" ? 
               isValuePrimitive ?
                 { kind: "primitive", value: t_args[1] as PrimitiveType }
@@ -295,26 +296,20 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
               t_args[1], 
             types, builtIns, converters, true, injectedPrimitives)(keyValue[1], formState.elementFormStates.get(index).ValueFormState)
 
-          if(value.kind == "errors") return value
-
-          return ValueOrErrors.Operations.return({key, value})
+          return key.kind == "errors" || value.kind == "errors" ? ValueOrErrors.Operations.all(List([key, value]))  : ValueOrErrors.Default.return({key: key.value, value: value.value})
         }
       )
-
-      if(parsedMap.length > 0 && parsedMap.some((_: ValueOrErrors<any, any>) => _.kind == "errors")) {
-        return ValueOrErrors.Operations.all(List(parsedMap))
-      }
-      // TODO this needs improvement
-      const allKeysStringified = parsedMap.map((_) => _.kind == "value" ? JSON.stringify((_.value.key as any).value) : "")
-      const allKeysUnique = Set(allKeysStringified).size == allKeysStringified.length
-
-      if(allKeysStringified.length > 0 && !allKeysUnique) {
-        return ValueOrErrors.Operations.throw(`Keys in the map are not unique: ${JSON.stringify(allKeysStringified)}`)
-      }
       
-      // return ValueOrErrors.Operations.return(parsedMap.map(_ => _.flatten()))
-      return ValueOrErrors.Operations.return(parsedMap.map(_ => (_ as any).map(({key, value}: {key: any, value: any}) => ({key: key.value, value: value.value}))).map((_: any) => _.value))
+      const nonUniqueKeyErrors = parsedMap.filter(_ => _.kind == "value").reduce((acc, _) => { 
+        const [id, displayName] = toIdentiferAndDisplayName(_.value.key)
+        console.log('in')
+        console.log(toIdentiferAndDisplayName(_.value.key))
+        console.log(id, displayName)
+        acc.ids.contains(id) ? acc.errors = acc.errors.push(ValueOrErrors.Default.throw(List([`Keys in the map are not unique: ${displayName}`]))) : acc.ids = acc.ids.push(id)
+        return acc
+      }, {ids: List<string>(), errors: List<ValueOrErrors<any, string>>()}).errors
 
+      return ValueOrErrors.Operations.all(parsedMap.concat(nonUniqueKeyErrors))
     }
   } else { // t.kind == lookup: we are dealing with a record/object or extended type 
     const tDef = types.get(t.name)!

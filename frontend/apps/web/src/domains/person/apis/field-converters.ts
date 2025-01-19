@@ -1,10 +1,9 @@
-import { ApiConverters, BuiltInApiConverters, CollectionReference, CollectionSelection } from "ballerina-core";
-import { List, OrderedMap, Map } from "immutable";
-import { t } from "node_modules/i18next";
-import { Category, PersonFormInjectedTypes } from "src/domains/person-from-config/injected-forms/category";
+import { ApiConverters, CollectionReference, CollectionSelection } from "ballerina-core";
+import { List, OrderedMap } from "immutable";
+import { PersonFormInjectedTypes } from "src/domains/person-from-config/injected-forms/category";
 
 export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
-	"injectedCategory": { fromAPIRawValue: _ => _, toAPIRawValue: ([_, __]) => _.category },
+	"injectedCategory": { fromAPIRawValue: _ => ({ category: _ ?? "adult", kind: "category" as const }), toAPIRawValue: ([_, __]) => _.category },
     "string": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: ([_, __]) => _ },
     "number": { fromAPIRawValue: _ => typeof _ == "number" ? _ : 0, toAPIRawValue: ([_, __])  => _ },
     "boolean": { fromAPIRawValue: _ => typeof _ == "boolean" ? _ : false, toAPIRawValue: ([_, __])  => _ },
@@ -33,59 +32,12 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
         toAPIRawValue: ([_, __]) => _.valueSeq().toArray()
     },
     "Map": {
-		fromAPIRawValue: _ => _ == undefined ? List() : List(_),
-        toAPIRawValue: ([_, __]) => _.valueSeq().toArray()
-	}
-}
-
-const logWrapper = ([_, __]: any) => {
-	if(__) console.log('value', _, 'isModified', __)
-	return _
-}
-
-export const modifiedDebugFieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
-	"injectedCategory": { fromAPIRawValue: _ => _ , toAPIRawValue: ([_, __]) => logWrapper([_.category, __]) },
-	"string": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: ([_, __]) => logWrapper([_, __]) },
-	"number": { fromAPIRawValue: _ => typeof _ == "number" ? _ : 0, toAPIRawValue: ([_, __])  => logWrapper([_, __]) },
-	"boolean": { fromAPIRawValue: _ => typeof _ == "boolean" ? _ : false, toAPIRawValue: ([_, __])  => logWrapper([_, __]) },
-	"maybeBoolean": { fromAPIRawValue: _ => typeof _ == "boolean" ? _ : undefined, toAPIRawValue: ([_, __])  => logWrapper([_, __]) },
-	"base64File": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: ([_, __]) => logWrapper([_, __]) },
-	"secret": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: ([_, isModified])  => (console.log({isModified, value: isModified ? _ : undefined}), isModified ? _ : undefined) },    
-	"Date": { fromAPIRawValue: _ => typeof _ == "string" ? new Date(Date.parse(_)) : typeof _ == "number" ? new Date(_) : new Date(Date.now()), toAPIRawValue: ([_, __])  => logWrapper([_, __]) },
-	"CollectionReference": {
-		fromAPIRawValue: _ => CollectionReference.Default(_.id ?? "", _.displayName ?? ""),
-		toAPIRawValue: ([_, __]) =>  {
-			if(__) console.log({value: { id: _.id, displayName: _.displayName },  isModified:  __})
-			return _.source == "enum" ? _.id : { id: _.id, displayName: _.displayName }
-		}
-	},
-	"SingleSelection": {
-		fromAPIRawValue: _ => _ == undefined ? CollectionSelection().Default.right("no selection") :
-			CollectionSelection().Default.left(
-				CollectionReference.Default(_.id ?? "", _.displayName ?? "")
-			),
-		toAPIRawValue: ([_, __]) => {
-			if (__) console.log({value: { id: _.value.id, displayName: _.value.displayName },  isModified:  __})
-			return _.kind == "r" ? undefined : _}
-	},
-	"MultiSelection": {
-		fromAPIRawValue: _ => _ == undefined ? OrderedMap() : OrderedMap(_.map((_: any) => ([_.id, _]))),
-		toAPIRawValue: ([_, __]) =>  {
-			if (__) console.log({value: _.valueSeq().toArray(), isModified: __})
-			return _.valueSeq().toArray()}
-	},
-	"List": {
-		fromAPIRawValue: _ => _ == undefined ? List() : List(_),
-		toAPIRawValue: ([_, __]) =>  {
-			if(__) console.log({value: _.valueSeq().toArray(), isModified: __})
-			return _.valueSeq().toArray()
-		}
-	},
-	"Map": {
-		fromAPIRawValue: _ => _ == undefined ? List() : List(_),
+		fromAPIRawValue: _ => _ == undefined ? List() : List(_.map(( _ : {key: any, __keywordreplacement__value__: any}) => ([_.key, _.__keywordreplacement__value__]))),
         toAPIRawValue: ([_, __]) => {
-			if(__) console.log({value: _.valueSeq().toArray(), isModified: __})
-			return _.valueSeq().toArray()
+			const first = _.first()
+			if(first && typeof first[0] == "string") return [_, ((_: string )=> [_, _])]
+			if(first && typeof first[0] == "object" && "value" in first[0]  && "id" in first[0]["value"] && "displayName" in first[0]["value"]) return [_, ((_: CollectionReference) => [_.id, _.displayName])]
+			return [_, (_: any) => [JSON.stringify(_), JSON.stringify(_)]]
 		}
 	}
 }

@@ -7,7 +7,7 @@ import { PersonContainerFormView, PersonNestedContainerFormView, PersonShowFormS
 import { PersonFormsConfig, PersonFromConfigApis, PersonConfigFormsLeafPredicates, PersonConfig, PersonFormState, Person } from "playground-core";
 import { PersonFieldViews } from "./domains/person-from-config/views/field-views";
 import { PersonForm } from "./domains/person/template";
-import { fieldTypeConverters, modifiedDebugFieldTypeConverters } from "./domains/person/apis/field-converters";
+import { fieldTypeConverters } from "./domains/person/apis/field-converters";
 import { categoryForm, CategoryState, PersonFormInjectedTypes } from "./domains/person-from-config/injected-forms/category";
 
 const ShowFormsParsingErrors = (parsedFormsConfig: FormParsingResult) =>
@@ -30,7 +30,6 @@ export const FormsApp = (props: {}) => {
 	// const [personConfigState, setPersonConfigState] = useState(PersonConfig.Default())
 
 	const [renderParserState, renderForms] = [true, true]
-	const debugFieldTypeConverters = false
 	const logState = true
 
 	logState && console.log({
@@ -104,7 +103,7 @@ export const FormsApp = (props: {}) => {
 									context={{
 										...configFormsParser,
 										containerFormView: PersonContainerFormView,
-										fieldTypeConverters: debugFieldTypeConverters ? modifiedDebugFieldTypeConverters : fieldTypeConverters,
+										fieldTypeConverters: fieldTypeConverters,
 										nestedContainerFormView: PersonNestedContainerFormView,
 										fieldViews: PersonFieldViews,
 										infiniteStreamSources: PersonFromConfigApis.streamApis,

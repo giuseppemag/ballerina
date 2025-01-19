@@ -77,8 +77,8 @@ export const ValueOrErrors = {
   Operations: {
     return: <v, e>(_: v): ValueOrErrors<v, e> =>
       ValueOrErrors.Default.return(_),
-    throw: <v, e>(_: e): ValueOrErrors<v, e> =>
-      ValueOrErrors.Default.throw(List([_])),
+    throw: <v, e>(_: List<e>): ValueOrErrors<v, e> =>
+      ValueOrErrors.Default.throw(_),
     map: <a, b, e>(
       f: BasicFun<a, b>
     ): Fun<ValueOrErrors<a, e>, ValueOrErrors<b, e>> =>
