@@ -38,6 +38,13 @@ export const FormsApp = (props: {}) => {
 		runner: formToShow % numForms == 0 ? personCreateFormState : personEditFormState
 	})
 
+	if(configFormsParser.formsConfig.sync.kind == "loaded" && 
+		configFormsParser.formsConfig.sync.value.kind == "r"
+	) {
+		return 		<ol>{configFormsParser.formsConfig.sync.value.value.map(_ => <li>{_}</li>)}</ol>
+	}
+
+
 	return (
 		<div className="App">
 			<h1>Ballerina 🩰</h1>
