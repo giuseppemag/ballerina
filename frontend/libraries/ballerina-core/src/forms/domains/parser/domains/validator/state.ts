@@ -1,5 +1,6 @@
-import { Set, Map, OrderedMap } from "immutable";
-import { ApiConverters, BoolExpr, BuiltIns, FieldName, FormsConfigMerger, InjectedPrimitives, MappingPaths, revertKeyword, Sum, Type, TypeDefinition, TypeName } from "../../../../../../main";
+import { Set, Map, OrderedMap, List } from "immutable";
+import { ApiConverters, BoolExpr, BuiltIns, FieldName, FormsConfigMerger, InjectedPrimitives, MappingPaths, revertKeyword, Sum, Type, TypeDefinition, TypeName, unit, Value } from "../../../../../../main";
+import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 
 export type FieldConfig = {
   renderer: string;
@@ -67,23 +68,51 @@ export type FormsConfig = {
 };
 export type FormValidationError = string;
 
-export type FormValidationResult = Sum<FormsConfig, Array<FormValidationError>>
+/*
+TODOs:
+  1. Check main form name exists in apis.entities
+  2. Expose parsing errors to a callback
+  3. Check that all fields in a form are present in the type
+*/
+
+export type FormConfigValidationAndParseResult = ValueOrErrors<FormsConfig, FormValidationError>
 export const FormsConfig = {
   Default: {
-    validateAndParseAPIResponse: <T extends {[key in keyof T]: {type: any, state: any}}>(builtIns: BuiltIns, apiConverters: ApiConverters<T>, injectedPrimitives?: InjectedPrimitives<T>) => (fc: any): FormValidationResult => {
-      let errors: Array<FormValidationError> = [];
+    validateAndParseFormConfig: <T extends {[key in keyof T]: {type: any, state: any}}>(builtIns: BuiltIns, apiConverters: ApiConverters<T>, injectedPrimitives?: InjectedPrimitives<T>) => (fc: any): FormConfigValidationAndParseResult => {
+      const errors: List<FormValidationError> = List();
       const formsConfig = Array.isArray(fc) ? FormsConfigMerger.Default.merge(fc) : fc;
-      let types: Map<TypeName, TypeDefinition> = Map();
-      if ("types" in formsConfig == false) {
-        errors.push("the formsConfig does not contain a 'types' field");
-        return Sum.Default.right(errors);
+      
+      const hasApis = "apis" in formsConfig;
+      const apiProps = List(["enumOptions", "searchableStreams", "entities"]);
+      const formPropertyChecks = List<[string, boolean]>(
+        [
+          ['types', "types" in formsConfig],
+          ['forms', "forms" in formsConfig],
+          ['apis', hasApis],
+          ['enumOptions', hasApis && "enumOptions" in formsConfig.apis],
+          ['searchableStreams', hasApis && "searchableStreams" in formsConfig.apis],
+          ['entities', hasApis && "entities" in formsConfig.apis],
+          ['mappings', "mappings" in formsConfig],
+          ['launchers', "launchers" in formsConfig]
+        ]
+      );
+
+      if(formPropertyChecks.some(([_, hasProp]) => !hasProp)){
+        const formPropertyErrors = formPropertyChecks.filter(([_, hasProp]) => !hasProp)
+        .map(([prop, _]) => apiProps.includes(prop) ? 
+          `the formsConfig.apis does not contain a '${prop}' field` :
+          `the formsConfig does not contain a '${prop}' field`);
+        return ValueOrErrors.Default.throw(formPropertyErrors);
       }
+
       if(injectedPrimitives){
         injectedPrimitives?.injectedPrimitives.keySeq().toArray().some((injectedPrimitiveName) => {
           if(!Object.keys(apiConverters).includes(injectedPrimitiveName as string)){
           errors.push(`the formsConfig does not contain an Api Converter for injected primitive: ${injectedPrimitiveName as string}`);
         }})
       }
+
+      let types: Map<TypeName, TypeDefinition> = Map();
       Object.keys(formsConfig["types"]).forEach((typeName: any) => {
         let typeDef: TypeDefinition = { name: typeName, extends: [], fields: OrderedMap() };
         types = types.set(typeName, typeDef);
@@ -114,13 +143,14 @@ export const FormsConfig = {
             if ("fun" in configFieldType && "args" in configFieldType &&
               typeof configFieldType["fun"] == "string" &&
               Array.isArray(configFieldType["args"]) 
-              // &&
-              // configFieldType["args"].every(_ => typeof (_) == "string")
             ) {
+              const args = configFieldType["fun"] == "Map" ? 
+                configFieldType["args"].map((arg:any) => (typeof arg == "string" ? arg : { kind:"application", value: arg.fun, args: arg.args })) as any :
+                configFieldType["args"] as any;
               const fieldType: Type = {
                 kind: "application",
                 value: configFieldType["fun"] as any,
-                args: configFieldType["args"] as any,
+                args,
               }
               typeDef.fields = typeDef.fields.set(fieldName, fieldType);
             }
@@ -129,20 +159,18 @@ export const FormsConfig = {
           }
         });
       });
+
       types.forEach((typeDef, typeName) => {
         typeDef.extends.forEach(extendedTypeName => {
           if ((!builtIns.primitives.has(extendedTypeName) && !injectedPrimitives?.injectedPrimitives.has(extendedTypeName as keyof T)) && !types.has(extendedTypeName))
             errors.push(`type ${typeName} extends non-existent type ${extendedTypeName}`);
         });
         typeDef.fields.forEach((fieldDef, fieldName) => {
+          // TODO - check application args are a valid type (-refs, primtives, lookups, possible here? or may have to do at end) also no undefined
           if (fieldDef.kind == "primitive" && (!builtIns.primitives.has(fieldDef.value) && !injectedPrimitives?.injectedPrimitives.has(fieldDef.value as keyof T) ))
             errors.push(`field ${fieldName} of type ${typeName} is non-existent primitive type ${fieldDef.value}`);
           if (fieldDef.kind == "lookup" && !types.has(fieldDef.name))
             errors.push(`field ${fieldName} of type ${typeName} is non-existent type ${fieldDef.name}`);
-          // if (fieldDef.kind == "application" && !builtIns.generics.has(fieldDef.value))
-          //   errors.push(`field ${fieldName} of type ${typeName} applies non-existent generic type ${fieldDef.value}`);
-          // if (fieldDef.kind == "application" && fieldDef.args.some(argType => !builtIns.primitives.has(argType) && !types.has(argType)))
-          //   errors.push(`field ${fieldName} of type ${typeName} applies non-existent type arguments ${JSON.stringify(fieldDef.args.filter(argType => !builtIns.primitives.has(argType) && !types.has(argType)))}`);
           if (fieldDef.kind == "application" && fieldDef.value == "SingleSelection") {
             if (fieldDef.args.length != 1)
               errors.push(`field ${fieldName} in type ${typeName}: SingleSelection should have exactly one type argument, found ${JSON.stringify(fieldDef.args)}`);
@@ -161,29 +189,17 @@ export const FormsConfig = {
                 errors.push(`field ${fieldName} in type ${typeName}: Multiselection requires ${argType.name} to 'extend CollectionReference'`);
             }
           }
+          if (fieldDef.kind == "application" && fieldDef.value == "List") {
+            if (fieldDef.args.length != 1)
+              errors.push(`field ${fieldName} in type ${typeName}: List should have exactly one type argument, found ${JSON.stringify(fieldDef.args)}`)
+          }
+          if (fieldDef.kind == "application" && fieldDef.value == "Map") {
+            if (fieldDef.args.length != 2)
+              errors.push(`field ${fieldName} in type ${typeName}: Map should have exactly two type arguments, found ${JSON.stringify(fieldDef.args)}`)
+          }
         });
       });
 
-      if ("forms" in formsConfig == false) {
-        errors.push("the formsConfig does not contain a 'forms' field");
-        return Sum.Default.right(errors);
-      }
-      if ("apis" in formsConfig == false) {
-        errors.push("the formsConfig does not contain an 'apis' field");
-        return Sum.Default.right(errors);
-      }
-      if ("mappings" in formsConfig == false) {
-        errors.push("the formsConfig does not contain a 'mappings' field");
-        return Sum.Default.right(errors);
-      }
-      if ("enumOptions" in formsConfig["apis"] == false) {
-        errors.push("formsConfig.apis does not contain an 'enumOptions' field");
-        return Sum.Default.right(errors);
-      }
-      if ("entities" in formsConfig["apis"] == false) {
-        errors.push("formsConfig.apis does not contain an 'entities' field");
-        return Sum.Default.right(errors);
-      }
       let enums: Map<string, TypeName> = Map();
       Object.keys(formsConfig["apis"]["enumOptions"]).forEach((enumOptionsName: any) => {
         if (!types.has(formsConfig["apis"]["enumOptions"][enumOptionsName])) {
@@ -192,6 +208,7 @@ export const FormsConfig = {
           enums = enums.set(enumOptionsName, formsConfig["apis"]["enumOptions"][enumOptionsName])
         }
       })
+
       let streams: Map<string, TypeName> = Map();
       Object.keys(formsConfig["apis"]["searchableStreams"]).forEach((searchableStreamName: any) => {
         if (!types.has(formsConfig["apis"]["searchableStreams"][searchableStreamName])) {
@@ -200,6 +217,7 @@ export const FormsConfig = {
           streams = streams.set(searchableStreamName, formsConfig["apis"]["searchableStreams"][searchableStreamName])
         }
       })
+
       let entities: Map<string, EntityApi> = Map();
       Object.keys(formsConfig["apis"]["entities"]).forEach((entityApiName: any) => {
         const entityApiConfig = formsConfig["apis"]["entities"][entityApiName]
@@ -541,10 +559,6 @@ export const FormsConfig = {
         }
       });
 
-      if ("launchers" in formsConfig == false) {
-        errors.push("the formsConfig does not contain a 'launchers' field");
-        return Sum.Default.right(errors);
-      }
       let launchers: FormsConfig["launchers"] = {
         create: Map<string, Launcher>(),
         edit: Map<string, Launcher>(),
@@ -600,13 +614,13 @@ export const FormsConfig = {
         }
       })
 
-      if (errors.length > 0) {
+      if (errors.size > 0) {
         console.error("parsing errors")
         console.error(errors)
-        return Sum.Default.right(errors);
+        return ValueOrErrors.Default.throw(errors);
       }
 
-      return Sum.Default.left({
+      return ValueOrErrors.Default.return({
         types: types,
         forms: forms,
         apis: {

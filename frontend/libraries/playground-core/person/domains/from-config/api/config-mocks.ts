@@ -85,14 +85,14 @@ export const PersonFormsConfig = {
       "fields": {
         "street": {
           renderer: "defaultString", visible:
-          // { "kind": "true" }
-          {
-            "kind": "or",
-            operands: [
-              { "kind": "leaf", "operation": "field", "arguments": { "location": "root", "field": "subscribeToNewsletter", "value": true } },
-              { "kind": "leaf", "operation": "field", "arguments": { "location": "local", "field": "number", "value": 10 } },
-            ]
-          }
+          { "kind": "true" }
+          // {
+          //   "kind": "or",
+          //   operands: [
+          //     { "kind": "leaf", "operation": "field", "arguments": { "location": "root", "field": "subscribeToNewsletter", "value": true } },
+          //     { "kind": "leaf", "operation": "field", "arguments": { "location": "local", "field": "number", "value": 10 } },
+          //   ]
+          // }
         },
         "number": { renderer: "defaultNumber", visible: { "kind": "true" } },
         "city": { renderer: "defaultInfiniteStream", stream: "cities", visible: { "kind": "true" } },
