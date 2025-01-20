@@ -17,9 +17,11 @@ Todo (✅/❌)
     ✅ read the json with FSharp.Data
     ❌ parse the json into the first naive structure
       ✅ use the type definitions from the business rule schema as a representation target
-      ❌ use expressions from the business rule schema plus new form and API types as a representation target
+      ✅ use expressions from the business rule schema plus API types as a representation target
+      ❌ use expressions from the business rule schema plus new form types as a representation target
       ❌ move the new types to ballerina-core
       ❌ type-check the type definitions for references to non-existing types
+      ❌ type-check the API definitions for references to non-existing types
       ❌ type-check the form instances for references to non-existing types, and also the field lookups
       ❌ type-check the form instances' `visible` and `disabled` predicates
       ❌ move the new type checkers to ballerina-core
@@ -27,7 +29,8 @@ Todo (✅/❌)
       ❌ parse the JSON into the representation APIs
       ❌ parse the JSON into the representation forms
       ❌ move the new type parsers to ballerina-core
-      ❌ use the Error monad, not Option
+      ❌ use the Error monad, not Option, for meaningful error messages
+      ❌ break the form engine in all possible ways together with John
     ❌ from the schema and the forms, generate Typescript code for
       ❌ one class per type
       ❌ one enum with all enum types

@@ -85,37 +85,31 @@ let formApis =
   option{
     let! instantiatedSampleTypes = sampleTypes ["injectedCategory"]
     let! genderRefType = instantiatedSampleTypes |> Map.tryFind "GenderRef"
-    let! colorRef = instantiatedSampleTypes |> Map.tryFind "ColorRef"
-    let! interestRef = instantiatedSampleTypes |> Map.tryFind "InterestRef"
-    let! permissionRef = instantiatedSampleTypes |> Map.tryFind "PermissionRef"
-    let! cityRef = instantiatedSampleTypes |> Map.tryFind "CityRef"
-    let! departmentRef = instantiatedSampleTypes |> Map.tryFind "DepartmentRef"
-    let! person = instantiatedSampleTypes |> Map.tryFind "Person"
+    let! colorRefType = instantiatedSampleTypes |> Map.tryFind "ColorRef"
+    let! interestRefType = instantiatedSampleTypes |> Map.tryFind "InterestRef"
+    let! permissionRefType = instantiatedSampleTypes |> Map.tryFind "PermissionRef"
+    let! cityRefType = instantiatedSampleTypes |> Map.tryFind "CityRef"
+    let! departmentRefType = instantiatedSampleTypes |> Map.tryFind "DepartmentRef"
+    let! personType = instantiatedSampleTypes |> Map.tryFind "Person"
     return {
-      enums=Map.empty;
-      streams=Map.empty;
-      entities=Map.empty;
+      enums=
+        [
+          ("genders", genderRefType.Name)
+          ("colors", colorRefType.Name)
+          ("interests", interestRefType.Name)
+          ("permissions", permissionRefType.Name)
+        ] |> Map.ofList;
+      streams=
+        [
+          ("cities", cityRefType.Name)
+          ("departments", departmentRefType.Name)
+        ] |> Map.ofList;
+      entities=
+        [
+          ("person", (personType.Name, [Create; Get; Update; Default] |> Set.ofList))
+        ] |> Map.ofList      
     }
   }
-
-//   "apis": {
-//     "enumOptions": {
-//       "genders": "GenderRef",
-//       "colors": "ColorRef",
-//       "interests": "InterestRef",
-//       "permissions": "PermissionRef"
-//     },
-//     "searchableStreams": {
-//       "cities": "CityRef",
-//       "departments": "DepartmentRef"
-//     },
-//     "entities": {
-//       "person": {
-//         "type": "Person",
-//         "methods": ["create", "get", "update", "default"]
-//       }
-//     }
-//   },
 
 type FormsGenTarget = 
 | ts = 1
