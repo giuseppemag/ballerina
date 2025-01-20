@@ -209,7 +209,7 @@ export const ParseForm = <T,>(
             .mapContext<any>(_ => ({ ..._, label, tooltip }))
         } else { // the list argument is a primitive
           const elementForm = FieldView(fieldConfig, fieldViews, fieldNameToElementViewCategory(formFieldElementRenderers)(fieldName) as any, elementRendererName, elementLabel, elementTooltip, EnumOptionsSources, fieldsOptionsConfig, leafPredicates, injectedPrimitives)
-          const initialFormState = FieldFormState(fieldConfig, fieldViews, fieldNameToElementViewCategory(formFieldElementRenderers)(fieldName) as any, elementRendererName, InfiniteStreamSources, fieldsInfiniteStreamsConfig, injectedPrimitives);
+          const initialFormState = FieldFormState(fieldConfig, fieldViews, fieldNameToElementViewCategory(formFieldElementRenderers)(fieldName) as any, elementRendererName, fieldName, InfiniteStreamSources, fieldsInfiniteStreamsConfig, injectedPrimitives);
           formConfig[fieldName] = ListForm<any, any, any & FormLabel, Unit>(
             { Default: () => initialFormState },
             { Default: () => initialElementValue },
