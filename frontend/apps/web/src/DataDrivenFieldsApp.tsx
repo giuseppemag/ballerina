@@ -114,7 +114,7 @@ const cardsConfigFromAPI: Array<CardConfig> =
 		]),
 	]
 
-const NumberRenderer = (props: { value: number, onNewValue:(edit:ValueEdit) => void }): JSX.Element =>
+const NumberRenderer = (props: { value: number, onNewValue:(edit:ValueEdit & { kind:"number" }) => void }): JSX.Element =>
 	<>
 		<h2>Number</h2>
 		{props.value}

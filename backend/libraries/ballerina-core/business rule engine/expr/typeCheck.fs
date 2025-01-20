@@ -29,8 +29,8 @@ let typeCheck (schema:Schema) (vars:VarTypes) (e:Expr) : Option<ExprType * VarTy
             let! fieldDescriptor = schema.tryFindField field
             let result = fieldDescriptor.Type(), vars'
             return result
-          | PrimitiveType p -> 
-            printfn "unexpected lookup on primitive type %A %A" p e
+          | t-> 
+            printfn "unexpected lookup on type %A when typechecking expression %A" t e
         }
       | Expr.Value v ->
         option{ 

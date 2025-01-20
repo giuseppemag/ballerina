@@ -48,12 +48,26 @@ and RuleDependencies = { dependencies:Map<EntityDescriptorId * FieldDescriptorId
 
 and Assignment = { Variable:VarName * List<FieldDescriptorId>; Value:Expr }
 and VarName = { VarName:string }
-and ExprType = LookupType of EntityDescriptorId | PrimitiveType of PrimitiveType
+and TypeBinding = { Name:TypeName; Type:ExprType }
+and TypeName = { TypeName:string; TypeId:Guid }
+and ExprType = 
+  | LookupType of EntityDescriptorId 
+  | ReferenceType of TypeName
+  | PrimitiveType of PrimitiveType 
+  | RecordType of List<RecordField> 
+  | UnionType of List<UnionCase>
+  | MapType of ExprType * ExprType
+  | TupleType of List<ExprType>
+  | OptionType of ExprType
+  | ListType of ExprType
+  | SetType of ExprType
+and UnionCase = { CaseName:string; Fields:ExprType }
+and RecordField = { FieldName:string; Type:ExprType }
 and VarTypes = Map<VarName, ExprType>
 and Vars = Map<VarName, Var>
 and EntityDescriptorId = { EntityDescriptorId:Guid; EntityName:string }
 and Var = EntityDescriptorId * EntityIdentifier
-and PrimitiveType = IntType | FloatType | StringType | BoolType | GuidType of EntityDescriptorId
+and PrimitiveType = DateOnlyType | DateTimeType | IntType | FloatType | StringType | BoolType | GuidType | RefType of EntityDescriptorId
 and Value = ConstInt of int | ConstFloat of float | ConstString of string | ConstBool of bool | ConstGuid of Guid | Var of Var 
 // | Field of FieldDescriptor
 and Expr = 
@@ -99,6 +113,23 @@ type Expr with
     FieldLookup(Expr.VarLookup varname, field)
   static member op_GreaterThan (e1:Expr, e2:Expr) =
     Binary(GreaterThan, e1, e2)
+
+type RecordField with
+  static member Name (self:RecordField) = self.FieldName
+
+type TypeBinding with
+  static member Create (name,exprType) = { TypeBinding.Name=name; TypeBinding.Type=exprType }
+
+type TypeName with
+  static member Create name = { TypeName=name; TypeId=Guid.CreateVersion7() }
+
+type ExprType with
+  static member Extends t1 t2 =
+    match t1, t2 with
+    | RecordType fields1, RecordType fields2 
+      when fields1 |> Seq.map (RecordField.Name) |> Set.ofSeq |> Set.intersect (fields2 |> Seq.map (RecordField.Name) |> Set.ofSeq) |> Set.isEmpty
+      -> fields1 @ fields2 |> ExprType.RecordType |> Some
+    | _ -> None
 
 type FieldDescriptor with
   member this.ToFieldDescriptorId : FieldDescriptorId = 
@@ -183,7 +214,7 @@ type FieldDescriptor with
         { 
           FieldDescriptorId=guid; 
           FieldName = entityName; 
-          Type = fun () -> ExprType.PrimitiveType (GuidType targetEntityDescriptorId)
+          Type = fun () -> ExprType.PrimitiveType (RefType targetEntityDescriptorId)
           Lookup = Option<'e>.fromObject >> Option.map(getField >> Value.ConstGuid);
           Get = fun id -> tryFindEntity id |> Option.map(getField >> Value.ConstGuid);
           Update = {|

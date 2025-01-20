@@ -7,251 +7,225 @@ Todo (✅/❌)
   ✅ docker
     ✅ PG
     ✅ PG-admin
-  ❌ port forward pgadmin or use DBeaver
-  ❌ auth.fsproj
-    ✅ models
-      ✅ users
-      ✅ registration-tokens
-      ✅ user events
-    ❌ registration, etc. coroutines
-      ✅ serialize/deserialize F# unions and records with endpoints
-      ✅ define CRUD 'a
-      ✅ define AB, ABEvent, ABEvent_CLI
-      ✅ define DBSets in DBContext
-      ✅ run migrations
-      ✅ move CRUD 'a to separate project
-      ✅ move updater U<'s> to separate file
-      ❌ cleanup
-        ✅ move sample coroutines
-        ✅ move sample dbcontext stuff
-          ✅ resolve dbcontext with DI
-          ✅ pass config from appsettings.development (based on env variable)
-        ✅ move AB sample
-        ❌ add PositionOptions config with extension method on builder
-        ❌ adding and configuring the dbcontext should also be done from another file, from ballerina-core perhaps
-      ✅ AB events sample domain
-        ✅ reorganize the main project decently, moving all the AB-related logic to a separate folder
-          ✅ repositories
-          ✅ endpoints
-        ✅ define ABRepo, ABEventRepo
-          ✅ generalize from a single DbSet
-          ✅ add ordering - requires making CRUD an interface
-          ✅ add skip/take
-            ✅ add url parameters to endpoint, check that they work also in OpenAPI
-            ✅ add "safety clamp" to avoid DDoS
-        ✅ post ABEvent, AB via repos
+  ❌ check that we can inspect a local DB (MySQL, Redis, ES, Postgres)
+  ❌ form validator and code generator
+    ✅ create a production-ready `ballerina` project that can be run
+      ✅ rename `web` to `test`
+    ❌ receive the command line parameters  
+      ✅ form json
+      ❌ array of extra primitive types
+    ✅ read the json with FSharp.Data
+    ❌ parse the json into the first naive structure
+      ✅ use the type definitions from the business rule schema as a representation target
+      ❌ use expressions from the business rule schema plus new form and API types as a representation target
+      ❌ move the new types to ballerina-core
+      ❌ type-check the type definitions for references to non-existing types
+      ❌ type-check the form instances for references to non-existing types, and also the field lookups
+      ❌ type-check the form instances' `visible` and `disabled` predicates
+      ❌ move the new type checkers to ballerina-core
+      ❌ parse the JSON into the representation types
+      ❌ parse the JSON into the representation APIs
+      ❌ parse the JSON into the representation forms
+      ❌ move the new type parsers to ballerina-core
+      ❌ use the Error monad, not Option
+    ❌ from the schema and the forms, generate Typescript code for
+      ❌ one class per type
+      ❌ one enum with all enum types
+      ❌ one enum with all stream types
+      ❌ one enum with all entity types
+    ❌ from the schema and the forms, generate Go code for
+      ❌ one class per type
+      ❌ one enum with all enum types
+      ❌ one enum with all stream types
+      ❌ one enum with all entity types
+    ❌ move relevant sources to a separate folder in ballerina-core (forms engine)
+  ✅ models
+    ✅ users
+    ✅ registration-tokens
+    ✅ user events
+  ❌ expose ballerina-core as a nuget package
+  ❌ expose ballerina-runtime as a nuget package
+  ❌ registration, etc. coroutines
+    ✅ serialize/deserialize F# unions and records with endpoints
+    ✅ define CRUD 'a
+    ✅ define AB, ABEvent, ABEvent_CLI
+    ✅ define DBSets in DBContext
+    ✅ run migrations
+    ✅ move CRUD 'a to separate project
+    ✅ move updater U<'s> to separate file
+    ❌ cleanup
+      ❌ create builder and app only after parsing the command line parameters
+      ✅ move sample coroutines
+      ✅ move sample dbcontext stuff
+        ✅ resolve dbcontext with DI
+        ✅ pass config from appsettings.development (based on env variable)
+      ✅ move AB sample
+      ❌ add PositionOptions config with extension method on builder
+      ❌ adding and configuring the dbcontext should also be done from another file, from ballerina-core perhaps
+    ✅ AB events sample domain
+      ✅ reorganize the main project decently, moving all the AB-related logic to a separate folder
+        ✅ repositories
+        ✅ endpoints
+      ✅ define ABRepo, ABEventRepo
+        ✅ generalize from a single DbSet
+        ✅ add ordering - requires making CRUD an interface
+        ✅ add skip/take
+          ✅ add url parameters to endpoint, check that they work also in OpenAPI
+          ✅ add "safety clamp" to avoid DDoS
+      ✅ post ABEvent, AB via repos
+        ✅ expose OpenAPI spec
+          ✅ type discriminator in swagger
+          ✅ type discriminator when serializing
+          ✅ type discriminator when deserializing
+      ❌ define and run ABCoroutine
+        ✅ separate entry point with own executable based on cmd-line arguments
+          ✅ check the cmd line parameters with System.CommandLine
+            ✅ shell script for `dotnet run -- mode web & dotnet run -- mode jobs`
+            ✅ isolate thread evaluator, move to separate file in main project
+            ✅ fix the ugly dancing ids of the active coroutines, they should remain the same
+        ✅ do not delete events, mark them as done, with an index on the status
+          ✅ add timestamp to events, process in creation order
+          ✅ allow adding new events from coroutines
+          ✅ POST should overwrite CreatedAt and ProcessingStatus
+            ✅ even better, POST should not expect CreatedAt and ProcessingStatus (deserializer)
+        ✅ add environment to the ./startup-be.sh launcher, otherwise we are using the wrong appsettings!!!
+        ✅ processBs
+        ✅ separate state = Unit from context = ABContext
+        ✅ extract the general purpose evaluator from jobs.fs
+          ✅ parameterize the event queries with a CRUD repo
+        ✅ endpoint to push AB events
           ✅ expose OpenAPI spec
-            ✅ type discriminator in swagger
-            ✅ type discriminator when serializing
-            ✅ type discriminator when deserializing
-        ❌ define and run ABCoroutine
-          ✅ separate entry point with own executable based on cmd-line arguments
-            ✅ check the cmd line parameters with System.CommandLine
-              ✅ shell script for `dotnet run -- mode web & dotnet run -- mode jobs`
-              ✅ isolate thread evaluator, move to separate file in main project
-              ✅ fix the ugly dancing ids of the active coroutines, they should remain the same
-          ✅ do not delete events, mark them as done, with an index on the status
-            ✅ add timestamp to events, process in creation order
-            ✅ allow adding new events from coroutines
-            ✅ POST should overwrite CreatedAt and ProcessingStatus
-              ✅ even better, POST should not expect CreatedAt and ProcessingStatus (deserializer)
-          ✅ add environment to the ./startup-be.sh launcher, otherwise we are using the wrong appsettings!!!
-          ✅ processBs
-          ✅ separate state = Unit from context = ABContext
-          ✅ extract the general purpose evaluator from jobs.fs
-            ✅ parameterize the event queries with a CRUD repo
-          ✅ endpoint to push AB events
-            ✅ expose OpenAPI spec
-          ✅ "blogging" context -> BallerinaContext
-          ✅ implement Repeat as a reified construct
-          ✅ AB jobs can be separated fully to the AB module with minimal dependencies
-          ❌ refactor `async` to `task`
-          ❌ BUG ALERT if translating to production! The Map of events will likely cause events not to be processed in create-order
-          ❌ test Spawn
-            ❌ remove ugly starting logic, everything is bootstrapped by the endpoint that pushes the CreateABEvent
-            ❌ create ABs from event
-            ❌ when the AB coroutine ends, it is respawned (migration-friendly strategy)
-          ✅ restore Async in Crud, run with Await
-          ✅ dependent on repo's for AB and ABEvent
-          ✅ co.On for ABEvent should check that the ABId matches or every ABEvent will match every co.On
-          ✅ test Any
-        ✅ project refactoring
-          ✅ move all the AB-related logic to the right project
-          ✅ rename grandeomega to web
-      ❌ define sample Positions API and types
-        ❌ pre-prototype
-          ✅ fill schema with constant seeds, including GUIDs
-            ✅ the schema `updater` implementations are empty, they should actually save the data
-            ✅ fill schema with business rules
-              ✅ define business rule for subtotals of AB.TotalABC = ACount+BCount+CCount
-                ✅ actions are wrong, redesign 
-                  ✅ rules need a starting scope entity (`AB`/`CD`)
-                  ✅ an entity descriptor is needed
-          ❌ define expr evaluator
-            ✅ basic eval expr
-            ✅ basic eval assignment
-            ❌ cleanup
-              ✅ the schema definition should be in a separate file than the context
-              ✅ allFields should be the flattening of allFields of each entity
-              ✅ move the various merge* utilities to extension methods
-              ✅ rename `XCount`, etc. to just `X`
-              ❌ the field descriptor definitions should use the operations from other field descriptors, and not perform any comparisons to entity descriptors Ids
-                ✅ Get should be based on Lookup
-                ❌ AB and CD should be based on generic containers of fields and nested entities, not real types
-                  ✅ the lookup of fields from ABs and CDs in the definition of the AB/CD entity schema should use the field definition lookup recursively
-                  ❌ the assignment (`Update`) of fields to ABs and CDs in the definition of the AB/CD entity schema should use the field definition assignment recursively
-              ❌ there are various places where we assume `One entityId`, is this always reasonable?
-                ❌ in particular, `Expr::execute` does not take into account more than one field lookup on the assigned variable, extend
-          ❌ testing scenario
-            ✅ add a setA event, see that the Total changes
-            ✅ add a setB event, see that the Total changes
-            ✅ add a setC event, see that the Total changes (nasty because of the AB-CD relation)
-              ✅ the CD values are cached inside the entity, they should be lazy
-              ✅ the propagation to TotalABC does not work
-              ✅ the predicate is not restricting
-            ✅ add a setCDRef event, see that the Total changes
-            ✅ add a setD event, for symmetry
-            ✅ extend the schema: CD - EF
-              ✅ add setE, setF events
-                ✅ Total3 does not change
-            ✅ verify that there actually is no loop
-              ✅ loops involve same rule, same entity, same field
-                ✅ redefine the transitive execution of business rules with the state monad
-                  ✅ define the state monad
-                  ✅ define the state runner
-                  ✅ restructure the transitive execution in terms of the state monad
-                    ✅ accumulate a stack of business rule executions
-                    ✅ accumulate the merged business rule executions
-                    ✅ throw an error with the right loop
-                    ✅ make `addCurrentModifiedFields` more type safe
-                    ✅ we need both `CurrentExecutedRules` and `AllExecutedRules`
-                ✅ show the loop
-              ✅ test with an actual loop
-              ✅ add orthogonal rules on the same entity-set
-                ✅ A, B, ...
-                ✅ alpha, beta, ...
-                ✅ cyrillic variants, ...
-            ✅ replace every `Guid.CreateVersion7` with `CreateVersion7` 
-            ✅ `createIntFieldDescriptor` belongs to _core_
-              ✅ and so does `createRefFieldDescriptor`
-            ✅ add all `XId` field descriptors, and return them in `GetFieldDescriptors
-            ✅ remove `EditPriority`, there is no difference anymore
-            ✅ improve the quality of the description of the various rules for documentation
-            ✅ remove `AsRefs`, only one ref updater is sufficient
-            ✅ EF inside CD, CD inside AB should be created as lookup fields
-            ❌ add `CDs` to `AB`, so not just one
-              ✅ use business rules for field setting
-              ✅ test the conditions, not always `Exists ... true`
-              ✅ introduce .System -> .User as prio, apply it to the set field events
-              ✅ modify all field events to the new structure based on business rule payloads
-              ❌ complete the scenario of multiple CDs
-                ❌ fix the wrong order of processing of events
-                ❌ add `AB_CD` relation entity, remove direct `AB-CD` references
-                  ❌ `AB_CD = { AB_CDId; ABId; CDId; IndexOfCDInAB }`
-                ❌ `Exists ab_cd in AB_CD | ab_cd.ABId = <ab1.ABId> && Exists cd in CD | cd.CDId = ab_cd.CDId |= [cd.EF := <ef1.EFId>]`
-                ❌ the `&&` operator propagates variables from both operands
-                ❌ the `||` operator propagates the intersection of variables with the same type from both operands
-                ❌ `Exists ab in AB | true |= [ab.Total1 := sumBy(Exists ab_cd in AB_CD | ab_cd.ABId = <ab1.ABId> && Exists cd in CD | cd.C + cd.D)]`
-                ❌ `Exists cd = new CD(...) | Exists ab_cd = new AB_CD(<ab1.ABId>, cd.CDId) | true |= []`
-                  ❌ all fields of new entities are marked as modified
-                ❌ `Exists ab_cd1 | ab_cd1.ABId = <ab1.ABId> && ab_cd1.CDId = <cd1.CDId> && Exists ab_cd2 | ab_cd2.ABId = <ab1.ABId> && ab_cd1.CDId = <cd2.CDId> | true |= [ab_cd1.IndexOfCDInAB = 2; ab_cd2.IndexOfCDInAB = 1]`
-            ❌ we don't need `One` anymore, do we? Let's move all to `Multiple`
-            ❌ rename `positions` to `abcd`
-            ❌ add an enum parameter to pick the edit to test
-          ❌ make it production-ready
-            ❌ define the values of AB, CD, etc. as a reflected definition
-            ❌ do not commit the updates to the context immediately, output a set of field value changes
-              ❌ the context becomes a cache of operations
-              ❌ output the applied rules for the visibility/explainability/logging
-              ❌ monadically
-            ❌ expose OpenAPI
-                ❌ https://www.nuget.org/packages/FSharp.SystemTextJson.Swagger
-                ❌ use the dynamic schema internally, but a statically typed `Expr` schema externally
-            ❌ test with 
-              ❌ a few thousands ABs, CDs, EFs
-              ❌ a dozen rules on many field "clusters"
-            ❌ the construction of field descriptors in the schema could be streamlined
-            ❌ the metadata entities belong to the model, not to Ballerina
-            ❌ all rules should be applied on all entities after creation of a new entity
-            ❌ BUG ALERT if translating to production! The Map of events will likely cause events not to be processed in create-order
-            ❌ allow approval, with associated business rules
-            ❌ deal with missing references (GUIDs that do not match an existing entity)
-            ❌ introduce list monad with errors for eval/execute
-              ❌ return useful error messages
-            ❌ the resolution of top-level existentials like `exists ab in AB | ab.ABId = CONSTGUID` should be resolved much faster
-            ❌ implement lazy fields in the schema
-              ❌ this requires a coroutine-mediated protocol
-              ❌ openSession(schema) -> operations | closeSession()
-              ❌ when the schema is fully dynamic, get/update operations work with reflection/`Dynamic` CLR type
-            ❌ consider flipping the relations around, using arrays/maps instead of relations
-            ❌ -----at this point, the prototype can be considered reasonably done and could go live as a microservice-----
-            ❌ the evaluation of existentials with conditions over foreign keys can be ran very quickly with lookup tables
-            ❌ efficiently: with pre-caching of the FREE-VARS of both condition and expression value
-            ❌ enums to strings
-          ❌ PROTOTYPE 2 - DB in PG with CRUD OpenAPI
-            ❌ performance test
-            ❌ add memcache after write operations
-          ❌ -----at this point, the second prototype can be considered reasonably done and could go live as a microservice-----
-          ❌ improve DSL for type-safe business rule and expression definition in F#
-            ❌ group field definitions and entity definitions under anonymous records for aesthetics and scoping in case of multiple fields with the same name in a different entity          
-          ❌ ideally with F#-style domain objects, not C#-style serializable objects
-          ❌ remove every single instance of mutation
-          ❌ separate DB serialization as a different EF package
-            ❌ represent Expr as JSON
-            ❌ represent Expr as a recursive structure looked up with a recursive query
-          ❌ extend the `ABCDEvent` definition to include a processed state and a created time
-          ❌ add an `EventDesc` to `FieldEvent`
-            ❌ useful for pre/post event actions and conditions, it defines that which is passed to co.On plus a pre- and post-condition coroutine
-            ❌ it is polymorphic and distributed over the concrete instances (ie `SetIntField of IntEventDesc`, ...)
-          ❌ define custom rules and make the priority of assignments actually count
-          ❌ persist the entities to Elasticsearch
-          ❌ persist the entities to Postgres
-            ❌ enums to strings
-            ❌ json fields, in particular metadata, expr, assignment
-        ❌ DocEvents = SenderEvents | ReceiverEvents | BankDetailEvents
-          ❌ further split by field types
-        ❌ InvoiceEvents = DocEvents | InvoiceEvents
-          ❌ InvoiceEvents = PositionEvents | PositionsEvents
-            ❌ SetPositionsVatIds
-            ❌ further split by field types
-        ❌ OrderEvents = DocEvents (| OrderEvents == ())
-        ❌ Document = Invoice | Order
-          ❌ Post Invoice with InvoiceEvent
-          ❌ Post Order with OrderEvent
-          ❌ GET Invoice (pretend it's only one)
-          ❌ GET Order (pretend it's only one)
-        ❌ _generate_ events from (annotated) static methods or annotations on attributes with dependency on CRUD repository
-        ❌ link event handlers to business rules and value defaults
-        ❌ After N edits, push to the frontend a request in the form of an event for the creation of a custom model or similar
-        ✅ add OpenAPI support, see if we get luckier with C# unions and inheritance
-      ❌ _generate_ translation of models into ef and OpenAPI
-        ❌ records
-        ❌ unions
-        ❌ with recursion
-        ❌ with serialization attributes
-      ❌ endpoint generation
-        ❌ extend chains
-        ❌ filter parameter (over extended entity)
-        ❌ sorting parameter (over extended entity)
-        ❌ security model of generated APIs from queries: allow, restrict
-        ❌ security model of extension
-          ❌ define User' vault data and prevent anyone from extending along User -> Vault unless they are the user themselves
-        ❌ control creation of extended entities (AB inside ABEvent for example)
-      ❌ low-code platform
-        ❌ business rules (of which defaultings are a data-driven instance) should be just data 
-        ❌ workflow manager should be just data-driven coroutines
-        ❌ statements and expressions evaluator
-        ❌ data sync'er and mapper
-      ✅ remove all the unused extra dependencies
-      ✅ coroutine runtime engine
-      ✅ fix stack overflow (flatten .Then)
-      ✅ run in memory
-      ✅ serialize to disk with JSON serializer
-      ❌ dbContext factory might fix the ugly `wait 0`
-      ❌ update state (serialized together with coroutine in DB)
-      ❌ update events
-      ❌ test user registration coroutine, create events with testing endpoint
-      ❌ run with intelligent suspensions
+        ✅ "blogging" context -> BallerinaContext
+        ✅ implement Repeat as a reified construct
+        ✅ AB jobs can be separated fully to the AB module with minimal dependencies
+        ❌ refactor `async` to `task`
+        ❌ BUG ALERT if translating to production! The Map of events will likely cause events not to be processed in create-order
+        ❌ test Spawn
+          ❌ remove ugly starting logic, everything is bootstrapped by the endpoint that pushes the CreateABEvent
+          ❌ create ABs from event
+          ❌ when the AB coroutine ends, it is respawned (migration-friendly strategy)
+        ✅ restore Async in Crud, run with Await
+        ✅ dependent on repo's for AB and ABEvent
+        ✅ co.On for ABEvent should check that the ABId matches or every ABEvent will match every co.On
+        ✅ test Any
+      ✅ project refactoring
+        ✅ move all the AB-related logic to the right project
+        ✅ rename grandeomega to web
+    ❌ define sample Positions API and types
+      ❌ define expr evaluator
+        ✅ basic eval expr
+        ✅ basic eval assignment
+        ❌ cleanup
+          ✅ the schema definition should be in a separate file than the context
+          ✅ allFields should be the flattening of allFields of each entity
+          ✅ move the various merge* utilities to extension methods
+          ✅ rename `XCount`, etc. to just `X`
+          ❌ the field descriptor definitions should use the operations from other field descriptors, and not perform any comparisons to entity descriptors Ids
+            ✅ Get should be based on Lookup
+            ❌ AB and CD should be based on generic containers of fields and nested entities, not real types
+              ✅ the lookup of fields from ABs and CDs in the definition of the AB/CD entity schema should use the field definition lookup recursively
+              ❌ the assignment (`Update`) of fields to ABs and CDs in the definition of the AB/CD entity schema should use the field definition assignment recursively
+          ❌ there are various places where we assume `One entityId`, is this always reasonable?
+            ❌ in particular, `Expr::execute` does not take into account more than one field lookup on the assigned variable, extend
+      ❌ testing scenario
+        ❌ add `CDs` to `AB`, so not just one
+          ✅ use business rules for field setting
+          ✅ test the conditions, not always `Exists ... true`
+          ✅ introduce .System -> .User as prio, apply it to the set field events
+          ✅ modify all field events to the new structure based on business rule payloads
+          ❌ complete the scenario of multiple CDs
+            ❌ fix the wrong order of processing of events
+            ❌ add `AB_CD` relation entity, remove direct `AB-CD` references
+              ❌ `AB_CD = { AB_CDId; ABId; CDId; IndexOfCDInAB }`
+            ❌ `Exists ab_cd in AB_CD | ab_cd.ABId = <ab1.ABId> && Exists cd in CD | cd.CDId = ab_cd.CDId |= [cd.EF := <ef1.EFId>]`
+            ❌ the `&&` operator propagates variables from both operands
+            ❌ the `||` operator propagates the intersection of variables with the same type from both operands
+            ❌ `Exists ab in AB | true |= [ab.Total1 := sumBy(Exists ab_cd in AB_CD | ab_cd.ABId = <ab1.ABId> && Exists cd in CD | cd.C + cd.D)]`
+            ❌ `Exists cd = new CD(...) | Exists ab_cd = new AB_CD(<ab1.ABId>, cd.CDId) | true |= []`
+              ❌ all fields of new entities are marked as modified
+            ❌ `Exists ab_cd1 | ab_cd1.ABId = <ab1.ABId> && ab_cd1.CDId = <cd1.CDId> && Exists ab_cd2 | ab_cd2.ABId = <ab1.ABId> && ab_cd1.CDId = <cd2.CDId> | true |= [ab_cd1.IndexOfCDInAB = 2; ab_cd2.IndexOfCDInAB = 1]`
+        ❌ we don't need `One` anymore, do we? Let's move all to `Multiple`
+        ❌ rename `positions` to `abcd`
+        ❌ add an enum parameter to pick the edit to test
+      ❌ make it production-ready
+        ❌ define the values of AB, CD, etc. as a reflected definition
+        ❌ do not commit the updates to the context immediately, output a set of field value changes
+          ❌ the context becomes a cache of operations
+          ❌ output the applied rules for the visibility/explainability/logging
+          ❌ monadically
+        ❌ expose OpenAPI
+            ❌ https://www.nuget.org/packages/FSharp.SystemTextJson.Swagger
+            ❌ use the dynamic schema internally, but a statically typed `Expr` schema externally
+        ❌ test with 
+          ❌ a few thousands ABs, CDs, EFs
+          ❌ a dozen rules on many field "clusters"
+        ❌ the construction of field descriptors in the schema could be streamlined
+        ❌ the metadata entities belong to the model, not to Ballerina
+        ❌ all rules should be applied on all entities after creation of a new entity
+        ❌ BUG ALERT if translating to production! The Map of events will likely cause events not to be processed in create-order
+        ❌ allow approval, with associated business rules
+        ❌ deal with missing references (GUIDs that do not match an existing entity)
+        ❌ introduce list monad with errors for eval/execute
+          ❌ return useful error messages
+        ❌ the resolution of top-level existentials like `exists ab in AB | ab.ABId = CONSTGUID` should be resolved much faster
+        ❌ implement lazy fields in the schema
+          ❌ this requires a coroutine-mediated protocol
+          ❌ openSession(schema) -> operations | closeSession()
+          ❌ when the schema is fully dynamic, get/update operations work with reflection/`Dynamic` CLR type
+        ❌ consider flipping the relations around, using arrays/maps instead of relations
+        ❌ -----at this point, the prototype can be considered reasonably done and could go live as a microservice-----
+        ❌ the evaluation of existentials with conditions over foreign keys can be ran very quickly with lookup tables
+        ❌ efficiently: with pre-caching of the FREE-VARS of both condition and expression value
+        ❌ enums to strings
+      ❌ PROTOTYPE 2 - DB in PG with CRUD OpenAPI
+        ❌ performance test
+        ❌ add memcache after write operations
+      ❌ -----at this point, the second prototype can be considered reasonably done and could go live as a microservice-----
+      ❌ improve DSL for type-safe business rule and expression definition in F#
+        ❌ group field definitions and entity definitions under anonymous records for aesthetics and scoping in case of multiple fields with the same name in a different entity          
+      ❌ ideally with F#-style domain objects, not C#-style serializable objects
+      ❌ remove every single instance of mutation
+      ❌ separate DB serialization as a different EF package
+        ❌ represent Expr as JSON
+        ❌ represent Expr as a recursive structure looked up with a recursive query
+      ❌ extend the `ABCDEvent` definition to include a processed state and a created time
+      ❌ add an `EventDesc` to `FieldEvent`
+        ❌ useful for pre/post event actions and conditions, it defines that which is passed to co.On plus a pre- and post-condition coroutine
+        ❌ it is polymorphic and distributed over the concrete instances (ie `SetIntField of IntEventDesc`, ...)
+      ❌ define custom rules and make the priority of assignments actually count
+      ❌ persist the entities to Elasticsearch
+      ❌ persist the entities to Postgres
+        ❌ enums to strings
+        ❌ json fields, in particular metadata, expr, assignment
+      ✅ add OpenAPI support, see if we get luckier with C# unions and inheritance
+    ❌ _generate_ translation of models into ef and OpenAPI
+      ❌ records
+      ❌ unions
+      ❌ with recursion
+      ❌ with serialization attributes
+    ❌ endpoint generation
+      ❌ extend chains
+      ❌ filter parameter (over extended entity)
+      ❌ sorting parameter (over extended entity)
+      ❌ security model of generated APIs from queries: allow, restrict
+      ❌ security model of extension
+        ❌ define User' vault data and prevent anyone from extending along User -> Vault unless they are the user themselves
+      ❌ control creation of extended entities (AB inside ABEvent for example)
+    ❌ low-code platform
+      ❌ business rules (of which defaultings are a data-driven instance) should be just data 
+      ❌ workflow manager should be just data-driven coroutines
+      ❌ statements and expressions evaluator
+      ❌ data sync'er and mapper
+    ✅ remove all the unused extra dependencies
+    ✅ coroutine runtime engine
+    ✅ fix stack overflow (flatten .Then)
+    ✅ run in memory
+    ✅ serialize to disk with JSON serializer
+    ❌ dbContext factory might fix the ugly `wait 0`
+    ❌ update state (serialized together with coroutine in DB)
+    ❌ update events
+    ❌ test user registration coroutine, create events with testing endpoint
+    ❌ run with intelligent suspensions
   ✅ blog.fsproj
   ✅ postgres.csproj (this is the migrations project)
     ✅ dbContext (in C#)

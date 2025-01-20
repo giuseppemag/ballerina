@@ -5,39 +5,16 @@ namespace grandeomega2
 
 open System
 open System.CommandLine
-open System.Collections.Generic
-open System.IO
-open System.Linq
-open System.Threading.Tasks
-open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.Hosting
-open Microsoft.AspNetCore.HttpsPolicy
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.DependencyInjection
-open Microsoft.Extensions.Hosting
-open Microsoft.Extensions.Logging
-open Microsoft.Extensions.Options
-open Ballerina.Coroutines
-open Ballerina.CRUD
 open Migrations
 open Microsoft.EntityFrameworkCore
-open MBrace.FsPickler
-open MBrace.FsPickler.Json
-open Microsoft.AspNetCore.Mvc
 open Microsoft.AspNetCore.Http.Json
-open System.Text.Json
 open System.Text.Json.Serialization
-open Ballerina.Fun
-open Ballerina.Queries
-open absample.efmodels
 open absample.repositories
 open absample.endpoints
-open Microsoft.OpenApi.Models
-open System.Threading
 open positions.model
-open System.Text.Json
-open System.Text.Json.Serialization
 open FSharp.SystemTextJson.Swagger
 
 module Program =
