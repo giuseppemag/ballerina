@@ -55,7 +55,8 @@ export const PersonFormsConfig = {
         "cityByDepartment": { fun: "Map", args: [{fun: "SingleSelection", args: ["DepartmentRef"]}, {fun: "SingleSelection", args: ["CityRef"]}] },
         "shoeColours": {fun: "Multiselection", args: ["ColorRef"]},
         "friendsBirthdays": { fun: "Map", args: ["string", "Date"] },
-        "holidays": {fun: "List", args: ["Date"]}
+        "holidays": {fun: "List", args: ["Date"]},
+        "interestsToString": { fun: "Map", args: [{fun: "SingleSelection", args: ["InterestRef"]}, "string"] },
       }
     }
   },
@@ -149,8 +150,8 @@ export const PersonFormsConfig = {
         "interests": {
           label: "interests",
           renderer: "defaultEnumMultiselect", options: "interests",
-          visible: 
-          { "kind": "leaf", "operation": "field", "arguments": { "location": "local", "field": "subscribeToNewsletter", "value": true } },
+          visible: { "kind": "true" },
+          // visible: { "kind": "leaf", "operation": "field", "arguments": { "location": "local", "field": "subscribeToNewsletter", "value": true } },
         },
         "departments": { 
           label: "departments",
@@ -209,7 +210,14 @@ export const PersonFormsConfig = {
             elementLabel: "holiday",
             elementRenderer: "defaultDate",
             visible: { "kind": "true" }
-        }
+        },
+        "interestsToString": {
+            label: "interests to string",
+            renderer: "defaultMap",
+            keyRenderer:{ label: "interest", renderer: "defaultEnum", options: "interests", visible: { "kind": "true" } },
+            valueRenderer:{ label: "string", renderer: "defaultString", visible: { "kind": "true" } },
+            visible: { "kind": "true" }
+        }, 
       },
       "tabs": {
         "main": {
@@ -221,7 +229,7 @@ export const PersonFormsConfig = {
             },
             "mailing": {
               "groups": {
-                "main": ["subscribeToNewsletter", "interests", "favoriteColor"],
+                "main": ["subscribeToNewsletter", "interests", "favoriteColor", "interestsToString"],
               }
             },
             "addresses": {

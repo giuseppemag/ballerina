@@ -7,7 +7,7 @@ import { PersonContainerFormView, PersonNestedContainerFormView, PersonShowFormS
 import { PersonFormsConfig, PersonFromConfigApis, PersonConfigFormsLeafPredicates, PersonConfig, PersonFormState, Person } from "playground-core";
 import { PersonFieldViews } from "./domains/person-from-config/views/field-views";
 import { PersonForm } from "./domains/person/template";
-import { fieldTypeConverters, modifiedDebugFieldTypeConverters } from "./domains/person/apis/field-converters";
+import { fieldTypeConverters } from "./domains/person/apis/field-converters";
 import { categoryForm, CategoryState, PersonFormInjectedTypes } from "./domains/person-from-config/injected-forms/category";
 
 const ShowFormsParsingErrors = (parsedFormsConfig: FormParsingResult) =>
@@ -30,7 +30,6 @@ export const FormsApp = (props: {}) => {
 	// const [personConfigState, setPersonConfigState] = useState(PersonConfig.Default())
 
 	const [renderParserState, renderForms] = [true, true]
-	const debugFieldTypeConverters = false
 	const logState = true
 
 	logState && console.log({
@@ -41,7 +40,7 @@ export const FormsApp = (props: {}) => {
 	if(configFormsParser.formsConfig.sync.kind == "loaded" && 
 		configFormsParser.formsConfig.sync.value.kind == "r"
 	) {
-		return 		<ol>{configFormsParser.formsConfig.sync.value.value.map(_ => <li>{_}</li>)}</ol>
+		return <ol>{configFormsParser.formsConfig.sync.value.value.map(_ => <li>{_}</li>)}</ol>
 	}
 
 
@@ -111,7 +110,7 @@ export const FormsApp = (props: {}) => {
 									context={{
 										...configFormsParser,
 										containerFormView: PersonContainerFormView,
-										fieldTypeConverters: debugFieldTypeConverters ? modifiedDebugFieldTypeConverters : fieldTypeConverters,
+										fieldTypeConverters: fieldTypeConverters,
 										nestedContainerFormView: PersonNestedContainerFormView,
 										fieldViews: PersonFieldViews,
 										infiniteStreamSources: PersonFromConfigApis.streamApis,
@@ -153,6 +152,7 @@ export const FormsApp = (props: {}) => {
 																console.log(`Successfully submitted`)
 															},
 															error: (_) => {
+																console.log(_)
 																setFormSuccess(false)
 																setFormErrors(_)
 																console.log(`Error submitting new person ${JSON.stringify(_)}`)
@@ -179,6 +179,8 @@ export const FormsApp = (props: {}) => {
 														{formErrors.map((_, i) => <li key={i}>{_}</li>)}
 													</ul>
 												</div>}
+												{formSuccess && <div style={{ border: "2px solid green" }}>
+												Form successfully submitted</div>}
 												<FormRunnerTemplate
 													context={{
 														...configFormsParser,
@@ -190,9 +192,14 @@ export const FormsApp = (props: {}) => {
 															submitButtonWrapper: EditPersonSubmitButtonWrapper,
 															apiHandlers: {
 																success: (_) => {
+																	setFormSuccess(true)
+																	setFormErrors(List())
 																	console.log({ type: 'success', 'data': _ })
 																},
 																error: (_) => {
+																	console.log(_)
+																	setFormSuccess(false)
+																	setFormErrors(_)
 																	console.log({ type: 'error', 'msg': _ })
 																},
 															},
