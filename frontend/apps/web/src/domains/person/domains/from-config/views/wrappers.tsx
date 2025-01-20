@@ -89,7 +89,7 @@ export const CreatePersonSubmitButtonWrapper: CreateFormView<any, any> = Templat
 export const PersonShowFormSetupErrors = (validatedFormsConfig: FormConfigValidationAndParseResult, parsedFormsConfig: FormParsingResult) => ({
   form: Template.Default((props: any) =>
     <>
-      {validatedFormsConfig.kind == "r" && JSON.stringify(validatedFormsConfig.value)}
+      {validatedFormsConfig.kind == "errors" && JSON.stringify(validatedFormsConfig.errors)}
       {parsedFormsConfig.kind == "r" && JSON.stringify(parsedFormsConfig.value)}
     </>),
     initialState: unit,

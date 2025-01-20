@@ -478,7 +478,7 @@ export const parseForms =
             return fromAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters, false, injectedPrimitives)(raw)
           }),
           update: (id: any, parsed: any) => {
-            return entityApis.update(launcher.api)(id, parsed)  
+            return parsed.kind =="errors" ? Promise.reject(parsed.errors) : entityApis.update(launcher.api)(id, parsed.value)  
           }
         }
         parsedLaunchers.edit = parsedLaunchers.edit.set(

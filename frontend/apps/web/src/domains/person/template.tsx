@@ -27,18 +27,18 @@ export const PersonForm = PersonFormBuilder.template({
   departments: InfiniteMultiselectDropdownForm<Department, PersonFormPredicateContext & FormLabel, Unit>(_ => PromiseRepo.Default.mock(() => [...(_.count() <= 0 ? ["please select at least one department"] : [])]))
     .withView(PersonFieldViews.InfiniteStreamMultiselectView())
     .mapContext(_ => ({ ..._, label: "department" })),
-  address: ListForm<Address, AddressFormState, PersonFormPredicateContext & FormLabel, Unit>(
-    { Default:() => ({ ...AddressFormState.Default(), ...SharedFormState.Default() })}, 
-    { Default:() => Address.Default("", 0, CollectionSelection().Default.right("no selection")) },
-    AddressForm
-    .withView(AddressView)
-    .mapContext(_ => ({
-      ..._,
-      visibleFields: Address.Operations.VisibleFields,
-      disabledFields: OrderedMap()
-    })),
-     _ => PromiseRepo.Default.mock(() => []))
-      .withView(PersonFieldViews.ListViews.defaultList())
-      .mapContext(_ => ({..._, label:"address"}))
+  // address: ListForm<Address, AddressFormState, PersonFormPredicateContext & FormLabel, Unit>(
+  //   { Default:() => ({ ...AddressFormState.Default(), ...SharedFormState.Default() })}, 
+  //   { Default:() => Address.Default("", 0, CollectionSelection().Default.right("no selection")) },
+  //   AddressForm
+  //   .withView(AddressView)
+  //   .mapContext(_ => ({
+  //     ..._,
+  //     visibleFields: Address.Operations.VisibleFields,
+  //     disabledFields: OrderedMap()
+  //   })),
+  //    _ => PromiseRepo.Default.mock(() => []))
+  //     .withView(PersonFieldViews.ListViews.defaultList())
+  //     .mapContext(_ => ({..._, label:"address"}))
 }, PersonApi.validate)
 
