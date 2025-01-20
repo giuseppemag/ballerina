@@ -1,3 +1,4 @@
+import { List } from "immutable"
 import { FormRunnerErrorsTemplate, id, Mapping, replaceWith, Sum, unit } from "../../../../../main"
 import { AsyncState } from "../../../../async/state"
 import { CoTypedFactory } from "../../../../coroutines/builder"
@@ -27,7 +28,7 @@ export const FormRunnerLoader = () => {
               return FormRunnerState.Updaters.form(
                 replaceWith(
                   Sum.Default.left(
-                    FormRunnerErrorsTemplate(Sum.Default.right([`Cannot find form '${formRef.formName}'`]))
+                    FormRunnerErrorsTemplate(Sum.Default.right(List([`Cannot find form '${formRef.formName}'`])))
                   )
                 )
               )
@@ -47,7 +48,7 @@ export const FormRunnerLoader = () => {
               return FormRunnerState.Updaters.form(
                 replaceWith(
                   Sum.Default.left(
-                    FormRunnerErrorsTemplate(Sum.Default.right([`Cannot find form '${formRef.formName}'`]))
+                    FormRunnerErrorsTemplate(Sum.Default.right(List([`Cannot find form '${formRef.formName}'`])))
                   )
                 )
               )
@@ -67,7 +68,7 @@ export const FormRunnerLoader = () => {
               return FormRunnerState.Updaters.form(
                 replaceWith(
                   Sum.Default.left(
-                    FormRunnerErrorsTemplate(Sum.Default.right([`Cannot find form '${formRef.formName}'`]))
+                    FormRunnerErrorsTemplate(Sum.Default.right(List([`Cannot find form '${formRef.formName}'`])))
                   )
                 )
               )

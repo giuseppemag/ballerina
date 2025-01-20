@@ -1,5 +1,5 @@
 import { List, Map, OrderedMap, OrderedSet, Set } from "immutable";
-import { BoolExpr, Unit, Guid, LeafPredicatesEvaluators, Predicate, FormsConfig, BuiltIns, FormDef, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, SharedFormState, CreateFormState, Entity, EditFormContext, CreateFormContext, MappedEntityFormTemplate, Mapping, Synchronized, simpleUpdater, TypeName, ListFieldState, ListForm, TypeDefinition, BuiltInApiConverters, defaultValue, fromAPIRawValue, toAPIRawValue, EditFormForeignMutationsExpected, MapFieldState, MapForm, Type, FieldConfig, Base64FileForm, SecretForm, InjectedPrimitives, Injectables, ApiConverters, Maybe } from "../../../../main";
+import { BoolExpr, Unit, Guid, LeafPredicatesEvaluators, Predicate, FormsConfig, BuiltIns, FormDef, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, SharedFormState, CreateFormState, Entity, EditFormContext, CreateFormContext, MappedEntityFormTemplate, Mapping, Synchronized, simpleUpdater, TypeName, ListFieldState, ListForm, TypeDefinition, BuiltInApiConverters, defaultValue, fromAPIRawValue, toAPIRawValue, EditFormForeignMutationsExpected, MapFieldState, MapForm, Type, FieldConfig, Base64FileForm, SecretForm, InjectedPrimitives, Injectables, ApiConverters, Maybe, FormValidationError, FormConfigValidationAndParseResult } from "../../../../main";
 import { Value } from "../../../value/state";
 import { CollectionReference } from "../collection/domains/reference/state";
 import { CollectionSelection } from "../collection/domains/selection/state";
@@ -220,21 +220,12 @@ export const ParseForm = <T,>(
       } else {
         if (viewType == "map") {
           const field = type.fields.get(fieldName)!
-
-          const parseType = (t:any) : TypeName | Type | undefined => {
-            if (typeof t == "string") return t
-            if ("fun" in t && "args" in t && Array.isArray(t.args)) {
-              return { kind:"application", value:t.fun, args:t.args }
-            }
-            return undefined
-          }
-
-          const [keyType, valueType] = field.kind == "application" ? [parseType(field.args[0]), parseType(field.args[1])] : (() => {
-            throw `error processing field type ${JSON.stringify(field)} of ${fieldName}`
-          })()
-          if (!keyType || !valueType) {
+          // TODO - reconsider error handling approach here in general
+          if(field.kind != "application") {
             throw `error processing field type ${JSON.stringify(field)} of ${fieldName}`
           }
+
+          const [keyType, valueType] =  [field.args[0], field.args[1]]
           const initialKeyValue = defaultValue(keyType)
           const initialValueValue = defaultValue(valueType)
           const getFormAndInitialState = (elementRenderers:any, rendererName:any, fieldConfig:FieldConfig) => {
@@ -350,7 +341,7 @@ export type ParsedLaunchers = {
     }>
 }
 export type ParsedForms = Map<string, ParsedForm & { form: EntityFormTemplate<any, any, any, any, any> }>
-export type FormParsingErrors = Array<string>
+export type FormParsingErrors = List<string>
 export type FormParsingResult = Sum<ParsedLaunchers, FormParsingErrors>
 export type StreamName = string
 export type InfiniteStreamSources = BasicFun<StreamName, SearchableInfiniteStreamState<CollectionReference>["getChunk"]>
@@ -379,7 +370,7 @@ export const parseForms =
     leafPredicates: LeafPredicates) =>
     (formsConfig: FormsConfig):
       FormParsingResult => {
-      let errors: FormParsingErrors = []
+      let errors: FormParsingErrors = List()
       let seen = Set<string>()
       let formProcessingOrder = OrderedSet<string>()
 
@@ -474,7 +465,7 @@ export const parseForms =
         }
       })
 
-      if (errors.length > 0) {
+      if (errors.size > 0) {
         return Sum.Default.right(errors)
       }
 
@@ -565,7 +556,7 @@ export const parseForms =
         )
       })
 
-      if (errors.length > 0) {
+      if (errors.size > 0) {
         return Sum.Default.right(errors)
       }
       return Sum.Default.left(parsedLaunchers)
