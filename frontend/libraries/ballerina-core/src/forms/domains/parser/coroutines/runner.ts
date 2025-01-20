@@ -12,9 +12,9 @@ export const LoadValidateAndParseFormsConfig = <T extends {[key in keyof T] : {t
     const formsConfig = replaceKeywords(rawFormsConfig, "from api")
     const builtIns = builtInsFromFieldViews(current.fieldViews)
     const injectedPrimitives = current.injectedPrimitives ? injectablesFromFieldViews(current.fieldViews, current.injectedPrimitives) : undefined
-    const validationResult = FormsConfig.Default.validateAndParseAPIResponse(builtIns, current.fieldTypeConverters, injectedPrimitives)(formsConfig)
-    if (validationResult.kind == "r")
-      return Sum.Default.right(validationResult.value)
+    const validationResult = FormsConfig.Default.validateAndParseFormConfig(builtIns, current.fieldTypeConverters, injectedPrimitives)(formsConfig)
+    if (validationResult.kind == "errors")
+      return Sum.Default.right(validationResult.errors)
     return parseForms(
       builtIns,
       injectedPrimitives,

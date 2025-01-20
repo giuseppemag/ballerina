@@ -152,15 +152,6 @@ export const defaultValue = <T>(types: Map<TypeName, TypeDefinition>, builtIns: 
   }
 }
 
-
-const parseTypeIShouldBePartOfFormValidation = (t:any) : TypeName | Type => {
-  if (typeof t == "string") return t
-  if ("fun" in t && "args" in t && Array.isArray(t.args)) {
-    return { kind:"application", value:t.fun, args:t.args }
-  }
-  return null!
-}
-
 export const fromAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, builtIns: BuiltIns, converters: BuiltInApiConverters, isKeywordsReplaced: boolean = false, injectedPrimitives?: InjectedPrimitives<T>) => (raw: any): any => {
   // alert(JSON.stringify(t))
   if (raw == undefined) {
@@ -195,26 +186,27 @@ export const fromAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>
       return result
     }
     if (t.value == "Map" && t.args.length == 2) {
+      console.log("t", t)
       let result = converters[t.value].fromAPIRawValue(obj)
-      let t_args = t.args.map(parseTypeIShouldBePartOfFormValidation)
-      const isKeyPrimitive = PrimitiveTypes.some(_ => _ == t.args[0]) || injectedPrimitives?.injectedPrimitives.has(t.args[0] as keyof T) 
-      const isValuePrimitive = PrimitiveTypes.some(_ => _ == t.args[1]) || injectedPrimitives?.injectedPrimitives.has(t.args[1] as keyof T) 
+
+      const isKeyPrimitive = typeof t.args[0] == "string" && PrimitiveTypes.some(_ => _ == t.args[0]) || injectedPrimitives?.injectedPrimitives.has(t.args[0] as keyof T) 
+      const isValuePrimitive = typeof t.args[1] == "string" && PrimitiveTypes.some(_ => _ == t.args[1]) || injectedPrimitives?.injectedPrimitives.has(t.args[1] as keyof T) 
       result = result.map(keyValue => ([
         fromAPIRawValue(
-          typeof t_args[0] == "string" ? 
+          typeof t.args[0] == "string" ? 
             isKeyPrimitive ?
-              { kind: "primitive", value: t_args[0] as PrimitiveType }
-            : { kind: "lookup", name: t_args[0] }
+              { kind: "primitive", value: t.args[0] as PrimitiveType }
+            : { kind: "lookup", name: t.args[0] }
           :
-            t_args[0], 
+            t.args[0], 
             types, builtIns, converters, true, injectedPrimitives)(keyValue[0]),
         fromAPIRawValue(
-          typeof t_args[1] == "string" ? 
+          typeof t.args[1] == "string" ? 
             isValuePrimitive ?
-              { kind: "primitive", value: t_args[1] as PrimitiveType }
-            : { kind: "lookup", name: t_args[1] }
+              { kind: "primitive", value: t.args[1] as PrimitiveType }
+            : { kind: "lookup", name: t.args[1] }
           :
-            t_args[1], 
+            t.args[1], 
             types, builtIns, converters, true, injectedPrimitives)(keyValue[1]),
       ])
       )
@@ -267,16 +259,15 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
       const [converterResult, toIdentiferAndDisplayName] = converters[t.value].toAPIRawValue([obj, formState.modifiedByUser])
       const isKeyPrimitive = PrimitiveTypes.some(_ => _ == t.args[0]) || injectedPrimitives?.injectedPrimitives.has(t.args[0] as keyof T)
       const isValuePrimitive = PrimitiveTypes.some(_ => _ == t.args[1]) || injectedPrimitives?.injectedPrimitives.has(t.args[1] as keyof T)
-      let t_args = t.args.map(parseTypeIShouldBePartOfFormValidation)
 
-      const parsedMap: List<ValueOrErrors<{key: any, value: any}, string>> = converterResult.map((keyValue: any, index: number) => {
+      const parsedMap: List<ValueOrErrors<{key: ValueOrErrors<any, any>, value: ValueOrErrors<any, any>}, any>> = converterResult.map((keyValue: any, index: number) => {
         const possiblyUndefinedKey = toAPIRawValue(
-          typeof t_args[0] == "string" ? 
+          typeof t.args[0] == "string" ? 
             isKeyPrimitive ?
-              { kind: "primitive", value: t_args[0] as PrimitiveType }
-            : { kind: "lookup", name: t_args[0] }
+              { kind: "primitive", value: t.args[0] as PrimitiveType }
+            : { kind: "lookup", name: t.args[0] }
           :
-            t_args[0], 
+            t.args[0], 
             types, builtIns, converters, true, injectedPrimitives)(keyValue[0], formState.elementFormStates.get(index).KeyFormState
           )
 
@@ -287,13 +278,13 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
             return possiblyUndefinedKey
           })()
 
-          const value: ValueOrErrors<any, string> = toAPIRawValue(
-            typeof t_args[1] == "string" ? 
+          const value = toAPIRawValue(
+            typeof t.args[1] == "string" ? 
               isValuePrimitive ?
-                { kind: "primitive", value: t_args[1] as PrimitiveType }
-              : { kind: "lookup", name: t_args[1] }
+                { kind: "primitive", value: t.args[1] as PrimitiveType }
+              : { kind: "lookup", name: t.args[1] }
             :
-              t_args[1], 
+              t.args[1], 
             types, builtIns, converters, true, injectedPrimitives)(keyValue[1], formState.elementFormStates.get(index).ValueFormState)
 
           return key.kind == "errors" || value.kind == "errors" ? ValueOrErrors.Operations.all(List([key, value]))  : ValueOrErrors.Default.return({key: key.value, value: value.value})

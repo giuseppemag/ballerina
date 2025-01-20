@@ -1,6 +1,7 @@
 import { List } from "immutable";
 import { BasicFun, BasicFun2, Fun } from "../../../fun/state";
 import { Value } from "../../../value/state";
+import { Updater } from "../../../../main";
 
 export type ValueOrErrors<v, e> = (
   | (Value<v> & { kind: "value" })
@@ -17,7 +18,7 @@ export type ValueOrErrors<v, e> = (
   flatten: <a, e>(
     this: ValueOrErrors<ValueOrErrors<a, e>, e>
   ) => ValueOrErrors<a, e>;
-  then: <a, b, e>(
+  bind: <a, b, e>(
     this: ValueOrErrors<a, e>,
     k: BasicFun<a, ValueOrErrors<b, e>>
   ) => ValueOrErrors<b, e>;
@@ -53,7 +54,7 @@ const operations = {
       return this.value;
     }
   },
-  then: function <a, b, e>(
+  bind: function <a, b, e>(
     this: ValueOrErrors<a, e>,
     k: BasicFun<a, ValueOrErrors<b, e>>
   ): ValueOrErrors<b, e> {
