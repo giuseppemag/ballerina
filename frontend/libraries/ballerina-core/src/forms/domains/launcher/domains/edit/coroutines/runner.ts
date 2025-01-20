@@ -37,15 +37,27 @@ export const editFormRunner = <E, FS>() => {
           EditFormState<E, FS>().Updaters.Template.toUnchecked()
         ),
         Debounce<Synchronized<Unit, ApiErrors>, EditFormWritableState<E, FS>>(
-          Synchronize<Unit, ApiErrors, EditFormWritableState<E, FS>>(
-            (_) =>
-              current.entity.sync.kind == "loaded"
-                ? current.api.update(current.entityId, current.entity.sync.value,  current.formState)
-                : Promise.resolve([]),
-            (_) => "transient failure",
-            5,
-            50
-          ),
+          (() => {
+            if(current.entity.sync.kind != "loaded") return Synchronize<Unit, ApiErrors, EditFormWritableState<E, FS>>(
+              (_) => Promise.resolve([]),
+              (_) => "transient failure",
+              5,
+              50
+            )
+            const parsed = current.parser(current.entity.sync.value,  current.formState)
+
+            return Synchronize<Unit, ApiErrors, EditFormWritableState<E, FS>>(
+              (_) =>
+                { 
+                  if(parsed.kind == "errors") return Promise.reject(parsed.errors)
+                  return current.api.update(current.entityId, parsed)
+                },
+              (_) => "transient failure",
+              parsed.kind == "errors" ? 1 : 5,
+              50
+            )
+          })(),
+
           15
         ).embed(
           (_) => ({ ..._, ..._.apiRunner }),
@@ -55,7 +67,9 @@ export const editFormRunner = <E, FS>() => {
           EditFormWritableState<E, FS>,
           EditFormContext<E, FS>,
           ApiErrors
-        >((_) => _.apiRunner.sync, {
+        >((_) => _.apiRunner.sync,
+        
+        {
           handleSuccess: current.apiHandlers?.success,
           handleError: current.apiHandlers?.error,
         }),

@@ -176,6 +176,7 @@ export const fromAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>
       return result
     }
     if (t.value == "List" && t.args.length == 1) {
+      console.log(t)
       let result = converters[t.value].fromAPIRawValue(obj)
       const isPrimitive = PrimitiveTypes.some(_ => _ == t.args[0]) || injectedPrimitives?.injectedPrimitives.has(t.args[0] as keyof T) 
       result = result.map(fromAPIRawValue(
@@ -186,7 +187,6 @@ export const fromAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>
       return result
     }
     if (t.value == "Map" && t.args.length == 2) {
-      console.log("t", t)
       let result = converters[t.value].fromAPIRawValue(obj)
 
       const isKeyPrimitive = typeof t.args[0] == "string" && PrimitiveTypes.some(_ => _ == t.args[0]) || injectedPrimitives?.injectedPrimitives.has(t.args[0] as keyof T) 
@@ -293,9 +293,6 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
       
       const nonUniqueKeyErrors = parsedMap.filter(_ => _.kind == "value").reduce((acc, _) => { 
         const [id, displayName] = toIdentiferAndDisplayName(_.value.key)
-        console.log('in')
-        console.log(toIdentiferAndDisplayName(_.value.key))
-        console.log(id, displayName)
         acc.ids.contains(id) ? acc.errors = acc.errors.push(ValueOrErrors.Default.throw(List([`Keys in the map are not unique: ${displayName}`]))) : acc.ids = acc.ids.push(id)
         return acc
       }, {ids: List<string>(), errors: List<ValueOrErrors<any, string>>()}).errors

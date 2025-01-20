@@ -40,7 +40,7 @@ export const FormsApp = (props: {}) => {
 	if(configFormsParser.formsConfig.sync.kind == "loaded" && 
 		configFormsParser.formsConfig.sync.value.kind == "r"
 	) {
-		return 		<ol>{configFormsParser.formsConfig.sync.value.value.map(_ => <li>{_}</li>)}</ol>
+		return <ol>{configFormsParser.formsConfig.sync.value.value.map(_ => <li>{_}</li>)}</ol>
 	}
 
 
@@ -152,6 +152,7 @@ export const FormsApp = (props: {}) => {
 																console.log(`Successfully submitted`)
 															},
 															error: (_) => {
+																console.log(_)
 																setFormSuccess(false)
 																setFormErrors(_)
 																console.log(`Error submitting new person ${JSON.stringify(_)}`)
@@ -178,6 +179,8 @@ export const FormsApp = (props: {}) => {
 														{formErrors.map((_, i) => <li key={i}>{_}</li>)}
 													</ul>
 												</div>}
+												{formSuccess && <div style={{ border: "2px solid green" }}>
+												Form successfully submitted</div>}
 												<FormRunnerTemplate
 													context={{
 														...configFormsParser,
@@ -189,9 +192,14 @@ export const FormsApp = (props: {}) => {
 															submitButtonWrapper: EditPersonSubmitButtonWrapper,
 															apiHandlers: {
 																success: (_) => {
+																	setFormSuccess(true)
+																	setFormErrors(List())
 																	console.log({ type: 'success', 'data': _ })
 																},
 																error: (_) => {
+																	console.log(_)
+																	setFormSuccess(false)
+																	setFormErrors(_)
 																	console.log({ type: 'error', 'msg': _ })
 																},
 															},

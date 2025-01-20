@@ -570,8 +570,6 @@ export const FormsConfig = {
           return
         }
         const launcherKind = formsConfig["launchers"][launcherName]["kind"] as Launcher["kind"] | MappingLauncher["kind"]
-          console.log(formsConfig["launchers"][launcherName]["form"])
-          console.log(forms.keySeq().toArray());
         if (forms.has(formsConfig["launchers"][launcherName]["form"]) == false) {
           errors = errors.push(`launcher '${launcherName}' references non-existing form '${formsConfig.launchers[launcherName].form}'`);
           return
