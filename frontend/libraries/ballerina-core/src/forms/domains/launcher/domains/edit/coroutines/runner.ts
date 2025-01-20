@@ -67,9 +67,7 @@ export const editFormRunner = <E, FS>() => {
           EditFormWritableState<E, FS>,
           EditFormContext<E, FS>,
           ApiErrors
-        >((_) => _.apiRunner.sync,
-        
-        {
+        >((_) => _.apiRunner.sync, {
           handleSuccess: current.apiHandlers?.success,
           handleError: current.apiHandlers?.error,
         }),

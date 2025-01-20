@@ -7,25 +7,25 @@ export type ValueOrErrors<v, e> = (
   | (Value<v> & { kind: "value" })
   | { errors: List<e>; kind: "errors" }
 ) & {
-  map: <a, b, e>(
+  Map: <a, b, e>(
     this: ValueOrErrors<a, e>,
     f: BasicFun<a, b>
   ) => ValueOrErrors<b, e>;
-  mapErrors: <a, e, e2>(
+  MapErrors: <a, e, e2>(
     this: ValueOrErrors<a, e>,
     f: BasicFun<List<e>, List<e2>>
   ) => ValueOrErrors<a, e2>;
-  flatten: <a, e>(
+  Flatten: <a, e>(
     this: ValueOrErrors<ValueOrErrors<a, e>, e>
   ) => ValueOrErrors<a, e>;
-  bind: <a, b, e>(
+  Then: <a, b, e>(
     this: ValueOrErrors<a, e>,
     k: BasicFun<a, ValueOrErrors<b, e>>
   ) => ValueOrErrors<b, e>;
 };
 
 const operations = {
-  map: function <a, b, e>(
+  Map: function <a, b, e>(
     this: ValueOrErrors<a, e>,
     f: BasicFun<a, b>
   ): ValueOrErrors<b, e> {
@@ -34,7 +34,7 @@ const operations = {
     }
     return ValueOrErrors.Default.return(f(this.value));
   },
-  mapErrors: function <a, e, e2>(
+  MapErrors: function <a, e, e2>(
     this: ValueOrErrors<a, e>,
     f: BasicFun<List<e>, List<e2>>
   ): ValueOrErrors<a, e2> {
@@ -43,7 +43,7 @@ const operations = {
     }
     return this;
   },
-  flatten: function <a, e>(
+  Flatten: function <a, e>(
     this: ValueOrErrors<ValueOrErrors<a, e>, e>
   ): ValueOrErrors<a, e> {
     if (this.kind == "errors") {
@@ -54,11 +54,11 @@ const operations = {
       return this.value;
     }
   },
-  bind: function <a, b, e>(
+  Then: function <a, b, e>(
     this: ValueOrErrors<a, e>,
     k: BasicFun<a, ValueOrErrors<b, e>>
   ): ValueOrErrors<b, e> {
-    return this.map(k).flatten();
+    return this.Map(k).Flatten();
   },
 };
 
@@ -76,23 +76,23 @@ export const ValueOrErrors = {
     }),
   },
   Operations: {
-    return: <v, e>(_: v): ValueOrErrors<v, e> =>
+    Return: <v, e>(_: v): ValueOrErrors<v, e> =>
       ValueOrErrors.Default.return(_),
-    throw: <v, e>(_: List<e>): ValueOrErrors<v, e> =>
+    Throw: <v, e>(_: List<e>): ValueOrErrors<v, e> =>
       ValueOrErrors.Default.throw(_),
-    map: <a, b, e>(
+    Map: <a, b, e>(
       f: BasicFun<a, b>
     ): Fun<ValueOrErrors<a, e>, ValueOrErrors<b, e>> =>
       Fun((_) =>
         _.kind == "errors" ? _ : ValueOrErrors.Default.return(f(_.value))
       ),
-    mapErrors: <a, e, e2>(
+    MapErrors: <a, e, e2>(
       f: BasicFun<List<e>, List<e2>>
     ): BasicFun<ValueOrErrors<a, e>, ValueOrErrors<a, e2>> =>
       Fun((_) =>
         _.kind == "errors" ? ValueOrErrors.Default.throw(f(_.errors)) : _
       ),
-    flatten: <a, e>(): Fun<
+    Flatten: <a, e>(): Fun<
       ValueOrErrors<ValueOrErrors<a, e>, e>,
       ValueOrErrors<a, e>
     > =>
@@ -105,30 +105,30 @@ export const ValueOrErrors = {
           return _.value;
         }
       }),
-    then: <a, b, e>(
+    Then: <a, b, e>(
       k: BasicFun<a, ValueOrErrors<b, e>>
     ): Fun<ValueOrErrors<a, e>, ValueOrErrors<b, e>> =>
       Fun((_: ValueOrErrors<a, e>) =>
-        ValueOrErrors.Operations.flatten<b, e>()(
-          ValueOrErrors.Operations.map<a, ValueOrErrors<b, e>, e>(k)(_)
+        ValueOrErrors.Operations.Flatten<b, e>()(
+          ValueOrErrors.Operations.Map<a, ValueOrErrors<b, e>, e>(k)(_)
         )
       ),
-    fold: <v, e, c>(
+    Fold: <v, e, c>(
       l: BasicFun<v, c>,
       r: BasicFun<List<e>, c>
     ): Fun<ValueOrErrors<v, e>, c> =>
       Fun((_) => (_.kind == "value" ? l(_.value) : r(_.errors))),
-    all: <v, e>(_: List<ValueOrErrors<v, e>>): ValueOrErrors<List<v>, e> =>
+    All: <v, e>(_: List<ValueOrErrors<v, e>>): ValueOrErrors<List<v>, e> =>
       _.reduce(
         (reduction, value) =>
-          ValueOrErrors.Operations.fold<v, e, ValueOrErrors<List<v>, e>>(
+          ValueOrErrors.Operations.Fold<v, e, ValueOrErrors<List<v>, e>>(
             (v: v) =>
               reduction.kind == "errors"
                 ? reduction
-                : reduction.map((_) => _.concat(v)),
+                : reduction.Map((_) => _.concat(v)),
             (es: List<e>) =>
               reduction.kind == "errors"
-                ? reduction.mapErrors((_) => _.concat(es))
+                ? reduction.MapErrors((_) => _.concat(es))
                 : ValueOrErrors.Default.throw(es)
           )(value),
         ValueOrErrors.Default.return(List<v>())
