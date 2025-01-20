@@ -161,7 +161,6 @@ export const FormsConfig = {
             errors = errors.push(`type ${typeName} extends non-existent type ${extendedTypeName}`);
         });
         typeDef.fields.forEach((fieldDef, fieldName) => {
-          // TODO - check application args are a valid type (-refs, primtives, lookups, possible here? or may have to do at end) also no undefined
           if (fieldDef.kind == "primitive" && (!builtIns.primitives.has(fieldDef.value) && !injectedPrimitives?.injectedPrimitives.has(fieldDef.value as keyof T) ))
             errors = errors.push(`field ${fieldName} of type ${typeName} is non-existent primitive type ${fieldDef.value}`);
           if (fieldDef.kind == "lookup" && !types.has(fieldDef.name))
@@ -570,8 +569,6 @@ export const FormsConfig = {
           return
         }
         const launcherKind = formsConfig["launchers"][launcherName]["kind"] as Launcher["kind"] | MappingLauncher["kind"]
-          console.log(formsConfig["launchers"][launcherName]["form"])
-          console.log(forms.keySeq().toArray());
         if (forms.has(formsConfig["launchers"][launcherName]["form"]) == false) {
           errors = errors.push(`launcher '${launcherName}' references non-existing form '${formsConfig.launchers[launcherName].form}'`);
           return

@@ -209,7 +209,7 @@ export const ParseForm = <T,>(
             .mapContext<any>(_ => ({ ..._, label, tooltip }))
         } else { // the list argument is a primitive
           const elementForm = FieldView(fieldConfig, fieldViews, fieldNameToElementViewCategory(formFieldElementRenderers)(fieldName) as any, elementRendererName, elementLabel, elementTooltip, EnumOptionsSources, fieldsOptionsConfig, leafPredicates, injectedPrimitives)
-          const initialFormState = FieldFormState(fieldConfig, fieldViews, fieldNameToElementViewCategory(formFieldElementRenderers)(fieldName) as any, elementRendererName, InfiniteStreamSources, fieldsInfiniteStreamsConfig, injectedPrimitives);
+          const initialFormState = FieldFormState(fieldConfig, fieldViews, fieldNameToElementViewCategory(formFieldElementRenderers)(fieldName) as any, elementRendererName, fieldName, InfiniteStreamSources, fieldsInfiniteStreamsConfig, injectedPrimitives);
           formConfig[fieldName] = ListForm<any, any, any & FormLabel, Unit>(
             { Default: () => initialFormState },
             { Default: () => initialElementValue },
@@ -305,7 +305,7 @@ export type EditLauncherContext<Entity, FormState, ExtraContext> =
       extraContext: ExtraContext,
       containerFormView: any,
       submitButtonWrapper: any
-    }, "api" | "actualForm">
+    }, "api" | "parser" | "actualForm">
 
 export type CreateLauncherContext<Entity, FormState, ExtraContext> =
   Omit<
@@ -477,9 +477,8 @@ export const parseForms =
           get: (id: string) => entityApis.get(launcher.api)(id).then((raw: any) => {
             return fromAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters, false, injectedPrimitives)(raw)
           }),
-          update: (id: Guid, value: any, formState: any) => {
-            const raw = toAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters, false, injectedPrimitives)(value, formState)
-            return raw.kind == "errors" ? Promise.reject(raw.errors) : entityApis.update(launcher.api)(id, raw.value)  
+          update: (id: any, parsed: any) => {
+            return entityApis.update(launcher.api)(id, parsed)  
           }
         }
         parsedLaunchers.edit = parsedLaunchers.edit.set(
@@ -489,6 +488,7 @@ export const parseForms =
               ({
                 ...parentContext,
                 api: api,
+                parser: (value: any, formState: any) => toAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters, false, injectedPrimitives)(value, formState),
                 actualForm: form.withView(containerFormView).mapContext((_: any) => ({ ..._, rootValue: _.value, ...parentContext.extraContext }))
               }) as any)
               .withViewFromProps(props => props.context.submitButtonWrapper)

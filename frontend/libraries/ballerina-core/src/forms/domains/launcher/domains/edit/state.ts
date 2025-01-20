@@ -1,4 +1,5 @@
 import { ApiResponseChecker, AsyncState, BasicUpdater, Debounced, ForeignMutationsInput, Guid, id, SimpleCallback, simpleUpdater, Synchronized, Template, unit, Unit, Updater, Value } from "../../../../../../main"
+import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state"
 import { BasicFun } from "../../../../../fun/state"
 
 export type ApiErrors = Array<string>
@@ -7,8 +8,9 @@ export type EditFormContext<E,FS> = {
   entityId:string,
   api:{
     get:(id: Guid) => Promise<E>,
-    update:(id: Guid, entity:E, formstate: FS) => Promise<ApiErrors>
+    update:(id: Guid, raw: any) => Promise<ApiErrors>
   },
+  parser: (entity:E, formstate: FS) => ValueOrErrors<E, ApiErrors>
   actualForm:Template<Value<E> & FS, FS, { onChange:SimpleCallback<BasicUpdater<E>>}>
 }
 

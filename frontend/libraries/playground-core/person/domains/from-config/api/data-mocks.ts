@@ -106,38 +106,63 @@ const entityApis: EntityApis = {
             }]),
             emails: ["john@doe.it", "johnthedon@doe.com"],
             "addressesWithLabel": [
-              ["home", {
-                street: faker.location.street(),
-                number: Math.floor(Math.random() * 500),
-                city: Math.random() > 0.5 ?
-                  undefined
-                  :
-                  City.Default(v4(), faker.location.city())
-              }]
+              {
+                key: "home",
+                value: {
+                  street: faker.location.street(),
+                  number: Math.floor(Math.random() * 500),
+                  city: Math.random() > 0.5 ?
+                    undefined
+                    :
+                    City.Default(v4(), faker.location.city())
+                }
+              }
             ],
             "addressesByCity": [
-              [City.Default(v4(), faker.location.city()), {
-                street: faker.location.street(),
-                number: Math.floor(Math.random() * 500),
-                city: Math.random() > 0.5 ?
-                  undefined
-                  :
-                  City.Default(v4(), faker.location.city())
-              }],
-              [City.Default(v4(), faker.location.city()), {
-                street: faker.location.street(),
-                number: Math.floor(Math.random() * 500),
-                city: Math.random() > 0.5 ?
-                  undefined
-                  :
-                  City.Default(v4(), faker.location.city())
-              }]
+              {
+                key: City.Default(v4(), faker.location.city()),
+                value: {
+                  street: faker.location.street(),
+                  number: Math.floor(Math.random() * 500),
+                  city: Math.random() > 0.5 ?
+                    undefined
+                    :
+                    City.Default(v4(), faker.location.city())
+                }
+              },
+              {
+                key: City.Default(v4(), faker.location.city()),
+                value: {
+                  street: faker.location.street(),
+                  number: Math.floor(Math.random() * 500),
+                  city: Math.random() > 0.5 ?
+                    undefined
+                    :
+                    City.Default(v4(), faker.location.city())
+                }
+              }
             ],
             "addressesWithColorLabel": [],
             "permissions": [],
-            "dependants": [[faker.person.firstName(), ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3]], [faker.person.firstName(), ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3]]],
+            "dependants":
+             [
+              {
+                key: faker.person.firstName(),
+                value: ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3]
+              },
+              {
+                key: faker.person.firstName(),
+                value: ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3]
+              }
+            ],
             "relatives": [["child", "adult", "senior"][Math.round(Math.random() * 10) % 3], ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3], ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3]],
-            "friendsByCategory": [[["child", "adult", "senior"][Math.round(Math.random() * 10) % 3], faker.person.firstName()]],
+            "friendsByCategory":
+             [
+              {
+                key: ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3],
+                value: faker.person.firstName()
+              }
+            ],
           })
         }
       default:
