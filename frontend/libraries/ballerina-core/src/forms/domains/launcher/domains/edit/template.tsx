@@ -62,8 +62,10 @@ export const EditFormTemplate = <E, FS>() : EditFormTemplate<E,FS> =>
       editFormRunner<E, FS>().mapContextFromProps(props => ({
         ...props.context,
         apiHandlers: {
-          success: props.foreignMutations.apiHandlers?.success,
-          error: props.foreignMutations.apiHandlers?.error
+          onGetSuccess: props.foreignMutations.apiHandlers?.onGetSuccess,
+          onGetError: props.foreignMutations.apiHandlers?.onGetError,
+          onUpdateSuccess: props.foreignMutations.apiHandlers?.onUpdateSuccess,
+          onUpdateError: props.foreignMutations.apiHandlers?.onUpdateError,
         }
       }))
     ])

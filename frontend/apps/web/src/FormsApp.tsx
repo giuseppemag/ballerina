@@ -105,7 +105,10 @@ export const FormsApp = (props: {}) => {
 						<tr>
 							<td>
 								{renderParserState && JSON.stringify(configFormsParser)}
-								<button onClick={() => setFormToShow(formToShow + 1)}>Show next form</button>
+								<button onClick={() => {
+									setFormErrors(List())
+									setFormSuccess(false)
+									setFormToShow(formToShow + 1)}}>Show next form</button>
 								<InstantiedPersonFormsParserTemplate
 									context={{
 										...configFormsParser,
@@ -146,16 +149,23 @@ export const FormsApp = (props: {}) => {
 														kind: "create",
 														submitButtonWrapper: CreatePersonSubmitButtonWrapper,
 														apiHandlers: {
-															success: (_) => {
-																setFormSuccess(true)
-																setFormErrors(List())
-																console.log(`Successfully submitted`)
+															onDefaultSuccess: (_) => {
+																console.log(`Success getting default person ${JSON.stringify(_)}`)
 															},
-															error: (_) => {
+															onDefaultError: (_) => {
+																setFormSuccess(false)
+																setFormErrors(List(["Error getting default person"]))
+																console.log(`Error getting default person ${JSON.stringify(_)}`)
+															},
+															onCreateError: (_) => {
 																console.log(_)
 																setFormSuccess(false)
-																setFormErrors(_)
+																setFormErrors(List(["Error creating person"]))
 																console.log(`Error submitting new person ${JSON.stringify(_)}`)
+															},
+															onCreateSuccess: (_) => {
+																setFormSuccess(true)
+																console.log(`Success creating person ${JSON.stringify(_)}`)
 															}
 														}
 													},
@@ -191,16 +201,24 @@ export const FormsApp = (props: {}) => {
 															kind: "edit",
 															submitButtonWrapper: EditPersonSubmitButtonWrapper,
 															apiHandlers: {
-																success: (_) => {
+																onGetError: (_) => {
+																	setFormSuccess(false)
+																	setFormErrors(List(["Error getting person"]))
+																	console.log(`Error getting person ${JSON.stringify(_)}`)
+																},
+																onGetSuccess: (_) => {
+																	console.log(`Success getting person ${JSON.stringify(_)}`)
+																},
+																onUpdateError: (_) => {
+																	console.log(_)
+																	setFormSuccess(false)
+																	setFormErrors(List(["Error updating person"]))
+																	console.log({ type: 'error', 'msg': _ })
+																},
+																onUpdateSuccess: (_) => {
 																	setFormSuccess(true)
 																	setFormErrors(List())
 																	console.log({ type: 'success', 'data': _ })
-																},
-																error: (_) => {
-																	console.log(_)
-																	setFormSuccess(false)
-																	setFormErrors(_)
-																	console.log({ type: 'error', 'msg': _ })
 																},
 															},
 														},
