@@ -13,7 +13,9 @@ Todo (✅/❌)
       ✅ rename `web` to `test`
     ❌ receive the command line parameters  
       ✅ form json
-      ❌ array of extra primitive types
+      ❌ array of extra primitive types with names and supported renderers
+    ❌ define a `Pair` domain with the `<*>` operator
+    ❌ define a `Sum`  domain with the `<+>` operator
     ✅ read the json with FSharp.Data
     ❌ parse the json into the first naive structure
       ✅ use the type definitions from the business rule schema as a representation target

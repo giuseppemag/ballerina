@@ -4,9 +4,39 @@ open FSharp.Data
 open FSharp.Data.JsonExtensions
 open System
 open System.IO
-open System.CommandLine
 open Ballerina.BusinessRules
 open Ballerina.Option
+
+let dup a = (a,a)
+let (<*>) f g = fun (a,b) -> (f a, g b)
+
+type CrudMethod = Create | Get | Update | Default
+type EnumApiName = { EnumName:string } with static member Create n = { EnumName=n }
+type StreamApiName = { StreamName:string } with static member Create n = { StreamName=n }
+type EntityApiName = { EntityName:string } with static member Create n = { EntityName=n }
+type FormApis = {
+  enums:Map<string, EnumApiName * TypeName>
+  streams:Map<string, StreamApiName * TypeName>
+  entities:Map<string, EntityApiName * (TypeName * Set<CrudMethod>)>
+}
+type FormConfigId = { FormName:string; FormId:Guid }
+type FormConfig = { 
+  FormName:string; 
+  FormId:Guid; 
+  Type:ExprType;
+  Fields:Map<FieldConfigId, FieldConfig>;
+  Tabs:FormTabs } with static member Name f = f.FormName
+and FormTabs = Map<string, FormColumns>
+and FormColumns = Map<string, FormGroups>
+and FormGroups = Map<string, List<FieldConfigId>>
+and FieldConfigId = { FieldName:string; FieldId:Guid }
+and FieldConfig = { FieldName:string; FieldId:Guid; Renderer:FieldRenderer; Visible:Expr; Disabled:Option<Expr> } with static member Id (f:FieldConfig) : FieldConfigId = { FieldName=f.FieldName; FieldId=f.FieldId }
+and FieldRenderer = 
+  | PrimitiveRenderer of PrimitiveRenderer
+  | EnumRenderer of EnumApiName * FieldRenderer
+  | StreamRenderer of StreamApiName * FieldRenderer
+and PrimitiveRendererId = { PrimitiveRendererName:string; PrimitiveRendererId:Guid }
+and PrimitiveRenderer = { PrimitiveRendererName:string; PrimitiveRendererId:Guid; Type:ExprType } with static member ToPrimitiveRendererId (r:PrimitiveRenderer) = { PrimitiveRendererName=r.PrimitiveRendererName; PrimitiveRendererId=r.PrimitiveRendererId }
 
 let sampleTypes injectedTypes = 
   let injectedTypes = injectedTypes |> Seq.map (fun injectedTypeName -> injectedTypeName, (injectedTypeName |> TypeName.Create, ExprType.RecordType []) |> TypeBinding.Create) |> Map.ofSeq
@@ -75,12 +105,7 @@ let sampleTypes injectedTypes =
       PersonName.TypeName,(PersonName, permissionRef) |> TypeBinding.Create
     ] |> Map.ofList
   }
-type CrudMethod = Create | Get | Update | Default
-type FormApis = {
-  enums:Map<string, TypeName>
-  streams:Map<string, TypeName>
-  entities:Map<string, TypeName * Set<CrudMethod>>
-}
+
 let formApis = 
   option{
     let! instantiatedSampleTypes = sampleTypes ["injectedCategory"]
@@ -91,87 +116,59 @@ let formApis =
     let! cityRefType = instantiatedSampleTypes |> Map.tryFind "CityRef"
     let! departmentRefType = instantiatedSampleTypes |> Map.tryFind "DepartmentRef"
     let! personType = instantiatedSampleTypes |> Map.tryFind "Person"
-    return {
+    return instantiatedSampleTypes,{
       enums=
         [
           ("genders", genderRefType.Name)
           ("colors", colorRefType.Name)
           ("interests", interestRefType.Name)
           ("permissions", permissionRefType.Name)
-        ] |> Map.ofList;
+        ] |> Seq.map (dup >> (fst <*> (EnumApiName.Create <*> id))) |> Map.ofSeq;
       streams=
         [
           ("cities", cityRefType.Name)
           ("departments", departmentRefType.Name)
-        ] |> Map.ofList;
+        ] |> Seq.map (dup >> (fst <*> (StreamApiName.Create <*> id))) |> Map.ofSeq;
       entities=
         [
           ("person", (personType.Name, [Create; Get; Update; Default] |> Set.ofList))
-        ] |> Map.ofList      
+        ] |> Seq.map (dup >> (fst <*> id) >> (id <*> (EntityApiName.Create <*> id))) |> Map.ofSeq;
     }
   }
 
-type FormsGenTarget = 
-| ts = 1
-| golang = 2
-
-let formsOptions = {|
-  mode = new Option<bool>(name= "-validate", description= "Type check the given forms config.");
-  language = 
-    (new Option<FormsGenTarget>(
-      "-codegen",
-      "Language to generate form bindings in."))
-        .FromAmong(
-            "ts",
-            "golang");
-  input = 
-    (new Option<string>(
-      "-input",
-      "Relative path of json form config."))
-|}
-
-[<EntryPoint>]
-let main args =
-  let rootCommand = new RootCommand("Sample app for System.CommandLine");
-  let formsCommand = new Command("forms");
-  rootCommand.AddCommand(formsCommand)
-  formsCommand.AddOption(formsOptions.mode)
-  formsCommand.AddOption(formsOptions.language)
-  formsCommand.AddOption(formsOptions.input)
-
-  // dotnet run -- forms -input person-config.json -validate -codegen ts
-  formsCommand.SetHandler(Action<_,_,_>(fun (validate:bool) (language:FormsGenTarget) (inputPath:string) ->
-    printfn "Forms it is - input path=%A validate=%A language=%A" inputPath validate language
-    if File.Exists inputPath |> not then
-      eprintfn "Fatal error: the input file %A does not exist" inputPath
-      System.Environment.Exit -1
-    let inputConfig = File.ReadAllText inputPath
-    let parsed = JsonValue.Parse inputConfig
-    match parsed with
-    | JsonValue.Record r ->
-      do printfn "%A" r
-    | v -> 
-      do eprintfn "%A" v
-    ), formsOptions.mode, formsOptions.language, formsOptions.input)
-
-
-// {
-//   "forms": {
-//     "address": {
-//       "type": "Address",
-//       "fields": {
-//         "street": {
-//           "renderer": "defaultString", "visible":
-//           {
-//             "kind": "or",
-//             "operands": [
-//               { "kind": "leaf", "operation": "field", "arguments": { "location": "root", "field": "subscribeToNewsletter", "value": true } },
-//               { "kind": "leaf", "operation": "field", "arguments": { "location": "local", "field": "number", "value": 10 } }
-//             ]
-//           }
-//         },
-//         "number": { "renderer": "defaultNumber", "visible": { "kind": "true" } },
-//         "city": { "renderer": "defaultInfiniteStream", "stream": "cities", "visible": { "kind": "true" } }
+let sampleForms (primitiveRenderers:Map<string, PrimitiveRenderer>) = 
+  option{
+    let! types, apis = formApis
+    let! defaultString = primitiveRenderers |> Map.tryFind "defaultString"
+    let! defaultNumber = primitiveRenderers |> Map.tryFind "defaultNumber"
+    let! defaultInfiniteStream = primitiveRenderers |> Map.tryFind "defaultInfiniteStream"
+    let! citiesStream = apis.streams |> Map.tryFind "cities"
+    let! addressType = types |> Map.tryFind "Address"
+    let addressForm:FormConfig = {
+      FormName="address"; 
+      FormId=Guid.CreateVersion7(); 
+      Type=addressType.Type;
+      Fields=[
+          { FieldName="street"; FieldId=Guid.CreateVersion7(); 
+            Renderer=PrimitiveRenderer defaultString; 
+            Visible=Expr.Binary(Or, 
+              Expr.RecordFieldLookup(Expr.VarLookup({ VarName = "root" }), "subscribeToNewsletter"),
+              Expr.Binary(Equals, 
+                Expr.RecordFieldLookup(Expr.VarLookup({ VarName = "local" }), "number"),
+                Expr.Value(Value.ConstInt 10)
+              )
+            ); 
+            Disabled=None }
+          { FieldName="number"; FieldId=Guid.CreateVersion7(); 
+            Renderer=PrimitiveRenderer defaultNumber; 
+            Visible=Expr.Value(Value.ConstBool true);
+            Disabled=None }            
+          { FieldName="city"; FieldId=Guid.CreateVersion7(); 
+            Renderer=StreamRenderer(citiesStream |> fst, PrimitiveRenderer defaultInfiniteStream); 
+            Visible=Expr.Value(Value.ConstBool true);
+            Disabled=None }            
+        ] |> Seq.map (dup >> (FieldConfig.Id <*> id)) |> Map.ofSeq;
+      Tabs=Map.empty
 //       },
 //       "tabs": {
 //         "main": {
@@ -185,6 +182,14 @@ let main args =
 //         }
 //       }
 //     },
+    }
+    let personForm:FormConfig = failwith ""
+    return types, apis, [
+      addressForm,
+      personForm
+    ] |> Seq.map(FormConfig.Name <*> id) |> Map.ofSeq
+  }   
+
 //     "person": {
 //       "type": "Person",
 //       "fields": {
@@ -310,6 +315,54 @@ let main args =
 //       }
 //     }
 //   },
+
+
+type FormsGenTarget = 
+| ts = 1
+| golang = 2
+
+open System.CommandLine
+
+let formsOptions = {|
+  mode = new Option<bool>(name= "-validate", description= "Type check the given forms config.");
+  language = 
+    (new Option<FormsGenTarget>(
+      "-codegen",
+      "Language to generate form bindings in."))
+        .FromAmong(
+            "ts",
+            "golang");
+  input = 
+    (new Option<string>(
+      "-input",
+      "Relative path of json form config."))
+|}
+
+[<EntryPoint>]
+let main args =
+  let rootCommand = new RootCommand("Sample app for System.CommandLine");
+  let formsCommand = new Command("forms");
+  rootCommand.AddCommand(formsCommand)
+  formsCommand.AddOption(formsOptions.mode)
+  formsCommand.AddOption(formsOptions.language)
+  formsCommand.AddOption(formsOptions.input)
+
+  // dotnet run -- forms -input person-config.json -validate -codegen ts
+  formsCommand.SetHandler(Action<_,_,_>(fun (validate:bool) (language:FormsGenTarget) (inputPath:string) ->
+    printfn "Forms it is - input path=%A validate=%A language=%A" inputPath validate language
+    if File.Exists inputPath |> not then
+      eprintfn "Fatal error: the input file %A does not exist" inputPath
+      System.Environment.Exit -1
+    let inputConfig = File.ReadAllText inputPath
+    let parsed = JsonValue.Parse inputConfig
+    match parsed with
+    | JsonValue.Record r ->
+      do printfn "%A" r
+    | v -> 
+      do eprintfn "%A" v
+    ), formsOptions.mode, formsOptions.language, formsOptions.input)
+
+
 //   "launchers": {
 //     "create-person": {
 //       "kind": "create",

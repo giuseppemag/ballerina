@@ -75,6 +75,7 @@ and Expr =
   | Binary of BinaryOperator * Expr * Expr
   | VarLookup of VarName
   | FieldLookup of Expr * FieldDescriptorId
+  | RecordFieldLookup of Expr * string
   | Exists of VarName * EntityDescriptorId * Expr
   | SumBy of VarName * EntityDescriptorId * Expr
 and BinaryOperator = Plus | Minus | GreaterThan | Equals | GreaterThanEquals | Times | DividedBy | And | Or
@@ -103,6 +104,8 @@ type Value with
     | _ -> None    
 
 type Expr with 
+  static member op_BooleanOr (e1:Expr, e2:Expr) =
+    Binary(Or, e1, e2)
   static member (+) (e1:Expr, e2:Expr) =
     Binary(Plus, e1, e2)
   static member (=>>) (e:Expr, fields:List<FieldDescriptorId>) =
