@@ -454,7 +454,8 @@ export const FormsConfig = {
           if (fieldTypeDef)
             rendererMatchesType(formName, fieldName)(fieldTypeDef, fieldConfig)
           if (fieldTypeDef && fieldTypeDef.kind == "application" && fieldTypeDef.value == "List" && (builtIns.renderers.list.has(fieldConfig["renderer"]))) {
-            let elementRenderer = fieldConfig["elementRenderer"]
+            // TODO: remove object check when deprecating string type element renderer
+            let elementRenderer = typeof fieldConfig["elementRenderer"] == "string" ? fieldConfig["elementRenderer"] : fieldConfig["elementRenderer"]?.renderer
             let elementType = fieldTypeDef.args[0]
             const rendererHasType = (elementRenderer: string, elementType: string): Array<string> => {
               const primitiveRendererNames = builtIns.primitives.get(elementType)
@@ -492,14 +493,28 @@ export const FormsConfig = {
                 errors = errors.push(`field ${revertKeyword(fieldName)} of form ${formName} references form ${fieldConfig["renderer"]}, which has type ${otherForm.type} whereas ${fieldTypeDef.name} was expected`);
             }
           }
+          // TODO: remove these warnings and object checj when we remove the deprecated elementLabel and elementTooltip fields
+          if(fieldConfig.elementLabel){
+            console.error("Warning: using elementlabel for a list field is deprecated, use a renderer object with label and tooltip properties instead")
+          }
+          if(fieldConfig.elementTooltip){
+            console.error("Warning: using elementTooltip for a list field is deprecated, use a renderer object with label and tooltip properties instead")
+          }
+          if(typeof fieldConfig.elementRenderer == "string"){
+            console.error("Warning: using a string elementRenderer for a list field is deprecated, use a renderer object instead")
+          }
           formDef.fields = formDef.fields.set(
             fieldName, {
             renderer: fieldConfig.renderer,
             label: fieldConfig.label,
             tooltip: fieldConfig.tooltip,
-            elementTooltip: fieldConfig.elementTooltip,
-            elementRenderer: fieldConfig.elementRenderer,
-            elementLabel: fieldConfig.elementLabel,
+            elementRenderer: typeof fieldConfig.elementRenderer == "string" ?
+             {
+              renderer: fieldConfig.elementRenderer,
+              label: fieldConfig.elementLabel,
+              tooltip: fieldConfig.elementTooltip,
+             } :
+              fieldConfig.elementRenderer,
             mapRenderer: 
               fieldConfig.keyRenderer && fieldConfig.valueRenderer ? 
                 { keyRenderer:fieldConfig.keyRenderer, valueRenderer:fieldConfig.valueRenderer } 
