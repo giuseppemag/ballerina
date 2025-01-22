@@ -73,11 +73,13 @@ and Value = ConstInt of int | ConstFloat of float | ConstString of string | Cons
 and Expr = 
   | Value of Value
   | Binary of BinaryOperator * Expr * Expr
+  | Unary of UnaryOperator * Expr
   | VarLookup of VarName
   | FieldLookup of Expr * FieldDescriptorId
   | RecordFieldLookup of Expr * string
   | Exists of VarName * EntityDescriptorId * Expr
   | SumBy of VarName * EntityDescriptorId * Expr
+and UnaryOperator = Not | Minus
 and BinaryOperator = Plus | Minus | GreaterThan | Equals | GreaterThanEquals | Times | DividedBy | And | Or
 
 and EntitiesIdentifiers = All | Multiple of Set<Guid>

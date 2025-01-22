@@ -20,19 +20,26 @@ Todo (✅/❌)
     ❌ parse the json into the first naive structure
       ✅ use the type definitions from the business rule schema as a representation target
       ✅ use expressions from the business rule schema plus API types as a representation target
-      ❌ use expressions from the business rule schema plus new form types as a representation target
+      ❌ use the Error monad, not Option, for meaningful error messages
+        ✅ use a properly monoidal type that works with `Any`, wrap it in `withError` for compatibility
+        ✅ quickly test that Sum.Any actually yields all the errors, or the first successful result
+        ❌ implement `Sum.All`, it will be necessary for the mass typechecking and validations
+      ❌ use expressions from the business rule schema plus new form types as a representation target for the massive `Person` sample
       ❌ move the new types to ballerina-core
       ❌ type-check the type definitions for references to non-existing types
       ❌ type-check the API definitions for references to non-existing types
       ❌ type-check the form instances for references to non-existing types, and also the field lookups
-      ❌ type-check the form instances' `visible` and `disabled` predicates
+        ❌ the primitiveRenderers need name and target type from the command line
+        ❌ type-check the form instances' `visible` and `disabled` predicates
+          ❌ inject `root` variable at form instantiation, not at form definition 
+          ❌ `local` variable can be injected any time, also at form definition
+          ❌ `flag` variable comes from the command line
       ❌ move the new type checkers to ballerina-core
-      ❌ parse the JSON into the representation types
+      ❌ parse the JSON into the representation types - ORDER SHOULD NOT MATTER!
       ❌ parse the JSON into the representation APIs
-      ❌ parse the JSON into the representation forms
+      ❌ parse the JSON into the representation forms - ORDER SHOULD NOT MATTER!
       ❌ move the new type parsers to ballerina-core
-      ❌ use the Error monad, not Option, for meaningful error messages
-      ❌ break the form engine in all possible ways together with John
+       ❌ break the form engine in all possible ways
     ❌ from the schema and the forms, generate Typescript code for
       ❌ one class per type
       ❌ one enum with all enum types

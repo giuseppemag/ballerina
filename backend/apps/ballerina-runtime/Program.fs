@@ -16,9 +16,9 @@ type EnumApiName = { EnumName:string } with static member Create n = { EnumName=
 type StreamApiName = { StreamName:string } with static member Create n = { StreamName=n }
 type EntityApiName = { EntityName:string } with static member Create n = { EntityName=n }
 type FormApis = {
-  enums:Map<string, EnumApiName * TypeName>
-  streams:Map<string, StreamApiName * TypeName>
-  entities:Map<string, EntityApiName * (TypeName * Set<CrudMethod>)>
+  Enums:Map<string, EnumApiName * TypeName>
+  Streams:Map<string, StreamApiName * TypeName>
+  Entities:Map<string, EntityApiName * (TypeName * Set<CrudMethod>)>
 }
 type FormConfigId = { FormName:string; FormId:Guid }
 type FormConfig = { 
@@ -26,7 +26,7 @@ type FormConfig = {
   FormId:Guid; 
   Type:ExprType;
   Fields:Map<string, FieldConfig>;
-  Tabs:FormTabs } with static member Name f = f.FormName
+  Tabs:FormTabs } with static member Name f = f.FormName; static member Id f = { FormName=f.FormName; FormId=f.FormId }
 and FormTabs = { FormTabs:Map<string, FormColumns> }
 and FormColumns = { FormColumns: Map<string, FormGroups> }
 and FormGroups = { FormGroups:Map<string, List<FieldConfigId>> }
@@ -36,12 +36,22 @@ and FieldConfig = { FieldName:string; FieldId:Guid; Label:Option<string>; Toolti
   static member Name (f:FieldConfig) = f.FieldName
 and FieldRenderer = 
   | PrimitiveRenderer of PrimitiveRenderer
+  | MapRenderer of {| Map:FieldRenderer; Key:KeyRenderer; Value:ValueRenderer |}
+  | ListRenderer of {| List:FieldRenderer; Element:ElementRenderer |}
   | EnumRenderer of EnumApiName * FieldRenderer
   | StreamRenderer of StreamApiName * FieldRenderer
+  | FormRenderer of FormConfigId
+and KeyRenderer = { Label:Option<string>; Tooltip:Option<string>; Renderer:FieldRenderer; Visible:Expr; Disabled:Option<Expr> }
+and ValueRenderer = { Label:Option<string>; Tooltip:Option<string>; Renderer:FieldRenderer; Visible:Expr; Disabled:Option<Expr> }
+and ElementRenderer = { Label:Option<string>; Tooltip:Option<string>; Renderer:FieldRenderer; Visible:Expr; Disabled:Option<Expr> }
 and PrimitiveRendererId = { PrimitiveRendererName:string; PrimitiveRendererId:Guid }
 and PrimitiveRenderer = { PrimitiveRendererName:string; PrimitiveRendererId:Guid; Type:ExprType } with static member ToPrimitiveRendererId (r:PrimitiveRenderer) = { PrimitiveRendererName=r.PrimitiveRendererName; PrimitiveRendererId=r.PrimitiveRendererId }
 
-let inline withError (e:'err) (o:Option<'res>) = o |> Sum.fromOption<'res,'err> (fun () -> e)
+type Errors = { Errors:List<string> } with
+  static member Zero()  = { Errors=[] }
+  static member Concat(e1,e2)  = { Errors=e1.Errors @ e2.Errors }
+
+let inline withError (e:string) (o:Option<'res>) : Sum<'res,Errors> = o |> Sum.fromOption<'res,Errors> (fun () -> { Errors=[e] })
 
 let sampleTypes injectedTypes = 
   let injectedTypes = injectedTypes |> Seq.map (fun injectedTypeName -> injectedTypeName, (injectedTypeName |> TypeName.Create, ExprType.RecordType []) |> TypeBinding.Create) |> Map.ofSeq
@@ -124,19 +134,19 @@ let formApis =
      DepartmentRef"
     let! personType = instantiatedSampleTypes |> Map.tryFind "Person" |> withError "Error: cannot find type Person"
     return instantiatedSampleTypes,{
-      enums=
+      Enums=
         [
           ("genders", genderRefType.Name)
           ("colors", colorRefType.Name)
           ("interests", interestRefType.Name)
           ("permissions", permissionRefType.Name)
         ] |> Seq.map (dup >> (fst <*> (EnumApiName.Create <*> id))) |> Map.ofSeq;
-      streams=
+      Streams=
         [
           ("cities", cityRefType.Name)
           ("departments", departmentRefType.Name)
         ] |> Seq.map (dup >> (fst <*> (StreamApiName.Create <*> id))) |> Map.ofSeq;
-      entities=
+      Entities=
         [
           ("person", (personType.Name, [Create; Get; Update; Default] |> Set.ofList))
         ] |> Seq.map (dup >> (fst <*> id) >> (id <*> (EntityApiName.Create <*> id))) |> Map.ofSeq;
@@ -146,18 +156,25 @@ let formApis =
 let sampleForms (primitiveRenderers:Map<string, PrimitiveRenderer>) = 
   sum{
     let! types, apis = formApis
-    let! defaultString = primitiveRenderers |> Map.tryFind "defaultString" |> withError "TODO"
-    let! defaultNumber = primitiveRenderers |> Map.tryFind "defaultNumber" |> withError "TODO"
-    let! defaultDate = primitiveRenderers |> Map.tryFind "defaultDate" |> withError "TODO"
-    let! defaultInfiniteStream = primitiveRenderers |> Map.tryFind "defaultInfiniteStream" |> withError "TODO"
-    let! defaultCategory = primitiveRenderers |> Map.tryFind "defaultCategory" |> withError "TODO"
-    let! citiesStream = apis.streams |> Map.tryFind "cities" |> withError "TODO"
-    let! addressType = types |> Map.tryFind "Address" |> withError "TODO"
-    let! personType = types |> Map.tryFind "Person" |> withError "TODO"
+    let! defaultString = primitiveRenderers |> Map.tryFind "defaultString" |> withError "Cannot find primitive renderer defaultString"
+    let! defaultNumber = primitiveRenderers |> Map.tryFind "defaultNumber" |> withError "Cannot find primitive renderer defaultNumber"
+    let! defaultDate = primitiveRenderers |> Map.tryFind "defaultDate" |> withError "Cannot find primitive renderer defaultDate"
+    let! defaultInfiniteStream = primitiveRenderers |> Map.tryFind "defaultInfiniteStream" |> withError "Cannot find primitive     
+renderer defaultInfiniteStream"
+    let! defaultEnum = primitiveRenderers |> Map.tryFind "defaultEnum" |> withError "Cannot find primitive renderer defaultEnum"
+    let! defaultEnumMultiselect = primitiveRenderers |> Map.tryFind "defaultEnumMultiselect" |> withError "Cannot find primitive renderer defaultEnumMultiselect"
+    let! defaultInfiniteStreamMultiselect = primitiveRenderers |> Map.tryFind "defaultInfiniteStreamMultiselect" |> withError "Cannot find primitive renderer 'defaultInfiniteStreamMultiselect'"
+    let! defaultMap = primitiveRenderers |> Map.tryFind "defaultMap" |> withError "Cannot find primitive renderer defaultMap"
+    let! defaultList = primitiveRenderers |> Map.tryFind "defaultList" |> withError "Cannot find primitive renderer defaultList"
+    let! defaultBoolean = primitiveRenderers |> Map.tryFind "defaultBoolean" |> withError "Cannot find primitive renderer defaultBoolean"
+    let! defaultCategory = primitiveRenderers |> Map.tryFind "defaultCategory" |> withError "Cannot find primitive renderer defaultCategory"
+    let! citiesStream = apis.Streams |> Map.tryFind "cities" |> withError "Cannot find stream API for cities"
+    let! addressType = types |> Map.tryFind "Address" |> withError "Cannot find type Address"
+    let! personType = types |> Map.tryFind "Person" |> withError "Cannot find type Person"
     let addressFields = 
       [
         { FieldName="street"; FieldId=Guid.CreateVersion7(); 
-          Label=None; Tooltip=None;
+           Label=None; Tooltip=None;
           Renderer=PrimitiveRenderer defaultString; 
           Visible=Expr.Binary(Or, 
             Expr.RecordFieldLookup(Expr.VarLookup({ VarName = "root" }), "subscribeToNewsletter"),
@@ -178,9 +195,9 @@ let sampleForms (primitiveRenderers:Map<string, PrimitiveRenderer>) =
           Visible=Expr.Value(Value.ConstBool true);
           Disabled=None }            
       ] |> Seq.map (dup >> (FieldConfig.Name <*> id)) |> Map.ofSeq;
-    let! streetField = addressFields |> Map.tryFind "street" |> withError "TODO"
-    let! numberField = addressFields |> Map.tryFind "number" |> withError "TODO"
-    let! cityField = addressFields |> Map.tryFind "city" |> withError "TODO"
+    let! streetField = addressFields |> Map.tryFind "street" |> withError "Cannot find 'street' field in form 'address'"
+    let! numberField = addressFields |> Map.tryFind "number" |> withError "Cannot find 'number' field in form 'address'"
+    let! cityField = addressFields |> Map.tryFind "city" |> withError "Cannot find 'city' field in form 'address'"
     let addressForm:FormConfig = {
       FormName="address"; 
       FormId=Guid.CreateVersion7(); 
@@ -201,6 +218,11 @@ let sampleForms (primitiveRenderers:Map<string, PrimitiveRenderer>) =
           ] |> Map.ofSeq
         }
     }
+    let! colorOptions = apis.Enums |> Map.tryFind "colors" |> withError "Cannot find 'colors' enum api"
+    let! genderOptions = apis.Enums |> Map.tryFind "genders" |> withError "Cannot find 'genders' enum api"
+    let! interestOptions = apis.Enums |> Map.tryFind "interests" |> withError "Cannot find 'interests' enum api"
+    let! departmentsStream = apis.Streams |> Map.tryFind "departments" |> withError "Cannot find 'departments' stream api"
+    let! permissionOptions = apis.Enums |> Map.tryFind "permissions" |> withError "Cannot find 'permissions' enum api"
     let personFields = 
       [
         { FieldName="category"; FieldId=Guid.CreateVersion7(); 
@@ -223,21 +245,275 @@ let sampleForms (primitiveRenderers:Map<string, PrimitiveRenderer>) =
           Renderer=PrimitiveRenderer defaultDate; 
           Visible=Expr.Value(Value.ConstBool true);
           Disabled=None }
+        { FieldName="favoriteColor"; FieldId=Guid.CreateVersion7(); 
+          Label=None; Tooltip=None;
+          Renderer=FieldRenderer.EnumRenderer(colorOptions |> fst, PrimitiveRenderer defaultEnum); 
+          Visible=Expr.Value(Value.ConstBool true);
+          Disabled=None }
+        { FieldName="gender"; FieldId=Guid.CreateVersion7(); 
+          Label=None; Tooltip=None;
+          Renderer=FieldRenderer.EnumRenderer(genderOptions |> fst, PrimitiveRenderer defaultEnum); 
+          Visible=
+            Expr.Binary(
+              Or,
+              Expr.RecordFieldLookup(Expr.VarLookup({ VarName = "flag" }), "X"),
+              Expr.RecordFieldLookup(Expr.VarLookup({ VarName = "flag" }), "Y")
+            );
+          Disabled=None }
+        { FieldName="dependants"; FieldId=Guid.CreateVersion7(); 
+          Label=Some "dependants"; Tooltip=None;
+          Renderer=FieldRenderer.MapRenderer({| 
+            Map=PrimitiveRenderer defaultMap; 
+            Key={
+              Label=Some "name"; Tooltip=Some "their name";
+              Renderer=FieldRenderer.PrimitiveRenderer defaultString; 
+              Visible=Expr.Value(Value.ConstBool true);
+              Disabled=None
+            }; 
+            Value={
+              Label=Some "category"; Tooltip=Some "their category";
+              Renderer=FieldRenderer.PrimitiveRenderer defaultCategory; 
+              Visible=Expr.Value(Value.ConstBool true);
+              Disabled=None
+            }; 
+          |}); 
+          Visible=Expr.Value(Value.ConstBool true);
+          Disabled=None }
+        { FieldName="friendsByCategory"; FieldId=Guid.CreateVersion7(); 
+          Label=Some "friends by category"; Tooltip=None;
+          Renderer=FieldRenderer.MapRenderer({| 
+            Map=PrimitiveRenderer defaultMap; 
+            Key={
+              Label=Some "category"; Tooltip=None;
+              Renderer=FieldRenderer.PrimitiveRenderer defaultDate; 
+              Visible=Expr.Value(Value.ConstBool true);
+              Disabled=None
+            }; 
+            Value={
+              Label=Some "name"; Tooltip=None;
+              Renderer=FieldRenderer.PrimitiveRenderer defaultString; 
+              Visible=Expr.Value(Value.ConstBool true);
+              Disabled=None
+            }; 
+          |}); 
+          Visible=Expr.Value(Value.ConstBool true);
+          Disabled=None }
+        { FieldName="relatives"; FieldId=Guid.CreateVersion7(); 
+          Label=Some "relatives"; Tooltip=Some "someone whom you are related to";
+          Renderer=FieldRenderer.ListRenderer {| 
+            List=FieldRenderer.PrimitiveRenderer defaultList;
+            Element={
+              Label=Some "relative"; Tooltip=Some "one relative";
+              Renderer=FieldRenderer.PrimitiveRenderer defaultDate; 
+              Visible=Expr.Value(Value.ConstBool true);
+              Disabled=None
+            }
+          |}; 
+          Visible=Expr.Value(Value.ConstBool true);
+          Disabled=None }
+        { FieldName="subscribeToNewsletter"; FieldId=Guid.CreateVersion7(); 
+          Label=Some "subscribe to newsletter"; Tooltip=None;
+          Renderer=PrimitiveRenderer defaultBoolean;
+          Visible=Expr.Value(Value.ConstBool true);
+          Disabled=None }
+        { FieldName="interests"; FieldId=Guid.CreateVersion7(); 
+          Label=Some "interests"; Tooltip=None;
+          Renderer=FieldRenderer.EnumRenderer(interestOptions |> fst, PrimitiveRenderer defaultEnumMultiselect);
+          Visible=
+            Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter");
+          Disabled=None }
+        { FieldName="departments"; FieldId=Guid.CreateVersion7(); 
+          Label=Some "departments"; Tooltip=None;
+          Renderer=FieldRenderer.StreamRenderer(departmentsStream |> fst, PrimitiveRenderer defaultInfiniteStreamMultiselect);
+          Visible=Expr.Value(Value.ConstBool true);
+          Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
+        { FieldName="mainAddress"; FieldId=Guid.CreateVersion7(); 
+          Label=Some "main address"; Tooltip=None;
+          Renderer=FieldRenderer.FormRenderer(FormConfig.Id addressForm);
+          Visible=Expr.Value(Value.ConstBool true);
+          Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
+        { FieldName="addresses"; FieldId=Guid.CreateVersion7(); 
+          Label=Some "other addresses"; Tooltip=None;
+          Renderer=FieldRenderer.ListRenderer({|
+            List=PrimitiveRenderer defaultList;
+            Element={
+              Label=Some "address"; Tooltip=None;
+              Renderer=FieldRenderer.FormRenderer(FormConfig.Id addressForm); 
+              Visible=Expr.Value(Value.ConstBool true);
+              Disabled=None
+            };
+          |});
+          Visible=Expr.Value(Value.ConstBool true);
+          Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
+        { FieldName="emails"; FieldId=Guid.CreateVersion7(); 
+          Label=Some "emails"; Tooltip=None;
+          Renderer=FieldRenderer.ListRenderer({|
+            List=PrimitiveRenderer defaultList;
+            Element={
+              Label=Some "email"; Tooltip=None;
+              Renderer=FieldRenderer.PrimitiveRenderer defaultString; 
+              Visible=Expr.Value(Value.ConstBool true);
+              Disabled=None
+            };
+          |});
+          Visible=Expr.Value(Value.ConstBool true);
+          Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
+        { FieldName="addressesWithLabel"; FieldId=Guid.CreateVersion7(); 
+          Label=Some "addresses with label"; Tooltip=None;
+          Renderer=FieldRenderer.MapRenderer({|
+            Map=PrimitiveRenderer defaultMap;
+            Key={
+              Label=Some "address label"; Tooltip=None;
+              Renderer=FieldRenderer.PrimitiveRenderer defaultString; 
+              Visible=Expr.Value(Value.ConstBool true);
+              Disabled=None
+            };
+            Value={
+              Label=Some "address"; Tooltip=None;
+              Renderer=FieldRenderer.FormRenderer(FormConfig.Id addressForm); 
+              Visible=Expr.Value(Value.ConstBool true);
+              Disabled=None
+            };
+          |});
+          Visible=Expr.Value(Value.ConstBool true);
+          Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
+        { FieldName="addressesByCity"; FieldId=Guid.CreateVersion7(); 
+          Label=Some "addresses by city"; Tooltip=None;
+          Renderer=FieldRenderer.MapRenderer({|
+            Map=PrimitiveRenderer defaultMap;
+            Key={
+              Label=Some "city"; Tooltip=Some "a nice place to live";
+              Renderer=FieldRenderer.StreamRenderer(citiesStream |> fst, PrimitiveRenderer defaultInfiniteStream); 
+              Visible=Expr.Value(Value.ConstBool true);
+              Disabled=None
+            };
+            Value={
+              Label=Some "address"; Tooltip=None;
+              Renderer=FieldRenderer.FormRenderer(FormConfig.Id addressForm); 
+              Visible=Expr.Value(Value.ConstBool true);
+              Disabled=None
+            };
+          |});
+          Visible=Expr.Value(Value.ConstBool true);
+          Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
+        { FieldName="addressesWithColorLabel"; FieldId=Guid.CreateVersion7(); 
+          Label=Some "addresses with color label"; Tooltip=None;
+          Renderer=FieldRenderer.MapRenderer({|
+            Map=PrimitiveRenderer defaultMap;
+            Key={
+              Label=Some "color"; Tooltip=None;
+              Renderer=FieldRenderer.EnumRenderer(colorOptions |> fst, PrimitiveRenderer defaultEnum); 
+              Visible=Expr.Value(Value.ConstBool true);
+              Disabled=None
+            };
+            Value={
+              Label=Some "address"; Tooltip=None;
+              Renderer=FieldRenderer.FormRenderer(FormConfig.Id addressForm); 
+              Visible=Expr.Value(Value.ConstBool true);
+              Disabled=None
+            };
+          |});
+          Visible=Expr.Value(Value.ConstBool true);
+          Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
+        { FieldName="permissions"; FieldId=Guid.CreateVersion7(); 
+          Label=Some "permissions"; Tooltip=None;
+          Renderer=FieldRenderer.MapRenderer({|
+            Map=PrimitiveRenderer defaultMap;
+            Key={
+              Label=Some "permission"; Tooltip=None;
+              Renderer=FieldRenderer.EnumRenderer(permissionOptions |> fst, PrimitiveRenderer defaultEnum); 
+              Visible=Expr.Value(Value.ConstBool true);
+              Disabled=None
+            };
+            Value={
+              Label=Some "granted"; Tooltip=None;
+              Renderer=FieldRenderer.PrimitiveRenderer defaultBoolean; 
+              Visible=Expr.Value(Value.ConstBool true);
+              Disabled=None
+            };
+          |});
+          Visible=Expr.Value(Value.ConstBool true);
+          Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
+        { FieldName="cityByDepartment"; FieldId=Guid.CreateVersion7(); 
+          Label=Some "city by department"; Tooltip=None;
+          Renderer=FieldRenderer.MapRenderer({|
+            Map=PrimitiveRenderer defaultMap;
+            Key={
+              Label=Some "department"; Tooltip=None;
+              Renderer=FieldRenderer.StreamRenderer(departmentsStream |> fst, FieldRenderer.PrimitiveRenderer defaultInfiniteStream); 
+              Visible=Expr.Value(Value.ConstBool true);
+              Disabled=None
+            };
+            Value={
+              Label=Some "city"; Tooltip=None;
+              Renderer=FieldRenderer.StreamRenderer(citiesStream |> fst, FieldRenderer.PrimitiveRenderer defaultInfiniteStream); 
+              Visible=Expr.Value(Value.ConstBool true);
+              Disabled=None
+            };
+          |});
+          Visible=Expr.Value(Value.ConstBool true);
+          Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
+        { FieldName="shoeColors"; FieldId=Guid.CreateVersion7(); 
+          Label=Some "shoe colors"; Tooltip=None;
+          Renderer=FieldRenderer.EnumRenderer(colorOptions |> fst, FieldRenderer.PrimitiveRenderer defaultEnumMultiselect);
+          Visible=Expr.Value(Value.ConstBool true);
+          Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
+        { FieldName="friendsBirthdays"; FieldId=Guid.CreateVersion7(); 
+          Label=Some "friends' birthdays"; Tooltip=None;
+          Renderer=FieldRenderer.MapRenderer({|
+            Map=PrimitiveRenderer defaultMap;
+            Key={
+              Label=Some "name"; Tooltip=None;
+              Renderer=FieldRenderer.PrimitiveRenderer defaultString; 
+              Visible=Expr.Value(Value.ConstBool true);
+              Disabled=None
+            };
+            Value={
+              Label=Some "birthday"; Tooltip=None;
+              Renderer=FieldRenderer.PrimitiveRenderer defaultDate; 
+              Visible=Expr.Value(Value.ConstBool true);
+              Disabled=None
+            };
+          |});
+          Visible=Expr.Value(Value.ConstBool true);
+          Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
+        { FieldName="holidays"; FieldId=Guid.CreateVersion7(); 
+          Label=Some "holidays"; Tooltip=None;
+          Renderer=FieldRenderer.ListRenderer({|
+            List=PrimitiveRenderer defaultList;
+            Element={
+              Label=Some "holiday"; Tooltip=None;
+              Renderer=FieldRenderer.PrimitiveRenderer defaultDate; 
+              Visible=Expr.Value(Value.ConstBool true);
+              Disabled=None
+            };
+          |});
+          Visible=Expr.Value(Value.ConstBool true);
+          Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
       ] |> Seq.map (dup >> (FieldConfig.Name <*> id)) |> Map.ofSeq;
-
-//         "favoriteColor": {
-//           "renderer": "defaultEnum", "options": "colors", "visible": { "kind": "true" }
-//         },
-//         "gender": {
-//           "label": "gender",
-//           "renderer": "defaultEnum", "options": "genders", "visible": {
-//             "kind": "or",
-//             "operands": [
-//               { "kind": "leaf", "operation": "flag", "arguments": "X" },
-//               { "kind": "leaf", "operation": "flag", "arguments": "Y" }
-//             ]
-//           }
-//         },
+    let! categoryField = personFields |> Map.tryFind "category" |> withError "Error: cannot find field 'category'"
+    let! nameField = personFields |> Map.tryFind "name" |> withError "Error: cannot find field 'name'"
+    let! surnameField = personFields |> Map.tryFind "surname" |> withError "Error: cannot find field 'surname'"
+    let! birthdayField = personFields |> Map.tryFind "birthday" |> withError "Error: cannot find field 'birthday'"
+    let! genderField = personFields |> Map.tryFind "gender" |> withError "Error: cannot find field 'gender'"
+    let! emailsField = personFields |> Map.tryFind "emails" |> withError "Error: cannot find field 'emails'"
+    let! dependantsField = personFields |> Map.tryFind "dependants" |> withError "Error: cannot find field 'dependants'"
+    let! friendsByCategoryField = personFields |> Map.tryFind "friendsByCategory" |> withError "Error: cannot find field 'friendsByCategory'"
+    let! relativesField = personFields |> Map.tryFind "relatives" |> withError "Error: cannot find field 'relatives'"
+    let! friendsBirthdaysField = personFields |> Map.tryFind "friendsBirthdays" |> withError "Error: cannot find field 'friendsBirthdays'"
+    let! shoeColoursField = personFields |> Map.tryFind "shoeColours" |> withError "Error: cannot find field 'shoeColours'"
+    let! subscribeToNewsletterField = personFields |> Map.tryFind "subscribeToNewsletter" |> withError "Error: cannot find field 'subscribeToNewsletter'"
+    let! interestsField = personFields |> Map.tryFind "interests" |> withError "Error: cannot find field 'interests'"
+    let! favoriteColorField = personFields |> Map.tryFind "favoriteColor" |> withError "Error: cannot find field 'favoriteColor'"
+    let! departmentsField = personFields |> Map.tryFind "departments" |> withError "Error: cannot find field 'departments'"
+    let! mainAddressField = personFields |> Map.tryFind "mainAddress" |> withError "Error: cannot find field 'mainAddress'"
+    let! addressesField = personFields |> Map.tryFind "addresses" |> withError "Error: cannot find field 'addresses'"
+    let! addressesWithLabelField = personFields |> Map.tryFind "addressesWithLabel" |> withError "Error: cannot find field 'addressesWithLabel'"
+    let! addressesByCityField = personFields |> Map.tryFind "addressesByCity" |> withError "Error: cannot find field 'addressesByCity'"
+    let! addressesWithColorLabelField = personFields |> Map.tryFind "addressesWithColorLabel" |> withError "Error: cannot find field 'addressesWithColorLabel'"
+    let! permissionsField = personFields |> Map.tryFind "permissions" |> withError "Error: cannot find field 'permissions'"
+    let! cityByDepartmentField = personFields |> Map.tryFind "cityByDepartment" |> withError "Error: cannot find field 'cityByDepartment'"
+    let! holidaysField = personFields |> Map.tryFind "holidays" |> withError "Error: cannot find field 'holidays'"
     let personForm:FormConfig = {
       FormName="person"; 
       FormId=Guid.CreateVersion7(); 
@@ -248,11 +524,21 @@ let sampleForms (primitiveRenderers:Map<string, PrimitiveRenderer>) =
           FormTabs=[
             ("main", {
               FormColumns= [
-                ("main", {
+                ("demographics", {
                   FormGroups= [
-                    ("main", [streetField; numberField; cityField] |> List.map FieldConfig.Id)
+                    ("main", [categoryField; nameField; surnameField; birthdayField; genderField; emailsField; dependantsField; friendsByCategoryField; relativesField; friendsBirthdaysField; shoeColoursField] |> List.map FieldConfig.Id)
                   ] |> Map.ofSeq
                 })
+                ("mailing", {
+                  FormGroups= [
+                  ("main", [subscribeToNewsletterField; interestsField; favoriteColorField] |> List.map FieldConfig.Id)
+                  ] |> Map.ofSeq
+                })
+                ("addresses", {
+                  FormGroups= [
+                    ("main", [departmentsField; mainAddressField; addressesField; addressesWithLabelField; addressesByCityField; addressesWithColorLabelField; permissionsField; cityByDepartmentField; holidaysField] |> List.map FieldConfig.Id)
+                  ] |> Map.ofSeq
+                })                         
               ] |> Map.ofSeq
             })
           ] |> Map.ofSeq
@@ -262,113 +548,19 @@ let sampleForms (primitiveRenderers:Map<string, PrimitiveRenderer>) =
       addressForm,
       personForm
     ] |> Seq.map(FormConfig.Name <*> id) |> Map.ofSeq
-  }   
+  }
 
-//         "dependants": {
-//           "label": "dependants",
-//           "renderer": "defaultMap",
-//           "tooltip": "someone who depends on you",
-//           "keyRenderer": { "label": "name", "tooltip": "their name", "renderer": "defaultString", "visible": { "kind": "true" } },
-//           "valueRenderer": { "label": "category", "tooltip": "their category", "renderer": "defaultCategory", "visible": { "kind": "true" } },
-//           "visible": { "kind": "true" }
-//         },
-//         "friendsByCategory": {
-//           "label": "friends by category",
-//           "renderer": "defaultMap",
-//           "keyRenderer": { "label": "category", "renderer": "defaultCategory", "visible": { "kind": "true" } },
-//           "valueRenderer": { "label": "name", "renderer": "defaultString", "visible": { "kind": "true" } },
-//           "visible": { "kind": "true" }
-//         },
-//         "relatives": { "label": "relatives", "tooltip": "someone who you are related to", "elementTooltip": "one relative", "elementLabel": "relative", "renderer": "defaultList", "elementRenderer":"defaultCategory", "visible": { "kind": "true" } },
-//         "subscribeToNewsletter": { "label": "subscribe to newsletter", "renderer": "defaultBoolean", "visible": { "kind": "true" } },
-//         "interests": {
-//           "label": "interests",
-//           "renderer": "defaultEnumMultiselect", "options": "interests",
-//           "visible": 
-//           { "kind": "leaf", "operation": "field", "arguments": { "location": "local", "field": "subscribeToNewsletter", "value": true } }
-//         },
-//         "departments": { 
-//           "label": "departments",
-//           "renderer": "defaultInfiniteStreamMultiselect", "stream": "departments", 
-//           "visible": { "kind": "true" }, 
-//           "disabled": 
-//             { "kind": "leaf", "operation": "field", "arguments": { "location": "local", "field": "subscribeToNewsletter", "value": false } }
-//         },
-//         "mainAddress": { "label": "main address", "renderer": "address", "visible": { "kind": "true" }},
-//         "addresses": { "label": "other addresses", "renderer": "defaultList", "elementLabel": "address", "elementRenderer":"address", "visible": { "kind": "true" } },
-//         "emails": { "label": "emails", "renderer": "defaultList", "elementLabel": "email", "elementRenderer":"defaultString", "visible": { "kind": "true" } },
-//         "addressesWithLabel": {
-//           "label": "addresses with label",
-//           "renderer": "defaultMap",
-//           "keyRenderer":{ "label": "address label", "renderer": "defaultString", "visible": { "kind": "true" } },
-//           "valueRenderer":{ "label": "address", "renderer": "address", "visible": { "kind": "true" } },
-//           "visible": { "kind": "true" } },
-//         "addressesByCity": {
-//             "label": "addresses by city",
-//             "renderer": "defaultMap",
-//             "keyRenderer":{ "label": "city", "tooltip": "a nice place to live", "renderer": "defaultInfiniteStream", "stream": "cities", "visible": { "kind": "true" } }, 
-//             "valueRenderer":{"label": "address", "renderer": "address", "visible": { "kind": "true" } }, 
-//             "visible": { "kind": "true" } },
-//         "addressesWithColorLabel": {
-//             "renderer": "defaultMap",
-//             "label": "addresses with color label",
-//             "keyRenderer":{ "label":"color", "renderer": "defaultEnum", "options": "colors", "visible": { "kind": "true" } }, 
-//             "valueRenderer":{ "label": "address", "renderer": "address", "visible": { "kind": "true" } }, 
-//             "visible": { "kind": "true" } },
-//         "permissions": {
-//             "label": "permissions",
-//             "renderer": "defaultMap",
-//             "keyRenderer":{ "label": "permission", "renderer": "defaultEnum", "options": "permissions", "visible": { "kind": "true" } },
-//             "valueRenderer":{ "label": "granted", "renderer": "defaultBoolean", "visible": { "kind": "true" } },
-//             "visible": { "kind": "true" } },
-//         "cityByDepartment": {
-//             "label": "city by department",
-//             "renderer": "defaultMap",
-//             "keyRenderer":{ "label": "department", "renderer": "defaultInfiniteStream", "stream": "departments", "visible": { "kind": "true" } },
-//             "valueRenderer":{ "label": "city", "renderer": "defaultInfiniteStream", "stream": "cities", "visible": { "kind": "true" } },
-//             "visible": { "kind": "true" } },
-//         "shoeColours": {
-//             "label": "shoe colours",
-//             "renderer": "defaultEnumMultiselect", "options": "colors", "visible": { "kind": "true" }
-//           },
-//         "friendsBirthdays": {
-//             "renderer": "defaultMap",
-//             "label": "friends birthdays",
-//             "keyRenderer":{ "label": "name", "renderer": "defaultString", "visible": { "kind": "true" } },
-//             "valueRenderer":{ "label": "birthday", "renderer": "defaultDate", "visible": { "kind": "true" } },
-//             "visible": { "kind": "true" }
-//           },
-//         "holidays": {
-//             "label": "holidays",
-//             "renderer": "defaultList",
-//             "elementLabel": "holiday",
-//             "elementRenderer": "defaultDate",
-//             "visible": { "kind": "true" }
-//         }
-//       },
-//       "tabs": {
-//         "main": {
-//           "columns": {
-//             "demographics": {
-//               "groups": {
-//                 "main": ["category", "name", "surname", "birthday", "gender", "emails", "dependants", "friendsByCategory", "relatives", "friendsBirthdays", "shoeColours"]
-//               }
-//             },
-//             "mailing": {
-//               "groups": {
-//                 "main": ["subscribeToNewsletter", "interests", "favoriteColor"]
-//               }
-//             },
-//             "addresses": {
-//               "groups": {
-//                 "main": ["departments", "mainAddress", "addresses", "addressesWithLabel", "addressesByCity", "addressesWithColorLabel", "permissions", "cityByDepartment", "holidays"]
-//               }
-//             }
-//           }
-//         }
-//       }
+//   "launchers": {
+//     "create-person": {
+//       "kind": "create",
+//       "form": "person",
+//       "api": "person"
+//     },
+//     "edit-person": {
+//       "kind": "edit",
+//       "form": "person",
+//       "api": "person"
 //     }
-//   },
 
 
 type FormsGenTarget = 
@@ -415,20 +607,5 @@ let main args =
     | v -> 
       do eprintfn "%A" v
     ), formsOptions.mode, formsOptions.language, formsOptions.input)
-
-
-//   "launchers": {
-//     "create-person": {
-//       "kind": "create",
-//       "form": "person",
-//       "api": "person"
-//     },
-//     "edit-person": {
-//       "kind": "edit",
-//       "form": "person",
-//       "api": "person"
-//     }
-//   }
-// }
 
   rootCommand.Invoke(args)
