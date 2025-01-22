@@ -19,7 +19,9 @@ export type EditFormState<E,FS> = {
   entity:Synchronized<Unit, E>
   apiRunner:Debounced<Synchronized<Unit,ApiErrors>>
   formState:FS,
-} & ApiResponseChecker;
+  initApiChecker: ApiResponseChecker,
+  updateApiChecker: ApiResponseChecker,
+};
 
 export const EditFormState = <E,FS>() => ({
   Default:(initialFormState:FS) : EditFormState<E,FS> => ({
@@ -28,16 +30,18 @@ export const EditFormState = <E,FS>() => ({
       Synchronized.Default(unit)
     ),
     formState:initialFormState,
-    ...ApiResponseChecker.Default(true),
+    initApiChecker:ApiResponseChecker.Default(true),
+    updateApiChecker:ApiResponseChecker.Default(true),
   }),
   Updaters:{
     Core:{
       ...simpleUpdater<EditFormState<E,FS>>()("entity"),
       ...simpleUpdater<EditFormState<E,FS>>()("apiRunner"),
       ...simpleUpdater<EditFormState<E,FS>>()("formState"),
+      ...simpleUpdater<EditFormState<E,FS>>()("initApiChecker"),
+      ...simpleUpdater<EditFormState<E,FS>>()("updateApiChecker"),
     },
     Template:{
-      ...ApiResponseChecker.Updaters<EditFormState<E, FS>>(),
       entity:(_:BasicUpdater<E>) : Updater<EditFormState<E,FS>> =>
           EditFormState<E,FS>().Updaters.Core.entity(
             Synchronized.Updaters.sync(
@@ -67,7 +71,9 @@ export type EditFormWritableState<E,FS> = EditFormState<E,FS>
 export type EditFormForeignMutationsExposed<E,FS> = ReturnType<ReturnType<typeof EditFormState<E,FS>>["ForeignMutations"]>
 export type EditFormForeignMutationsExpected<E,FS> = {
   apiHandlers?: {
-    success?: (_: EditFormWritableState<E, FS> & EditFormContext<E, FS> | undefined) => void;
-    error?: <ApiErrors>(_: ApiErrors | undefined) => void;
+    onGetSuccess?: (_: EditFormWritableState<E, FS> & EditFormContext<E, FS> | undefined) => void;
+    onGetError?: <ApiErrors>(_: ApiErrors | undefined) => void;
+    onUpdateSuccess?: (_: EditFormWritableState<E, FS> & EditFormContext<E, FS> | undefined) => void;
+    onUpdateError?: <ApiErrors>(_: ApiErrors | undefined) => void;
   }
 }
