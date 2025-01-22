@@ -193,12 +193,15 @@ export const ParseForm = <T,>(
     } else {
       const viewType = fieldNameToViewCategory(fieldName) as any
       if (viewType == "list") {
-        const elementRendererName = formFieldElementRenderers[fieldName]
+        const elementRenderer = formFieldElementRenderers[fieldName]
+        const elementRendererName = elementRenderer?.renderer
         const field = type.fields.get(fieldName)!
-        const elementLabel = formDef.fields.get(fieldName)!.elementLabel
-        const elementTooltip= formDef.fields.get(fieldName)!.elementTooltip
+        
         const initialElementValue = defaultValue(field.kind == "primitive" ? field.value : field.kind == "lookup" ? field.name : field.args[0])
-        const elementForm = otherForms.get(elementRendererName)
+        const elementLabel = elementRenderer?.label
+        const elementTooltip = elementRenderer?.tooltip
+        const elementForm = otherForms.get(elementRenderer.renderer)
+
         if (elementForm != undefined) { // the list argument is a nested form
           const initialFormState = elementForm.initialFormState
           formConfig[fieldName] = ListForm<any, any, any & FormLabel, Unit>(

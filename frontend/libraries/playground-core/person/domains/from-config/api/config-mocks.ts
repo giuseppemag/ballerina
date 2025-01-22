@@ -207,9 +207,12 @@ export const PersonFormsConfig = {
         "holidays": {
             label: "holidays",
             renderer: "defaultList",
-            elementLabel: "holiday",
-            elementRenderer: "defaultDate",
-            visible: { "kind": "true" }
+            visible: { "kind": "true" },
+            // backwards compatibility
+            // elementLabel: "holiday",
+            // elementRenderer: "defaultDate",
+            // elementTooltip: "a holiday",
+            elementRenderer: { renderer: "defaultDate", label: "holiday", tooltip: "a holiday"},
         },
         "interestsToString": {
             label: "interests to string",
