@@ -15,12 +15,16 @@ type CrudMethod = Create | Get | Update | Default
 type FormLauncherId = { LauncherName:string; LauncherId:Guid }
 and FormLauncher = { LauncherName:string; LauncherId:Guid; Form:FormConfigId; EntityApi:EntityApiName; Mode:FormLauncherMode } with static member Name (l:FormLauncher) : string = l.LauncherName; static member Id (l:FormLauncher) : FormLauncherId = { LauncherName=l.LauncherName; LauncherId=l.LauncherId }
 and FormLauncherMode = | Create | Edit
-and EnumApiName = { EnumName:string } with static member Create n = { EnumName=n }
-and StreamApiName = { StreamName:string } with static member Create n = { StreamName=n }
+and EnumApiId = { EnumName:string; EnumId:Guid }
+and EnumApi = { EnumName:string; EnumId:Guid; Type:TypeName } with static member Id (e:EnumApi) = { EnumName=e.EnumName; EnumId=e.EnumId }; static member Create (n,t) : EnumApi = { EnumName=n; Type=t; EnumId=Guid.CreateVersion7() }
+
+and StreamApiId = { StreamName:string; StreamId:Guid }
+and StreamApi = { StreamName:string; StreamId:Guid; Type:TypeName } with static member Id (e:StreamApi) = { StreamName=e.StreamName; StreamId=e.StreamId }; static member Create (n,t) : StreamApi = { StreamName=n; Type=t; StreamId=Guid.CreateVersion7() }
+
 and EntityApiName = { EntityName:string } with static member Create n = { EntityName=n }
 and FormApis = {
-  Enums:Map<string, EnumApiName * TypeName>
-  Streams:Map<string, StreamApiName * TypeName>
+  Enums:Map<string, EnumApi>
+  Streams:Map<string, StreamApi>
   Entities:Map<string, EntityApiName * (TypeName * Set<CrudMethod>)>
 }
 and FormConfigId = { FormName:string; FormId:Guid }
@@ -41,8 +45,8 @@ and FieldRenderer =
   | PrimitiveRenderer of PrimitiveRenderer
   | MapRenderer of {| Map:FieldRenderer; Key:KeyRenderer; Value:ValueRenderer |}
   | ListRenderer of {| List:FieldRenderer; Element:ElementRenderer |}
-  | EnumRenderer of EnumApiName * FieldRenderer
-  | StreamRenderer of StreamApiName * FieldRenderer
+  | EnumRenderer of EnumApiId * FieldRenderer
+  | StreamRenderer of StreamApiId * FieldRenderer
   | FormRenderer of FormConfigId
 and KeyRenderer = { Label:Option<string>; Tooltip:Option<string>; Renderer:FieldRenderer; Visible:Expr; Disabled:Option<Expr> }
 and ValueRenderer = { Label:Option<string>; Tooltip:Option<string>; Renderer:FieldRenderer; Visible:Expr; Disabled:Option<Expr> }
@@ -143,12 +147,12 @@ let formApis =
           ("colors", colorRefType.Name)
           ("interests", interestRefType.Name)
           ("permissions", permissionRefType.Name)
-        ] |> Seq.map (dup >> (fst <*> (EnumApiName.Create <*> id))) |> Map.ofSeq;
+        ] |> Seq.map (dup >> (fst <*> EnumApi.Create)) |> Map.ofSeq;
       Streams=
         [
           ("cities", cityRefType.Name)
           ("departments", departmentRefType.Name)
-        ] |> Seq.map (dup >> (fst <*> (StreamApiName.Create <*> id))) |> Map.ofSeq;
+        ] |> Seq.map (dup >> (fst <*> StreamApi.Create)) |> Map.ofSeq;
       Entities=
         [
           ("person", (personType.Name, [CrudMethod.Create; Get; Update; Default] |> Set.ofList))
@@ -194,7 +198,7 @@ renderer defaultInfiniteStream"
           Disabled=None }            
         { FieldName="city"; FieldId=Guid.CreateVersion7(); 
           Label=None; Tooltip=None;
-          Renderer=StreamRenderer(citiesStream |> fst, PrimitiveRenderer defaultInfiniteStream); 
+          Renderer=StreamRenderer(citiesStream |> StreamApi.Id, PrimitiveRenderer defaultInfiniteStream); 
           Visible=Expr.Value(Value.ConstBool true);
           Disabled=None }            
       ] |> Seq.map (dup >> (FieldConfig.Name <*> id)) |> Map.ofSeq;
@@ -250,12 +254,12 @@ renderer defaultInfiniteStream"
           Disabled=None }
         { FieldName="favoriteColor"; FieldId=Guid.CreateVersion7(); 
           Label=None; Tooltip=None;
-          Renderer=FieldRenderer.EnumRenderer(colorOptions |> fst, PrimitiveRenderer defaultEnum); 
+          Renderer=FieldRenderer.EnumRenderer(colorOptions |> EnumApi.Id, PrimitiveRenderer defaultEnum); 
           Visible=Expr.Value(Value.ConstBool true);
           Disabled=None }
         { FieldName="gender"; FieldId=Guid.CreateVersion7(); 
           Label=None; Tooltip=None;
-          Renderer=FieldRenderer.EnumRenderer(genderOptions |> fst, PrimitiveRenderer defaultEnum); 
+          Renderer=FieldRenderer.EnumRenderer(genderOptions |> EnumApi.Id, PrimitiveRenderer defaultEnum); 
           Visible=
             Expr.Binary(
               Or,
@@ -321,13 +325,13 @@ renderer defaultInfiniteStream"
           Disabled=None }
         { FieldName="interests"; FieldId=Guid.CreateVersion7(); 
           Label=Some "interests"; Tooltip=None;
-          Renderer=FieldRenderer.EnumRenderer(interestOptions |> fst, PrimitiveRenderer defaultEnumMultiselect);
+          Renderer=FieldRenderer.EnumRenderer(interestOptions |> EnumApi.Id, PrimitiveRenderer defaultEnumMultiselect);
           Visible=
             Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter");
           Disabled=None }
         { FieldName="departments"; FieldId=Guid.CreateVersion7(); 
           Label=Some "departments"; Tooltip=None;
-          Renderer=FieldRenderer.StreamRenderer(departmentsStream |> fst, PrimitiveRenderer defaultInfiniteStreamMultiselect);
+          Renderer=FieldRenderer.StreamRenderer(departmentsStream |> StreamApi.Id, PrimitiveRenderer defaultInfiniteStreamMultiselect);
           Visible=Expr.Value(Value.ConstBool true);
           Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
         { FieldName="mainAddress"; FieldId=Guid.CreateVersion7(); 
@@ -386,7 +390,7 @@ renderer defaultInfiniteStream"
             Map=PrimitiveRenderer defaultMap;
             Key={
               Label=Some "city"; Tooltip=Some "a nice place to live";
-              Renderer=FieldRenderer.StreamRenderer(citiesStream |> fst, PrimitiveRenderer defaultInfiniteStream); 
+              Renderer=FieldRenderer.StreamRenderer(citiesStream |> StreamApi.Id, PrimitiveRenderer defaultInfiniteStream); 
               Visible=Expr.Value(Value.ConstBool true);
               Disabled=None
             };
@@ -405,7 +409,7 @@ renderer defaultInfiniteStream"
             Map=PrimitiveRenderer defaultMap;
             Key={
               Label=Some "color"; Tooltip=None;
-              Renderer=FieldRenderer.EnumRenderer(colorOptions |> fst, PrimitiveRenderer defaultEnum); 
+              Renderer=FieldRenderer.EnumRenderer(colorOptions |> EnumApi.Id, PrimitiveRenderer defaultEnum); 
               Visible=Expr.Value(Value.ConstBool true);
               Disabled=None
             };
@@ -424,7 +428,7 @@ renderer defaultInfiniteStream"
             Map=PrimitiveRenderer defaultMap;
             Key={
               Label=Some "permission"; Tooltip=None;
-              Renderer=FieldRenderer.EnumRenderer(permissionOptions |> fst, PrimitiveRenderer defaultEnum); 
+              Renderer=FieldRenderer.EnumRenderer(permissionOptions |> EnumApi.Id, PrimitiveRenderer defaultEnum); 
               Visible=Expr.Value(Value.ConstBool true);
               Disabled=None
             };
@@ -443,13 +447,13 @@ renderer defaultInfiniteStream"
             Map=PrimitiveRenderer defaultMap;
             Key={
               Label=Some "department"; Tooltip=None;
-              Renderer=FieldRenderer.StreamRenderer(departmentsStream |> fst, FieldRenderer.PrimitiveRenderer defaultInfiniteStream); 
+              Renderer=FieldRenderer.StreamRenderer(departmentsStream |> StreamApi.Id, FieldRenderer.PrimitiveRenderer defaultInfiniteStream); 
               Visible=Expr.Value(Value.ConstBool true);
               Disabled=None
             };
             Value={
               Label=Some "city"; Tooltip=None;
-              Renderer=FieldRenderer.StreamRenderer(citiesStream |> fst, FieldRenderer.PrimitiveRenderer defaultInfiniteStream); 
+              Renderer=FieldRenderer.StreamRenderer(citiesStream |> StreamApi.Id, FieldRenderer.PrimitiveRenderer defaultInfiniteStream); 
               Visible=Expr.Value(Value.ConstBool true);
               Disabled=None
             };
@@ -458,7 +462,7 @@ renderer defaultInfiniteStream"
           Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
         { FieldName="shoeColors"; FieldId=Guid.CreateVersion7(); 
           Label=Some "shoe colors"; Tooltip=None;
-          Renderer=FieldRenderer.EnumRenderer(colorOptions |> fst, FieldRenderer.PrimitiveRenderer defaultEnumMultiselect);
+          Renderer=FieldRenderer.EnumRenderer(colorOptions |> EnumApi.Id, FieldRenderer.PrimitiveRenderer defaultEnumMultiselect);
           Visible=Expr.Value(Value.ConstBool true);
           Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
         { FieldName="friendsBirthdays"; FieldId=Guid.CreateVersion7(); 

@@ -4,6 +4,7 @@ open System.Linq
 open positions.model
 open Ballerina.Fun
 open Ballerina.Collections.Map
+open Ballerina.Sum
 open Ballerina.Coroutines
 open Ballerina.BusinessRules
 open Ballerina.BusinessRuleExecution
@@ -52,10 +53,10 @@ let abcdEventLoop() =
             Trace=[]
             }
           match executeRulesTransitively().run(businessRulesExecutionContext,businessRulesExecutionState) with
-          | Choice1Of2 _ -> 
+          | Left _ -> 
             do printfn "Transitive execution completed successfully"
             do Console.ReadLine() |> ignore
-          | Choice2Of2 e -> 
+          | Right e -> 
             do printfn "Error %A, rule execution resulted in a possible loop that was interrupted" e
             do Console.ReadLine() |> ignore
         )

@@ -38,7 +38,10 @@ type SumBuilder() =
     Sum.bind k p
   member _.Combine(p, k) = 
     Sum.bind (fun _ -> k) p
-  member inline _.Any<'a,'b when 'b : (static member Concat:'b * 'b -> 'b) and 'b:(static member Zero:Unit -> 'b)>(ps:List<Sum<'a,'b>>) =
+  member inline _.Any<'a,'b 
+    when 'b : (static member Concat:'b * 'b -> 'b) 
+    and 'b:(static member Zero:Unit -> 'b)>
+    (ps:List<Sum<'a,'b>>) =
     let merge:Sum<'a,'b> -> Sum<'a,'b> -> Sum<'a,'b> = 
       function
       | Left a -> fun _ -> Left a
@@ -47,11 +50,21 @@ type SumBuilder() =
         | Left a -> Left a 
         | Right b2 -> Right ('b.Concat(b1,b2))
     ps |> Seq.fold merge (Right ('b.Zero()))
-  // member _.All(ps:List<Coroutine<'a, 's, 'c, 'e>>) =
-  //   Co(fun _ -> CoroutineResult.Any(ps), None, None)
-  // member co.For(seq, body) =
-  //   let seq:seq<Option<_>> = seq |> Seq.map body
-  //   seq |> Seq.fold (fun acc p -> co.Combine(acc, p)) (co.Return())
+  member inline _.All<'a,'b 
+    when 'b : (static member Concat:'b * 'b -> 'b) 
+    and 'b:(static member Zero:Unit -> 'b)>
+    (ps:List<Sum<'a,'b>>) =
+    let merge:Sum<List<'a>,'b> -> Sum<'a,'b> -> Sum<List<'a>,'b> = 
+      function
+      | Left a1 -> 
+        function 
+        | Left a2 -> Left (a1 @ [a2]) 
+        | Right b2 -> Right b2
+      | Right b1 ->
+        function 
+        | Right b2 -> Right ('b.Concat(b1,b2))
+        | _ -> Right b1
+    ps |> Seq.fold merge (Left [])
   member sum.Delay p = 
     sum.Bind ((sum.Return ()), p)
 

@@ -3,7 +3,7 @@ open System
 open System.Linq
 open Ballerina.Fun
 open Ballerina.Collections.Map
-open Ballerina.State
+open Ballerina.StateWithError
 open Ballerina.Coroutines
 open Ballerina.BusinessRules
 open Ballerina.BusinessRulesRestrictionPredicates
