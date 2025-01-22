@@ -12,16 +12,19 @@ let dup a = (a,a)
 let (<*>) f g = fun (a,b) -> (f a, g b)
 
 type CrudMethod = Create | Get | Update | Default
-type EnumApiName = { EnumName:string } with static member Create n = { EnumName=n }
-type StreamApiName = { StreamName:string } with static member Create n = { StreamName=n }
-type EntityApiName = { EntityName:string } with static member Create n = { EntityName=n }
-type FormApis = {
+type FormLauncherId = { LauncherName:string; LauncherId:Guid }
+and FormLauncher = { LauncherName:string; LauncherId:Guid; Form:FormConfigId; EntityApi:EntityApiName; Mode:FormLauncherMode } with static member Name (l:FormLauncher) : string = l.LauncherName; static member Id (l:FormLauncher) : FormLauncherId = { LauncherName=l.LauncherName; LauncherId=l.LauncherId }
+and FormLauncherMode = | Create | Edit
+and EnumApiName = { EnumName:string } with static member Create n = { EnumName=n }
+and StreamApiName = { StreamName:string } with static member Create n = { StreamName=n }
+and EntityApiName = { EntityName:string } with static member Create n = { EntityName=n }
+and FormApis = {
   Enums:Map<string, EnumApiName * TypeName>
   Streams:Map<string, StreamApiName * TypeName>
   Entities:Map<string, EntityApiName * (TypeName * Set<CrudMethod>)>
 }
-type FormConfigId = { FormName:string; FormId:Guid }
-type FormConfig = { 
+and FormConfigId = { FormName:string; FormId:Guid }
+and FormConfig = { 
   FormName:string; 
   FormId:Guid; 
   Type:ExprType;
@@ -148,7 +151,7 @@ let formApis =
         ] |> Seq.map (dup >> (fst <*> (StreamApiName.Create <*> id))) |> Map.ofSeq;
       Entities=
         [
-          ("person", (personType.Name, [Create; Get; Update; Default] |> Set.ofList))
+          ("person", (personType.Name, [CrudMethod.Create; Get; Update; Default] |> Set.ofList))
         ] |> Seq.map (dup >> (fst <*> id) >> (id <*> (EntityApiName.Create <*> id))) |> Map.ofSeq;
     }
   }
@@ -544,24 +547,28 @@ renderer defaultInfiniteStream"
           ] |> Map.ofSeq
         }
     }
+    let! personApi = apis.Entities |> Map.tryFind "person" |> withError "Error: cannot find entity api 'person'"
+    let createPerson:FormLauncher = {
+      LauncherName="create-person"; LauncherId=Guid.CreateVersion7();
+      Mode=FormLauncherMode.Create; 
+      Form=personForm |> FormConfig.Id;
+      EntityApi=personApi |> fst
+    }
+    let editPerson:FormLauncher = {
+      LauncherName="edit-person"; LauncherId=Guid.CreateVersion7();
+      Mode=FormLauncherMode.Edit; 
+      Form=personForm |> FormConfig.Id;
+      EntityApi=personApi |> fst
+    }
     return types, apis, [
-      addressForm,
+      addressForm
       personForm
-    ] |> Seq.map(FormConfig.Name <*> id) |> Map.ofSeq
+    ] |> Seq.map(dup >> (FormConfig.Name <*> id)) |> Map.ofSeq,
+    [ 
+      createPerson
+      editPerson
+    ] |> Seq.map(dup >> (FormLauncher.Name <*> id)) |> Map.ofSeq
   }
-
-//   "launchers": {
-//     "create-person": {
-//       "kind": "create",
-//       "form": "person",
-//       "api": "person"
-//     },
-//     "edit-person": {
-//       "kind": "edit",
-//       "form": "person",
-//       "api": "person"
-//     }
-
 
 type FormsGenTarget = 
 | ts = 1
