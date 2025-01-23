@@ -30,7 +30,7 @@ type SumBuilder() =
     Sum.Right e
   member _.Return(result:'a) = 
     Sum.Left result
-  member opt.ReturnFrom(result:Option<_>) = 
+  member sum.ReturnFrom(result:Sum<_,_>) = 
     result
   member _.Yield(result:'a) = 
     Sum.Left result
@@ -67,6 +67,12 @@ type SumBuilder() =
     ps |> Seq.fold merge (Left [])
   member sum.Delay p = 
     sum.Bind ((sum.Return ()), p)
+  member sum.Lift2 (f:'a -> 'b -> 'c) p1 p2 = 
+    sum{
+      let! a = p1
+      let! b = p2
+      return f a b
+    }
 
 let sum = SumBuilder()
 

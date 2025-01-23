@@ -48,13 +48,16 @@ and RuleDependencies = { dependencies:Map<EntityDescriptorId * FieldDescriptorId
 
 and Assignment = { Variable:VarName * List<FieldDescriptorId>; Value:Expr }
 and VarName = { VarName:string }
-and TypeBinding = { Name:TypeName; Type:ExprType }
-and TypeName = { TypeName:string; TypeId:Guid }
+and TypeBinding = { TypeId:TypeId; Type:ExprType }
+and TypeBindings = Map<TypeId, ExprType>
+and TypeId = { TypeName:string; TypeId:Guid }
 and ExprType = 
-  | LookupType of EntityDescriptorId 
-  | ReferenceType of TypeName
+  | UnitType
+  | VarType of VarName
+  | SchemaLookupType of EntityDescriptorId 
+  | LookupType of TypeId
   | PrimitiveType of PrimitiveType 
-  | RecordType of List<RecordField> 
+  | RecordType of Map<string,ExprType> 
   | UnionType of List<UnionCase>
   | MapType of ExprType * ExprType
   | TupleType of List<ExprType>
@@ -62,7 +65,6 @@ and ExprType =
   | ListType of ExprType
   | SetType of ExprType
 and UnionCase = { CaseName:string; Fields:ExprType }
-and RecordField = { FieldName:string; Type:ExprType }
 and VarTypes = Map<VarName, ExprType>
 and Vars = Map<VarName, Var>
 and EntityDescriptorId = { EntityDescriptorId:Guid; EntityName:string }
@@ -119,22 +121,33 @@ type Expr with
   static member op_GreaterThan (e1:Expr, e2:Expr) =
     Binary(GreaterThan, e1, e2)
 
-type RecordField with
-  static member Name (self:RecordField) = self.FieldName
-
 type TypeBinding with
-  static member Create (name,exprType) = { TypeBinding.Name=name; TypeBinding.Type=exprType }
+  static member Create (name,exprType) = { TypeBinding.TypeId=name; TypeBinding.Type=exprType }
 
-type TypeName with
+type TypeId with
   static member Create name = { TypeName=name; TypeId=Guid.CreateVersion7() }
 
 type ExprType with
-  static member Extends t1 t2 =
+  static member Extend t1 t2 =
     match t1, t2 with
     | RecordType fields1, RecordType fields2 
-      when fields1 |> Seq.map (RecordField.Name) |> Set.ofSeq |> Set.intersect (fields2 |> Seq.map (RecordField.Name) |> Set.ofSeq) |> Set.isEmpty
-      -> fields1 @ fields2 |> ExprType.RecordType |> Some
+      when fields1 |> Map.keys |> Set.ofSeq |> Set.intersect (fields2 |> Map.keys |> Set.ofSeq) |> Set.isEmpty
+      -> Map.merge (fun a _ -> a) fields1 fields2 |> ExprType.RecordType |> Some
     | _ -> None
+  static member GetTypesFreeVars (t:ExprType) : Set<TypeId> = 
+    let (!) = ExprType.GetTypesFreeVars
+    match t with
+    | ExprType.UnitType | ExprType.VarType _ -> Set.empty
+    | ExprType.TupleType ts -> ts |> Seq.map (!) |> Seq.fold (+) Set.empty
+    | ExprType.ListType t
+    | ExprType.SetType t
+    | ExprType.OptionType t -> !t
+    | ExprType.LookupType t -> Set.singleton t
+    | ExprType.MapType(k,v) -> !k + !v
+    | ExprType.SchemaLookupType _ 
+    | ExprType.PrimitiveType _ -> Set.empty
+    | ExprType.UnionType cs -> cs |> Seq.map (fun c -> !c.Fields) |> Seq.fold (+) Set.empty
+    | ExprType.RecordType fs -> fs |> Map.values |> Seq.map (!) |> Seq.fold (+) Set.empty
 
 type FieldDescriptor with
   member this.ToFieldDescriptorId : FieldDescriptorId = 
@@ -163,7 +176,7 @@ type EntityDescriptor with
             // do printfn "fieldValue = %A" fieldValue
             // do Console.ReadLine() |> ignore
             match fieldDescriptor.Type(), fieldValue with
-            | ExprType.LookupType entityDescriptorId, Value.ConstGuid id ->
+            | ExprType.SchemaLookupType entityDescriptorId, Value.ConstGuid id ->
               let! entityDescriptor = allEntities |> Map.tryFind entityDescriptorId
               // do printfn "entityDescriptor = %A" entityDescriptor
               // do Console.ReadLine() |> ignore
@@ -235,7 +248,7 @@ type FieldDescriptor with
         { 
           FieldDescriptorId=guid; 
           FieldName = entityName; 
-          Type = fun () -> ExprType.LookupType targetEntityDescriptorId
+          Type = fun () -> ExprType.SchemaLookupType targetEntityDescriptorId
           Lookup = Option<'e>.fromObject >> Option.map(getField >> Value.ConstGuid);
           Get = fun id -> tryFindEntity id |> Option.map(getField >> Value.ConstGuid);
           Update = {|

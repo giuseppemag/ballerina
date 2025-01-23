@@ -4,7 +4,7 @@ open System
 open System.Linq
 open Ballerina.Fun
 open Ballerina.Coroutines
-open Ballerina.Option
+open Ballerina.Sum
 open Ballerina.BusinessRules
 open Ballerina.BusinessRuleTypeChecking
 
@@ -133,8 +133,8 @@ type BusinessRule with
     // let variables = scope rule.Condition |> Seq.map (fun v -> v.varName, v.entityType) |> Map.ofSeq
     let conditionType = typeCheck schema Map.empty rule.Condition
     match conditionType with
-    | None -> failwithf "Condition %A does not type check" (rule.Condition)
-    | Some (_,vars) ->
+    | Right errors -> failwithf "Condition %A does not type check with errors %A" (rule.Condition) errors.Errors
+    | Left (_,vars) ->
       let dependencies = [
         for action in rule.Actions do
           let fieldLookups = fieldLookups action.Value
@@ -142,7 +142,7 @@ type BusinessRule with
           // Console.ReadLine() |> ignore
           for (varName, fields) in fieldLookups do
             match typeCheck schema vars (Expr.VarLookup varName) with
-            | Some (LookupType varType, _) ->
+            | Left (SchemaLookupType varType, _) ->
               let rec lookupPrefixes = 
                 function
                 | [] -> []
@@ -163,7 +163,7 @@ type BusinessRule with
                 // do printfn "typeCheckFull of %A with %A" ((Expr.VarLookup varName =>> lookupFields)) vars
                 // do Console.ReadLine() |> ignore
                 match typeCheck schema vars (Expr.VarLookup varName =>> lookupFields) with
-                | Some (LookupType lookupType, _) ->
+                | Left (SchemaLookupType lookupType, _) ->
                   let dependency:RuleDependency = {
                     ChangedEntityType = lookupType
                     ChangedField = lastField
@@ -173,14 +173,18 @@ type BusinessRule with
                   }
                   if changedFields |> Set.contains dependency.ChangedField then
                     yield dependency
-                | e -> 
-                  failwithf "Error %A\nCannot typecheck lookup path %A with lookupField %A and vars %A" e ((Expr.VarLookup varName =>> lookupFields)) lookupFields vars
+                | Left _ as e -> 
+                  failwithf "Error %A\nUnexpected typecheck result in lookup path %A with lookupField %A and vars %A" e ((Expr.VarLookup varName =>> lookupFields)) lookupFields vars
+                | Right e -> 
+                  failwithf "Error %A\nCannot typecheck lookup path %A with lookupField %A and vars %A" e.Errors ((Expr.VarLookup varName =>> lookupFields)) lookupFields vars
                 // and RuleDependency = { ChangedEntityType:EntityDescriptor; RestrictedVariable:string; RestrictedVariableType:EntityDescriptor; PathFromVariableToChange:List<FieldDescriptor> }
                 // and RuleDependencies = Map<EntityDescriptorId * FieldDescriptor, List<RuleDependency>>
                 // for each prefix of fields
                   // the type is the type of the varName + path, thus excluding the last fieldName
               ()
-            | _ -> failwithf "Cannot typecheck varName %A" (Expr.VarLookup varName) 
+            | Left _ as e -> 
+              failwithf "Error\nUnexpected typecheck result %A in var lookup %A and vars %A" e (Expr.VarLookup varName) vars
+            | Right e -> failwithf "Cannot typecheck varName %A with errors %A" (Expr.VarLookup varName) e.Errors
       ]
       let byEntityAndField:RuleDependencies = 
         { 

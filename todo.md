@@ -27,17 +27,31 @@ Todo (✅/❌)
       ✅ use expressions from the business rule schema plus new form types as a representation target for the massive `Person` sample
       ✅ think about the types for enums, streams, etc: they do not look good, define a whole record with an `Id` static member
       ✅ define state monad with errors as a composition of state and sum
-      ❌ convert the exiting type-checker to `Sum` through `withError`
-        ❌ there is the `Schema`, and then there are `TypeBindings:Map<string, Type>`
-        ❌ move the `Error` type to core
-      ❌ type-check the form instances field lookups with the map of types by name as bound context
-        ❌ the primitiveRenderers need name and target type from the command line
+      ❌ ensure existence and structural reasonableness of all referenced types
+        ✅ in other type definitions
+        ✅ in APIs
+        ✅ in forms
+        ✅ in launchers
+        ✅ records should not have duplicated field names 
+        ✅ instantiate sampleForms with primitives and injected fields
+          ✅ gather all instantiated types
+          ✅ gather all definition types
+          ✅ check that they are all a subset of the definitions
+          ✅ produce a clear error message with the missing type names
+      ❌ somewhat painful but 
+        ❌ `string -> T` is built up while parsing
+        ❌ `TId -> T` is the parsed context
+      ❌ convert all instances of Map.tryFind ... withError ... to `Map.tryFindWithError`
+      ✅ convert the exiting type-checker to `Sum` through `withError`
+      ❌ type-check the form instances field lookups 
+        ❌ with the map of types by type-id as bindings context in addition to the schema
+        ❌ `byStructure: FieldRenderer -> ExprType`
+        ❌ `byFieldName : FieldConfig -> ExprType`
+        ❌ `Unify : ExprType * ExprType -> Sum<Set<VarBindings>, Errors>`
         ❌ type-check the form instances' `visible` and `disabled` predicates
           ❌ inject `root` variable at form instantiation, not at form definition 
           ❌ `local` variable can be injected any time, also at form definition
           ❌ `flag` variable comes from the command line
-      ❌ move the new types (`Form`, etc.) to ballerina-core
-      ❌ move the new type checkers to ballerina-core
       ❌ parse the JSON into the representation types - ORDER SHOULD NOT MATTER!
         ❌ use `StateWithError`
         ❌ pre-populate the types with empty (`Unit`) bodies in a map that gets overwritten later
@@ -45,17 +59,21 @@ Todo (✅/❌)
       ❌ parse the JSON into the representation forms - ORDER SHOULD NOT MATTER!
       ❌ move the new type parsers to ballerina-core
        ❌ break the form engine in all possible ways
-    ❌ from the schema and the forms, generate Typescript code for
-      ❌ one class per type
-      ❌ one enum with all enum types
-      ❌ one enum with all stream types
-      ❌ one enum with all entity types
+    ❌ create some basic sample in Go with structs, enums, and the visitor-wrapper for type-safe API selectors
     ❌ from the schema and the forms, generate Go code for
       ❌ one class per type
       ❌ one enum with all enum types
       ❌ one enum with all stream types
       ❌ one enum with all entity types
     ❌ move relevant sources to a separate folder in ballerina-core (forms engine)
+      ❌ move the new types (`Errors`, `Form`, etc.) to ballerina-core
+      ❌ move the new type checkers to ballerina-core
+    ❌ connect command line parameters to right invocations, leave nothing but the command parser in `Program.fs`
+      ❌ the primitive types' renderers
+      ❌ the injected types
+    ❌ define webservice variant
+    ❌ package as standalone executable
+    ❌ generate Typescript and C# code from forms-config
   ✅ models
     ✅ users
     ✅ registration-tokens
@@ -78,7 +96,7 @@ Todo (✅/❌)
         ✅ pass config from appsettings.development (based on env variable)
       ✅ move AB sample
       ❌ add PositionOptions config with extension method on builder
-      ❌ adding and configuring the dbcontext should also be done from another file, from ballerina-core perhaps
+      ❌ adding and configuring the dbcontext should also be done from another file
     ✅ AB events sample domain
       ✅ reorganize the main project decently, moving all the AB-related logic to a separate folder
         ✅ repositories
@@ -145,6 +163,7 @@ Todo (✅/❌)
           ❌ there are various places where we assume `One entityId`, is this always reasonable?
             ❌ in particular, `Expr::execute` does not take into account more than one field lookup on the assigned variable, extend
       ❌ testing scenario
+        ❌ define an algebra of business rules to support cascades like for the GLAccount defaulting
         ❌ add `CDs` to `AB`, so not just one
           ✅ use business rules for field setting
           ✅ test the conditions, not always `Exists ... true`

@@ -4,34 +4,36 @@ open FSharp.Data
 open FSharp.Data.JsonExtensions
 open System
 open System.IO
+open Ballerina.Fun
 open Ballerina.BusinessRules
 open Ballerina.Option
 open Ballerina.Sum
-
+open Ballerina.Errors
 let dup a = (a,a)
 let (<*>) f g = fun (a,b) -> (f a, g b)
 
+
 type CrudMethod = Create | Get | Update | Default
 type FormLauncherId = { LauncherName:string; LauncherId:Guid }
-and FormLauncher = { LauncherName:string; LauncherId:Guid; Form:FormConfigId; EntityApi:EntityApiName; Mode:FormLauncherMode } with static member Name (l:FormLauncher) : string = l.LauncherName; static member Id (l:FormLauncher) : FormLauncherId = { LauncherName=l.LauncherName; LauncherId=l.LauncherId }
+and FormLauncher = { LauncherName:string; LauncherId:Guid; Form:FormConfigId; EntityApi:EntityApiId; Mode:FormLauncherMode } with static member Name (l:FormLauncher) : string = l.LauncherName; static member Id (l:FormLauncher) : FormLauncherId = { LauncherName=l.LauncherName; LauncherId=l.LauncherId }
 and FormLauncherMode = | Create | Edit
 and EnumApiId = { EnumName:string; EnumId:Guid }
-and EnumApi = { EnumName:string; EnumId:Guid; Type:TypeName } with static member Id (e:EnumApi) = { EnumName=e.EnumName; EnumId=e.EnumId }; static member Create (n,t) : EnumApi = { EnumName=n; Type=t; EnumId=Guid.CreateVersion7() }
-
+and EnumApi = { EnumName:string; EnumId:Guid; TypeId:TypeId } with static member Id (e:EnumApi) = { EnumName=e.EnumName; EnumId=e.EnumId }; static member Create (n,t) : EnumApi = { EnumName=n; TypeId=t; EnumId=Guid.CreateVersion7() }; static member Type (a:EnumApi) : TypeId = a.TypeId
 and StreamApiId = { StreamName:string; StreamId:Guid }
-and StreamApi = { StreamName:string; StreamId:Guid; Type:TypeName } with static member Id (e:StreamApi) = { StreamName=e.StreamName; StreamId=e.StreamId }; static member Create (n,t) : StreamApi = { StreamName=n; Type=t; StreamId=Guid.CreateVersion7() }
+and StreamApi = { StreamName:string; StreamId:Guid; TypeId:TypeId } with static member Id (e:StreamApi) = { StreamName=e.StreamName; StreamId=e.StreamId }; static member Create (n,t) : StreamApi = { StreamName=n; TypeId=t; StreamId=Guid.CreateVersion7() }; static member Type (a:StreamApi) : TypeId = a.TypeId
+and EntityApiId = { EntityName:string; EntityId:Guid }
+and EntityApi = { EntityName:string; EntityId:Guid; TypeId:TypeId } with static member Id (e:EntityApi) = { EntityName=e.EntityName; EntityId=e.EntityId }; static member Create (n,t) : EntityApi = { EntityName=n; TypeId=t; EntityId=Guid.CreateVersion7() }; static member Type (a:EntityApi) : TypeId = a.TypeId
 
-and EntityApiName = { EntityName:string } with static member Create n = { EntityName=n }
 and FormApis = {
   Enums:Map<string, EnumApi>
   Streams:Map<string, StreamApi>
-  Entities:Map<string, EntityApiName * (TypeName * Set<CrudMethod>)>
+  Entities:Map<string, EntityApi * Set<CrudMethod>>
 }
 and FormConfigId = { FormName:string; FormId:Guid }
 and FormConfig = { 
   FormName:string; 
   FormId:Guid; 
-  Type:ExprType;
+  TypeId:TypeId;
   Fields:Map<string, FieldConfig>;
   Tabs:FormTabs } with static member Name f = f.FormName; static member Id f = { FormName=f.FormName; FormId=f.FormId }
 and FormTabs = { FormTabs:Map<string, FormColumns> }
@@ -54,67 +56,134 @@ and ElementRenderer = { Label:Option<string>; Tooltip:Option<string>; Renderer:F
 and PrimitiveRendererId = { PrimitiveRendererName:string; PrimitiveRendererId:Guid }
 and PrimitiveRenderer = { PrimitiveRendererName:string; PrimitiveRendererId:Guid; Type:ExprType } with static member ToPrimitiveRendererId (r:PrimitiveRenderer) = { PrimitiveRendererName=r.PrimitiveRendererName; PrimitiveRendererId=r.PrimitiveRendererId }
 
-type Errors = { Errors:List<string> } with
-  static member Zero()  = { Errors=[] }
-  static member Concat(e1,e2)  = { Errors=e1.Errors @ e2.Errors }
 
-let inline withError (e:string) (o:Option<'res>) : Sum<'res,Errors> = o |> Sum.fromOption<'res,Errors> (fun () -> { Errors=[e] })
+let inline extractTypes<'k, 'v when 'v : (static member Type : 'v -> TypeId) and 'k : comparison> (m:Map<'k, 'v>) =
+  m |> Map.values |> Seq.map(fun e -> e |> 'v.Type |> Set.singleton) |> Seq.fold (+) Set.empty
+
+type ParsedFormsContext = {
+  Types:Map<string, TypeBinding>
+  Apis:FormApis
+  Forms:Map<string, FormConfig>
+  Launchers:Map<string, FormLauncher>
+}
+
+type FieldRenderer with
+  static member GetTypesFreeVars (ctx:ParsedFormsContext) (fr:FieldRenderer) : Sum<Set<TypeId>, Errors> = 
+    let (+) = sum.Lift2 Set.union
+    let (!) = FieldRenderer.GetTypesFreeVars ctx 
+    match fr with
+    | FieldRenderer.EnumRenderer(e,f) -> 
+      (ctx.Apis.Enums |> Map.tryFindWithError e.EnumName "enum" e.EnumName |> Sum.map (EnumApi.Type >> Set.singleton)) + !f
+    | FieldRenderer.FormRenderer f ->
+      sum{ 
+        let! f = ctx.Forms |> Map.tryFindWithError f.FormName "form" f.FormName
+        return! f |> FormConfig.GetTypesFreeVars ctx
+      }
+    | FieldRenderer.ListRenderer l ->
+      !l.Element.Renderer + !l.List
+    | FieldRenderer.MapRenderer m ->
+      !m.Map + !m.Key.Renderer + !m.Value.Renderer
+    | FieldRenderer.PrimitiveRenderer p -> sum{ return p.Type |> ExprType.GetTypesFreeVars }
+    | FieldRenderer.StreamRenderer (s,f) ->
+      (ctx.Apis.Streams |> Map.tryFindWithError s.StreamName "stream" s.StreamName |> Sum.map (StreamApi.Type >> Set.singleton)) + !f
+
+and FormConfig with
+  static member GetTypesFreeVars (ctx:ParsedFormsContext) (fc:FormConfig) : Sum<Set<TypeId>, Errors> = 
+    let (+) = sum.Lift2 Set.union
+    sum{ return Set.singleton fc.TypeId } + 
+      (
+        fc.Fields 
+          |> Map.values |> Seq.map(fun f -> f.Renderer |> FieldRenderer.GetTypesFreeVars ctx) 
+          |> Seq.fold (+) (sum{ return Set.empty })
+      )
+
+and FormLauncher with
+  static member GetTypesFreeVars (ctx:ParsedFormsContext) (fl:FormLauncher) : Sum<Set<TypeId>, Errors> = 
+    let (+) = sum.Lift2 Set.union
+    sum{
+      let! form = ctx.Forms |> Map.tryFindWithError fl.Form.FormName "form" fl.Form.FormName
+      let! entity = ctx.Apis.Entities |> Map.tryFindWithError fl.EntityApi.EntityName "entity api" fl.EntityApi.EntityName
+      return! FormConfig.GetTypesFreeVars ctx form
+    }
+
+type FormApis with
+  static member GetTypesFreeVars (fa:FormApis) : Set<TypeId> = 
+    extractTypes fa.Enums + extractTypes fa.Streams + extractTypes (fa.Entities |> Map.map (fun _ -> fst))
+
+type ParsedFormsContext with
+  static member GetTypesFreeVars (ctx:ParsedFormsContext) : Sum<Set<TypeId>, Errors> = 
+    let (+) = sum.Lift2 Set.union
+    let zero = sum{ return Set.empty }
+    (ctx.Forms |> Map.values |> Seq.map(FormConfig.GetTypesFreeVars ctx) |> Seq.fold (+) zero) +
+    (ctx.Apis |> FormApis.GetTypesFreeVars |> sum.Return) + 
+    (ctx.Launchers |> Map.values |> Seq.map(FormLauncher.GetTypesFreeVars ctx) |> Seq.fold (+) zero)
+  static member Validate (ctx:ParsedFormsContext) : Sum<Unit, Errors> =
+    sum{
+      let! usedTypes = ParsedFormsContext.GetTypesFreeVars ctx
+      let availableTypes = ctx.Types |> Map.values |> Seq.map(fun tb -> tb.TypeId) |> Set.ofSeq
+      if availableTypes |> Set.isSuperset usedTypes then return ()
+      else 
+        let missingTypeErrors = (usedTypes - availableTypes) |> Set.map (fun t -> Errors.Singleton (sprintf "Error: missing type definition for %s" t.TypeName)) |> Seq.fold (curry Errors.Concat) (Errors.Zero())
+        return! sum.Throw(missingTypeErrors)
+    }
 
 let sampleTypes injectedTypes = 
-  let injectedTypes = injectedTypes |> Seq.map (fun injectedTypeName -> injectedTypeName, (injectedTypeName |> TypeName.Create, ExprType.RecordType []) |> TypeBinding.Create) |> Map.ofSeq
-  let collectionReferenceType = ExprType.RecordType [
-          { FieldName="Id"; Type=ExprType.PrimitiveType PrimitiveType.GuidType }
-          { FieldName="DisplayValue"; Type=ExprType.PrimitiveType PrimitiveType.StringType }
-        ]
+  let injectedTypes = injectedTypes |> Seq.map (fun injectedTypeName -> injectedTypeName.TypeName, (injectedTypeName, ExprType.VarType({ VarName="'a1" })) |> TypeBinding.Create) |> Map.ofSeq
+  let collectionReferenceType = 
+    ExprType.RecordType(
+      [
+        ("Id", ExprType.PrimitiveType PrimitiveType.GuidType)
+        ("DisplayValue", ExprType.PrimitiveType PrimitiveType.StringType)
+      ] |> Map.ofList)
   sum{
-    let CityRefName = "CityRef" |> TypeName.Create
-    let AddressName = "Address" |> TypeName.Create
-    let GenderRefName = "GenderRef" |> TypeName.Create
-    let ColorRefName = "ColorRef" |> TypeName.Create
-    let InterestRefName = "InterestRef" |> TypeName.Create
-    let DepartmentRefName = "DepartmentRef" |> TypeName.Create
-    let PermissionRefName = "PermissionRef" |> TypeName.Create
-    let PersonName = "Person" |> TypeName.Create
-    let! injectedCategoryName = injectedTypes |> Map.tryFind "injectedCategory" |> Option.map (fun tb -> tb.Name) |> withError "Error: missing injectedCategory from injected types"
+    let CityRefName = "CityRef" |> TypeId.Create
+    let AddressName = "Address" |> TypeId.Create
+    let GenderRefName = "GenderRef" |> TypeId.Create
+    let ColorRefName = "ColorRef" |> TypeId.Create
+    let InterestRefName = "InterestRef" |> TypeId.Create
+    let DepartmentRefName = "DepartmentRef" |> TypeId.Create
+    let PermissionRefName = "PermissionRef" |> TypeId.Create
+    let PersonName = "Person" |> TypeId.Create
+    let! injectedCategoryName = injectedTypes |> Map.tryFind "injectedCategory" |> Option.map (fun tb -> tb.TypeId) |> withError "Error: missing injectedCategory from injected types"
 
-    let! cityRef = ExprType.Extends collectionReferenceType (ExprType.RecordType []) |> withError "Error: cannot create CityRef"
+    let! cityRef = ExprType.Extend collectionReferenceType (ExprType.RecordType Map.empty) |> withError "Error: cannot create CityRef"
     let address = 
-      ExprType.RecordType [
-          { FieldName="street"; Type=ExprType.PrimitiveType PrimitiveType.StringType }
-          { FieldName="number"; Type=ExprType.PrimitiveType PrimitiveType.IntType }
-          { FieldName="city"; Type=cityRef }
-        ]
-    let! genderRef = ExprType.Extends collectionReferenceType (ExprType.RecordType []) |> withError "Error: cannot create GenderRef"
-    let! colorRef = ExprType.Extends collectionReferenceType (ExprType.RecordType []) |> withError "Error: cannot create ColorRef"
-    let! interestRef = ExprType.Extends collectionReferenceType (ExprType.RecordType []) |> withError "Error: cannot create InterestRef"
-    let! departmentRef = ExprType.Extends collectionReferenceType (ExprType.RecordType []) |> withError "Error: cannot create DepartmentRef"
-    let! permissionRef = ExprType.Extends collectionReferenceType (ExprType.RecordType []) |> withError "Error: cannot create PermissionRef"
+      ExprType.RecordType ([
+          "street", ExprType.PrimitiveType PrimitiveType.StringType
+          "number", ExprType.PrimitiveType PrimitiveType.IntType
+          "city", cityRef
+      ] |> Map.ofList)
+    let! genderRef = ExprType.Extend collectionReferenceType (ExprType.RecordType Map.empty) |> withError "Error: cannot create GenderRef"
+    let! colorRef = ExprType.Extend collectionReferenceType (ExprType.RecordType Map.empty) |> withError "Error: cannot create ColorRef"
+    let! interestRef = ExprType.Extend collectionReferenceType (ExprType.RecordType Map.empty) |> withError "Error: cannot create InterestRef"
+    let! departmentRef = ExprType.Extend collectionReferenceType (ExprType.RecordType Map.empty) |> withError "Error: cannot create DepartmentRef"
+    let! permissionRef = ExprType.Extend collectionReferenceType (ExprType.RecordType Map.empty) |> withError "Error: cannot create PermissionRef"
     let person = 
-      ExprType.RecordType [
-          { FieldName="name"; Type=ExprType.PrimitiveType PrimitiveType.StringType }
-          { FieldName="surname"; Type=ExprType.PrimitiveType PrimitiveType.StringType }
-          { FieldName="birthday"; Type=ExprType.PrimitiveType PrimitiveType.DateOnlyType }
-          { FieldName="subscribeToNewsletter"; Type=ExprType.PrimitiveType PrimitiveType.BoolType }
-          { FieldName="favoriteColor"; Type=ExprType.ReferenceType ColorRefName |> ExprType.OptionType }
-          { FieldName="gender"; Type=ExprType.ReferenceType GenderRefName |> ExprType.OptionType }
-          { FieldName="interests"; Type=ExprType.SetType(ExprType.ReferenceType InterestRefName) }
-          { FieldName="departments"; Type=ExprType.SetType(ExprType.ReferenceType DepartmentRefName) }
-          { FieldName="mainAddress"; Type=ExprType.SetType(ExprType.ReferenceType AddressName) }
-          { FieldName="dependants"; Type=ExprType.MapType(ExprType.PrimitiveType PrimitiveType.StringType, ExprType.ReferenceType injectedCategoryName) }
-          { FieldName="friendsByCategory"; Type=ExprType.MapType(ExprType.ReferenceType injectedCategoryName, ExprType.PrimitiveType PrimitiveType.StringType) }
-          { FieldName="relatives"; Type=ExprType.ListType(ExprType.ReferenceType injectedCategoryName) }
-          { FieldName="addresses"; Type=ExprType.ListType(ExprType.ReferenceType AddressName) }
-          { FieldName="emails"; Type=ExprType.ListType(ExprType.PrimitiveType PrimitiveType.StringType) }
-          { FieldName="addressesWithLabel"; Type=ExprType.MapType(ExprType.PrimitiveType PrimitiveType.StringType, ExprType.ReferenceType AddressName) }
-          { FieldName="addressesByCity"; Type=ExprType.MapType(ExprType.ReferenceType CityRefName |> ExprType.OptionType, ExprType.ReferenceType AddressName) }
-          { FieldName="addressesWithColorLabel"; Type=ExprType.MapType(ExprType.ReferenceType ColorRefName |> ExprType.OptionType, ExprType.ReferenceType AddressName) }
-          { FieldName="permissions"; Type=ExprType.MapType(ExprType.ReferenceType PermissionRefName |> ExprType.OptionType, ExprType.PrimitiveType PrimitiveType.BoolType) }
-          { FieldName="cityByDepartment"; Type=ExprType.MapType(ExprType.ReferenceType DepartmentRefName |> ExprType.OptionType, ExprType.ReferenceType CityRefName |> ExprType.OptionType) }
-          { FieldName="shoeColours"; Type=ExprType.SetType(ExprType.ReferenceType ColorRefName) }
-          { FieldName="friendsBirthdays"; Type=ExprType.MapType(ExprType.PrimitiveType PrimitiveType.StringType, ExprType.PrimitiveType PrimitiveType.DateOnlyType) }
-          { FieldName="holidays"; Type=ExprType.ListType(ExprType.PrimitiveType PrimitiveType.DateOnlyType) }
-          { FieldName="category"; Type=ExprType.ReferenceType injectedCategoryName }
-        ]
+      ExprType.RecordType([
+          "name", ExprType.PrimitiveType PrimitiveType.StringType
+          "surname", ExprType.PrimitiveType PrimitiveType.StringType
+          "birthday", ExprType.PrimitiveType PrimitiveType.DateOnlyType
+          "subscribeToNewsletter", ExprType.PrimitiveType PrimitiveType.BoolType
+          "favoriteColor", ExprType.LookupType ColorRefName |> ExprType.OptionType
+          "gender", ExprType.LookupType GenderRefName |> ExprType.OptionType
+          "interests", ExprType.SetType(ExprType.LookupType InterestRefName)
+          "departments", ExprType.SetType(ExprType.LookupType DepartmentRefName)
+          "mainAddress", ExprType.SetType(ExprType.LookupType AddressName)
+          "dependants", ExprType.MapType(ExprType.PrimitiveType PrimitiveType.StringType, ExprType.LookupType injectedCategoryName)
+          "friendsByCategory", ExprType.MapType(ExprType.LookupType injectedCategoryName, ExprType.PrimitiveType PrimitiveType.StringType)
+          "relatives", ExprType.ListType(ExprType.LookupType injectedCategoryName)
+          "addresses", ExprType.ListType(ExprType.LookupType AddressName)
+          "emails", ExprType.ListType(ExprType.PrimitiveType PrimitiveType.StringType)
+          "addressesWithLabel", ExprType.MapType(ExprType.PrimitiveType PrimitiveType.StringType, ExprType.LookupType AddressName)
+          "addressesByCity", ExprType.MapType(ExprType.LookupType CityRefName |> ExprType.OptionType, ExprType.LookupType AddressName)
+          "addressesWithColorLabel", ExprType.MapType(ExprType.LookupType ColorRefName |> ExprType.OptionType, ExprType.LookupType AddressName)
+          "permissions", ExprType.MapType(ExprType.LookupType PermissionRefName |> ExprType.OptionType, ExprType.PrimitiveType PrimitiveType.BoolType)
+          "cityByDepartment", ExprType.MapType(ExprType.LookupType DepartmentRefName |> ExprType.OptionType, ExprType.LookupType CityRefName |> ExprType.OptionType)
+          "shoeColors", ExprType.SetType(ExprType.LookupType ColorRefName)
+          "friendsBirthdays", ExprType.MapType(ExprType.PrimitiveType PrimitiveType.StringType, ExprType.PrimitiveType PrimitiveType.DateOnlyType)
+          "holidays", ExprType.ListType(ExprType.PrimitiveType PrimitiveType.DateOnlyType)
+          "category", ExprType.LookupType injectedCategoryName
+        ] |> Map.ofList)
     return [
       yield! injectedTypes |> Seq.map (fun t -> t.Key, t.Value)
       CityRefName.TypeName,(CityRefName, cityRef) |> TypeBinding.Create
@@ -128,9 +197,9 @@ let sampleTypes injectedTypes =
     ] |> Map.ofList
   }
 
-let formApis = 
+let formApis injectedTypes = 
   sum{
-    let! instantiatedSampleTypes = sampleTypes ["injectedCategory"]
+    let! instantiatedSampleTypes = sampleTypes injectedTypes
     let! genderRefType = instantiatedSampleTypes |> Map.tryFind "GenderRef" |> withError "Error: cannot find type  GenderRef"
     let! colorRefType = instantiatedSampleTypes |> Map.tryFind "ColorRef" |> withError "Error: cannot find type  ColorRef"
     let! interestRefType = instantiatedSampleTypes |> Map.tryFind "InterestRef" |> withError "Error: cannot find type  InterestRef"
@@ -143,26 +212,26 @@ let formApis =
     return instantiatedSampleTypes,{
       Enums=
         [
-          ("genders", genderRefType.Name)
-          ("colors", colorRefType.Name)
-          ("interests", interestRefType.Name)
-          ("permissions", permissionRefType.Name)
+          ("genders", genderRefType.TypeId)
+          ("colors", colorRefType.TypeId)
+          ("interests", interestRefType.TypeId)
+          ("permissions", permissionRefType.TypeId)
         ] |> Seq.map (dup >> (fst <*> EnumApi.Create)) |> Map.ofSeq;
       Streams=
         [
-          ("cities", cityRefType.Name)
-          ("departments", departmentRefType.Name)
+          ("cities", cityRefType.TypeId)
+          ("departments", departmentRefType.TypeId)
         ] |> Seq.map (dup >> (fst <*> StreamApi.Create)) |> Map.ofSeq;
       Entities=
         [
-          ("person", (personType.Name, [CrudMethod.Create; Get; Update; Default] |> Set.ofList))
-        ] |> Seq.map (dup >> (fst <*> id) >> (id <*> (EntityApiName.Create <*> id))) |> Map.ofSeq;
+          ("person", personType.TypeId, [CrudMethod.Create; Get; Update; Default] |> Set.ofList)
+        ] |> Seq.map (fun (n,tn,m) -> n,(EntityApi.Create(n,tn),m)) |> Map.ofSeq;
     }
   }
 
-let sampleForms (primitiveRenderers:Map<string, PrimitiveRenderer>) = 
+let instantiateSampleForms injectedTypes (primitiveRenderers:Map<string, PrimitiveRenderer>) = 
   sum{
-    let! types, apis = formApis
+    let! types, apis = formApis injectedTypes
     let! defaultString = primitiveRenderers |> Map.tryFind "defaultString" |> withError "Cannot find primitive renderer defaultString"
     let! defaultNumber = primitiveRenderers |> Map.tryFind "defaultNumber" |> withError "Cannot find primitive renderer defaultNumber"
     let! defaultDate = primitiveRenderers |> Map.tryFind "defaultDate" |> withError "Cannot find primitive renderer defaultDate"
@@ -208,7 +277,7 @@ renderer defaultInfiniteStream"
     let addressForm:FormConfig = {
       FormName="address"; 
       FormId=Guid.CreateVersion7(); 
-      Type=addressType.Type;
+      TypeId=addressType.TypeId;
       Fields=addressFields
       Tabs=
         {
@@ -508,7 +577,7 @@ renderer defaultInfiniteStream"
     let! friendsByCategoryField = personFields |> Map.tryFind "friendsByCategory" |> withError "Error: cannot find field 'friendsByCategory'"
     let! relativesField = personFields |> Map.tryFind "relatives" |> withError "Error: cannot find field 'relatives'"
     let! friendsBirthdaysField = personFields |> Map.tryFind "friendsBirthdays" |> withError "Error: cannot find field 'friendsBirthdays'"
-    let! shoeColoursField = personFields |> Map.tryFind "shoeColours" |> withError "Error: cannot find field 'shoeColours'"
+    let! shoeColorsField = personFields |> Map.tryFind "shoeColors" |> withError "Error: cannot find field 'shoeColors'"
     let! subscribeToNewsletterField = personFields |> Map.tryFind "subscribeToNewsletter" |> withError "Error: cannot find field 'subscribeToNewsletter'"
     let! interestsField = personFields |> Map.tryFind "interests" |> withError "Error: cannot find field 'interests'"
     let! favoriteColorField = personFields |> Map.tryFind "favoriteColor" |> withError "Error: cannot find field 'favoriteColor'"
@@ -524,7 +593,7 @@ renderer defaultInfiniteStream"
     let personForm:FormConfig = {
       FormName="person"; 
       FormId=Guid.CreateVersion7(); 
-      Type=personType.Type;
+      TypeId=personType.TypeId;
       Fields=personFields
       Tabs=
         {
@@ -533,7 +602,7 @@ renderer defaultInfiniteStream"
               FormColumns= [
                 ("demographics", {
                   FormGroups= [
-                    ("main", [categoryField; nameField; surnameField; birthdayField; genderField; emailsField; dependantsField; friendsByCategoryField; relativesField; friendsBirthdaysField; shoeColoursField] |> List.map FieldConfig.Id)
+                    ("main", [categoryField; nameField; surnameField; birthdayField; genderField; emailsField; dependantsField; friendsByCategoryField; relativesField; friendsBirthdaysField; shoeColorsField] |> List.map FieldConfig.Id)
                   ] |> Map.ofSeq
                 })
                 ("mailing", {
@@ -556,23 +625,52 @@ renderer defaultInfiniteStream"
       LauncherName="create-person"; LauncherId=Guid.CreateVersion7();
       Mode=FormLauncherMode.Create; 
       Form=personForm |> FormConfig.Id;
-      EntityApi=personApi |> fst
+      EntityApi=personApi |> fst |> EntityApi.Id
     }
     let editPerson:FormLauncher = {
       LauncherName="edit-person"; LauncherId=Guid.CreateVersion7();
       Mode=FormLauncherMode.Edit; 
       Form=personForm |> FormConfig.Id;
-      EntityApi=personApi |> fst
+      EntityApi=personApi |> fst |> EntityApi.Id
     }
-    return types, apis, [
-      addressForm
-      personForm
-    ] |> Seq.map(dup >> (FormConfig.Name <*> id)) |> Map.ofSeq,
-    [ 
-      createPerson
-      editPerson
-    ] |> Seq.map(dup >> (FormLauncher.Name <*> id)) |> Map.ofSeq
+    return {
+      Types=types;
+      Apis=apis;
+      Forms=[
+        addressForm
+        personForm
+      ] |> Seq.map(dup >> (FormConfig.Name <*> id)) |> Map.ofSeq;
+      Launchers=[ 
+        createPerson
+        editPerson
+      ] |> Seq.map(dup >> (FormLauncher.Name <*> id)) |> Map.ofSeq
+    }
   }
+
+let injectedCategoryType:TypeId = { TypeName="injectedCategory"; TypeId=Guid.CreateVersion7() }
+let sampleInjectedTypes = [injectedCategoryType]
+let samplePrimitiveRenderers:Map<string, PrimitiveRenderer> =
+  [
+    "defaultBoolean", { PrimitiveRendererName="defaultBoolean"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.BoolType }
+    "defaultString", { PrimitiveRendererName="defaultString"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.StringType }
+    "defaultNumber", { PrimitiveRendererName="defaultNumber"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.IntType }
+    "defaultDate", { PrimitiveRendererName="defaultDate"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.DateOnlyType }
+    "defaultInfiniteStream", { PrimitiveRendererName="defaultInfiniteStream"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.VarType({ VarName="'a1"}) }
+    "defaultInfiniteStreamMultiselect", { PrimitiveRendererName="defaultInfiniteStreamMultiselect"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.SetType(ExprType.VarType({ VarName="'a1"})) }
+    "defaultEnum", { PrimitiveRendererName="defaultEnum"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.VarType({ VarName="'a1"}) }
+    "defaultEnumMultiselect", { PrimitiveRendererName="defaultEnumMultiselect"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.SetType(ExprType.VarType({ VarName="'a1"})) }    
+    "defaultMap", { PrimitiveRendererName="defaultMap"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.MapType(ExprType.VarType({ VarName="'a1"}), ExprType.VarType({ VarName="'a2"})) }
+    "defaultList", { PrimitiveRendererName="defaultList"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.ListType(ExprType.VarType({ VarName="'a1"})) }    
+    "defaultCategory", { PrimitiveRendererName="defaultCategory"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.LookupType injectedCategoryType }    
+  ] |> Map.ofSeq
+let sampleForms = instantiateSampleForms sampleInjectedTypes samplePrimitiveRenderers
+do printfn "%A" sampleForms
+do Console.ReadLine() |> ignore
+match sampleForms with
+| Left sampleForms -> 
+  do printfn "%A" (ParsedFormsContext.Validate sampleForms)
+  do Console.ReadLine() |> ignore
+| Right _ -> ()
 
 type FormsGenTarget = 
 | ts = 1
@@ -606,7 +704,6 @@ let main args =
 
   // dotnet run -- forms -input person-config.json -validate -codegen ts
   formsCommand.SetHandler(Action<_,_,_>(fun (validate:bool) (language:FormsGenTarget) (inputPath:string) ->
-    printfn "Forms it is - input path=%A validate=%A language=%A" inputPath validate language
     if File.Exists inputPath |> not then
       eprintfn "Fatal error: the input file %A does not exist" inputPath
       System.Environment.Exit -1

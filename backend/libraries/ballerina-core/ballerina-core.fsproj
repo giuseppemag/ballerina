@@ -14,6 +14,7 @@
     <Compile Include="collections/sum/model.fs" />
     <Compile Include="collections/option/model.fs" />
     <Compile Include="collections/map/model.fs" />
+    <Compile Include="errors/model.fs" />
     <Compile Include="state/model.fs" />
     <Compile Include="state/with error/model.fs" />
     <Compile Include="coroutine/model.fs" />
