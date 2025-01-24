@@ -4,6 +4,8 @@ open System
 open Ballerina.Fun
 open Ballerina.Option
 open Ballerina.Collections.Map
+open Sum
+open Errors
 
 type EntityDescriptor = { 
   EntityDescriptorId:Guid; 
@@ -51,6 +53,7 @@ and VarName = { VarName:string }
 and TypeBinding = { TypeId:TypeId; Type:ExprType }
 and TypeBindings = Map<TypeId, ExprType>
 and TypeId = { TypeName:string; TypeId:Guid }
+and UnificationConstraints = { EqualityClasses:Map<VarName, Set<VarName>> }
 and ExprType = 
   | UnitType
   | VarType of VarName
@@ -261,3 +264,15 @@ type FieldDescriptor with
           |};
         }
     |}
+
+type UnificationConstraints with
+  static member Add (v1:VarName, v2:VarName) (constraints:UnificationConstraints) : UnificationConstraints = 
+    let v1Equivalence = (constraints.EqualityClasses |> Map.tryFind v1 |> Option.defaultWith (fun () -> Set.empty)) + Set.singleton v2
+    let v2Equivalence = (constraints.EqualityClasses |> Map.tryFind v2 |> Option.defaultWith (fun () -> Set.empty)) + Set.singleton v1
+    let newJoinedEquivalence = v1Equivalence + v2Equivalence
+    let modifiedConstraints = newJoinedEquivalence |> Set.toSeq |> Seq.map (fun v -> v, newJoinedEquivalence - Set.singleton v) |> Map.ofSeq
+    { 
+      constraints with 
+        EqualityClasses = constraints.EqualityClasses 
+          |> Map.merge (fun oldConstraint newConstraint -> newConstraint) modifiedConstraints 
+    }

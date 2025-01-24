@@ -47,7 +47,8 @@ Todo (✅/❌)
         ❌ with the map of types by type-id as bindings context in addition to the schema
         ❌ `byStructure: FieldRenderer -> ExprType`
         ❌ `byFieldName : FieldConfig -> ExprType`
-        ❌ `Unify : ExprType * ExprType -> Sum<Set<VarBindings>, Errors>`
+        ✅ `Unify : ExprType * ExprType -> Sum<Set<VarBindings>, Errors>`
+          ✅ test unify carefully
         ❌ type-check the form instances' `visible` and `disabled` predicates
           ❌ inject `root` variable at form instantiation, not at form definition 
           ❌ `local` variable can be injected any time, also at form definition

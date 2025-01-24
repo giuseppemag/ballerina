@@ -5,14 +5,18 @@ open Ballerina.Fun
 type Map<'k,'v when 'k : comparison> with 
   static member merge
     (deduplicate:'v -> 'v -> 'v) (m2:Map<'k,'v>) (m1:Map<'k,'v>) : Map<'k,'v> =
-      match m2 |> Seq.tryHead with
-      | None -> m1
-      | Some(first') -> 
-        match m1 |> Map.tryFind first'.Key with
-        | None -> m1 |> Map.add first'.Key first'.Value
-        | Some(firstValue) -> 
-          let m1 = m1 |> Map.add first'.Key (deduplicate firstValue first'.Value)
-          m1 |>  Map.merge deduplicate m2
+    let rec merge
+      (deduplicate:'v -> 'v -> 'v) (m2:Map<'k,'v>) (m1:list<'k * 'v>) : Map<'k,'v> =
+        match m1 with
+        | [] -> m2
+        | (k1,v1)::m1 -> 
+          match m2 |> Map.tryFind k1 with
+          | None -> 
+            merge deduplicate m2 m1 |> Map.add k1 v1
+          | Some v2 -> 
+            merge deduplicate m2 m1 |> Map.add k1 (deduplicate v1 v2)
+    merge deduplicate m2 (m1 |> Seq.map (fun kv -> kv.Key, kv.Value) |> List.ofSeq)
+
   static member mergeMany
     ((+):'v -> 'v -> 'v) (maps:seq<Map<'k,'v>>) : Map<'k,'v> =
       maps |> Seq.fold (fun m1 m2 -> m1 |> Map.merge (+) m2) Map.empty

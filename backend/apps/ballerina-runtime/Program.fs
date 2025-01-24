@@ -56,7 +56,6 @@ and ElementRenderer = { Label:Option<string>; Tooltip:Option<string>; Renderer:F
 and PrimitiveRendererId = { PrimitiveRendererName:string; PrimitiveRendererId:Guid }
 and PrimitiveRenderer = { PrimitiveRendererName:string; PrimitiveRendererId:Guid; Type:ExprType } with static member ToPrimitiveRendererId (r:PrimitiveRenderer) = { PrimitiveRendererName=r.PrimitiveRendererName; PrimitiveRendererId=r.PrimitiveRendererId }
 
-
 let inline extractTypes<'k, 'v when 'v : (static member Type : 'v -> TypeId) and 'k : comparison> (m:Map<'k, 'v>) =
   m |> Map.values |> Seq.map(fun e -> e |> 'v.Type |> Set.singleton) |> Seq.fold (+) Set.empty
 
@@ -86,6 +85,10 @@ type FieldRenderer with
     | FieldRenderer.PrimitiveRenderer p -> sum{ return p.Type |> ExprType.GetTypesFreeVars }
     | FieldRenderer.StreamRenderer (s,f) ->
       (ctx.Apis.Streams |> Map.tryFindWithError s.StreamName "stream" s.StreamName |> Sum.map (StreamApi.Type >> Set.singleton)) + !f
+  static member ToType (ctx:ParsedFormsContext) (fr:FieldRenderer) : Sum<ExprType, Errors> = 
+    // let rec toType 
+    failwith ""
+
 
 and FormConfig with
   static member GetTypesFreeVars (ctx:ParsedFormsContext) (fc:FormConfig) : Sum<Set<TypeId>, Errors> = 
@@ -664,6 +667,21 @@ let samplePrimitiveRenderers:Map<string, PrimitiveRenderer> =
     "defaultCategory", { PrimitiveRendererName="defaultCategory"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.LookupType injectedCategoryType }    
   ] |> Map.ofSeq
 let sampleForms = instantiateSampleForms sampleInjectedTypes samplePrimitiveRenderers
+
+let (!) n = { VarName=n }
+let constraints0:UnificationConstraints = { EqualityClasses = Map.empty }
+let constraints1 = 
+  constraints0 
+    |> UnificationConstraints.Add(!"a", !"b")
+    |> UnificationConstraints.Add(!"a", !"c")
+    |> UnificationConstraints.Add(!"b", !"d")
+    |> UnificationConstraints.Add(!"x", !"y")
+    |> UnificationConstraints.Add(!"y", !"z")
+    |> UnificationConstraints.Add(!"p", !"q")
+do printfn "%A" constraints1
+do Console.ReadLine() |> ignore
+
+
 do printfn "%A" sampleForms
 do Console.ReadLine() |> ignore
 match sampleForms with
