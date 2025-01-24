@@ -43,23 +43,31 @@ Todo (✅/❌)
         ❌ `TId -> T` is the parsed context
       ❌ convert all instances of Map.tryFind ... withError ... to `Map.tryFindWithError`
       ✅ convert the exiting type-checker to `Sum` through `withError`
-      ❌ type-check the form instances field lookups 
-        ❌ with the map of types by type-id as bindings context in addition to the schema
-        ❌ `byStructure: FieldRenderer -> ExprType`
-        ❌ `byFieldName : FieldConfig -> ExprType`
+      ✅ type-check the form instances field lookups 
+        ✅ with the map of types by type-id as bindings context in addition to the schema
+        ✅ `byStructure: FieldRenderer -> ExprType`
+        ✅ `byFieldName : FieldConfig -> ExprType`
         ✅ `Unify : ExprType * ExprType -> Sum<Set<VarBindings>, Errors>`
-          ✅ test unify carefully
         ❌ type-check the form instances' `visible` and `disabled` predicates
           ❌ inject `root` variable at form instantiation, not at form definition 
           ❌ `local` variable can be injected any time, also at form definition
           ❌ `flag` variable comes from the command line
+      ❌ type-check the launchers
+        ❌ form type and launcher type are the same
+        ❌ the methods are correct
       ❌ parse the JSON into the representation types - ORDER SHOULD NOT MATTER!
         ❌ use `StateWithError`
         ❌ pre-populate the types with empty (`Unit`) bodies in a map that gets overwritten later
       ❌ parse the JSON into the representation APIs
       ❌ parse the JSON into the representation forms - ORDER SHOULD NOT MATTER!
       ❌ move the new type parsers to ballerina-core
-       ❌ break the form engine in all possible ways
+        ❌ break the form engine in all possible ways
+        ❌ launchers
+        ❌ tabs
+        ❌ types
+        ❌ forms
+        ❌ order of types
+        ❌ order of forms
     ❌ create some basic sample in Go with structs, enums, and the visitor-wrapper for type-safe API selectors
     ❌ from the schema and the forms, generate Go code for
       ❌ one class per type
@@ -69,6 +77,8 @@ Todo (✅/❌)
     ❌ move relevant sources to a separate folder in ballerina-core (forms engine)
       ❌ move the new types (`Errors`, `Form`, etc.) to ballerina-core
       ❌ move the new type checkers to ballerina-core
+    ❌ pretty print types
+    ❌ add source context to errors
     ❌ connect command line parameters to right invocations, leave nothing but the command parser in `Program.fs`
       ❌ the primitive types' renderers
       ❌ the injected types

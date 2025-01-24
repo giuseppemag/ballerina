@@ -50,10 +50,11 @@ and RuleDependencies = { dependencies:Map<EntityDescriptorId * FieldDescriptorId
 
 and Assignment = { Variable:VarName * List<FieldDescriptorId>; Value:Expr }
 and VarName = { VarName:string }
+and TypeVarBindings = Map<VarName, ExprType>
 and TypeBinding = { TypeId:TypeId; Type:ExprType }
 and TypeBindings = Map<TypeId, ExprType>
 and TypeId = { TypeName:string; TypeId:Guid }
-and UnificationConstraints = { EqualityClasses:Map<VarName, Set<VarName>> }
+and UnificationConstraints = { Equalities:Set<VarName * VarName> }
 and ExprType = 
   | UnitType
   | VarType of VarName
@@ -110,6 +111,26 @@ type Value with
     | Value.ConstString v -> Some(v :> obj)
     | _ -> None    
 
+type UnificationConstraints with
+  static member Zero() = { UnificationConstraints.Equalities=Set.empty }
+  static member Add (v1:VarName, v2:VarName) (constraints:UnificationConstraints) : UnificationConstraints = 
+    { 
+      constraints with Equalities = constraints.Equalities |> Set.add (v1,v2) |> Set.add (v2,v1)
+    }
+  static member (+) (constraints1:UnificationConstraints,constraints2:UnificationConstraints) : UnificationConstraints = 
+    { Equalities=constraints1.Equalities + constraints2.Equalities }
+  static member Singleton (v1:VarName, v2:VarName) : UnificationConstraints = 
+    UnificationConstraints.Zero() |> UnificationConstraints.Add(v1,v2)
+  static member ToEquivalenceClasses (constraints:UnificationConstraints) : List<Set<VarName>> =
+    let mutable result:Map<VarName, Set<VarName>> = Map.empty    
+    for (v1,v2) in constraints.Equalities do
+      let v1Equivalence = (result |> Map.tryFind v1 |> Option.defaultWith (fun () -> Set.empty)) + Set.singleton v2
+      let v2Equivalence = (result |> Map.tryFind v2 |> Option.defaultWith (fun () -> Set.empty)) + Set.singleton v1
+      let newJoinedEquivalence = v1Equivalence + v2Equivalence
+      let modifiedConstraints = newJoinedEquivalence |> Set.toSeq |> Seq.map (fun v -> v, newJoinedEquivalence) |> Map.ofSeq
+      result <- result |> Map.merge (fun oldConstraint newConstraint -> newConstraint) modifiedConstraints
+    result |> Map.values |> Set.ofSeq |> Set.toList
+
 type Expr with 
   static member op_BooleanOr (e1:Expr, e2:Expr) =
     Binary(Or, e1, e2)
@@ -151,6 +172,87 @@ type ExprType with
     | ExprType.PrimitiveType _ -> Set.empty
     | ExprType.UnionType cs -> cs |> Seq.map (fun c -> !c.Fields) |> Seq.fold (+) Set.empty
     | ExprType.RecordType fs -> fs |> Map.values |> Seq.map (!) |> Seq.fold (+) Set.empty
+  static member Substitute (tvars:TypeVarBindings) (t:ExprType) : ExprType = 
+    let (!) = ExprType.Substitute tvars
+    let (!!) = List.map (!)
+    match t with
+    | ExprType.LookupType _
+    | ExprType.SchemaLookupType _
+    | ExprType.PrimitiveType _ 
+    | ExprType.UnitType -> t
+    | ExprType.VarType v -> 
+      match tvars |> Map.tryFind v with 
+      | None -> t
+      | Some t -> t
+    | ExprType.ListType t -> ExprType.ListType(!t)
+    | ExprType.SetType t -> ExprType.SetType(!t)
+    | ExprType.OptionType t -> ExprType.OptionType(!t)
+    | ExprType.MapType(k,v) -> ExprType.MapType(!k,!v)
+    | ExprType.TupleType ts -> ExprType.TupleType(!!ts)
+    | ExprType.UnionType cs -> ExprType.UnionType(cs |> List.map (fun c -> { c with Fields = !c.Fields }))
+    | ExprType.RecordType fs -> ExprType.RecordType(fs |> Map.map (fun _ -> (!)))
+  static member Unify (tvars:TypeVarBindings) (typedefs:Map<TypeId, ExprType>) (t1:ExprType) (t2:ExprType) : Sum<UnificationConstraints, Errors> = 
+    let (=?=) = ExprType.Unify tvars typedefs
+    sum{
+      match t1,t2 with
+      | ExprType.VarType v1, ExprType.VarType v2 -> 
+        match tvars |> Map.tryFind v1, tvars |> Map.tryFind v2  with 
+        | Some v1, Some v2 -> 
+          if v1 = v2 then return UnificationConstraints.Zero()
+          else return! sum.Throw(Errors.Singleton(sprintf "Error: types %A and %A cannot be unified" t1 t2))
+        | _ -> 
+          return UnificationConstraints.Singleton(v1,v2)
+      | t, ExprType.LookupType tn
+      | ExprType.LookupType tn, t -> 
+        match typedefs |> Map.tryFind tn with
+        | None -> return! sum.Throw(Errors.Singleton(sprintf "Error: types %A and %A cannot be unified" t1 t2))
+        | Some t' -> return! t =?= t'
+      | ExprType.ListType(t1), ExprType.ListType(t2) 
+      | ExprType.SetType(t1), ExprType.SetType(t2) 
+      | ExprType.OptionType(t1), ExprType.OptionType(t2) -> 
+        return! t1 =?= t2
+      | ExprType.MapType(k1,v1),ExprType.MapType(k2,v2) -> 
+        let! partialUnifications = sum.All([k1 =?= k2; v1 =?= v2])
+        return partialUnifications |> Seq.fold (+) (UnificationConstraints.Zero())
+      | ExprType.TupleType([]), ExprType.TupleType([]) -> 
+        return UnificationConstraints.Zero()
+      | ExprType.TupleType(t1::ts1), ExprType.TupleType(t2::ts2) -> 
+        let! partialUnifications = sum.All([t1 =?= t2; ExprType.TupleType(ts1) =?= ExprType.TupleType(ts2)])
+        return partialUnifications |> Seq.fold (+) (UnificationConstraints.Zero())
+      | ExprType.TupleType(_), ExprType.TupleType(_) -> 
+        return! sum.Throw(Errors.Singleton(sprintf "Error: tuples of different length %A and %A cannot be unified" t1 t2))
+      | ExprType.UnionType([]), ExprType.UnionType([]) -> 
+        return UnificationConstraints.Zero()
+      | ExprType.UnionType(t1::ts1), ExprType.UnionType(t2::ts2) -> 
+        if t1.CaseName <> t2.CaseName then 
+          return! sum.Throw(Errors.Singleton(sprintf "Error: union cases %A and %A cannot be unified" t1 t2))
+        else
+          let! partialUnifications = sum.All([t1.Fields =?= t2.Fields; ExprType.UnionType(ts1) =?= ExprType.UnionType(ts2)])
+          return partialUnifications |> Seq.fold (+) (UnificationConstraints.Zero())
+      | ExprType.UnionType(_), ExprType.UnionType(_) -> 
+        return! sum.Throw(Errors.Singleton(sprintf "Error: unions of different length %A and %A cannot be unified" t1 t2))
+      | ExprType.RecordType(m1), ExprType.RecordType(m2) when m1 |> Map.isEmpty && m2 |> Map.isEmpty -> 
+        return UnificationConstraints.Zero()
+      | ExprType.RecordType(m1), ExprType.RecordType(m2) -> 
+        match m1 |> Seq.tryHead with
+        | None -> 
+          return! sum.Throw(Errors.Singleton(sprintf "Error: records of different length %A and %A cannot be unified" t1 t2))
+        | Some first1 -> 
+          let m1 = m1 |> Map.remove first1.Key
+          match m2 |> Map.tryFind first1.Key with
+          | None ->
+            return! sum.Throw(Errors.Singleton(sprintf "Error: records with mismatched field names %A and %A cannot be unified" t1 t2))
+          | Some first2 ->
+            let m2 = m2 |> Map.remove first1.Key
+            let! partialUnifications = sum.All([first1.Value =?= first2; ExprType.RecordType(m1) =?= ExprType.RecordType(m2)])
+            return partialUnifications |> Seq.fold (+) (UnificationConstraints.Zero())
+      | ExprType.VarType v, t 
+      | t, ExprType.VarType v -> 
+        return UnificationConstraints.Zero()
+      | _ -> 
+        if t1 = t2 then return UnificationConstraints.Zero()
+        else return! sum.Throw(Errors.Singleton(sprintf "Error: types %A and %A cannot be unified" t1 t2))
+    }
 
 type FieldDescriptor with
   member this.ToFieldDescriptorId : FieldDescriptorId = 
@@ -264,15 +366,3 @@ type FieldDescriptor with
           |};
         }
     |}
-
-type UnificationConstraints with
-  static member Add (v1:VarName, v2:VarName) (constraints:UnificationConstraints) : UnificationConstraints = 
-    let v1Equivalence = (constraints.EqualityClasses |> Map.tryFind v1 |> Option.defaultWith (fun () -> Set.empty)) + Set.singleton v2
-    let v2Equivalence = (constraints.EqualityClasses |> Map.tryFind v2 |> Option.defaultWith (fun () -> Set.empty)) + Set.singleton v1
-    let newJoinedEquivalence = v1Equivalence + v2Equivalence
-    let modifiedConstraints = newJoinedEquivalence |> Set.toSeq |> Seq.map (fun v -> v, newJoinedEquivalence - Set.singleton v) |> Map.ofSeq
-    { 
-      constraints with 
-        EqualityClasses = constraints.EqualityClasses 
-          |> Map.merge (fun oldConstraint newConstraint -> newConstraint) modifiedConstraints 
-    }

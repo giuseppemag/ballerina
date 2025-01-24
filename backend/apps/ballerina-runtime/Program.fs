@@ -85,10 +85,61 @@ type FieldRenderer with
     | FieldRenderer.PrimitiveRenderer p -> sum{ return p.Type |> ExprType.GetTypesFreeVars }
     | FieldRenderer.StreamRenderer (s,f) ->
       (ctx.Apis.Streams |> Map.tryFindWithError s.StreamName "stream" s.StreamName |> Sum.map (StreamApi.Type >> Set.singleton)) + !f
-  static member ToType (ctx:ParsedFormsContext) (fr:FieldRenderer) : Sum<ExprType, Errors> = 
-    // let rec toType 
-    failwith ""
+  static member Validate (ctx:ParsedFormsContext) (fr:FieldRenderer) : Sum<ExprType, Errors> = 
+    let (!) = FieldRenderer.Validate ctx
+    sum{
+      match fr with
+      | FieldRenderer.EnumRenderer(enum, enumRenderer) -> 
+        let! enum = ctx.Apis.Enums |> Map.tryFindWithError enum.EnumName "enum" enum.EnumName
+        let! enumType = ctx.Types |> Map.tryFindWithError enum.TypeId.TypeName "enum type" enum.EnumName
+        let! enumRendererType = !enumRenderer
+        return ExprType.Substitute (Map.empty |> Map.add { VarName="a1" } enumType.Type) enumRendererType
+      | FieldRenderer.FormRenderer f ->
+        let! f = ctx.Forms |> Map.tryFindWithError f.FormName "form" f.FormName
+        let! formType = ctx.Types |> Map.tryFindWithError f.TypeId.TypeName "form type" f.FormName
+        return formType.Type
+      | FieldRenderer.ListRenderer(l) -> 
+        let! genericListRenderer = !l.List
+        let! elementRendererType = !l.Element.Renderer
+        let listRenderer = ExprType.Substitute (Map.empty |> Map.add { VarName="a1" } elementRendererType) genericListRenderer
+        return listRenderer
+      | FieldRenderer.MapRenderer(m) -> 
+        let! genericMapRenderer = !m.Map
+        let! keyRendererType = !m.Key.Renderer
+        let! valueRendererType = !m.Value.Renderer
+        let mapRenderer = ExprType.Substitute (Map.empty |> Map.add { VarName="a1" } keyRendererType |> Map.add { VarName="a2" } valueRendererType) genericMapRenderer
+        return mapRenderer
+      | FieldRenderer.PrimitiveRenderer p -> 
+        return p.Type
+      | FieldRenderer.StreamRenderer (stream, streamRenderer) ->
+        let! stream = ctx.Apis.Streams |> Map.tryFindWithError stream.StreamName "stream" stream.StreamName
+        let! streamType = ctx.Types |> Map.tryFindWithError stream.TypeId.TypeName "stream type" stream.StreamName
+        let! streamRendererType = !streamRenderer
+        return ExprType.Substitute (Map.empty |> Map.add { VarName="a1" } streamType.Type) streamRendererType
+    }
 
+and FieldConfig with
+  static member Validate (ctx:ParsedFormsContext) (formType:ExprType) (fc:FieldConfig) : Sum<Unit, Errors> = 
+    sum{
+      match formType with
+      | RecordType fields ->
+        match fields |> Map.tryFind fc.FieldName with
+        | Some fieldType -> 
+          let! rendererType = FieldRenderer.Validate ctx fc.Renderer
+          let result = ExprType.Unify Map.empty (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq) rendererType fieldType |> Sum.map ignore
+          if result.IsRight then
+            do printfn "validating field config %A" fc
+            do Console.ReadLine() |> ignore
+            do printfn "result %A" result
+            do Console.ReadLine() |> ignore
+            return! result
+          else
+            return! result
+        | None -> 
+          return! sum.Throw(Errors.Singleton(sprintf "Error: field name %A is not found in type %A" fc.FieldName formType))
+      | _ ->       
+        return! sum.Throw(Errors.Singleton(sprintf "Error: form type %A is not a record type" formType))
+    }
 
 and FormConfig with
   static member GetTypesFreeVars (ctx:ParsedFormsContext) (fc:FormConfig) : Sum<Set<TypeId>, Errors> = 
@@ -99,7 +150,12 @@ and FormConfig with
           |> Map.values |> Seq.map(fun f -> f.Renderer |> FieldRenderer.GetTypesFreeVars ctx) 
           |> Seq.fold (+) (sum{ return Set.empty })
       )
-
+  static member Validate (ctx:ParsedFormsContext) (formConfig:FormConfig) : Sum<Unit, Errors> = 
+    sum{
+      let! formType = ctx.Types |> Map.tryFindWithError formConfig.TypeId.TypeName "form type" formConfig.TypeId.TypeName
+      return! sum.All(formConfig.Fields |> Map.values |> Seq.map (FieldConfig.Validate ctx formType.Type) |> Seq.toList) |> Sum.map ignore
+    }
+    
 and FormLauncher with
   static member GetTypesFreeVars (ctx:ParsedFormsContext) (fl:FormLauncher) : Sum<Set<TypeId>, Errors> = 
     let (+) = sum.Lift2 Set.union
@@ -124,7 +180,9 @@ type ParsedFormsContext with
     sum{
       let! usedTypes = ParsedFormsContext.GetTypesFreeVars ctx
       let availableTypes = ctx.Types |> Map.values |> Seq.map(fun tb -> tb.TypeId) |> Set.ofSeq
-      if availableTypes |> Set.isSuperset usedTypes then return ()
+      if availableTypes |> Set.isSuperset usedTypes then 
+        do! sum.All(ctx.Forms |> Map.values |> Seq.map(FormConfig.Validate ctx) |> Seq.toList) |> Sum.map ignore
+        return ()
       else 
         let missingTypeErrors = (usedTypes - availableTypes) |> Set.map (fun t -> Errors.Singleton (sprintf "Error: missing type definition for %s" t.TypeName)) |> Seq.fold (curry Errors.Concat) (Errors.Zero())
         return! sum.Throw(missingTypeErrors)
@@ -171,7 +229,7 @@ let sampleTypes injectedTypes =
           "gender", ExprType.LookupType GenderRefName |> ExprType.OptionType
           "interests", ExprType.SetType(ExprType.LookupType InterestRefName)
           "departments", ExprType.SetType(ExprType.LookupType DepartmentRefName)
-          "mainAddress", ExprType.SetType(ExprType.LookupType AddressName)
+          "mainAddress", ExprType.LookupType AddressName
           "dependants", ExprType.MapType(ExprType.PrimitiveType PrimitiveType.StringType, ExprType.LookupType injectedCategoryName)
           "friendsByCategory", ExprType.MapType(ExprType.LookupType injectedCategoryName, ExprType.PrimitiveType PrimitiveType.StringType)
           "relatives", ExprType.ListType(ExprType.LookupType injectedCategoryName)
@@ -196,7 +254,7 @@ let sampleTypes injectedTypes =
       InterestRefName.TypeName,(InterestRefName, interestRef) |> TypeBinding.Create
       DepartmentRefName.TypeName,(DepartmentRefName, departmentRef) |> TypeBinding.Create
       PermissionRefName.TypeName,(PermissionRefName, permissionRef) |> TypeBinding.Create
-      PersonName.TypeName,(PersonName, permissionRef) |> TypeBinding.Create
+      PersonName.TypeName,(PersonName, person) |> TypeBinding.Create
     ] |> Map.ofList
   }
 
@@ -668,22 +726,6 @@ let samplePrimitiveRenderers:Map<string, PrimitiveRenderer> =
   ] |> Map.ofSeq
 let sampleForms = instantiateSampleForms sampleInjectedTypes samplePrimitiveRenderers
 
-let (!) n = { VarName=n }
-let constraints0:UnificationConstraints = { EqualityClasses = Map.empty }
-let constraints1 = 
-  constraints0 
-    |> UnificationConstraints.Add(!"a", !"b")
-    |> UnificationConstraints.Add(!"a", !"c")
-    |> UnificationConstraints.Add(!"b", !"d")
-    |> UnificationConstraints.Add(!"x", !"y")
-    |> UnificationConstraints.Add(!"y", !"z")
-    |> UnificationConstraints.Add(!"p", !"q")
-do printfn "%A" constraints1
-do Console.ReadLine() |> ignore
-
-
-do printfn "%A" sampleForms
-do Console.ReadLine() |> ignore
 match sampleForms with
 | Left sampleForms -> 
   do printfn "%A" (ParsedFormsContext.Validate sampleForms)
