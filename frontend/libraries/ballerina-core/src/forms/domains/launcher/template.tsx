@@ -1,5 +1,5 @@
 import { List } from "immutable"
-import { BasicUpdater, FormRunnerContext, FormRunnerForeignMutationsExpected, FormRunnerLoader, FormRunnerState, Mapping, Sum, unit } from "../../../../main"
+import { BasicUpdater, FormRunnerContext, FormRunnerForeignMutationsExpected, FormRunnerLoader, FormRunnerState, Sum, unit } from "../../../../main"
 import { Template } from "../../../template/state"
 import { FormParsingResult } from "../parser/state"
 
@@ -14,7 +14,6 @@ export const FormRunnerErrorsTemplate = (parsedFormsConfig: FormParsingResult) =
   //   props.context.showFormParsingErrors(parsedFormsConfig)
   // ),
   formState: unit,
-  mapping: Mapping.Default.fromPaths(unit)
 })
 
 export const FormRunnerTemplate =
@@ -26,12 +25,11 @@ export const FormRunnerTemplate =
           context={{
             ...props.context.form.value.formState,
             entityId: props.context.formRef.kind == "edit" ? props.context.formRef.entityId : undefined,
-            value: props.context.formRef.kind == "map" ? props.context.formRef.value : undefined,
-            formState: props.context.formRef.kind == "map" ? props.context.form.value.formState : props.context.form.value.formState.formState,
+            value: undefined,
+            formState: props.context.form.value.formState.formState,
             extraContext: {
               ...props.context.extraContext,
               rootValue:
-                props.context.formRef.kind == "map" ? props.context.form.value.mapping.from(props.context.formRef.value) :
                   props.context.form.value.formState?.entity.sync?.value,
             },
             submitButtonWrapper: (props.context.formRef.kind == "create" || props.context.formRef.kind == "edit" )  ? props.context.formRef.submitButtonWrapper : undefined

@@ -1,5 +1,5 @@
 import { List } from "immutable"
-import { FormRunnerErrorsTemplate, id, Mapping, replaceWith, Sum, unit } from "../../../../../main"
+import { FormRunnerErrorsTemplate, id, replaceWith, Sum } from "../../../../../main"
 import { AsyncState } from "../../../../async/state"
 import { CoTypedFactory } from "../../../../coroutines/builder"
 import { FormRunnerContext, FormRunnerForeignMutationsExpected, FormRunnerState } from "../state"
@@ -22,27 +22,7 @@ export const FormRunnerLoader = () => {
               )
             )
           const formRef = current.formRef
-          if (formRef.kind == "map") {
-            const mappedForm = current.formsConfig.sync.value.value.mappings.get(formRef.formName)
-            if (mappedForm == undefined)
-              return FormRunnerState.Updaters.form(
-                replaceWith(
-                  Sum.Default.left(
-                    FormRunnerErrorsTemplate(Sum.Default.right(List([`Cannot find form '${formRef.formName}'`])))
-                  )
-                )
-              )
-            const instantiatedForm = mappedForm()
-            return FormRunnerState.Updaters.form(
-              replaceWith(
-                Sum.Default.left({
-                  form: instantiatedForm.form,
-                  formState: instantiatedForm.initialState,
-                  mapping: instantiatedForm.mapping
-                })
-              )
-            )
-          } else if (formRef.kind == "create") {
+          if (formRef.kind == "create") {
             const createForm = current.formsConfig.sync.value.value.create.get(formRef.formName)
             if (createForm == undefined)
               return FormRunnerState.Updaters.form(
@@ -58,7 +38,6 @@ export const FormRunnerLoader = () => {
                   Sum.Default.left({
                     form: instantiatedForm.form,
                     formState: instantiatedForm.initialState,
-                    mapping: Mapping.Default.fromPaths(unit)
                   })
                 )
               )  
@@ -78,7 +57,6 @@ export const FormRunnerLoader = () => {
                   Sum.Default.left({
                     form: instantiatedForm.form,
                     formState: instantiatedForm.initialState,
-                    mapping: Mapping.Default.fromPaths(unit)
                   })
                 )
               )

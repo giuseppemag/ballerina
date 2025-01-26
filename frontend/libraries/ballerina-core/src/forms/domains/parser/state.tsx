@@ -1,5 +1,5 @@
 import { List, Map, OrderedMap, OrderedSet, Set } from "immutable";
-import { BoolExpr, Unit, Guid, LeafPredicatesEvaluators, Predicate, FormsConfig, BuiltIns, FormDef, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, SharedFormState, CreateFormState, Entity, EditFormContext, CreateFormContext, MappedEntityFormTemplate, Mapping, Synchronized, simpleUpdater, TypeName, ListFieldState, ListForm, TypeDefinition, BuiltInApiConverters, defaultValue, fromAPIRawValue, toAPIRawValue, EditFormForeignMutationsExpected, MapFieldState, MapForm, Type, FieldConfig, Base64FileForm, SecretForm, InjectedPrimitives, Injectables, ApiConverters, Maybe, FormValidationError, FormConfigValidationAndParseResult } from "../../../../main";
+import { BoolExpr, Unit, Guid, LeafPredicatesEvaluators, Predicate, FormsConfig, BuiltIns, FormDef, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, SharedFormState, CreateFormState, EditFormContext, CreateFormContext, Synchronized, simpleUpdater, TypeName, ListFieldState, ListForm, TypeDefinition, BuiltInApiConverters, defaultValue, fromAPIRawValue, toAPIRawValue, EditFormForeignMutationsExpected, MapFieldState, MapForm, Type, FieldConfig, Base64FileForm, SecretForm, InjectedPrimitives, Injectables, ApiConverters, Maybe } from "../../../../main";
 import { Value } from "../../../value/state";
 import { CollectionReference } from "../collection/domains/reference/state";
 import { CollectionSelection } from "../collection/domains/selection/state";
@@ -16,7 +16,6 @@ import { SearchableInfiniteStreamForm } from "../primitives/domains/searchable-i
 import { StringForm } from "../primitives/domains/string/template";
 import { FormLabel } from "../singleton/domains/form-label/state";
 import { Form } from "../singleton/template";
-import { ValueOrErrors } from "../../../collections/domains/valueOrErrors/state";
 
 const parseOptions = (leafPredicates: any, options: any) => {
   const result = options.map((_: any) => ([_[0].id, [_[0], (_[1] as BoolExpr<any>).eval<any>(leafPredicates)]]));
@@ -334,14 +333,6 @@ export type ParsedLaunchers = {
         EditFormState<Entity, FormState>, EditFormForeignMutationsExpected<Entity, FormState>>,
       initialState: EditFormState<Entity, FormState>
     }>,
-  mappings: Map<string, <Source, Target, FormState, ExtraContext>() =>
-    {
-      form:
-      MappedEntityFormTemplate<
-        Source, Target, FormState, ExtraContext, Unit>,
-      initialState: EditFormState<Target, FormState>,
-      mapping: Mapping<any, any>
-    }>
 }
 export type ParsedForms = Map<string, ParsedForm & { form: EntityFormTemplate<any, any, any, any, any> }>
 export type FormParsingErrors = List<string>
@@ -380,7 +371,6 @@ export const parseForms =
       let parsedLaunchers: ParsedLaunchers = {
         create: Map(),
         edit: Map(),
-        mappings: Map()
       }
       let parsedForms: ParsedForms = Map()
       const traverse = (formDef: FormDef) => {
@@ -528,32 +518,6 @@ export const parseForms =
               .withViewFromProps(props => props.context.submitButtonWrapper)
               .mapForeignMutationsFromProps(props => props.foreignMutations as any),
             initialState: CreateFormState<any, any>().Default(initialState),
-            actualForm: form,
-          })
-        )
-      })
-
-      formsConfig.launchers.mappings.forEach((launcher, launcherName) => {
-        const parsedForm = parsedForms.get(launcher.form)!
-        const form = parsedForm.form.withView(containerFormView)
-        const initialState = parsedForm.initialFormState
-        const mappingConfig = formsConfig.mappings.get(launcher.mapping)! as any
-        const mapping =
-          Mapping.Default.fromPaths<any, any>(
-            mappingConfig.paths
-          )
-        parsedLaunchers.mappings = parsedLaunchers.mappings.set(
-          launcherName,
-          <Source, Target, FormState, ExtraContext>() => ({
-            form:
-              MappedEntityFormTemplate<Source, Target, FormState, ExtraContext, Unit>(
-                mapping,
-                (form as any).mapContext((parentContext: any) => {
-                  return ({ ...parentContext, ...parentContext.extraContext })
-                }))
-                .mapForeignMutationsFromProps(props => props.foreignMutations as any),
-            initialState: initialState,
-            mapping: mapping,
             actualForm: form,
           })
         )

@@ -78,8 +78,6 @@ export const PersonFormsConfig = {
       },
     }
   },
-  "mappings": {
-  },
   "forms": {
     "address": {
       "type": "Address",
@@ -256,10 +254,5 @@ export const PersonFormsConfig = {
       "form": "person",
       "api": "person"
     },
-    // "person-from-config": {
-    //   "kind": "mapping",
-    //   "form": "person",
-    //   "mapping": "personFromConfig"
-    // }
   }
 }

@@ -1,4 +1,4 @@
-import { BasicFun, Guid, Mapping, simpleUpdater, Sum, Unit } from "../../../../main"
+import { BasicFun, Guid, simpleUpdater, Sum, Unit } from "../../../../main"
 import { FormParsingResult, FormsParserState } from "../parser/state"
 import { OnChange } from "../singleton/state"
 
@@ -39,7 +39,7 @@ export type FormRunnerContext = {
   showFormParsingErrors: BasicFun<FormParsingResult, JSX.Element>
 } & FormsParserState
 export type FormRunnerState = {
-  form:Sum<{ form:any, formState:any, mapping:Mapping<any,any> }, "not initialized">
+  form:Sum<{ form:any, formState:any }, "not initialized">
 }
 export type FormRunnerForeignMutationsExpected = Unit
 export const FormRunnerState = {

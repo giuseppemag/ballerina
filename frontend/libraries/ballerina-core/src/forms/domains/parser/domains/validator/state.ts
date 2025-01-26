@@ -1,5 +1,5 @@
 import { Set, Map, OrderedMap, List } from "immutable";
-import { ApiConverters, BoolExpr, BuiltIns, FieldName, FormsConfigMerger, InjectedPrimitives, MappingPaths, revertKeyword, Sum, Type, TypeDefinition, TypeName, unit, Value } from "../../../../../../main";
+import { ApiConverters, BoolExpr, BuiltIns, FieldName, FormsConfigMerger, InjectedPrimitives, revertKeyword, Sum, Type, TypeDefinition, TypeName, unit, Value } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 
 export type FieldConfig = {
@@ -36,20 +36,9 @@ export type Launcher = {
   form: string,
   api: string
 }
-export type MappingLauncher = {
-  name: string,
-  kind: "mapping",
-  form: string,
-  mapping: string
-}
 export type EntityApi = {
   type: TypeName,
   methods: { create: boolean, get: boolean, update: boolean, default: boolean }
-}
-export type EntitiesMapping = {
-  source: TypeName,
-  target: TypeName,
-  paths: MappingPaths<any>
 }
 export type FormsConfig = {
   types: Map<TypeName, TypeDefinition>;
@@ -59,11 +48,9 @@ export type FormsConfig = {
     streams: Map<string, TypeName>;
     entities: Map<string, EntityApi>;
   };
-  mappings: Map<string, EntitiesMapping>,
   launchers: {
     create: Map<string, Launcher>;
     edit: Map<string, Launcher>;
-    mappings: Map<string, MappingLauncher>;
   }
 };
 export type FormValidationError = string;
@@ -86,7 +73,6 @@ export const FormsConfig = {
           ['enumOptions', hasApis && "enumOptions" in formsConfig.apis],
           ['searchableStreams', hasApis && "searchableStreams" in formsConfig.apis],
           ['entities', hasApis && "entities" in formsConfig.apis],
-          ['mappings', "mappings" in formsConfig],
           ['launchers', "launchers" in formsConfig]
         ]
       );
@@ -236,62 +222,6 @@ export const FormsConfig = {
             }
           })
         }
-      })
-
-      let mappings: Map<string, EntitiesMapping> = Map()
-      Object.keys(formsConfig["mappings"]).forEach((mappingName: any) => {
-        const mapping = formsConfig["mappings"][mappingName]
-        if (!("source" in mapping && "target" in mapping && "paths" in mapping))
-          errors = errors.push(`formsConfig.mappings.${mappingName} does not have all the required fields ('source', 'target', and 'path')`);
-        else {
-          const source = mapping.source as string
-          const target = mapping.target as string
-          const paths = mapping.paths
-          if (!types.has(source))
-            errors = errors.push(`formsConfig.mappings.source refers to non-existent type ${source}`)
-          if (!types.has(target))
-            errors = errors.push(`formsConfig.mappings.target refers to non-existent type ${target}`)
-          const lookupPath = (source: Type, path: Array<string>): Type | undefined => {
-            if (path.length <= 0) return source
-            if (source.kind != "lookup" || !types.has(source.name)) {
-              errors = errors.push(`formsConfig.mappings ${JSON.stringify(source)} is not a lookup or does not exist`)
-            } else {
-              const sourceTypeDef = types.get(source.name)!
-              if (!sourceTypeDef.fields.has(path[0])) {
-                errors = errors.push(`path ${JSON.stringify(path)} refers to non-existent field ${path[0]}`)
-              }
-              return lookupPath(sourceTypeDef.fields.get(path[0])!, path.slice(1))
-            }
-            return undefined
-          }
-          const mappingPathValidator = (source: Type, target: Type, path: any) => {
-            if (Array.isArray(path)) {
-              const sourceType = lookupPath(source, path)
-              if (!sourceType || Type.Operations.Equals(sourceType, target) == false) {
-                errors = errors.push(`path ${JSON.stringify(path)} connects different types ${JSON.stringify(sourceType)} and ${JSON.stringify(target)}`)
-              }
-            } else {
-              if (target.kind != "lookup" || !types.has(target.name)) {
-                errors = errors.push(`path ${JSON.stringify(path)} refers to an object but ${JSON.stringify(target)} is not`)
-              } else {
-                const targetTypeDef = types.get(target.name)!
-                const pathFieldNames = Set(Object.keys(path))
-                const targetFieldNames = targetTypeDef.fields.keySeq().toSet()
-                if (!pathFieldNames.equals(targetFieldNames))
-                  errors = errors.push(`path ${JSON.stringify(pathFieldNames.toArray())} does not cover all fields of target ${JSON.stringify(targetFieldNames.toArray())}, ${JSON.stringify(targetFieldNames.subtract(pathFieldNames).toArray())} are missing`)
-                else
-                  Object.keys(path).forEach(fieldName => {
-                    if (!targetTypeDef.fields.has(fieldName)) {
-                      errors = errors.push(`path ${JSON.stringify(path)} refers to non-existing field ${fieldName} on ${JSON.stringify(target)} is not`)
-                    }
-                    mappingPathValidator(source, targetTypeDef.fields.get(fieldName)!, path[fieldName])
-                  })
-              }
-            }
-          }
-          mappingPathValidator(Type.Default.lookup(source), Type.Default.lookup(target), paths)
-        }
-        mappings = mappings.set(mappingName, mapping)
       })
 
       let forms: Map<string, FormDef> = Map();
@@ -493,7 +423,7 @@ export const FormsConfig = {
                 errors = errors.push(`field ${revertKeyword(fieldName)} of form ${formName} references form ${fieldConfig["renderer"]}, which has type ${otherForm.type} whereas ${fieldTypeDef.name} was expected`);
             }
           }
-          // TODO: remove these warnings and object checj when we remove the deprecated elementLabel and elementTooltip fields
+          // TODO: remove these warnings and object check when we remove the deprecated elementLabel and elementTooltip fields
           if(fieldConfig.elementLabel){
             console.error("Warning: using elementlabel for a list field is deprecated, use a renderer object with label and tooltip properties instead")
           }
@@ -575,59 +505,45 @@ export const FormsConfig = {
       let launchers: FormsConfig["launchers"] = {
         create: Map<string, Launcher>(),
         edit: Map<string, Launcher>(),
-        mappings: Map<string, MappingLauncher>(),
       }
       Object.keys(formsConfig["launchers"]).forEach((launcherName: any) => {
-        const launcherKinds = ["create", "edit", "mapping"]
+        const launcherKinds = ["create", "edit"]
         if (launcherKinds.includes(formsConfig["launchers"][launcherName]["kind"]) == false) {
           errors = errors.push(`launcher '${launcherName}' has invalid 'kind': expected any of ${JSON.stringify(launcherKinds)}`);
           return
         }
-        const launcherKind = formsConfig["launchers"][launcherName]["kind"] as Launcher["kind"] | MappingLauncher["kind"]
+        const launcherKind = formsConfig["launchers"][launcherName]["kind"] as Launcher["kind"]
         if (forms.has(formsConfig["launchers"][launcherName]["form"]) == false) {
           errors = errors.push(`launcher '${launcherName}' references non-existing form '${formsConfig.launchers[launcherName].form}'`);
           return
         }
         const form = forms.get(formsConfig["launchers"][launcherName]["form"])!
-        if (launcherKind != "mapping") {
-          if (entities.has(formsConfig["launchers"][launcherName]["api"]) == false) {
-            errors = errors.push(`launcher '${launcherName}' references non-existing entity api '${formsConfig.launchers[launcherName].api}'`);
-            return
-          }
-          const api = entities.get(formsConfig["launchers"][launcherName]["api"])!
-          if (form.type != api.type)
-            errors = errors.push(`form and api in launcher '${launcherName}' reference different types '${form.type}' and '${api.type}'`);
-          if (formsConfig["launchers"][launcherName]["kind"] == "create" &&
-            !(api.methods.create && api.methods.default)
-          )
-            errors = errors.push(`launcher '${launcherName}' requires api methods 'create' and 'default'`);
-          if (formsConfig["launchers"][launcherName]["kind"] == "edit" &&
-            !(api.methods.get && api.methods.update)
-          )
-            errors = errors.push(`launcher '${launcherName}' requires api methods 'get' and 'update'`);
-          let launcher: Launcher = {
-            name: launcherName,
-            kind: formsConfig["launchers"][launcherName]["kind"],
-            form: formsConfig["launchers"][launcherName]["form"],
-            api: formsConfig["launchers"][launcherName]["api"],
-          };
-          if (launcher.kind == "create")
-            launchers.create = launchers.create.set(launcherName, launcher)
-          else
-            launchers.edit = launchers.edit.set(launcherName, launcher)
-        } else {
-          const launcherConfig = formsConfig["launchers"][launcherName]
-          const mappingName = launcherConfig["mapping"]
-          if (mappingName in formsConfig["mappings"] == false)
-            errors = errors.push(`launcher '${launcherName}' references non-existing mapping '${mappingName}'`);
-          else {
-            const mapping = formsConfig["mappings"][mappingName]
-            if (mapping["target"] != form.type)
-              errors = errors.push(`launcher '${launcherName}' has a form over '${form.type}' but a mapping to a different type '${mapping["target"]}'`);
-            else
-              launchers.mappings = launchers.mappings.set(launcherName, launcherConfig)
-          }
+        
+        if (entities.has(formsConfig["launchers"][launcherName]["api"]) == false) {
+          errors = errors.push(`launcher '${launcherName}' references non-existing entity api '${formsConfig.launchers[launcherName].api}'`);
+          return
         }
+        const api = entities.get(formsConfig["launchers"][launcherName]["api"])!
+        if (form.type != api.type)
+          errors = errors.push(`form and api in launcher '${launcherName}' reference different types '${form.type}' and '${api.type}'`);
+        if (formsConfig["launchers"][launcherName]["kind"] == "create" &&
+          !(api.methods.create && api.methods.default)
+        )
+          errors = errors.push(`launcher '${launcherName}' requires api methods 'create' and 'default'`);
+        if (formsConfig["launchers"][launcherName]["kind"] == "edit" &&
+          !(api.methods.get && api.methods.update)
+        )
+          errors = errors.push(`launcher '${launcherName}' requires api methods 'get' and 'update'`);
+        let launcher: Launcher = {
+          name: launcherName,
+          kind: formsConfig["launchers"][launcherName]["kind"],
+          form: formsConfig["launchers"][launcherName]["form"],
+          api: formsConfig["launchers"][launcherName]["api"],
+        };
+        if (launcher.kind == "create")
+          launchers.create = launchers.create.set(launcherName, launcher)
+        else
+          launchers.edit = launchers.edit.set(launcherName, launcher)
       })
 
       if (errors.size > 0) {
@@ -644,7 +560,6 @@ export const FormsConfig = {
           streams: streams,
           entities: entities,
         },
-        mappings: mappings,
         launchers: launchers
       });
     }

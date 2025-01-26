@@ -77,29 +77,6 @@ export const FormsApp = (props: {}) => {
 									}}
 								/> */}
 								{/* {JSON.stringify(personConfigState)} */}
-								{/* <MappedPersonForm
-									context={{
-										...personFormState,
-										value: personConfigState,
-										formState: personFormState,
-										person: personConfigToPersonMapping.from(personConfigState),
-										columns: [["name", "surname", "gender", "birthday"],
-										["subscribeToNewsletter", "interests"],
-										["departments", "address"]],
-										visibleFields: Person.Operations.VisibleFields,
-										disabledFields: Person.Operations.VisibleFields,
-										flags: Set(["BC"]),
-										showAllErrors: false,
-									}}
-									setState={_ => setPersonFormState(_)}
-									view={PersonView}
-									foreignMutations={{
-										onChange: (_, path) => {
-											setPersonConfigState(_)
-											console.log(path.toArray())
-										}
-									}}
-								/> */}
 							</td>
 						</tr>
 						<tr>
