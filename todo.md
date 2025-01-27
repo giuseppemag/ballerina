@@ -38,7 +38,7 @@ Todo (✅/❌)
           ✅ gather all definition types
           ✅ check that they are all a subset of the definitions
           ✅ produce a clear error message with the missing type names
-      ❌ somewhat painful but 
+      ❌ somewhat painful but
         ❌ `string -> T` is built up while parsing
         ❌ `TId -> T` is the parsed context
       ❌ convert all instances of Map.tryFind ... withError ... to `Map.tryFindWithError`
@@ -52,9 +52,16 @@ Todo (✅/❌)
           ❌ inject `root` variable at form instantiation, not at form definition 
           ❌ `local` variable can be injected any time, also at form definition
           ❌ `flag` variable comes from the command line
-      ❌ type-check the launchers
-        ❌ form type and launcher type are the same
-        ❌ the methods are correct
+      ✅ type-check the launchers
+        ✅ form type and launcher type are the same
+        ✅ the methods are correct
+      ❌ create some basic sample in Go with structs, enums, and the visitor-wrapper for type-safe API selectors
+      ❌ from the schema and the forms, generate Go code for
+        ❌ one class per type
+        ❌ one enum with all enum types
+        ❌ one enum with all stream types
+        ❌ one enum with all entity types
+        ❌ one visitor-style generic dispatcher
       ❌ parse the JSON into the representation types - ORDER SHOULD NOT MATTER!
         ❌ use `StateWithError`
         ❌ pre-populate the types with empty (`Unit`) bodies in a map that gets overwritten later
@@ -68,17 +75,12 @@ Todo (✅/❌)
         ❌ forms
         ❌ order of types
         ❌ order of forms
-    ❌ create some basic sample in Go with structs, enums, and the visitor-wrapper for type-safe API selectors
-    ❌ from the schema and the forms, generate Go code for
-      ❌ one class per type
-      ❌ one enum with all enum types
-      ❌ one enum with all stream types
-      ❌ one enum with all entity types
+    ❌ pretty print types in errors
+    ❌ add source context to errors for pretty printing
+      ❌ probably needs the state monad with an error decorator accumulated from the parent
     ❌ move relevant sources to a separate folder in ballerina-core (forms engine)
       ❌ move the new types (`Errors`, `Form`, etc.) to ballerina-core
       ❌ move the new type checkers to ballerina-core
-    ❌ pretty print types
-    ❌ add source context to errors
     ❌ connect command line parameters to right invocations, leave nothing but the command parser in `Program.fs`
       ❌ the primitive types' renderers
       ❌ the injected types
