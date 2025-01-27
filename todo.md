@@ -55,13 +55,19 @@ Todo (✅/❌)
       ✅ type-check the launchers
         ✅ form type and launcher type are the same
         ✅ the methods are correct
-      ❌ create some basic sample in Go with structs, enums, and the visitor-wrapper for type-safe API selectors
+      ❌ create some basic sample in Go 
+        ✅ structs
+        ✅ enums
+        ❌ visitor-wrapper for type-safe API selectors
       ❌ from the schema and the forms, generate Go code for
-        ❌ one class per type
+        ❌ one struct per type
+        ❌ one file per struct
         ❌ one enum with all enum types
         ❌ one enum with all stream types
         ❌ one enum with all entity types
         ❌ one visitor-style generic dispatcher
+        ❌ injected types need a source package
+      ❌ define library with common utilities
       ❌ parse the JSON into the representation types - ORDER SHOULD NOT MATTER!
         ❌ use `StateWithError`
         ❌ pre-populate the types with empty (`Unit`) bodies in a map that gets overwritten later
@@ -75,15 +81,18 @@ Todo (✅/❌)
         ❌ forms
         ❌ order of types
         ❌ order of forms
-    ❌ pretty print types in errors
-    ❌ add source context to errors for pretty printing
-      ❌ probably needs the state monad with an error decorator accumulated from the parent
-    ❌ move relevant sources to a separate folder in ballerina-core (forms engine)
-      ❌ move the new types (`Errors`, `Form`, etc.) to ballerina-core
-      ❌ move the new type checkers to ballerina-core
+        ❌ move relevant sources to a separate folder in ballerina-core (forms engine)
+          ❌ move the new types (`Errors`, `Form`, etc.) to ballerina-core
+          ❌ move the new type checkers to ballerina-core
     ❌ connect command line parameters to right invocations, leave nothing but the command parser in `Program.fs`
       ❌ the primitive types' renderers
       ❌ the injected types
+      ❌ output of code generation
+      ❌ package of the output code
+      ❌ std lib
+    ❌ pretty print types in errors
+    ❌ add source context to errors for pretty printing
+      ❌ probably needs the state monad with an error decorator accumulated from the parent
     ❌ define webservice variant
     ❌ package as standalone executable
     ❌ generate Typescript and C# code from forms-config
