@@ -55,24 +55,29 @@ Todo (✅/❌)
       ✅ type-check the launchers
         ✅ form type and launcher type are the same
         ✅ the methods are correct
-      ❌ create some basic sample in Go 
+      ✅ create some basic sample in Go 
         ✅ structs
         ✅ enums
-        ❌ visitor-wrapper for type-safe API selectors
+        ✅ visitor-wrapper for type-safe API selectors
       ❌ from the schema and the forms, generate Go code for
         ❌ one struct per type
-        ❌ one file per struct
+          ❌ generate proper type names
+          ❌ why are the record fields not lookups to other record fields?!?
         ❌ one enum with all enum types
         ❌ one enum with all stream types
         ❌ one enum with all entity types
         ❌ one visitor-style generic dispatcher
         ❌ injected types need a source package
-      ❌ define library with common utilities
-      ❌ parse the JSON into the representation types - ORDER SHOULD NOT MATTER!
-        ❌ use `StateWithError`
-        ❌ pre-populate the types with empty (`Unit`) bodies in a map that gets overwritten later
+        ❌ package imports only if the relevant types (date/uuid) are used, or use them in a forced way to make the errors disappear
+        ❌ one file per struct
+      ✅ define library with common utilities
+      ❌ parse the JSON into the representation types
+        ❌ use topological sort
       ❌ parse the JSON into the representation APIs
-      ❌ parse the JSON into the representation forms - ORDER SHOULD NOT MATTER!
+      ❌ parse the JSON into the representation forms
+        ❌ use topological sort
+      ❌ package as standalone executable
+      ❌ first go live
       ❌ move the new type parsers to ballerina-core
         ❌ break the form engine in all possible ways
         ❌ launchers
@@ -93,8 +98,8 @@ Todo (✅/❌)
     ❌ pretty print types in errors
     ❌ add source context to errors for pretty printing
       ❌ probably needs the state monad with an error decorator accumulated from the parent
+    ❌ add tests
     ❌ define webservice variant
-    ❌ package as standalone executable
     ❌ generate Typescript and C# code from forms-config
   ✅ models
     ✅ users

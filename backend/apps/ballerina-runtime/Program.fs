@@ -9,6 +9,7 @@ open Ballerina.BusinessRules
 open Ballerina.Option
 open Ballerina.Sum
 open Ballerina.Errors
+
 let dup a = (a,a)
 let (<*>) f g = fun (a,b) -> (f a, g b)
 
@@ -205,7 +206,7 @@ type ParsedFormsContext with
     }
 
 let sampleTypes injectedTypes = 
-  let injectedTypes = injectedTypes |> Seq.map (fun injectedTypeName -> injectedTypeName.TypeName, (injectedTypeName, ExprType.VarType({ VarName="'a1" })) |> TypeBinding.Create) |> Map.ofSeq
+  let injectedTypes = injectedTypes |> Seq.map (fun injectedTypeName -> injectedTypeName.TypeName, (injectedTypeName, ExprType.RecordType Map.empty) |> TypeBinding.Create) |> Map.ofSeq
   let collectionReferenceType = 
     ExprType.RecordType(
       [
@@ -228,7 +229,7 @@ let sampleTypes injectedTypes =
       ExprType.RecordType ([
           "street", ExprType.PrimitiveType PrimitiveType.StringType
           "number", ExprType.PrimitiveType PrimitiveType.IntType
-          "city", cityRef
+          "city", ExprType.LookupType CityRefName
       ] |> Map.ofList)
     let! genderRef = ExprType.Extend collectionReferenceType (ExprType.RecordType Map.empty) |> withError "Error: cannot create GenderRef"
     let! colorRef = ExprType.Extend collectionReferenceType (ExprType.RecordType Map.empty) |> withError "Error: cannot create ColorRef"
@@ -742,11 +743,89 @@ let samplePrimitiveRenderers:Map<string, PrimitiveRenderer> =
   ] |> Map.ofSeq
 let sampleForms = instantiateSampleForms sampleInjectedTypes samplePrimitiveRenderers
 
+type ExprType with
+  static member GetFields (t:ExprType) : Sum<List<string * ExprType>, Errors> =
+    match t with
+    | ExprType.RecordType fs ->
+      sum{ return fs |> Seq.map(fun v -> v.Key, v.Value) |> List.ofSeq }
+    | _ -> sum.Throw(sprintf "Error: type %A is no record and thus has no fields" t |> Errors.Singleton)
+
+type StringBuilder = | One of string | Many of seq<StringBuilder> with 
+  static member ToString (sb:StringBuilder) : string = 
+    let acc = new System.Text.StringBuilder()
+    let rec traverse : StringBuilder -> Unit = function | One s -> acc.Append s |> ignore | Many sb -> sb |> Seq.iter traverse
+    traverse sb
+    acc.ToString()
+
+type ParsedFormsContext with
+  static member ToGolang (ctx:ParsedFormsContext) (package_name:string) : Sum<StringBuilder,Errors> = 
+    let heading = StringBuilder.One $$"""package {{package_name}}
+
+import (
+	"ballerina.com/core"
+	"github.com/google/uuid"
+	"google.golang.org/genproto/googleapis/type/date"
+)
+var _1 uuid.UUID
+var _2 date.Date
+var _3 ballerina.Option[ballerina.Unit]
+
+"""
+    sum{
+      let! generated_types = sum.All(ctx.Types |> Seq.map(fun t -> 
+        sum{
+          let! fields = ExprType.GetFields t.Value.Type
+          let typeStart = $$"""type {{t.Value.TypeId.TypeName}} struct {
+"""
+          let fields = Many (seq{
+            for fieldName,fieldType in fields do
+              yield One "  "
+              yield One fieldName
+              yield One " "
+              yield One (sprintf "%A" fieldType)
+              yield One "\n"
+          })
+          let typeEnd = $$"""}
+"""
+
+          let consStart = $$"""func New{{t.Value.TypeId.TypeName}}("""
+          let consEnd = $$""") *{{t.Value.TypeId.TypeName}} {
+  res := new({{t.Value.TypeId.TypeName}})
+  // res.Id = id
+  // res.Value = value
+  return res
+}
+
+"""
+          return StringBuilder.Many(seq{
+            yield One typeStart
+            yield fields
+            yield One typeEnd
+            yield One consStart
+            yield One consEnd
+          })
+        }) |> List.ofSeq)
+      return StringBuilder.Many(seq{
+        yield heading
+        yield! generated_types
+      })
+    }
+
 match sampleForms with
 | Left sampleForms -> 
-  do printfn "%A" (ParsedFormsContext.Validate sampleForms)
-  do Console.ReadLine() |> ignore
-| Right _ -> ()
+  match ParsedFormsContext.Validate sampleForms with
+  | Left validatedForms ->
+    match ParsedFormsContext.ToGolang sampleForms "person_form" with
+    | Left generatedCode -> 
+      do printfn "forms are parsed and validated"
+      // do Console.ReadLine() |> ignore
+      do System.IO.File.WriteAllText("./generated-output/models/models.gen.go", generatedCode |> StringBuilder.ToString)
+    | Right err -> 
+      do printfn "Code generation errors: %A" err
+  | Right err -> 
+    do printfn "Validation errors: %A" err
+| Right err -> 
+  do printfn "Parsing errors: %A" err
 
 type FormsGenTarget = 
 | ts = 1
@@ -787,9 +866,9 @@ let main args =
     let parsed = JsonValue.Parse inputConfig
     match parsed with
     | JsonValue.Record r ->
-      do printfn "%A" r
+      ()
     | v -> 
-      do eprintfn "%A" v
+      () // error
     ), formsOptions.mode, formsOptions.language, formsOptions.input)
 
   rootCommand.Invoke(args)
