@@ -49,18 +49,46 @@ export const FormRunnerTemplate =
               if (props.context.formRef.kind == "map")
                 props.context.formRef.onChange(_, _path)
             },
-            onSubmitted: (_: any) => {
-              if (props.context.formRef.kind == "create")
-                props.context.formRef.onSubmitted(_)
-            },
             apiHandlers: {
-              success: (_: any) => {
-                if (props.context.formRef.kind === 'edit')
-                  props.context.formRef.apiHandlers?.success?.(_)
+              onDefaultSuccess: (_: any) => {
+                if (
+                  props.context.formRef.kind == "create"
+                )
+                  props.context.formRef.apiHandlers?.onDefaultSuccess?.(_)
               },
-              error: (_: any) => {
+              onDefaultError: (_: any) => {
+                if (
+                  props.context.formRef.kind == "create"
+                )
+                  props.context.formRef.apiHandlers?.onDefaultError?.(_)
+              },
+              onCreateSuccess: (_: any) => {
+                if (props.context.formRef.kind === 'create')
+                  props.context.formRef.apiHandlers?.onCreateSuccess?.(_)
+              },
+              onCreateError: (_: any) => {
+                if (props.context.formRef.kind === 'create')
+                  props.context.formRef.apiHandlers?.onCreateError?.(_)
+              },
+              onGetSuccess: (_: any) => {
+                if (
+                  props.context.formRef.kind === 'edit'
+                )
+                  props.context.formRef.apiHandlers?.onGetSuccess?.(_)
+              },
+              onGetError: (_: any) => {
+                if (
+                  props.context.formRef.kind === 'edit'
+                )
+                  props.context.formRef.apiHandlers?.onGetError?.(_)
+              },
+              onUpdateSuccess: (_: any) => {
                 if (props.context.formRef.kind === 'edit')
-                  props.context.formRef.apiHandlers?.error?.(_)
+                  props.context.formRef.apiHandlers?.onUpdateSuccess?.(_)
+              },
+              onUpdateError: (_: any) => {
+                if (props.context.formRef.kind === 'edit')
+                  props.context.formRef.apiHandlers?.onUpdateError?.(_)
               }
             }
           }}

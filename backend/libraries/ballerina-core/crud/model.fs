@@ -24,7 +24,7 @@ type Crud<'a> with
         member this.setId id = entity.setId id
         member this.getId e = entity.getId e
         member this.create e = 
-          let id = Guid.NewGuid()
+          let id = Guid.CreateVersion7()
           do dbSet.Add(entity.setId id e) |> ignore
           do db.SaveChanges() |> ignore
           id
@@ -70,7 +70,7 @@ type CrudSeq<'a> with
 //         member this.setId id = entity.setId id
 //         member this.getId e = entity.getId e
 //         member this.create e = 
-//           let id = Guid.NewGuid()
+//           let id = Guid.CreateVersion7()
 //           do dbSet.Add(entity.setId id e) |> ignore
 //           async{
 //             let! _ = db.SaveChangesAsync() |> Async.AwaitTask

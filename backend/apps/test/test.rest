@@ -1,6 +1,18 @@
 GET http://localhost:5000/swagger/v1/swagger.json HTTP/1.1
 #####
 
+POST http://localhost:5000/TestUnions HTTP/1.1
+content-type: application/json
+
+{"Case":"True"}
+#####
+
+POST http://localhost:5000/TestUnions HTTP/1.1
+content-type: application/json
+
+{"Case":"False"}
+#####
+
 GET http://localhost:5000/ABEvents?skip=0&take=100 HTTP/1.1
 content-type: application/json
 #####

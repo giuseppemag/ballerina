@@ -5,14 +5,7 @@ namespace grandeomega2
 
 open System
 open System.CommandLine
-open System.Collections.Generic
-open System.IO
-open System.Linq
-open System.Threading.Tasks
-open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.Hosting
-open Microsoft.AspNetCore.HttpsPolicy
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Options
@@ -20,20 +13,12 @@ open Ballerina.Coroutines
 open Ballerina.CRUD
 open Migrations
 open Microsoft.EntityFrameworkCore
-open MBrace.FsPickler
-open MBrace.FsPickler.Json
-open Microsoft.AspNetCore.Mvc
 open Microsoft.AspNetCore.Http.Json
-open System.Text.Json
 open System.Text.Json.Serialization
-open Ballerina.Fun
-open Ballerina.Queries
-open absample.efmodels
 open absample.repositories
 open absample.endpoints
-open Microsoft.OpenApi.Models
-open System.Threading
 open positions.model
+open FSharp.SystemTextJson.Swagger
 
 module Program =
   open abcdsample.eventLoop
@@ -65,14 +50,22 @@ module Program =
   | mocked = 4
   | msgraph = 5
   | spotify = 6
+  | testunions = 7
+
+  type MyBool = True | False
+  type EFOrError = Inl of EF | Inr of string
 
   [<EntryPoint>]
   let main args =
     let builder = WebApplication.CreateBuilder(args)
     builder.Services.Configure<PositionOptions>(builder.Configuration.GetSection(PositionOptions.Position))
+    let fsOptions = JsonFSharpOptions() // setup options here 
     builder.Services.Configure<JsonOptions>(fun (options:JsonOptions) -> 
       options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+      options.SerializerOptions.Converters.Add(JsonFSharpConverter(fsOptions))
     )
+
+    builder.Services.AddSwaggerForSystemTextJson(fsOptions)
 
     builder.Services.AddDbContext<BallerinaContext>(fun opt -> 
       opt.UseNpgsql(
@@ -80,13 +73,29 @@ module Program =
         ) |> ignore)
     builder.Services
         .AddEndpointsApiExplorer()
-        .AddSwaggerGen(fun options ->
-            options.UseOneOfForPolymorphism()
-            options.SelectDiscriminatorNameUsing(fun _ -> "$type")
-          )
+        // .AddSwaggerGen(fun options ->
+        //     options.UseOneOfForPolymorphism()
+        //     options.SelectDiscriminatorNameUsing(fun _ -> "$type")
+        //   )
 
     // app.UseHttpsRedirection()
     let app = builder.Build()
+    app .UseSwagger()
+        .UseSwaggerUI()
+    
+    let testunions() = 
+      app.MapPost("/TestUnions", new Func<MyBool, EFOrError>(fun input -> 
+        let r = System.Random()
+        if input.IsTrue then
+            Inl {
+              EFId = Guid.CreateVersion7();
+              E = r.Next() % 10;
+              F = r.Next() % 10
+            }
+        else
+            Inr "Greetings!"
+      )).WithOpenApi() |> ignore
+      app.Run("http://localhost:5000")
 
     let web() = 
       app.UseABSample<BallerinaContext>(
@@ -115,6 +124,7 @@ module Program =
 
     rootCommand.SetHandler(Action<LaunchMode, Guid, Guid, string>(fun (mode:LaunchMode) (tenant : Guid) (client : Guid) (secret : string) ->
       match mode with
+      | LaunchMode.testunions -> testunions()
       | LaunchMode.web -> web()
       | LaunchMode.jobs -> abEventLoop (app.Services.CreateScope)
       | LaunchMode.abcdjobs -> abcdEventLoop ()

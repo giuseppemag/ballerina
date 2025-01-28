@@ -1,5 +1,5 @@
 import { List, Map, OrderedMap, OrderedSet, Set } from "immutable";
-import { BoolExpr, Unit, PromiseRepo, Guid, LeafPredicatesEvaluators, Predicate, FormsConfig, BuiltIns, FormDef, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, SharedFormState, CreateFormState, Entity, EditFormContext, CreateFormContext, MappedEntityFormTemplate, Mapping, FormValidationResult, Synchronized, simpleUpdater, PrimitiveType, GenericType, ApiConverter, TypeName, ListFieldState, ListForm, TypeDefinition, BuiltInApiConverters, defaultValue, fromAPIRawValue, toAPIRawValue, EditFormForeignMutationsExpected, MapFieldState, MapForm, Type, FieldConfig, Base64FileForm, SecretForm, InjectedPrimitives, Injectables, ApiConverters } from "../../../../main";
+import { BoolExpr, Unit, Guid, LeafPredicatesEvaluators, Predicate, FormsConfig, BuiltIns, FormDef, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, SharedFormState, CreateFormState, Entity, EditFormContext, CreateFormContext, MappedEntityFormTemplate, Mapping, Synchronized, simpleUpdater, TypeName, ListFieldState, ListForm, TypeDefinition, BuiltInApiConverters, defaultValue, fromAPIRawValue, toAPIRawValue, EditFormForeignMutationsExpected, MapFieldState, MapForm, Type, FieldConfig, Base64FileForm, SecretForm, InjectedPrimitives, Injectables, ApiConverters, Maybe, FormValidationError, FormConfigValidationAndParseResult } from "../../../../main";
 import { Value } from "../../../value/state";
 import { CollectionReference } from "../collection/domains/reference/state";
 import { CollectionSelection } from "../collection/domains/selection/state";
@@ -16,6 +16,7 @@ import { SearchableInfiniteStreamForm } from "../primitives/domains/searchable-i
 import { StringForm } from "../primitives/domains/string/template";
 import { FormLabel } from "../singleton/domains/form-label/state";
 import { Form } from "../singleton/template";
+import { ValueOrErrors } from "../../../collections/domains/valueOrErrors/state";
 
 const parseOptions = (leafPredicates: any, options: any) => {
   const result = options.map((_: any) => ([_[0].id, [_[0], (_[1] as BoolExpr<any>).eval<any>(leafPredicates)]]));
@@ -24,7 +25,7 @@ const parseOptions = (leafPredicates: any, options: any) => {
 };
 
 export const FieldView = //<Context, FieldViews extends DefaultFieldViews, EnumFieldConfigs extends {}, EnumSources extends {}>() => <ViewType extends keyof FieldViews, ViewName extends keyof FieldViews[ViewType]>
-  <T,>(fieldConfig:FieldConfig, fieldViews: any, viewType: any, viewName: any, fieldName: string, label: string, tooltip: string | undefined, enumFieldConfigs: EnumOptionsSources, enumSources: any, leafPredicates: any, injectedPrimitives?: InjectedPrimitives<T>): any =>
+  <T,>(fieldConfig:FieldConfig, fieldViews: any, viewType: any, viewName: any, label: string | undefined, tooltip: string | undefined, enumFieldConfigs: EnumOptionsSources, enumSources: any, leafPredicates: any, injectedPrimitives?: InjectedPrimitives<T>): any =>
   {
     if (viewType == "maybeBoolean")
       return MaybeBooleanForm<any & FormLabel, Unit>()
@@ -37,7 +38,7 @@ export const FieldView = //<Context, FieldViews extends DefaultFieldViews, EnumF
     if (viewType == "date")
       return DateForm<any & FormLabel, Unit>()
         .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
-        .mapContext<any & DateFormState & Value<Date>>(_ => ({ ..._, label: label, tooltip })) as any
+        .mapContext<any & DateFormState & Value<Maybe<Date>>>(_ => ({ ..._, label: label, tooltip })) as any
     if (viewType == "number")
       return NumberForm<any & FormLabel, Unit>()
         .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
@@ -96,10 +97,9 @@ export const FieldFormState = //<Context, FieldViews extends DefaultFieldViews, 
         ...injectedPrimitiveDefaultState,
         ...SharedFormState.Default()
       }) : SharedFormState.Default();
-      return SharedFormState.Default()
     }
     if (viewType == "date")
-      return DateFormState.Default("");
+      return DateFormState.Default();
     if (viewType == "enumSingleSelection" || viewType == "enumMultiSelection")
       return ({ ...EnumFormState<any, any>().Default(), ...SharedFormState.Default() });
     if (viewType == "streamSingleSelection" || viewType == "streamMultiSelection") {
@@ -193,12 +193,15 @@ export const ParseForm = <T,>(
     } else {
       const viewType = fieldNameToViewCategory(fieldName) as any
       if (viewType == "list") {
-        const elementRendererName = formFieldElementRenderers[fieldName]
+        const elementRenderer = formFieldElementRenderers[fieldName]
+        const elementRendererName = elementRenderer?.renderer
         const field = type.fields.get(fieldName)!
-        const elementLabel = formDef.fields.get(fieldName)!.elementLabel
-        const elementTooltip= formDef.fields.get(fieldName)!.elementTooltip
+        
         const initialElementValue = defaultValue(field.kind == "primitive" ? field.value : field.kind == "lookup" ? field.name : field.args[0])
-        const elementForm = otherForms.get(elementRendererName)
+        const elementLabel = elementRenderer?.label
+        const elementTooltip = elementRenderer?.tooltip
+        const elementForm = otherForms.get(elementRenderer.renderer)
+
         if (elementForm != undefined) { // the list argument is a nested form
           const initialFormState = elementForm.initialFormState
           formConfig[fieldName] = ListForm<any, any, any & FormLabel, Unit>(
@@ -208,7 +211,7 @@ export const ParseForm = <T,>(
           ).withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
             .mapContext<any>(_ => ({ ..._, label, tooltip }))
         } else { // the list argument is a primitive
-          const elementForm = FieldView(fieldConfig, fieldViews, fieldNameToElementViewCategory(formFieldElementRenderers)(fieldName) as any, elementRendererName, fieldName, elementLabel ?? label, elementTooltip, EnumOptionsSources, fieldsOptionsConfig, leafPredicates, injectedPrimitives)
+          const elementForm = FieldView(fieldConfig, fieldViews, fieldNameToElementViewCategory(formFieldElementRenderers)(fieldName) as any, elementRendererName, elementLabel, elementTooltip, EnumOptionsSources, fieldsOptionsConfig, leafPredicates, injectedPrimitives)
           const initialFormState = FieldFormState(fieldConfig, fieldViews, fieldNameToElementViewCategory(formFieldElementRenderers)(fieldName) as any, elementRendererName, fieldName, InfiniteStreamSources, fieldsInfiniteStreamsConfig, injectedPrimitives);
           formConfig[fieldName] = ListForm<any, any, any & FormLabel, Unit>(
             { Default: () => initialFormState },
@@ -220,26 +223,17 @@ export const ParseForm = <T,>(
       } else {
         if (viewType == "map") {
           const field = type.fields.get(fieldName)!
-
-          const parseType = (t:any) : TypeName | Type | undefined => {
-            if (typeof t == "string") return t
-            if ("fun" in t && "args" in t && Array.isArray(t.args)) {
-              return { kind:"application", value:t.fun, args:t.args }
-            }
-            return undefined
-          }
-
-          const [keyType, valueType] = field.kind == "application" ? [parseType(field.args[0]), parseType(field.args[1])] : (() => {
-            throw `error processing field type ${JSON.stringify(field)} of ${fieldName}`
-          })()
-          if (!keyType || !valueType) {
+          // TODO - reconsider error handling approach here in general
+          if(field.kind != "application") {
             throw `error processing field type ${JSON.stringify(field)} of ${fieldName}`
           }
+
+          const [keyType, valueType] =  [field.args[0], field.args[1]]
           const initialKeyValue = defaultValue(keyType)
           const initialValueValue = defaultValue(valueType)
           const getFormAndInitialState = (elementRenderers:any, rendererName:any, fieldConfig:FieldConfig) => {
             const formDef = otherForms.get(rendererName)
-            const elementLabel = elementRenderers[fieldName].label ?? label
+            const elementLabel = elementRenderers[fieldName].label
             const elementTooltip = elementRenderers[fieldName].tooltip
             if (formDef != undefined) {
               return [
@@ -248,7 +242,7 @@ export const ParseForm = <T,>(
               ]
             } else {
               const categoryName = fieldNameToElementViewCategory(elementRenderers)(fieldName) as any
-              const form = FieldView(fieldConfig, fieldViews, categoryName, rendererName, fieldName, elementLabel, elementTooltip, EnumOptionsSources, fieldsOptionsConfig, leafPredicates, injectedPrimitives)
+              const form = FieldView(fieldConfig, fieldViews, categoryName, rendererName, elementLabel, elementTooltip, EnumOptionsSources, fieldsOptionsConfig, leafPredicates, injectedPrimitives)
               const initialFormState = FieldFormState(fieldConfig, fieldViews, categoryName, rendererName, fieldName, InfiniteStreamSources, fieldsInfiniteStreamsConfig, injectedPrimitives);
               return [
                 form,
@@ -272,7 +266,7 @@ export const ParseForm = <T,>(
           ).withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
             .mapContext<any>(_ => ({ ..._, label, tooltip }))
         } else {
-          formConfig[fieldName] = FieldView(fieldConfig, fieldViews, viewType, viewName, fieldName, label, tooltip, EnumOptionsSources, fieldsOptionsConfig, leafPredicates, injectedPrimitives);
+          formConfig[fieldName] = FieldView(fieldConfig, fieldViews, viewType, viewName, label, tooltip, EnumOptionsSources, fieldsOptionsConfig, leafPredicates, injectedPrimitives);
         }
       }
     }
@@ -314,7 +308,7 @@ export type EditLauncherContext<Entity, FormState, ExtraContext> =
       extraContext: ExtraContext,
       containerFormView: any,
       submitButtonWrapper: any
-    }, "api" | "actualForm">
+    }, "api" | "parser" | "actualForm">
 
 export type CreateLauncherContext<Entity, FormState, ExtraContext> =
   Omit<
@@ -350,7 +344,7 @@ export type ParsedLaunchers = {
     }>
 }
 export type ParsedForms = Map<string, ParsedForm & { form: EntityFormTemplate<any, any, any, any, any> }>
-export type FormParsingErrors = Array<string>
+export type FormParsingErrors = List<string>
 export type FormParsingResult = Sum<ParsedLaunchers, FormParsingErrors>
 export type StreamName = string
 export type InfiniteStreamSources = BasicFun<StreamName, SearchableInfiniteStreamState<CollectionReference>["getChunk"]>
@@ -379,7 +373,7 @@ export const parseForms =
     leafPredicates: LeafPredicates) =>
     (formsConfig: FormsConfig):
       FormParsingResult => {
-      let errors: FormParsingErrors = []
+      let errors: FormParsingErrors = List()
       let seen = Set<string>()
       let formProcessingOrder = OrderedSet<string>()
 
@@ -408,6 +402,15 @@ export const parseForms =
             if (fieldType?.kind == "application" && fieldType?.value == "List" && fieldType?.args.length == 1 && field.elementRenderer != undefined) {
               if (formsConfig.forms.has(field.elementRenderer))
                 traverse(formsConfig.forms.get(field.elementRenderer)!)
+            }
+            if (fieldType?.kind == "application" && fieldType?.value == "Map" && fieldType?.args.length == 2 && field.mapRenderer != undefined) {
+              const mapRenderer = field.mapRenderer
+              if (mapRenderer && formsConfig.forms.has(mapRenderer.keyRenderer.renderer)) {
+                traverse(formsConfig.forms.get(mapRenderer.keyRenderer.renderer)!)
+              }
+              if (mapRenderer && formsConfig.forms.has(mapRenderer.valueRenderer.renderer)) {
+                traverse(formsConfig.forms.get(mapRenderer.valueRenderer.renderer)!)
+              }
             }
           } catch (error) {
             errors.push(`unhandled error: ${JSON.stringify(error)} -> ${formDef.name}`)
@@ -465,7 +468,7 @@ export const parseForms =
         }
       })
 
-      if (errors.length > 0) {
+      if (errors.size > 0) {
         return Sum.Default.right(errors)
       }
 
@@ -475,13 +478,11 @@ export const parseForms =
         const initialState = parsedForm.initialFormState
         const api = {
           get: (id: string) => entityApis.get(launcher.api)(id).then((raw: any) => {
-            // alert(JSON.stringify(raw))
-            // alert(JSON.stringify(parsedForm.formDef.type))
-            const parsed = fromAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters, false, injectedPrimitives)(raw)
-            return parsed
+            return fromAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters, false, injectedPrimitives)(raw)
           }),
-          update: (id: Guid, value: any, formState: any) =>
-            entityApis.update(launcher.api)(id, toAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters, false, injectedPrimitives)(value, formState))
+          update: (id: any, parsed: any) => {
+            return parsed.kind =="errors" ? Promise.reject(parsed.errors) : entityApis.update(launcher.api)(id, parsed.value)  
+          }
         }
         parsedLaunchers.edit = parsedLaunchers.edit.set(
           launcherName,
@@ -490,6 +491,7 @@ export const parseForms =
               ({
                 ...parentContext,
                 api: api,
+                parser: (value: any, formState: any) => toAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters, false, injectedPrimitives)(value, formState),
                 actualForm: form.withView(containerFormView).mapContext((_: any) => ({ ..._, rootValue: _.value, ...parentContext.extraContext }))
               }) as any)
               .withViewFromProps(props => props.context.submitButtonWrapper)
@@ -505,12 +507,8 @@ export const parseForms =
         const initialState = parsedForm.initialFormState
         const api = {
           create: ([value, formState]: [any, any]) => {
-            // alert(`type = ${JSON.stringify(parsedForm.formDef.type)}`)
-            // alert(`value = ${JSON.stringify(value)}`)
-            console.log("value", JSON.stringify(value))
             const raw = toAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters, false, injectedPrimitives)(value, formState)
-            // alert(`raw = ${JSON.stringify(raw.interests)}`)
-            return entityApis.create(launcher.api)(raw)
+            return raw.kind == "errors" ? Promise.reject(raw.errors) : entityApis.create(launcher.api)(raw.value)
           },
           default: (_: Unit) => entityApis.default(launcher.api)(unit)
             .then((raw: any) => {
@@ -561,7 +559,7 @@ export const parseForms =
         )
       })
 
-      if (errors.length > 0) {
+      if (errors.size > 0) {
         return Sum.Default.right(errors)
       }
       return Sum.Default.left(parsedLaunchers)
@@ -591,6 +589,9 @@ export const revertKeyword = (fieldName: string): string => {
 
 export const replaceKeywords = (obj: any, kind: "from api" | "to api"): any => {
   const replacementFn = kind == "from api" ? replaceKeyword : revertKeyword;
+  if(obj instanceof Date && !isNaN(obj.valueOf())) {
+    return obj;
+  }
   if (Array.isArray(obj) || List.isList(obj)) {
     return obj.map((item) =>
       typeof item == "string"

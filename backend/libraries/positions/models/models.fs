@@ -29,7 +29,7 @@ and EF = {
   E:int;
   F:int;
 }
-and ABCDEvent = SetField of SetFieldEvent
+and ABCDEvent = Edit of BusinessRule
 and Context = {
   ABs:Unit -> Map<Guid, AB>; CDs:Unit -> Map<Guid, CD>; EFs:Unit -> Map<Guid, EF>;
   ActiveEvents:List<ABCDEvent>; PastEvents:List<ABCDEvent>;

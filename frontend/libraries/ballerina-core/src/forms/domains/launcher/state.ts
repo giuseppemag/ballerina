@@ -2,23 +2,34 @@ import { BasicFun, Guid, Mapping, simpleUpdater, Sum, Unit } from "../../../../m
 import { FormParsingResult, FormsParserState } from "../parser/state"
 import { OnChange } from "../singleton/state"
 
+export type FormRefCreateApiHandlers<Arg> = {
+  onDefaultSuccess?: (_: Arg) => void,
+  onDefaultError?: (_: Arg) => void,
+  onCreateSuccess?: (_: Arg) => void,
+  onCreateError?: (_: Arg) => void,
+}
+
+export type FormRefEditApiHandlers<Arg> = {
+  onGetSuccess?: (_: Arg) => void,
+  onGetError?: (_: Arg) => void,
+  onUpdateSuccess?: (_: Arg) => void,
+  onUpdateError?: (_: Arg) => void,
+}
+
 export type FormRef = {
   formName:string
 } & ({
   kind:"edit",
   submitButtonWrapper:any
   entityId:Guid,
-  apiHandlers?: {
-    success?: (_: any) => void,
-    error?: (_: any) => void,
-  }
+  apiHandlers?: FormRefEditApiHandlers<any>
 } | {
   kind:"map",
   onChange:OnChange<any>
   value:any
 } | {
   kind:"create",
-  onSubmitted: (_: any) => void,
+  apiHandlers?: FormRefCreateApiHandlers<any>,
   submitButtonWrapper:any
 })
 

@@ -3,11 +3,15 @@ open System
 open System.Linq
 open positions.model
 open Ballerina.Fun
+open Ballerina.Collections.Map
+open Ballerina.Sum
 open Ballerina.Coroutines
 open Ballerina.BusinessRules
 open Ballerina.BusinessRuleExecution
 open context
 open Ballerina.BusinessRuleTransitiveExecution
+open Ballerina.BusinessRuleEvaluation
+open Ballerina.BusinessRulePreprocessor
 
 let abcdEventLoop() = 
   let mutable context:Context = init_abcdContext()
@@ -15,45 +19,53 @@ let abcdEventLoop() =
   let processABCD : Coroutine<Unit, JobsState, Context, ABCDEvent> = 
     co.Repeat(
       co{
-        let! e = co.On(
+        let! businessRule = co.On(
           function 
-          | ABCDEvent.SetField(SetFieldEvent.SingletonIntFieldEvent { Target = target; Self = self })
-          | ABCDEvent.SetField(SetFieldEvent.SingletonRefFieldEvent { Target = target; Self = self }) -> 
-            Option.Some ({| Self=self; Target=target |})
-          | discarded -> 
-            Option.None)
+          | ABCDEvent.Edit br ->
+            Option.Some br
+          // | _ -> 
+          //   Option.None
+          )
         do! co.Wait(TimeSpan.FromSeconds 0.0)
-        let! context = co.GetContext()
-        let vars:Vars = 
-          [
-            { VarName = "this" }, (e.Self.EntityDescriptorId, e.Target)
-          ] |> Map.ofList
-        let! modifiedFields = co.Do(fun ctx -> execute ctx.Schema vars e.Self.Assignment)
+        let! modifiedFields = co.Do(fun ctx -> 
+          let schema = ctx.Schema
+          let results = eval None schema Map.empty businessRule.Condition
+          let allModifiedFields = seq{
+              for (vars,result) in results do
+                match result with
+                | Value.ConstBool true ->
+                  for a in businessRule.Actions do
+                    yield! execute schema vars a
+                | _ -> 
+                  ()
+            }
+          allModifiedFields |> Seq.fold (Map.merge EntitiesIdentifiers.merge) Map.empty
+          // execute ctx.Schema vars e.Self.Assignment
+        )
         do printfn "modifiedFields %A" modifiedFields
         do Console.ReadLine() |> ignore
         do! co.Do(fun ctx -> 
-          for vars in modifiedFields do
-            let businessRulesExecutionContext = { AllRules=ctx.BusinessRules; Schema=ctx.Schema }
-            let businessRulesExecutionState = { 
-              AllExecutedRules=Map.empty
-              CurrentExecutedRules=Map.empty;
-              CurrentModifiedFields=vars;
-              Trace=[]
-             }
-            match executeRulesTransitively().run(businessRulesExecutionContext,businessRulesExecutionState) with
-            | Choice1Of2 _ -> 
-              do printfn "Transitive execution completed successfully"
-              do Console.ReadLine() |> ignore
-            | Choice2Of2 e -> 
-              do printfn "Error %A, rule execution resulted in a possible loop that was interrupted" e
-              do Console.ReadLine() |> ignore
+          let businessRulesExecutionContext = { AllRules=ctx.BusinessRules; Schema=ctx.Schema }
+          let businessRulesExecutionState = { 
+            AllExecutedRules=Map.empty
+            CurrentExecutedRules=Map.empty;
+            CurrentModifiedFields=modifiedFields;
+            Trace=[]
+            }
+          match executeRulesTransitively().run(businessRulesExecutionContext,businessRulesExecutionState) with
+          | Left _ -> 
+            do printfn "Transitive execution completed successfully"
+            do Console.ReadLine() |> ignore
+          | Right e -> 
+            do printfn "Error %A, rule execution resulted in a possible loop that was interrupted" e
+            do Console.ReadLine() |> ignore
         )
       }
     )
 
   let init(): EvaluatedCoroutines<_,_,_> =         
     { 
-      active = [Guid.NewGuid(), processABCD] |> Map.ofSeq;
+      active = [Guid.CreateVersion7(), processABCD] |> Map.ofSeq;
       waiting = Map.empty;
       waitingOrListening = Map.empty;
       listening = Map.empty;
@@ -65,10 +77,8 @@ let abcdEventLoop() =
     context, 
     context.ActiveEvents |> Seq.map (
       function 
-      | (ABCDEvent.SetField(SetFieldEvent.SingletonIntFieldEvent inner)) as e -> inner.Self.FieldEventId, e
-      | (ABCDEvent.SetField(SetFieldEvent.SingletonRefFieldEvent inner)) as e -> inner.Self.FieldEventId, e
-      | (ABCDEvent.SetField(SetFieldEvent.IntFieldEvent inner)) as e -> inner.Self.FieldEventId, e)
-      |> Map.ofSeq, 
+      | ABCDEvent.Edit br as e -> br.BusinessRuleId, e
+    ) |> Map.ofSeq, 
     ()
   let updateEvents (dataSource:Unit) events u_e =
     let events' = u_e events

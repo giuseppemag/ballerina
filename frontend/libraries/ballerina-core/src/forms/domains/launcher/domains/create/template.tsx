@@ -60,6 +60,11 @@ export const CreateFormTemplate = <E, FS>(): CreateFormTemplate<E, FS> =>
     }).any([
       createFormRunner<E, FS>().mapContextFromProps(props => ({
         ...props.context,
-        onSubmitted:props.foreignMutations.onSubmitted
+        apiHandlers: {
+          onDefaultSuccess: props.foreignMutations.apiHandlers?.onDefaultSuccess,
+          onDefaultError: props.foreignMutations.apiHandlers?.onDefaultError,
+          onCreateSuccess: props.foreignMutations.apiHandlers?.onCreateSuccess,
+          onCreateError: props.foreignMutations.apiHandlers?.onCreateError
+        }
       }))
     ])

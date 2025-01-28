@@ -246,7 +246,7 @@ type Eval<'s,'c,'e>() = class end
       | Await(a:Task<'a>) ->
         let result = a |> Async.AwaitTask |> Async.RunSynchronously
         Done(result, None, None)
-        // let id = Guid.NewGuid()
+        // let id = Guid.CreateVersion7()
         // let task = a |> Async.StartAsTask
         // Active(co.Awaiting(id, a, task), None, None)
       // | Awaiting(id, a, task) ->
@@ -279,7 +279,7 @@ let rec evalMany (ps:Map<Guid, Coroutine<Unit, 's, 'c, 'e>>) ((s, c, es, dt):'s 
           evaluated <- { evaluated with active = evaluated.active.Add(p.Key, p') }; u_s <- u_s >>? u_s'; u_e <- u_e >>? u_e'
         | _ -> ()
         for p' in spawned do
-          evaluated <- { evaluated with active = evaluated.active.Add(Guid.NewGuid(), p') }; u_s <- u_s >>? u_s'; u_e <- u_e >>? u_e'
+          evaluated <- { evaluated with active = evaluated.active.Add(Guid.CreateVersion7(), p') }; u_s <- u_s >>? u_s'; u_e <- u_e >>? u_e'
       | Active (p', u_s', u_e') -> 
         evaluated <- { evaluated with active = evaluated.active.Add(p.Key, p') }; u_s <- u_s >>? u_s'; u_e <- u_e >>? u_e'
       | Listening (p', u_s', u_e') -> 

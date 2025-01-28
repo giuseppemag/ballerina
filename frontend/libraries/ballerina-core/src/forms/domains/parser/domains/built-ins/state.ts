@@ -2,7 +2,8 @@ import { Map, List, Set, OrderedMap } from "immutable"
 import { CollectionReference } from "../../../collection/domains/reference/state";
 import { CollectionSelection } from "../../../collection/domains/selection/state";
 import { BasicFun } from "../../../../../fun/state";
-import { InjectedPrimitives, replaceKeyword, replaceKeywords, revertKeyword, Type, TypeDefinition, TypeName, Unit } from "../../../../../../main";
+import { InjectedPrimitives, Maybe, replaceKeyword, replaceKeywords, revertKeyword, Sum, Type, TypeDefinition, TypeName, Unit, Value } from "../../../../../../main";
+import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 
 export const PrimitiveTypes =
   ["string",
@@ -32,7 +33,7 @@ export type BuiltInApiConverters = {
   "maybeBoolean": ApiConverter<boolean | undefined>
   "base64File": ApiConverter<string>
   "secret": ApiConverter<string>,
-  "Date": ApiConverter<Date>
+  "Date": ApiConverter<Maybe<Date>>
   "CollectionReference": ApiConverter<CollectionReference>
   "SingleSelection": ApiConverter<CollectionSelection<any>>
   "MultiSelection": ApiConverter<OrderedMap<string, any>>
@@ -69,8 +70,8 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
       ["number", { renderers: Set(["number"]),  defaultValue: 0 }] as [string, PrimitiveBuiltIn],
       ["boolean", { renderers: Set(["boolean"]), defaultValue: false }],
       ["maybeBoolean", { renderers: Set(["maybeBoolean"]), defaultValue: undefined }] as [string, PrimitiveBuiltIn],
-      ["date", { renderers: Set(["date"]), defaultValue: new Date(Date.now()) }] as [string, PrimitiveBuiltIn],
-      ["Date", { renderers: Set(["date"]), defaultValue: new Date(Date.now()) }] as [string, PrimitiveBuiltIn],
+      ["date", { renderers: Set(["date"]), defaultValue: undefined }] as [string, PrimitiveBuiltIn],
+      ["Date", { renderers: Set(["date"]), defaultValue: undefined }] as [string, PrimitiveBuiltIn],
       ["CollectionReference", { renderers: Set(["enumSingleSelection", "enumMultiSelection", "streamSingleSelection", "streamMultiSelection"]), defaultValue: CollectionReference.Default("", "") }] as [string, PrimitiveBuiltIn],
       ["base64File", { renderers: Set(["base64File"]), defaultValue: "" }] as [string, PrimitiveBuiltIn],
       ["secret", { renderers: Set(["secret"]), defaultValue: "" }] as [string, PrimitiveBuiltIn],
@@ -151,15 +152,6 @@ export const defaultValue = <T>(types: Map<TypeName, TypeDefinition>, builtIns: 
   }
 }
 
-
-const parseTypeIShouldBePartOfFormValidation = (t:any) : TypeName | Type => {
-  if (typeof t == "string") return t
-  if ("fun" in t && "args" in t && Array.isArray(t.args)) {
-    return { kind:"application", value:t.fun, args:t.args }
-  }
-  return null!
-}
-
 export const fromAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, builtIns: BuiltIns, converters: BuiltInApiConverters, isKeywordsReplaced: boolean = false, injectedPrimitives?: InjectedPrimitives<T>) => (raw: any): any => {
   // alert(JSON.stringify(t))
   if (raw == undefined) {
@@ -195,25 +187,25 @@ export const fromAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>
     }
     if (t.value == "Map" && t.args.length == 2) {
       let result = converters[t.value].fromAPIRawValue(obj)
-      let t_args = t.args.map(parseTypeIShouldBePartOfFormValidation)
-      const isKeyPrimitive = PrimitiveTypes.some(_ => _ == t.args[0]) || injectedPrimitives?.injectedPrimitives.has(t.args[0] as keyof T) 
-      const isValuePrimitive = PrimitiveTypes.some(_ => _ == t.args[1]) || injectedPrimitives?.injectedPrimitives.has(t.args[1] as keyof T) 
+
+      const isKeyPrimitive = typeof t.args[0] == "string" && PrimitiveTypes.some(_ => _ == t.args[0]) || injectedPrimitives?.injectedPrimitives.has(t.args[0] as keyof T) 
+      const isValuePrimitive = typeof t.args[1] == "string" && PrimitiveTypes.some(_ => _ == t.args[1]) || injectedPrimitives?.injectedPrimitives.has(t.args[1] as keyof T) 
       result = result.map(keyValue => ([
         fromAPIRawValue(
-          typeof t_args[0] == "string" ? 
+          typeof t.args[0] == "string" ? 
             isKeyPrimitive ?
-              { kind: "primitive", value: t_args[0] as PrimitiveType }
-            : { kind: "lookup", name: t_args[0] }
+              { kind: "primitive", value: t.args[0] as PrimitiveType }
+            : { kind: "lookup", name: t.args[0] }
           :
-            t_args[0], 
+            t.args[0], 
             types, builtIns, converters, true, injectedPrimitives)(keyValue[0]),
         fromAPIRawValue(
-          typeof t_args[1] == "string" ? 
+          typeof t.args[1] == "string" ? 
             isValuePrimitive ?
-              { kind: "primitive", value: t_args[1] as PrimitiveType }
-            : { kind: "lookup", name: t_args[1] }
+              { kind: "primitive", value: t.args[1] as PrimitiveType }
+            : { kind: "lookup", name: t.args[1] }
           :
-            t_args[1], 
+            t.args[1], 
             types, builtIns, converters, true, injectedPrimitives)(keyValue[1]),
       ])
       )
@@ -233,74 +225,96 @@ export const fromAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>
   return obj
 }
 
-export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, builtIns: BuiltIns, converters: BuiltInApiConverters, isKeywordsReverted: boolean = false, injectedPrimitives?: InjectedPrimitives<T>) => (raw: any, formState: any) : any => {
+export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, builtIns: BuiltIns, converters: BuiltInApiConverters, isKeywordsReverted: boolean = false, injectedPrimitives?: InjectedPrimitives<T>) => (raw: any, formState: any) : ValueOrErrors<any, string> => {
   const obj = !isKeywordsReverted ? replaceKeywords(raw, "to api") : raw
   if (t.kind == "primitive") {
-    return converters[t.value].toAPIRawValue([obj, formState.modifiedByUser] as never)
+    return ValueOrErrors.Operations.Return(converters[t.value].toAPIRawValue([obj, formState.modifiedByUser] as never))
   } else if (t.kind == "application") { // application here means "generic type application"
     if (t.value == "SingleSelection" && t.args.length == 1) {
-      let result = converters[t.value].toAPIRawValue([obj, formState.modifiedByUser])
-      if (result != undefined && typeof result == "object"){
-        result = toAPIRawValue({ kind:"lookup", name:t.args[0] }, types, builtIns, converters, true, injectedPrimitives)(result, formState)
-      }
-      return result
+      const result = converters[t.value].toAPIRawValue([obj, formState.modifiedByUser])
+      if(typeof result != "object") return ValueOrErrors.Operations.Return(result)
+      
+      return toAPIRawValue({ kind:"lookup", name:t.args[0] }, types, builtIns, converters, true, injectedPrimitives)(result, formState)
     }
     if ((t.value == "Multiselection" || t.value == "MultiSelection") && t.args.length == 1) {
-      // alert(`MultiSelect ${JSON.stringify(t)} ${JSON.stringify(obj)}`)
-      let result = converters["MultiSelection"].toAPIRawValue([obj, formState.modifiedByUser])
-      // alert(`MultiSelect result1 = ${JSON.stringify(result)}`)
-      // alert(`${JSON.stringify(t.args[0])}`)
-      result = result.map((_:any) => 
-        typeof _ == "object" ? toAPIRawValue({ kind:"lookup", name: t.args[0] }, types, builtIns, converters, true, injectedPrimitives)(_, formState) : _)
-      // alert(`MultiSelect result2 = ${JSON.stringify(result)}`)
-      return result
+      const result = converters["MultiSelection"].toAPIRawValue([obj, formState.modifiedByUser])
+
+      return ValueOrErrors.Operations.All(List<ValueOrErrors<any, string>>(result.map((_:any) =>
+        typeof _ == "object" ? toAPIRawValue({ kind:"lookup", name: t.args[0] }, types, builtIns, converters, true, injectedPrimitives)(_, formState) : ValueOrErrors.Operations.Return(_))))
     }
     if (t.value == "List" && t.args.length == 1) {
       const converterResult = converters[t.value].toAPIRawValue([obj, formState.modifiedByUser])
       const isPrimitive = PrimitiveTypes.some(_ => _ == t.args[0]) || injectedPrimitives?.injectedPrimitives.has(t.args[0] as keyof T) 
-      return converterResult.map((item: any, index: number) =>
+      return ValueOrErrors.Operations.All(List<ValueOrErrors<any, string>>(converterResult.map((item: any, index: number) =>
         toAPIRawValue(
           isPrimitive ?
             { kind:"primitive", value:t.args[0] as PrimitiveType }
           : { kind:"lookup", name:t.args[0] },
           types, builtIns, converters, true, injectedPrimitives)(item,
             formState.elementFormStates.get(index)
-      ))
+      ))))
     }
     if (t.value == "Map" && t.args.length == 2) {
-      const converterResult = converters[t.value].toAPIRawValue([obj, formState.modifiedByUser])
+      const [converterResult, toIdentiferAndDisplayName] = converters[t.value].toAPIRawValue([obj, formState.modifiedByUser])
+      const isKeyPrimitive = PrimitiveTypes.some(_ => _ == t.args[0]) || injectedPrimitives?.injectedPrimitives.has(t.args[0] as keyof T)
       const isValuePrimitive = PrimitiveTypes.some(_ => _ == t.args[1]) || injectedPrimitives?.injectedPrimitives.has(t.args[1] as keyof T)
-      let t_args = t.args.map(parseTypeIShouldBePartOfFormValidation)
-      return (converterResult as List<[any, any]>).reduce((acc: Record<any, any>, [k, v]: [any, any], index: number) => { 
-        if(typeof k != "string" && typeof k != "number") {
-          throw new Error(`key ${k} is not a valid javascript object key (string, number), it is ${typeof k} check field converters.`)
-        }
-        const value = toAPIRawValue(
-          typeof t_args[1] == "string" ? 
-            isValuePrimitive ?
-              { kind: "primitive", value: t_args[1] as PrimitiveType }
-            : { kind: "lookup", name: t_args[1] }
-          :
-            t_args[1], 
-          types, builtIns, converters, true, injectedPrimitives)(v, formState.elementFormStates.get(index).ValueFormState);
-        acc[k] = value;
-        return acc;
-        }, {} as Record<any, any>
-      )
-    }
 
+      const parsedMap: List<ValueOrErrors<{key: ValueOrErrors<any, any>, value: ValueOrErrors<any, any>}, any>> = converterResult.map((keyValue: any, index: number) => {
+        const possiblyUndefinedKey = toAPIRawValue(
+          typeof t.args[0] == "string" ? 
+            isKeyPrimitive ?
+              { kind: "primitive", value: t.args[0] as PrimitiveType }
+            : { kind: "lookup", name: t.args[0] }
+          :
+            t.args[0], 
+            types, builtIns, converters, true, injectedPrimitives)(keyValue[0], formState.elementFormStates.get(index).KeyFormState
+          )
+
+          const key: ValueOrErrors<any, string> = (() => {
+            if(possiblyUndefinedKey.kind == "value" && (possiblyUndefinedKey.value == undefined || possiblyUndefinedKey.value == null || possiblyUndefinedKey.value == "" || (typeof possiblyUndefinedKey.value == "object" && Object.keys(possiblyUndefinedKey.value).length == 0))) {
+              return ValueOrErrors.Operations.Throw(List([`A mapped key is undefined for type ${JSON.stringify(t.args[0])}`]))
+            }
+            return possiblyUndefinedKey
+          })()
+
+          const value = toAPIRawValue(
+            typeof t.args[1] == "string" ? 
+              isValuePrimitive ?
+                { kind: "primitive", value: t.args[1] as PrimitiveType }
+              : { kind: "lookup", name: t.args[1] }
+            :
+              t.args[1], 
+            types, builtIns, converters, true, injectedPrimitives)(keyValue[1], formState.elementFormStates.get(index).ValueFormState)
+
+          return key.kind == "errors" || value.kind == "errors" ? ValueOrErrors.Operations.All(List([key, value]))  : ValueOrErrors.Default.return({key: key.value, value: value.value})
+        }
+      )
+      
+      const nonUniqueKeyErrors = parsedMap.filter(_ => _.kind == "value").reduce((acc, _) => { 
+        const [id, displayName] = toIdentiferAndDisplayName(_.value.key)
+        acc.ids.contains(id) ? acc.errors = acc.errors.push(ValueOrErrors.Default.throw(List([`Keys in the map are not unique: ${displayName}`]))) : acc.ids = acc.ids.push(id)
+        return acc
+      }, {ids: List<string>(), errors: List<ValueOrErrors<any, string>>()}).errors
+
+      return ValueOrErrors.Operations.All(parsedMap.concat(nonUniqueKeyErrors))
+    }
   } else { // t.kind == lookup: we are dealing with a record/object or extended type 
-    let result: any = { ...obj }
     const tDef = types.get(t.name)!
     if("extends" in tDef && tDef.extends.length == 1) {
-      return converters[(tDef.extends[0] as keyof BuiltInApiConverters)].toAPIRawValue([obj, formState.modifiedByUser] as never)
-    }
-    tDef.fields.forEach((fieldType, fieldName) => {
+      return ValueOrErrors.Operations.Return(converters[(tDef.extends[0] as keyof BuiltInApiConverters)].toAPIRawValue([obj, formState.modifiedByUser] as never))
+    }    
+    const convertedMap = tDef.fields.mapEntries(([fieldName, fieldType] ) => {
       const revertedFieldName = revertKeyword(fieldName)
       const fieldValue = obj[revertedFieldName]
-      result[revertedFieldName] = toAPIRawValue(fieldType, types, builtIns, converters, true, injectedPrimitives)(fieldValue, formState[fieldName])
+      const converted = toAPIRawValue(fieldType, types, builtIns, converters, true, injectedPrimitives)(fieldValue, formState[fieldName])
+      return [revertedFieldName, converted]
     })
-    return result
+    if(convertedMap.some((valueOrError) => valueOrError.kind == "errors")) {
+      const propertiesWithErrors = convertedMap.filter((valueOrError) => valueOrError.kind == "errors")
+      const namedErrors = propertiesWithErrors.map((value, key) => value.MapErrors(_ => _.map((_: string) => `${key}: ${_}`)))
+      return ValueOrErrors.Operations.All(List<ValueOrErrors<any, string>>(namedErrors.valueSeq().toList()))
+    }
+    return ValueOrErrors.Operations.Return(convertedMap.map(valueOrError => valueOrError.kind == "value" ? valueOrError.value : valueOrError.errors).toJS())
   }
-  return defaultValue(types, builtIns, injectedPrimitives)(t.value)
+  return ValueOrErrors.Operations.Return(defaultValue(types, builtIns, injectedPrimitives)(t.value))
 }

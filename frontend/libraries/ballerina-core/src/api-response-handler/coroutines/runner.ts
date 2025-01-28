@@ -3,7 +3,7 @@ import { CoTypedFactory } from "../../coroutines/builder";
 import { AsyncState } from "../../../main";
 
 export const HandleApiResponse = <
-  State extends ApiResponseChecker,
+  State,
   Context,
   ApiErrors
 >(
@@ -17,18 +17,12 @@ export const HandleApiResponse = <
 
     return AsyncState.Operations.isLoading(asyncState)
       ? CheckerCo.Do(() => {})
-      : CheckerCo.Seq([
-        CheckerCo.Do(() => {
-          return AsyncState.Operations.status(asyncState) === 'error'
+      : CheckerCo.Do(() => {
+          return AsyncState.Operations.status(asyncState) === "error"
             ? handlers.handleError?.(
-              asyncState.kind === 'error' ? asyncState.error : undefined
-            )
-            : handlers.handleSuccess?.(_)
-          }),
-          CheckerCo.SetState((_) => ({
-            ..._,
-            ...ApiResponseChecker.Updaters.toChecked()(_),
-          })),
-        ]);
-  });
+                asyncState.kind === "error" ? asyncState.error : undefined
+              )
+            : handlers.handleSuccess?.(_);
+        })
+    });
 };

@@ -55,4 +55,4 @@ type BusinessRule with
       | None -> false
   static member mergeExecutedRules (rules1:Map<BusinessRuleId, EntitiesIdentifiers>)
     (rules2:Map<BusinessRuleId, EntitiesIdentifiers>) = 
-    rules1 |> Map.merge rules2 EntitiesIdentifiers.merge
+    rules1 |> Map.merge EntitiesIdentifiers.merge rules2

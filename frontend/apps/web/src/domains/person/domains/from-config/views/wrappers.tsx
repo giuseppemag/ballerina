@@ -1,4 +1,4 @@
-import { EntityFormView, FormLayout, Unit, unit, CreateFormView, Template, CreateFormContext, CreateFormWritableState, CreateFormForeignMutationsExpected, SimpleCallback, FormParsingResult, FormValidationResult, EditFormView, EditFormWritableState, EditFormContext, EditFormForeignMutationsExpected } from "ballerina-core"
+import { EntityFormView, FormLayout, Unit, unit, CreateFormView, Template, CreateFormContext, CreateFormWritableState, CreateFormForeignMutationsExpected, SimpleCallback, FormParsingResult, FormConfigValidationAndParseResult, EditFormView, EditFormWritableState, EditFormContext, EditFormForeignMutationsExpected } from "ballerina-core"
 
 export const PersonContainerFormView: EntityFormView<any, any, any, { layout: FormLayout }, Unit> = props => {
   return <>
@@ -86,10 +86,10 @@ export const CreatePersonSubmitButtonWrapper: CreateFormView<any, any> = Templat
       </>
   )
 
-export const PersonShowFormSetupErrors = (validatedFormsConfig: FormValidationResult, parsedFormsConfig: FormParsingResult) => ({
+export const PersonShowFormSetupErrors = (validatedFormsConfig: FormConfigValidationAndParseResult, parsedFormsConfig: FormParsingResult) => ({
   form: Template.Default((props: any) =>
     <>
-      {validatedFormsConfig.kind == "r" && JSON.stringify(validatedFormsConfig.value)}
+      {validatedFormsConfig.kind == "errors" && JSON.stringify(validatedFormsConfig.errors)}
       {parsedFormsConfig.kind == "r" && JSON.stringify(parsedFormsConfig.value)}
     </>),
     initialState: unit,
