@@ -261,7 +261,7 @@ export const ParseForm = <T,>(
           const keyRendererName = formFieldKeyRenderers[fieldName]
           const valueRendererName = formFieldValueRenderers[fieldName]
           const [keyForm,keyFormInitialState] = getFormAndInitialState(formFieldKeyRenderers, keyRendererName?.renderer ?? keyRendererName, keyRendererName as FieldConfig)
-          const [valueForm,valueFormInitialState] = getFormAndInitialState(formFieldValueRenderers, valueRendererName?.renderer ?? valueRendererName, keyRendererName as FieldConfig)
+          const [valueForm,valueFormInitialState] = getFormAndInitialState(formFieldValueRenderers, valueRendererName?.renderer ?? valueRendererName, valueRendererName as FieldConfig)
           formConfig[fieldName] = MapForm<any, any, any, any, any & FormLabel, Unit>(
             { Default: () => keyFormInitialState },
             { Default: () => valueFormInitialState },
@@ -507,6 +507,7 @@ export const parseForms =
           create: ([value, formState]: [any, any]) => {
             // alert(`type = ${JSON.stringify(parsedForm.formDef.type)}`)
             // alert(`value = ${JSON.stringify(value)}`)
+            console.log("value", JSON.stringify(value))
             const raw = toAPIRawValue({ kind: "lookup", name: parsedForm.formDef.type }, formsConfig.types, builtIns, apiConverters, false, injectedPrimitives)(value, formState)
             // alert(`raw = ${JSON.stringify(raw.interests)}`)
             return entityApis.create(launcher.api)(raw)
@@ -598,13 +599,13 @@ export const replaceKeywords = (obj: any, kind: "from api" | "to api"): any => {
     );
   } else if (typeof obj === "object" && obj !== null) {
     if(OrderedMap.isOrderedMap(obj)) {
-      return obj.map((_, key) =>
-        replacementFn(key as string)
+      return obj.mapEntries(([key, _]) =>
+        [replacementFn(key as string), _]
       )
     }
     if(Map.isMap(obj)) {
-      return obj.map((_, key) =>
-        replacementFn(key as string)
+      return obj.mapEntries(([key, _]) =>
+        [replacementFn(key as string), _]
       )
     }
     const copy = { ...obj };

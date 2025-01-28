@@ -17,8 +17,9 @@ let abcdEventLoop() =
       co{
         let! e = co.On(
           function 
-          | ABCDEvent.SetField(SetFieldEvent.SingletonIntFieldEvent e) -> 
-            Option.Some e
+          | ABCDEvent.SetField(SetFieldEvent.SingletonIntFieldEvent { Target = target; Self = self })
+          | ABCDEvent.SetField(SetFieldEvent.SingletonRefFieldEvent { Target = target; Self = self }) -> 
+            Option.Some ({| Self=self; Target=target |})
           | discarded -> 
             Option.None)
         do! co.Wait(TimeSpan.FromSeconds 0.0)
@@ -32,9 +33,21 @@ let abcdEventLoop() =
         do Console.ReadLine() |> ignore
         do! co.Do(fun ctx -> 
           for vars in modifiedFields do
-            match executeRulesTransitively ctx.BusinessRules ctx.Schema Map.empty vars with
-            | Some() -> ()
-            | None -> printfn "Error, rule execution resulted in a possible loop that was interrupted")
+            let businessRulesExecutionContext = { AllRules=ctx.BusinessRules; Schema=ctx.Schema }
+            let businessRulesExecutionState = { 
+              AllExecutedRules=Map.empty
+              CurrentExecutedRules=Map.empty;
+              CurrentModifiedFields=vars;
+              Trace=[]
+             }
+            match executeRulesTransitively().run(businessRulesExecutionContext,businessRulesExecutionState) with
+            | Choice1Of2 _ -> 
+              do printfn "Transitive execution completed successfully"
+              do Console.ReadLine() |> ignore
+            | Choice2Of2 e -> 
+              do printfn "Error %A, rule execution resulted in a possible loop that was interrupted" e
+              do Console.ReadLine() |> ignore
+        )
       }
     )
 
@@ -53,6 +66,7 @@ let abcdEventLoop() =
     context.ActiveEvents |> Seq.map (
       function 
       | (ABCDEvent.SetField(SetFieldEvent.SingletonIntFieldEvent inner)) as e -> inner.Self.FieldEventId, e
+      | (ABCDEvent.SetField(SetFieldEvent.SingletonRefFieldEvent inner)) as e -> inner.Self.FieldEventId, e
       | (ABCDEvent.SetField(SetFieldEvent.IntFieldEvent inner)) as e -> inner.Self.FieldEventId, e)
       |> Map.ofSeq, 
     ()
@@ -76,7 +90,23 @@ let abcdEventLoop() =
     ()
   let log (dataSource:Unit) =
     Console.Clear() |> ignore
-    printfn "%A" (context.ABs() |> Map.values |> Seq.map (fun ab -> {| A = ab.A; B = ab.B; CD = {| C = (context.CDs()).[ab.CDId].C |}; Total = ab.TotalABC |}))
+    for ab in context.ABs() |> Map.values do
+      printf """{|
+  Id = %s
+  A1 = %d; B1 = %d; Total1 = %d;
+    CD = {| Id = %s; C = %d; D = %d 
+            EF = {| Id = %s; E = %d; F = %d |}
+         |}; 
+  А2 = %d; Б2 = %d; Total2 = %d;
+  Α3 = %d; Β3 = %d; Σ3 = %d;
+|}
+"""
+        (ab.ABId.ToString().Substring(0, 4))
+        ab.A1 ab.B1 ab.Total1 ((context.CDs()).[ab.CDId].CDId.ToString().Substring(0,4)) (context.CDs()).[ab.CDId].C (context.CDs()).[ab.CDId].D 
+        (context.EFs().[((context.CDs()).[ab.CDId].EFId)].EFId.ToString().Substring(0,4)) (context.EFs().[((context.CDs()).[ab.CDId].EFId)].E) (context.EFs().[((context.CDs()).[ab.CDId].EFId)].F)
+        ab.А2 ab.Б2 ab.Весь2
+        ab.Α3 ab.Β3 ab.Σ3
+      
   let releaseSnapshot (_:Unit) =
     ()
   Ballerina.CoroutinesRunner.runLoop init getSnapshot updateState updateEvents log releaseSnapshot

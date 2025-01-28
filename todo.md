@@ -102,25 +102,45 @@ Todo (✅/❌)
                   ❌ the assignment (`Update`) of fields to ABs and CDs in the definition of the AB/CD entity schema should use the field definition assignment recursively
               ❌ there are various places where we assume `One entityId`, is this always reasonable?
                 ❌ in particular, `Expr::execute` does not take into account more than one field lookup on the assigned variable, extend
-              ❌ distribute the various field updaters along the typed `XFieldDescriptor`, every entity should have the map of fields by type
-              ❌ rename `positions` to `abcd`
+          ❌ rename `positions` to `abcd`
           ❌ testing scenario
             ✅ add a setA event, see that the Total changes
             ✅ add a setB event, see that the Total changes
-            ❌ add a setC event, see that the Total changes (nasty because of the AB-CD relation)
+            ✅ add a setC event, see that the Total changes (nasty because of the AB-CD relation)
               ✅ the CD values are cached inside the entity, they should be lazy
-              ❌ the propagation to TotalABC does not work
-            ❌ add a setCDRef event, see that the Total changes
-            ❌ extend the schema: CD - EF, CD also has a DCount
-            ❌ add a setE event, see that the Total changes
-            ❌ verify that there actually is no loop
-              ❌ loops involve same rule, same entity, same field
-              ❌ test with an actual loop
-              ❌ add orthogonal rules on the same entity-set
-            ❌ change all `CD` refs inside a given `AB`
-              ❌ the schema for `CD` then needs a `RefsField`
-              ❌ complete the scenario of multiple CDs, so that the events can also be EntityEvents such as `Add`, `Delete`, `Move`, etc.
+              ✅ the propagation to TotalABC does not work
+              ✅ the predicate is not restricting
+            ✅ add a setCDRef event, see that the Total changes
+            ✅ add a setD event, for symmetry
+            ✅ extend the schema: CD - EF
+              ✅ add setE, setF events
+                ✅ Total3 does not change
+            ✅ verify that there actually is no loop
+              ✅ loops involve same rule, same entity, same field
+                ✅ redefine the transitive execution of business rules with the state monad
+                  ✅ define the state monad
+                  ✅ define the state runner
+                  ✅ restructure the transitive execution in terms of the state monad
+                    ✅ accumulate a stack of business rule executions
+                    ✅ accumulate the merged business rule executions
+                    ✅ throw an error with the right loop
+                    ✅ make `addCurrentModifiedFields` more type safe
+                    ✅ we need both `CurrentExecutedRules` and `AllExecutedRules`
+                ✅ show the loop
+              ✅ test with an actual loop
+              ✅ add orthogonal rules on the same entity-set
+                ✅ A, B, ...
+                ✅ alpha, beta, ...
+                ✅ cyrillic variants, ...
+            ❌ add `CDs` to `AB`, so not just one
+              ❌ change all `CD` refs inside a given `AB`
+                ❌ the schema for `CD` then needs a `RefsField`
+                ❌ complete the scenario of multiple CDs, so that the events can also be EntityEvents such as `Add`, `Delete`, `Move`, etc.
           ❌ make it production-ready
+            ❌ drop the distinction between singleton and group field, it is not really relevant
+            ❌ test with 
+              ❌ a few thousands ABs, CDs, EFs
+              ❌ a dozen rules on many field "clusters"
             ❌ do not commit the updates to the context immediately, output a set of field value changes
               ❌ the context becomes a cache of operations
               ❌ output the applied rules for the visibility/explainability/logging
@@ -128,23 +148,30 @@ Todo (✅/❌)
             ❌ expose OpenAPI
               ❌ add API to set the schema, and cache it in a JSON file
                 ❌ wait for the SetSchema event, or the schema to be available in the context
+            ❌ the construction of field descriptors in the schema could be streamlined
+            ❌ the metadata entities belong to the model, not to Ballerina
             ❌ all rules should be applied on all entities after creation of a new entity
             ❌ prepare a `co.Any` where each coroutine returns a different `fieldDescriptor x (Target = One | Multiple | All)`
             ❌ BUG ALERT if translating to production! The Map of events will likely cause events not to be processed in create-order
             ❌ allow approval, with associated business rules
+            ❌ deal with missing references (GUIDs that do not match an existing entity)
             ❌ introduce list monad with errors for eval/execute
               ❌ return useful error messages
+            ❌ -----at this point, the prototype can be considered reasonably done and could go live as a microservice-----
             ❌ implement lazy fields in the schema
               ❌ this requires a coroutine-mediated protocol
               ❌ openSession(schema) -> operations | closeSession()
               ❌ when the schema is fully dynamic, get/update operations work with reflection/`Dynamic` CLR type
             ❌ efficiently: with pre-caching of the FREE-VARS of both condition and expression value
-            ❌ improve DSL for type-safe business rule and expression definition in F#
-              ❌ group field definitions and entity definitions under anonymous records for aesthetics and scoping in case of multiple fields with the same name in a different entity          
-            ❌ ideally with F#-style domain objects, not C#-style serializable objects
             ❌ enums to strings
-            ❌ remove every single instance of mutation
-          ❌ -----at this point, the prototype can be considered reasonably done and could go live as a microservice-----
+          ❌ PROTOTYPE 2 - DB in PG with CRUD OpenAPI
+            ❌ performance test
+            ❌ add memcache after write operations
+          ❌ -----at this point, the second prototype can be considered reasonably done and could go live as a microservice-----
+          ❌ improve DSL for type-safe business rule and expression definition in F#
+            ❌ group field definitions and entity definitions under anonymous records for aesthetics and scoping in case of multiple fields with the same name in a different entity          
+          ❌ ideally with F#-style domain objects, not C#-style serializable objects
+          ❌ remove every single instance of mutation
           ❌ separate DB serialization as a different EF package
             ❌ represent Expr as JSON
             ❌ represent Expr as a recursive structure looked up with a recursive query

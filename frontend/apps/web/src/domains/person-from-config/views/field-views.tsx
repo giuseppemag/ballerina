@@ -1,5 +1,5 @@
 import { SharedFormState, AsyncState, FormLabel, BooleanView, NumberView, StringView, DateView, CollectionReference, EnumView, EnumMultiselectView, SearchableInfiniteStreamView, InfiniteStreamMultiselectView, BaseEnumContext, MaybeBooleanView, ListFieldView, unit, MapFieldView, Base64FileView, SecretView } from "ballerina-core";
-import { CategoryView } from "../injected-forms/category";
+import { Category, CategoryView } from "../injected-forms/category";
 
 export const MostUglyValidationDebugView = (props: { context: SharedFormState }) =>
   props.context.modifiedByUser && props.context.validation.sync && AsyncState.Operations.isLoading(props.context.validation.sync) ?
@@ -27,9 +27,9 @@ export const PersonFieldViews = {
         <>
             {props.context.label && <h3>{props.context.label}</h3>}
             {props.context.tooltip && <p>{props.context.tooltip}</p>}
-            <button style={props.context.value == "child" ? {borderColor: "red"} : {}} onClick={_ => props.foreignMutations.setNewValue("child")}>child</button>
-            <button style={props.context.value == "adult" ? {borderColor: "red"} : {}} onClick={_ => props.foreignMutations.setNewValue("adult")}>adult</button>
-            <button style={props.context.value == "senior" ? {borderColor: "red"} : {}} onClick={_ => props.foreignMutations.setNewValue("senior")}>senior</button>
+            <button style={props.context.value.category == "child" ? {borderColor: "red"} : {}} onClick={_ => props.foreignMutations.setNewValue({kind: "category", category: "child"})}>child</button>
+            <button style={props.context.value.category == "adult" ? {borderColor: "red"} : {}} onClick={_ => props.foreignMutations.setNewValue({kind: "category", category: "adult"})}>adult</button>
+            <button style={props.context.value.category == "senior" ? {borderColor: "red"} : {}} onClick={_ => props.foreignMutations.setNewValue({kind: "category", category: "senior"})}>senior</button>
           <MostUglyValidationDebugView {...props} />
         </>,
   },

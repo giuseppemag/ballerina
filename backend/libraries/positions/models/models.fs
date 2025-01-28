@@ -6,19 +6,32 @@ open Ballerina.Collections.Map
 open Ballerina.BusinessRules
 
 type AB = { 
-  ABId:Guid; Metadata:EntityMetadata
-  A:int; ACountMetadata:SingletonIntFieldMetadata
-  B:int; BCountMetadata:SingletonIntFieldMetadata
-  TotalABC:int; TotalABCMetadata:ReadonlyIntFieldMetadata
-  CDId:Guid; CDMetadata:RefFieldMetadata
+  ABId:Guid;  
+  A1:int;
+  B1:int;
+  CDId:Guid;
+  Total1:int;
+  А2:int;
+  Б2:int;
+  Весь2:int;
+  Α3: int;
+  Β3: int;
+  Σ3: int;
 }
 and CD = { 
-  CDId:Guid; Metadata:EntityMetadata 
-  C:int; CCountMetadata:SingletonIntFieldMetadata
+  CDId:Guid;
+  C:int;
+  D:int;
+  EFId:Guid;
+}
+and EF = { 
+  EFId:Guid;
+  E:int;
+  F:int;
 }
 and ABCDEvent = SetField of SetFieldEvent
 and Context = {
-  ABs:Unit -> Map<Guid, AB>; CDs:Unit -> Map<Guid, CD>;
+  ABs:Unit -> Map<Guid, AB>; CDs:Unit -> Map<Guid, CD>; EFs:Unit -> Map<Guid, EF>;
   ActiveEvents:List<ABCDEvent>; PastEvents:List<ABCDEvent>;
   BusinessRules:Map<Guid, BusinessRule>;
   Schema:Schema

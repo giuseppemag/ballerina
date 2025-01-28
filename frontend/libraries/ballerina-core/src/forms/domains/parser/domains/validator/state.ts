@@ -104,11 +104,12 @@ export const FormsConfig = {
             if (injectedPrimitives?.injectedPrimitives.has(configFieldType as keyof T) && 
             (builtIns.primitives.has(configFieldType) || builtIns.generics.has(configFieldType))) {
               errors.push(`field ${fieldName} in type ${typeName}: injectedPrimitive cannot have same name as builtIn primitive`);
+            } else {
+              if (builtIns.primitives.has(configFieldType) || injectedPrimitives?.injectedPrimitives.has(configFieldType as keyof T))
+                typeDef.fields = typeDef.fields.set(fieldName, { kind: "primitive", value: configFieldType as any });
+              else
+                typeDef.fields = typeDef.fields.set(fieldName, { kind: "lookup", name: configFieldType as any })
             }
-            if (builtIns.primitives.has(configFieldType) || injectedPrimitives?.injectedPrimitives.has(configFieldType as keyof T))
-              typeDef.fields = typeDef.fields.set(fieldName, { kind: "primitive", value: configFieldType as any });
-            else
-              typeDef.fields = typeDef.fields.set(fieldName, { kind: "lookup", name: configFieldType as any });
           } else if (typeof configFieldType == "object") {
             if ("fun" in configFieldType && "args" in configFieldType &&
               typeof configFieldType["fun"] == "string" &&

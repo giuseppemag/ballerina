@@ -110,7 +110,7 @@ export const FormsApp = (props: {}) => {
 										entityApis: PersonFromConfigApis.entityApis,
 										leafPredicates: PersonConfigFormsLeafPredicates,
 										getFormsConfig: () => PromiseRepo.Default.mock(() => PersonFormsConfig),
-										injectedPrimitives: Map([["injectedCategory", {fieldView: categoryForm, defaultValue: "adult", defaultState: CategoryState.Default() }]]),
+										injectedPrimitives: Map([["injectedCategory", {fieldView: categoryForm, defaultValue: {category: "adult", kind: "category"}, defaultState: CategoryState.Default() }]]),
 									}}
 									setState={setConfigFormsParser}
 									view={unit}

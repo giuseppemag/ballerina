@@ -32,20 +32,17 @@ let eval (variableRestriction:Option<VarName * (obj -> bool)>) (schema:Schema) (
       ]
     | VarLookup v when vars |> Map.containsKey v -> 
       [vars, (Value.Var (vars.[v]))]
-    | FieldLookup(var, []) -> eval vars var
-    | FieldLookup(var, field::fields) -> 
-      let remainingLookup (vars,e) = eval vars (Expr.FieldLookup(e, fields))
+    | FieldLookup(e, field) -> 
       [
         for fieldDescriptor in schema.tryFindField field |> Option.toList do
-        for res1 in eval vars var do
+        for res1 in eval vars e do
           match res1 with
           | (vars', Value.Var (_, One entityId))
           | (vars', Value.ConstGuid (entityId)) ->
             for value in fieldDescriptor.Get entityId |> Option.toList do
-              let res = (vars', value |> Expr.Value) |> remainingLookup
-              yield! res
+              yield (vars', value)
           | _ -> 
-            do printfn "unsupported field lookup %A -> %A" ([e,fields]) res1
+            do printfn "unsupported field lookup %A -> %A" ([e,field]) res1
             do Console.ReadLine() |> ignore
             ()
       ]
@@ -71,11 +68,10 @@ let eval (variableRestriction:Option<VarName * (obj -> bool)>) (schema:Schema) (
 let rec lookedUpFieldDescriptors (e:Expr) = 
   let (!) e = lookedUpFieldDescriptors e
   match e with
-  | Expr.FieldLookup(e, []) -> !e
-  | Expr.FieldLookup((Expr.VarLookup varname) as e, f::fs) -> 
+  | Expr.FieldLookup(e, f) ->   
     seq{
-        yield Set.singleton {| VarName=varname; FieldDescriptorId=f |}
-        yield !Expr.FieldLookup(e, fs)
+        yield Set.singleton {| FieldDescriptorId=f |}
+        yield !e
     } |> Set.unionMany
   | Expr.Binary(_, e1, e2) -> !e1 |> Set.union !e2
   | Expr.SumBy(_,_,e)
@@ -115,11 +111,12 @@ let rec scopeSeq (e:Expr) =
 let rec fieldLookups (e:Expr) = 
   let (!) e = fieldLookups e
   match e with
-  | Expr.FieldLookup((Expr.VarLookup varName), fields) ->
+  | Expr.FieldLookup((Expr.VarLookup varName), field) ->
     seq{
-      yield (varName, fields)
+      yield (varName, [field])
     } |> Set.ofSeq
-  | Expr.FieldLookup(e,_)
+  | Expr.FieldLookup(e,nextField) ->
+    !e |> Set.map (fun (v,fs) -> v,fs @ [nextField])
   | Expr.Exists(_,_,e)
   | Expr.SumBy(_,_,e) -> !e
   | Expr.Binary(_, e1, e2) -> !e1 |> Set.union !e2
@@ -135,7 +132,7 @@ type BusinessRule with
       let dependencies = [
         for action in rule.Actions do
           let fieldLookups = fieldLookups action.Value
-          // printfn "fieldLookups %A" fieldLookups
+          // printfn "action.Value %A fieldLookups %A" action.Value fieldLookups
           // Console.ReadLine() |> ignore
           for (varName, fields) in fieldLookups do
             match typeCheck schema vars (Expr.VarLookup varName) with
@@ -151,8 +148,15 @@ type BusinessRule with
                       yield f::prefix, lastElement
                   ]
               let allLookups = lookupPrefixes fields
+              // do printfn "allLookups %A" allLookups
+              // do Console.ReadLine() |> ignore
               for (lookupFields, lastField) in allLookups do
-                match typeCheck schema vars (Expr.FieldLookup(Expr.VarLookup varName, lookupFields)) with
+                // do printfn "lookupFields %A" lookupFields
+                // do Console.ReadLine() |> ignore
+                // if lookupFields |> List.length >= 2 then
+                // do printfn "typeCheckFull of %A with %A" ((Expr.VarLookup varName =>> lookupFields)) vars
+                // do Console.ReadLine() |> ignore
+                match typeCheck schema vars (Expr.VarLookup varName =>> lookupFields) with
                 | Some (LookupType lookupType, _) ->
                   let dependency:RuleDependency = {
                     ChangedEntityType = lookupType
@@ -163,7 +167,8 @@ type BusinessRule with
                   }
                   if changedFields |> Set.contains dependency.ChangedField then
                     yield dependency
-                | _ -> failwithf "Cannot typecheck lookup path %A" (Expr.FieldLookup(Expr.VarLookup varName, lookupFields)) 
+                | e -> 
+                  failwithf "Error %A\nCannot typecheck lookup path %A with lookupField %A and vars %A" e ((Expr.VarLookup varName =>> lookupFields)) lookupFields vars
                 // and RuleDependency = { ChangedEntityType:EntityDescriptor; RestrictedVariable:string; RestrictedVariableType:EntityDescriptor; PathFromVariableToChange:List<FieldDescriptor> }
                 // and RuleDependencies = Map<EntityDescriptorId * FieldDescriptor, List<RuleDependency>>
                 // for each prefix of fields
@@ -173,6 +178,6 @@ type BusinessRule with
       ]
       let byEntityAndField:RuleDependencies = 
         { 
-          dependencies=dependencies |> Seq.groupBy (fun dep -> dep.ChangedEntityType, dep.ChangedField) |> Map.ofSeq |> Map.map (fun k -> List.ofSeq)
+          dependencies=dependencies |> Seq.groupBy (fun dep -> dep.ChangedEntityType, dep.ChangedField) |> Map.ofSeq |> Map.map (fun k -> Set.ofSeq)
         }
       in byEntityAndField 

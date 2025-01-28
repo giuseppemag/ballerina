@@ -5,21 +5,15 @@ open Ballerina.Fun
 open Ballerina.Option
 open Ballerina.Collections.Map
 
-type EntityMetadata = { EntityMetadataId:Guid; Approval:bool; Entity:EntityDescriptor }
-and EntityDescriptor = { 
+type EntityDescriptor = { 
   EntityDescriptorId:Guid; 
   EntityName:string; 
+  TryFind:Guid -> Option<obj>; 
   GetId:obj -> Option<Guid>; 
   Lookup:obj * List<FieldDescriptorId> -> Option<obj>;
   GetEntities:Unit -> List<obj> 
   GetFieldDescriptors:Unit -> Map<FieldDescriptorId,FieldDescriptor>
 }
-
-and FieldMetadata = { FieldMetadataId:Guid; Approval:bool; CurrentEditPrio:EditPriority }
-and IntFieldMetadata = { Self:FieldMetadata; Field:FieldDescriptorId }
-and RefFieldMetadata = { Self:FieldMetadata; Field:FieldDescriptorId }
-and ReadonlyIntFieldMetadata = { Self:FieldMetadata; Field:FieldDescriptorId }
-and SingletonIntFieldMetadata = { Self:FieldMetadata; Field:FieldDescriptorId }
 
 and FieldDescriptorId = { FieldDescriptorId:Guid; FieldName:string }
 and FieldDescriptor = { 
@@ -51,12 +45,13 @@ and FieldUpdateResult = | ValueChanged = 0 | ValueStayedTheSame = 1 | Failure = 
 and FieldEventBase = { FieldEventId:Guid; EntityDescriptorId:EntityDescriptorId; Assignment:Assignment }
 and IntFieldEvent = { Self:FieldEventBase; Targets:EntitiesIdentifiers }
 and SingletonIntFieldEvent = { Self:FieldEventBase; Target:EntityIdentifier }
-and SetFieldEvent = IntFieldEvent of IntFieldEvent | SingletonIntFieldEvent of SingletonIntFieldEvent
+and SingletonRefFieldEvent = { Self:FieldEventBase; Target:EntityIdentifier }
+and SetFieldEvent = IntFieldEvent of IntFieldEvent | SingletonIntFieldEvent of SingletonIntFieldEvent | SingletonRefFieldEvent of SingletonRefFieldEvent
 
 and BusinessRuleId = { BusinessRuleId:Guid }
 and BusinessRule = { BusinessRuleId:Guid; Name:string; Priority:BusinessRulePriority; Condition:Expr; Actions:List<Assignment> }
 and RuleDependency = { ChangedEntityType:EntityDescriptorId; RestrictedVariable:VarName; RestrictedVariableType:EntityDescriptorId; PathFromVariableToChange:List<FieldDescriptorId>; ChangedField:FieldDescriptorId }
-and RuleDependencies = { dependencies:Map<EntityDescriptorId * FieldDescriptorId, List<RuleDependency>> }
+and RuleDependencies = { dependencies:Map<EntityDescriptorId * FieldDescriptorId, Set<RuleDependency>> }
 
 and Assignment = { Variable:VarName * List<FieldDescriptorId>; Value:Expr }
 and VarName = { VarName:string }
@@ -72,7 +67,7 @@ and Expr =
   | Value of Value
   | Binary of BinaryOperator * Expr * Expr
   | VarLookup of VarName
-  | FieldLookup of Expr * List<FieldDescriptorId>
+  | FieldLookup of Expr * FieldDescriptorId
   | Exists of VarName * EntityDescriptorId * Expr
   | SumBy of VarName * EntityDescriptorId * Expr
 and BinaryOperator = Plus | Minus | GreaterThan | Equals | GreaterThanEquals | Times | DividedBy | And | Or
@@ -104,8 +99,12 @@ type Value with
 type Expr with 
   static member (+) (e1:Expr, e2:Expr) =
     Binary(Plus, e1, e2)
-  static member (=>) (varname:VarName, fields:List<FieldDescriptorId>) =
-    FieldLookup(Expr.VarLookup varname, fields)
+  static member (=>>) (e:Expr, fields:List<FieldDescriptorId>) =
+    match fields with
+    | [] -> e
+    | f::fs -> Expr.FieldLookup(e, f) =>> fs
+  static member (=>) (varname:VarName, field:FieldDescriptorId) =
+    FieldLookup(Expr.VarLookup varname, field)
   static member op_GreaterThan (e1:Expr, e2:Expr) =
     Binary(GreaterThan, e1, e2)
 
@@ -117,44 +116,6 @@ type EntityDescriptor with
   member this.ToEntityDescriptorId = 
     { EntityDescriptorId=this.EntityDescriptorId; EntityName=this.EntityName }
 
-type RuleDependency with
-  member dep.Predicate (schema:Schema) (changedEntitiesIds:Set<Guid>) =
-    option{
-      let! changedEntityType = schema.tryFindEntity dep.ChangedEntityType
-      // do printfn "changedEntityType = %A" (changedEntityType.ToEntityDescriptorId)
-      // do Console.ReadLine() |> ignore
-      let! restrictedVariableType = schema.tryFindEntity dep.RestrictedVariableType
-      // do printfn "restrictedVariableType = %A" (restrictedVariableType.ToEntityDescriptorId)
-      // do Console.ReadLine() |> ignore
-      return fun (restrictedVariable:obj) -> 
-        option{
-            // do printfn "restrictedVariable = %A" (restrictedVariable)
-            // do Console.ReadLine() |> ignore
-            let! variableValue = restrictedVariableType.Lookup(restrictedVariable, dep.PathFromVariableToChange)
-            // do printfn "variableValue = %A" (variableValue)
-            // do Console.ReadLine() |> ignore
-            let! variableValueId = changedEntityType.GetId variableValue
-            // do printfn "variableValueId = %A" (variableValueId)
-            // do Console.ReadLine() |> ignore
-            return changedEntitiesIds |> Set.contains variableValueId
-          } |> Option.defaultValue true
-        } |> Option.defaultValue (fun o -> true)
-
-
-type RuleDependencies with
-  member deps.PredicatesByRestrictedVariable (schema:Schema) (changedEntitiesIds:Set<Guid>) =
-    let (||.) = fun p1 p2 -> fun (o:obj) -> p1 o || p2 o
-    let dependencies = deps.dependencies |> Map.values
-    let dependencies = 
-      seq{
-        for depsByChangeType in dependencies do
-        for dep in depsByChangeType do
-        yield [dep.RestrictedVariable, [dep.Predicate schema changedEntitiesIds]] |> Map.ofList
-      } 
-    dependencies
-      |> Map.mergeMany (fun l1 l2 -> l1 @ l2)
-      |> Map.map (fun k ps -> ps |> Seq.reduce (||.))
-
 type BusinessRule with
   member this.ToBusinessRuleId = { BusinessRuleId = this.BusinessRuleId }
 
@@ -162,16 +123,30 @@ type EntityDescriptor with
   static member GenericLookup:EntityDescriptor -> Map<EntityDescriptorId, EntityDescriptor> -> obj * List<FieldDescriptorId> -> Option<obj> = 
     fun self allEntities (obj, fieldIds) ->
       option{
+        // do printfn "lookup = %A" (obj, fieldIds)
+        // do Console.ReadLine() |> ignore
         match fieldIds with
         | [] -> return obj
         | fieldId::fieldIds -> 
             let! fieldDescriptor = self.GetFieldDescriptors() |> Map.tryFind fieldId
+            // do printfn "fieldDescriptor = %A" fieldDescriptor
+            // do Console.ReadLine() |> ignore
             let! fieldValue = fieldDescriptor.Lookup obj
+            // do printfn "fieldValue = %A" fieldValue
+            // do Console.ReadLine() |> ignore
             match fieldDescriptor.Type(), fieldValue with
             | ExprType.LookupType entityDescriptorId, Value.ConstGuid id ->
               let! entityDescriptor = allEntities |> Map.tryFind entityDescriptorId
-              let! fieldValue = entityDescriptor.GetId id
-              return! entityDescriptor.Lookup (fieldValue, fieldIds)
+              // do printfn "entityDescriptor = %A" entityDescriptor
+              // do Console.ReadLine() |> ignore
+              let! fieldValue = entityDescriptor.TryFind id
+              // do printfn "fieldValue = %A" fieldValue
+              // do Console.ReadLine() |> ignore
+              let! result = entityDescriptor.Lookup (fieldValue, fieldIds)
+              return result
             | _ -> 
-              return! fieldValue.toObject
+              let! result = fieldValue.toObject
+              // do printfn "result = %A" fieldValue
+              // do Console.ReadLine() |> ignore
+              return result
       }
