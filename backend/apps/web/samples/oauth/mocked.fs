@@ -19,7 +19,7 @@ let init(): EvaluatedCoroutines<_,_,_> =
     stopped = Set.empty
   }
 
-let getSnapshot(): unit * OAuthContext<_, _> * Map<Guid, OAuthError> * unit =
+let getSnapshot(): unit * OAuthContext<_, _, _> * Map<Guid, Unit> * unit =
   (),
   {
     GetToken = 

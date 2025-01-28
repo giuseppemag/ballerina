@@ -15,8 +15,6 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.HttpsPolicy
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.DependencyInjection
-open Microsoft.Extensions.Hosting
-open Microsoft.Extensions.Logging
 open Microsoft.Extensions.Options
 open Ballerina.Coroutines
 open Ballerina.CRUD
@@ -42,6 +40,7 @@ module Program =
   open absample.eventLoop
   open Oauth.Mocked
   open Oauth.MSGraph
+  open Oauth.Spotify
   type PositionOptions() = 
     member val Title:string = "" with get, set
     member val Name:string = "" with get, set
@@ -65,6 +64,7 @@ module Program =
   | abcdjobs = 3
   | mocked = 4
   | msgraph = 5
+  | spotify = 6
 
   [<EntryPoint>]
   let main args =
@@ -120,6 +120,7 @@ module Program =
       | LaunchMode.abcdjobs -> abcdEventLoop ()
       | LaunchMode.mocked -> oauthEventLoop()
       | LaunchMode.msgraph -> msGraphEventLoop tenant client secret
+      | LaunchMode.spotify -> spotifyEventLoop "" "" ""
       | _ -> printfn "no mode selected, exiting"
       ), mode, tenantArg, clientArg, secretArg)
     do rootCommand.Invoke(args) |> ignore

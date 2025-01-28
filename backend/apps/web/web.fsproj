@@ -9,7 +9,10 @@
     <Compile Include=".\samples\ab-events\endpoints.fs" />
     <Compile Include=".\samples\ab-events\jobs.fs" />
     <Compile Include=".\samples\oauth\mocked.fs" />
+    <Compile Include=".\samples\oauth\common.fs" />
     <Compile Include=".\samples\oauth\msgraph\api.fs" />
+    <Compile Include=".\samples\oauth\spotify\api.fs" />
+    <Compile Include=".\samples\oauth\spotify\spotify.fs" />
     <Compile Include=".\samples\oauth\msgraph\msgraph.fs" />
     <Compile Include=".\samples\abcd-events\schema.fs" />
     <Compile Include=".\samples\abcd-events\context.fs" />

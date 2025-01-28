@@ -1,12 +1,13 @@
 ﻿module Users
 open System
+open System.Threading.Tasks
 open Ballerina.Coroutines
 open Ballerina.Fun
 
 type [<CLIMutable>] Token = { TokenId:Guid; Token:string }
 let Token = {|
   Zero = { TokenId=Guid.Empty; Token="" }
-  Create = fun () -> async{ return { TokenId = Guid.NewGuid(); Token=BCrypt.Net.BCrypt.GenerateSalt() } }
+  Create = fun () -> task{ return { TokenId = Guid.NewGuid(); Token=BCrypt.Net.BCrypt.GenerateSalt() } }
 |} 
   
 
@@ -38,15 +39,15 @@ and EmailConfirmedEvent(Email:string, TokenId:Guid) =
 type UserCoroutinesState = unit 
 let User = 
   {|
-    Create = fun (newUser:NewUserEventCase) -> failwith<Async<Guid>> "not implemented";
-    Update = fun (userId:Guid) (updater:U<User>) -> failwith<Async<Unit>> "not implemented";
-    Delete = fun (userId:Guid) -> failwith<Async<Unit>> "not implemented";
+    Create = fun (newUser:NewUserEventCase) -> failwith<Task<Guid>> "not implemented";
+    Update = fun (userId:Guid) (updater:U<User>) -> failwith<Task<Unit>> "not implemented";
+    Delete = fun (userId:Guid) -> failwith<Task<Unit>> "not implemented";
     Updaters = 
       {|
         EmailConfirmed = fun (updater:U<bool>) (current:User) -> { current with EmailConfirmed = updater(current.EmailConfirmed) } 
         Active = fun (updater:U<bool>) (current:User) -> { current with Active = updater(current.Active) } 
       |};
-    SendRegistrationConfirmationEmail = fun (userId:Guid) (token:Token) -> failwith<Async<Unit>> "not implemented"
+    SendRegistrationConfirmationEmail = fun (userId:Guid) (token:Token) -> failwith<Task<Unit>> "not implemented"
     RegistrationExpiration = TimeSpan.FromDays(3)
   |}
 

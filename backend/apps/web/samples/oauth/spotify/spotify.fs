@@ -1,10 +1,10 @@
-module Oauth.MSGraph
+module Oauth.Spotify
 
 open System
 open OAuth.Coroutine
 open OAuth.Models
 open Ballerina.Coroutines
-open OAuth.MSGraph.API
+open OAuth.Spotify.API
 
 let init(): EvaluatedCoroutines<_,_,_> =
   {
@@ -14,7 +14,7 @@ let init(): EvaluatedCoroutines<_,_,_> =
     listening = Map.empty
     stopped = Set.empty
   }
-let getSnapshot (tenant : Guid) (clientId : Guid) secret =
+let getSnapshot (clientId : string) (clientSecret : string) (authorizationCode : string) =
   fun () ->
     (),
     {
@@ -22,23 +22,23 @@ let getSnapshot (tenant : Guid) (clientId : Guid) secret =
         fun () ->
           do printfn "Getting Access Token..." 
           do Console.ReadLine() |> ignore
-          requestToken tenant clientId secret  
+          requestToken clientId clientSecret authorizationCode
       SaveAccessToken = 
         fun accessToken -> task {
           do printfn "Getting Entra users: %A" accessToken 
-          let! getResult = getUsers 50 accessToken.AccessToken
+          let! getResult = getNewReleases 0 10 (accessToken.AccessToken)
           match getResult with
           | Choice1Of2 statusCode -> 
               do printfn "API error: %A" statusCode
-          | Choice2Of2 users ->
-              do printfn "%A" (users |> Array.toList)
+          | Choice2Of2 newReleases ->
+              do printfn "%A" newReleases
           do Console.ReadLine() |> ignore
         }
       RefreshToken =
-        fun _ ->
-          do printfn "Refreshings with Refresh Token: %A" ()
+        fun token ->
+          do printfn "Refreshings with Refresh Token: %A" token
           do Console.ReadLine() |> ignore
-          requestToken tenant clientId secret
+          refreshToken clientId clientSecret token
       GetExpiration =
         //NOTE: this is for testing purposes. You can read the actual expiration from the token and refresh with half that frequency.
         fun accessToken -> TimeSpan.FromSeconds(30.)
@@ -46,5 +46,5 @@ let getSnapshot (tenant : Guid) (clientId : Guid) secret =
     Map.empty,
     ()
 
-let msGraphEventLoop (tenant : Guid) (clientId : Guid) (secret : string) =
-  Ballerina.CoroutinesRunner.runLoop init (getSnapshot tenant clientId secret) ((fun _ -> ())) (fun _ _ _ -> ()) (fun () -> Console.Clear(); printfn "Tick: %A" (DateTime.UtcNow)) (fun _ -> ())
+let spotifyEventLoop (clientId : string) (clientSecret : string) (authorizationCode : string) =
+  Ballerina.CoroutinesRunner.runLoop init (getSnapshot clientId clientSecret authorizationCode) ((fun _ -> ())) (fun _ _ _ -> ()) (fun () -> Console.Clear(); printfn "Tick: %A" (DateTime.UtcNow)) (fun _ -> ())

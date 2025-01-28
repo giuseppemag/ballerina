@@ -21,7 +21,7 @@ and CoroutineResult<'a, 's, 'c, 'e> =
   | Wait of TimeSpan * Coroutine<'a, 's, 'c, 'e>
   | On of ('e -> Option<'a>)
   | Do of ('c -> 'a)
-  | Await of Async<'a>
+  | Await of Task<'a>
   // | Awaiting of Guid * Async<'a> * Task<'a>
   | Then of (Coroutine<Coroutine<'a, 's, 'c, 'e>, 's, 'c, 'e>)
   | Combine of (Coroutine<Unit, 's, 'c, 'e> * Coroutine<'a, 's, 'c, 'e>)
@@ -47,7 +47,7 @@ and CoroutineResult<'a, 's, 'c, 'e> =
       //     )
       | Await (p) -> 
           Await(
-            async{ 
+            task{ 
               let! x = p
               return f x
             }
@@ -99,12 +99,12 @@ type CoroutineBuilder() =
   member co.Do(f : 's -> 'a) =
     co.YieldAfter(Co(fun _ -> CoroutineResult.Do(f), None, None))
 
-  member co.DoAsync (f : 'c -> Task<'a>) : Coroutine<'a, 's, 'c, 'e> = co {
+  member co.Await (f : 'c -> Task<'a>) : Coroutine<'a, 's, 'c, 'e> = co {
     let! task = co.Do f
-    return! co.Await(Async.AwaitTask task)
+    return! co.Await task
   }
   
-  member co.Await(p : Async<'a>) =    
+  member co.Await(p : Task<'a>) =    
     co.YieldAfter(Co(fun _ -> CoroutineResult.Await(p), None, None))
   // member _.Awaiting(id:Guid, p : Async<'a>, t:Task<'a>) =
   //   Co(fun _ -> CoroutineResult.Awaiting(id,p,t), None, None)
@@ -243,8 +243,8 @@ type Eval<'s,'c,'e>() = class end
         Spawned([p], None, None, None)
       | Do(f) ->
         Done(f c, None, None)
-      | Await(a:Async<'a>) ->
-        let result = a |> Async.RunSynchronously
+      | Await(a:Task<'a>) ->
+        let result = a |> Async.AwaitTask |> Async.RunSynchronously
         Done(result, None, None)
         // let id = Guid.NewGuid()
         // let task = a |> Async.StartAsTask

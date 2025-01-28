@@ -5,14 +5,7 @@ open System.Net.Http
 open System.Net
 open System.Text.Json
 open System.Text.Json.Serialization
-
-type MSOauthResponse =
-  {
-    [<JsonPropertyName("access_token")>]
-    AccessToken : string
-    [<JsonPropertyName("expires_in")>]
-    Duration : int64
-  }
+open OAuth.Common
 
 type EntraUser = 
   {
@@ -30,9 +23,6 @@ type OdataUserResult =
     Value : EntraUser[]
   }
 
-let httpClient = new HttpClient()
-
-
 let requestToken tenant clientId secret = task {
   let url = $"https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token"
   let content = new FormUrlEncodedContent(
@@ -44,7 +34,7 @@ let requestToken tenant clientId secret = task {
   match response.StatusCode with
   | HttpStatusCode.OK ->
       let! resultContent = response.Content.ReadAsStringAsync()
-      let deserializedContent = JsonSerializer.Deserialize<MSOauthResponse>(resultContent)
+      let deserializedContent = JsonSerializer.Deserialize<OAuthResponse>(resultContent)
       return Choice2Of2({| AccessToken = deserializedContent.AccessToken; Duration = deserializedContent.Duration |}, ())        
   | _ -> return Choice1Of2()
 }
