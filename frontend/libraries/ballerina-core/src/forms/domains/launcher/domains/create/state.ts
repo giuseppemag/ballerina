@@ -1,60 +1,67 @@
-import { ApiErrors, ApiResponseChecker, AsyncState, BasicUpdater, Debounced, ForeignMutationsInput, id, SimpleCallback, simpleUpdater, Synchronized, Template, unit, Unit, Updater, Value } from "../../../../../../main"
+import { ApiErrors, ApiResponseChecker, AsyncState, BasicUpdater, CommonFormState, Debounced, ForeignMutationsInput, id, SimpleCallback, simpleUpdater, simpleUpdaterWithChildren, Synchronized, Template, unit, Unit, Updater, Value } from "../../../../../../main"
+import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state"
 import { BasicFun } from "../../../../../fun/state"
 
 export type CreateFormContext<E,FS> = {
   entityId:string,
   api:{
     default:() => Promise<E>,
-    create:BasicFun<[E, FS], Promise<ApiErrors>>
+    create: (raw: any) => Promise<ApiErrors>
   },
-  actualForm:Template<Value<E> & FS, FS, { onChange:SimpleCallback<BasicUpdater<E>> }>
+  parser: (entity:E, formstate: CreateFormState<E,FS>) => ValueOrErrors<E, ApiErrors>,
+  actualForm:Template<Value<E> & {formFieldStates:FS} & { commonFormState: CommonFormState }, {formFieldStates: FS} & { commonFormState: CommonFormState }, { onChange:SimpleCallback<BasicUpdater<E>> }>
 }
 
 export type CreateFormState<E,FS> = {
-  // first sync is GET (returns E), second is UPDATE (accepts E)
-  entity:Debounced<Synchronized<Unit, Synchronized<E, ApiErrors>>>
-  formState:FS,
-  initApiChecker: ApiResponseChecker,
-  createApiChecker: ApiResponseChecker,
+  entity: Synchronized<Unit, E>
+  formFieldStates: FS,
+  commonFormState: CommonFormState,
+  customFormState: {
+    initApiChecker: ApiResponseChecker,
+    createApiChecker: ApiResponseChecker,
+    apiRunner: Debounced<Synchronized<Unit, ApiErrors>>
+  }
 }
 
 export const CreateFormState = <E,FS>() => ({
-  Default:(initialFormState:FS) : CreateFormState<E,FS> => ({
-    entity:Debounced.Default(
-      Synchronized.Default(unit)
-    ),
-    formState:initialFormState,
-    initApiChecker:ApiResponseChecker.Default(true),
-    createApiChecker:ApiResponseChecker.Default(true),
+  Default:(formFieldStates:FS,
+    commonFormState: CommonFormState,
+    customFormState: {
+      initApiChecker: ApiResponseChecker,
+      createApiChecker: ApiResponseChecker,
+      apiRunner: Debounced<Synchronized<Unit, ApiErrors>>
+  }) : CreateFormState<E,FS> => ({
+    entity:Synchronized.Default(unit),
+    formFieldStates,
+    commonFormState,
+    customFormState
   }),
   Updaters:{
     Core:{
       ...simpleUpdater<CreateFormState<E,FS>>()("entity"),
-      ...simpleUpdater<CreateFormState<E,FS>>()("formState"),
-      ...simpleUpdater<CreateFormState<E,FS>>()("initApiChecker"),
-      ...simpleUpdater<CreateFormState<E,FS>>()("createApiChecker"),
+      ...simpleUpdater<CreateFormState<E,FS>>()("formFieldStates"),
+      ...simpleUpdaterWithChildren<CreateFormState<E,FS>>()({
+          ...simpleUpdater<CreateFormState<E,FS>["customFormState"]>()("initApiChecker"),
+          ...simpleUpdater<CreateFormState<E,FS>["customFormState"]>()("createApiChecker"),
+          ...simpleUpdater<CreateFormState<E,FS>["customFormState"]>()("apiRunner"),
+      })("customFormState"),
+      ...simpleUpdater<CreateFormState<E,FS>>()("commonFormState"),
     },
     Template:{
       entity:(_:BasicUpdater<E>) : Updater<CreateFormState<E,FS>> => 
         CreateFormState<E,FS>().Updaters.Core.entity(
-          Debounced.Updaters.Core.value(
             Synchronized.Updaters.sync(
               AsyncState.Operations.map(
-                Synchronized.Updaters.value(
                   _
-                )
               )
             )
-          )
         ),
         submit:() : Updater<CreateFormState<E,FS>> => 
-          CreateFormState<E,FS>().Updaters.Core.entity(
+          CreateFormState<E,FS>().Updaters.Core.customFormState.children.apiRunner(
             Debounced.Updaters.Template.value(
               Synchronized.Updaters.sync(
                 AsyncState.Operations.map(
-                  Synchronized.Updaters.value(
                     id
-                  )
                 )
               )
             )

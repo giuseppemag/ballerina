@@ -14,18 +14,19 @@ export const EnumForm = <Context extends FormLabel & BaseEnumContext<Context, El
 ) => {
   const Co = CoTypedFactory<Context & Value<CollectionSelection<Element>> & { disabled:boolean }, EnumFormState<Context, Element>>()
   return Template.Default<Context & Value<CollectionSelection<Element>> & { disabled:boolean }, EnumFormState<Context, Element>, ForeignMutationsExpected & { onChange: OnChange<CollectionSelection<Element>>; },
-    EnumView<Context, Element, ForeignMutationsExpected>>(props => <>
+    EnumView<Context, Element, ForeignMutationsExpected>>(props => {
+      return <>
       <props.view {...props}
         context={{
           ...props.context,
-          activeOptions: !AsyncState.Operations.hasValue(props.context.options.sync) ? "loading"
-            : props.context.options.sync.value.valueSeq().filter(o => o[1](props.context)).map(o => o[0]).toArray()
+          activeOptions: !AsyncState.Operations.hasValue(props.context.customFormState.options.sync) ? "loading"
+            : props.context.customFormState.options.sync.value.valueSeq().filter(o => o[1](props.context)).map(o => o[0]).toArray()
         }}
         foreignMutations={{
           ...props.foreignMutations,
           setNewValue: (_) => {
-            if (!AsyncState.Operations.hasValue(props.context.options.sync)) return
-            const newSelection = props.context.options.sync.value.get(_);
+            if (!AsyncState.Operations.hasValue(props.context.customFormState.options.sync)) return
+            const newSelection = props.context.customFormState.options.sync.value.get(_);
             if (newSelection == undefined)
               return props.foreignMutations.onChange(replaceWith(CollectionSelection<Element>().Default.right("no selection")), List());
             else
@@ -33,19 +34,22 @@ export const EnumForm = <Context extends FormLabel & BaseEnumContext<Context, El
 
           }
         }} />
-    </>
+    </>}
     ).any([
       ValidateRunner<Context & { disabled:boolean }, EnumFormState<Context, Element>, ForeignMutationsExpected, CollectionSelection<Element>>(
         validation ? _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation) : undefined
       ),
       Co.Template<ForeignMutationsExpected & { onChange: OnChange<CollectionSelection<Element>>; }>(
         Co.GetState().then(current =>
-          Synchronize<Unit, OrderedMap<Guid, [Element, BasicPredicate<Context>]>>(current.getOptions, () => "transient failure", 5, 50)
-            .embed(_ => _.options, _ => current => ({ ...current, options: _(current.options) }))
+          { 
+            return Synchronize<Unit, OrderedMap<Guid, [Element, BasicPredicate<Context>]>>(current.getOptions, () => "transient failure", 5, 50)
+            .embed(_ =>  _.customFormState.options,
+               _ => current => ({ ...current, customFormState: { ...current.customFormState, options: _(current.customFormState.options) } })
+              )}
         ),
         {
           interval: 15,
-          runFilter: props => !AsyncState.Operations.hasValue(props.context.options.sync)
+          runFilter: props => !AsyncState.Operations.hasValue(props.context.customFormState.options.sync)
         }
       )
     ]);

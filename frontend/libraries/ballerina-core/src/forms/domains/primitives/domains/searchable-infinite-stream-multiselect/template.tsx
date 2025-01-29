@@ -25,7 +25,7 @@ export const InfiniteMultiselectDropdownForm = <Element extends CollectionRefere
           //.SetState(SearchNow.Updaters.reloadsRequested(_ => _ + 1))
           .then(_ => DebouncedCo.Return("success")),
         250
-      ).embed(_ => ({ ..._, ..._.searchText }), SearchableInfiniteStreamState<Element>().Updaters.Core.searchText),
+      ).embed(_ => ({ ..._, ..._.customFormState.searchText }), SearchableInfiniteStreamState<Element>().Updaters.Core.customFormState.children.searchText),
       DebouncerCo.Wait(0)
     ])
   );
@@ -33,14 +33,14 @@ export const InfiniteMultiselectDropdownForm = <Element extends CollectionRefere
     debouncer,
     {
       interval: 15,
-      runFilter: props => Debounced.Operations.shouldCoroutineRun(props.context.searchText)
+      runFilter: props => Debounced.Operations.shouldCoroutineRun(props.context.customFormState.searchText)
     }
   );
   const loaderRunner = Co.Template<ForeignMutationsExpected & { onChange: OnChange<OrderedMap<Guid, Element>>; }>(
-    InfiniteStreamLoader<Element>().embed(_ => _.stream, SearchableInfiniteStreamState<Element>().Updaters.Core.stream),
+    InfiniteStreamLoader<Element>().embed(_ => _.customFormState.stream, SearchableInfiniteStreamState<Element>().Updaters.Core.customFormState.children.stream),
     {
       interval: 15,
-      runFilter: props => InfiniteStreamState().Operations.shouldCoroutineRun(props.context.stream)
+      runFilter: props => InfiniteStreamState().Operations.shouldCoroutineRun(props.context.customFormState.stream)
     }
   );
 
@@ -48,21 +48,21 @@ export const InfiniteMultiselectDropdownForm = <Element extends CollectionRefere
     <props.view {...props}
       context={{
         ...props.context,
-        hasMoreValues: !(props.context.stream.loadedElements.last()?.hasMoreValues == false),
-        isLoading: AsyncState.Operations.isLoading(props.context.stream.loadingMore),
-        availableOptions: props.context.stream.loadedElements.valueSeq().flatMap(chunk =>
+        hasMoreValues: !(props.context.customFormState.stream.loadedElements.last()?.hasMoreValues == false),
+        isLoading: AsyncState.Operations.isLoading(props.context.customFormState.stream.loadingMore),
+        availableOptions: props.context.customFormState.stream.loadedElements.valueSeq().flatMap(chunk =>
           chunk.data.valueSeq()
         ).toArray()
       }}
       foreignMutations={{
         ...props.foreignMutations,
         toggleOpen: () => props.setState(
-            SearchableInfiniteStreamState<Element>().Updaters.Core.status(
+            SearchableInfiniteStreamState<Element>().Updaters.Core.customFormState.children.status(
               replaceWith(
-                props.context.status == "closed" ? "open" : "closed")
+                props.context.customFormState.status == "closed" ? "open" : "closed")
             ).then(
-              props.context.stream.loadedElements.count() == 0 ?
-                SearchableInfiniteStreamState<Element>().Updaters.Core.stream(
+              props.context.customFormState.stream.loadedElements.count() == 0 ?
+                SearchableInfiniteStreamState<Element>().Updaters.Core.customFormState.children.stream(
                   InfiniteStreamState<Element>().Updaters.Template.loadMore()
                 )
                 : id
@@ -81,7 +81,7 @@ export const InfiniteMultiselectDropdownForm = <Element extends CollectionRefere
           ),
         loadMore: () =>
           props.setState(
-            SearchableInfiniteStreamState<Element>().Updaters.Core.stream(
+            SearchableInfiniteStreamState<Element>().Updaters.Core.customFormState.children.stream(
               InfiniteStreamState<Element>().Updaters.Template.loadMore()
             )
           ),
@@ -105,9 +105,9 @@ export const InfiniteMultiselectDropdownForm = <Element extends CollectionRefere
     debouncerRunner.mapContextFromProps(props => ({
       ...props.context,
       onDebounce: () => props.setState(
-        SearchableInfiniteStreamState<Element>().Updaters.Core.stream(
+        SearchableInfiniteStreamState<Element>().Updaters.Core.customFormState.children.stream(
           InfiniteStreamState<Element>().Updaters.Template.reload(
-            props.context.getChunk(props.context.searchText.value)
+            props.context.customFormState.getChunk(props.context.customFormState.searchText.value)
           )
         )
       )

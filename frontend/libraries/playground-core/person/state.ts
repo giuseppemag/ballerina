@@ -1,10 +1,11 @@
 import { faker } from "@faker-js/faker";
-import { CollectionReference, CollectionSelection, Guid, FormStateFromEntity, DateFormState, EnumFormState, FormLabel, BaseEnumContext, SearchableInfiniteStreamState, SharedFormState, Predicate, ListFieldState, Maybe } from "ballerina-core";
-import { Map, List, OrderedMap } from "immutable";
-import { v4 } from "uuid";
+import { CollectionReference, CollectionSelection, Guid, FormStateFromEntity, DateFormState, EnumFormState, FormLabel, BaseEnumContext, SearchableInfiniteStreamState, CommonFormState, Predicate, ListFieldState, Maybe, unit } from "ballerina-core";
+import { List, OrderedMap } from "immutable";
 import { Interest, PersonApi } from "./apis/mocks";
-import { Address, City, AddressFormState } from "./domains/address/state";
+import { Address, AddressFormState, City } from "./domains/address/state";
 import { PersonFormPredicateContext } from "./domains/predicates";
+import Immutable from "immutable";
+import { v4 } from "uuid";
 
 
 export type Gender = CollectionReference;
@@ -19,7 +20,7 @@ export type Person = {
   gender: CollectionSelection<Gender>;
   interests: OrderedMap<Guid, Interest>;
   departments: OrderedMap<Guid, Department>;
-  // address: List<Address>;
+  address: Address;
 };
 export const Person = {
   Default: Object.assign((name: string,
@@ -29,10 +30,10 @@ export const Person = {
     gender: CollectionSelection<Gender>,
     interests: OrderedMap<Guid, Interest>,
     departments: OrderedMap<Guid, Department>,
-    address: List<Address>
+    address: Address
   ): Person => ({
     name, surname, birthday, subscribeToNewsletter, gender, interests, departments,
-    //  address,
+     address,
   }),
     {
       mocked: (): Person => ({
@@ -43,14 +44,14 @@ export const Person = {
         gender: CollectionSelection<CollectionReference>().Default.right("no selection"),
         interests: OrderedMap(),
         departments: OrderedMap(),
-        // address: List([{
-        //   street: faker.location.street(),
-        //   number: Math.floor(Math.random() * 500),
-        //   city: Math.random() > 0.5 ?
-        //     CollectionSelection<CollectionReference>().Default.right("no selection")
-        //     :
-        //     CollectionSelection<CollectionReference>().Default.left(City.Default(v4(), faker.location.city()))
-        // }])
+        address: {
+          street: faker.location.street(),
+          number: Math.floor(Math.random() * 500),
+          city: Math.random() > 0.5 ?
+            CollectionSelection<CollectionReference>().Default.right("no selection")
+            :
+            CollectionSelection<CollectionReference>().Default.left(City.Default(v4(), faker.location.city()))
+        }
       })
     }),
   Operations: {
@@ -61,7 +62,7 @@ export const Person = {
       ["subscribeToNewsletter", PersonFormPredicateContext.Predicates.True],
       ["interests", PersonFormPredicateContext.Predicates.SubscribedToNewsletter],
       ["departments", PersonFormPredicateContext.Predicates.True],
-      // ["address", PersonFormPredicateContext.Predicates.BC.or(PersonFormPredicateContext.Predicates.FO)],
+      ["address", PersonFormPredicateContext.Predicates.BC.or(PersonFormPredicateContext.Predicates.FO)],
     ])
   }
 };
@@ -70,18 +71,21 @@ export type PersonFormState = FormStateFromEntity<Person, {
   gender: EnumFormState<PersonFormPredicateContext & FormLabel & BaseEnumContext<PersonFormPredicateContext, Gender>, Gender>;
   interests: EnumFormState<PersonFormPredicateContext & FormLabel & BaseEnumContext<PersonFormPredicateContext, Interest>, Interest>;
   departments: SearchableInfiniteStreamState<Department>;
-  // address: ListFieldState<Address, AddressFormState>;
+  address: AddressFormState
 }>;
 export const PersonFormState = {
   Default: (): PersonFormState => ({
-    ...SharedFormState.Default(),
-    name: SharedFormState.Default(),
-    surname: SharedFormState.Default(),
-    subscribeToNewsletter: SharedFormState.Default(),
-    birthday: ({ ...DateFormState.Default(), ...SharedFormState.Default() }),
-    gender: ({ ...EnumFormState<PersonFormPredicateContext & FormLabel & BaseEnumContext<PersonFormPredicateContext, Gender>, Gender>().Default(), ...SharedFormState.Default() }),
-    interests: ({ ...EnumFormState<PersonFormPredicateContext & FormLabel & BaseEnumContext<PersonFormPredicateContext, Interest>, Interest>().Default(), ...SharedFormState.Default() }),
-    departments: ({ ...SearchableInfiniteStreamState<Department>().Default("", PersonApi.getDepartments()), ...SharedFormState.Default() }),
-    // address: ListFieldState<Address, AddressFormState>().Default(Map())
+    commonFormState: CommonFormState.Default(),
+    formFieldStates: {
+      name: { commonFormState: CommonFormState.Default(), customFormState: unit },
+      surname: { commonFormState: CommonFormState.Default(), customFormState: unit },
+      subscribeToNewsletter: { commonFormState: CommonFormState.Default(), customFormState: unit },
+      birthday: { commonFormState: CommonFormState.Default(), customFormState: DateFormState.Default() },
+      gender: { commonFormState: CommonFormState.Default(), customFormState: EnumFormState<PersonFormPredicateContext & FormLabel & BaseEnumContext<PersonFormPredicateContext, Gender>, Gender>().Default() },
+      interests: { commonFormState: CommonFormState.Default(), customFormState: EnumFormState<PersonFormPredicateContext & FormLabel & BaseEnumContext<PersonFormPredicateContext, Interest>, Interest>().Default() },
+      departments: { commonFormState: CommonFormState.Default(), customFormState: SearchableInfiniteStreamState<Department>().Default("", PersonApi.getDepartments()) },
+      address: { commonFormState: CommonFormState.Default(), customFormState:  AddressFormState.Default() }
+    }
   })
 };
+

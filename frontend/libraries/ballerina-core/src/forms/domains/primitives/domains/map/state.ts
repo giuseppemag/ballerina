@@ -4,11 +4,11 @@ import { BasicFun } from "../../../../../fun/state";
 import { Template, View } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
-import { OnChange, SharedFormState } from "../../../singleton/state";
+import { OnChange, CommonFormState } from "../../../singleton/state";
 
 
 export type MapFieldState<K, V, KeyFormState, ValueFormState> =
-  SharedFormState &
+{ commonFormState: CommonFormState } &
   {
     elementFormStates: Map<number, { KeyFormState: KeyFormState, ValueFormState: ValueFormState }>
   };
@@ -16,7 +16,7 @@ export const MapFieldState = <K, V, KeyFormState, ValueFormState>() => ({
   Default: (
     elementFormStates: MapFieldState<K, V, KeyFormState, ValueFormState>["elementFormStates"],
   ): MapFieldState<K, V, KeyFormState, ValueFormState> => ({
-    ...SharedFormState.Default(),
+    commonFormState: CommonFormState.Default(),
     elementFormStates
   }),
   Updaters: {

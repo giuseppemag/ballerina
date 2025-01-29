@@ -1,5 +1,5 @@
 import { List } from "immutable"
-import { BasicUpdater, FormRunnerContext, FormRunnerForeignMutationsExpected, FormRunnerLoader, FormRunnerState, Mapping, Sum, unit } from "../../../../main"
+import { BasicUpdater, FormRunnerContext, FormRunnerForeignMutationsExpected, FormRunnerLoader, FormRunnerState, Sum, unit } from "../../../../main"
 import { Template } from "../../../template/state"
 import { FormParsingResult } from "../parser/state"
 
@@ -13,42 +13,35 @@ export const FormRunnerErrorsTemplate = (parsedFormsConfig: FormParsingResult) =
   // form: Template.Default<FormRunnerContext & FormRunnerState, FormRunnerState, FormRunnerForeignMutationsExpected>(props =>
   //   props.context.showFormParsingErrors(parsedFormsConfig)
   // ),
-  formState: unit,
-  mapping: Mapping.Default.fromPaths(unit)
+  formFieldStates: unit,
+  entity: unit,
+  commonFormState: unit,
+  customFormState: unit,
 })
 
 export const FormRunnerTemplate =
   Template.Default<FormRunnerContext & FormRunnerState, FormRunnerState, FormRunnerForeignMutationsExpected>(props => {
     if (props.context.form.kind == "r") return <></>
-    // console.log("props.context.form.value.formState", props.context)
     return <>
         <props.context.form.value.form
           context={{
-            ...props.context.form.value.formState,
             entityId: props.context.formRef.kind == "edit" ? props.context.formRef.entityId : undefined,
-            value: props.context.formRef.kind == "map" ? props.context.formRef.value : undefined,
-            formState: props.context.formRef.kind == "map" ? props.context.form.value.formState : props.context.form.value.formState.formState,
+            entity: props.context.form.value.entity,
+            formFieldStates: props.context.form.value.formFieldStates,
+            commonFormState: props.context.form.value.commonFormState,
+            customFormState: props.context.form.value.customFormState,
             extraContext: {
               ...props.context.extraContext,
               rootValue:
-                props.context.formRef.kind == "map" ? props.context.form.value.mapping.from(props.context.formRef.value) :
-                  props.context.form.value.formState?.entity.sync?.value,
+                  props.context.form.value?.entity.sync?.value,
             },
             submitButtonWrapper: (props.context.formRef.kind == "create" || props.context.formRef.kind == "edit" )  ? props.context.formRef.submitButtonWrapper : undefined
           }}
           setState={(_: BasicUpdater<any>) => props.setState(
-            FormRunnerState.Updaters.form(
-              Sum.Updaters.left(
-                current => ({ ...current, formState: _(current.formState) })
-              )
-            )
+            FormRunnerState.Updaters.form(Sum.Updaters.left(_))
           )}
           view={unit}
           foreignMutations={{
-            onChange: (_: BasicUpdater<any>, _path: List<string>) => {
-              if (props.context.formRef.kind == "map")
-                props.context.formRef.onChange(_, _path)
-            },
             apiHandlers: {
               onDefaultSuccess: (_: any) => {
                 if (

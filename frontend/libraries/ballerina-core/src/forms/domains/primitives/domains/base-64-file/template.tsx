@@ -3,13 +3,13 @@ import { BasicFun, replaceWith, ValidateRunner } from "../../../../../../main";
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
-import { FieldValidation, FieldValidationWithPath, OnChange, SharedFormState } from "../../../singleton/state";
+import { FieldValidation, FieldValidationWithPath, OnChange, CommonFormState } from "../../../singleton/state";
 import { Base64FileView } from "./state";
 
 
 export const Base64FileForm = <Context extends FormLabel, ForeignMutationsExpected>(
   validation?:BasicFun<string, Promise<FieldValidation>>) => {
-  return Template.Default<Context & Value<string> & { disabled:boolean }, SharedFormState, ForeignMutationsExpected & { onChange: OnChange<string>; }, Base64FileView<Context, ForeignMutationsExpected>>(props => <>
+  return Template.Default<Context & Value<string> & { disabled:boolean }, { commonFormState: CommonFormState }, ForeignMutationsExpected & { onChange: OnChange<string>; }, Base64FileView<Context, ForeignMutationsExpected>>(props => <>
     <props.view {...props}
       foreignMutations={{
         ...props.foreignMutations,
@@ -17,7 +17,7 @@ export const Base64FileForm = <Context extends FormLabel, ForeignMutationsExpect
       }} />
   </>
   ).any([
-    ValidateRunner<Context & { disabled:boolean }, SharedFormState, ForeignMutationsExpected, string>(
+    ValidateRunner<Context & { disabled:boolean }, { commonFormState: CommonFormState }, ForeignMutationsExpected, string>(
       validation ? _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation) : undefined
     ),
   ])

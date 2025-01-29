@@ -14,7 +14,7 @@ export const DateForm = <Context extends FormLabel, ForeignMutationsExpected>(
       foreignMutations={{
         ...props.foreignMutations,
         setNewValue: (_) => {
-          props.setState(DateFormState.Updaters.possiblyInvalidInput(replaceWith(_)))
+          props.setState(DateFormState.Updaters.Core.customFormState.children.possiblyInvalidInput(replaceWith(_)) )
           const newValue = _ == undefined ? _ : new Date(_)
           setTimeout(() => {
             props.foreignMutations.onChange(replaceWith(newValue), List())
