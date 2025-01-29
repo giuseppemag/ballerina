@@ -32,7 +32,7 @@ export const PersonContainerFormView: EntityFormView<any, any, any, { layout: Fo
 
 export const PersonNestedContainerFormView: EntityFormView<any, any, any, { layout: FormLayout }, Unit> = props => {
   return <>
-  {props.context.label && <h3>{props.context.label}</h3>}
+  {props.context.header && <h3>{props.context.header}</h3>}
     <table>
       <tbody>
         {/* {JSON.stringify(props.VisibleFieldKeys.toArray())} */}
@@ -69,7 +69,7 @@ export const CreatePersonSubmitButtonWrapper: CreateFormView<any, any> = Templat
   }>(props =>
     <>
       {props.view.actualForm}
-      <button disabled={props.context.entity.dirty != "not dirty"} onClick={e => props.foreignMutations.onSubmit()}>Submit</button>
+      <button disabled={props.context.customFormState.apiRunner.dirty != "not dirty"} onClick={e => props.foreignMutations.onSubmit()}>Submit</button>
     </>
   )
 
@@ -82,7 +82,7 @@ export const CreatePersonSubmitButtonWrapper: CreateFormView<any, any> = Templat
     }>(props =>
       <>
         {props.view.actualForm}
-        <button disabled={props.context.apiRunner.dirty != "not dirty"} onClick={e => props.foreignMutations.onSubmit()}>Submit</button>
+        <button disabled={props.context.customFormState.apiRunner.dirty != "not dirty"} onClick={e => props.foreignMutations.onSubmit()}>Submit</button>
       </>
   )
 

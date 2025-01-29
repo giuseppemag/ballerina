@@ -39,7 +39,7 @@ export type FormRunnerContext = {
   showFormParsingErrors: BasicFun<FormParsingResult, JSX.Element>
 } & FormsParserState
 export type FormRunnerState = {
-  form:Sum<{ form:any, formState:any }, "not initialized">
+  form:Sum<{ form:any, formFieldStates:any, entity:any, commonFormState:any, customFormState:any }, "not initialized">
 }
 export type FormRunnerForeignMutationsExpected = Unit
 export const FormRunnerState = {

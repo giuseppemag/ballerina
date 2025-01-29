@@ -1,19 +1,19 @@
-import { FormLabel, CollectionReference, DateView, EnumView, EnumMultiselectView, StringView, NumberView, BooleanView, SearchableInfiniteStreamView, InfiniteStreamMultiselectView, SharedFormState, AsyncState, BaseEnumContext, ListFieldView, unit } from "ballerina-core";
+import { FormLabel, CollectionReference, DateView, EnumView, EnumMultiselectView, StringView, NumberView, BooleanView, SearchableInfiniteStreamView, InfiniteStreamMultiselectView, CommonFormState, AsyncState, BaseEnumContext, ListFieldView, unit } from "ballerina-core";
 import { PersonFormPredicateContext } from "playground-core";
 
-export const MostUglyValidationDebugView = (props: { context: { showAllErrors: boolean } & SharedFormState }) =>
-  props.context.modifiedByUser && props.context.validation.sync && AsyncState.Operations.isLoading(props.context.validation.sync) ?
+export const MostUglyValidationDebugView = (props: { context: { showAllErrors: boolean } & {commonFormState: CommonFormState} }) =>
+  props.context.commonFormState.modifiedByUser && props.context.commonFormState.validation.sync && AsyncState.Operations.isLoading(props.context.commonFormState.validation.sync) ?
     <>🔄</>
     :
-    (props.context.showAllErrors || props.context.modifiedByUser) && props.context.validation.sync && AsyncState.Operations.hasValue(props.context.validation.sync) &&
-      props.context.validation.sync.value.length > 0 ?
+    (props.context.showAllErrors || props.context.commonFormState.modifiedByUser) && props.context.commonFormState.validation.sync && AsyncState.Operations.hasValue(props.context.commonFormState.validation.sync) &&
+      props.context.commonFormState.validation.sync.value.length > 0 ?
       <table>
         <tr>
           <td>
             validation errors
           </td>
           <td>
-            {JSON.stringify(props.context.validation.sync.value)}
+            {JSON.stringify(props.context.commonFormState.validation.sync.value)}
           </td>
         </tr>
       </table>
@@ -50,7 +50,7 @@ export const PersonFieldViews = {
     props =>
       <>
         {props.context.label && <h3>{props.context.label}</h3>}
-        <input value={props.context.possiblyInvalidInput}
+        <input value={props.context.customFormState.possiblyInvalidInput}
           onChange={e => props.foreignMutations.setNewValue(e.currentTarget.value)
           } />
         <MostUglyValidationDebugView {...props} />
@@ -107,16 +107,16 @@ export const PersonFieldViews = {
         </select>
       }
       <MostUglyValidationDebugView {...props} />
-      {(props.context.showAllErrors || props.context.formState.modifiedByUser) && AsyncState.Operations.hasValue(props.context.formState.validation.sync) &&
-        props.context.formState.validation.sync.value.length > 0 &&
-        props.context.formState.validation.sync.value.some(([path, _error]) => path.length == 1 && path[0] == "interests") ?
+      {(props.context.showAllErrors || props.context.formState.commonFormState.modifiedByUser) && AsyncState.Operations.hasValue(props.context.formState.commonFormState.validation.sync) &&
+        props.context.formState.commonFormState.validation.sync.value.length > 0 &&
+        props.context.formState.commonFormState.validation.sync.value.some(([path, _error]) => path.length == 1 && path[0] == "interests") ?
         <table>
           <tr>
             <td>
               validation errors
             </td>
             <td>
-              {JSON.stringify(props.context.formState.validation.sync.value.filter(([path, _error]) => path.length == 1 && path[0] == "interests"))}
+              {JSON.stringify(props.context.formState.commonFormState.validation.sync.value.filter(([path, _error]) => path.length == 1 && path[0] == "interests"))}
             </td>
           </tr>
         </table>
@@ -130,19 +130,19 @@ export const PersonFieldViews = {
       <>
         {props.context.label && <h3>{props.context.label}</h3>}
         <button onClick={() => props.foreignMutations.toggleOpen()}>
-          {props.context.value.kind == "l" && props.context.value.value.displayName} {props.context.status == "open" ? "➖" : "➕"}
+          {props.context.value.kind == "l" && props.context.value.value.displayName} {props.context.customFormState.status == "open" ? "➖" : "➕"}
         </button>
         <button onClick={() => props.foreignMutations.clearSelection()
         }>❌</button>
         {
-          props.context.status == "closed" ? <></> :
+          props.context.customFormState.status == "closed" ? <></> :
             <>
-              <input value={props.context.searchText.value}
+              <input value={props.context.customFormState.searchText.value}
                 onChange={e => props.foreignMutations.setSearchText(e.currentTarget.value)}
               />
               <ul>
                 {
-                  props.context.stream.loadedElements.valueSeq().map(chunk =>
+                  props.context.customFormState.stream.loadedElements.valueSeq().map(chunk =>
                     chunk.data.valueSeq().map(element =>
                       <li>
                         <button onClick={() => props.foreignMutations.select(element)}>
@@ -166,15 +166,15 @@ export const PersonFieldViews = {
       <>
         {props.context.label && <h3>{props.context.label}</h3>}
         <button onClick={() => props.foreignMutations.toggleOpen()}>
-          {props.context.value.map(_ => _.displayName).join(", ")} {props.context.status == "open" ? "➖" : "➕"}
+          {props.context.value.map(_ => _.displayName).join(", ")} {props.context.customFormState.status == "open" ? "➖" : "➕"}
         </button>
         <button onClick={() => props.foreignMutations.clearSelection()}>
           ❌
         </button>
         {
-          props.context.status == "closed" ? <></> :
+          props.context.customFormState.status == "closed" ? <></> :
             <>
-              <input value={props.context.searchText.value}
+              <input value={props.context.customFormState.searchText.value}
                 onChange={e => props.foreignMutations.setSearchText(e.currentTarget.value)}
               />
               <ul>

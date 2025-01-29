@@ -1,6 +1,6 @@
 Todo (✅/❌)
   ❌ make validator partial
-  ❌ key-values: uniqueness constraint enforcement
+  ✅ key-values: uniqueness constraint enforcement
   ❌ show both data-sync and type-safe forms in FormsApp
   ✅ deprecate mapping in both config and code forms, they are not a good idea
 

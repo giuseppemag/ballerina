@@ -1,4 +1,4 @@
-import { CollectionReference, Sum, FormStateFromEntity, SearchableInfiniteStreamState, SharedFormState, Predicate, CollectionSelection } from "ballerina-core";
+import { CollectionReference, Sum, FormStateFromEntity, SearchableInfiniteStreamState, CommonFormState, Predicate, CollectionSelection, unit } from "ballerina-core";
 import { OrderedMap } from "immutable";
 import { PersonFormPredicateContext } from "../predicates";
 import { AddressApi } from "playground-core";
@@ -33,9 +33,11 @@ export type AddressFormState = FormStateFromEntity<Address, {
 }>;
 export const AddressFormState = {
   Default: (): AddressFormState => ({
-    ...SharedFormState.Default(),
-    street: SharedFormState.Default(),
-    number: SharedFormState.Default(),
-    city: ({ ...SearchableInfiniteStreamState<City>().Default("", AddressApi.getCities()), ...SharedFormState.Default() })
+    commonFormState: CommonFormState.Default(),
+    formFieldStates: {
+      street: { commonFormState: CommonFormState.Default(), customFormState: unit },
+      number: { commonFormState: CommonFormState.Default(), customFormState: unit },
+      city: { customFormState: SearchableInfiniteStreamState<City>().Default("", AddressApi.getCities()), commonFormState: CommonFormState.Default() }
+    }
   })
 };

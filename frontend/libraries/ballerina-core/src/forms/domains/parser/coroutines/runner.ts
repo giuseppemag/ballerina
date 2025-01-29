@@ -1,6 +1,6 @@
 import { AsyncState, builtInsFromFieldViews, FormsConfig, injectablesFromFieldViews, Sum, Synchronize, Unit } from "../../../../../main"
 import { CoTypedFactory } from "../../../../coroutines/builder"
-import { FormParsingResult, FormsParserContext, FormsParserState, parseForms, replaceKeywords } from "../state"
+import { FormParsingResult, FormsParserContext, FormsParserState, parseForms } from "../state"
 
 export const LoadValidateAndParseFormsConfig = <T extends {[key in keyof T] : {type: any, state: any}}>() => {
   const Co = CoTypedFactory<FormsParserContext<T>, FormsParserState>()
@@ -9,10 +9,9 @@ export const LoadValidateAndParseFormsConfig = <T extends {[key in keyof T] : {t
   Co.GetState().then(current => 
   Synchronize<Unit, FormParsingResult>(async() => {
     const rawFormsConfig = await current.getFormsConfig();
-    const formsConfig = replaceKeywords(rawFormsConfig, "from api")
     const builtIns = builtInsFromFieldViews(current.fieldViews)
     const injectedPrimitives = current.injectedPrimitives ? injectablesFromFieldViews(current.fieldViews, current.injectedPrimitives) : undefined
-    const validationResult = FormsConfig.Default.validateAndParseFormConfig(builtIns, current.fieldTypeConverters, injectedPrimitives)(formsConfig)
+    const validationResult = FormsConfig.Default.validateAndParseFormConfig(builtIns, current.fieldTypeConverters, injectedPrimitives)(rawFormsConfig)
     if (validationResult.kind == "errors")
       return Sum.Default.right(validationResult.errors)
     return parseForms(

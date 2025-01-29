@@ -13,40 +13,35 @@ export const FormRunnerErrorsTemplate = (parsedFormsConfig: FormParsingResult) =
   // form: Template.Default<FormRunnerContext & FormRunnerState, FormRunnerState, FormRunnerForeignMutationsExpected>(props =>
   //   props.context.showFormParsingErrors(parsedFormsConfig)
   // ),
-  formState: unit,
+  formFieldStates: unit,
+  entity: unit,
+  commonFormState: unit,
+  customFormState: unit,
 })
 
 export const FormRunnerTemplate =
   Template.Default<FormRunnerContext & FormRunnerState, FormRunnerState, FormRunnerForeignMutationsExpected>(props => {
     if (props.context.form.kind == "r") return <></>
-    // console.log("props.context.form.value.formState", props.context)
     return <>
         <props.context.form.value.form
           context={{
-            ...props.context.form.value.formState,
             entityId: props.context.formRef.kind == "edit" ? props.context.formRef.entityId : undefined,
-            value: undefined,
-            formState: props.context.form.value.formState.formState,
+            entity: props.context.form.value.entity,
+            formFieldStates: props.context.form.value.formFieldStates,
+            commonFormState: props.context.form.value.commonFormState,
+            customFormState: props.context.form.value.customFormState,
             extraContext: {
               ...props.context.extraContext,
               rootValue:
-                  props.context.form.value.formState?.entity.sync?.value,
+                  props.context.form.value?.entity.sync?.value,
             },
             submitButtonWrapper: (props.context.formRef.kind == "create" || props.context.formRef.kind == "edit" )  ? props.context.formRef.submitButtonWrapper : undefined
           }}
           setState={(_: BasicUpdater<any>) => props.setState(
-            FormRunnerState.Updaters.form(
-              Sum.Updaters.left(
-                current => ({ ...current, formState: _(current.formState) })
-              )
-            )
+            FormRunnerState.Updaters.form(Sum.Updaters.left(_))
           )}
           view={unit}
           foreignMutations={{
-            onChange: (_: BasicUpdater<any>, _path: List<string>) => {
-              if (props.context.formRef.kind == "map")
-                props.context.formRef.onChange(_, _path)
-            },
             apiHandlers: {
               onDefaultSuccess: (_: any) => {
                 if (

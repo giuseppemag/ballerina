@@ -1,5 +1,5 @@
 import { Set, Map, OrderedMap, List } from "immutable";
-import { ApiConverters, BoolExpr, BuiltIns, FieldName, FormsConfigMerger, InjectedPrimitives, revertKeyword, Sum, Type, TypeDefinition, TypeName, unit, Value } from "../../../../../../main";
+import { ApiConverters, BoolExpr, BuiltIns, FieldName, FormsConfigMerger, InjectedPrimitives, Type, TypeDefinition, TypeName } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 
 export type FieldConfig = {
@@ -416,11 +416,11 @@ export const FormsConfig = {
           }
           if (fieldTypeDef?.kind == "lookup") {
             if (!forms.has(fieldConfig.renderer))
-              errors = errors.push(`field ${revertKeyword(fieldName)} of form ${formName} references non-existing form ${fieldConfig["renderer"]}`);
+              errors = errors.push(`field ${(fieldName)} of form ${formName} references non-existing form ${fieldConfig["renderer"]}`);
             else {
               const otherForm = forms.get(fieldConfig.renderer)!
               if (otherForm.type != fieldTypeDef.name)
-                errors = errors.push(`field ${revertKeyword(fieldName)} of form ${formName} references form ${fieldConfig["renderer"]}, which has type ${otherForm.type} whereas ${fieldTypeDef.name} was expected`);
+                errors = errors.push(`field ${(fieldName)} of form ${formName} references form ${fieldConfig["renderer"]}, which has type ${otherForm.type} whereas ${fieldTypeDef.name} was expected`);
             }
           }
           // TODO: remove these warnings and object check when we remove the deprecated elementLabel and elementTooltip fields

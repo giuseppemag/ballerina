@@ -6,7 +6,7 @@ import { Range } from "immutable"
 
 
 export const AddressApi = {
-  getCities: (): SearchableInfiniteStreamState<City>["getChunk"] => (_searchText) => (_streamPosition) => PromiseRepo.Default.mock(
+  getCities: (): SearchableInfiniteStreamState<City>["customFormState"]["getChunk"] => (_searchText) => (_streamPosition) => PromiseRepo.Default.mock(
     () => ({
       data: OrderedMapRepo.Default.fromSmallIdentifiables(
         Range(0, 20).map(_ => City.Default(v4(), _searchText + faker.location.city())).toArray()

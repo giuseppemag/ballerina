@@ -4,19 +4,19 @@ import { BasicFun } from "../../../../../fun/state";
 import { Template, View } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
-import { OnChange, SharedFormState } from "../../../singleton/state";
+import { OnChange, CommonFormState } from "../../../singleton/state";
 
 
 export type ListFieldState<Element, ElementFormState> =
-  SharedFormState &
   {
+    commonFormState: CommonFormState,
     elementFormStates: Map<number, ElementFormState>
   };
 export const ListFieldState = <Element, ElementFormState>() => ({
   Default: (
     elementFormStates: Map<number, ElementFormState>,
   ): ListFieldState<Element, ElementFormState> => ({
-    ...SharedFormState.Default(),
+    commonFormState: CommonFormState.Default(),
     elementFormStates
   }),
   Updaters: {

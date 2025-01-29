@@ -21,6 +21,7 @@ export const FormRunnerLoader = () => {
                 )
               )
             )
+            
           const formRef = current.formRef
           if (formRef.kind == "create") {
             const createForm = current.formsConfig.sync.value.value.create.get(formRef.formName)
@@ -37,7 +38,10 @@ export const FormRunnerLoader = () => {
                 replaceWith(
                   Sum.Default.left({
                     form: instantiatedForm.form,
-                    formState: instantiatedForm.initialState,
+                    formFieldStates: instantiatedForm.initialState.formFieldStates,
+                    entity: instantiatedForm.initialState.entity,
+                    commonFormState: instantiatedForm.initialState.commonFormState,
+                    customFormState: instantiatedForm.initialState.customFormState,
                   })
                 )
               )  
@@ -56,7 +60,10 @@ export const FormRunnerLoader = () => {
                 replaceWith(
                   Sum.Default.left({
                     form: instantiatedForm.form,
-                    formState: instantiatedForm.initialState,
+                    formFieldStates: instantiatedForm.initialState.formFieldStates,
+                    entity: instantiatedForm.initialState.entity,
+                    commonFormState: instantiatedForm.initialState.commonFormState,
+                    customFormState: instantiatedForm.initialState.customFormState
                   })
                 )
               )
