@@ -38,20 +38,12 @@ Todo (✅/❌)
           ✅ gather all definition types
           ✅ check that they are all a subset of the definitions
           ✅ produce a clear error message with the missing type names
-      ❌ somewhat painful but
-        ❌ `string -> T` is built up while parsing
-        ❌ `TId -> T` is the parsed context
-      ❌ convert all instances of Map.tryFind ... withError ... to `Map.tryFindWithError`
       ✅ convert the exiting type-checker to `Sum` through `withError`
       ✅ type-check the form instances field lookups 
         ✅ with the map of types by type-id as bindings context in addition to the schema
         ✅ `byStructure: FieldRenderer -> ExprType`
         ✅ `byFieldName : FieldConfig -> ExprType`
         ✅ `Unify : ExprType * ExprType -> Sum<Set<VarBindings>, Errors>`
-        ❌ type-check the form instances' `visible` and `disabled` predicates
-          ❌ inject `root` variable at form instantiation, not at form definition 
-          ❌ `local` variable can be injected any time, also at form definition
-          ❌ `flag` variable comes from the command line
       ✅ type-check the launchers
         ✅ form type and launcher type are the same
         ✅ the methods are correct
@@ -60,24 +52,58 @@ Todo (✅/❌)
         ✅ enums
         ✅ visitor-wrapper for type-safe API selectors
       ❌ from the schema and the forms, generate Go code for
-        ❌ one struct per type
-          ❌ generate proper type names
-          ❌ why are the record fields not lookups to other record fields?!?
-        ❌ one enum with all enum types
-        ❌ one enum with all stream types
-        ❌ one enum with all entity types
-        ❌ one visitor-style generic dispatcher
-        ❌ injected types need a source package
-        ❌ package imports only if the relevant types (date/uuid) are used, or use them in a forced way to make the errors disappear
-        ❌ one file per struct
+        ✅ one struct per type
+          ✅ generate proper type names
+          ✅ single selections should be `Option`
+          ✅ generate constructor arguments
+          ✅ generate constructor assignments
+        ✅ one enum with all enum types
+        ✅ one enum with all stream types
+        ✅ one enum with all entity types
+        ✅ one visitor-style generic dispatcher for enums, streams, and entities (APIs)
+          ✅ entities enum: per CRUD method
+          ✅ entities visitor: per CRUD method
+          ✅ the streams visitor needs an injected, or a generic, payload object
+          ✅ error, not panic
+        ✅ `CollectionReference` should not be a built-in, just add it to the declarations of the forms
+          ✅ adjust the sample
+        ✅ use https://pkg.go.dev/time for datetime
+        ✅ use https://pkg.go.dev/github.com/google/uuid for uuid
+        ✅ which packages are imported is a parameter
+        ✅ allow injection of primitives, but only for things like `filterGroup`
+        ❌ make all types serializable with https://pkg.go.dev/encoding/json
+          ✅ make all fields public
+          ❌ test filled maps, sets, options
+        ✅ package imports only if the relevant types (date/uuid) are used, or use them in a forced way to make the errors disappear
       ✅ define library with common utilities
-      ❌ parse the JSON into the representation types
-        ❌ use topological sort
-      ❌ parse the JSON into the representation APIs
+      ✅ `All` requires a non-empty list and a semigroup, not a monoid
+      ✅ parse the JSON into the representation types
+        ✅ fill the types Map
+          ✅ add fields to each type
+          ✅ apply type extensions
+      ✅ parse the JSON into the representation APIs
+        ✅ parse enums
+        ✅ parse streams
+        ✅ parse entities
+      ❌ connect command line parameters to right invocations
+        ❌ the injected types
+        ❌ output of code generation
+        ❌ package of the output code
+        ❌ imported packages
+      ❌ `dotnet publish` as standalone executable
+      ❌ adjust person-config in FE and use that from cmd line, delete the copy
+      ❌ first go-live
       ❌ parse the JSON into the representation forms
         ❌ use topological sort
-      ❌ package as standalone executable
-      ❌ first go live
+        ❌ parse fields
+        ❌ parse visibility and disabled predicates
+          ❌ type-check the form instances' `visible` and `disabled` predicates
+            ❌ inject `root` variable at form instantiation, not at form definition 
+            ❌ `local` variable can be injected any time, also at form definition
+            ❌ `flag` values comes from the command line
+      ❌ connect command line parameters to right invocations
+        ❌ the primitive types' renderers
+        ❌ delete the sample parsed form
       ❌ move the new type parsers to ballerina-core
         ❌ break the form engine in all possible ways
         ❌ launchers
@@ -89,18 +115,23 @@ Todo (✅/❌)
         ❌ move relevant sources to a separate folder in ballerina-core (forms engine)
           ❌ move the new types (`Errors`, `Form`, etc.) to ballerina-core
           ❌ move the new type checkers to ballerina-core
-    ❌ connect command line parameters to right invocations, leave nothing but the command parser in `Program.fs`
-      ❌ the primitive types' renderers
-      ❌ the injected types
-      ❌ output of code generation
-      ❌ package of the output code
-      ❌ std lib
+    ❌ check the consistency of the used data structures: `Type` vs `TypeId`
+    ❌ somewhat painful but
+      ❌ `string -> T` is built up while parsing
+      ❌ `TId -> T` is the parsed context
+    ❌ convert all instances of Map.tryFind ... withError ... to `Map.tryFindWithError`
     ❌ pretty print types in errors
     ❌ add source context to errors for pretty printing
       ❌ probably needs the state monad with an error decorator accumulated from the parent
     ❌ add tests
+    ❌ make ExprType.resolveLookup recursive
+    ❌ help command
     ❌ define webservice variant
     ❌ generate Typescript and C# code from forms-config
+    ❌ define `import` command, generate with some sort of linking strategy for shared files
+    ❌ allow recursive types (needs adjustment in frontend too)
+      ❌ be careful with out-of-order extensions
+    ❌ allow union types (needs adjustment in frontend too)
   ✅ models
     ✅ users
     ✅ registration-tokens

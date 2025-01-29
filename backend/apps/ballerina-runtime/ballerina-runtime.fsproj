@@ -4,6 +4,8 @@
     <TargetFramework>net9.0</TargetFramework>
     <RootNamespace>ballerina_runtime</RootNamespace>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <RuntimeIdentifiers>osx-arm64;linux-x64;osx-x64;linux-arm64</RuntimeIdentifiers>
+    <PublishSingleFile>true</PublishSingleFile>
   </PropertyGroup>
 
   <ItemGroup>
