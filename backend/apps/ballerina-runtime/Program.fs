@@ -270,7 +270,7 @@ type String with
   static member ToFirstUpper (self:String) = self.ToFirstUpper
 
 type ParsedFormsContext with
-  static member ToGolang (ctx:ParsedFormsContext) (imports:List<string>) (packageName:string) : Sum<StringBuilder,Errors> = 
+  static member ToGolang (ctx:ParsedFormsContext) (imports:List<string>) (packageName:string) (formName:string) : Sum<StringBuilder,Errors> = 
     let heading = StringBuilder.One $$"""package {{packageName}}
 
 import (
@@ -290,24 +290,24 @@ var _4 date.Date
     sum{
       let enumsEnum = 
         seq{
-          yield One(sprintf "type EnumType int\n")
+          yield One(sprintf "type %sEnumType int\n" formName)
           yield One("const (\n")
           yield! ctx.Apis.Enums |> Map.values |> Seq.mapi(fun i e -> 
-            One(sprintf "  %sType%s\n" e.EnumName (if i = 0 then " EnumType = iota" else ""))
+            One(sprintf "  %s%sType%s\n" e.EnumName.ToFirstUpper formName (if i = 0 then ($" {formName}EnumType = iota") else ""))
           )
           yield One(")\n")
         }
 
       let enumSelector = 
         seq{
-          yield One "func EnumSelector[c any](enumName EnumType, "
+          yield One $"func {formName}EnumSelector[c any](enumName string, "
           yield! ctx.Apis.Enums |> Map.values |> Seq.map(fun e -> 
             One(sprintf "get%s func() c, " e.EnumName)
           )
           yield One ") (c,error) {\n"
           yield One "  switch enumName {\n"
           yield! ctx.Apis.Enums |> Map.values |> Seq.map(fun e -> 
-            One(sprintf "  case %sType: return get%s(), nil\n" e.EnumName e.EnumName)
+            One(sprintf "  case \"%s%sType\": return get%s(), nil\n" e.EnumName.ToFirstUpper formName e.EnumName)
           )
           yield One "  }\n"
           yield One "  var result c\n"
@@ -317,24 +317,24 @@ var _4 date.Date
 
       let streamsEnum = 
         seq{
-          yield One(sprintf "type StreamType int\n")
+          yield One(sprintf "type %sStreamType int\n" formName)
           yield One("const (\n")
-          yield! ctx.Apis.Streams |> Map.values |> Seq.map(fun e -> 
-            One(sprintf "  %sType StreamType = iota\n" e.StreamName)
+          yield! ctx.Apis.Streams |> Map.values |> Seq.mapi(fun i e -> 
+            One(sprintf "  %s%sType%s\n" e.StreamName.ToFirstUpper formName (if i = 0 then ($" {formName}StreamType = iota") else ""))
           )
           yield One(")\n")
         }
 
       let streamSelector = 
         seq{
-          yield One "func StreamSelector[searchParams any, c any](streamName StreamType, searchArgs searchParams, "
+          yield One $"func {formName}StreamSelector[searchParams any, c any](streamName string, searchArgs searchParams, "
           yield! ctx.Apis.Streams |> Map.values |> Seq.map(fun e -> 
             One(sprintf "get%s func(searchParams) c, " e.StreamName)
           )
           yield One ") (c,error) {\n"
           yield One "  switch streamName {\n"
           yield! ctx.Apis.Streams |> Map.values |> Seq.map(fun e -> 
-            One(sprintf "  case %sType: return get%s(searchArgs),nil\n" e.StreamName e.StreamName)
+            One(sprintf "  case \"%s%sType\": return get%s(searchArgs),nil\n" e.StreamName.ToFirstUpper formName e.StreamName)
           )
           yield One "  }\n"
           yield One "  var result c\n"
@@ -344,18 +344,18 @@ var _4 date.Date
 
       let entitiesOPEnum opName op = 
         seq{
-          yield One(sprintf "type Entity%sType int" opName)
+          yield One(sprintf "type %sEntity%sType int" formName opName)
           yield One("\nconst (\n")
           let oppableEntities = ctx.Apis.Entities |> Map.values |> Seq.filter (snd >> (Set.contains op)) |> Seq.map fst
-          yield! oppableEntities |> Seq.map (fun e -> 
-            One(sprintf "  %s%sType Entity%sType = iota\n" e.EntityName opName opName)
+          yield! oppableEntities |> Seq.mapi (fun i e -> 
+            One(sprintf "  %s%s%sType%s\n" e.EntityName.ToFirstUpper formName opName (if i = 0 then ($" {formName}Entity{opName}Type = iota") else ""))
           )
           yield One(")\n\n")
         }
 
       let entitiesOPSelector opName op = 
         seq{
-          yield One $$"""func Entity{{opName}}Selector[searchParams any, c any](entityName Entity{{opName}}Type, searchArgs searchParams, """
+          yield One $$"""func {{formName}}Entity{{opName}}Selector[searchParams any, c any](entityName string, searchArgs searchParams, """
           let oppableEntities = ctx.Apis.Entities |> Map.values |> Seq.filter (snd >> (Set.contains op)) |> Seq.map fst
           yield! oppableEntities |> Seq.map (fun e -> 
             One(sprintf "get%s func(searchParams) c, " e.EntityName)
@@ -363,7 +363,7 @@ var _4 date.Date
           yield One ") (c,error) {\n"
           yield One "  switch entityName {\n"
           yield! oppableEntities |> Seq.map(fun e -> 
-            One(sprintf "  case %s%sType: return get%s(searchArgs),nil\n" e.EntityName opName e.EntityName)
+            One(sprintf "  case \"%s%s%sType\": return get%s(searchArgs),nil\n" e.EntityName.ToFirstUpper formName opName e.EntityName)
           )
           yield One "  }\n"
           yield One "  var result c\n"
@@ -1216,6 +1216,14 @@ let formsOptions = {|
     (new Option<string>(
       "-output",
       "Relative path of the generated source file(s). Will be created if it does not exist.", IsRequired=true))
+  package_name = 
+    (new Option<string>(
+      "-package_name",
+      "Name of the generated package.", IsRequired=true))
+  form_name = 
+    (new Option<string>(
+      "-form_name",
+      "Name of the form, prefixed to disambiguate generated symbols.", IsRequired=true))
 |}
 
 [<EntryPoint>]
@@ -1227,22 +1235,24 @@ let main args =
   formsCommand.AddOption(formsOptions.language)
   formsCommand.AddOption(formsOptions.input)
   formsCommand.AddOption(formsOptions.output)
+  formsCommand.AddOption(formsOptions.package_name)
+  formsCommand.AddOption(formsOptions.form_name)
 
   // dotnet run -- forms -input person-config.json -validate -codegen ts
-  formsCommand.SetHandler(Action<_,_,_,_>(fun (validate:bool) (language:FormsGenTarget) (inputPath:string) (outputPath:string) ->
+  formsCommand.SetHandler(Action<_,_,_,_,_,_>(fun (validate:bool) (language:FormsGenTarget) (inputPath:string) (outputPath:string) (generatedPackage:string) (formName:string) ->
     if File.Exists inputPath |> not then
       eprintfn "Fatal error: the input file %A does not exist" inputPath
       System.Environment.Exit -1
     let inputConfig = File.ReadAllText inputPath
     let jsonValue = JsonValue.Parse inputConfig
     // samplePrimitiveRenderers
-    let injectedTypes = sampleInjectedTypes |> Seq.map (fun injectedTypeName -> injectedTypeName.TypeName, (injectedTypeName, ExprType.RecordType Map.empty) |> TypeBinding.Create) |> Map.ofSeq
+    let injectedTypes = [] |> Seq.map (fun injectedTypeName -> injectedTypeName.TypeName, (injectedTypeName, ExprType.RecordType Map.empty) |> TypeBinding.Create) |> Map.ofSeq
     let initialContext = { ParsedFormsContext.Empty with Types=injectedTypes }
     match ((ParsedFormsContext.parse jsonValue).run((), initialContext)) with
     | Left(_,Some parsedForms)  -> 
       match ParsedFormsContext.Validate parsedForms with
       | Left validatedForms ->
-        match ParsedFormsContext.ToGolang parsedForms [] "person_form" with
+        match ParsedFormsContext.ToGolang parsedForms [] generatedPackage formName with
         | Left generatedCode -> 
           // do Console.ReadLine() |> ignore
           do printfn "forms are parsed and validated"
@@ -1262,6 +1272,13 @@ let main args =
       do printfn "Parsing errors: %A" err
     | _ -> 
       do printfn "Error: no output when parsing."
-    ), formsOptions.mode, formsOptions.language, formsOptions.input, formsOptions.output)
+    ), formsOptions.mode, formsOptions.language, formsOptions.input, formsOptions.output, formsOptions.package_name, formsOptions.form_name)
 
   rootCommand.Invoke(args)
+
+(*
+forms -input ./input-forms/email-provider-selection.json -output ./generated-output/models/email-provider-selection.gen.go -validate -codegen golang -package_name email_provider_selection -form_name EmailProviderSelection
+forms -input ./input-forms/go-live-date.json -output ./generated-output/models/go-live-date.gen.go -validate -codegen golang -package_name go_live_date  -form_name GoLiveDate
+forms -input ./input-forms/quality-check-mm-invoice.json -output ./generated-output/models/quality-check-mm-invoice.gen.go -validate -codegen golang -package_name quality_check_mm_invoice -form_name QualityCheckMMInvoice
+forms -input ./input-forms/users-blp.json -output ./generated-output/models/users-blp.gen.go -validate -codegen golang -package_name users_blp -form_name UsersBlp
+*)

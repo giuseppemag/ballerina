@@ -86,13 +86,19 @@ Todo (✅/❌)
         ✅ parse streams
         ✅ parse entities
       ❌ connect command line parameters to right invocations
+        ✅ output of code generation
+        ✅ package of the output code
         ❌ the injected types
-        ❌ output of code generation
-        ❌ package of the output code
+          ❌ remove 'injectedCategory'
         ❌ imported packages
+        ❌ package_name as a parameter
+        ❌ form-name as a prefix parameter in all stream names, enum names, entity names
       ❌ `dotnet publish` as standalone executable
       ❌ adjust person-config in FE and use that from cmd line, delete the copy
       ❌ first go-live
+      ❌ specify enums as enums
+      ❌ generate output names from input names
+      ❌ accept *.json as input name
       ❌ parse the JSON into the representation forms
         ❌ use topological sort
         ❌ parse fields
