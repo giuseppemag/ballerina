@@ -40,12 +40,15 @@ export const EditFormTemplate = <E, FS>() : EditFormTemplate<E,FS> =>
             props.context.actualForm({
               context: {
                 value: props.context.entity.sync.value,
-                ...props.context.formState,
+                formFieldStates: props.context.formFieldStates,
+                commonFormState: props.context.commonFormState,
               },
               setState: _ => {
-                props.setState(
-                  EditFormState<E, FS>().Updaters.Core.formState(_)
-                )
+                props.setState(__ => ({
+                  ...__,
+                  formFieldStates: _(__).formFieldStates,
+                  commonFormState: _(__).commonFormState
+                }))
               },
               foreignMutations: {
                 onChange: (e) => {

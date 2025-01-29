@@ -1,19 +1,19 @@
-import { SharedFormState, AsyncState, FormLabel, BooleanView, NumberView, StringView, DateView, CollectionReference, EnumView, EnumMultiselectView, SearchableInfiniteStreamView, InfiniteStreamMultiselectView, BaseEnumContext, MaybeBooleanView, ListFieldView, unit, MapFieldView, Base64FileView, SecretView } from "ballerina-core";
+import { CommonFormState, AsyncState, FormLabel, BooleanView, NumberView, StringView, DateView, CollectionReference, EnumView, EnumMultiselectView, SearchableInfiniteStreamView, InfiniteStreamMultiselectView, BaseEnumContext, MaybeBooleanView, ListFieldView, unit, MapFieldView, Base64FileView, SecretView } from "ballerina-core";
 import { Category, CategoryView } from "../injected-forms/category";
 
-export const MostUglyValidationDebugView = (props: { context: SharedFormState }) =>
-  props.context.modifiedByUser && props.context.validation.sync && AsyncState.Operations.isLoading(props.context.validation.sync) ?
+export const MostUglyValidationDebugView = (props: { context: {commonFormState: CommonFormState} }) =>
+  props.context.commonFormState.modifiedByUser && props.context.commonFormState.validation.sync && AsyncState.Operations.isLoading(props.context.commonFormState.validation.sync) ?
     <>🔄</>
     :
-    (props.context.modifiedByUser) &&  props.context.validation.sync && AsyncState.Operations.hasValue(props.context.validation.sync) &&
-      props.context.validation.sync.value.length > 0 ?
+    (props.context.commonFormState.modifiedByUser) &&  props.context.commonFormState.validation.sync && AsyncState.Operations.hasValue(props.context.commonFormState.validation.sync) &&
+      props.context.commonFormState.validation.sync.value.length > 0 ?
       <table>
         <tr>
           <td>
             validation errors
           </td>
           <td>
-            {JSON.stringify(props.context.validation.sync.value)}
+            {JSON.stringify(props.context.commonFormState.validation.sync.value)}
           </td>
         </tr>
       </table>
@@ -89,7 +89,7 @@ export const PersonFieldViews = {
         <>
           {props.context.label && <h3>{props.context.label}</h3>}
           {props.context.tooltip && <p>{props.context.tooltip}</p>}
-          <input disabled={props.context.disabled} value={props.context.possiblyInvalidInput}
+          <input disabled={props.context.disabled} value={props.context.customFormState.possiblyInvalidInput}
             onChange={e => props.foreignMutations.setNewValue(e.currentTarget.value)
             } />
           <MostUglyValidationDebugView {...props} />
@@ -98,10 +98,11 @@ export const PersonFieldViews = {
   enumSingleSelection: {
     defaultEnum: <Context extends FormLabel & BaseEnumContext<Context, Element>, Element extends CollectionReference, ForeignMutationsExpected>():
     EnumView<Context, Element, ForeignMutationsExpected> =>
-      props => <>
-        {props.context.label && <h3>{props.context.label}</h3>}
-        {props.context.activeOptions == "loading" ?
-          "loading options" :
+      props => {
+        return <>
+          {props.context.label && <h3>{props.context.label}</h3>}
+          {props.context.activeOptions == "loading" ?
+            "loading options" :
           <select value={props.context.value.kind == "l" ? props.context.value.value.id : undefined}
             onChange={e => props.foreignMutations.setNewValue(e.currentTarget.value)}>
             <>
@@ -115,7 +116,7 @@ export const PersonFieldViews = {
           </select>
         }
         <MostUglyValidationDebugView {...props} />
-      </>,
+      </>},
   },
   enumMultiSelection: {
     defaultEnumMultiselect: <Context extends FormLabel & BaseEnumContext<Context, Element>, Element extends CollectionReference, ForeignMutationsExpected>():
@@ -147,19 +148,19 @@ export const PersonFieldViews = {
           {props.context.label && <h3>{props.context.label}</h3>}
           {props.context.tooltip && <p>{props.context.tooltip}</p>}
           <button disabled={props.context.disabled} onClick={() => props.foreignMutations.toggleOpen()}>
-            {props.context.value.kind == "l" && props.context.value.value.displayName} {props.context.status == "open" ? "➖" : "➕"}
+            {props.context.value.kind == "l" && props.context.value.value.displayName} {props.context.customFormState.status == "open" ? "➖" : "➕"}
           </button>
           <button disabled={props.context.disabled} onClick={() => props.foreignMutations.clearSelection()
           }>❌</button>
           {
-            props.context.status == "closed" ? <></> :
+            props.context.customFormState.status == "closed" ? <></> :
               <>
-                <input disabled={props.context.disabled} value={props.context.searchText.value}
+                <input disabled={props.context.disabled} value={props.context.customFormState.searchText.value}
                   onChange={e => props.foreignMutations.setSearchText(e.currentTarget.value)}
                 />
                 <ul>
                   {
-                    props.context.stream.loadedElements.valueSeq().map(chunk =>
+                    props.context.customFormState.stream.loadedElements.valueSeq().map(chunk =>
                       chunk.data.valueSeq().map(element =>
                         <li>
                           <button disabled={props.context.disabled} onClick={() => props.foreignMutations.select(element)}>
@@ -185,15 +186,15 @@ export const PersonFieldViews = {
         <>
           {props.context.label && <h3>{props.context.label}</h3>}
           <button disabled={props.context.disabled} onClick={() => props.foreignMutations.toggleOpen()}>
-            {props.context.value.map(_ => _.displayName).join(", ")} {props.context.status == "open" ? "➖" : "➕"}
+            {props.context.value.map(_ => _.displayName).join(", ")} {props.context.customFormState.status == "open" ? "➖" : "➕"}
           </button>
           <button disabled={props.context.disabled} onClick={() => props.foreignMutations.clearSelection()}>
             ❌
           </button>
           {
-            props.context.status == "closed" ? <></> :
+            props.context.customFormState.status == "closed" ? <></> :
               <>
-                <input disabled={props.context.disabled} value={props.context.searchText.value}
+                <input disabled={props.context.disabled} value={props.context.customFormState.searchText.value}
                   onChange={e => props.foreignMutations.setSearchText(e.currentTarget.value)}
                 />
                 <ul>

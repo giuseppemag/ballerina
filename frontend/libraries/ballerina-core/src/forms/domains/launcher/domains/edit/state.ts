@@ -1,4 +1,4 @@
-import { ApiResponseChecker, AsyncState, BasicUpdater, Debounced, ForeignMutationsInput, Guid, id, SimpleCallback, simpleUpdater, Synchronized, Template, unit, Unit, Updater, Value } from "../../../../../../main"
+import { ApiResponseChecker, AsyncState, BasicUpdater, CommonFormState, Debounced, ForeignMutationsInput, Guid, id, SimpleCallback, simpleUpdater, simpleUpdaterWithChildren, Sum, Synchronized, Template, unit, Unit, Updater, Value } from "../../../../../../main"
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state"
 import { BasicFun } from "../../../../../fun/state"
 
@@ -10,36 +10,45 @@ export type EditFormContext<E,FS> = {
     get:(id: Guid) => Promise<E>,
     update:(id: Guid, raw: any) => Promise<ApiErrors>
   },
-  parser: (entity:E, formstate: FS) => ValueOrErrors<E, ApiErrors>
-  actualForm:Template<Value<E> & FS, FS, { onChange:SimpleCallback<BasicUpdater<E>>}>
+  parser: (entity:E, formstate: EditFormState<E,FS>) => ValueOrErrors<E, ApiErrors>
+  actualForm:Template<Value<E> & {formFieldStates:FS} & { commonFormState: CommonFormState }, {formFieldStates: FS} & { commonFormState: CommonFormState }, { onChange:SimpleCallback<BasicUpdater<E>> }>
 }
 
 export type EditFormState<E,FS> = {
-  // first sync is GET (returns E), second is UPDATE (accepts E)
-  entity:Synchronized<Unit, E>
-  apiRunner:Debounced<Synchronized<Unit,ApiErrors>>
-  formState:FS,
-  initApiChecker: ApiResponseChecker,
-  updateApiChecker: ApiResponseChecker,
-};
+  entity: Synchronized<Unit, E>
+  formFieldStates: FS,
+  commonFormState: CommonFormState,
+  customFormState: {
+    initApiChecker: ApiResponseChecker,
+    updateApiChecker: ApiResponseChecker,
+    apiRunner: Debounced<Synchronized<Unit, ApiErrors>>
+  }
+}
 
 export const EditFormState = <E,FS>() => ({
-  Default:(initialFormState:FS) : EditFormState<E,FS> => ({
+  Default:(formFieldStates:FS,
+    commonFormState: CommonFormState,
+    customFormState: {
+      initApiChecker: ApiResponseChecker,
+      updateApiChecker: ApiResponseChecker,
+      apiRunner: Debounced<Synchronized<Unit, ApiErrors>>
+    }
+  ) : EditFormState<E,FS> => ({
     entity:Synchronized.Default(unit),
-    apiRunner:Debounced.Default(
-      Synchronized.Default(unit)
-    ),
-    formState:initialFormState,
-    initApiChecker:ApiResponseChecker.Default(true),
-    updateApiChecker:ApiResponseChecker.Default(true),
+    formFieldStates,
+    commonFormState,
+    customFormState
   }),
   Updaters:{
     Core:{
       ...simpleUpdater<EditFormState<E,FS>>()("entity"),
-      ...simpleUpdater<EditFormState<E,FS>>()("apiRunner"),
-      ...simpleUpdater<EditFormState<E,FS>>()("formState"),
-      ...simpleUpdater<EditFormState<E,FS>>()("initApiChecker"),
-      ...simpleUpdater<EditFormState<E,FS>>()("updateApiChecker"),
+      ...simpleUpdater<EditFormState<E,FS>>()("formFieldStates"),
+      ...simpleUpdaterWithChildren<EditFormState<E,FS>>()({
+          ...simpleUpdater<EditFormState<E,FS>["customFormState"]>()("initApiChecker"),
+          ...simpleUpdater<EditFormState<E,FS>["customFormState"]>()("updateApiChecker"),
+          ...simpleUpdater<EditFormState<E,FS>["customFormState"]>()("apiRunner"),
+      })("customFormState"),
+      ...simpleUpdater<EditFormState<E,FS>>()("commonFormState"),
     },
     Template:{
       entity:(_:BasicUpdater<E>) : Updater<EditFormState<E,FS>> =>
@@ -51,7 +60,7 @@ export const EditFormState = <E,FS>() => ({
             )
           ),
       submit: () : Updater<EditFormState<E,FS>> =>
-        EditFormState<E,FS>().Updaters.Core.apiRunner(
+        EditFormState<E,FS>().Updaters.Core.customFormState.children.apiRunner(
           Debounced.Updaters.Template.value(
             Synchronized.Updaters.sync(
               AsyncState.Operations.map(

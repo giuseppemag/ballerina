@@ -7,7 +7,6 @@ import {
   EditFormForeignMutationsExpected,
   EditFormState,
   HandleApiResponse,
-  replaceWith,
   Synchronize,
   Synchronized,
   Unit,
@@ -24,50 +23,46 @@ export const editFormRunner = <E, FS>() => {
   const init = Co.GetState().then((current) =>
     Co.Seq([
       Co.SetState(
-        EditFormState<E, FS>().Updaters.Core.initApiChecker(ApiResponseChecker.Updaters().toUnchecked())
+        EditFormState<E, FS>().Updaters.Core.customFormState.children.initApiChecker(ApiResponseChecker.Updaters().toUnchecked())
       ),
-    Synchronize<Unit, E>(
-      () => current.api.get(current.entityId),
-      (_) => "transient failure",
-      5,
-      50
-    ).embed((_) => _.entity, EditFormState<E, FS>().Updaters.Core.entity),
+      Synchronize<Unit, E>(
+        () => current.api.get(current.entityId),
+        (_) => "transient failure",
+        5,
+        50
+      ).embed((_) => _.entity, EditFormState<E, FS>().Updaters.Core.entity),
       HandleApiResponse<
       EditFormWritableState<E, FS>,
       EditFormContext<E, FS>,
       E
-    >((_) => _.entity.sync , {
-      handleSuccess: current.apiHandlers?.onGetSuccess,
-      handleError: current.apiHandlers?.onGetError,
-    }),
-    Co.SetState(
-      EditFormState<E, FS>().Updaters.Core.initApiChecker(ApiResponseChecker.Updaters().toChecked())
-    ),
-  ])
+      >((_) => _.entity.sync , {
+        handleSuccess: current.apiHandlers?.onGetSuccess,
+        handleError: current.apiHandlers?.onGetError,
+      }),
+      Co.SetState(
+        EditFormState<E, FS>().Updaters.Core.customFormState.children.initApiChecker(ApiResponseChecker.Updaters().toChecked())
+      ),
+    ])
   )
 
   const synchronize = Co.Repeat(
     Co.GetState().then((current) =>
       Co.Seq([
-        Co.SetState(
-          EditFormState<E, FS>().Updaters.Core.updateApiChecker(ApiResponseChecker.Updaters().toUnchecked())
-        ),
+        Co.SetState(EditFormState<E, FS>().Updaters.Core.customFormState.children.updateApiChecker(ApiResponseChecker.Updaters().toUnchecked())),
         Debounce<Synchronized<Unit, ApiErrors>, EditFormWritableState<E, FS>>(
           (() => {
-            if(current.entity.sync.kind != "loaded") return Synchronize<Unit, ApiErrors, EditFormWritableState<E, FS>>(
-              (_) => Promise.resolve([]),
-              (_) => "transient failure",
-              5,
-              50
-            )
-            const parsed = current.parser(current.entity.sync.value,  current.formState)
+            if(current.entity.sync.kind != "loaded") {
+                return Synchronize<Unit, ApiErrors, EditFormWritableState<E, FS>>(
+                (_) => Promise.resolve([]),
+                (_) => "transient failure",
+                5,
+                50
+              )
+            }
+            const parsed = current.parser(current.entity.sync.value,  current)
 
             return Synchronize<Unit, ApiErrors, EditFormWritableState<E, FS>>(
-              (_) =>
-                { 
-                  if(parsed.kind == "errors") return Promise.reject(parsed.errors)
-                  return current.api.update(current.entityId, parsed)
-                },
+              (_) => parsed.kind == "errors" ? Promise.reject(parsed.errors) : current.api.update(current.entityId, parsed),
               (_) => "transient failure",
               parsed.kind == "errors" ? 1 : 5,
               50
@@ -76,19 +71,19 @@ export const editFormRunner = <E, FS>() => {
 
           15
         ).embed(
-          (_) => ({ ..._, ..._.apiRunner }),
-          EditFormState<E, FS>().Updaters.Core.apiRunner
+          (_) => ({ ..._, ..._.customFormState.apiRunner }),
+          EditFormState<E, FS>().Updaters.Core.customFormState.children.apiRunner
         ),
         HandleApiResponse<
           EditFormWritableState<E, FS>,
           EditFormContext<E, FS>,
           ApiErrors
-        >((_) => _.apiRunner.sync, {
+        >((_) => _.customFormState.apiRunner.sync, {
           handleSuccess: current.apiHandlers?.onUpdateSuccess,
           handleError: current.apiHandlers?.onUpdateError,
         }),
         Co.SetState(
-          EditFormState<E, FS>().Updaters.Core.updateApiChecker(ApiResponseChecker.Updaters().toChecked())
+          EditFormState<E, FS>().Updaters.Core.customFormState.children.updateApiChecker(ApiResponseChecker.Updaters().toChecked())
         ),
       ])
     )
@@ -97,14 +92,14 @@ export const editFormRunner = <E, FS>() => {
   return Co.Template<EditFormForeignMutationsExpected<E, FS>>(init, {
     interval: 15,
     runFilter: (props) =>
-      !AsyncState.Operations.hasValue(props.context.entity.sync) || !ApiResponseChecker.Operations.checked(props.context.initApiChecker),
+      !AsyncState.Operations.hasValue(props.context.entity.sync) || !ApiResponseChecker.Operations.checked(props.context.customFormState.initApiChecker),
   }).any([
     Co.Template<EditFormForeignMutationsExpected<E, FS>>(synchronize, {
       interval: 15,
       runFilter: (props) =>
         props.context.entity.sync.kind == "loaded" &&
-        (Debounced.Operations.shouldCoroutineRun(props.context.apiRunner) ||
-        !ApiResponseChecker.Operations.checked(props.context.updateApiChecker)),
+        (Debounced.Operations.shouldCoroutineRun(props.context.customFormState.apiRunner) ||
+        !ApiResponseChecker.Operations.checked(props.context.customFormState.updateApiChecker)),
     }),
   ]);
 };

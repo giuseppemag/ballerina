@@ -20,7 +20,7 @@ const interests: Array<[Interest, BasicPredicate<PersonFormPredicateContext>]> =
 ];
 
 export const PersonApi = {
-  getDepartments: (): SearchableInfiniteStreamState<Department>["getChunk"] => (_searchText) => (_streamPosition) => PromiseRepo.Default.mock(
+  getDepartments: (): SearchableInfiniteStreamState<Department>["customFormState"]["getChunk"] => (_searchText) => (_streamPosition) => PromiseRepo.Default.mock(
     () => ({
       data: OrderedMapRepo.Default.fromSmallIdentifiables(
         Range(0, 20).map(_ => Department.Default(v4(), _searchText + faker.company.buzzPhrase() + " department")).toArray()
