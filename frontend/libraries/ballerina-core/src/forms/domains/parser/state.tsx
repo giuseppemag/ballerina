@@ -391,8 +391,9 @@ export const parseForms =
           }
           try {
             if (fieldType?.kind == "application" && fieldType?.value == "List" && fieldType?.args.length == 1 && field.elementRenderer != undefined) {
-              if (formsConfig.forms.has(field.elementRenderer))
-                traverse(formsConfig.forms.get(field.elementRenderer)!)
+              if (typeof field.elementRenderer == "string") throw Error("Deprecated element renderer as string, use a render object instead - check parser.")
+              if (formsConfig.forms.has(field.elementRenderer.renderer))
+                traverse(formsConfig.forms.get(field.elementRenderer.renderer)!)
             }
             if (fieldType?.kind == "application" && fieldType?.value == "Map" && fieldType?.args.length == 2 && field.mapRenderer != undefined) {
               const mapRenderer = field.mapRenderer
