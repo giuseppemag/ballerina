@@ -160,8 +160,8 @@ export const FormsConfig = {
                 errors = errors.push(`arg ${fieldDef.args[0]} in type ${typeName} references non existent type`);
                 return
               }
-              if (argType.extends.length != 1 || argType.extends[0] != "CollectionReference")
-                errors = errors.push(`field ${fieldName} in type ${typeName}: SingleSelection requires ${argType.name} to 'extend CollectionReference'`);
+              if (argType.extends.length != 1 || (argType.extends[0] != "CollectionReference" && !types.has(argType.extends[0])))
+                errors = errors.push(`field ${fieldName} in type ${typeName}: SingleSelection requires ${argType.name} to extend ${argType.extends[0]}`);
             }
           }
           if (fieldDef.kind == "application" && fieldDef.value == "Multiselection") {
@@ -173,8 +173,8 @@ export const FormsConfig = {
                 errors = errors.push(`arg ${fieldDef.args[0]} in type ${typeName} references non existent type`);
                 return errors
               }
-              if (argType.extends.length != 1 || argType.extends[0] != "CollectionReference")
-                errors = errors.push(`field ${fieldName} in type ${typeName}: Multiselection requires ${argType.name} to 'extend CollectionReference'`);
+              if (argType.extends.length != 1 || (argType.extends[0] != "CollectionReference" && !types.has(argType.extends[0])))
+                errors = errors.push(`field ${fieldName} in type ${typeName}: Multiselection requires ${argType.name} to extend ${argType.extends[0]}`);
             }
           }
           if (fieldDef.kind == "application" && fieldDef.value == "List") {
