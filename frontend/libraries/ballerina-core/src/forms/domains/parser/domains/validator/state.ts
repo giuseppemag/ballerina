@@ -7,7 +7,7 @@ export type FieldConfig = {
   label?: string;
   tooltip?: string;
   api: { stream?: string, enumOptions?: string };
-  elementRenderer?: string;
+  elementRenderer?: string | FieldConfig;
   elementLabel?: string;
   elementTooltip?: string;
   mapRenderer?: { keyRenderer: FieldConfig, valueRenderer: FieldConfig };
