@@ -32,7 +32,7 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
         toAPIRawValue: ([_, __]) => _.valueSeq().toArray()
     },
     "Map": {
-		fromAPIRawValue: _ => _ == undefined ? List() : List(_.map(( _ : {key: any, __keywordreplacement__value__: any}) => ([_.key, _.__keywordreplacement__value__]))),
+		fromAPIRawValue: _ => _ == undefined ? List() : List(_.map(( _ : {key: any, value: any}) => ([_.key, _.value]))),
         toAPIRawValue: ([_, __]) => {
 			const first = _.first()
 			if(first && typeof first[0] == "string") return [_, ((_: string )=> [_, _])]

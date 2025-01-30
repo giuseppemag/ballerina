@@ -32,7 +32,7 @@ export type BuiltInApiConverters = {
   "boolean": ApiConverter<boolean>
   "maybeBoolean": ApiConverter<boolean | undefined>
   "base64File": ApiConverter<string>
-  "secret": ApiConverter<string>,
+  "secret": ApiConverter<string>
   "Date": ApiConverter<Maybe<Date>>
   "CollectionReference": ApiConverter<CollectionReference>
   "SingleSelection": ApiConverter<CollectionSelection<any>>
@@ -294,15 +294,25 @@ export const toAPIRawValue = <T>(t: Type, types: Map<TypeName, TypeDefinition>, 
       return ValueOrErrors.Operations.All(parsedMap.concat(nonUniqueKeyErrors))
     }
   } else { // t.kind == lookup: we are dealing with a record/object or extended type 
-    const tDef = types.get(t.name)!
-    if("extends" in tDef && tDef.extends.length == 1) {
-      return ValueOrErrors.Operations.Return(converters[(tDef.extends[0] as keyof BuiltInApiConverters)].toAPIRawValue([raw, formState.modifiedByUser] as never))
-    }    
-    const convertedMap = tDef.fields.mapEntries(([fieldName, fieldType] ) => {
+    const convertMap = (typeDefinition: TypeDefinition, isExtended: boolean) => (typeDefinition).fields.mapEntries(([fieldName, fieldType] ) => {
       const fieldValue = raw[fieldName]
-      const converted = toAPIRawValue(fieldType, types, builtIns, converters, injectedPrimitives)(fieldValue, formState.formFieldStates[fieldName])
+      const fieldFormState = isExtended ? formState : formState.formFieldStates[fieldName]
+      const converted = toAPIRawValue(fieldType, types, builtIns, converters, injectedPrimitives)(fieldValue, fieldFormState)
       return [fieldName, converted]
     })
+
+    const tDef = types.get(t.name)!
+    const isExtended = "extends" in tDef && tDef.extends.length == 1
+    // Check for deprecated primitive CollectionReference - later should return error in this case
+    if(isExtended && !types.has(tDef.extends[0])) {
+      console.warn(`Deprecated: Primitive Collection Reference. Please use a CollectionReference in the form config instead. Cannot find type ${tDef.extends[0]} when resolving toAPIRawValue, assuming the deprecated primitive CollectionReference is being used.`)
+      return ValueOrErrors.Operations.Return(converters["CollectionReference"].toAPIRawValue([raw, formState.modifiedByUser] as never))
+    }
+
+    const extendedTDef = isExtended ? types.get(tDef.extends[0])! : undefined;
+
+    const convertedMap = extendedTDef ? convertMap(extendedTDef, true) : convertMap(tDef, false)
+
     if(convertedMap.some((valueOrError) => valueOrError.kind == "errors")) {
       const propertiesWithErrors = convertedMap.filter((valueOrError) => valueOrError.kind == "errors")
       const namedErrors = propertiesWithErrors.map((value, key) => value.MapErrors(_ => _.map((_: string) => `${key}: ${_}`)))
