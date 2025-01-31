@@ -19,8 +19,6 @@ export const Form = <Entity, FieldStates extends { formFieldStates: any}, Contex
               .mapContext<EntityFormContext<Entity, Fields, FieldStates, Context, ForeignMutationsExpected> & { disabled:boolean }>(_ => 
                 {
                   // disabled flag is passed in from the container form when mapping over fields
-                  console.debug("FIELD", field)
-                  console.debug('INSIDE CONTEXT', _)
                   return ({ 
                     value: _.value[field],
                     extraContext: _.extraContext,

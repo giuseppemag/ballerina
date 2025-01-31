@@ -1,5 +1,5 @@
 import { List, Map, OrderedMap, OrderedSet, Set } from "immutable";
-import { BoolExpr, Unit, Guid, LeafPredicatesEvaluators, Predicate, FormsConfig, BuiltIns, FormDef, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, CommonFormState, CreateFormState, EditFormContext, CreateFormContext, Synchronized, simpleUpdater, TypeName, ListFieldState, ListForm, TypeDefinition, BuiltInApiConverters, defaultValue, fromAPIRawValue, toAPIRawValue, EditFormForeignMutationsExpected, MapFieldState, MapForm, Type, Base64FileForm, SecretForm, InjectedPrimitives, Injectables, ApiConverters, Maybe, ApiResponseChecker, Debounced } from "../../../../main";
+import { BoolExpr, Unit, Guid, LeafPredicatesEvaluators, Predicate, FormsConfig, BuiltIns, FormDef, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, CommonFormState, CreateFormState, EditFormContext, CreateFormContext, Synchronized, simpleUpdater, TypeName, ListFieldState, ListForm, TypeDefinition, BuiltInApiConverters, defaultValue, fromAPIRawValue, toAPIRawValue, EditFormForeignMutationsExpected, MapFieldState, MapForm, Type, Base64FileForm, SecretForm, InjectedPrimitives, Injectables, ApiConverters, Maybe, ApiResponseChecker, Debounced, RendererConfig } from "../../../../main";
 import { Value } from "../../../value/state";
 import { CollectionReference } from "../collection/domains/reference/state";
 import { CollectionSelection } from "../collection/domains/selection/state";
@@ -18,24 +18,6 @@ import { FormLabel } from "../singleton/domains/form-label/state";
 import { Form } from "../singleton/template";
 import { ValueOrErrors } from "../../../collections/domains/valueOrErrors/state";
 
-export type RendererConfig = {
-  renderer: string;
-  api?: {
-    stream?: string;
-    enumOptions?: string;
-  }
-  label?: string;
-  tooltip?: string;
-  options?: string;
-  stream?: string;
-  elementRenderer?: RendererConfig;
-  mapRenderer?: RendererConfig;
-  keyRenderer?: RendererConfig,
-  valueRenderer?: RendererConfig
-  visible?: BoolExpr<any>;
-  disabled?: BoolExpr<any>;
-}
-
 export type ParsedRenderer = {renderer: any, initialValue: any, initialState: any}
 
 const parseOptions = (leafPredicates: any, options: any) => {
@@ -48,7 +30,6 @@ const formViewToViewKind = (viewName: string | undefined, formViews: Record<stri
   if (viewName == undefined) {
     throw `cannot resolve view ${viewName}` // TODO -- better error handling
   }
-  console.debug('formNames', formNames.toJS())
   if(formNames.has(viewName)){
     return "form";
   }
@@ -67,7 +48,6 @@ export const RendererParser = <T,>(parsingContext: { formViews: Record<string, R
   const viewKind = formViewToViewKind(rendererConfig.renderer, parsingContext.formViews, parsingContext.forms.keySeq().toSet())
   const rendererKind = viewKind == "form" ? "form" : viewKind == "map" ? "map" : viewKind == "list" ? "list" : "primitive"
   // TODO: improve the default value function to avoid this
-  console.debug('rendererConfig', rendererConfig)
   const defaultValueKind = rendererKind == "form" ? rendererConfig.renderer :
                              rendererKind == "map" ? {kind: "application", value: "Map", args: []} as Type:
                                rendererKind == "list" ? {kind: "application", value: "List", args: []} as Type:
@@ -87,7 +67,6 @@ export const RendererParser = <T,>(parsingContext: { formViews: Record<string, R
         initialState: FormStates(rendererConfig, viewKind, rendererConfig.renderer, parsingContext.infiniteStreamSources, parsingContext.injectedPrimitives)
       })
     case "form":
-      console.debug("INITIAL FORM STATE", parsingContext.forms.get(rendererConfig.renderer)!.initialFormState)
       return ValueOrErrors.Default.return({
           renderer: parsingContext.forms.get(rendererConfig.renderer)!.form.withView(parsingContext.nestedContainerFormView).mapContext<any>(_ => ({ ..._, label: rendererConfig.label, tooltip: rendererConfig.tooltip })),
           initialValue: parsingContext.defaultValue(defaultValueKind),
@@ -221,51 +200,39 @@ export type ParsedForm = {
 export const ParseForm = <T,>(
   formName: string,
   formDef: FormDef,
-  containerFormView: any,
   nestedContainerFormView: any,
   formViews: Record<string, Record<string, any>>,
   forms: ParsedForms,
   fieldsViewsConfig: any,
-  formFieldElementRenderers: any,
-  formFieldKeyRenderers: any,
-  formFieldValueRenderers: any,
-  fieldsInfiniteStreamsConfig: any,
-  fieldsOptionsConfig: any,
   infiniteStreamSources: any,
   enumOptionsSources: EnumOptionsSources,
   leafPredicates: any,
   visibleFieldsBoolExprs: any,
   disabledFieldsBoolExprs: any,
   defaultValue: BasicFun<TypeName | Type, any>,
-  type: TypeDefinition,
   injectedPrimitives?: InjectedPrimitives<T>
 ): ParsedForm => {
 
+  const formConfig: any = {};
   const initialFormState: any = {
     commonFormState: CommonFormState.Default(),
     formFieldStates: {},
   };
 
-  const formConfig: any = {};
   const fieldNames = Object.keys(fieldsViewsConfig)
+
   fieldNames.forEach(fieldName => {
-    const fieldConfig = formDef.fields.get(fieldName)!  
-    const viewName = (fieldsViewsConfig as any)[fieldName];
-    const parsedFormConfig  = RendererParser({
-      formViews, forms, nestedContainerFormView, defaultValue, enumOptionsSources, leafPredicates, infiniteStreamSources, injectedPrimitives }, fieldConfig as RendererConfig)
-    console.debug('parsedFormConfig', parsedFormConfig)
-    if(parsedFormConfig.kind == "errors") throw Error("Error parsing form") // TODO - better error handling
+    const parsedFormConfig  = RendererParser(
+      {formViews, forms, nestedContainerFormView, defaultValue, enumOptionsSources, leafPredicates, infiniteStreamSources, injectedPrimitives },
+      formDef.fields.get(fieldName)! 
+    )
+    
+    if(parsedFormConfig.kind == "errors") throw Error(`Error parsing form ${fieldsViewsConfig[fieldName]}`) // TODO - better error handling
+
     formConfig[fieldName] = parsedFormConfig.value.renderer
     initialFormState["formFieldStates"][fieldName] = parsedFormConfig.value.initialState
 
-    if (typeof formConfig[fieldName] == "string") {
-      const err = formConfig[fieldName]
-      console.error(`error processing field ${fieldName}`, err)
-      formConfig[fieldName] = (props: any) => <>Error: field {fieldName} with {viewName} could not be instantiated</>
-      throw err
-    }
   });
-
   const visibleFields = parseVisibleFields(
     Object.entries(visibleFieldsBoolExprs), leafPredicates
   );
@@ -385,7 +352,7 @@ export const parseForms =
               if (formsConfig.forms.has(field.elementRenderer.renderer))
                 traverse(formsConfig.forms.get(field.elementRenderer.renderer)!)
             }
-            if (fieldType?.kind == "application" && fieldType?.value == "Map" && fieldType?.args.length == 2 && field.mapRenderer != undefined) {
+            if (fieldType?.kind == "application" && fieldType?.value == "Map" && fieldType?.args.length == 2) {
               const keyRenderer = field.keyRenderer
               const valueRenderer = field.valueRenderer
               if (keyRenderer && formsConfig.forms.has(keyRenderer.renderer)) {
@@ -412,32 +379,20 @@ export const parseForms =
         const formFieldRenderers = formConfig.fields.map(field => field.renderer).toObject()
         const formFieldVisibilities = formConfig.fields.map(field => field.visible).toObject()
         const formFieldDisabled = formConfig.fields.map(field => field.disabled).toObject()
-        const formFieldStreams = formConfig.fields.filter(field => field.stream != undefined).map(field => field.stream).toObject()
-        const formFieldEnumOptions = formConfig.fields.filter(field => field.options != undefined).map(field => field.options).toObject()
-        const formFieldElementRenderers = formConfig.fields.filter(field => field.elementRenderer != undefined).map(field => field.elementRenderer).toObject()
-        const formFieldKeyRenderers = formConfig.fields.filter(field => field.mapRenderer != undefined).map(field => field.mapRenderer?.keyRenderer).toObject()
-        const formFieldValueRenderers = formConfig.fields.filter(field => field.mapRenderer != undefined).map(field => field.mapRenderer?.valueRenderer).toObject()
         try {
           const parsedForm = ParseForm(
             formName,
             formConfig,
-            containerFormView,
             nestedContainerFormView,
             fieldViews,
             parsedForms,
             formFieldRenderers,
-            formFieldElementRenderers,
-            formFieldKeyRenderers,
-            formFieldValueRenderers,
-            formFieldStreams,
-            formFieldEnumOptions,
             infiniteStreamSources,
             enumOptionsSources,
             leafPredicates,
             formFieldVisibilities,
             formFieldDisabled,
             defaultValue(formsConfig.types, builtIns, injectedPrimitives),
-            formConfig.typeDef,
             injectedPrimitives
           )
           const formBuilder = Form<any, any, any, any>().Default<any>()
@@ -457,7 +412,6 @@ export const parseForms =
 
           parsedForms = parsedForms.set(formName, { ...parsedForm, form })
         } catch (error: any) {
-          console.debug('error', error)
           errors.push(error.message ?? error)
         }
       })

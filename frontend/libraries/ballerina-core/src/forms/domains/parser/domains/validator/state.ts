@@ -1,20 +1,23 @@
 import { Set, Map, OrderedMap, List } from "immutable";
-import { ApiConverters, BoolExpr, BuiltIns, FieldName, FormsConfigMerger, InjectedPrimitives, RendererConfig, Type, TypeDefinition, TypeName } from "../../../../../../main";
+import { ApiConverters, BoolExpr, BuiltIns, FieldName, FormsConfigMerger, InjectedPrimitives, Type, TypeDefinition, TypeName } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
-import { config } from "process";
 
-// export type FieldConfig = {
-//   renderer: string;
-//   label?: string;
-//   tooltip?: string;
-//   api: { stream?: string, enumOptions?: string };
-//   elementRenderer?: string | FieldConfig;
-//   elementLabel?: string;
-//   elementTooltip?: string;
-//   mapRenderer?: { keyRenderer: FieldConfig, valueRenderer: FieldConfig };
-//   visible: BoolExpr<any>;
-//   disabled: BoolExpr<any>;
-// };
+export type RendererConfig = {
+  renderer: string;
+  api?: {
+    stream?: string;
+    enumOptions?: string;
+  }
+  label?: string;
+  tooltip?: string;
+  options?: string;
+  stream?: string;
+  elementRenderer?: RendererConfig;
+  keyRenderer?: RendererConfig,
+  valueRenderer?: RendererConfig
+  visible?: BoolExpr<any>;
+  disabled?: BoolExpr<any>;
+}
 
 export type FormDef = {
   name: string;
@@ -129,7 +132,7 @@ export const FormsConfig = {
             ) {
               const args = configFieldType["fun"] == "Map" || configFieldType["fun"] == "List" ? 
                 configFieldType["args"].map((arg:any) => (typeof arg == "string" ? arg : { kind:"application", value: arg.fun, args: arg.args })) as any :
-                configFieldType["args"] as any;
+                    configFieldType["args"] as any;
               const fieldType: Type = {
                 kind: "application",
                 value: configFieldType["fun"] as any,

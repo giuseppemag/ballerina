@@ -15,7 +15,7 @@ export type Type = {
 } | {
   kind: "primitive"; value: PrimitiveTypeName;
 } | {
-  kind: "application"; value: TypeName; args: Array<TypeName>; // args: Array<TypeName | Type>;
+  kind: "application"; value: TypeName; args: Array<TypeName | Type>; // args: Array<TypeName | Type>;
 };
 export const Type = {
   Default: {
