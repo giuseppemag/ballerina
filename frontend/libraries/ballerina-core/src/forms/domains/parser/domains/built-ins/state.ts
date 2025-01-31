@@ -125,7 +125,8 @@ export const defaultValue = <T>(types: Map<TypeName, TypeDefinition>, builtIns: 
       if (generic != undefined) {
         return generic.defaultValue
       } else {
-        let custom = types.get(t)
+        //TODO: fix this in the validator
+        let custom = types.get(t[0].toUpperCase() + t.slice(1))
         if (custom != undefined) {
           let res = {} as any
           custom.fields.forEach((field, fieldName) => {

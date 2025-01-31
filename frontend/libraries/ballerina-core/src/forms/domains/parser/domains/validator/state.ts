@@ -1,24 +1,26 @@
 import { Set, Map, OrderedMap, List } from "immutable";
-import { ApiConverters, BoolExpr, BuiltIns, FieldName, FormsConfigMerger, InjectedPrimitives, Type, TypeDefinition, TypeName } from "../../../../../../main";
+import { ApiConverters, BoolExpr, BuiltIns, FieldName, FormsConfigMerger, InjectedPrimitives, RendererConfig, Type, TypeDefinition, TypeName } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
+import { config } from "process";
 
-export type FieldConfig = {
-  renderer: string;
-  label?: string;
-  tooltip?: string;
-  api: { stream?: string, enumOptions?: string };
-  elementRenderer?: string | FieldConfig;
-  elementLabel?: string;
-  elementTooltip?: string;
-  mapRenderer?: { keyRenderer: FieldConfig, valueRenderer: FieldConfig };
-  visible: BoolExpr<any>;
-  disabled: BoolExpr<any>;
-};
+// export type FieldConfig = {
+//   renderer: string;
+//   label?: string;
+//   tooltip?: string;
+//   api: { stream?: string, enumOptions?: string };
+//   elementRenderer?: string | FieldConfig;
+//   elementLabel?: string;
+//   elementTooltip?: string;
+//   mapRenderer?: { keyRenderer: FieldConfig, valueRenderer: FieldConfig };
+//   visible: BoolExpr<any>;
+//   disabled: BoolExpr<any>;
+// };
+
 export type FormDef = {
   name: string;
   type: TypeName;
   typeDef: TypeDefinition;
-  fields: Map<FieldName, FieldConfig>;
+  fields: Map<FieldName, RendererConfig>;
   tabs: FormLayout;
   header?: string;
 };
@@ -125,7 +127,7 @@ export const FormsConfig = {
               typeof configFieldType["fun"] == "string" &&
               Array.isArray(configFieldType["args"]) 
             ) {
-              const args = configFieldType["fun"] == "Map" ? 
+              const args = configFieldType["fun"] == "Map" || configFieldType["fun"] == "List" ? 
                 configFieldType["args"].map((arg:any) => (typeof arg == "string" ? arg : { kind:"application", value: arg.fun, args: arg.args })) as any :
                 configFieldType["args"] as any;
               const fieldType: Type = {
@@ -405,7 +407,9 @@ export const FormsConfig = {
                   if (elementForm.type != elementType)
                     return [`${elementType} cannot be rendered by form renderer ${elementRenderer} (which renders ${elementForm.type})`]
                 } else {
-                  return [`cannot find ${elementType}, cannot validate whether or not ${elementRenderer} is the right one`]
+                  if(builtIns.renderers.list.has(elementRenderer)){}
+                  // check for map or list renderer
+                  // return [`cannot find ${elementType}, cannot validate whether or not ${elementRenderer} is the right one`]
                 }
               }
               return []
@@ -445,10 +449,8 @@ export const FormsConfig = {
               tooltip: fieldConfig.elementTooltip,
              } :
               fieldConfig.elementRenderer,
-            mapRenderer: 
-              fieldConfig.keyRenderer && fieldConfig.valueRenderer ? 
-                { keyRenderer:fieldConfig.keyRenderer, valueRenderer:fieldConfig.valueRenderer } 
-              : undefined,
+            keyRenderer: fieldConfig?.keyRenderer,
+            valueRenderer: fieldConfig?.valueRenderer,
             visible: BoolExpr.Default(fieldConfig.visible),
             disabled: fieldConfig.disabled != undefined ?
               BoolExpr.Default(fieldConfig.disabled)

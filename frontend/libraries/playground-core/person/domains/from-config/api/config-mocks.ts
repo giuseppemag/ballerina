@@ -39,6 +39,8 @@ export const PersonFormsConfig = {
     },
     "Person": {
       fields: {
+        "listMapList": { fun: "List", args: [{ fun: "Map", args: ["string", {fun: "List", args: ["string"]}] }] },
+        "listList": {fun: "List", args: [{fun: "List", args: ["string"]}]},
         "category": "injectedCategory",
         "name": "string",
         "surname": "string",
@@ -140,6 +142,35 @@ export const PersonFormsConfig = {
     "person": {
       "type": "Person",
       "fields": {
+        "listMapList": {
+          label: "list map list",
+          renderer: "defaultList",
+          elementRenderer: {
+            renderer: "defaultMap",
+            keyRenderer: { label: "string", renderer: "defaultString", visible: { "kind": "true" } },
+            valueRenderer: {
+              renderer: "defaultList",
+              elementRenderer: { renderer: "defaultString", visible: { "kind": "true" } },
+              visible: { "kind": "true" }
+            },
+            visible: { "kind": "true" }
+          },
+          visible: { "kind": "true" }
+        },
+        "listList": {
+          label: "list list",
+          renderer: "defaultList",
+          visible: {"kind": "true"},
+          elementRenderer: {
+            label: "HERE",
+            renderer: "defaultList",
+            visible: {"kind": "true"},            
+            elementRenderer: {
+              renderer: "defaultString",
+              visible: {"kind": "true"}
+            }
+          }
+        },
         "category": { label: "category", renderer: "defaultCategory", visible: { "kind": "true" } },
         "name": { label: "first name", tooltip: "Any name will do", renderer: "defaultString", visible: { "kind": "true" } },
         "surname": { label: "last name", renderer: "defaultString", visible: { "kind": "true" } },
@@ -263,7 +294,10 @@ export const PersonFormsConfig = {
           "columns": {
             "demographics": {
               "groups": {
-                "main": ["category", "name", "surname", "birthday", "gender", "emails", "dependants", "friendsByCategory", "relatives", "friendsBirthdays", "shoeColours"],
+                "main": [ 
+                  "listMapList",
+                  "listList",
+                   "category", "name", "surname", "birthday", "gender", "emails", "dependants", "friendsByCategory", "relatives", "friendsBirthdays", "shoeColours"],
               },
             },
             "mailing": {
