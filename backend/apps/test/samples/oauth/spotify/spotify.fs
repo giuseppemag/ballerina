@@ -25,7 +25,7 @@ let getSnapshot (clientId : string) (clientSecret : string) (authorizationCode :
           requestToken clientId clientSecret authorizationCode
       SaveAccessToken = 
         fun accessToken -> task {
-          do printfn "Getting Entra users: %A" accessToken 
+          do printfn "Getting Latest Albums: %A" accessToken 
           let! getResult = getNewReleases 0 10 (accessToken.AccessToken)
           match getResult with
           | Choice1Of2 statusCode -> 

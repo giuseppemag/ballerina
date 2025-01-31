@@ -106,33 +106,86 @@ module Program =
         .UseSwagger()
         .UseSwaggerUI()
       app.Run("http://localhost:5000")
+    
+    //ms graph arguments
+    let msTenantArg = new Option<Guid>(name = "tenant", description = "Tenant Id")
+    let msClientArg = new Option<Guid>(name = "client", description = "MS Entra Client Id")
+    let msSecretArg = new Option<string>(name = "secret", description = "MS Entra Application secret")
 
-    let mode = new Option<LaunchMode>(
-            name= "mode",
-            description= "Start the application in web or jobs mode.");
-    let tenantArg = new Option<Guid>(name = "tenant", description = "Tenant Id")
-    let clientArg = new Option<Guid>(name = "client", description = "Client Id")
-    let secretArg = new Option<string>(name = "secret", description = "Application secret")
+    //spotify arguments
+    let spotifyClientArg = new Option<string>(name = "client", description = "Spotify Client Id")
+    let spotifySecretArg = new Option<string>(name = "secret", description = "Spotify Secret")
+    let spotifyAuthorizationCode = new Option<string>(name = "code", description = "Authorization code obtained after user consent.")
 
+    let abCommand = new Command(name = "web",
+      description = "Run the AB sample on localhost."
+    )
+
+    let jobsCommand = new Command(name = "jobs",
+      description = "Run the AB loop sample.")
+
+    let abcdCommand = new Command(
+      name = "abcd",
+      description = "Run the ABCD loop sample."
+    )
+
+    let unionsCommad = new Command(
+      name = "test-unions",
+      description = "Sample for discriminated unions."
+    )
+
+    let mockedOauthCommand = new Command(
+      name = "oauth-mocked",
+      description = "Run the OAuth sample with a mocked API."
+    )
+
+    let msGraphOauthCommand = new Command(
+      name = "oauth-ms-graph",
+      description = "Run the oauth sample using the application permissions flow. 
+        Queries the ms-graph user api from a tenant. Pass the tenant id, client id, and client secret as arguments."
+    )
+    msGraphOauthCommand.AddOption(msTenantArg)
+    msGraphOauthCommand.AddOption(msClientArg)
+    msGraphOauthCommand.AddOption(msSecretArg)
+
+    let spotifyOauthCommand = new Command(
+      name = "oauth-spotify",
+      description = "Run the oauth sample using the delegated permissions flow. Pass the client id, client secret, and authorization code 
+      as arguments"
+    )
+
+    spotifyOauthCommand.AddOption(spotifyClientArg)
+    spotifyOauthCommand.AddOption(spotifySecretArg)
+    spotifyOauthCommand.AddOption(spotifyAuthorizationCode)
 
     let rootCommand = new RootCommand("Sample app for System.CommandLine");
-    rootCommand.AddOption(mode)
 
-    rootCommand.AddOption(tenantArg)
-    rootCommand.AddOption(clientArg)
-    rootCommand.AddOption(secretArg)
+    rootCommand.Add(abCommand)
+    rootCommand.Add(jobsCommand)
+    rootCommand.Add(abcdCommand)
+    rootCommand.Add(unionsCommad)
+    rootCommand.Add(mockedOauthCommand)
+    rootCommand.Add(msGraphOauthCommand)
+    rootCommand.Add(spotifyOauthCommand)
 
-    rootCommand.SetHandler(Action<LaunchMode, Guid, Guid, string>(fun (mode:LaunchMode) (tenant : Guid) (client : Guid) (secret : string) ->
-      match mode with
-      | LaunchMode.testunions -> testunions()
-      | LaunchMode.web -> web()
-      | LaunchMode.jobs -> abEventLoop (app.Services.CreateScope)
-      | LaunchMode.abcdjobs -> abcdEventLoop ()
-      | LaunchMode.mocked -> oauthEventLoop()
-      | LaunchMode.msgraph -> msGraphEventLoop tenant client secret
-      | LaunchMode.spotify -> spotifyEventLoop "" "" ""
-      | _ -> printfn "no mode selected, exiting"
-      ), mode, tenantArg, clientArg, secretArg)
+    abCommand.SetHandler(fun () -> web())
+    jobsCommand.SetHandler(fun () -> abEventLoop(app.Services.CreateScope))
+    abcdCommand.SetHandler(fun () -> abcdEventLoop())
+    unionsCommad.SetHandler(fun () -> testunions())
+    mockedOauthCommand.SetHandler(fun () -> oauthEventLoop())
+    msGraphOauthCommand.SetHandler((
+      fun tenant clientId clientSecret ->
+        msGraphEventLoop tenant clientId clientSecret
+      ),
+      msTenantArg, msClientArg, msSecretArg
+    )
+    spotifyOauthCommand.SetHandler((
+      fun clientId clientSecret authorizationCode ->
+        spotifyEventLoop clientId clientSecret authorizationCode
+      ),
+      spotifyClientArg, spotifySecretArg, spotifyAuthorizationCode
+    )
+
     do rootCommand.Invoke(args) |> ignore
 
     exitCode
