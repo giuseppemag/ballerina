@@ -20,6 +20,7 @@ import { ValueOrErrors } from "../../../collections/domains/valueOrErrors/state"
 
 export type ParsedRenderer = {renderer: any, initialValue: any, initialState: any}
 
+
 const parseOptions = (leafPredicates: any, options: any) => {
   const result = options.map((_: any) => ([_[0].id, [_[0], (_[1] as BoolExpr<any>).eval<any>(leafPredicates)]]));
   const resultMap = result.reduce((a: any, b: any) => a.set(b[0], b[1]), OrderedMap<any, any>());

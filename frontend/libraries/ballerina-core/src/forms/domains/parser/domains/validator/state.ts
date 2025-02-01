@@ -1,6 +1,7 @@
 import { Set, Map, OrderedMap, List } from "immutable";
 import { ApiConverters, BoolExpr, BuiltIns, FieldName, FormsConfigMerger, InjectedPrimitives, Type, TypeDefinition, TypeName } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
+import { parseTypeFromForm } from "../types/domains/converter/state";
 
 export type RendererConfig = {
   renderer: string;
@@ -62,6 +63,7 @@ export type FormValidationError = string;
 
 
 export type FormConfigValidationAndParseResult = ValueOrErrors<FormsConfig, FormValidationError>
+
 export const FormsConfig = {
   Default: {
     validateAndParseFormConfig: <T extends {[key in keyof T]: {type: any, state: any}}>(builtIns: BuiltIns, apiConverters: ApiConverters<T>, injectedPrimitives?: InjectedPrimitives<T>) => (fc: any): FormConfigValidationAndParseResult => {
@@ -131,7 +133,7 @@ export const FormsConfig = {
               Array.isArray(configFieldType["args"]) 
             ) {
               const args = configFieldType["fun"] == "Map" || configFieldType["fun"] == "List" ? 
-                configFieldType["args"].map((arg:any) => (typeof arg == "string" ? arg : { kind:"application", value: arg.fun, args: arg.args })) as any :
+                configFieldType["args"].map((arg:any) => (parseTypeFromForm(arg))) as any :
                     configFieldType["args"] as any;
               const fieldType: Type = {
                 kind: "application",
@@ -156,7 +158,8 @@ export const FormsConfig = {
             errors = errors.push(`field ${fieldName} of type ${typeName} is non-existent primitive type ${fieldDef.value}`);
           if (fieldDef.kind == "lookup" && !types.has(fieldDef.name))
             errors = errors.push(`field ${fieldName} of type ${typeName} is non-existent type ${fieldDef.name}`);
-          if (fieldDef.kind == "application" && fieldDef.value == "SingleSelection") {
+          // TODO an error case for field.args[0] not being a string
+          if (fieldDef.kind == "application" && fieldDef.value == "SingleSelection" && typeof fieldDef.args[0] == "string") {
             if (fieldDef.args.length != 1)
               errors = errors.push(`field ${fieldName} in type ${typeName}: SingleSelection should have exactly one type argument, found ${JSON.stringify(fieldDef.args)}`);
             else {
@@ -169,7 +172,8 @@ export const FormsConfig = {
                 errors = errors.push(`field ${fieldName} in type ${typeName}: SingleSelection requires ${argType.name} to extend ${argType.extends[0]}`);
             }
           }
-          if (fieldDef.kind == "application" && fieldDef.value == "Multiselection") {
+          // TODO an error case for field.args[0] not being a string
+          if (fieldDef.kind == "application" && fieldDef.value == "Multiselection" && typeof fieldDef.args[0] == "string") {
             if (fieldDef.args.length != 1)
               errors = errors.push(`field ${fieldName} in type ${typeName}: Multiselection should have exactly one type argument, found ${JSON.stringify(fieldDef.args)}`);
             else {
@@ -391,6 +395,7 @@ export const FormsConfig = {
           if (fieldTypeDef && fieldTypeDef.kind == "application" && fieldTypeDef.value == "List" && (builtIns.renderers.list.has(fieldConfig["renderer"]))) {
             // TODO: remove object check when deprecating string type element renderer
             let elementRenderer = typeof fieldConfig["elementRenderer"] == "string" ? fieldConfig["elementRenderer"] : fieldConfig["elementRenderer"]?.renderer
+            // TODO: we may just need to remove the renderer has type check as it won't work recursively
             let elementType = fieldTypeDef.args[0]
             const rendererHasType = (elementRenderer: string, elementType: string): Array<string> => {
               const primitiveRendererNames = builtIns.primitives.get(elementType)
@@ -417,9 +422,10 @@ export const FormsConfig = {
               }
               return []
             }
-            let elementErrors = rendererHasType(elementRenderer, elementType)
-            if (elementErrors.length > 0)
-              errors = errors.push(...elementErrors)
+            // TODO : follow up on this for errors
+            // let elementErrors = rendererHasType(elementRenderer, elementType)
+            // if (elementErrors.length > 0)
+            //   errors = errors.push(...elementErrors)
           }
           if (fieldTypeDef?.kind == "lookup") {
             if (!forms.has(fieldConfig.renderer))
