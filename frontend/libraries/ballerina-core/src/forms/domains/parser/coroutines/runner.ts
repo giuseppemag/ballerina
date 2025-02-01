@@ -1,4 +1,4 @@
-import { AsyncState, builtInsFromFieldViews, FormsConfig, injectablesFromFieldViews, Sum, Synchronize, Unit } from "../../../../../main"
+import { AsyncState, builtInsFromFieldViews, ParsedFormJSON, injectablesFromFieldViews, Sum, Synchronize, Unit } from "../../../../../main"
 import { CoTypedFactory } from "../../../../coroutines/builder"
 import { FormParsingResult, FormsParserContext, FormsParserState, parseForms } from "../state"
 
