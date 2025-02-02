@@ -142,6 +142,7 @@ export const FormsApp = (props: {}) => {
 															},
 															onCreateSuccess: (_) => {
 																setFormSuccess(true)
+																setFormErrors(List())
 																console.log(`Success creating person ${JSON.stringify(_.entity.sync.value)}`)
 															}
 														}

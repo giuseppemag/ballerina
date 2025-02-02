@@ -220,7 +220,7 @@ export const toAPIRawValue = <T extends { [key in keyof T]: { type: any; state: 
             t.args[0],
             types, builtIns, converters, injectedPrimitives)(keyValue[0], formState.elementFormStates.get(index).KeyFormState
           ).Then(possiblyUndefinedKey => {
-              if(possiblyUndefinedKey.kind == "value" && (possiblyUndefinedKey.value == undefined || possiblyUndefinedKey.value == null || possiblyUndefinedKey.value == "" || (typeof possiblyUndefinedKey.value == "object" && Object.keys(possiblyUndefinedKey.value).length == 0))) {
+              if((possiblyUndefinedKey == undefined || possiblyUndefinedKey == null || possiblyUndefinedKey == "" || (typeof possiblyUndefinedKey == "object" && Object.keys(possiblyUndefinedKey).length == 0))) {
                 return ValueOrErrors.Operations.Throw(List([`A mapped key is undefined for type ${JSON.stringify(t.args[0])}`]))
               }
               else return toAPIRawValue(
