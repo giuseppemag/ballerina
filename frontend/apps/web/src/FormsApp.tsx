@@ -1,10 +1,10 @@
 import { useState } from "react";
 import "./App.css";
-import { unit, FormsConfig, parseForms, FormParsingResult, Sum, builtInsFromFieldViews, FormConfigValidationAndParseResult, EditLauncherContext, CreateLauncherContext, FormsParserState, FormRunnerState, FormsParserTemplate, PromiseRepo, FormRunnerTemplate, BuiltInApiConverters, CollectionReference, CollectionSelection } from "ballerina-core";
-import { List, OrderedMap, Set, Map } from "immutable";
+import { unit, FormParsingResult, FormsParserState, FormRunnerState, FormsParserTemplate, PromiseRepo, FormRunnerTemplate } from "ballerina-core";
+import { List, Set, Map } from "immutable";
 // import { PersonView } from "./domains/person/views/main-view";
-import { PersonContainerFormView, PersonNestedContainerFormView, PersonShowFormSetupErrors, CreatePersonSubmitButtonWrapper, EditPersonSubmitButtonWrapper } from "./domains/person/domains/from-config/views/wrappers";
-import { PersonFormsConfig, PersonFromConfigApis, PersonConfigFormsLeafPredicates, PersonConfig, PersonFormState, Person } from "playground-core";
+import { PersonContainerFormView, PersonNestedContainerFormView, CreatePersonSubmitButtonWrapper, EditPersonSubmitButtonWrapper } from "./domains/person/domains/from-config/views/wrappers";
+import { PersonFormsConfig, PersonFromConfigApis, PersonConfigFormsLeafPredicates, Person } from "playground-core";
 import { PersonFieldViews } from "./domains/person-from-config/views/field-views";
 // import { PersonForm } from "./domains/person/template";
 import { fieldTypeConverters } from "./domains/person/apis/field-converters";
@@ -19,7 +19,7 @@ const InstantiedPersonFormsParserTemplate = FormsParserTemplate<PersonFormInject
 
 export const FormsApp = (props: {}) => {
 	const [configFormsParser, setConfigFormsParser] = useState(FormsParserState.Default())
-	const [formToShow, setFormToShow] = useState(1)
+	const [formToShow, setFormToShow] = useState(0)
 	const numForms = 2
 	const [personCreateFormState, setPersonCreateFormState] = useState(FormRunnerState.Default())
 	const [personEditFormState, setPersonEditFormState] = useState(FormRunnerState.Default())
@@ -142,7 +142,8 @@ export const FormsApp = (props: {}) => {
 															},
 															onCreateSuccess: (_) => {
 																setFormSuccess(true)
-																console.log(`Success creating person ${JSON.stringify(_)}`)
+																setFormErrors(List())
+																console.log(`Success creating person ${JSON.stringify(_.entity.sync.value)}`)
 															}
 														}
 													},
