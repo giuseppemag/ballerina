@@ -1,130 +1,7 @@
 import { Set, Map, OrderedMap, List } from "immutable";
-import { ApiConverters, BoolExpr, BuiltIns, FieldName, FormsConfigMerger, InjectedPrimitives, isObject, isString, ParsedType, PrimitiveTypeName, RawFieldType, RawType, TypeName } from "../../../../../../main";
+import { ApiConverters, BuiltIns, FieldName, FormsConfigMerger, InjectedPrimitives, isObject, isString, ParsedType, RawFieldType, RawType, TypeName } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
-
-export type RawRenderer = {
-  renderer?: any;
-  label?: any;
-  tooltip?: any;
-  visible?: any;
-  disabled?: any;
-  stream?: any;
-  options?: any;
-  elementRenderer?: any;
-  keyRenderer?: any;
-  valueRenderer?: any;
-}
-export type ParsedRenderer<T> = 
-  (
-  | { kind: "primitive"; }
-  | { kind: "form"; }
-  | { kind: "enum"; options: string; }
-  | { kind: "stream"; stream: string; }
-  | { kind: "list"; elementRenderer: ParsedRenderer<T>; }
-  | { kind: "map"; keyRenderer: ParsedRenderer<T>; valueRenderer: ParsedRenderer<T>; }
-  ) & { renderer: string;
-        type: ParsedType<T>
-        label?: string;
-        tooltip?: string;
-        visible?: BoolExpr<any>;
-        disabled?: BoolExpr<any>; 
-    }
-export const ParsedRenderer = {
-  Default: {
-    primitive: <T>(type: ParsedType<T>, renderer: string, visible: any, disabled: any, label?: string, tooltip?: string ): ParsedRenderer<T> => ({
-      kind: "primitive",
-      type,
-      renderer,
-      label,
-      tooltip,
-      visible: BoolExpr.Default(visible),
-      disabled: disabled != undefined ?
-        BoolExpr.Default(disabled)
-        : BoolExpr.Default.false(),
-    }),
-    form: <T>(type: ParsedType<T>, renderer: string, visible: any, disabled: any, label?: string, tooltip?: string ): ParsedRenderer<T> => ({
-      kind: "form",
-      type,
-      renderer,
-      label,
-      tooltip,
-      visible: BoolExpr.Default(visible),
-      disabled: disabled != undefined ?
-        BoolExpr.Default(disabled)
-        : BoolExpr.Default.false(),
-    }),
-    enum: <T>(type: ParsedType<T>, renderer: string, visible: any, disabled: any, options: string, label?: string, tooltip?: string ): ParsedRenderer<T> => ({
-      kind: "enum",
-      type,
-      renderer,
-      label,
-      tooltip,
-      visible: BoolExpr.Default(visible),
-      disabled: disabled != undefined ?
-        BoolExpr.Default(disabled)
-        : BoolExpr.Default.false(),
-      options
-    }),
-    stream: <T>(type: ParsedType<T>, renderer: string, visible: any, disabled: any, stream: string, label?: string, tooltip?: string ): ParsedRenderer<T> => ({
-      kind: "stream",
-      type,
-      renderer,
-      label,
-      tooltip,
-      visible: BoolExpr.Default(visible),
-      disabled: disabled != undefined ?
-        BoolExpr.Default(disabled)
-        : BoolExpr.Default.false(),
-      stream
-    }),
-    list: <T>(type: ParsedType<T>, renderer: string, visible: any, disabled: any, elementRenderer: ParsedRenderer<T>, label?: string, tooltip?: string ): ParsedRenderer<T> => ({
-      kind: "list",
-      type,
-      renderer,
-      label,
-      tooltip,
-      visible: BoolExpr.Default(visible),
-      disabled: disabled != undefined ?
-        BoolExpr.Default(disabled)
-        : BoolExpr.Default.false(),
-      elementRenderer
-    }),
-    map: <T>(type: ParsedType<T>, renderer: string, visible: any, disabled: any, keyRenderer: ParsedRenderer<T>, valueRenderer: ParsedRenderer<T>, label?: string, tooltip?: string ): ParsedRenderer<T> => ({
-      kind: "map",
-      type,
-      renderer,
-      label,
-      tooltip,
-      visible: BoolExpr.Default(visible),
-      disabled: disabled != undefined ?
-        BoolExpr.Default(disabled)
-        : BoolExpr.Default.false(),
-      keyRenderer,
-      valueRenderer
-    }),
-  },
-  Operations: {
-  parseRenderer: <T>(fieldType: ParsedType<T>, field: RawRenderer, types: Map<string, ParsedType<T>>): ParsedRenderer<T> => {
-      if(fieldType.kind == "primitive")
-        return ParsedRenderer.Default.primitive(fieldType, field.renderer, field.visible, field.disabled, field.label, field.tooltip)
-      if(fieldType.kind == "form")
-        return ParsedRenderer.Default.form(fieldType, field.renderer, field.visible, field.disabled, field.label, field.tooltip)
-      if(fieldType.kind == "application" && "options" in field)
-        return ParsedRenderer.Default.enum(fieldType, field.renderer, field.visible, field.disabled, field.options, field.label, field.tooltip)
-      if(fieldType.kind == "application" && "stream" in field)
-        return ParsedRenderer.Default.stream(fieldType, field.renderer, field.visible, field.disabled, field.stream, field.label, field.tooltip)
-      if(fieldType.kind == "application" && fieldType.value == "List")
-        return ParsedRenderer.Default.list(fieldType, field.renderer, field.visible, field.disabled, ParsedRenderer.Operations.parseRenderer(fieldType.args[0], field.elementRenderer, types), field.label, field.tooltip)
-      if(fieldType.kind == "application" && fieldType.value == "Map")
-        return ParsedRenderer.Default.map(fieldType, field.renderer, field.visible, field.disabled, ParsedRenderer.Operations.parseRenderer(fieldType.args[0], field.keyRenderer, types), ParsedRenderer.Operations.parseRenderer(fieldType.args[1], field.valueRenderer, types), field.label, field.tooltip)
-      if(fieldType.kind == "lookup"){
-        return ParsedRenderer.Operations.parseRenderer(types.get(fieldType.name)!, field, types)
-      }
-      console.error(`Invalid field type ${JSON.stringify(fieldType)} for field ${JSON.stringify(field)}`)
-      throw new Error("Invalid field type")
-  }
-}
-}
+import { ParsedRenderer } from "../renderer/state";
 
 export type RawForm = {
   type?: any;
@@ -140,7 +17,6 @@ export const RawForm = {
 }
 export type ParsedFormConfig<T> = {
   name: string;
-  // type: TypeName; // TODO should be typename, or just removed and type def used
   type: ParsedType<T>;
   fields: Map<FieldName, ParsedRenderer<T>>;
   tabs: FormLayout;
@@ -267,23 +143,6 @@ export const FormsConfig = {
 
       let entities: Map<string, EntityApi> = Map();
       Object.entries(formsConfig.apis.entities).forEach(([entityApiName, entityApi]: [entiyApiName: string, entityApi: RawEntityApi ]) => {
-        if(!("type" in entityApi)){
-          errors = errors.push(`formsConfig.apis.entities.${entityApiName} is missing the required 'type' attribute`);
-          return
-        }
-        if(!isString(entityApi.type)){
-          errors = errors.push(`formsConfig.apis.entities.${entityApiName}.type is not a string`);
-          return
-        }
-        if(!("methods" in entityApi)){
-          errors = errors.push(`formsConfig.apis.entities.${entityApiName} is missing the required 'methods' attribute`);
-          return
-        }
-        if(!Array.isArray(entityApi.methods)){
-          errors = errors.push(`formsConfig.apis.entities.${entityApiName}.methods is not an array`);
-          return
-        }
-
         entities = entities.set(entityApiName, {
           type: entityApi.type,
           methods: {
@@ -310,7 +169,7 @@ export const FormsConfig = {
         const parsedForm: ParsedFormConfig<T> = { name: formName, fields: Map(), tabs: Map(), type: parsedTypes.get(form.type)!, header: RawForm.hasHeader(form) ? form.header : undefined };
 
         Object.entries(form.fields).forEach(([fieldName, field]: [fieldName: string, field: any]) =>
-          parsedForm.fields = parsedForm.fields.set(fieldName, ParsedRenderer.Operations.parseRenderer(formType.fields.get(fieldName)!, field, parsedTypes))         
+          parsedForm.fields = parsedForm.fields.set(fieldName, ParsedRenderer.Operations.ParseRenderer(formType.fields.get(fieldName)!, field, parsedTypes))         
         )
 
         let tabs: FormLayout = OrderedMap()
@@ -339,37 +198,11 @@ export const FormsConfig = {
         edit: Map<string, Launcher>(),
       }
       Object.keys(formsConfig["launchers"]).forEach((launcherName: any) => {
-        const launcherKinds = ["create", "edit"]
-        if (launcherKinds.includes(formsConfig["launchers"][launcherName]["kind"]) == false) {
-          errors = errors.push(`launcher '${launcherName}' has invalid 'kind': expected any of ${JSON.stringify(launcherKinds)}`);
-          return
-        }
-        if (forms.has(formsConfig["launchers"][launcherName]["form"]) == false) {
-          errors = errors.push(`launcher '${launcherName}' references non-existing form '${formsConfig.launchers[launcherName].form}'`);
-          return
-        }
-        const form = forms.get(formsConfig["launchers"][launcherName]["form"])!
-        
-        if (entities.has(formsConfig["launchers"][launcherName]["api"]) == false) {
-          errors = errors.push(`launcher '${launcherName}' references non-existing entity api '${formsConfig.launchers[launcherName].api}'`);
-          return
-        }
-        const api = entities.get(formsConfig["launchers"][launcherName]["api"])!
-        if (form.type.kind == "application" && form.type.value != api.type)
-          errors = errors.push(`form and api in launcher '${launcherName}' reference different types '${form.type}' and '${api.type}'`);
-        if (formsConfig["launchers"][launcherName]["kind"] == "create" &&
-          !(api.methods.create && api.methods.default)
-        )
-          errors = errors.push(`launcher '${launcherName}' requires api methods 'create' and 'default'`);
-        if (formsConfig["launchers"][launcherName]["kind"] == "edit" &&
-          !(api.methods.get && api.methods.update)
-        )
-          errors = errors.push(`launcher '${launcherName}' requires api methods 'get' and 'update'`);
         let launcher: Launcher = {
           name: launcherName,
-          kind: formsConfig["launchers"][launcherName]["kind"],
-          form: formsConfig["launchers"][launcherName]["form"],
-          api: formsConfig["launchers"][launcherName]["api"],
+          kind: formsConfig.launchers[launcherName]["kind"],
+          form: formsConfig.launchers[launcherName]["form"],
+          api: formsConfig.launchers[launcherName]["api"],
         };
         if (launcher.kind == "create")
           launchers.create = launchers.create.set(launcherName, launcher)
