@@ -15,9 +15,9 @@ export type RawType<T> = {
   fields?: OrderedMap<FieldName, RawFieldType<T>>
 }
 export const RawType = {
-    isExtendedType: <T>(type: RawType<T>): type is RawType<T> & {extends: unknown} => "extends" in type,
-    isValidExtendedType: <T>(type: RawType<T>): type is RawType<T> & {extends: Array<TypeName>} => "extends" in type && Array.isArray(type.extends) && type.extends.length == 1 && (isString(type.extends[0])) ,
-    hasFields: <T>(type: RawType<T>): type is {fields: OrderedMap<FieldName, RawFieldType<T>>} => "fields" in type,
+    isMaybeExtendedType: <T>(type: RawType<T>): type is RawType<T> & {extends: unknown} => "extends" in type,
+    isExtendedType: <T>(type: RawType<T>): type is RawType<T> & {extends: Array<TypeName>} => "extends" in type && Array.isArray(type.extends) && type.extends.length == 1 && (isString(type.extends[0])) ,
+    hasFields: <T>(type: RawType<T>): type is {fields: any} => "fields" in type,
 }
 export type RawApplicationType<T> = {
   fun?: GenericType;
@@ -27,15 +27,15 @@ export type RawApplicationType<T> = {
 export type RawFieldType<T> = RawApplicationType<T> | string | PrimitiveTypeName<T>
 export const RawFieldType = { 
   isMaybePrimitive: (_: any) => isString(_),
-  isValidPrimitive: <T>(_: RawFieldType<T>, injectedPrimitives: InjectedPrimitives<T> | undefined): _ is PrimitiveTypeName<T> => Boolean(PrimitiveTypes.some(_ => _ == _) || injectedPrimitives?.injectedPrimitives.has(_ as keyof T)),
+  isPrimitive: <T>(_: RawFieldType<T>, injectedPrimitives: InjectedPrimitives<T> | undefined): _ is PrimitiveTypeName<T> => Boolean(PrimitiveTypes.some(__ => _ == __) || injectedPrimitives?.injectedPrimitives.has(_ as keyof T)),
   isMaybeApplication: (_: any): _ is Object => isObject(_),
-  isValidApplication: <T>(_: RawFieldType<T>): _ is {fun: GenericType, args: Array<RawFieldType<T>>} => hasFun(_) && isGenericType(_.fun) && hasArgs(_) ,
+  isApplication: <T>(_: RawFieldType<T>): _ is {fun: GenericType, args: Array<RawFieldType<T>>} => hasFun(_) && isGenericType(_.fun) && hasArgs(_) ,
   isMaybeLookup: (_: any) => isString(_),
-  isValidLookup: <T>(_: RawFieldType<T>, forms: Set<TypeName>): _ is TypeName => isString(_) && forms.has(_),
-  isList: <T>(_: RawFieldType<T>): _ is {fun: "List", args: Array<RawFieldType<T>>} => RawFieldType.isValidApplication(_) && _.fun == "List" && _.args.length == 1,
-  isMap: <T>(_: RawFieldType<T>): _ is {fun: "Map", args: Array<RawFieldType<T>>} => RawFieldType.isValidApplication(_) && _.fun == "Map" && _.args.length == 2,
-  isSingleSelection: <T>(_: RawFieldType<T>): _ is {fun: "SingleSelection", args: Array<RawFieldType<T>>} => RawFieldType.isValidApplication(_) && _.fun == "SingleSelection" && _.args.length == 1,
-  isMultiSelection: <T>(_: RawFieldType<T>): _ is {fun: "MultiSelection", args: Array<RawFieldType<T>>} => RawFieldType.isValidApplication(_) && _.fun == "MultiSelection" && _.args.length == 1,
+  isLookup: <T>(_: RawFieldType<T>, forms: Set<TypeName>): _ is TypeName => isString(_) && forms.has(_),
+  isList: <T>(_: RawFieldType<T>): _ is {fun: "List", args: Array<RawFieldType<T>>} => RawFieldType.isApplication(_) && _.fun == "List" && _.args.length == 1,
+  isMap: <T>(_: RawFieldType<T>): _ is {fun: "Map", args: Array<RawFieldType<T>>} => RawFieldType.isApplication(_) && _.fun == "Map" && _.args.length == 2,
+  isSingleSelection: <T>(_: RawFieldType<T>): _ is {fun: "SingleSelection", args: Array<RawFieldType<T>>} => RawFieldType.isApplication(_) && _.fun == "SingleSelection" && _.args.length == 1,
+  isMultiSelection: <T>(_: RawFieldType<T>): _ is {fun: "MultiSelection", args: Array<RawFieldType<T>>} => RawFieldType.isApplication(_) && _.fun == "MultiSelection" && _.args.length == 1,
 }
 
 export type PrimitiveTypeName<T> = "string" | "number" | "maybeBoolean" | "boolean" | "Date" | "CollectionReference" | "base64File" | "secret" | keyof T;
@@ -53,7 +53,7 @@ export const ParsedType = {
     lookup: <T>(name: string): ParsedType<T> => ({ kind: "lookup", name }),
   },
   Operations: {
-    Equals: <K, T>(fst: ParsedType<T>, snd: ParsedType<T>): boolean =>
+    Equals: <T>(fst: ParsedType<T>, snd: ParsedType<T>): boolean =>
       fst.kind == "lookup" && snd.kind == "lookup" ? fst.name == snd.name :
         fst.kind == "primitive" && snd.kind == "primitive" ? fst.value == snd.value :
           fst.kind == "application" && snd.kind == "application" ?
@@ -62,29 +62,30 @@ export const ParsedType = {
             fst.args.every((v, i) => v == snd.args[i]) :
             false,      
     ParseRawFieldType: <T>(fieldName: TypeName, rawFieldType: RawFieldType<T>, types: Set<TypeName>, injectedPrimitives?: InjectedPrimitives<T>) : ValueOrErrors<ParsedType<T>, string> => {
-      if (RawFieldType.isValidPrimitive(rawFieldType, injectedPrimitives))
+      
+      if (RawFieldType.isPrimitive(rawFieldType, injectedPrimitives))
          return ValueOrErrors.Default.return(ParsedType.Default.primitive(rawFieldType))
       if (RawFieldType.isSingleSelection(rawFieldType))
-        ParsedType.Operations.ParseRawFieldType(fieldName, rawFieldType.args[0], types, injectedPrimitives).Then(parsedArgs => {
-          return ValueOrErrors.Default.return(ParsedType.Default.application("SingleSelection", [parsedArgs]))
-        })
-      if (RawFieldType.isMultiSelection(rawFieldType))
-        ParsedType.Operations.ParseRawFieldType(fieldName, rawFieldType.args[0], types, injectedPrimitives).Then(parsedArgs => {
-          return ValueOrErrors.Default.return(ParsedType.Default.application("MultiSelection", [parsedArgs]))
-        })
-      if (RawFieldType.isList(rawFieldType))
-        ParsedType.Operations.ParseRawFieldType(fieldName, rawFieldType.args[0], types, injectedPrimitives).Then(parsedArgs => {
-          return ValueOrErrors.Default.return(ParsedType.Default.application("List", [parsedArgs]))
-        })
-      if (RawFieldType.isMap(rawFieldType))
-        ParsedType.Operations.ParseRawFieldType(fieldName, rawFieldType.args[0], types, injectedPrimitives).Then(parsedArgs0 => 
-          ParsedType.Operations.ParseRawFieldType(fieldName, rawFieldType.args[1], types, injectedPrimitives).Then(parsedArgs1 => {
-            return ValueOrErrors.Default.return(ParsedType.Default.application("Map", [parsedArgs0, parsedArgs1]))
-          })
+        return ParsedType.Operations.ParseRawFieldType(fieldName, rawFieldType.args[0], types, injectedPrimitives).Then(parsedArgs =>
+          ValueOrErrors.Default.return(ParsedType.Default.application("SingleSelection", [parsedArgs]))
         )
-      if(RawFieldType.isValidLookup(rawFieldType, types))
+      if (RawFieldType.isMultiSelection(rawFieldType))
+        return ParsedType.Operations.ParseRawFieldType(fieldName, rawFieldType.args[0], types, injectedPrimitives).Then(parsedArgs => 
+          ValueOrErrors.Default.return(ParsedType.Default.application("MultiSelection", [parsedArgs]))
+        )
+      if (RawFieldType.isList(rawFieldType))
+        return ParsedType.Operations.ParseRawFieldType(fieldName, rawFieldType.args[0], types, injectedPrimitives).Then(parsedArgs => 
+          ValueOrErrors.Default.return(ParsedType.Default.application("List", [parsedArgs]))
+        )
+      if (RawFieldType.isMap(rawFieldType))
+        return ParsedType.Operations.ParseRawFieldType(fieldName, rawFieldType.args[0], types, injectedPrimitives).Then(parsedArgs0 => 
+          ParsedType.Operations.ParseRawFieldType(fieldName, rawFieldType.args[1], types, injectedPrimitives).Then(parsedArgs1 => 
+            ValueOrErrors.Default.return(ParsedType.Default.application("Map", [parsedArgs0, parsedArgs1]))
+          )
+        )
+      if(RawFieldType.isLookup(rawFieldType, types))
          return ValueOrErrors.Default.return(ParsedType.Default.lookup(rawFieldType))
-      
+      console.debug(`Invalid type ${JSON.stringify(rawFieldType)} for field ${JSON.stringify(fieldName)}`)
       return ValueOrErrors.Default.throw(List([`Invalid type ${JSON.stringify(rawFieldType)} for field ${JSON.stringify(fieldName)}`]))
     }
   }

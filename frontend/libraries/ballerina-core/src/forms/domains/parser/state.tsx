@@ -18,7 +18,7 @@ import { FormLabel } from "../singleton/domains/form-label/state";
 import { Form } from "../singleton/template";
 import { ValueOrErrors } from "../../../collections/domains/valueOrErrors/state";
 
-export type Form = {
+type Form = {
   renderer: Template<any, any, any, any>,
   initialValue: any,
   initialState: any
@@ -353,6 +353,7 @@ export const parseForms =
             }
           } catch (error) {
             errors.push(`unhandled error: ${JSON.stringify(error)} -> ${formDef.name}`)
+            console.debug(error)
           }
         })
         formProcessingOrder = formProcessingOrder.add(formDef.name)

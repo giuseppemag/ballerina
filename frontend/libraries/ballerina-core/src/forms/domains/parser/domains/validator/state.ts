@@ -28,7 +28,10 @@ export type ParsedRenderer<T> =
         tooltip?: string;
         visible?: BoolExpr<any>;
         disabled?: BoolExpr<any>; 
-    }  
+    }
+export const ParsedRenderer = {
+  
+}
 
 export type RawForm = {
   type?: any;
@@ -84,7 +87,7 @@ export type RawFormJSON = {
 export const RawFormJSON = {
   hasTypes: (_: any): _ is { types: Object } => isObject(_) && "types" in _ && isObject(_.types),
   hasForms: (_: any): _ is { forms: Object } => isObject(_) && "forms" in _ && isObject(_.forms),
-  hasApis: (_: any): _ is { apis: { enumOptions: Object; searchableStreams: Object; entities: Object; }} => isObject(_) && "apis" in _ && isObject(_.apis) && "enumOptions" in _.apis && isObject(_.apis.enumOptions) && "searchableStreams" in _.apis && isObject(_.apirs.searchableStreams) && "entities" in _.apis && isObject(_.apis.entities), 
+  hasApis: (_: any): _ is { apis: { enumOptions: Object; searchableStreams: Object; entities: Object; }} => isObject(_) && "apis" in _ && isObject(_.apis) && "enumOptions" in _.apis && isObject(_.apis.enumOptions) && "searchableStreams" in _.apis && isObject(_.apis.searchableStreams) && "entities" in _.apis && isObject(_.apis.entities), 
   hasLaunchers: (_: any): _ is { launchers: any } => isObject(_) && "launchers" in _,
 }
 export type ParsedFormJSON<T> = {
@@ -111,7 +114,7 @@ export const FormsConfig = {
     validateAndParseFormConfig: <T extends {[key in keyof T]: {type: any, state: any}}>(builtIns: BuiltIns, apiConverters: ApiConverters<T>, injectedPrimitives?: InjectedPrimitives<T>) => (fc: any): FormConfigValidationAndParseResult<T> => {
       let errors: List<FormValidationError> = List();
       const formsConfig = Array.isArray(fc) ? FormsConfigMerger.Default.merge(fc) : fc;
-      
+
       // validation only
       const hasApis = "apis" in formsConfig;
       const apiProps = List(["enumOptions", "searchableStreams", "entities"]);
@@ -145,20 +148,23 @@ export const FormsConfig = {
 
       // Parse Type
       let parsedTypes: Map<TypeName, ParsedType<T>> = Map();
-      let rawExtendedTypes: Map<TypeName, {  extends: Array<TypeName>; fields: OrderedMap<FieldName, RawFieldType<T>>}> = Map();
       const rawTypesFromConfig = formsConfig.types;
       const rawTypeNames = Set(Object.keys(rawTypesFromConfig))
       Object.entries(formsConfig.types).forEach(([rawTypeName, rawType]) => {
         // TODO: Parser, should you be able to extend an extended type? probs not, so something for GMs parser
-        // First check if it is an extended type, we need to resolve these after all types are parsed
+        
+        const parsedType: ParsedType<T> = { kind: "form", value: rawTypeName, fields: Map() };
+        
         if (!RawType.hasFields(rawType)){
           errors = errors.push(`missing 'fields' in type ${rawTypeName}: expected object`);
           return
         }
-        
-        if (RawType.isExtendedType(rawType)) 
-          if (RawType.isValidExtendedType<T>(rawType)){
-            rawExtendedTypes = rawExtendedTypes.set(rawTypeName, rawType);
+
+        // First check if it is an extended type, we need to resolve these as lookup types
+        // TODO: Backwards compatability for CollectionReference
+        if (RawType.isMaybeExtendedType(rawType)) 
+          if (RawType.isExtendedType<T>(rawType)){
+            parsedTypes = parsedTypes.set(rawTypeName, ParsedType.Default.lookup(rawType.extends[0]));
             return
           }
           else{
@@ -166,19 +172,14 @@ export const FormsConfig = {
             return
           }
            
-        // Then parse types with fields wich are either primitive, application or lookup, if valid
-        const parsedType: ParsedType<T> = { kind: "form", value: rawTypeName, fields: Map() };
-        Object.entries(rawType.fields).forEach((rawFieldName: any, rawFieldType: any) => {
-          if ((RawFieldType.isMaybeLookup(rawFieldType) && !RawFieldType.isValidPrimitive(rawFieldType, injectedPrimitives)
+
+        Object.entries(rawType.fields).forEach(([rawFieldName, rawFieldType]: [rawFieldName: any, rawFieldType: any]) => {
+          if ((RawFieldType.isMaybeLookup(rawFieldType) && !RawFieldType.isPrimitive(rawFieldType, injectedPrimitives)
                && (injectedPrimitives?.injectedPrimitives.has(rawFieldType as keyof T) || (builtIns.primitives.has(rawFieldType))))){
                 // TODO fix up injected primitive with operations and now have this doubling or assertion here
                 // This validation must be done at runtime, as we need to know the injectedPrimitives and field names
                 errors = errors.push(`field ${rawFieldName} in type ${rawTypeName}: fields, injectedPrimitive and builtIns cannot have the same name`); //TODO remind GM of this for BE parser
                 return;
-          }
-          if(RawFieldType.isMaybeApplication(rawFieldType) && !RawFieldType.isValidApplication(rawFieldType)){
-              errors = errors.push(`field ${rawFieldName} in type ${rawTypeName}: expected application, found ${JSON.stringify(rawFieldType)}`);
-              return;
           }
           
           const parsedFieldType = ParsedType.Operations.ParseRawFieldType(rawFieldName, rawFieldType, rawTypeNames, injectedPrimitives);
@@ -190,34 +191,28 @@ export const FormsConfig = {
 
           parsedType.fields = parsedType.fields.set(rawFieldName, parsedFieldType.value);
         });
+        parsedTypes = parsedTypes.set(rawTypeName, parsedType);
       });
 
-      // Now we resolve the extended types
-      rawExtendedTypes.forEach((rawExtendedType, rawTypeName) => {
-        if(!parsedTypes.has(rawExtendedType.extends[0])){
-          errors = errors.push(`type ${rawTypeName} extends non-existent type ${rawTypeName}`);
-          return
-        }
-        parsedTypes.set(rawTypeName, parsedTypes.get(rawExtendedType.extends[0])!);
-      });
-      
+      /// PROBLEM HERE WITH fields typing and not putting all types into the map
+
       let enums: Map<string, TypeName> = Map();
       Object.entries(formsConfig.apis.enumOptions).forEach(([enumOptionName, enumOption]) => {
-        if (!parsedTypes.has(enumOption)) {
-          errors = errors.push(`formsConfig.apis.enumOptions: ${enumOptionName} refers to non-existent type ${enumOption}`);
-        } else {
+        // if (!parsedTypes.has(enumOption)) {
+        //   errors = errors.push(`formsConfig.apis.enumOptions: ${enumOptionName} refers to non-existent type ${enumOption}`);
+        // } else {
           enums = enums.set(enumOptionName, enumOption)
-        }
+        // }
       })
 
       // parse streams
       let streams: Map<string, TypeName> = Map();
       Object.entries(formsConfig.apis.searchableStreams).forEach(([searchableStreamName, searchableStream]) => {
-        if (!parsedTypes.has(searchableStream)) {
-          errors = errors.push(`formsConfig.apis.searchableStreams: ${searchableStreamName} refers to non-existent type ${searchableStream}`);
-        } else {
+        // if (!parsedTypes.has(searchableStream)) {
+        //   errors = errors.push(`formsConfig.apis.searchableStreams: ${searchableStreamName} refers to non-existent type ${searchableStream}`);
+        // } else {
           streams = streams.set(searchableStreamName, searchableStream)
-        }
+        // }
       })
       // end
 
@@ -240,9 +235,9 @@ export const FormsConfig = {
           errors = errors.push(`formsConfig.apis.entities.${entityApiName}.methods is not an array`);
           return
         }
-        if (!parsedTypes.has(entityApi.type)) {
-          errors = errors.push(`formsConfig.apis.entities refers to non-existent type ${entityApi.type}`);
-        }
+        // if (!parsedTypes.has(entityApi.type)) {
+        //   errors = errors.push(`formsConfig.apis.entities refers to non-existent type ${entityApi.type}`);
+        // }
 
         entities = entities.set(entityApiName, {
           type: entityApi.type,
@@ -256,6 +251,7 @@ export const FormsConfig = {
         
       })
       // end
+  
 
       // parse forms
       let forms: Map<string, ParsedFormConfig<T>> = Map();
@@ -275,13 +271,19 @@ export const FormsConfig = {
         if(!RawForm.hasTabs(form)){
           errors = errors.push(`form ${formName} is missing the required 'tabs' attribute`);
           return
-        }     
-
-        const parsedForm: ParsedFormConfig<T> = { name: formName, fields: Map(), tabs: Map(), type: parsedTypes.get(form.type)!, header: RawForm.hasHeader(form) ? form.header : undefined };
+        }
         
+        const parsedForm: ParsedFormConfig<T> = { name: formName, fields: Map(), tabs: Map(), type: parsedTypes.get(form.type)!, header: RawForm.hasHeader(form) ? form.header : undefined };
+
+        const formType = parsedTypes.get(form.type)!
+        if(formType.kind != "form"){
+          errors = errors.push(`form ${formName} references non-form type ${form.type}`);
+          return
+        }
         // parse fields
         Object.entries(form.fields).forEach(([fieldName, field]: [fieldName: string, field: any]) => {
-          const fieldType = parsedTypes.get(fieldName)!
+          const fieldType = formType.fields.get(fieldName)!
+          
           if(fieldType.kind == "primitive")
             parsedForm.fields = parsedForm.fields.set(fieldName, {
               type: fieldType,
@@ -294,7 +296,6 @@ export const FormsConfig = {
                 BoolExpr.Default(field.disabled)
                 : BoolExpr.Default.false(),
             })
-          
 
           if(fieldType.kind == "form")
             parsedForm.fields = parsedForm.fields.set(
@@ -308,8 +309,7 @@ export const FormsConfig = {
               disabled: field.disabled != undefined ?
                 BoolExpr.Default(field.disabled)
                 : BoolExpr.Default.false(),
-            })
-          
+            })          
 
           if(fieldType.kind == "application" && "options" in field)
             parsedForm.fields = parsedForm.fields.set(
@@ -325,7 +325,6 @@ export const FormsConfig = {
                 : BoolExpr.Default.false(),
               options: field.options
             })
-          
 
           if(fieldType.kind == "application" && "stream" in field)
             parsedForm.fields = parsedForm.fields.set(
@@ -341,9 +340,10 @@ export const FormsConfig = {
                 : BoolExpr.Default.false(),
               stream: field.stream
             })
-          
 
           if(fieldType.kind == "application" && fieldType.value == "List")
+          {
+            // backwards compatability
             parsedForm.fields = parsedForm.fields.set(
               fieldName, {
               type: fieldType,
@@ -357,6 +357,7 @@ export const FormsConfig = {
                 : BoolExpr.Default.false(),
               elementRenderer: field.elementRenderer
             })
+          }
 
           if(fieldType.kind == "application" && fieldType.value == "Map")
             parsedForm.fields = parsedForm.fields.set(
@@ -394,9 +395,10 @@ export const FormsConfig = {
             })
         })
         parsedForm.tabs = tabs
-        
         forms = forms.set(formName, parsedForm);
-    })
+      })
+
+
 
       let launchers: ParsedFormJSON<T>["launchers"] = {
         create: Map<string, Launcher>(),
@@ -440,7 +442,6 @@ export const FormsConfig = {
         else
           launchers.edit = launchers.edit.set(launcherName, launcher)
       })
-
 
       if (errors.size > 0) {
         console.error("parsing errors")
