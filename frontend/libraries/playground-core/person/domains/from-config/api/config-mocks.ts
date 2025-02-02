@@ -1,5 +1,11 @@
 export const PersonFormsConfig = {
   "types": {
+    "CollectionReference": {
+      fields: {
+        "id": "string",
+        "displayName": "string"
+      }
+    },
     "CityRef": {
       "extends": ["CollectionReference"],
       fields: {}
@@ -31,14 +37,10 @@ export const PersonFormsConfig = {
       "extends": ["CollectionReference"],
       fields: {}
     },
-    "FamilyMemberToAge": {
-      fields: {
-        "familyMembertoAge": 
-          {fun: "Map", args: ["string", "number"]}
-      }
-    },
     "Person": {
       fields: {
+        "listMapList": { fun: "List", args: [{ fun: "Map", args: ["string", {fun: "List", args: ["string"]}] }] },
+        "listList": {fun: "List", args: [{fun: "List", args: ["string"]}]},
         "category": "injectedCategory",
         "name": "string",
         "surname": "string",
@@ -49,8 +51,8 @@ export const PersonFormsConfig = {
         "dependants": { fun: "Map", args: ["string", "injectedCategory"] },
         "friendsByCategory": { fun: "Map", args: ["injectedCategory", "string"] },
         "relatives": { fun: "List", args: ["injectedCategory"] },
-        "interests": { fun: "Multiselection", args: ["InterestRef"] },
-        "departments": { fun: "Multiselection", args: ["DepartmentRef"] },
+        "interests": { fun: "MultiSelection", args: ["InterestRef"] },
+        "departments": { fun: "MultiSelection", args: ["DepartmentRef"] },
         "mainAddress": "Address",
         "addresses": { fun: "List", args: ["Address"] },
         "emails": { fun: "List", args: ["string"] },
@@ -59,11 +61,11 @@ export const PersonFormsConfig = {
         "addressesWithColorLabel": { fun: "Map", args: [{ fun: "SingleSelection", args: ["ColorRef"]}, "Address"] },
         "permissions": { fun: "Map", args: [{ fun: "SingleSelection", args: ["PermissionRef"]}, "boolean"] },
         "cityByDepartment": { fun: "Map", args: [{fun: "SingleSelection", args: ["DepartmentRef"]}, {fun: "SingleSelection", args: ["CityRef"]}] },
-        "shoeColours": {fun: "Multiselection", args: ["ColorRef"]},
+        "shoeColours": {fun: "MultiSelection", args: ["ColorRef"]},
         "friendsBirthdays": { fun: "Map", args: ["string", "Date"] },
         "holidays": {fun: "List", args: ["Date"]},
         "interestsToString": { fun: "Map", args: [{fun: "SingleSelection", args: ["InterestRef"]}, "string"] },
-        "familiesToMemberToAges": { fun: "Map", args: ["string", "FamilyMemberToAge"] },
+        "familiesToMemberToAges": { fun: "Map", args: ["string", {fun: "Map", args: ["string", "number"]}] },
       }
     }
   },
@@ -86,28 +88,6 @@ export const PersonFormsConfig = {
     }
   },
   "forms": {
-    "familyMemberToAge": {
-      "type": "FamilyMemberToAge",
-      "fields": {
-        "familyMembertoAge": {
-          renderer: "defaultMap",
-          keyRenderer: { label: "family member", renderer: "defaultString", visible: { "kind": "true" } },
-          valueRenderer: { label: "age", renderer: "defaultNumber", visible: { "kind": "true" } },
-          visible: { "kind": "true" }
-        }
-      },
-      "tabs": {
-        "main": {
-          "columns": {
-            "main": {
-              "groups": {
-                "main": ["familyMembertoAge"]
-              }
-            }
-          }
-        }
-      }
-    },
     "address": {
       "type": "Address",
       "fields": {
@@ -140,6 +120,35 @@ export const PersonFormsConfig = {
     "person": {
       "type": "Person",
       "fields": {
+        "listMapList": {
+          label: "list map list",
+          renderer: "defaultList",
+          elementRenderer: {
+            renderer: "defaultMap",
+            keyRenderer: { label: "string", renderer: "defaultString", visible: { "kind": "true" } },
+            valueRenderer: {
+              renderer: "defaultList",
+              elementRenderer: { renderer: "defaultString", visible: { "kind": "true" } },
+              visible: { "kind": "true" }
+            },
+            visible: { "kind": "true" }
+          },
+          visible: { "kind": "true" }
+        },
+        "listList": {
+          label: "list list",
+          renderer: "defaultList",
+          visible: {"kind": "true"},
+          elementRenderer: {
+            label: "HERE",
+            renderer: "defaultList",
+            visible: {"kind": "true"},            
+            elementRenderer: {
+              renderer: "defaultString",
+              visible: {"kind": "true"}
+            }
+          }
+        },
         "category": { label: "category", renderer: "defaultCategory", visible: { "kind": "true" } },
         "name": { label: "first name", tooltip: "Any name will do", renderer: "defaultString", visible: { "kind": "true" } },
         "surname": { label: "last name", renderer: "defaultString", visible: { "kind": "true" } },
@@ -174,7 +183,9 @@ export const PersonFormsConfig = {
           valueRenderer: { label: "name", renderer: "defaultString", visible: { "kind": "true" } },
           visible: { "kind": "true" },
         },
-        "relatives": { label: "relatives", tooltip: "someone who you are related to", elementTooltip: "one relative", elementLabel: "relative", renderer: "defaultList", elementRenderer:"defaultCategory", visible: { "kind": "true" } },
+        "relatives": { label: "relatives", tooltip: "someone who you are related to", elementTooltip: "one relative", elementLabel: "relative", renderer: "defaultList", elementRenderer: {
+          renderer: "defaultCategory", visible: { "kind": "true" }
+        }, visible: { "kind": "true" } },
         "subscribeToNewsletter": { label: "subscribe to newsletter", renderer: "defaultBoolean", visible: { "kind": "true" } },
         "interests": {
           label: "interests",
@@ -190,8 +201,12 @@ export const PersonFormsConfig = {
             // { "kind": "leaf", "operation": "field", "arguments": { "location": "local", "field": "subscribeToNewsletter", "value": false } }
         },
         "mainAddress": { label: "main address", renderer: "address", visible: { "kind": "true" }},
-        "addresses": { label: "other addresses", renderer: "defaultList", elementLabel: "address", elementRenderer:"address", visible: { "kind": "true" } },
-        "emails": { label: "emails", renderer: "defaultList", elementLabel: "email", elementRenderer:"defaultString", visible: { "kind": "true" } },
+        "addresses": { label: "other addresses", renderer: "defaultList", elementLabel: "address", elementRenderer: {
+          renderer: "address", visible: { "kind": "true" }
+        }, visible: { "kind": "true" } },
+        "emails": { label: "emails", renderer: "defaultList", elementLabel: "email", elementRenderer: {
+          renderer: "defaultString", visible: { "kind": "true" }
+        }, visible: { "kind": "true" } },
         "addressesWithLabel": {
           label: "addresses with label",
           renderer: "defaultMap",
@@ -241,7 +256,7 @@ export const PersonFormsConfig = {
             // elementLabel: "holiday",
             // elementRenderer: "defaultDate",
             // elementTooltip: "a holiday",
-            elementRenderer: { renderer: "defaultDate", label: "holiday", tooltip: "a holiday"},
+            elementRenderer: { renderer: "defaultDate", label: "holiday", tooltip: "a holiday", visible: { "kind": "true" } },
         },
         "interestsToString": {
             label: "interests to string",
@@ -254,7 +269,13 @@ export const PersonFormsConfig = {
           label: "families to member to ages",
           renderer: "defaultMap",
           keyRenderer: { label: "family", renderer: "defaultString", visible: { "kind": "true" } },
-          valueRenderer: { label: "member to age", renderer: "familyMemberToAge", visible: { "kind": "true" } },
+          valueRenderer: {
+            label: "family member to age",
+            renderer: "defaultMap",
+            keyRenderer: { label: "family member", renderer: "defaultString", visible: { "kind": "true" } },
+            valueRenderer: { label: "age", renderer: "defaultNumber", visible: { "kind": "true" } },
+            visible: { "kind": "true" }
+          },
           visible: { "kind": "true" }
         }
       },
@@ -263,7 +284,10 @@ export const PersonFormsConfig = {
           "columns": {
             "demographics": {
               "groups": {
-                "main": ["category", "name", "surname", "birthday", "gender", "emails", "dependants", "friendsByCategory", "relatives", "friendsBirthdays", "shoeColours"],
+                "main": [ 
+                  "listMapList",
+                  "listList",
+                   "category", "name", "surname", "birthday", "gender", "emails", "dependants", "friendsByCategory", "relatives", "friendsBirthdays", "shoeColours"],
               },
             },
             "mailing": {
