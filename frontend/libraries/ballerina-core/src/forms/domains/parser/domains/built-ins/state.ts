@@ -114,30 +114,20 @@ export const defaultValue = <T>(types: Map<TypeName, ParsedType<T>>, builtIns: B
   if(t.kind == "primitive") {
     const primitive = builtIns.primitives.get(t.value as string)
     const injectedPrimitive = injectedPrimitives?.injectedPrimitives.get(t.value as keyof T)
-    if (primitive != undefined) {
+    if (primitive != undefined) 
       return primitive.defaultValue
-    } else if (injectedPrimitive != undefined) {
+    if (injectedPrimitive != undefined) 
       return injectedPrimitive.defaultValue
-    }
   }
 
   if (t.kind == "application") {
     const generic = builtIns.generics.get(t.value)
-    if (generic) {
+    if (generic) 
       return generic.defaultValue
-    }
   }
 
-  if(t.kind == "lookup") {
-    const form = types.get(t.name)
-    if (form != undefined && form.kind == "form") {
-        let res = {} as any
-        form.fields.forEach((field, fieldName) => {
-          res[fieldName] = defaultValue(types, builtIns, injectedPrimitives)(field)
-        })
-      return res
-    }
-  }
+  if(t.kind == "lookup")
+    defaultValue(types, builtIns, injectedPrimitives)(types.get(t.name)!)
 
   if(t.kind == "form") {
     let res = {} as any
@@ -181,23 +171,9 @@ export const fromAPIRawValue = <T extends { [key in keyof T]: { type: any; state
       )
     }
   }
-  if(t.kind == "lookup") {
-    let result: any = { ...raw }
-    const tDef = types.get(t.name)!
-    if(tDef.kind == "form"){
-      tDef.fields.forEach((fieldType, fieldName) => {
-        const fieldValue = raw[fieldName]
-        result[fieldName] = fromAPIRawValue(fieldType, types, builtIns, converters, injectedPrimitives)(fieldValue)
-      })
-      return result
-    }
-    // for extended types
-    if(tDef.kind == "lookup") 
-      return fromAPIRawValue(tDef, types, builtIns, converters, injectedPrimitives)(raw)
-    
-    console.error(`unsupported type ${JSON.stringify(t)}, returning the obj value right away`)
-    return raw
-  }
+
+  if(t.kind == "lookup")
+    return fromAPIRawValue(types.get(t.name)!, types, builtIns, converters, injectedPrimitives)(raw)
 
   if(t.kind == "form") {
     let result: any = { ...raw }

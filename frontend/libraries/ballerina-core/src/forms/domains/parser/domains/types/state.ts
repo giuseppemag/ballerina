@@ -55,13 +55,15 @@ export const ParsedType = {
   },
   Operations: {
     Equals: <T>(fst: ParsedType<T>, snd: ParsedType<T>): boolean =>
-      fst.kind == "lookup" && snd.kind == "lookup" ? fst.name == snd.name :
-        fst.kind == "primitive" && snd.kind == "primitive" ? fst.value == snd.value :
-          fst.kind == "application" && snd.kind == "application" ?
-            fst.value == snd.value &&
-            fst.args.length == snd.args.length &&
-            fst.args.every((v, i) => v == snd.args[i]) :
-            false,      
+      fst.kind == "form" && snd.kind == "form" ? fst.value == snd.value :
+        fst.kind == "lookup" && snd.kind == "lookup" ? fst.name == snd.name :
+          fst.kind == "primitive" && snd.kind == "primitive" ? fst.value == snd.value :
+            fst.kind == "application" && snd.kind == "application" ?
+              fst.value == snd.value &&
+              fst.args.length == snd.args.length &&
+              fst.args.every((v, i) => v == snd.args[i]) :
+              false,
+    
     ParseRawFieldType: <T>(fieldName: TypeName, rawFieldType: RawFieldType<T>, types: Set<TypeName>, injectedPrimitives?: InjectedPrimitives<T>) : ValueOrErrors<ParsedType<T>, string> => {
       
       if (RawFieldType.isPrimitive(rawFieldType, injectedPrimitives))
@@ -86,7 +88,6 @@ export const ParsedType = {
         )
       if(RawFieldType.isLookup(rawFieldType, types))
          return ValueOrErrors.Default.return(ParsedType.Default.lookup(rawFieldType))
-      console.debug(`Invalid type ${JSON.stringify(rawFieldType)} for field ${JSON.stringify(fieldName)}`)
       return ValueOrErrors.Default.throw(List([`Invalid type ${JSON.stringify(rawFieldType)} for field ${JSON.stringify(fieldName)}`]))
     }
   }

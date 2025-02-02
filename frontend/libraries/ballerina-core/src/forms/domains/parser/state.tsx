@@ -323,7 +323,6 @@ export const parseForms =
         edit: Map(),
       }
       let parsedForms: ParsedForms<T> = Map()
-      // TODO: Do we need to account for the other types? (Form, enum, stream)
       const traverse = (formDef:ParsedFormConfig<T>) => {
         if (formProcessingOrder.has(formDef.name)) {
           return
@@ -354,7 +353,7 @@ export const parseForms =
               }
             }
           } catch (error: any) {
-            console.error(error)
+            console.error(`error parsing field :${fieldName}:: `,error)
             errors.push(error.message ?? error)
           }
         })

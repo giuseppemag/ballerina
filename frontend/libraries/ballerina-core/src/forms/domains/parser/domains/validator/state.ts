@@ -201,51 +201,24 @@ export type FormValidationError = string;
 
 export type FormConfigValidationAndParseResult<T> = ValueOrErrors<ParsedFormJSON<T>, FormValidationError>
 
-
 export const FormsConfig = {
   Default: {
     validateAndParseFormConfig: <T extends {[key in keyof T]: {type: any, state: any}}>(builtIns: BuiltIns, apiConverters: ApiConverters<T>, injectedPrimitives?: InjectedPrimitives<T>) => (fc: any): FormConfigValidationAndParseResult<T> => {
       let errors: List<FormValidationError> = List();
       const formsConfig = Array.isArray(fc) ? FormsConfigMerger.Default.merge(fc) : fc;
 
-      // validation only
-      const hasApis = "apis" in formsConfig;
-      const apiProps = List(["enumOptions", "searchableStreams", "entities"]);
-      const formPropertyChecks = List<[string, boolean]>(
-        [
-          ['types', "types" in formsConfig],
-          ['forms', "forms" in formsConfig],
-          ['apis', hasApis],
-          ['enumOptions', hasApis && "enumOptions" in formsConfig.apis],
-          ['searchableStreams', hasApis && "searchableStreams" in formsConfig.apis],
-          ['entities', hasApis && "entities" in formsConfig.apis],
-          ['launchers', "launchers" in formsConfig]
-        ]
-      );
-
       if (!RawFormJSON.hasTypes(formsConfig) || !RawFormJSON.hasForms(formsConfig) || !RawFormJSON.hasApis(formsConfig) || !RawFormJSON.hasLaunchers(formsConfig)) {
-        const formPropertyErrors = formPropertyChecks.filter(([_, hasProp]) => !hasProp)
-        .map(([prop, _]) => apiProps.includes(prop) ? 
-          `the formsConfig.apis does not contain a '${prop}' field` :
-          `the formsConfig does not contain a '${prop}' field`);
-        return ValueOrErrors.Default.throw(formPropertyErrors);
+        return ValueOrErrors.Default.throw(List(['the formsConfig is missing required top level fields']));
       }
 
-      if(injectedPrimitives){
-        injectedPrimitives?.injectedPrimitives.keySeq().toArray().some((injectedPrimitiveName) => {
-          if(!Object.keys(apiConverters).includes(injectedPrimitiveName as string)){
-          errors = errors.push(`the formsConfig does not contain an Api Converter for injected primitive: ${injectedPrimitiveName as string}`);
-        }})
-      }
-      // end
+      // This error check must stay in the frontend, as it depends on injected types
+      if(injectedPrimitives?.injectedPrimitives.keySeq().toArray().some((injectedPrimitiveName) => !Object.keys(apiConverters).includes(injectedPrimitiveName as string)))
+          return ValueOrErrors.Default.throw(List([`the formsConfig does not contain an Api Converter for all injected primitives`]));
 
-      // Parse Type
       let parsedTypes: Map<TypeName, ParsedType<T>> = Map();
       const rawTypesFromConfig = formsConfig.types;
       const rawTypeNames = Set(Object.keys(rawTypesFromConfig))
-      Object.entries(formsConfig.types).forEach(([rawTypeName, rawType]) => {
-        // TODO: Parser, should you be able to extend an extended type? probs not, so something for GMs parser
-        
+      Object.entries(formsConfig.types).forEach(([rawTypeName, rawType]) => {        
         const parsedType: ParsedType<T> = { kind: "form", value: rawTypeName, fields: Map() };
         
         if (!RawType.hasFields(rawType)){
@@ -253,8 +226,6 @@ export const FormsConfig = {
           return
         }
 
-        // First check if it is an extended type, we need to resolve these as lookup types
-        // TODO: Backwards compatability for CollectionReference
         if (RawType.isMaybeExtendedType(rawType)) 
           if (RawType.isExtendedType<T>(rawType)){
             parsedTypes = parsedTypes.set(rawTypeName, ParsedType.Default.lookup(rawType.extends[0]));
@@ -264,19 +235,16 @@ export const FormsConfig = {
             errors = errors.push(`invalid 'extends' clause in type ${rawTypeName}: expected string[]`);
             return
           }
-           
 
         Object.entries(rawType.fields).forEach(([rawFieldName, rawFieldType]: [rawFieldName: any, rawFieldType: any]) => {
           if ((RawFieldType.isMaybeLookup(rawFieldType) && !RawFieldType.isPrimitive(rawFieldType, injectedPrimitives)
                && (injectedPrimitives?.injectedPrimitives.has(rawFieldType as keyof T) || (builtIns.primitives.has(rawFieldType))))){
-                // TODO fix up injected primitive with operations and now have this doubling or assertion here
                 // This validation must be done at runtime, as we need to know the injectedPrimitives and field names
                 errors = errors.push(`field ${rawFieldName} in type ${rawTypeName}: fields, injectedPrimitive and builtIns cannot have the same name`); //TODO remind GM of this for BE parser
                 return;
           }
           
           const parsedFieldType = ParsedType.Operations.ParseRawFieldType(rawFieldName, rawFieldType, rawTypeNames, injectedPrimitives);
-          // TODO whole parser should return a ValueOrErrors so we can use monadic operations
           if(parsedFieldType.kind == "errors"){
             errors = errors.concat(parsedFieldType.errors.toArray());
             return;
@@ -287,29 +255,16 @@ export const FormsConfig = {
         parsedTypes = parsedTypes.set(rawTypeName, parsedType);
       });
 
-      /// PROBLEM HERE WITH fields typing and not putting all types into the map
-
       let enums: Map<string, TypeName> = Map();
-      Object.entries(formsConfig.apis.enumOptions).forEach(([enumOptionName, enumOption]) => {
-        // if (!parsedTypes.has(enumOption)) {
-        //   errors = errors.push(`formsConfig.apis.enumOptions: ${enumOptionName} refers to non-existent type ${enumOption}`);
-        // } else {
+      Object.entries(formsConfig.apis.enumOptions).forEach(([enumOptionName, enumOption]) =>
           enums = enums.set(enumOptionName, enumOption)
-        // }
-      })
+      )
 
-      // parse streams
       let streams: Map<string, TypeName> = Map();
-      Object.entries(formsConfig.apis.searchableStreams).forEach(([searchableStreamName, searchableStream]) => {
-        // if (!parsedTypes.has(searchableStream)) {
-        //   errors = errors.push(`formsConfig.apis.searchableStreams: ${searchableStreamName} refers to non-existent type ${searchableStream}`);
-        // } else {
+      Object.entries(formsConfig.apis.searchableStreams).forEach(([searchableStreamName, searchableStream]) => 
           streams = streams.set(searchableStreamName, searchableStream)
-        // }
-      })
-      // end
+      )
 
-      // parse entities
       let entities: Map<string, EntityApi> = Map();
       Object.entries(formsConfig.apis.entities).forEach(([entityApiName, entityApi]: [entiyApiName: string, entityApi: RawEntityApi ]) => {
         if(!("type" in entityApi)){
@@ -328,9 +283,6 @@ export const FormsConfig = {
           errors = errors.push(`formsConfig.apis.entities.${entityApiName}.methods is not an array`);
           return
         }
-        // if (!parsedTypes.has(entityApi.type)) {
-        //   errors = errors.push(`formsConfig.apis.entities refers to non-existent type ${entityApi.type}`);
-        // }
 
         entities = entities.set(entityApiName, {
           type: entityApi.type,
@@ -343,43 +295,24 @@ export const FormsConfig = {
         })
         
       })
-      // end
-  
 
-      // parse forms
       let forms: Map<string, ParsedFormConfig<T>> = Map();
       Object.entries(formsConfig.forms).forEach(([formName, form]: [formName: string, form: RawForm]) => {
-        if(!RawForm.hasType(form)){
-          errors = errors.push(`form ${formName} is missing the required 'type' attribute`);
+        if(!RawForm.hasType(form) || !RawForm.hasFields(form) || !RawForm.hasTabs(form)){
+          errors = errors.push(`form ${formName} is missing the required type, fields or tabs attribute`);
           return
         }
-        if (!parsedTypes.has(form.type)) {
-          errors = errors.push(`form ${formName} references non-existing type ${form.type}`);
-          return
-        }
-        if(!RawForm.hasFields(form)){
-          errors = errors.push(`form ${formName} is missing the required 'fields' attribute`);
-          return
-        }
-        if(!RawForm.hasTabs(form)){
-          errors = errors.push(`form ${formName} is missing the required 'tabs' attribute`);
-          return
-        }
-        
-        const parsedForm: ParsedFormConfig<T> = { name: formName, fields: Map(), tabs: Map(), type: parsedTypes.get(form.type)!, header: RawForm.hasHeader(form) ? form.header : undefined };
-
         const formType = parsedTypes.get(form.type)!
         if(formType.kind != "form"){
           errors = errors.push(`form ${formName} references non-form type ${form.type}`);
           return
         }
-        
-        // parse fields
+        const parsedForm: ParsedFormConfig<T> = { name: formName, fields: Map(), tabs: Map(), type: parsedTypes.get(form.type)!, header: RawForm.hasHeader(form) ? form.header : undefined };
+
         Object.entries(form.fields).forEach(([fieldName, field]: [fieldName: string, field: any]) =>
           parsedForm.fields = parsedForm.fields.set(fieldName, ParsedRenderer.Operations.parseRenderer(formType.fields.get(fieldName)!, field, parsedTypes))         
         )
 
-        // parse tabs
         let tabs: FormLayout = OrderedMap()
         Object.entries(form.tabs).forEach(([tabName, tab]: [tabName: string, tab: any]) => {
             let cols: TabLayout = { columns: OrderedMap() }
