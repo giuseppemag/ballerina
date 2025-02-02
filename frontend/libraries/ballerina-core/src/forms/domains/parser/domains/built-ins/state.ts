@@ -79,7 +79,7 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
     ]),
     "generics": Map([
       ["SingleSelection", { defaultValue: CollectionSelection().Default.right("no selection") }] as [string, GenericBuiltIn],
-      ["Multiselection", { defaultValue: Map() }] as [string, GenericBuiltIn],
+      ["MultiSelection", { defaultValue: Map() }] as [string, GenericBuiltIn],
       ["List", { defaultValue: List() }] as [string, GenericBuiltIn],
       ["Map", { defaultValue: List() }] as [string, GenericBuiltIn]
     ]),
@@ -139,6 +139,13 @@ export const defaultValue = <T>(types: Map<TypeName, ParsedType<T>>, builtIns: B
     }
   }
 
+  if(t.kind == "form") {
+    let res = {} as any
+    t.fields.forEach((field, fieldName) => {
+      res[fieldName] = defaultValue(types, builtIns, injectedPrimitives)(field)
+    })
+    return res
+  }
   throw Error(`cannot find type ${JSON.stringify(t)} when resolving defaultValue`)
 }
 
@@ -177,11 +184,24 @@ export const fromAPIRawValue = <T extends { [key in keyof T]: { type: any; state
   if(t.kind == "lookup") {
     let result: any = { ...raw }
     const tDef = types.get(t.name)!
-    if(tDef.kind != "form") {
-      console.error(`unsupported type ${JSON.stringify(t)}, returning the obj value right away`)
-      return raw
+    if(tDef.kind == "form"){
+      tDef.fields.forEach((fieldType, fieldName) => {
+        const fieldValue = raw[fieldName]
+        result[fieldName] = fromAPIRawValue(fieldType, types, builtIns, converters, injectedPrimitives)(fieldValue)
+      })
+      return result
     }
-    tDef.fields.forEach((fieldType, fieldName) => {
+    // for extended types
+    if(tDef.kind == "lookup") 
+      return fromAPIRawValue(tDef, types, builtIns, converters, injectedPrimitives)(raw)
+    
+    console.error(`unsupported type ${JSON.stringify(t)}, returning the obj value right away`)
+    return raw
+  }
+
+  if(t.kind == "form") {
+    let result: any = { ...raw }
+    t.fields.forEach((fieldType, fieldName) => {
       const fieldValue = raw[fieldName]
       result[fieldName] = fromAPIRawValue(fieldType, types, builtIns, converters, injectedPrimitives)(fieldValue)
     })
@@ -194,10 +214,9 @@ export const fromAPIRawValue = <T extends { [key in keyof T]: { type: any; state
 
 export const toAPIRawValue = <T extends { [key in keyof T]: { type: any; state: any; }}>(t: ParsedType<T>, types: Map<TypeName, ParsedType<T>>, builtIns: BuiltIns, converters: ApiConverters<T>, injectedPrimitives?: InjectedPrimitives<T>) => (raw: any, formState: any) : ValueOrErrors<any, string> => {
   if (t.kind == "primitive")
-    // TODO: fix thos type assertion some day
     return ValueOrErrors.Operations.Return(converters[t.value as string | keyof T].toAPIRawValue([raw, formState.modifiedByUser]))
   
-  if (t.kind == "application") { // application here means "generic type application"
+  if (t.kind == "application") {
     if (t.value == "SingleSelection") {
       const result = converters[t.value].toAPIRawValue([raw, formState.modifiedByUser])
       if(typeof result != "object") return ValueOrErrors.Operations.Return(result)
@@ -232,7 +251,7 @@ export const toAPIRawValue = <T extends { [key in keyof T]: { type: any; state: 
                   t.args[1],
                   types, builtIns, converters, injectedPrimitives)(keyValue[1], formState.elementFormStates.get(index).ValueFormState
                 ).Then(value => {
-                  return ValueOrErrors.Default.return({key: possiblyUndefinedKey.value, value: value.value})
+                  return ValueOrErrors.Default.return({key: possiblyUndefinedKey, value: value})
                 }
               )
             }
@@ -250,21 +269,14 @@ export const toAPIRawValue = <T extends { [key in keyof T]: { type: any; state: 
     }
   }
   
-  if (t.kind == "lookup") {
-    // TODO backwards compatibility with deprecated primitive CollectionReference
-    const tDef = types.get(t.name)!
-    if(!tDef && t.name == "CollectionReference") {
-      console.warn(`Deprecated: Primitive Collection Reference. Please state a CollectionReference type in the form config instead.`)
-      return ValueOrErrors.Operations.Return(converters["CollectionReference"].toAPIRawValue([raw, formState.modifiedByUser] as never))
-    }
-    if(tDef.kind != "form") {
-      console.error(`unsupported type ${JSON.stringify(t)}, returning the obj value right away`)
-      return ValueOrErrors.Operations.Return(raw)
-    }
-
+  if (t.kind == "lookup") 
+    return toAPIRawValue(types.get(t.name)!, types, builtIns, converters, injectedPrimitives)(raw, formState)
+    
+  if(t.kind == "form") {
     const res = [] as any
-    tDef.fields.forEach((fieldType, fieldName) =>
-        res.push([fieldName, toAPIRawValue(fieldType, types, builtIns, converters, injectedPrimitives)(raw[fieldName], formState[fieldName])])
+    t.fields.forEach((fieldType, fieldName) => 
+      // nullish coalescing operator on state used for extended type state, but this maybe should have its own kind
+      res.push([fieldName, toAPIRawValue(fieldType, types, builtIns, converters, injectedPrimitives)(raw[fieldName], formState['formFieldStates']?.[fieldName] ?? formState)])
     )
     const errors: ValueOrErrors<List<any>, string> = ValueOrErrors.Operations.All(res.map(([_, value]:[_: string, value: ValueOrErrors<any, string>]) => value))
     if(errors.kind == "errors")
@@ -274,7 +286,7 @@ export const toAPIRawValue = <T extends { [key in keyof T]: { type: any; state: 
       acc[fieldName] = value.value
       return acc
     }, {} as any))
-
   }
+
   return ValueOrErrors.Operations.Return(defaultValue(types, builtIns, injectedPrimitives)(t))
 }

@@ -1,4 +1,4 @@
-import { Set, Map, OrderedMap, List, has } from "immutable";
+import { Set, Map, OrderedMap, List } from "immutable";
 import { ApiConverters, BoolExpr, BuiltIns, FieldName, FormsConfigMerger, InjectedPrimitives, isObject, isString, ParsedType, PrimitiveTypeName, RawFieldType, RawType, TypeName } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 
@@ -30,7 +30,100 @@ export type ParsedRenderer<T> =
         disabled?: BoolExpr<any>; 
     }
 export const ParsedRenderer = {
-  
+  Default: {
+    primitive: <T>(type: ParsedType<T>, renderer: string, visible: any, disabled: any, label?: string, tooltip?: string ): ParsedRenderer<T> => ({
+      kind: "primitive",
+      type,
+      renderer,
+      label,
+      tooltip,
+      visible: BoolExpr.Default(visible),
+      disabled: disabled != undefined ?
+        BoolExpr.Default(disabled)
+        : BoolExpr.Default.false(),
+    }),
+    form: <T>(type: ParsedType<T>, renderer: string, visible: any, disabled: any, label?: string, tooltip?: string ): ParsedRenderer<T> => ({
+      kind: "form",
+      type,
+      renderer,
+      label,
+      tooltip,
+      visible: BoolExpr.Default(visible),
+      disabled: disabled != undefined ?
+        BoolExpr.Default(disabled)
+        : BoolExpr.Default.false(),
+    }),
+    enum: <T>(type: ParsedType<T>, renderer: string, visible: any, disabled: any, options: string, label?: string, tooltip?: string ): ParsedRenderer<T> => ({
+      kind: "enum",
+      type,
+      renderer,
+      label,
+      tooltip,
+      visible: BoolExpr.Default(visible),
+      disabled: disabled != undefined ?
+        BoolExpr.Default(disabled)
+        : BoolExpr.Default.false(),
+      options
+    }),
+    stream: <T>(type: ParsedType<T>, renderer: string, visible: any, disabled: any, stream: string, label?: string, tooltip?: string ): ParsedRenderer<T> => ({
+      kind: "stream",
+      type,
+      renderer,
+      label,
+      tooltip,
+      visible: BoolExpr.Default(visible),
+      disabled: disabled != undefined ?
+        BoolExpr.Default(disabled)
+        : BoolExpr.Default.false(),
+      stream
+    }),
+    list: <T>(type: ParsedType<T>, renderer: string, visible: any, disabled: any, elementRenderer: ParsedRenderer<T>, label?: string, tooltip?: string ): ParsedRenderer<T> => ({
+      kind: "list",
+      type,
+      renderer,
+      label,
+      tooltip,
+      visible: BoolExpr.Default(visible),
+      disabled: disabled != undefined ?
+        BoolExpr.Default(disabled)
+        : BoolExpr.Default.false(),
+      elementRenderer
+    }),
+    map: <T>(type: ParsedType<T>, renderer: string, visible: any, disabled: any, keyRenderer: ParsedRenderer<T>, valueRenderer: ParsedRenderer<T>, label?: string, tooltip?: string ): ParsedRenderer<T> => ({
+      kind: "map",
+      type,
+      renderer,
+      label,
+      tooltip,
+      visible: BoolExpr.Default(visible),
+      disabled: disabled != undefined ?
+        BoolExpr.Default(disabled)
+        : BoolExpr.Default.false(),
+      keyRenderer,
+      valueRenderer
+    }),
+  },
+  Operations: {
+  parseRenderer: <T>(fieldType: ParsedType<T>, field: RawRenderer, types: Map<string, ParsedType<T>>): ParsedRenderer<T> => {
+      if(fieldType.kind == "primitive")
+        return ParsedRenderer.Default.primitive(fieldType, field.renderer, field.visible, field.disabled, field.label, field.tooltip)
+      if(fieldType.kind == "form")
+        return ParsedRenderer.Default.form(fieldType, field.renderer, field.visible, field.disabled, field.label, field.tooltip)
+      if(fieldType.kind == "application" && "options" in field)
+        return ParsedRenderer.Default.enum(fieldType, field.renderer, field.visible, field.disabled, field.options, field.label, field.tooltip)
+      if(fieldType.kind == "application" && "stream" in field)
+        return ParsedRenderer.Default.stream(fieldType, field.renderer, field.visible, field.disabled, field.stream, field.label, field.tooltip)
+      if(fieldType.kind == "application" && fieldType.value == "List")
+        return ParsedRenderer.Default.list(fieldType, field.renderer, field.visible, field.disabled, ParsedRenderer.Operations.parseRenderer(fieldType.args[0], field.elementRenderer, types), field.label, field.tooltip)
+      if(fieldType.kind == "application" && fieldType.value == "Map")
+        return ParsedRenderer.Default.map(fieldType, field.renderer, field.visible, field.disabled, ParsedRenderer.Operations.parseRenderer(fieldType.args[0], field.keyRenderer, types), ParsedRenderer.Operations.parseRenderer(fieldType.args[1], field.valueRenderer, types), field.label, field.tooltip)
+      if(fieldType.kind == "lookup"){
+        return ParsedRenderer.Operations.parseRenderer(types.get(fieldType.name)!, field, types)
+      }
+      console.error(`Invalid field type ${JSON.stringify(fieldType)} for field ${JSON.stringify(field)}`)
+      throw new Error("Invalid field type")
+  }
+}
 }
 
 export type RawForm = {
@@ -280,101 +373,11 @@ export const FormsConfig = {
           errors = errors.push(`form ${formName} references non-form type ${form.type}`);
           return
         }
+        
         // parse fields
-        Object.entries(form.fields).forEach(([fieldName, field]: [fieldName: string, field: any]) => {
-          const fieldType = formType.fields.get(fieldName)!
-          
-          if(fieldType.kind == "primitive")
-            parsedForm.fields = parsedForm.fields.set(fieldName, {
-              type: fieldType,
-              kind: "primitive",
-              renderer: field.renderer,
-              label: field.label,
-              tooltip: field.tooltip,
-              visible: BoolExpr.Default(field.visible),
-              disabled: field.disabled != undefined ?
-                BoolExpr.Default(field.disabled)
-                : BoolExpr.Default.false(),
-            })
-
-          if(fieldType.kind == "form")
-            parsedForm.fields = parsedForm.fields.set(
-              fieldName, {
-              type: fieldType,
-              kind: "form",
-              renderer: field.renderer,
-              label: field.label,
-              tooltip: field.tooltip,
-              visible: BoolExpr.Default(field.visible),
-              disabled: field.disabled != undefined ?
-                BoolExpr.Default(field.disabled)
-                : BoolExpr.Default.false(),
-            })          
-
-          if(fieldType.kind == "application" && "options" in field)
-            parsedForm.fields = parsedForm.fields.set(
-              fieldName, {
-              type: fieldType,
-              kind: "enum",
-              renderer: field.renderer,
-              label: field.label,
-              tooltip: field.tooltip,
-              visible: BoolExpr.Default(field.visible),
-              disabled: field.disabled != undefined ?
-                BoolExpr.Default(field.disabled)
-                : BoolExpr.Default.false(),
-              options: field.options
-            })
-
-          if(fieldType.kind == "application" && "stream" in field)
-            parsedForm.fields = parsedForm.fields.set(
-              fieldName, {
-              type: fieldType,
-              kind: "stream",
-              renderer: field.renderer,
-              label: field.label,
-              tooltip: field.tooltip,
-              visible: BoolExpr.Default(field.visible),
-              disabled: field.disabled != undefined ?
-                BoolExpr.Default(field.disabled)
-                : BoolExpr.Default.false(),
-              stream: field.stream
-            })
-
-          if(fieldType.kind == "application" && fieldType.value == "List")
-          {
-            // backwards compatability
-            parsedForm.fields = parsedForm.fields.set(
-              fieldName, {
-              type: fieldType,
-              kind: "list",
-              renderer: field.renderer,
-              label: field.label,
-              tooltip: field.tooltip,
-              visible: BoolExpr.Default(field.visible),
-              disabled: field.disabled != undefined ?
-                BoolExpr.Default(field.disabled)
-                : BoolExpr.Default.false(),
-              elementRenderer: field.elementRenderer
-            })
-          }
-
-          if(fieldType.kind == "application" && fieldType.value == "Map")
-            parsedForm.fields = parsedForm.fields.set(
-              fieldName, {
-              type: fieldType,
-              kind: "map",
-              renderer: field.renderer,
-              label: field.label,
-              tooltip: field.tooltip,
-              visible: BoolExpr.Default(field.visible),
-              disabled: field.disabled != undefined ?
-                BoolExpr.Default(field.disabled)
-                : BoolExpr.Default.false(),
-              keyRenderer: field.keyRenderer,
-              valueRenderer: field.valueRenderer
-            })
-          })
+        Object.entries(form.fields).forEach(([fieldName, field]: [fieldName: string, field: any]) =>
+          parsedForm.fields = parsedForm.fields.set(fieldName, ParsedRenderer.Operations.parseRenderer(formType.fields.get(fieldName)!, field, parsedTypes))         
+        )
 
         // parse tabs
         let tabs: FormLayout = OrderedMap()
@@ -397,8 +400,6 @@ export const FormsConfig = {
         parsedForm.tabs = tabs
         forms = forms.set(formName, parsedForm);
       })
-
-
 
       let launchers: ParsedFormJSON<T>["launchers"] = {
         create: Map<string, Launcher>(),

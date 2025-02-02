@@ -52,6 +52,8 @@ export const rendererToForm = <T,>(parsingContext: { formViews: Record<string, R
 
   switch (parsedRenderer.kind) {
     case "primitive":
+    case "enum":
+    case "stream":
       return ValueOrErrors.Default.return({
         renderer: FormRenderers(parsedRenderer, parsingContext.formViews, viewKind, parsedRenderer.renderer, parsedRenderer.label, parsedRenderer.tooltip, parsingContext.enumOptionsSources, parsingContext.leafPredicates, parsingContext.injectedPrimitives),
         initialValue: parsingContext.defaultValue(parsedRenderer.type),
@@ -61,7 +63,7 @@ export const rendererToForm = <T,>(parsingContext: { formViews: Record<string, R
       return ValueOrErrors.Default.return({
           renderer: parsingContext.forms.get(parsedRenderer.renderer)!.form.withView(parsingContext.nestedContainerFormView).mapContext<any>(_ => ({ ..._, label: parsedRenderer.label, tooltip: parsedRenderer.tooltip })),
           initialValue: parsingContext.defaultValue(parsedRenderer.type),
-          initialState: parsingContext.forms.get(parsedRenderer.renderer)!.initialFormState //TODO error handling instead of cast,
+          initialState: parsingContext.forms.get(parsedRenderer.renderer)!.initialFormState
       })
     case "list":
         return rendererToForm(parsingContext, parsedRenderer.elementRenderer).Then(parsedElementRenderer => 
@@ -93,7 +95,7 @@ export const rendererToForm = <T,>(parsingContext: { formViews: Record<string, R
                 )
           )
     default:
-      return ValueOrErrors.Default.throw(List([`error: the kind for ${viewKind}::${parsedRenderer.renderer} cannot be found`]));
+      return ValueOrErrors.Default.throw(List([`error: the kind for ${viewKind}::${parsedRenderer} cannot be found`]));
   }
 }
 
@@ -217,7 +219,6 @@ export const ParseForm = <T,>(
       {formViews, forms, nestedContainerFormView, defaultValue, enumOptionsSources, leafPredicates, infiniteStreamSources, injectedPrimitives },
       formDef.fields.get(fieldName)! 
     )
-    
     if(parsedFormConfig.kind == "errors") throw Error(`Error parsing form ${fieldsViewsConfig[fieldName]}`) // TODO - better error handling
 
     formConfig[fieldName] = parsedFormConfig.value.renderer
@@ -322,6 +323,7 @@ export const parseForms =
         edit: Map(),
       }
       let parsedForms: ParsedForms<T> = Map()
+      // TODO: Do we need to account for the other types? (Form, enum, stream)
       const traverse = (formDef:ParsedFormConfig<T>) => {
         if (formProcessingOrder.has(formDef.name)) {
           return
@@ -351,9 +353,9 @@ export const parseForms =
                 traverse(formsConfig.forms.get(valueRenderer.renderer)!)
               }
             }
-          } catch (error) {
-            errors.push(`unhandled error: ${JSON.stringify(error)} -> ${formDef.name}`)
-            console.debug(error)
+          } catch (error: any) {
+            console.error(error)
+            errors.push(error.message ?? error)
           }
         })
         formProcessingOrder = formProcessingOrder.add(formDef.name)
@@ -402,6 +404,7 @@ export const parseForms =
 
           parsedForms = parsedForms.set(formName, { ...parsedForm, form })
         } catch (error: any) {
+          console.error(error)
           errors.push(error.message ?? error)
         }
       })

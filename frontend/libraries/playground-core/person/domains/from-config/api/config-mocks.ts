@@ -183,7 +183,9 @@ export const PersonFormsConfig = {
           valueRenderer: { label: "name", renderer: "defaultString", visible: { "kind": "true" } },
           visible: { "kind": "true" },
         },
-        "relatives": { label: "relatives", tooltip: "someone who you are related to", elementTooltip: "one relative", elementLabel: "relative", renderer: "defaultList", elementRenderer:"defaultCategory", visible: { "kind": "true" } },
+        "relatives": { label: "relatives", tooltip: "someone who you are related to", elementTooltip: "one relative", elementLabel: "relative", renderer: "defaultList", elementRenderer: {
+          renderer: "defaultCategory", visible: { "kind": "true" }
+        }, visible: { "kind": "true" } },
         "subscribeToNewsletter": { label: "subscribe to newsletter", renderer: "defaultBoolean", visible: { "kind": "true" } },
         "interests": {
           label: "interests",
@@ -199,8 +201,12 @@ export const PersonFormsConfig = {
             // { "kind": "leaf", "operation": "field", "arguments": { "location": "local", "field": "subscribeToNewsletter", "value": false } }
         },
         "mainAddress": { label: "main address", renderer: "address", visible: { "kind": "true" }},
-        "addresses": { label: "other addresses", renderer: "defaultList", elementLabel: "address", elementRenderer:"address", visible: { "kind": "true" } },
-        "emails": { label: "emails", renderer: "defaultList", elementLabel: "email", elementRenderer:"defaultString", visible: { "kind": "true" } },
+        "addresses": { label: "other addresses", renderer: "defaultList", elementLabel: "address", elementRenderer: {
+          renderer: "address", visible: { "kind": "true" }
+        }, visible: { "kind": "true" } },
+        "emails": { label: "emails", renderer: "defaultList", elementLabel: "email", elementRenderer: {
+          renderer: "defaultString", visible: { "kind": "true" }
+        }, visible: { "kind": "true" } },
         "addressesWithLabel": {
           label: "addresses with label",
           renderer: "defaultMap",
@@ -250,7 +256,7 @@ export const PersonFormsConfig = {
             // elementLabel: "holiday",
             // elementRenderer: "defaultDate",
             // elementTooltip: "a holiday",
-            elementRenderer: { renderer: "defaultDate", label: "holiday", tooltip: "a holiday"},
+            elementRenderer: { renderer: "defaultDate", label: "holiday", tooltip: "a holiday", visible: { "kind": "true" } },
         },
         "interestsToString": {
             label: "interests to string",

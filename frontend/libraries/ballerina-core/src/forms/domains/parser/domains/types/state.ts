@@ -48,6 +48,7 @@ export type ParsedType<T> =
 
 export const ParsedType = {
   Default: {
+    form: <T>(value: TypeName, fields: Map<FieldName, ParsedType<T>>): ParsedType<T> => ({ kind: "form", value, fields }),
     primitive: <T>(name: PrimitiveTypeName<T> | keyof T): ParsedType<T> => ({ kind: "primitive", value: name }),
     application: <T>(value: GenericType, args: Array<ParsedType<T>>): ParsedType<T> => ({ kind: "application", value, args }),
     lookup: <T>(name: string): ParsedType<T> => ({ kind: "lookup", name }),
