@@ -20,7 +20,7 @@ type FormLauncherId = { LauncherName:string; LauncherId:Guid }
 and FormLauncher = { LauncherName:string; LauncherId:Guid; Form:FormConfigId; EntityApi:EntityApiId; Mode:FormLauncherMode } with static member Name (l:FormLauncher) : string = l.LauncherName; static member Id (l:FormLauncher) : FormLauncherId = { LauncherName=l.LauncherName; LauncherId=l.LauncherId }
 and FormLauncherMode = | Create | Edit
 and EnumApiId = { EnumName:string; EnumId:Guid }
-and EnumApi = { EnumName:string; EnumId:Guid; TypeId:TypeId } with static member Id (e:EnumApi) = { EnumName=e.EnumName; EnumId=e.EnumId }; static member Create (n,t) : EnumApi = { EnumName=n; TypeId=t; EnumId=Guid.CreateVersion7() }; static member Type (a:EnumApi) : TypeId = a.TypeId
+and EnumApi = { EnumName:string; EnumId:Guid; TypeId:TypeId; UnderlyingEnum:TypeId } with static member Id (e:EnumApi) = { EnumName=e.EnumName; EnumId=e.EnumId }; static member Create (n,t,c) : EnumApi = { EnumName=n; TypeId=t; EnumId=Guid.CreateVersion7(); UnderlyingEnum=c }; static member Type (a:EnumApi) : TypeId = a.TypeId
 and StreamApiId = { StreamName:string; StreamId:Guid }
 and StreamApi = { StreamName:string; StreamId:Guid; TypeId:TypeId } with static member Id (e:StreamApi) = { StreamName=e.StreamName; StreamId=e.StreamId }; static member Create (n,t) : StreamApi = { StreamName=n; TypeId=t; StreamId=Guid.CreateVersion7() }; static member Type (a:StreamApi) : TypeId = a.TypeId
 and EntityApiId = { EntityName:string; EntityId:Guid }
@@ -340,13 +340,19 @@ type EnumApi with
     state{
       let! enumType = ExprType.parse enumTypeJson
       let! enumTypeId = enumType |> ExprType.asLookupId |> state.OfSum
-      do! state.SetState(
-        ParsedFormsContext.Updaters.Apis(
-          FormApis.Updaters.Enums(
-            Map.add enumName { EnumApi.EnumId=Guid.CreateVersion7(); TypeId=enumTypeId; EnumName=enumName }
+      let! ctx = state.GetState()
+      let! enumType = ExprType.resolveLookup ctx enumType |> state.OfSum
+      let! fields = ExprType.GetFields enumType |> state.OfSum
+      match fields with
+      | [("values", ExprType.LookupType underlyingUnion)] ->
+        do! state.SetState(
+          ParsedFormsContext.Updaters.Apis(
+            FormApis.Updaters.Enums(
+              Map.add enumName { EnumApi.EnumId=Guid.CreateVersion7(); TypeId=enumTypeId; EnumName=enumName; UnderlyingEnum=underlyingUnion }
+            )
           )
         )
-      )
+      | _ -> return! state.Throw($$"""Error: invalid enum reference type passed to enum '{{enumName}}""" |> Errors.Singleton)
     }
 
 type StreamApi with
@@ -414,6 +420,7 @@ type ParsedFormsContext with
     let heading = StringBuilder.One $$"""package {{packageName}}
 
 import (
+  "fmt"
 	"time"
 	"ballerina.com/core"
 	"github.com/google/uuid"
@@ -427,32 +434,19 @@ var _4 date.Date
 """
 
     sum{
-      // let enumsEnum = 
-      //   seq{
-      //     yield One(sprintf "type %sEnumType int\n" formName)
-      //     yield One("const (\n")
-      //     yield! ctx.Apis.Enums |> Map.values |> Seq.mapi(fun i e -> 
-      //       One(sprintf "  %s%sType%s\n" e.EnumName.ToFirstUpper formName (if i = 0 then ($" {formName}EnumType = iota") else ""))
-      //     )
-      //     yield One(")\n")
-      //   }
-
-      // let enumSelector = 
-      //   seq{
-      //     yield One $"func {formName}EnumSelector[c any](enumName string, "
-      //     yield! ctx.Apis.Enums |> Map.values |> Seq.map(fun e -> 
-      //       One(sprintf "get%s func() c, " e.EnumName)
-      //     )
-      //     yield One ") (c,error) {\n"
-      //     yield One "  switch enumName {\n"
-      //     yield! ctx.Apis.Enums |> Map.values |> Seq.map(fun e -> 
-      //       One(sprintf "  case \"%s%sType\": return get%s(), nil\n" e.EnumName.ToFirstUpper formName e.EnumName)
-      //     )
-      //     yield One "  }\n"
-      //     yield One "  var result c\n"
-      //     yield One """return result, fmt.Errorf("%a is not a valid enum name", enumName )"""
-      //     yield One "\n}\n\n"
-      //   }
+      let enumCasesGETter = 
+        seq{
+          yield One $"func {formName}EnumGETter(enumName string) "
+          yield One " ([]string,error) {\n"
+          yield One "  switch enumName {\n"
+          yield! ctx.Apis.Enums |> Map.values |> Seq.map(fun e -> 
+            One(sprintf "  case \"%s\": return All%sCases[:], nil\n" e.EnumName e.UnderlyingEnum.TypeName)
+          )
+          yield One "  }\n"
+          yield One "  var result []string\n"
+          yield One """return result, fmt.Errorf("%s is not a valid enum name", enumName )"""
+          yield One "\n}\n\n"
+        }
 
       // let streamsEnum = 
       //   seq{
@@ -477,7 +471,7 @@ var _4 date.Date
       //     )
       //     yield One "  }\n"
       //     yield One "  var result c\n"
-      //     yield One """return result, fmt.Errorf("%a is not a valid stream name", streamName )"""
+      //     yield One """return result, fmt.Errorf("%s is not a valid stream name", streamName )"""
       //     yield One "\n}\n\n"
       //   }
 
@@ -506,7 +500,7 @@ var _4 date.Date
       //     )
       //     yield One "  }\n"
       //     yield One "  var result c\n"
-      //     yield One """return result, fmt.Errorf("%a is not a valid entity name", entityName )"""
+      //     yield One """return result, fmt.Errorf("%s is not a valid entity name", entityName )"""
       //     yield One "\n}\n\n"
       //   }
 
@@ -532,6 +526,10 @@ var _4 date.Date
                 yield StringBuilder.One "\n"
               yield StringBuilder.One ")"
               yield StringBuilder.One "\n"
+              yield StringBuilder.One $$"""var All{{t.Key}}Cases = [...]string{ """
+              for enumCase in enumCases do
+                yield StringBuilder.One $$"""{{t.Key}}{{enumCase}}, """
+              yield StringBuilder.One "}\n"
             })
           | _ ->
             let! fields = ExprType.GetFields t.Value.Type
@@ -588,8 +586,7 @@ var _4 date.Date
           }) |> List.ofSeq)
       return StringBuilder.Many(seq{
         yield heading
-        // yield! enumsEnum
-        // yield! enumSelector
+        yield! enumCasesGETter
         // yield! streamsEnum
         // yield! streamSelector
         // yield! entitiesOPSelector "GET" CrudMethod.Get
@@ -812,11 +809,11 @@ let formApis injectedTypes =
     return instantiatedSampleTypes,{
       Enums=
         [
-          ("genders", genderRefType.TypeId)
-          ("colors", colorRefType.TypeId)
-          ("interests", interestRefType.TypeId)
-          ("permissions", permissionRefType.TypeId)
-        ] |> Seq.map (dup >> (fst <*> EnumApi.Create)) |> Map.ofSeq;
+          // ("genders", genderRefType.TypeId)
+          // ("colors", colorRefType.TypeId)
+          // ("interests", interestRefType.TypeId)
+          // ("permissions", permissionRefType.TypeId)
+        ] |> Seq.map ((fst <*> EnumApi.Create)) |> Map.ofSeq;
       Streams=
         [
           ("cities", cityRefType.TypeId)

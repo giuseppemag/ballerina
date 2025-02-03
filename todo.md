@@ -99,14 +99,21 @@ Todo (✅/❌)
         ✅ actually generate the enums at the top level!!!
       ✅ enums need to validate that the underlying type has just an "enum" value
       ❌ proper type-safe visitors, especially wrt method calls and the signature of the callbacks which need to make sense case-by-case
-      ❌ better syntax for the predicates (more aligned to the conditionals AST)
+        ✅ enums GET
+        ❌ enums POST
+        ❌ streams GET
+        ❌ streams POST
+        ❌ enitites GET
+        ❌ entities POST
+        ❌ entities Default
+        ❌ entities Update
       ❌ add optional extra config json with all required parameters
+        ❌ make it part of the config file itself
         ❌ injected primitives, with their respective imports
         ❌ make the current primitives with their respective imports a default seed that gets overridden by the injected primitives
         ❌ remove `injectedCategoryType` from hardcoded seeds
       ❌ invalid json errors should be handled more gracefully
       ✅ rename `Multiselection` to `MultiSelection`
-      ❌ accept empty `apis` blocks
       ❌ accept *.json as input name
         ❌ generate output file names from input names and output path
       ❌ educated guess of `package_name` from file name
@@ -122,6 +129,7 @@ Todo (✅/❌)
         ❌ parse fields
         ❌ parse visibility and disabled predicates
           ❌ type-check the form instances' `visible` and `disabled` predicates
+            ❌ fully align syntax to conditionals
             ❌ inject `root` variable at form instantiation, not at form definition 
             ❌ `local` variable can be injected any time, also at form definition
             ❌ `flag` values come from some type in the config (ideally imported)
@@ -144,6 +152,7 @@ Todo (✅/❌)
       ❌ `string -> T` is built up while parsing
       ❌ `TId -> T` is the parsed context
     ❌ convert all instances of Map.tryFind ... withError ... to `Map.tryFindWithError`
+    ❌ accept empty `apis` blocks
     ❌ pretty print types in errors
     ❌ add source context to errors for pretty printing
       ❌ probably needs the state monad with an error decorator accumulated from the parent
