@@ -94,14 +94,21 @@ Todo (✅/❌)
         ✅ package_name as a parameter
         ✅ form-name as a prefix parameter in all stream names, enum names, entity names
       ✅ `dotnet publish` as standalone executable
-      ❌ adjust person-config in FE and use that from cmd line, delete the copy
-      ❌ first go-live
-      ❌ define extensions to config forms, including: * injected primitives * enums and their requirements * proper type-safe visitors, especially wrt method calls * better generation of enum cases * better syntax for the predicates (more aligned to the conditionals AST)
+      ✅ first go-live
       ❌ specify enums as enums
+        ❌ actually generate the enums at the top level!!!
+      ❌ define extensions to config forms, including: * injected primitives * proper type-safe visitors, especially wrt method calls * better generation of enum cases * better syntax for the predicates (more aligned to the conditionals AST)
+        ❌ add optional extra config json with all required parameters
+      ❌ invalid json errors should be handled more gracefully
+      ❌ all utility methods should be capitalized in Program.fs
+      ❌ remove `injectedCategoryType` from hardcoded seeds
+      ❌ the context is no context: it's the state; rename the type
+      ❌ rename `Multiselection` to `MultiSelection`
       ❌ generate output names from input names
       ❌ accept *.json as input name
-      ❌ educated guess of package_name and form_name
-      ❌ streams and enums need to validate that the underlying type has id and displayvalue
+      ❌ educated guess of `package_name` from file name
+      ❌ educated guess of `form_name` from `package_name`
+      ❌ streams need to validate that the underlying type has id and displayvalue
       ❌ enums need to validate that the underlying type has just an "enum" value
       ❌ accept empty `apis` blocks
       ❌ parse the JSON into the representation forms
@@ -111,10 +118,14 @@ Todo (✅/❌)
           ❌ type-check the form instances' `visible` and `disabled` predicates
             ❌ inject `root` variable at form instantiation, not at form definition 
             ❌ `local` variable can be injected any time, also at form definition
-            ❌ `flag` values comes from the command line
+            ❌ `flag` values come from some type in the config (ideally imported)
+      ❌ adjust person-config in FE and use that from cmd line, delete the copy
       ❌ connect command line parameters to right invocations
         ❌ the primitive types' renderers
         ❌ delete the sample parsed form
+      ❌ define `import` command, generate with some sort of linking strategy for shared files
+      ❌ write to Sven a "why not just a package somewhere?"
+      ❌ move string builder to ballerina-core
       ❌ move the new type parsers to ballerina-core
         ❌ break the form engine in all possible ways
         ❌ launchers
@@ -139,7 +150,6 @@ Todo (✅/❌)
     ❌ help command
     ❌ define webservice variant
     ❌ generate Typescript and C# code from forms-config
-    ❌ define `import` command, generate with some sort of linking strategy for shared files
     ❌ allow recursive types (needs adjustment in frontend too)
       ❌ be careful with out-of-order extensions
     ❌ allow union types (needs adjustment in frontend too)

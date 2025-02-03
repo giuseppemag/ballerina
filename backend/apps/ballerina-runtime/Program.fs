@@ -199,33 +199,72 @@ type FormApis with
   static member GetTypesFreeVars (fa:FormApis) : Set<TypeId> = 
     extractTypes fa.Enums + extractTypes fa.Streams + extractTypes (fa.Entities |> Map.map (fun _ -> fst))
 
-type ParsedFormsContext with
-  static member GetTypesFreeVars (ctx:ParsedFormsContext) : Sum<Set<TypeId>, Errors> = 
-    let (+) = sum.Lift2 Set.union
-    let zero = sum{ return Set.empty }
-    (ctx.Forms |> Map.values |> Seq.map(FormConfig.GetTypesFreeVars ctx) |> Seq.fold (+) zero) +
-    (ctx.Apis |> FormApis.GetTypesFreeVars |> sum.Return) + 
-    (ctx.Launchers |> Map.values |> Seq.map(FormLauncher.GetTypesFreeVars ctx) |> Seq.fold (+) zero)
-  static member Validate (ctx:ParsedFormsContext) : Sum<Unit, Errors> =
-    sum{
-      let! usedTypes = ParsedFormsContext.GetTypesFreeVars ctx
-      let availableTypes = ctx.Types |> Map.values |> Seq.map(fun tb -> tb.TypeId) |> Set.ofSeq
-      if Set.isSuperset availableTypes usedTypes then 
-        do! sum.All(ctx.Forms |> Map.values |> Seq.map(FormConfig.Validate ctx) |> Seq.toList) |> Sum.map ignore
-        do! sum.All(ctx.Launchers |> Map.values |> Seq.map(FormLauncher.Validate ctx) |> Seq.toList) |> Sum.map ignore
-      else 
-        let missingTypeErrors = (usedTypes - availableTypes) |> Set.map (fun t -> Errors.Singleton (sprintf "Error: missing type definition for %s" t.TypeName)) |> Seq.fold (curry Errors.Concat) (Errors.Zero())
-        return! sum.Throw(missingTypeErrors)
-    }
-
 type ExprType with
+  static member parseUnionCase (json:JsonValue) : State<UnionCase,Unit,ParsedFormsContext,Errors> = 
+    state{
+      let error = state.Throw($$"""Error: unsupported union case {{json}}.""" |> Errors.Singleton)
+      match json with
+      | JsonValue.Record args ->
+        // { "case":"Soccer", "fields":{} }
+        match args |> Seq.tryFind (fst >> (=) "case"), args |> Seq.tryFind (fst >> (=) "fields") with
+        | Some (_, JsonValue.String caseName), Some (_,fieldsJson) ->
+          let! fieldsType = ExprType.parse fieldsJson
+          return { CaseName=caseName; Fields=fieldsType }
+        | _ -> return! error
+      | _ -> return! error
+    }
+  static member parse (json:JsonValue) : State<ExprType,Unit,ParsedFormsContext,Errors> = 
+    let (!) = ExprType.parse
+    state{
+      match json with
+      | JsonValue.Record [||] ->
+        return ExprType.UnitType
+      | JsonValue.String "guid" ->
+        return ExprType.PrimitiveType PrimitiveType.GuidType
+      | JsonValue.String "string" ->
+        return ExprType.PrimitiveType PrimitiveType.StringType
+      | JsonValue.String "number" ->
+        return ExprType.PrimitiveType PrimitiveType.IntType
+      | JsonValue.String "boolean" ->
+        return ExprType.PrimitiveType PrimitiveType.BoolType
+      | JsonValue.String "Date" ->
+        return ExprType.PrimitiveType PrimitiveType.DateOnlyType
+      | JsonValue.String typeName ->
+        let! s = state.GetState()
+        let! typeId = s.Types |> Map.tryFind typeName |> withError $$"""Error: cannot find type {{typeName}}""" |> state.OfSum
+        return ExprType.LookupType typeId.TypeId
+      | JsonValue.Record fields ->
+        match fields |> Seq.tryFind (fst >> (=) "fun") |> Option.map snd, fields |> Seq.tryFind (fst >> (=) "args") |> Option.map snd with
+        | Some(JsonValue.String "SingleSelection"), Some(JsonValue.Array arg) when arg.Length = 1 ->
+          let! arg = !(arg.[0])
+          return ExprType.OptionType arg
+        | Some(JsonValue.String "Multiselection"), Some(JsonValue.Array arg) when arg.Length = 1 ->
+          let! arg = !(arg.[0])
+          return ExprType.SetType arg
+        | Some(JsonValue.String "List"), Some(JsonValue.Array arg) when arg.Length = 1 ->
+          let! arg = !(arg.[0])
+          return ExprType.ListType arg
+        | Some(JsonValue.String "Map"), Some(JsonValue.Array arg) when arg.Length = 2 ->
+          let! k = !(arg.[0])
+          let! v = !(arg.[1])
+          return ExprType.MapType(k,v)
+        | Some(JsonValue.String "Union"), Some(JsonValue.Array cases)  ->
+          let! cases = state.All(cases |> Seq.map (ExprType.parseUnionCase))
+          return ExprType.UnionType cases
+        | _ ->
+          return! state.Throw($$"""Error: unsupported type {{json}}.""" |> Errors.Singleton)
+      | _ -> 
+        return! state.Throw($$"""Error: unsupported type {{json}}.""" |> Errors.Singleton)
+    }
   static member GetFields (t:ExprType) : Sum<List<string * ExprType>, Errors> =
     match t with
     | ExprType.RecordType fs ->
       sum{ return fs |> Seq.map(fun v -> v.Key, v.Value) |> List.ofSeq }
     | _ -> sum.Throw(sprintf "Error: type %A is no record and thus has no fields" t |> Errors.Singleton)
+type ExprType with
   static member ToGolangTypeAnnotation (t:ExprType) : Sum<string, Errors> =
     let (!) = ExprType.ToGolangTypeAnnotation
+    let error = sum.Throw(sprintf "Error: cannot generate type annotation for type %A" t |> Errors.Singleton)
     sum{ 
       match t with
       | ExprType.LookupType t -> return t.TypeName
@@ -234,7 +273,7 @@ type ExprType with
           | PrimitiveType.BoolType -> return "bool"
           | PrimitiveType.DateOnlyType -> return "date.Date"
           | PrimitiveType.DateTimeType ->
-            return! sum.Throw(sprintf "Error: cannot generate type annotation for type %A" t |> Errors.Singleton)
+            return! error
           | PrimitiveType.FloatType -> return "float32"
           | PrimitiveType.GuidType -> return "uuid.UUID"
           | PrimitiveType.IntType -> return "int"
@@ -253,7 +292,52 @@ type ExprType with
         let! k = !k
         let! v = !v
         return sprintf "ballerina.Map[%s,%s]" k v
-      | _ -> return! sum.Throw(sprintf "Error: cannot generate type annotation for type %A" t |> Errors.Singleton)
+      | _ -> return! error
+    }
+  static member find (ctx:ParsedFormsContext) (typeId:TypeId) : Sum<ExprType,Errors> = 
+    sum{
+      return! ctx.Types |> Map.tryFindWithError typeId.TypeName "types" typeId.TypeName |> Sum.map(fun tb -> tb.Type)
+    }
+  static member asLookupId (t:ExprType) : Sum<TypeId,Errors> = 
+    sum{
+      match t with
+      | ExprType.LookupType l -> return l
+      | _ -> return! sum.Throw(Errors.Singleton $$"""Error: type {{t}} cannot be converted to a lookup.""")
+    }
+  static member resolveLookup (ctx:ParsedFormsContext) (t:ExprType) : Sum<ExprType,Errors> = 
+    sum{
+      match t with
+      | ExprType.LookupType l -> 
+        return! ExprType.find ctx l
+      | _ -> return t
+    }
+
+type StreamApi with
+  static member validate (ctx:ParsedFormsContext) (streamApi:StreamApi) : Sum<Unit,Errors> = 
+    sum{
+      let! streamType = ExprType.find ctx streamApi.TypeId
+      let! streamType = ExprType.resolveLookup ctx streamType
+      let! fields = ExprType.GetFields streamType
+      let error = sum.Throw($$"""Error: type {{streamType}} in stream {{streamApi.StreamName}} is invalid: expected fields id:Guid, displayValue:string""" |> Errors.Singleton)
+      match fields |> Seq.tryFind (snd >> (function ExprType.PrimitiveType(PrimitiveType.GuidType) -> true | _ -> false)) with
+      | Some ("id",_) | Some ("Id",_) | Some ("ID",_) -> 
+        match fields |> Seq.tryFind (snd >> (function ExprType.PrimitiveType(PrimitiveType.StringType) -> true | _ -> false)) with
+        | Some ("displayValue",_) | Some ("DisplayValue",_) | Some ("DISPLAYVALUE",_) -> 
+          return ()
+        | _ -> return! error
+      | _ -> return! error
+    }
+  static member parse (streamName:string) (streamTypeJson:JsonValue) : State<Unit,Unit,ParsedFormsContext,Errors> = 
+    state{
+      let! streamType = ExprType.parse streamTypeJson
+      let! streamTypeId = streamType |> ExprType.asLookupId |> state.OfSum
+      do! state.SetState(
+        ParsedFormsContext.Updaters.Apis(
+          FormApis.Updaters.Streams(
+            Map.add streamName { StreamApi.StreamId=Guid.CreateVersion7(); TypeId=streamTypeId; StreamName=streamName }
+          )
+        )
+      )
     }
 
 type StringBuilder = | One of string | Many of seq<StringBuilder> with 
@@ -270,6 +354,24 @@ type String with
   static member ToFirstUpper (self:String) = self.ToFirstUpper
 
 type ParsedFormsContext with
+  static member GetTypesFreeVars (ctx:ParsedFormsContext) : Sum<Set<TypeId>, Errors> = 
+    let (+) = sum.Lift2 Set.union
+    let zero = sum{ return Set.empty }
+    (ctx.Forms |> Map.values |> Seq.map(FormConfig.GetTypesFreeVars ctx) |> Seq.fold (+) zero) +
+    (ctx.Apis |> FormApis.GetTypesFreeVars |> sum.Return) + 
+    (ctx.Launchers |> Map.values |> Seq.map(FormLauncher.GetTypesFreeVars ctx) |> Seq.fold (+) zero)
+  static member Validate (ctx:ParsedFormsContext) : Sum<Unit, Errors> =
+    sum{
+      let! usedTypes = ParsedFormsContext.GetTypesFreeVars ctx
+      let availableTypes = ctx.Types |> Map.values |> Seq.map(fun tb -> tb.TypeId) |> Set.ofSeq
+      if Set.isSuperset availableTypes usedTypes then 
+        do! sum.All(ctx.Forms |> Map.values |> Seq.map(FormConfig.Validate ctx) |> Seq.toList) |> Sum.map ignore
+        do! sum.All(ctx.Launchers |> Map.values |> Seq.map(FormLauncher.Validate ctx) |> Seq.toList) |> Sum.map ignore
+        do! sum.All(ctx.Apis.Streams |> Map.values |> Seq.map (fun s -> StreamApi.validate ctx s) |> Seq.toList) |> Sum.map ignore
+      else 
+        let missingTypeErrors = (usedTypes - availableTypes) |> Set.map (fun t -> Errors.Singleton (sprintf "Error: missing type definition for %s" t.TypeName)) |> Seq.fold (curry Errors.Concat) (Errors.Zero())
+        return! sum.Throw(missingTypeErrors)
+    }
   static member ToGolang (ctx:ParsedFormsContext) (imports:List<string>) (packageName:string) (formName:string) : Sum<StringBuilder,Errors> = 
     let heading = StringBuilder.One $$"""package {{packageName}}
 
@@ -373,56 +475,60 @@ var _4 date.Date
 
       let! generatedTypes = sum.All(ctx.Types |> Seq.map(fun t -> 
         sum{
-          let! fields = ExprType.GetFields t.Value.Type
-          let typeStart = $$"""type {{t.Value.TypeId.TypeName}} struct {
-"""
-          let! fieldTypes = sum.All(fields |> Seq.map (snd >> ExprType.ToGolangTypeAnnotation) |> List.ofSeq)
-          let fieldDeclarations = Many (seq{
-            for fieldType,fieldName in fields |> Seq.map fst |> Seq.zip fieldTypes do
-              yield One "  "
-              yield One fieldName.ToFirstUpper
-              yield One " "
-              yield One fieldType
-              yield One "\n"
-          })
-          let typeEnd = $$"""}
-"""
+          match t.Value.Type with
+          | ExprType.UnionType _ ->
+            return StringBuilder.One "PLACEHOLDER UNION TYPE "
+          | _ ->
+            let! fields = ExprType.GetFields t.Value.Type
+            let typeStart = $$"""type {{t.Value.TypeId.TypeName}} struct {
+  """
+            let! fieldTypes = sum.All(fields |> Seq.map (snd >> ExprType.ToGolangTypeAnnotation) |> List.ofSeq)
+            let fieldDeclarations = Many (seq{
+              for fieldType,fieldName in fields |> Seq.map fst |> Seq.zip fieldTypes do
+                yield One "  "
+                yield One fieldName.ToFirstUpper
+                yield One " "
+                yield One fieldType
+                yield One "\n"
+            })
+            let typeEnd = $$"""}
+  """
 
-          let consStart = $$"""func New{{t.Value.TypeId.TypeName}}("""
-          let consParams = Many (seq{
-            for fieldType,fieldName in fields |> Seq.map fst |> Seq.zip fieldTypes do
-              yield One fieldName
-              yield One " "
-              yield One fieldType
-              yield One ", "
-          })
-          let consDeclEnd = $$""") {{t.Value.TypeId.TypeName}} {
-  res := new({{t.Value.TypeId.TypeName}})
-"""
+            let consStart = $$"""func New{{t.Value.TypeId.TypeName}}("""
+            let consParams = Many (seq{
+              for fieldType,fieldName in fields |> Seq.map fst |> Seq.zip fieldTypes do
+                yield One fieldName
+                yield One " "
+                yield One fieldType
+                yield One ", "
+            })
+            let consDeclEnd = $$""") {{t.Value.TypeId.TypeName}} {
+    res := new({{t.Value.TypeId.TypeName}})
+  """
 
-          let consBodyEnd = $$"""  return *res
-}
+            let consBodyEnd = $$"""  return *res
+  }
 
-"""
-          let consFieldInits = Many (seq{
-            for fieldType,fieldName in fields |> Seq.map fst |> Seq.zip fieldTypes do
-              yield One "  res."
-              yield One fieldName.ToFirstUpper
-              yield One " = "
-              yield One fieldName
-              yield One ";\n"
-          })
-          return StringBuilder.Many(seq{
-            yield One typeStart
-            yield fieldDeclarations
-            yield One typeEnd
-            yield One consStart
-            yield consParams
-            yield One consDeclEnd
-            yield consFieldInits
-            yield One consBodyEnd
-          })
-        }) |> List.ofSeq)
+  """
+            let consFieldInits = Many (seq{
+              for fieldType,fieldName in fields |> Seq.map fst |> Seq.zip fieldTypes do
+                yield One "  res."
+                yield One fieldName.ToFirstUpper
+                yield One " = "
+                yield One fieldName
+                yield One ";\n"
+            })
+            return StringBuilder.Many(seq{
+              yield One typeStart
+              yield fieldDeclarations
+              yield One typeEnd
+              yield One consStart
+              yield consParams
+              yield One consDeclEnd
+              yield consFieldInits
+              yield One consBodyEnd
+            })
+          }) |> List.ofSeq)
       return StringBuilder.Many(seq{
         yield heading
         yield! enumsEnum
@@ -441,58 +547,6 @@ var _4 date.Date
       })
     }
 
-type ExprType with
-  static member asLookupId (t:ExprType) : Sum<TypeId,Errors> = 
-    sum{
-      match t with
-      | ExprType.LookupType l -> return l
-      | _ -> return! sum.Throw(Errors.Singleton $$"""Error: type {{t}} cannot be converted to a lookup.""")
-    }
-  static member resolveLookup (t:ExprType) : State<ExprType,Unit,ParsedFormsContext,Errors> = 
-    state{
-      match t with
-      | ExprType.LookupType l -> 
-        let! s = state.GetState()
-        return! s.Types |> Map.tryFindWithError l.TypeName "types" l.TypeName |> Sum.map(fun tb -> tb.Type) |> state.OfSum
-      | _ -> return t
-    }
-  static member parse (json:JsonValue) : State<ExprType,Unit,ParsedFormsContext,Errors> = 
-    let (!) = ExprType.parse
-    state{
-      match json with
-      | JsonValue.String "string" ->
-        return ExprType.PrimitiveType PrimitiveType.StringType
-      | JsonValue.String "number" ->
-        return ExprType.PrimitiveType PrimitiveType.IntType
-      | JsonValue.String "boolean" ->
-        return ExprType.PrimitiveType PrimitiveType.BoolType
-      | JsonValue.String "Date" ->
-        return ExprType.PrimitiveType PrimitiveType.DateOnlyType
-      | JsonValue.String typeName ->
-        let! s = state.GetState()
-        let! typeId = s.Types |> Map.tryFind typeName |> withError $$"""Error: cannot find type {{typeName}}""" |> state.OfSum
-        return ExprType.LookupType typeId.TypeId
-      | JsonValue.Record fields ->
-        match fields |> Seq.tryFind (fst >> (=) "fun") |> Option.map snd, fields |> Seq.tryFind (fst >> (=) "args") |> Option.map snd with
-        | Some(JsonValue.String "SingleSelection"), Some(JsonValue.Array arg) when arg.Length = 1 ->
-          let! arg = !(arg.[0])
-          return ExprType.OptionType arg
-        | Some(JsonValue.String "Multiselection"), Some(JsonValue.Array arg) when arg.Length = 1 ->
-          let! arg = !(arg.[0])
-          return ExprType.SetType arg
-        | Some(JsonValue.String "List"), Some(JsonValue.Array arg) when arg.Length = 1 ->
-          let! arg = !(arg.[0])
-          return ExprType.ListType arg
-        | Some(JsonValue.String "Map"), Some(JsonValue.Array arg) when arg.Length = 2 ->
-          let! k = !(arg.[0])
-          let! v = !(arg.[1])
-          return ExprType.MapType(k,v)
-        | _ ->
-          return! state.Throw($$"""Error: unsupported type {{json}}.""" |> Errors.Singleton)
-      | _ -> 
-        return! state.Throw($$"""Error: unsupported type {{json}}.""" |> Errors.Singleton)
-    }
-
 type EnumApi with
   static member parse (enumName:string) (enumTypeJson:JsonValue) : State<Unit,Unit,ParsedFormsContext,Errors> = 
     state{
@@ -506,22 +560,6 @@ type EnumApi with
         )
       )
     }
-
-
-type StreamApi with
-  static member parse (streamName:string) (streamTypeJson:JsonValue) : State<Unit,Unit,ParsedFormsContext,Errors> = 
-    state{
-      let! enumType = ExprType.parse streamTypeJson
-      let! streamTypeId = enumType |> ExprType.asLookupId |> state.OfSum
-      do! state.SetState(
-        ParsedFormsContext.Updaters.Apis(
-          FormApis.Updaters.Streams(
-            Map.add streamName { StreamApi.StreamId=Guid.CreateVersion7(); TypeId=streamTypeId; StreamName=streamName }
-          )
-        )
-      )
-    }
-
 
 type CrudMethod with
   static member parse (crudMethodJson:JsonValue) : State<CrudMethod,Unit,ParsedFormsContext,Errors> = 
@@ -589,15 +627,15 @@ type ParsedFormsContext with
     state{
       for typeName,typeJson in typesJson do
         match typeJson with
-        | JsonValue.Record(typeJson) ->
-          match typeJson |> Seq.tryFind (fst >> (=) "extends") |> Option.map snd |> Option.orElseWith ((fun () -> JsonValue.Array[||] |> Some)), typeJson |> Seq.tryFind (fst >> (=) "fields") |> Option.map snd with
+        | JsonValue.Record(typeJsonArgs) ->
+          match typeJsonArgs |> Seq.tryFind (fst >> (=) "extends") |> Option.map snd |> Option.orElseWith ((fun () -> JsonValue.Array[||] |> Some)), typeJsonArgs |> Seq.tryFind (fst >> (=) "fields") |> Option.map snd with
           | Some (JsonValue.Array extends), Some (JsonValue.Record fields) ->
             let typeId:TypeId = {  TypeName=typeName; TypeId=Guid.CreateVersion7() }
             let! s = state.GetState()
             let! extendedTypes = 
               extends |> Seq.map (fun extendsJson -> state{
                 let! parsed = ExprType.parse extendsJson
-                return! ExprType.resolveLookup parsed
+                return! ExprType.resolveLookup s parsed |> state.OfSum
               }) |> state.All
             let! fields = 
               fields |> Seq.map (fun (fieldName, fieldType) -> 
@@ -620,7 +658,13 @@ type ParsedFormsContext with
             )
             return ()
           | _ -> 
-            return! state.Throw($$"""Error: type {{typeName}} should be a record with only 'extends' and 'fields'.""" |> Errors.Singleton)
+            let typeId:TypeId = {  TypeName=typeName; TypeId=Guid.CreateVersion7() }
+            let! parsedType = ExprType.parse typeJson
+            do! state.SetState(
+              ParsedFormsContext.Updaters.Types(
+                Map.add typeName { Type=parsedType; TypeId=typeId }
+              )
+            )
         | _ -> 
           return! state.Throw($$"""Error: type {{typeName}} should be a record with only 'extends' and 'fields'.""" |> Errors.Singleton)   
         }
@@ -1246,7 +1290,7 @@ let main args =
     let inputConfig = File.ReadAllText inputPath
     let jsonValue = JsonValue.Parse inputConfig
     // samplePrimitiveRenderers
-    let injectedTypes = [] |> Seq.map (fun injectedTypeName -> injectedTypeName.TypeName, (injectedTypeName, ExprType.RecordType Map.empty) |> TypeBinding.Create) |> Map.ofSeq
+    let injectedTypes = [injectedCategoryType] |> Seq.map (fun injectedTypeName -> injectedTypeName.TypeName, (injectedTypeName, ExprType.RecordType Map.empty) |> TypeBinding.Create) |> Map.ofSeq
     let initialContext = { ParsedFormsContext.Empty with Types=injectedTypes }
     match ((ParsedFormsContext.parse jsonValue).run((), initialContext)) with
     | Left(_,Some parsedForms)  -> 
