@@ -238,7 +238,8 @@ type ExprType with
         | Some(JsonValue.String "SingleSelection"), Some(JsonValue.Array arg) when arg.Length = 1 ->
           let! arg = !(arg.[0])
           return ExprType.OptionType arg
-        | Some(JsonValue.String "Multiselection"), Some(JsonValue.Array arg) when arg.Length = 1 ->
+        | Some(JsonValue.String "Multiselection"), Some(JsonValue.Array arg)
+        | Some(JsonValue.String "MultiSelection"), Some(JsonValue.Array arg) when arg.Length = 1 ->
           let! arg = !(arg.[0])
           return ExprType.SetType arg
         | Some(JsonValue.String "List"), Some(JsonValue.Array arg) when arg.Length = 1 ->
@@ -261,6 +262,11 @@ type ExprType with
     | ExprType.RecordType fs ->
       sum{ return fs |> Seq.map(fun v -> v.Key, v.Value) |> List.ofSeq }
     | _ -> sum.Throw(sprintf "Error: type %A is no record and thus has no fields" t |> Errors.Singleton)
+  static member GetCases (t:ExprType) : Sum<List<UnionCase>, Errors> =
+    match t with
+    | ExprType.UnionType cs ->
+      sum{ return cs }
+    | _ -> sum.Throw(sprintf "Error: type %A is no union and thus has no cases" t |> Errors.Singleton)    
 type ExprType with
   static member ToGolangTypeAnnotation (t:ExprType) : Sum<string, Errors> =
     let (!) = ExprType.ToGolangTypeAnnotation
@@ -310,6 +316,37 @@ type ExprType with
       | ExprType.LookupType l -> 
         return! ExprType.find ctx l
       | _ -> return t
+    }
+
+type EnumApi with
+  static member validate (ctx:ParsedFormsContext) (enumApi:EnumApi) : Sum<Unit,Errors> = 
+    sum{
+      let! enumType = ExprType.find ctx enumApi.TypeId
+      let! enumType = ExprType.resolveLookup ctx enumType
+      let! fields = ExprType.GetFields enumType
+      let error = sum.Throw($$"""Error: type {{enumType}} in enum {{enumApi.EnumName}} is invalid: expected only one field 'values' of type 'enum'""" |> Errors.Singleton)
+      match fields with
+      | [("values", valuesType)] ->
+        let! valuesType = ExprType.resolveLookup ctx valuesType
+        let! cases = ExprType.GetCases valuesType
+        if cases |> Seq.exists (fun case -> case.Fields.IsUnitType |> not) then
+          return! error
+        else 
+          return ()
+      | _ -> 
+        return! error
+    }
+  static member parse (enumName:string) (enumTypeJson:JsonValue) : State<Unit,Unit,ParsedFormsContext,Errors> = 
+    state{
+      let! enumType = ExprType.parse enumTypeJson
+      let! enumTypeId = enumType |> ExprType.asLookupId |> state.OfSum
+      do! state.SetState(
+        ParsedFormsContext.Updaters.Apis(
+          FormApis.Updaters.Enums(
+            Map.add enumName { EnumApi.EnumId=Guid.CreateVersion7(); TypeId=enumTypeId; EnumName=enumName }
+          )
+        )
+      )
     }
 
 type StreamApi with
@@ -367,7 +404,8 @@ type ParsedFormsContext with
       if Set.isSuperset availableTypes usedTypes then 
         do! sum.All(ctx.Forms |> Map.values |> Seq.map(FormConfig.Validate ctx) |> Seq.toList) |> Sum.map ignore
         do! sum.All(ctx.Launchers |> Map.values |> Seq.map(FormLauncher.Validate ctx) |> Seq.toList) |> Sum.map ignore
-        do! sum.All(ctx.Apis.Streams |> Map.values |> Seq.map (fun s -> StreamApi.validate ctx s) |> Seq.toList) |> Sum.map ignore
+        do! sum.All(ctx.Apis.Enums |> Map.values |> Seq.map (EnumApi.validate ctx) |> Seq.toList) |> Sum.map ignore
+        do! sum.All(ctx.Apis.Streams |> Map.values |> Seq.map (StreamApi.validate ctx) |> Seq.toList) |> Sum.map ignore
       else 
         let missingTypeErrors = (usedTypes - availableTypes) |> Set.map (fun t -> Errors.Singleton (sprintf "Error: missing type definition for %s" t.TypeName)) |> Seq.fold (curry Errors.Concat) (Errors.Zero())
         return! sum.Throw(missingTypeErrors)
@@ -376,7 +414,6 @@ type ParsedFormsContext with
     let heading = StringBuilder.One $$"""package {{packageName}}
 
 import (
-	"fmt"
 	"time"
 	"ballerina.com/core"
 	"github.com/google/uuid"
@@ -390,94 +427,112 @@ var _4 date.Date
 """
 
     sum{
-      let enumsEnum = 
-        seq{
-          yield One(sprintf "type %sEnumType int\n" formName)
-          yield One("const (\n")
-          yield! ctx.Apis.Enums |> Map.values |> Seq.mapi(fun i e -> 
-            One(sprintf "  %s%sType%s\n" e.EnumName.ToFirstUpper formName (if i = 0 then ($" {formName}EnumType = iota") else ""))
-          )
-          yield One(")\n")
-        }
+      // let enumsEnum = 
+      //   seq{
+      //     yield One(sprintf "type %sEnumType int\n" formName)
+      //     yield One("const (\n")
+      //     yield! ctx.Apis.Enums |> Map.values |> Seq.mapi(fun i e -> 
+      //       One(sprintf "  %s%sType%s\n" e.EnumName.ToFirstUpper formName (if i = 0 then ($" {formName}EnumType = iota") else ""))
+      //     )
+      //     yield One(")\n")
+      //   }
 
-      let enumSelector = 
-        seq{
-          yield One $"func {formName}EnumSelector[c any](enumName string, "
-          yield! ctx.Apis.Enums |> Map.values |> Seq.map(fun e -> 
-            One(sprintf "get%s func() c, " e.EnumName)
-          )
-          yield One ") (c,error) {\n"
-          yield One "  switch enumName {\n"
-          yield! ctx.Apis.Enums |> Map.values |> Seq.map(fun e -> 
-            One(sprintf "  case \"%s%sType\": return get%s(), nil\n" e.EnumName.ToFirstUpper formName e.EnumName)
-          )
-          yield One "  }\n"
-          yield One "  var result c\n"
-          yield One """return result, fmt.Errorf("%a is not a valid enum name", enumName )"""
-          yield One "\n}\n\n"
-        }
+      // let enumSelector = 
+      //   seq{
+      //     yield One $"func {formName}EnumSelector[c any](enumName string, "
+      //     yield! ctx.Apis.Enums |> Map.values |> Seq.map(fun e -> 
+      //       One(sprintf "get%s func() c, " e.EnumName)
+      //     )
+      //     yield One ") (c,error) {\n"
+      //     yield One "  switch enumName {\n"
+      //     yield! ctx.Apis.Enums |> Map.values |> Seq.map(fun e -> 
+      //       One(sprintf "  case \"%s%sType\": return get%s(), nil\n" e.EnumName.ToFirstUpper formName e.EnumName)
+      //     )
+      //     yield One "  }\n"
+      //     yield One "  var result c\n"
+      //     yield One """return result, fmt.Errorf("%a is not a valid enum name", enumName )"""
+      //     yield One "\n}\n\n"
+      //   }
 
-      let streamsEnum = 
-        seq{
-          yield One(sprintf "type %sStreamType int\n" formName)
-          yield One("const (\n")
-          yield! ctx.Apis.Streams |> Map.values |> Seq.mapi(fun i e -> 
-            One(sprintf "  %s%sType%s\n" e.StreamName.ToFirstUpper formName (if i = 0 then ($" {formName}StreamType = iota") else ""))
-          )
-          yield One(")\n")
-        }
+      // let streamsEnum = 
+      //   seq{
+      //     yield One(sprintf "type %sStreamType int\n" formName)
+      //     yield One("const (\n")
+      //     yield! ctx.Apis.Streams |> Map.values |> Seq.mapi(fun i e -> 
+      //       One(sprintf "  %s%sType%s\n" e.StreamName.ToFirstUpper formName (if i = 0 then ($" {formName}StreamType = iota") else ""))
+      //     )
+      //     yield One(")\n")
+      //   }
 
-      let streamSelector = 
-        seq{
-          yield One $"func {formName}StreamSelector[searchParams any, c any](streamName string, searchArgs searchParams, "
-          yield! ctx.Apis.Streams |> Map.values |> Seq.map(fun e -> 
-            One(sprintf "get%s func(searchParams) c, " e.StreamName)
-          )
-          yield One ") (c,error) {\n"
-          yield One "  switch streamName {\n"
-          yield! ctx.Apis.Streams |> Map.values |> Seq.map(fun e -> 
-            One(sprintf "  case \"%s%sType\": return get%s(searchArgs),nil\n" e.StreamName.ToFirstUpper formName e.StreamName)
-          )
-          yield One "  }\n"
-          yield One "  var result c\n"
-          yield One """return result, fmt.Errorf("%a is not a valid stream name", streamName )"""
-          yield One "\n}\n\n"
-        }
+      // let streamSelector = 
+      //   seq{
+      //     yield One $"func {formName}StreamSelector[searchParams any, c any](streamName string, searchArgs searchParams, "
+      //     yield! ctx.Apis.Streams |> Map.values |> Seq.map(fun e -> 
+      //       One(sprintf "get%s func(searchParams) c, " e.StreamName)
+      //     )
+      //     yield One ") (c,error) {\n"
+      //     yield One "  switch streamName {\n"
+      //     yield! ctx.Apis.Streams |> Map.values |> Seq.map(fun e -> 
+      //       One(sprintf "  case \"%s%sType\": return get%s(searchArgs),nil\n" e.StreamName.ToFirstUpper formName e.StreamName)
+      //     )
+      //     yield One "  }\n"
+      //     yield One "  var result c\n"
+      //     yield One """return result, fmt.Errorf("%a is not a valid stream name", streamName )"""
+      //     yield One "\n}\n\n"
+      //   }
 
-      let entitiesOPEnum opName op = 
-        seq{
-          yield One(sprintf "type %sEntity%sType int" formName opName)
-          yield One("\nconst (\n")
-          let oppableEntities = ctx.Apis.Entities |> Map.values |> Seq.filter (snd >> (Set.contains op)) |> Seq.map fst
-          yield! oppableEntities |> Seq.mapi (fun i e -> 
-            One(sprintf "  %s%s%sType%s\n" e.EntityName.ToFirstUpper formName opName (if i = 0 then ($" {formName}Entity{opName}Type = iota") else ""))
-          )
-          yield One(")\n\n")
-        }
+      // let entitiesOPEnum opName op = 
+      //   seq{
+      //     yield One(sprintf "type %sEntity%sType int" formName opName)
+      //     yield One("\nconst (\n")
+      //     let oppableEntities = ctx.Apis.Entities |> Map.values |> Seq.filter (snd >> (Set.contains op)) |> Seq.map fst
+      //     yield! oppableEntities |> Seq.mapi (fun i e -> 
+      //       One(sprintf "  %s%s%sType%s\n" e.EntityName.ToFirstUpper formName opName (if i = 0 then ($" {formName}Entity{opName}Type = iota") else ""))
+      //     )
+      //     yield One(")\n\n")
+      //   }
 
-      let entitiesOPSelector opName op = 
-        seq{
-          yield One $$"""func {{formName}}Entity{{opName}}Selector[searchParams any, c any](entityName string, searchArgs searchParams, """
-          let oppableEntities = ctx.Apis.Entities |> Map.values |> Seq.filter (snd >> (Set.contains op)) |> Seq.map fst
-          yield! oppableEntities |> Seq.map (fun e -> 
-            One(sprintf "get%s func(searchParams) c, " e.EntityName)
-          )
-          yield One ") (c,error) {\n"
-          yield One "  switch entityName {\n"
-          yield! oppableEntities |> Seq.map(fun e -> 
-            One(sprintf "  case \"%s%s%sType\": return get%s(searchArgs),nil\n" e.EntityName.ToFirstUpper formName opName e.EntityName)
-          )
-          yield One "  }\n"
-          yield One "  var result c\n"
-          yield One """return result, fmt.Errorf("%a is not a valid entity name", entityName )"""
-          yield One "\n}\n\n"
-        }
+      // let entitiesOPSelector opName op = 
+      //   seq{
+      //     yield One $$"""func {{formName}}Entity{{opName}}Selector[searchParams any, c any](entityName string, searchArgs searchParams, """
+      //     let oppableEntities = ctx.Apis.Entities |> Map.values |> Seq.filter (snd >> (Set.contains op)) |> Seq.map fst
+      //     yield! oppableEntities |> Seq.map (fun e -> 
+      //       One(sprintf "get%s func(searchParams) c, " e.EntityName)
+      //     )
+      //     yield One ") (c,error) {\n"
+      //     yield One "  switch entityName {\n"
+      //     yield! oppableEntities |> Seq.map(fun e -> 
+      //       One(sprintf "  case \"%s%s%sType\": return get%s(searchArgs),nil\n" e.EntityName.ToFirstUpper formName opName e.EntityName)
+      //     )
+      //     yield One "  }\n"
+      //     yield One "  var result c\n"
+      //     yield One """return result, fmt.Errorf("%a is not a valid entity name", entityName )"""
+      //     yield One "\n}\n\n"
+      //   }
 
       let! generatedTypes = sum.All(ctx.Types |> Seq.map(fun t -> 
         sum{
           match t.Value.Type with
-          | ExprType.UnionType _ ->
-            return StringBuilder.One "PLACEHOLDER UNION TYPE "
+          | ExprType.UnionType cases ->
+            let! enumCases = 
+              cases |> Seq.map (fun case -> 
+                sum{
+                  if case.Fields.IsUnitType then
+                    return case.CaseName
+                  else return! sum.Throw($$"""Error: Go only supports enums, meaning unions where the cases have no fields.""" |> Errors.Singleton)
+                }) |> sum.All
+            return StringBuilder.Many(seq{
+              yield StringBuilder.One "\n"
+              yield StringBuilder.One $$"""type {{t.Key}} string"""
+              yield StringBuilder.One "\n"
+              yield StringBuilder.One "const ("
+              yield StringBuilder.One "\n"
+              for enumCase in enumCases do
+                yield StringBuilder.One $$"""  {{t.Key}}{{enumCase}} = "{{enumCase}}" """
+                yield StringBuilder.One "\n"
+              yield StringBuilder.One ")"
+              yield StringBuilder.One "\n"
+            })
           | _ ->
             let! fields = ExprType.GetFields t.Value.Type
             let typeStart = $$"""type {{t.Value.TypeId.TypeName}} struct {
@@ -519,9 +574,11 @@ var _4 date.Date
                 yield One ";\n"
             })
             return StringBuilder.Many(seq{
+              yield One "\n"
               yield One typeStart
               yield fieldDeclarations
               yield One typeEnd
+              yield One "\n"
               yield One consStart
               yield consParams
               yield One consDeclEnd
@@ -531,35 +588,22 @@ var _4 date.Date
           }) |> List.ofSeq)
       return StringBuilder.Many(seq{
         yield heading
-        yield! enumsEnum
-        yield! enumSelector
-        yield! streamsEnum
-        yield! streamSelector
-        yield! entitiesOPSelector "GET" CrudMethod.Get
-        yield! entitiesOPEnum "GET" CrudMethod.Get
-        yield! entitiesOPSelector "POST" CrudMethod.Create
-        yield! entitiesOPEnum "POST" CrudMethod.Create
-        yield! entitiesOPSelector "PATCH" CrudMethod.Update
-        yield! entitiesOPEnum "PATCH" CrudMethod.Update
-        yield! entitiesOPSelector "DEFAULT" CrudMethod.Default
-        yield! entitiesOPEnum "DEFAULT" CrudMethod.Default
+        // yield! enumsEnum
+        // yield! enumSelector
+        // yield! streamsEnum
+        // yield! streamSelector
+        // yield! entitiesOPSelector "GET" CrudMethod.Get
+        // yield! entitiesOPEnum "GET" CrudMethod.Get
+        // yield! entitiesOPSelector "POST" CrudMethod.Create
+        // yield! entitiesOPEnum "POST" CrudMethod.Create
+        // yield! entitiesOPSelector "PATCH" CrudMethod.Update
+        // yield! entitiesOPEnum "PATCH" CrudMethod.Update
+        // yield! entitiesOPSelector "DEFAULT" CrudMethod.Default
+        // yield! entitiesOPEnum "DEFAULT" CrudMethod.Default
         yield! generatedTypes
       })
     }
 
-type EnumApi with
-  static member parse (enumName:string) (enumTypeJson:JsonValue) : State<Unit,Unit,ParsedFormsContext,Errors> = 
-    state{
-      let! enumType = ExprType.parse enumTypeJson
-      let! enumTypeId = enumType |> ExprType.asLookupId |> state.OfSum
-      do! state.SetState(
-        ParsedFormsContext.Updaters.Apis(
-          FormApis.Updaters.Enums(
-            Map.add enumName { EnumApi.EnumId=Guid.CreateVersion7(); TypeId=enumTypeId; EnumName=enumName }
-          )
-        )
-      )
-    }
 
 type CrudMethod with
   static member parse (crudMethodJson:JsonValue) : State<CrudMethod,Unit,ParsedFormsContext,Errors> = 

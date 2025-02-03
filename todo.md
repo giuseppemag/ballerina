@@ -95,22 +95,28 @@ Todo (✅/❌)
         ✅ form-name as a prefix parameter in all stream names, enum names, entity names
       ✅ `dotnet publish` as standalone executable
       ✅ first go-live
-      ❌ specify enums as enums
-        ❌ actually generate the enums at the top level!!!
-      ❌ define extensions to config forms, including: * injected primitives * proper type-safe visitors, especially wrt method calls * better generation of enum cases * better syntax for the predicates (more aligned to the conditionals AST)
-        ❌ add optional extra config json with all required parameters
+      ✅ specify enums as enums
+        ✅ actually generate the enums at the top level!!!
+      ✅ enums need to validate that the underlying type has just an "enum" value
+      ❌ proper type-safe visitors, especially wrt method calls and the signature of the callbacks which need to make sense case-by-case
+      ❌ better syntax for the predicates (more aligned to the conditionals AST)
+      ❌ add optional extra config json with all required parameters
+        ❌ injected primitives, with their respective imports
+        ❌ make the current primitives with their respective imports a default seed that gets overridden by the injected primitives
+        ❌ remove `injectedCategoryType` from hardcoded seeds
       ❌ invalid json errors should be handled more gracefully
-      ❌ all utility methods should be capitalized in Program.fs
-      ❌ remove `injectedCategoryType` from hardcoded seeds
-      ❌ the context is no context: it's the state; rename the type
-      ❌ rename `Multiselection` to `MultiSelection`
-      ❌ generate output names from input names
+      ✅ rename `Multiselection` to `MultiSelection`
+      ❌ accept empty `apis` blocks
       ❌ accept *.json as input name
+        ❌ generate output file names from input names and output path
       ❌ educated guess of `package_name` from file name
       ❌ educated guess of `form_name` from `package_name`
-      ❌ streams need to validate that the underlying type has id and displayvalue
-      ❌ enums need to validate that the underlying type has just an "enum" value
-      ❌ accept empty `apis` blocks
+      ✅ streams need to validate that the underlying type has id and displayvalue
+      ❌ connect command line parameters to right invocations
+        ❌ the primitive types' renderers
+        ❌ delete the sample parsed form
+      ❌ define `import` command, generate with some sort of linking strategy for shared files
+      ❌ write to Sven a "why not just a package somewhere?"
       ❌ parse the JSON into the representation forms
         ❌ use topological sort
         ❌ parse fields
@@ -119,12 +125,8 @@ Todo (✅/❌)
             ❌ inject `root` variable at form instantiation, not at form definition 
             ❌ `local` variable can be injected any time, also at form definition
             ❌ `flag` values come from some type in the config (ideally imported)
+      ❌ all utility methods should be capitalized in Program.fs
       ❌ adjust person-config in FE and use that from cmd line, delete the copy
-      ❌ connect command line parameters to right invocations
-        ❌ the primitive types' renderers
-        ❌ delete the sample parsed form
-      ❌ define `import` command, generate with some sort of linking strategy for shared files
-      ❌ write to Sven a "why not just a package somewhere?"
       ❌ move string builder to ballerina-core
       ❌ move the new type parsers to ballerina-core
         ❌ break the form engine in all possible ways
@@ -145,6 +147,7 @@ Todo (✅/❌)
     ❌ pretty print types in errors
     ❌ add source context to errors for pretty printing
       ❌ probably needs the state monad with an error decorator accumulated from the parent
+      ❌ distinguish state from parsed context
     ❌ add tests
     ❌ make ExprType.resolveLookup recursive
     ❌ help command
@@ -152,7 +155,7 @@ Todo (✅/❌)
     ❌ generate Typescript and C# code from forms-config
     ❌ allow recursive types (needs adjustment in frontend too)
       ❌ be careful with out-of-order extensions
-    ❌ allow union types (needs adjustment in frontend too)
+    ✅ allow union types (needs adjustment in frontend too)
   ✅ models
     ✅ users
     ✅ registration-tokens

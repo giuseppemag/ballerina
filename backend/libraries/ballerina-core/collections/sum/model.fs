@@ -65,6 +65,11 @@ type SumBuilder() =
         | Right b2 -> Right ('b.Concat(b1,b2))
         | _ -> Right b1
     ps |> Seq.fold merge (Left [])
+  member inline sum.All<'a,'b 
+    when 'b : (static member Concat:'b * 'b -> 'b) 
+    and 'b:(static member Zero:Unit -> 'b)>
+    (ps:seq<Sum<'a,'b>>) = 
+    ps |> List.ofSeq |> sum.All
   member sum.Delay p = 
     sum.Bind ((sum.Return ()), p)
   member sum.Lift2 (f:'a -> 'b -> 'c) p1 p2 = 
