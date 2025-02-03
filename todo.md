@@ -100,7 +100,7 @@ Todo (✅/❌)
       ✅ enums need to validate that the underlying type has just an "enum" value
       ❌ proper type-safe visitors, especially wrt method calls and the signature of the callbacks which need to make sense case-by-case
         ✅ enums GET
-        ❌ enums POST
+        ✅ enums POST
         ❌ streams GET
         ❌ streams POST
         ❌ enitites GET

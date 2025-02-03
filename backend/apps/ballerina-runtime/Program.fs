@@ -424,6 +424,7 @@ import (
 	"time"
 	"ballerina.com/core"
 	"github.com/google/uuid"
+  "golang.org/x/exp/slices"
 	"google.golang.org/genproto/googleapis/type/date"{{imports |> List.map(sprintf "  \"%s\"\n") |> List.fold (+) ""}}
 )
 var _1 uuid.UUID
@@ -444,7 +445,31 @@ var _4 date.Date
           )
           yield One "  }\n"
           yield One "  var result []string\n"
-          yield One """return result, fmt.Errorf("%s is not a valid enum name", enumName )"""
+          yield One """  return result, fmt.Errorf("%s is not a valid enum name", enumName )"""
+          yield One "\n}\n\n"
+        }
+
+      let enumCasesPOSTter = 
+        seq{
+          yield One $"func {formName}EnumPOSTter(enumName string, enumValue string, "
+          yield! ctx.Apis.Enums |> Map.values |> Seq.map(fun e -> 
+            One(sprintf "on%s func (string) (ballerina.Unit,error), " e.EnumName)
+          )
+          yield One ") (ballerina.Unit,error) {\n"
+          yield One "  switch enumName {\n"
+          yield! ctx.Apis.Enums |> Map.values |> Seq.map(fun e -> 
+            Many(seq{
+              yield One(sprintf "  case \"%s\":\n" e.EnumName)
+              yield One($$"""    if slices.Contains(All{{e.UnderlyingEnum.TypeName}}Cases[:], enumValue) {""")
+              yield One("\n")
+              yield One($$"""      return on{{e.EnumName}}(enumValue)""")
+              yield One("\n")
+              yield One("    }\n")
+            })
+          )
+          yield One "  }\n"
+          yield One "  var result = ballerina.DefaultUnit\n"
+          yield One """  return result, fmt.Errorf("%s,%s is not a valid enum name/value combination", enumName )"""
           yield One "\n}\n\n"
         }
 
@@ -587,6 +612,7 @@ var _4 date.Date
       return StringBuilder.Many(seq{
         yield heading
         yield! enumCasesGETter
+        yield! enumCasesPOSTter
         // yield! streamsEnum
         // yield! streamSelector
         // yield! entitiesOPSelector "GET" CrudMethod.Get
