@@ -127,7 +127,7 @@ export const defaultValue = <T>(types: Map<TypeName, ParsedType<T>>, builtIns: B
   }
 
   if(t.kind == "lookup")
-    defaultValue(types, builtIns, injectedPrimitives)(types.get(t.name)!)
+    return defaultValue(types, builtIns, injectedPrimitives)(types.get(t.name)!)
 
   if(t.kind == "form") {
     let res = {} as any

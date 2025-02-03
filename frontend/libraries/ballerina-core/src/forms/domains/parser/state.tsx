@@ -155,7 +155,7 @@ export const parseForms =
         }
         seen = seen.add(formDef.name)
         formDef.fields.forEach((field, fieldName) => {
-          if (field.type.kind == "lookup") {
+          if (field.type.kind == "lookup" || field.type.kind == "form") {
             traverse(formsConfig.forms.get(field.renderer)!)
           }
           try {
