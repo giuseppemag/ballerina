@@ -9,7 +9,6 @@ import { PersonFieldViews } from "./domains/person-from-config/views/field-views
 // import { PersonForm } from "./domains/person/template";
 import { fieldTypeConverters } from "./domains/person/apis/field-converters";
 import { categoryForm, CategoryState, PersonFormInjectedTypes } from "./domains/person-from-config/injected-forms/category";
-import { PersonConfigUnionEnums } from "./domains/person/apis/person-config-union-enums";
 
 const ShowFormsParsingErrors = (parsedFormsConfig: FormParsingResult) =>
 	<div style={{ border: "red" }}>
@@ -98,7 +97,7 @@ export const FormsApp = (props: {}) => {
 										enumOptionsSources: PersonFromConfigApis.enumApis,
 										entityApis: PersonFromConfigApis.entityApis,
 										leafPredicates: PersonConfigFormsLeafPredicates,
-										getFormsConfig: () => PromiseRepo.Default.mock(() => PersonConfigUnionEnums),
+										getFormsConfig: () => PromiseRepo.Default.mock(() => PersonFormsConfig),
 										injectedPrimitives: Map([["injectedCategory", {fieldView: categoryForm, defaultValue: {category: "adult", kind: "category"}, defaultState: CategoryState.Default() }]]),
 									}}
 									setState={setConfigFormsParser}
