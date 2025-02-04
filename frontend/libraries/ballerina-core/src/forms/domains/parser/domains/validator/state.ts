@@ -191,6 +191,7 @@ export const FormsConfig = {
               label: field?.label,
               visible: field.visible,
               disabled: field?.disabled,
+              description: field?.description,
               elementRenderer: {
                 renderer: field.elementRenderer,
                 label: field?.elementLabel,
