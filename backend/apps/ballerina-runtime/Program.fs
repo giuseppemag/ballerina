@@ -239,7 +239,6 @@ type ExprType with
         | Some(JsonValue.String "SingleSelection"), Some(JsonValue.Array arg) when arg.Length = 1 ->
           let! arg = !(arg.[0])
           return ExprType.OptionType arg
-        | Some(JsonValue.String "Multiselection"), Some(JsonValue.Array arg)
         | Some(JsonValue.String "MultiSelection"), Some(JsonValue.Array arg) when arg.Length = 1 ->
           let! arg = !(arg.[0])
           return ExprType.SetType arg

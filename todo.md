@@ -115,17 +115,10 @@ Todo (✅/❌)
       ❌ write to Sven a "why not just a package somewhere?"
       ✅ rename `Multiselection` to `MultiSelection`
       ✅ streams need to validate that the underlying type has id and displayvalue
-      ❌ define `import` command, generate with some sort of linking strategy for shared files
-      ❌ entites visitors
-        ❌ entites GET - identical to stream GETter: pairs of get + serialize
-        ❌ entities GETDefault - identical to stream GETter: pairs of get + serialize
-        ❌ entities POST - how do we represent changes?
-        ❌ entities PATCH - how do we represent changes?
-        ❌ make all these functions partially applied in the actual parameters vs the visitor parameters
-      ❌ the Go type generator is now reasonably mature
       ❌ parse the JSON into the representation forms
         ❌ use topological sort
         ❌ parse fields
+        ❌ parse nested (ListElement, Key, Value, etc.) renderers as a structure, not a string for consistency
         ❌ delete the sample parsed form
         ❌ parse visibility and disabled predicates
           ❌ type-check the form instances' `visible` and `disabled` predicates
@@ -133,6 +126,7 @@ Todo (✅/❌)
             ❌ inject `root` variable at form instantiation, not at form definition 
             ❌ `local` variable can be injected any time, also at form definition
             ❌ `flag` values come from some type in the config (ideally imported)
+      ❌ define `import` command, generate with some sort of linking strategy for shared files
       ❌ the functionality of the validator is now mature
       ❌ all utility methods should be capitalized in Program.fs
       ❌ adjust person-config in FE and use that from cmd line, delete the copy
@@ -148,10 +142,8 @@ Todo (✅/❌)
         ❌ move relevant sources to a separate folder in ballerina-core (forms engine)
           ❌ move the new types (`Errors`, `Form`, etc.) to ballerina-core
           ❌ move the new type checkers to ballerina-core
+    ❌ the Go type generator is now reasonably mature
     ❌ check the consistency of the used data structures: `Type` vs `TypeId`
-    ❌ somewhat painful but
-      ❌ `string -> T` is built up while parsing
-      ❌ `TId -> T` is the parsed context
     ❌ convert all instances of Map.tryFind ... withError ... to `Map.tryFindWithError`
     ❌ accept empty `apis` blocks
     ❌ pretty print types in errors
@@ -161,12 +153,21 @@ Todo (✅/❌)
     ❌ add tests
     ❌ make ExprType.resolveLookup recursive
     ❌ help command
+    ❌ somewhat painful but
+      ❌ `string -> T` is built up while parsing
+      ❌ `TId -> T` is the parsed context
     ❌ the tool is now complete and its code is clean
     ❌ define webservice variant
     ❌ generate Typescript and C# code from forms-config
     ❌ allow recursive types (needs adjustment in frontend too)
       ❌ be careful with out-of-order extensions
     ❌ the tool is now very mature and ready for extensive use - further change should be discouraged unless there's a strong case for it
+    ❌ entites visitors
+      ❌ entites GET - identical to stream GETter: pairs of get + serialize
+      ❌ entities GETDefault - identical to stream GETter: pairs of get + serialize
+      ❌ entities POST - how do we represent changes?
+      ❌ entities PATCH - how do we represent changes?
+      ❌ make all these functions partially applied in the actual parameters vs the visitor parameters
     ✅ allow union types (needs adjustment in frontend too)
   ✅ models
     ✅ users
