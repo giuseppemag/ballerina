@@ -1,9 +1,6 @@
 Todo (✅/❌)
   ❌ make validator partial
-  ✅ key-values: uniqueness constraint enforcement
   ❌ show both data-sync and type-safe forms in FormsApp
-  ✅ deprecate mapping in both config and code forms, they are not a good idea
-
   ✅ docker
     ✅ PG
     ✅ PG-admin
@@ -11,9 +8,8 @@ Todo (✅/❌)
   ❌ form validator and code generator
     ✅ create a production-ready `ballerina` project that can be run
       ✅ rename `web` to `test`
-    ❌ receive the command line parameters  
+    ✅ receive the command line parameters  
       ✅ form json
-      ❌ array of extra primitive types with names and supported renderers
     ❌ define a `Pair` domain with the `<*>` operator
     ✅ define a `Sum`  domain with the `<+>` operator
     ✅ read the json with FSharp.Data
@@ -27,7 +23,7 @@ Todo (✅/❌)
       ✅ use expressions from the business rule schema plus new form types as a representation target for the massive `Person` sample
       ✅ think about the types for enums, streams, etc: they do not look good, define a whole record with an `Id` static member
       ✅ define state monad with errors as a composition of state and sum
-      ❌ ensure existence and structural reasonableness of all referenced types
+      ✅ ensure existence and structural reasonableness of all referenced types
         ✅ in other type definitions
         ✅ in APIs
         ✅ in forms
@@ -71,9 +67,9 @@ Todo (✅/❌)
         ✅ use https://pkg.go.dev/github.com/google/uuid for uuid
         ✅ which packages are imported is a parameter
         ✅ allow injection of primitives, but only for things like `filterGroup`
-        ❌ make all types serializable with https://pkg.go.dev/encoding/json
+        ✅ make all types serializable with https://pkg.go.dev/encoding/json
           ✅ make all fields public
-          ❌ test filled maps, sets, options
+          ✅ test filled maps, sets, options
         ✅ package imports only if the relevant types (date/uuid) are used, or use them in a forced way to make the errors disappear
       ✅ define library with common utilities
       ✅ `All` requires a non-empty list and a semigroup, not a monoid
@@ -85,12 +81,9 @@ Todo (✅/❌)
         ✅ parse enums
         ✅ parse streams
         ✅ parse entities
-      ❌ connect command line parameters to right invocations
+     ✅ connect command line parameters to right invocations
         ✅ output of code generation
         ✅ package of the output code
-        ❌ injected types
-          ✅ remove 'injectedCategory'
-        ❌ imported packages
         ✅ package_name as a parameter
         ✅ form-name as a prefix parameter in all stream names, enum names, entity names
       ✅ `dotnet publish` as standalone executable
@@ -109,16 +102,19 @@ Todo (✅/❌)
         ❌ make it part of the config file itself
         ❌ injected primitives, with their respective imports
           ❌ use injected `guid` in `streamPOSTer` in particular
+        ❌ injected generics - `Option`, `Map`, `Set`, `List`/array
         ❌ make the current primitives with their respective imports a default seed that gets overridden by the injected primitives
-        ❌ remove `injectedCategoryType` from hardcoded seeds
-      ❌ invalid json errors should be handled more gracefully
-      ✅ rename `Multiselection` to `MultiSelection`
+        ❌ do not add imports unless they are used (for example, slices)
+        ✅ remove `injectedCategoryType` from hardcoded seeds
       ❌ accept *.json as input name
         ❌ generate output file names from input names and output path
+      ❌ invalid json errors should be handled more gracefully
       ❌ educated guess of `package_name` from file name
       ❌ educated guess of `form_name` from `package_name`
+      ❌ test on all sample form configs and then make a new release
+      ❌ write to Sven a "why not just a package somewhere?"
+      ✅ rename `Multiselection` to `MultiSelection`
       ✅ streams need to validate that the underlying type has id and displayvalue
-      ❌ connect command line parameters to right invocations
       ❌ define `import` command, generate with some sort of linking strategy for shared files
       ❌ entites visitors
         ❌ entites GET - identical to stream GETter: pairs of get + serialize
@@ -127,7 +123,6 @@ Todo (✅/❌)
         ❌ entities PATCH - how do we represent changes?
         ❌ make all these functions partially applied in the actual parameters vs the visitor parameters
       ❌ the Go type generator is now reasonably mature
-      ❌ write to Sven a "why not just a package somewhere?"
       ❌ parse the JSON into the representation forms
         ❌ use topological sort
         ❌ parse fields

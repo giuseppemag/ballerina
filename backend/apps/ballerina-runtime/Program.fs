@@ -10,6 +10,7 @@ open Ballerina.Option
 open Ballerina.Sum
 open Ballerina.Errors
 open Ballerina.StateWithError
+open MBrace.FsPickler.Json
 
 let dup a = (a,a)
 let (<*>) f g = fun (a,b) -> (f a, g b)
@@ -1319,8 +1320,96 @@ renderer defaultInfiniteStream"
     }
   }
 
+type BuiltIns = {
+  Primitives:Map<PrimitiveType, BuiltinTypeDef>
+  Generics:Map<GenericType, BuiltinTypeDef>
+  Custom:Map<string, BuiltinTypeDef>
+}
+and GenericType = Option | List | Set | Map
+and BuiltinTypeDef = {
+  GeneratedTypeName: string
+  RequiredImport:Option<string>
+  SupportedRenderers:Set<string>
+}
+
+let builtins = { 
+  Primitives=[
+    (PrimitiveType.GuidType, {
+      GeneratedTypeName="uuid.UUID"
+      RequiredImport=None
+      SupportedRenderers=["defaultGUID"] |> Set.ofSeq
+    })
+  ] |> Map.ofSeq
+  Generics=[
+    (GenericType.Option, {
+      GeneratedTypeName="ballerina.Option"
+      RequiredImport=Some "ballerina.com/core"
+      SupportedRenderers=["defaultEnum"; "defaultInfiniteStream"] |> Set.ofSeq
+    })
+  ] |> Map.ofSeq
+  Custom=[
+    ("injectedCategory", {
+      GeneratedTypeName="ballerina.Unit"
+      RequiredImport=None
+      SupportedRenderers=["defaultInjectedCategory"] |> Set.ofSeq
+    })
+  ] |> Map.ofSeq
+
+}
+open System.Text.Json
+open System.Text.Json.Serialization
+
+let options =
+    JsonFSharpOptions.Default()
+        .ToJsonSerializerOptions()
+
+// 3. Either way, pass the options to Serialize/Deserialize.
+JsonSerializer.Serialize(builtins, options) |> Console.WriteLine
+let builtinsText = """{
+  "Primitives": [
+    [
+      {
+        "Case": "GuidType"
+      },
+      {
+        "GeneratedTypeName": "uuid.UUID",
+        "RequiredImport": null,
+        "SupportedRenderers": [
+          "defaultGUID"
+        ]
+      }
+    ]
+  ],
+  "Generics": [
+    [
+      {
+        "Case": "Option"
+      },
+      {
+        "GeneratedTypeName": "ballerina.Option",
+        "RequiredImport": "ballerina.com/core",
+        "SupportedRenderers": [
+          "defaultEnum",
+          "defaultInfiniteStream"
+        ]
+      }
+    ]
+  ],
+  "Custom": {
+    "injectedCategory": {
+      "GeneratedTypeName": "ballerina.Unit",
+      "RequiredImport": null,
+      "SupportedRenderers": [
+        "defaultInjectedCategory"
+      ]
+    }
+  }
+}"""
+Console.WriteLine(JsonSerializer.Deserialize<BuiltIns>(builtinsText, options))
+// Console.ReadLine() |> ignore
+
 let injectedCategoryType:TypeId = { TypeName="injectedCategory"; TypeId=Guid.CreateVersion7() }
-let sampleInjectedTypes = [injectedCategoryType]
+let sampleInjectedTypes = [] // [injectedCategoryType]
 let samplePrimitiveRenderers:Map<string, PrimitiveRenderer> =
   [
     "defaultBoolean", { PrimitiveRendererName="defaultBoolean"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.BoolType }
@@ -1437,8 +1526,8 @@ let main args =
   rootCommand.Invoke(args)
 
 (*
-forms -input ./input-forms/email-provider-selection.json -output ./generated-output/models/email-provider-selection.gen.go -validate -codegen golang -package_name email_provider_selection -form_name EmailProviderSelection
-forms -input ./input-forms/go-live-date.json -output ./generated-output/models/go-live-date.gen.go -validate -codegen golang -package_name go_live_date  -form_name GoLiveDate
-forms -input ./input-forms/quality-check-mm-invoice.json -output ./generated-output/models/quality-check-mm-invoice.gen.go -validate -codegen golang -package_name quality_check_mm_invoice -form_name QualityCheckMMInvoice
-forms -input ./input-forms/users-blp.json -output ./generated-output/models/users-blp.gen.go -validate -codegen golang -package_name users_blp -form_name UsersBlp
+dotnet run -- forms -input ./input-forms/email-provider-selection.json -output ./generated-output/models/email-provider-selection.gen.go -validate -codegen golang -package_name email_provider_selection -form_name EmailProviderSelection
+dotnet run -- forms -input ./input-forms/go-live-date.json -output ./generated-output/models/go-live-date.gen.go -validate -codegen golang -package_name go_live_date  -form_name GoLiveDate
+dotnet run -- forms -input ./input-forms/quality-check-mm-invoice.json -output ./generated-output/models/quality-check-mm-invoice.gen.go -validate -codegen golang -package_name quality_check_mm_invoice -form_name QualityCheckMMInvoice
+dotnet run -- forms -input ./input-forms/users-blp.json -output ./generated-output/models/users-blp.gen.go -validate -codegen golang -package_name users_blp -form_name UsersBlp
 *)
