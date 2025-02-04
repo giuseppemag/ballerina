@@ -1,4 +1,4 @@
-import { CommonFormState, AsyncState, FormLabel, BooleanView, NumberView, StringView, DateView, CollectionReference, EnumView, EnumMultiselectView, SearchableInfiniteStreamView, InfiniteStreamMultiselectView, BaseEnumContext, MaybeBooleanView, ListFieldView, unit } from "ballerina-core";
+import { CommonFormState, AsyncState, FormLabel, BooleanView, NumberView, StringView, DateView, CollectionReference, EnumView, EnumMultiselectView, SearchableInfiniteStreamView, InfiniteStreamMultiselectView, BaseEnumContext, MaybeBooleanView, ListFieldView, unit, Value } from "ballerina-core";
 
 export const MostUglyValidationDebugView = (props: { context: {commonFormState: CommonFormState} }) =>
   props.context.commonFormState.modifiedByUser && props.context.commonFormState.validation.sync && AsyncState.Operations.isLoading(props.context.commonFormState.validation.sync) ?
@@ -82,19 +82,19 @@ export const PersonFieldViews = {
         </>,
   },
   enumSingleSelection: {
-    defaultEnum: <Context extends FormLabel & BaseEnumContext<Context, Element>, Element extends CollectionReference, ForeignMutationsExpected>(): 
-    EnumView<Context, Element, ForeignMutationsExpected> =>
+    defaultEnum: <Context extends FormLabel & BaseEnumContext<Value<Element>>, Element extends CollectionReference, ForeignMutationsExpected>(): 
+    EnumView<Context, Value<Element>, ForeignMutationsExpected> =>
       props => <>
         {props.context.label && <h3>{props.context.label}</h3>}
         {props.context.activeOptions == "loading" ?
           "loading options" :
-          <select value={props.context.value.kind == "l" ? props.context.value.value.id : undefined}
+          <select value={props.context.value.kind == "l" ? props.context.value.value.value.id : undefined}
             onChange={e => props.foreignMutations.setNewValue(e.currentTarget.value)}>
             <>
               <option></option>
               {props.context.activeOptions.map(o =>
-                <option value={o.id}>
-                  {o.displayName}
+                <option value={o.value.id}>
+                  {o.value.displayName}
                 </option>
               )}
             </>
@@ -104,8 +104,8 @@ export const PersonFieldViews = {
       </>,
   },
   enumMultiSelection: {
-    defaultEnumMultiselect: <Context extends FormLabel & BaseEnumContext<Context, Element>, Element extends CollectionReference, ForeignMutationsExpected>(): 
-      EnumMultiselectView<Context, Element, ForeignMutationsExpected> =>
+    defaultEnumMultiselect: <Context extends FormLabel & BaseEnumContext<Value<Element>>, Element extends CollectionReference, ForeignMutationsExpected>(): 
+      EnumMultiselectView<Context, Value<Element>, ForeignMutationsExpected> =>
       props => <>
         {props.context.label && <h3>{props.context.label}</h3>}
         {props.context.activeOptions == "loading" ?
@@ -115,8 +115,8 @@ export const PersonFieldViews = {
           onChange={e => props.foreignMutations.setNewValue(Array.from(e.currentTarget.options).filter(_ => _.selected).map(_ => _.value))}>
           <>
             {props.context.activeOptions.map(o =>
-              <option value={o.id}>
-                {o.displayName}
+              <option value={o.value.id}>
+                {o.value.displayName}
               </option>
             )}
           </>

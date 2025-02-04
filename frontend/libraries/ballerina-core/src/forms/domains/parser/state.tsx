@@ -121,7 +121,7 @@ export type EntityApis = {
 export type EnumName = string
 
 
-export type EnumOptionsSources = BasicFun<EnumName, BasicFun<Unit, Promise<Array<[CollectionReference, BoolExpr<Unit>]>>>>
+export type EnumOptionsSources = BasicFun<EnumName, BasicFun<Unit, Promise<Array<{value: CollectionReference}>>>>
 export const parseForms =
   <LeafPredicates, T extends { [key in keyof T]: { type: any; state: any; }; },>(
     builtIns: BuiltIns,
@@ -155,6 +155,7 @@ export const parseForms =
         }
         seen = seen.add(formDef.name)
         formDef.fields.forEach((field, fieldName) => {
+          // TODO add a union case
           if (field.type.kind == "lookup" || field.type.kind == "form") {
             traverse(formsConfig.forms.get(field.renderer)!)
           }
@@ -186,6 +187,7 @@ export const parseForms =
         seen = seen.clear()
         traverse(form)
       })
+
 
       formProcessingOrder.forEach(formName => {
         const formConfig = formsConfig.forms.get(formName)!
@@ -241,7 +243,8 @@ export const parseForms =
         const initialState = parsedForm.initialFormState
         const api = {
           get: (id: string) => entityApis.get(launcher.api)(id).then((raw: any) => {
-            return fromAPIRawValue(parsedForm.formDef.type , formsConfig.types, builtIns, apiConverters, injectedPrimitives)(raw)
+            const x =fromAPIRawValue(parsedForm.formDef.type , formsConfig.types, builtIns, apiConverters, injectedPrimitives)(raw)
+            return x
           }),
           update: (id: any, parsed: any) => {
             return parsed.kind =="errors" ? Promise.reject(parsed.errors) : entityApis.update(launcher.api)(id, parsed.value)  
@@ -285,13 +288,12 @@ export const parseForms =
         const form = parsedForm.form
         const initialState = parsedForm.initialFormState
         const api = {
-          default: (_: Unit) => entityApis.default(launcher.api)(unit)
-            .then((raw: any) => {
-              return fromAPIRawValue(parsedForm.formDef.type , formsConfig.types, builtIns, apiConverters, injectedPrimitives)(raw)
-            }),
-          create: (parsed: any) => {
-            return parsed.kind == "errors" ? Promise.reject(parsed.errors) : entityApis.create(launcher.api)(parsed.value)
-          },
+          default: (_: Unit) => 
+            entityApis.default(launcher.api)(unit).then((raw: any) => 
+              fromAPIRawValue(parsedForm.formDef.type , formsConfig.types, builtIns, apiConverters, injectedPrimitives)(raw)),
+          create: (parsed: any) => 
+            parsed.kind == "errors" ? Promise.reject(parsed.errors) : entityApis.create(launcher.api)(parsed.value)
+          ,
         }
         parsedLaunchers.create = parsedLaunchers.create.set(
           launcherName,

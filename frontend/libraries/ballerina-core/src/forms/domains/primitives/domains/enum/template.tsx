@@ -9,7 +9,7 @@ import { FieldValidation, FieldValidationWithPath, FormValidatorSynchronized, On
 import { BaseEnumContext, EnumFormState, EnumView } from "./state";
 
 
-export const EnumForm = <Context extends FormLabel & BaseEnumContext<Context, Element>, ForeignMutationsExpected, Element extends CollectionReference>(
+export const EnumForm = <Context extends FormLabel & BaseEnumContext<Element>, ForeignMutationsExpected, Element extends Value<CollectionReference>>(
   validation?: BasicFun<CollectionSelection<Element>, Promise<FieldValidation>>
 ) => {
   const Co = CoTypedFactory<Context & Value<CollectionSelection<Element>> & { disabled:boolean }, EnumFormState<Context, Element>>()
@@ -20,7 +20,7 @@ export const EnumForm = <Context extends FormLabel & BaseEnumContext<Context, El
         context={{
           ...props.context,
           activeOptions: !AsyncState.Operations.hasValue(props.context.customFormState.options.sync) ? "loading"
-            : props.context.customFormState.options.sync.value.valueSeq().filter(o => o[1](props.context)).map(o => o[0]).toArray()
+            : props.context.customFormState.options.sync.value.valueSeq().toArray()
         }}
         foreignMutations={{
           ...props.foreignMutations,
@@ -30,7 +30,7 @@ export const EnumForm = <Context extends FormLabel & BaseEnumContext<Context, El
             if (newSelection == undefined)
               return props.foreignMutations.onChange(replaceWith(CollectionSelection<Element>().Default.right("no selection")), List());
             else
-              return props.foreignMutations.onChange(replaceWith(CollectionSelection<Element>().Default.left(newSelection[0])), List());
+              return props.foreignMutations.onChange(replaceWith(CollectionSelection<Element>().Default.left(newSelection)), List());
 
           }
         }} />
@@ -42,7 +42,7 @@ export const EnumForm = <Context extends FormLabel & BaseEnumContext<Context, El
       Co.Template<ForeignMutationsExpected & { onChange: OnChange<CollectionSelection<Element>>; }>(
         Co.GetState().then(current =>
           { 
-            return Synchronize<Unit, OrderedMap<Guid, [Element, BasicPredicate<Context>]>>(current.getOptions, () => "transient failure", 5, 50)
+            return Synchronize<Unit, OrderedMap<Guid, Element>>(current.getOptions, () => "transient failure", 5, 50)
             .embed(_ =>  _.customFormState.options,
                _ => current => ({ ...current, customFormState: { ...current.customFormState, options: _(current.customFormState.options) } })
               )}

@@ -19,7 +19,7 @@ const InstantiedPersonFormsParserTemplate = FormsParserTemplate<PersonFormInject
 
 export const FormsApp = (props: {}) => {
 	const [configFormsParser, setConfigFormsParser] = useState(FormsParserState.Default())
-	const [formToShow, setFormToShow] = useState(0)
+	const [formToShow, setFormToShow] = useState(1)
 	const numForms = 2
 	const [personCreateFormState, setPersonCreateFormState] = useState(FormRunnerState.Default())
 	const [personEditFormState, setPersonEditFormState] = useState(FormRunnerState.Default())

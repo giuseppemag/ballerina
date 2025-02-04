@@ -1,4 +1,4 @@
-import { ApiConverters, CollectionReference, CollectionSelection } from "ballerina-core";
+import { ApiConverters, CollectionReference, CollectionSelection, Value } from "ballerina-core";
 import { List, OrderedMap } from "immutable";
 import { PersonFormInjectedTypes } from "src/domains/person-from-config/injected-forms/category";
 
@@ -11,14 +11,10 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
     "base64File": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: ([_, __])  => _ },
     "secret": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: ([_, isModified])  => isModified ? _ : undefined },
     "Date": { fromAPIRawValue: _ => typeof _ == "string" ? new Date(Date.parse(_)) : typeof _ == "number" ? new Date(_) : new Date(Date.now()), toAPIRawValue: ([_, __])  => _ },
-    "CollectionReference": {
-        fromAPIRawValue: _ => CollectionReference.Default(_.id ?? "", _.displayName ?? ""),
-        toAPIRawValue: ([_, __]) => _.source == "enum" ? _.id : { id: _.id, displayName: _.displayName }
-    },
     "SingleSelection": {
         fromAPIRawValue: _ => _ == undefined ? CollectionSelection().Default.right("no selection") :
             CollectionSelection().Default.left(
-                CollectionReference.Default(_.id ?? "", _.displayName ?? "")
+                _
             ),
         toAPIRawValue: ([_, __]) => {
 			return _.kind == "r" ? undefined : _.value}
@@ -36,7 +32,8 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
         toAPIRawValue: ([_, __]) => {
 			const first = _.first()
 			if(first && typeof first[0] == "string") return [_, ((_: string )=> [_, _])]
-			if(first && typeof first[0] == "object" && "value" in first[0]  && "id" in first[0]["value"] && "displayName" in first[0]["value"]) return [_, ((_: CollectionReference) => [_.id, _.displayName])]
+			if(first && typeof first[0] == "object" && "value" in first[0] && typeof first[0]["value"] == "object"  && "value" in first[0]["value"] &&  typeof first[0]["value"]["value"] == "object" &&  "id" in first[0]["value"]["value"] && "displayName" in first[0]["value"]["value"]) return [_, ((_: Value<CollectionReference>) => [_.value.id, _.value.displayName])]
+            if(first && typeof first[0] == "object" && "value" in first[0] && typeof first[0]["value"] == "object"  && "id" in first[0]["value"] && "displayName" in first[0]["value"]) return [_, ((_: CollectionReference) => [_.id, _.displayName])]
 			return [_, (_: any) => [JSON.stringify(_), JSON.stringify(_)]]
 		}
 	}
