@@ -1,4 +1,4 @@
-import { ApiConverters, CollectionReference, CollectionSelection } from "ballerina-core";
+import { ApiConverters, CollectionReference, CollectionSelection, Value } from "ballerina-core";
 import { List, OrderedMap } from "immutable";
 import { PersonFormInjectedTypes } from "src/domains/person-from-config/injected-forms/category";
 
@@ -32,7 +32,8 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
         toAPIRawValue: ([_, __]) => {
 			const first = _.first()
 			if(first && typeof first[0] == "string") return [_, ((_: string )=> [_, _])]
-			if(first && typeof first[0] == "object" && "value" in first[0]  && "id" in first[0]["value"] && "displayName" in first[0]["value"]) return [_, ((_: CollectionReference) => [_.id, _.displayName])]
+			if(first && typeof first[0] == "object" && "value" in first[0] && typeof first[0]["value"] == "object"  && "value" in first[0]["value"] &&  typeof first[0]["value"]["value"] == "object" &&  "id" in first[0]["value"]["value"] && "displayName" in first[0]["value"]["value"]) return [_, ((_: Value<CollectionReference>) => [_.value.id, _.value.displayName])]
+            if(first && typeof first[0] == "object" && "value" in first[0] && typeof first[0]["value"] == "object"  && "id" in first[0]["value"] && "displayName" in first[0]["value"]) return [_, ((_: CollectionReference) => [_.id, _.displayName])]
 			return [_, (_: any) => [JSON.stringify(_), JSON.stringify(_)]]
 		}
 	}

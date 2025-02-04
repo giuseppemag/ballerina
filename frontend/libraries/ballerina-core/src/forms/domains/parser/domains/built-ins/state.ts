@@ -6,7 +6,9 @@ import { InjectedPrimitives, Maybe, ParsedType, TypeName } from "../../../../../
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 
 export const PrimitiveTypes =
-  ["string",
+  [ 
+    "guid", //resolves to string
+    "string",
     "number",
     "boolean",
     "maybeBoolean",

@@ -56,7 +56,7 @@ export const RawFieldType = {
   isForm: <T>(_: RawFieldType<T>): _ is {fields: Object} => typeof _ == "object" && "fields" in _ && isObject(_.fields),
 }
 
-export type PrimitiveTypeName<T> = "string" | "number" | "maybeBoolean" | "boolean" | "Date" | "base64File" | "secret" | keyof T;
+export type PrimitiveTypeName<T> = "string" | "number" | "maybeBoolean" | "boolean" | "Date" | "base64File" | "secret" | keyof T | "guid";
 export type FormFields<T> =  Map<FieldName, ParsedType<T>>
 export type ParsedType<T> = 
   | { kind: "unionCase", name: CaseName, fields: ParsedType<T> }
@@ -89,7 +89,7 @@ export const ParsedType = {
     
     ParseRawFieldType: <T>(fieldName: TypeName, rawFieldType: RawFieldType<T>, types: Set<TypeName>, injectedPrimitives?: InjectedPrimitives<T>) : ValueOrErrors<ParsedType<T>, string> => {
       if (RawFieldType.isPrimitive(rawFieldType, injectedPrimitives))
-         return ValueOrErrors.Default.return(ParsedType.Default.primitive(rawFieldType))
+         return ValueOrErrors.Default.return(ParsedType.Default.primitive(rawFieldType == "guid" ? "string" : rawFieldType))
       if (RawFieldType.isSingleSelection(rawFieldType))
         return ParsedType.Operations.ParseRawFieldType(fieldName, rawFieldType.args[0], types, injectedPrimitives).Then(parsedArgs =>
           ValueOrErrors.Default.return(ParsedType.Default.application("SingleSelection", [parsedArgs]))
