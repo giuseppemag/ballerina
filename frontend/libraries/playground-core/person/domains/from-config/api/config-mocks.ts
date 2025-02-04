@@ -314,11 +314,15 @@ export const PersonFormsConfig = {
         addresses: {
           label: "other addresses",
           renderer: "defaultList",
-          elementRenderer: {
-            renderer: "address",
-            label: "address",
-            visible: { kind: "true" },
-          },
+          //bw compatability case
+          elementRenderer: "address",
+          elementLabel: "address",
+          elementTooltip: "address tooltip",
+          // elementRenderer: {
+          //   renderer: "address",
+          //   label: "address",
+          //   visible: { kind: "true" },
+          // },
           visible: { kind: "true" },
         },
         emails: {

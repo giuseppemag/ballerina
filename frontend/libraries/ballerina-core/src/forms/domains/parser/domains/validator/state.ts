@@ -179,7 +179,32 @@ export const FormsConfig = {
         const parsedForm: ParsedFormConfig<T> = { name: formName, fields: Map(), tabs: Map(), type: parsedTypes.get(form.type)!, header: RawForm.hasHeader(form) ? form.header : undefined };
 
         Object.entries(form.fields).forEach(([fieldName, field]: [fieldName: string, field: any]) =>
-          parsedForm.fields = parsedForm.fields.set(fieldName, ParsedRenderer.Operations.ParseRenderer(formType.fields.get(fieldName)!, field, parsedTypes))         
+          {  
+            const fieldType = formType.fields.get(fieldName)!
+            if(fieldType.kind == "application" && fieldType.value == "List" ){
+              console.debug("parsing field", fieldName, field)
+              console.debug('fieldType', formType.fields.get(fieldName)!);
+            }
+
+            const bwcompatiblefield = fieldType.kind  == "application" && fieldType.value == "List" && typeof field.elementRenderer == "string" ? {
+              renderer: field.renderer,
+              label: field?.label,
+              visible: field.visible,
+              disabled: field?.disabled,
+              elementRenderer: {
+                renderer: field.elementRenderer,
+                label: field?.elementLabel,
+                tooltip: field?.elementTooltip,
+                visible: field.visible
+              }
+            }: field
+
+            if(fieldType.kind == "application" && fieldType.value == "List" ){
+              console.debug('bwcompatiblefield', bwcompatiblefield);
+
+            }
+            return parsedForm.fields = parsedForm.fields.set(fieldName, ParsedRenderer.Operations.ParseRenderer(fieldType, bwcompatiblefield, parsedTypes))  
+          }       
         )
 
         let tabs: FormLayout = OrderedMap()
