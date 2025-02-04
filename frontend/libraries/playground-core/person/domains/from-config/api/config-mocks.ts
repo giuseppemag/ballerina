@@ -191,7 +191,7 @@ export const PersonFormsConfig = {
       fields: {
         category: {
           label: "category",
-          description: "categories, surely they have no practical uses?",
+          details: "categories, surely they have no practical uses?",
           renderer: "defaultCategory",
           visible: { kind: "true" },
         },
@@ -235,7 +235,7 @@ export const PersonFormsConfig = {
           keyRenderer: {
             label: "name",
             tooltip: "their name",
-            details: "a name helps you to identtify a person, animal or thing",
+            details: "a name helps you to identify a person, animal or thing",
             renderer: "defaultString",
             visible: { kind: "true" },
           },
@@ -444,7 +444,7 @@ export const PersonFormsConfig = {
           renderer: "defaultList",
           elementRenderer: {
             label: "date",
-            descritpion: "a day off, time to relax, unwind and enjoy the frivolities of life",
+            details: "a day off, time to relax, unwind and enjoy the frivolities of life",
             renderer: "defaultDate",
             visible: { kind: "true" },
           },
