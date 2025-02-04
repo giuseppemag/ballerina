@@ -1,5 +1,5 @@
 import { List, Map, OrderedMap, Set } from "immutable";
-import { Base64FileForm, BaseEnumContext, BasicFun, BooleanForm, BoolExpr, CollectionReference, CollectionSelection, CommonFormState, DateForm, DateFormState, EnumForm, EnumFormState, EnumMultiselectForm, EnumOptionsSources, FormLabel, Guid, InfiniteMultiselectDropdownForm, InjectedPrimitives, ListFieldState, ListForm, MapFieldState, MapForm, Maybe, MaybeBooleanForm, NumberForm, ParsedForms, ParsedType, SearchableInfiniteStreamForm, SearchableInfiniteStreamState, SecretForm, StringForm, Template, Unit, Value } from "../../../../../../main";
+import { Base64FileForm, BaseEnumContext, BasicFun, BasicPredicate, BooleanForm, BoolExpr, CollectionReference, CollectionSelection, CommonFormState, DateForm, DateFormState, EnumForm, EnumFormState, EnumMultiselectForm, EnumOptionsSources, FormLabel, Guid, InfiniteMultiselectDropdownForm, InjectedPrimitives, ListFieldState, ListForm, MapFieldState, MapForm, Maybe, MaybeBooleanForm, NumberForm, OrderedMapRepo, ParsedForms, ParsedType, SearchableInfiniteStreamForm, SearchableInfiniteStreamState, SecretForm, StringForm, Template, Unit, Value } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 
 type Form = {
@@ -128,11 +128,6 @@ export const ParsedRenderer = {
       console.error(`Invalid field type ${JSON.stringify(fieldType)} for field ${JSON.stringify(field)}`)
       throw new Error("Invalid field type")
     },
-    ParseOptions: (leafPredicates: any, options: any) => {
-      const result = options.map((_: any) => ([_[0].id, [_[0], (_[1] as BoolExpr<any>).eval<any>(leafPredicates)]]));
-      const resultMap = result.reduce((a: any, b: any) => a.set(b[0], b[1]), OrderedMap<any, any>());
-      return resultMap;
-    },
     FormViewToViewKind: (viewName: string | undefined, formViews: Record<string, any>, formNames: Set<string>) => {
       if (viewName == undefined) {
         throw Error(`cannot resolve view ${viewName}`) // TODO -- better error handling
@@ -223,18 +218,18 @@ export const ParsedRenderer = {
           .withView(formViews[viewKind][viewName]())
           .mapContext<any & CommonFormState & Value<string>>(_ => ({ ..._, label: label, tooltip }))
       if (viewKind == "enumSingleSelection" && rendererConfig.kind == "enum")
-        return EnumForm<any & FormLabel & BaseEnumContext<any, CollectionReference>, Unit, CollectionReference>()
+        return EnumForm<any & FormLabel & BaseEnumContext<Value<CollectionReference>>, Unit, Value<CollectionReference>>()
           .withView(formViews[viewKind][viewName]())
-          .mapContext<any & EnumFormState<any & BaseEnumContext<any, CollectionReference>, CollectionReference> & Value<CollectionSelection<CollectionReference>>>(_ => ({
+          .mapContext<any & EnumFormState<any & BaseEnumContext<Value<CollectionReference>>, Value<CollectionReference>> & Value<CollectionSelection<Value<CollectionReference>>>>(_ => ({
             ..._, label: label, tooltip, getOptions: () => {
-              return ((enumOptionsSources as any)(rendererConfig.options)() as Promise<any>).then(options => ParsedRenderer.Operations.ParseOptions(leafPredicates, options))
+              return ((enumOptionsSources as any)(rendererConfig.options)() as Promise<any>).then(options => Map(options.map((o: {value: CollectionReference}) => [o.value.id, o])))
             }
           })) 
       if (viewKind == "enumMultiSelection" && rendererConfig.kind == "enum")
-        return EnumMultiselectForm<any & FormLabel & BaseEnumContext<any, CollectionReference>, Unit, CollectionReference>()
+        return EnumMultiselectForm<any & FormLabel & BaseEnumContext<Value<CollectionReference>>, Unit, Value<CollectionReference>>()
           .withView(formViews[viewKind][viewName]() )
-          .mapContext<any & EnumFormState<any & BaseEnumContext<any, CollectionReference>, CollectionReference> & Value<OrderedMap<Guid, CollectionReference>>>(_ => ({
-            ..._, label: label, tooltip, getOptions: () => ((enumOptionsSources as any)(rendererConfig.options)() as Promise<any>).then(options => ParsedRenderer.Operations.ParseOptions(leafPredicates, options))
+          .mapContext<any & EnumFormState<any & BaseEnumContext<Value<CollectionReference>>, Value<CollectionReference>> & Value<OrderedMap<Guid, CollectionReference>>>(_ => ({
+            ..._, label: label, tooltip, getOptions: () => ((enumOptionsSources as any)(rendererConfig.options)() as Promise<any>).then(options => OrderedMap(options.map((o: {value: CollectionReference}) => [o.value.id, o])))
           })) 
       if (viewKind == "streamSingleSelection")
         return SearchableInfiniteStreamForm<CollectionReference, any & FormLabel, Unit>()

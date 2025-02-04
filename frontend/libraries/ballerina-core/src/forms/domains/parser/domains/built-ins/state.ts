@@ -1,4 +1,4 @@
-import { Map, List, Set, OrderedMap, is } from "immutable"
+import { Map, List, Set, OrderedMap } from "immutable"
 import { CollectionReference } from "../../../collection/domains/reference/state";
 import { CollectionSelection } from "../../../collection/domains/selection/state";
 import { BasicFun } from "../../../../../fun/state";
@@ -11,7 +11,6 @@ export const PrimitiveTypes =
     "boolean",
     "maybeBoolean",
     "Date",
-    "CollectionReference",
     "base64File",
     "secret",
   ] as const
@@ -21,7 +20,9 @@ export const GenericTypes = [
   "SingleSelection",
   "MultiSelection",
   "List",
-  "Map"] as const
+  "Map",
+  "Union"
+] as const
 export type GenericType = (typeof GenericTypes)[number]
 
 export type ApiConverter<T> =  { fromAPIRawValue: BasicFun<any, T>, toAPIRawValue: BasicFun<[T, boolean], any> }
@@ -35,7 +36,6 @@ export type BuiltInApiConverters = {
   "base64File": ApiConverter<string>
   "secret": ApiConverter<string>
   "Date": ApiConverter<Maybe<Date>>
-  "CollectionReference": ApiConverter<CollectionReference>
   "SingleSelection": ApiConverter<CollectionSelection<any>>
   "MultiSelection": ApiConverter<OrderedMap<string, any>>
   "List": ApiConverter<List<any>>,
@@ -73,7 +73,6 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
       ["maybeBoolean", { renderers: Set(["maybeBoolean"]), defaultValue: undefined }] as [string, PrimitiveBuiltIn],
       ["date", { renderers: Set(["date"]), defaultValue: undefined }] as [string, PrimitiveBuiltIn],
       ["Date", { renderers: Set(["date"]), defaultValue: undefined }] as [string, PrimitiveBuiltIn],
-      ["CollectionReference", { renderers: Set(["enumSingleSelection", "enumMultiSelection", "streamSingleSelection", "streamMultiSelection"]), defaultValue: CollectionReference.Default("", "") }] as [string, PrimitiveBuiltIn],
       ["base64File", { renderers: Set(["base64File"]), defaultValue: "" }] as [string, PrimitiveBuiltIn],
       ["secret", { renderers: Set(["secret"]), defaultValue: "" }] as [string, PrimitiveBuiltIn],
     ]),
@@ -81,7 +80,8 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
       ["SingleSelection", { defaultValue: CollectionSelection().Default.right("no selection") }] as [string, GenericBuiltIn],
       ["MultiSelection", { defaultValue: Map() }] as [string, GenericBuiltIn],
       ["List", { defaultValue: List() }] as [string, GenericBuiltIn],
-      ["Map", { defaultValue: List() }] as [string, GenericBuiltIn]
+      ["Map", { defaultValue: List() }] as [string, GenericBuiltIn],    
+      ["Union", { defaultValue: Map() }] as [string, GenericBuiltIn],
     ]),
     "renderers": {
       "boolean": Set(),
@@ -147,6 +147,9 @@ export const fromAPIRawValue = <T extends { [key in keyof T]: { type: any; state
   if (t.kind == "primitive") {
     return converters[t.value].fromAPIRawValue(raw)
   }
+  if(t.kind == "union") {
+    return CollectionReference.Default(raw, raw, "enum")
+  }
   if (t.kind == "application") {
     if (t.value == "SingleSelection") {
       return CollectionSelection().Updaters.left(
@@ -191,7 +194,9 @@ export const fromAPIRawValue = <T extends { [key in keyof T]: { type: any; state
 export const toAPIRawValue = <T extends { [key in keyof T]: { type: any; state: any; }}>(t: ParsedType<T>, types: Map<TypeName, ParsedType<T>>, builtIns: BuiltIns, converters: ApiConverters<T>, injectedPrimitives?: InjectedPrimitives<T>) => (raw: any, formState: any) : ValueOrErrors<any, string> => {
   if (t.kind == "primitive")
     return ValueOrErrors.Operations.Return(converters[t.value as string | keyof T].toAPIRawValue([raw, formState.modifiedByUser]))
-  
+  if(t.kind == "union"){
+    return ValueOrErrors.Operations.Return(raw.id)
+  }
   if (t.kind == "application") {
     if (t.value == "SingleSelection") {
       const result = converters[t.value].toAPIRawValue([raw, formState.modifiedByUser])

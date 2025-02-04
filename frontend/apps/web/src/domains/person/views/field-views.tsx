@@ -1,4 +1,4 @@
-import { FormLabel, CollectionReference, DateView, EnumView, EnumMultiselectView, StringView, NumberView, BooleanView, SearchableInfiniteStreamView, InfiniteStreamMultiselectView, CommonFormState, AsyncState, BaseEnumContext, ListFieldView, unit } from "ballerina-core";
+import { FormLabel, CollectionReference, DateView, EnumView, EnumMultiselectView, StringView, NumberView, BooleanView, SearchableInfiniteStreamView, InfiniteStreamMultiselectView, CommonFormState, AsyncState, BaseEnumContext, ListFieldView, unit, Value } from "ballerina-core";
 import { PersonFormPredicateContext } from "playground-core";
 
 export const MostUglyValidationDebugView = (props: { context: { showAllErrors: boolean } & {commonFormState: CommonFormState} }) =>
@@ -55,25 +55,25 @@ export const PersonFieldViews = {
           } />
         <MostUglyValidationDebugView {...props} />
       </>,
-  EnumView: <Context extends FormLabel & BaseEnumContext<Context, Element> & { showAllErrors: boolean }, Element extends CollectionReference, ForeignMutationsExpected>(): EnumView<Context, Element, ForeignMutationsExpected> =>
+  EnumView: <Context extends FormLabel & BaseEnumContext<Value<Element>> & { showAllErrors: boolean }, Element extends CollectionReference, ForeignMutationsExpected>(): EnumView<Context, Value<Element>, ForeignMutationsExpected> =>
     props => <>
       {props.context.label && <h3>{props.context.label}</h3>}
       {props.context.activeOptions == "loading" ?
         "loading options" :
-        <select value={props.context.value.kind == "l" ? props.context.value.value.id : undefined}
+        <select value={props.context.value.kind == "l" ? props.context.value.value.value.id : undefined}
           onChange={e => props.foreignMutations.setNewValue(e.currentTarget.value)}>
           <>
             <option></option>
             {props.context.activeOptions.map(o =>
-              <option value={o.id}>
-                {o.displayName}
+              <option value={o.value.id}>
+                {o.value.displayName}
               </option>
             )}
           </>
         </select>}
       <MostUglyValidationDebugView {...props} />
     </>,
-  EnumMultiselectView: <Context extends FormLabel & BaseEnumContext<Context, Element> & { showAllErrors: boolean }, Element extends CollectionReference, ForeignMutationsExpected>(): EnumMultiselectView<Context, Element, ForeignMutationsExpected> =>
+  EnumMultiselectView: <Context extends FormLabel & BaseEnumContext<Value<Element>> & { showAllErrors: boolean }, Element extends CollectionReference, ForeignMutationsExpected>(): EnumMultiselectView<Context, Value<Element>, ForeignMutationsExpected> =>
     props => <>
       {props.context.label && <h3>{props.context.label}</h3>}
       {props.context.activeOptions == "loading" ?
@@ -82,15 +82,15 @@ export const PersonFieldViews = {
           onChange={e => props.foreignMutations.setNewValue(Array.from(e.currentTarget.options).filter(_ => _.selected).map(_ => _.value))}>
           <>
             {props.context.activeOptions.map(o =>
-              <option value={o.id}>
-                {o.displayName}
+              <option value={o.value.id}>
+                {o.value.displayName}
               </option>
             )}
           </>
         </select>}
       <MostUglyValidationDebugView {...props} />
     </>,
-  Interests: <Context extends PersonFormPredicateContext & FormLabel & BaseEnumContext<Context, Element> & { showAllErrors: boolean }, Element extends CollectionReference, ForeignMutationsExpected>(): EnumMultiselectView<Context, Element, ForeignMutationsExpected> =>
+  Interests: <Context extends PersonFormPredicateContext & FormLabel & BaseEnumContext<Value<Element>> & { showAllErrors: boolean }, Element extends CollectionReference, ForeignMutationsExpected>(): EnumMultiselectView<Context, Value<Element>, ForeignMutationsExpected> =>
     props => <>
       {props.context.label && <h3>{props.context.label}</h3>}
       {props.context.activeOptions == "loading" ?
@@ -99,8 +99,8 @@ export const PersonFieldViews = {
           onChange={e => props.foreignMutations.setNewValue(Array.from(e.currentTarget.options).filter(_ => _.selected).map(_ => _.value))}>
           <>
             {props.context.activeOptions.map(o =>
-              <option value={o.id}>
-                {o.displayName}
+              <option value={o.value.id}>
+                {o.value.displayName}
               </option>
             )}
           </>

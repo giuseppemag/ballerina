@@ -9,6 +9,7 @@ import { PersonFieldViews } from "./domains/person-from-config/views/field-views
 // import { PersonForm } from "./domains/person/template";
 import { fieldTypeConverters } from "./domains/person/apis/field-converters";
 import { categoryForm, CategoryState, PersonFormInjectedTypes } from "./domains/person-from-config/injected-forms/category";
+import { PersonConfigUnionEnums } from "./domains/person/apis/person-config-union-enums";
 
 const ShowFormsParsingErrors = (parsedFormsConfig: FormParsingResult) =>
 	<div style={{ border: "red" }}>
@@ -19,7 +20,7 @@ const InstantiedPersonFormsParserTemplate = FormsParserTemplate<PersonFormInject
 
 export const FormsApp = (props: {}) => {
 	const [configFormsParser, setConfigFormsParser] = useState(FormsParserState.Default())
-	const [formToShow, setFormToShow] = useState(0)
+	const [formToShow, setFormToShow] = useState(1)
 	const numForms = 2
 	const [personCreateFormState, setPersonCreateFormState] = useState(FormRunnerState.Default())
 	const [personEditFormState, setPersonEditFormState] = useState(FormRunnerState.Default())
@@ -97,7 +98,7 @@ export const FormsApp = (props: {}) => {
 										enumOptionsSources: PersonFromConfigApis.enumApis,
 										entityApis: PersonFromConfigApis.entityApis,
 										leafPredicates: PersonConfigFormsLeafPredicates,
-										getFormsConfig: () => PromiseRepo.Default.mock(() => PersonFormsConfig),
+										getFormsConfig: () => PromiseRepo.Default.mock(() => PersonConfigUnionEnums),
 										injectedPrimitives: Map([["injectedCategory", {fieldView: categoryForm, defaultValue: {category: "adult", kind: "category"}, defaultState: CategoryState.Default() }]]),
 									}}
 									setState={setConfigFormsParser}

@@ -94,8 +94,17 @@ export const FormsConfig = {
       let parsedTypes: Map<TypeName, ParsedType<T>> = Map();
       const rawTypesFromConfig = formsConfig.types;
       const rawTypeNames = Set(Object.keys(rawTypesFromConfig))
-      Object.entries(formsConfig.types).forEach(([rawTypeName, rawType]) => {        
+      Object.entries(rawTypesFromConfig).forEach(([rawTypeName, rawType]) => {        
         const parsedType: ParsedType<T> = { kind: "form", value: rawTypeName, fields: Map() };
+          if (RawFieldType.isUnion(rawType)){
+          const parsingResult = ParsedType.Operations.ParseRawFieldType(rawTypeName, rawType, rawTypeNames, injectedPrimitives)
+          if(parsingResult.kind == "errors"){
+            errors = errors.concat(parsingResult.errors.toArray());
+            return;
+          }
+          parsedTypes = parsedTypes.set(rawTypeName, parsingResult.value)
+          return
+        }
         
         if (!RawType.hasFields(rawType)){
           errors = errors.push(`missing 'fields' in type ${rawTypeName}: expected object`);
@@ -135,6 +144,7 @@ export const FormsConfig = {
       Object.entries(formsConfig.apis.enumOptions).forEach(([enumOptionName, enumOption]) =>
           enums = enums.set(enumOptionName, enumOption)
       )
+
 
       let streams: Map<string, TypeName> = Map();
       Object.entries(formsConfig.apis.searchableStreams).forEach(([searchableStreamName, searchableStream]) => 
@@ -192,6 +202,7 @@ export const FormsConfig = {
         parsedForm.tabs = tabs
         forms = forms.set(formName, parsedForm);
       })
+
 
       let launchers: ParsedFormJSON<T>["launchers"] = {
         create: Map<string, Launcher>(),

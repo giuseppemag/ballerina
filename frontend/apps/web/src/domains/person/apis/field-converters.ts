@@ -11,14 +11,10 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
     "base64File": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: ([_, __])  => _ },
     "secret": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: ([_, isModified])  => isModified ? _ : undefined },
     "Date": { fromAPIRawValue: _ => typeof _ == "string" ? new Date(Date.parse(_)) : typeof _ == "number" ? new Date(_) : new Date(Date.now()), toAPIRawValue: ([_, __])  => _ },
-    "CollectionReference": {
-        fromAPIRawValue: _ => CollectionReference.Default(_.id ?? "", _.displayName ?? ""),
-        toAPIRawValue: ([_, __]) => _.source == "enum" ? _.id : { id: _.id, displayName: _.displayName }
-    },
     "SingleSelection": {
         fromAPIRawValue: _ => _ == undefined ? CollectionSelection().Default.right("no selection") :
             CollectionSelection().Default.left(
-                CollectionReference.Default(_.id ?? "", _.displayName ?? "")
+                _
             ),
         toAPIRawValue: ([_, __]) => {
 			return _.kind == "r" ? undefined : _.value}
