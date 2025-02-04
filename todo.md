@@ -98,18 +98,17 @@ Todo (✅/❌)
       ✅ specify enums as enums
         ✅ actually generate the enums at the top level!!!
       ✅ enums need to validate that the underlying type has just an "enum" value
-      ❌ proper type-safe visitors, especially wrt method calls and the signature of the callbacks which need to make sense case-by-case
+      ✅ proper type-safe visitors for enums and streams
         ✅ enums GET
+          ✅ flip it: define some processors that take as input the array of cases of type `XXXRef`, not `XXXEnum`
+          ✅ `values` -> `value`
         ✅ enums POST
-        ❌ streams GET
-        ❌ streams POST
-        ❌ enitites GET
-        ❌ entities POST
-        ❌ entities Default
-        ❌ entities Update
+        ✅ streams GET
+        ✅ streams POST
       ❌ add optional extra config json with all required parameters
         ❌ make it part of the config file itself
         ❌ injected primitives, with their respective imports
+          ❌ use injected `guid` in `streamPOSTer` in particular
         ❌ make the current primitives with their respective imports a default seed that gets overridden by the injected primitives
         ❌ remove `injectedCategoryType` from hardcoded seeds
       ❌ invalid json errors should be handled more gracefully
@@ -120,19 +119,26 @@ Todo (✅/❌)
       ❌ educated guess of `form_name` from `package_name`
       ✅ streams need to validate that the underlying type has id and displayvalue
       ❌ connect command line parameters to right invocations
-        ❌ the primitive types' renderers
-        ❌ delete the sample parsed form
       ❌ define `import` command, generate with some sort of linking strategy for shared files
+      ❌ entites visitors
+        ❌ entites GET - identical to stream GETter: pairs of get + serialize
+        ❌ entities GETDefault - identical to stream GETter: pairs of get + serialize
+        ❌ entities POST - how do we represent changes?
+        ❌ entities PATCH - how do we represent changes?
+        ❌ make all these functions partially applied in the actual parameters vs the visitor parameters
+      ❌ the Go type generator is now reasonably mature
       ❌ write to Sven a "why not just a package somewhere?"
       ❌ parse the JSON into the representation forms
         ❌ use topological sort
         ❌ parse fields
+        ❌ delete the sample parsed form
         ❌ parse visibility and disabled predicates
           ❌ type-check the form instances' `visible` and `disabled` predicates
             ❌ fully align syntax to conditionals
             ❌ inject `root` variable at form instantiation, not at form definition 
             ❌ `local` variable can be injected any time, also at form definition
             ❌ `flag` values come from some type in the config (ideally imported)
+      ❌ the functionality of the validator is now mature
       ❌ all utility methods should be capitalized in Program.fs
       ❌ adjust person-config in FE and use that from cmd line, delete the copy
       ❌ move string builder to ballerina-core
@@ -160,10 +166,12 @@ Todo (✅/❌)
     ❌ add tests
     ❌ make ExprType.resolveLookup recursive
     ❌ help command
+    ❌ the tool is now complete and its code is clean
     ❌ define webservice variant
     ❌ generate Typescript and C# code from forms-config
     ❌ allow recursive types (needs adjustment in frontend too)
       ❌ be careful with out-of-order extensions
+    ❌ the tool is now very mature and ready for extensive use - further change should be discouraged unless there's a strong case for it
     ✅ allow union types (needs adjustment in frontend too)
   ✅ models
     ✅ users

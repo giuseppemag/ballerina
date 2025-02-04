@@ -326,7 +326,7 @@ type EnumApi with
       let! fields = ExprType.GetFields enumType
       let error = sum.Throw($$"""Error: type {{enumType}} in enum {{enumApi.EnumName}} is invalid: expected only one field 'values' of type 'enum'""" |> Errors.Singleton)
       match fields with
-      | [("values", valuesType)] ->
+      | [("value", valuesType)] ->
         let! valuesType = ExprType.resolveLookup ctx valuesType
         let! cases = ExprType.GetCases valuesType
         if cases |> Seq.exists (fun case -> case.Fields.IsUnitType |> not) then
@@ -344,7 +344,7 @@ type EnumApi with
       let! enumType = ExprType.resolveLookup ctx enumType |> state.OfSum
       let! fields = ExprType.GetFields enumType |> state.OfSum
       match fields with
-      | [("values", ExprType.LookupType underlyingUnion)] ->
+      | [("value", ExprType.LookupType underlyingUnion)] ->
         do! state.SetState(
           ParsedFormsContext.Updaters.Apis(
             FormApis.Updaters.Enums(
@@ -435,17 +435,37 @@ var _4 date.Date
 """
 
     sum{
-      let enumCasesGETter = 
+      let enumCasesGETters = 
         seq{
-          yield One $"func {formName}EnumGETter(enumName string) "
+          yield One $"func {formName}EnumAutoGETter(enumName string) "
           yield One " ([]string,error) {\n"
           yield One "  switch enumName {\n"
           yield! ctx.Apis.Enums |> Map.values |> Seq.map(fun e -> 
-            One(sprintf "  case \"%s\": return All%sCases[:], nil\n" e.EnumName e.UnderlyingEnum.TypeName)
+            Many(seq{
+              yield One$$"""    case "{{e.EnumName}}": return ballerina.MapArray(All{{e.UnderlyingEnum.TypeName}}Cases[:], func (c {{e.UnderlyingEnum.TypeName}}) string { return string(c) }), nil"""
+              yield One "\n"
+            })
           )
           yield One "  }\n"
           yield One "  var result []string\n"
           yield One """  return result, fmt.Errorf("%s is not a valid enum name", enumName )"""
+          yield One "\n}\n\n"
+
+          yield One $"func {formName}EnumGETter[result any](enumName string, enumValue string, "
+          yield! ctx.Apis.Enums |> Map.values |> Seq.map(fun e -> 
+            One($$"""on{{e.EnumName}} func ([]{{e.UnderlyingEnum.TypeName}}) (result,error), """)
+          )
+          yield One ") (result,error) {\n"
+          yield One "  switch enumName {\n"
+          yield! ctx.Apis.Enums |> Map.values |> Seq.map(fun e -> 
+            Many(seq{
+              yield One($$"""    case "{{e.EnumName}}": return on{{e.EnumName}}(All{{e.UnderlyingEnum.TypeName}}Cases[:])""" )
+              yield One "\n"
+            })
+          )
+          yield One "  }\n"
+          yield One "  var res result\n"
+          yield One """  return res, fmt.Errorf("%s is not a valid enum name", enumName )"""
           yield One "\n}\n\n"
         }
 
@@ -453,52 +473,81 @@ var _4 date.Date
         seq{
           yield One $"func {formName}EnumPOSTter(enumName string, enumValue string, "
           yield! ctx.Apis.Enums |> Map.values |> Seq.map(fun e -> 
-            One(sprintf "on%s func (string) (ballerina.Unit,error), " e.EnumName)
+            One($$"""on{{e.EnumName}} func ({{e.UnderlyingEnum.TypeName}}) (ballerina.Unit,error), """)
           )
           yield One ") (ballerina.Unit,error) {\n"
           yield One "  switch enumName {\n"
           yield! ctx.Apis.Enums |> Map.values |> Seq.map(fun e -> 
             Many(seq{
               yield One(sprintf "  case \"%s\":\n" e.EnumName)
-              yield One($$"""    if slices.Contains(All{{e.UnderlyingEnum.TypeName}}Cases[:], enumValue) {""")
+              yield One($$"""    if slices.Contains(All{{e.UnderlyingEnum.TypeName}}Cases[:], {{e.UnderlyingEnum.TypeName}}(enumValue)) {""")
               yield One("\n")
-              yield One($$"""      return on{{e.EnumName}}(enumValue)""")
+              yield One($$"""      return on{{e.EnumName}}({{e.UnderlyingEnum.TypeName}}(enumValue))""")
               yield One("\n")
               yield One("    }\n")
             })
           )
           yield One "  }\n"
           yield One "  var result = ballerina.DefaultUnit\n"
-          yield One """  return result, fmt.Errorf("%s,%s is not a valid enum name/value combination", enumName )"""
+          yield One """  return result, fmt.Errorf("%s,%s is not a valid enum name/value combination", enumName, enumValue )"""
           yield One "\n}\n\n"
         }
 
-      // let streamsEnum = 
-      //   seq{
-      //     yield One(sprintf "type %sStreamType int\n" formName)
-      //     yield One("const (\n")
-      //     yield! ctx.Apis.Streams |> Map.values |> Seq.mapi(fun i e -> 
-      //       One(sprintf "  %s%sType%s\n" e.StreamName.ToFirstUpper formName (if i = 0 then ($" {formName}StreamType = iota") else ""))
-      //     )
-      //     yield One(")\n")
-      //   }
+      let streamGETter = 
+        seq{
+          yield One $"func {formName}StreamGETter[searchParams any, serializedResult any](streamName string, searchArgs searchParams, "
+          yield! ctx.Apis.Streams |> Map.values |> Seq.map(fun e -> 
+            One($$"""get{{e.StreamName}} func(searchParams) ([]{{e.TypeId.TypeName}}, error), serialize{{e.StreamName}} func(searchParams, []{{e.TypeId.TypeName}}) (serializedResult, error), """)
+          )
+          yield One ") (serializedResult,error) {\n"
+          yield One "  var result serializedResult\n"
+          yield One "  switch streamName {\n"
+          yield! ctx.Apis.Streams |> Map.values |> Seq.map(fun e -> 
+            Many(seq{
+              One $$"""  case "{{e.StreamName}}":"""
+              One "\n"
+              One $$"""   var res,err = get{{e.StreamName}}(searchArgs)"""
+              One "\n"
+              One $$"""   if err != nil { return result,err }"""
+              One "\n"
+              One $$"""   return serialize{{e.StreamName}}(searchArgs, res)"""
+              One "\n"
+            })
+          )
+          yield One "  }\n"
+          yield One """return result, fmt.Errorf("%s is not a valid stream name", streamName )"""
+          yield One "\n}\n\n"
+        }
 
-      // let streamSelector = 
-      //   seq{
-      //     yield One $"func {formName}StreamSelector[searchParams any, c any](streamName string, searchArgs searchParams, "
-      //     yield! ctx.Apis.Streams |> Map.values |> Seq.map(fun e -> 
-      //       One(sprintf "get%s func(searchParams) c, " e.StreamName)
-      //     )
-      //     yield One ") (c,error) {\n"
-      //     yield One "  switch streamName {\n"
-      //     yield! ctx.Apis.Streams |> Map.values |> Seq.map(fun e -> 
-      //       One(sprintf "  case \"%s%sType\": return get%s(searchArgs),nil\n" e.StreamName.ToFirstUpper formName e.StreamName)
-      //     )
-      //     yield One "  }\n"
-      //     yield One "  var result c\n"
-      //     yield One """return result, fmt.Errorf("%s is not a valid stream name", streamName )"""
-      //     yield One "\n}\n\n"
-      //   }
+      let streamPOSTter = 
+        seq{
+          yield One $"func {formName}StreamPOSTter[serializedResult any](streamName string, id uuid.UUID, "
+          yield! ctx.Apis.Streams |> Map.values |> Seq.map(fun e -> 
+            One($$"""get{{e.StreamName}} func(uuid.UUID) ({{e.TypeId.TypeName}}, error), serialize{{e.StreamName}} func({{e.TypeId.TypeName}}) (serializedResult, error), """)
+          )
+          yield One ") (serializedResult,error) {\n"
+          yield One "  var result serializedResult\n"
+          yield One "  switch streamName {\n"
+          yield! ctx.Apis.Streams |> Map.values |> Seq.map(fun e -> 
+            Many(seq{
+              One $$"""  case "{{e.StreamName}}":"""
+              One "\n"
+              One $$"""   var res,err = get{{e.StreamName}}(id)"""
+              One "\n"
+              One $$"""   if err != nil { return result,err }"""
+              One "\n"
+              One $$"""   return serialize{{e.StreamName}}(res)"""
+              One "\n"
+            })
+          )
+          yield One "  }\n"
+          yield One """return result, fmt.Errorf("%s is not a valid stream name", streamName )"""
+          yield One "\n}\n\n"
+        }
+
+// func PersonStreamPOSTter[operationResult any](streamName string, id uuid, getcities func(uuid) (CityRef, error), oncities func(CityRef) (operationResult,error), ) {
+//   switch over streamName, then return call id |> get |> oncities
+// } 
 
       // let entitiesOPEnum opName op = 
       //   seq{
@@ -547,11 +596,11 @@ var _4 date.Date
               yield StringBuilder.One "const ("
               yield StringBuilder.One "\n"
               for enumCase in enumCases do
-                yield StringBuilder.One $$"""  {{t.Key}}{{enumCase}} = "{{enumCase}}" """
+                yield StringBuilder.One $$"""  {{t.Key}}{{enumCase}} {{t.Key}} = "{{enumCase}}" """
                 yield StringBuilder.One "\n"
               yield StringBuilder.One ")"
               yield StringBuilder.One "\n"
-              yield StringBuilder.One $$"""var All{{t.Key}}Cases = [...]string{ """
+              yield StringBuilder.One $$"""var All{{t.Key}}Cases = [...]{{t.Key}}{ """
               for enumCase in enumCases do
                 yield StringBuilder.One $$"""{{t.Key}}{{enumCase}}, """
               yield StringBuilder.One "}\n"
@@ -611,10 +660,10 @@ var _4 date.Date
           }) |> List.ofSeq)
       return StringBuilder.Many(seq{
         yield heading
-        yield! enumCasesGETter
+        yield! enumCasesGETters
         yield! enumCasesPOSTter
-        // yield! streamsEnum
-        // yield! streamSelector
+        yield! streamGETter
+        yield! streamPOSTter
         // yield! entitiesOPSelector "GET" CrudMethod.Get
         // yield! entitiesOPEnum "GET" CrudMethod.Get
         // yield! entitiesOPSelector "POST" CrudMethod.Create
