@@ -10,11 +10,39 @@ open Ballerina.Option
 open Ballerina.Sum
 open Ballerina.Errors
 open Ballerina.StateWithError
-open MBrace.FsPickler.Json
+open Ballerina.SeqStateWithError
+open System.Text.Json
+open System.Text.Json.Serialization
 
 let dup a = (a,a)
 let (<*>) f g = fun (a,b) -> (f a, g b)
 
+
+type CodeGenConfig = {
+  Int:CodegenConfigTypeDef
+  Bool:CodegenConfigTypeDef
+  String:CodegenConfigTypeDef
+  Date:CodegenConfigTypeDef
+  Guid:CodegenConfigTypeDef
+  Unit:CodegenConfigTypeDef
+  Option:CodegenConfigTypeDef
+  List:CodegenConfigListDef
+  Map:CodegenConfigTypeDef
+  Set:CodegenConfigTypeDef
+  Custom:Map<string, CodegenConfigTypeDef>
+}
+and GenericType = Option | List | Set | Map
+and CodegenConfigListDef = {
+  GeneratedTypeName: string
+  RequiredImport:Option<string>
+  SupportedRenderers:Set<string>
+  MappingFunction:string
+}    
+and CodegenConfigTypeDef = {
+  GeneratedTypeName: string
+  RequiredImport:Option<string>
+  SupportedRenderers:Set<string>
+}    
 
 type CrudMethod = Create | Get | Update | Default
 type FormLauncherId = { LauncherName:string; LauncherId:Guid }
@@ -70,6 +98,11 @@ and PrimitiveRenderer = { PrimitiveRendererName:string; PrimitiveRendererId:Guid
 let inline extractTypes<'k, 'v when 'v : (static member Type : 'v -> TypeId) and 'k : comparison> (m:Map<'k, 'v>) =
   m |> Map.values |> Seq.map(fun e -> e |> 'v.Type |> Set.singleton) |> Seq.fold (+) Set.empty
 
+type GeneratedLanguageSpecificConfig = { 
+  EnumValueFieldName:string
+  StreamIdFieldName:string
+  StreamDisplayValueFieldName:string
+}
 type ParsedFormsContext = {
   Types:Map<string, TypeBinding>
   Apis:FormApis
@@ -83,6 +116,14 @@ type ParsedFormsContext = {
       Apis=fun u -> fun s -> { s with ParsedFormsContext.Apis = u(s.Apis)};
       Forms=fun u -> fun s -> { s with ParsedFormsContext.Forms = u(s.Forms)};
       Launchers=fun u -> fun s -> { s with ParsedFormsContext.Launchers = u(s.Launchers)};
+    |}
+
+type GoCodeGenState = {
+  UsedImports:Set<string>
+} with
+  static member Updaters = 
+    {|
+      UsedImports=fun u -> fun s -> { s with UsedImports = u(s.UsedImports)};
     |}
 
 type FieldRenderer with
@@ -268,36 +309,44 @@ type ExprType with
       sum{ return cs }
     | _ -> sum.Throw(sprintf "Error: type %A is no union and thus has no cases" t |> Errors.Singleton)    
 type ExprType with
-  static member ToGolangTypeAnnotation (t:ExprType) : Sum<string, Errors> =
-    let (!) = ExprType.ToGolangTypeAnnotation
-    let error = sum.Throw(sprintf "Error: cannot generate type annotation for type %A" t |> Errors.Singleton)
-    sum{ 
+  static member ToGolangTypeAnnotation (config:CodeGenConfig) (t:ExprType) : State<string, Unit, GoCodeGenState, Errors> =
+    let (!) = ExprType.ToGolangTypeAnnotation config
+    let error = sum.Throw(sprintf "Error: cannot generate type annotation for type %A" t |> Errors.Singleton) |> state.OfSum
+    let registerImportAndReturn t = 
+      state{
+        do! t.RequiredImport |> Option.toList |> Set.ofList |> Set.union |> GoCodeGenState.Updaters.UsedImports |> state.SetState
+        return t.GeneratedTypeName
+      }
+    state{ 
       match t with
       | ExprType.LookupType t -> return t.TypeName
       | ExprType.PrimitiveType p ->
           match p with
-          | PrimitiveType.BoolType -> return "bool"
-          | PrimitiveType.DateOnlyType -> return "date.Date"
-          | PrimitiveType.DateTimeType ->
-            return! error
-          | PrimitiveType.FloatType -> return "float32"
-          | PrimitiveType.GuidType -> return "uuid.UUID"
-          | PrimitiveType.IntType -> return "int"
+          | PrimitiveType.BoolType -> return! config.Bool |> registerImportAndReturn 
+          | PrimitiveType.DateOnlyType -> return! config.Date |> registerImportAndReturn 
+          | PrimitiveType.DateTimeType -> return! error
+          | PrimitiveType.FloatType -> return! error
+          | PrimitiveType.GuidType -> return! config.Guid |> registerImportAndReturn 
+          | PrimitiveType.IntType -> return! config.Int |> registerImportAndReturn 
           | PrimitiveType.RefType r -> return r.EntityName
-          | PrimitiveType.StringType -> return "string"
+          | PrimitiveType.StringType -> return! config.String |> registerImportAndReturn 
       | ExprType.ListType e -> 
         let! e = !e
-        return sprintf "[]%s" e
+        do! config.List.RequiredImport |> Option.toList |> Set.ofList |> Set.union |> GoCodeGenState.Updaters.UsedImports |> state.SetState
+        return $"{config.List.GeneratedTypeName}[{e}]"
       | ExprType.SetType e -> 
         let! e = !e
-        return sprintf "ballerina.Set[%s]" e
+        do! config.Set.RequiredImport |> Option.toList |> Set.ofList |> Set.union |> GoCodeGenState.Updaters.UsedImports |> state.SetState
+        return $"{config.Set.GeneratedTypeName}[{e}]"
       | ExprType.OptionType e -> 
         let! e = !e
-        return sprintf "ballerina.Option[%s]" e
+        do! config.Option.RequiredImport |> Option.toList |> Set.ofList |> Set.union |> GoCodeGenState.Updaters.UsedImports |> state.SetState
+        return $"{config.Option.GeneratedTypeName}[{e}]"
       | ExprType.MapType(k,v) -> 
         let! k = !k
         let! v = !v
-        return sprintf "ballerina.Map[%s,%s]" k v
+        do! config.Map.RequiredImport |> Option.toList |> Set.ofList |> Set.union |> GoCodeGenState.Updaters.UsedImports |> state.SetState
+        return $"{config.Map.GeneratedTypeName}[{k},{v}]"
       | _ -> return! error
     }
   static member find (ctx:ParsedFormsContext) (typeId:TypeId) : Sum<ExprType,Errors> = 
@@ -319,14 +368,14 @@ type ExprType with
     }
 
 type EnumApi with
-  static member validate (ctx:ParsedFormsContext) (enumApi:EnumApi) : Sum<Unit,Errors> = 
+  static member validate valueFieldName (ctx:ParsedFormsContext) (enumApi:EnumApi) : Sum<Unit,Errors> = 
     sum{
       let! enumType = ExprType.find ctx enumApi.TypeId
       let! enumType = ExprType.resolveLookup ctx enumType
       let! fields = ExprType.GetFields enumType
-      let error = sum.Throw($$"""Error: type {{enumType}} in enum {{enumApi.EnumName}} is invalid: expected only one field 'values' of type 'enum'""" |> Errors.Singleton)
+      let error = sum.Throw($$"""Error: type {{enumType}} in enum {{enumApi.EnumName}} is invalid: expected only one field '{{valueFieldName}}' of type 'enum'""" |> Errors.Singleton)
       match fields with
-      | [("value", valuesType)] ->
+      | [(value, valuesType)] when value = valueFieldName ->
         let! valuesType = ExprType.resolveLookup ctx valuesType
         let! cases = ExprType.GetCases valuesType
         if cases |> Seq.exists (fun case -> case.Fields.IsUnitType |> not) then
@@ -336,7 +385,7 @@ type EnumApi with
       | _ -> 
         return! error
     }
-  static member parse (enumName:string) (enumTypeJson:JsonValue) : State<Unit,Unit,ParsedFormsContext,Errors> = 
+  static member parse valueFieldName (enumName:string) (enumTypeJson:JsonValue) : State<Unit,Unit,ParsedFormsContext,Errors> = 
     state{
       let! enumType = ExprType.parse enumTypeJson
       let! enumTypeId = enumType |> ExprType.asLookupId |> state.OfSum
@@ -344,7 +393,7 @@ type EnumApi with
       let! enumType = ExprType.resolveLookup ctx enumType |> state.OfSum
       let! fields = ExprType.GetFields enumType |> state.OfSum
       match fields with
-      | [("value", ExprType.LookupType underlyingUnion)] ->
+      | [(value, ExprType.LookupType underlyingUnion)] when value = valueFieldName ->
         do! state.SetState(
           ParsedFormsContext.Updaters.Apis(
             FormApis.Updaters.Enums(
@@ -356,16 +405,16 @@ type EnumApi with
     }
 
 type StreamApi with
-  static member validate (ctx:ParsedFormsContext) (streamApi:StreamApi) : Sum<Unit,Errors> = 
+  static member validate (generatedLanguageSpecificConfig:GeneratedLanguageSpecificConfig) (ctx:ParsedFormsContext) (streamApi:StreamApi) : Sum<Unit,Errors> = 
     sum{
       let! streamType = ExprType.find ctx streamApi.TypeId
       let! streamType = ExprType.resolveLookup ctx streamType
       let! fields = ExprType.GetFields streamType
       let error = sum.Throw($$"""Error: type {{streamType}} in stream {{streamApi.StreamName}} is invalid: expected fields id:Guid, displayValue:string""" |> Errors.Singleton)
       match fields |> Seq.tryFind (snd >> (function ExprType.PrimitiveType(PrimitiveType.GuidType) -> true | _ -> false)) with
-      | Some ("id",_) | Some ("Id",_) | Some ("ID",_) -> 
+      | Some (id,_) when id = generatedLanguageSpecificConfig.StreamIdFieldName -> 
         match fields |> Seq.tryFind (snd >> (function ExprType.PrimitiveType(PrimitiveType.StringType) -> true | _ -> false)) with
-        | Some ("displayValue",_) | Some ("DisplayValue",_) | Some ("DISPLAYVALUE",_) -> 
+        | Some (displayValue,_) when displayValue = generatedLanguageSpecificConfig.StreamDisplayValueFieldName -> 
           return ()
         | _ -> return! error
       | _ -> return! error
@@ -403,38 +452,21 @@ type ParsedFormsContext with
     (ctx.Forms |> Map.values |> Seq.map(FormConfig.GetTypesFreeVars ctx) |> Seq.fold (+) zero) +
     (ctx.Apis |> FormApis.GetTypesFreeVars |> sum.Return) + 
     (ctx.Launchers |> Map.values |> Seq.map(FormLauncher.GetTypesFreeVars ctx) |> Seq.fold (+) zero)
-  static member Validate (ctx:ParsedFormsContext) : Sum<Unit, Errors> =
+  static member Validate codegenTargetConfig (ctx:ParsedFormsContext) : Sum<Unit, Errors> =
     sum{
       let! usedTypes = ParsedFormsContext.GetTypesFreeVars ctx
       let availableTypes = ctx.Types |> Map.values |> Seq.map(fun tb -> tb.TypeId) |> Set.ofSeq
       if Set.isSuperset availableTypes usedTypes then 
         do! sum.All(ctx.Forms |> Map.values |> Seq.map(FormConfig.Validate ctx) |> Seq.toList) |> Sum.map ignore
         do! sum.All(ctx.Launchers |> Map.values |> Seq.map(FormLauncher.Validate ctx) |> Seq.toList) |> Sum.map ignore
-        do! sum.All(ctx.Apis.Enums |> Map.values |> Seq.map (EnumApi.validate ctx) |> Seq.toList) |> Sum.map ignore
-        do! sum.All(ctx.Apis.Streams |> Map.values |> Seq.map (StreamApi.validate ctx) |> Seq.toList) |> Sum.map ignore
+        do! sum.All(ctx.Apis.Enums |> Map.values |> Seq.map (EnumApi.validate codegenTargetConfig.EnumValueFieldName ctx) |> Seq.toList) |> Sum.map ignore
+        do! sum.All(ctx.Apis.Streams |> Map.values |> Seq.map (StreamApi.validate codegenTargetConfig ctx) |> Seq.toList) |> Sum.map ignore
       else 
         let missingTypeErrors = (usedTypes - availableTypes) |> Set.map (fun t -> Errors.Singleton (sprintf "Error: missing type definition for %s" t.TypeName)) |> Seq.fold (curry Errors.Concat) (Errors.Zero())
         return! sum.Throw(missingTypeErrors)
     }
-  static member ToGolang (ctx:ParsedFormsContext) (imports:List<string>) (packageName:string) (formName:string) : Sum<StringBuilder,Errors> = 
-    let heading = StringBuilder.One $$"""package {{packageName}}
-
-import (
-  "fmt"
-	"time"
-	"ballerina.com/core"
-	"github.com/google/uuid"
-  "golang.org/x/exp/slices"
-	"google.golang.org/genproto/googleapis/type/date"{{imports |> List.map(sprintf "  \"%s\"\n") |> List.fold (+) ""}}
-)
-var _1 uuid.UUID
-var _2 time.Time
-var _3 ballerina.Option[ballerina.Unit]
-var _4 date.Date
-
-"""
-
-    sum{
+  static member ToGolang (codegenConfig:CodeGenConfig) (ctx:ParsedFormsContext) (packageName:string) (formName:string) : Sum<StringBuilder,Errors> = 
+    let result = state{
       let enumCasesGETters = 
         seq{
           yield One $"func {formName}EnumAutoGETter(enumName string) "
@@ -442,7 +474,7 @@ var _4 date.Date
           yield One "  switch enumName {\n"
           yield! ctx.Apis.Enums |> Map.values |> Seq.map(fun e -> 
             Many(seq{
-              yield One$$"""    case "{{e.EnumName}}": return ballerina.MapArray(All{{e.UnderlyingEnum.TypeName}}Cases[:], func (c {{e.UnderlyingEnum.TypeName}}) string { return string(c) }), nil"""
+              yield One$$"""    case "{{e.EnumName}}": return {{codegenConfig.List.MappingFunction}}(All{{e.UnderlyingEnum.TypeName}}Cases[:], func (c {{e.UnderlyingEnum.TypeName}}) string { return string(c) }), nil"""
               yield One "\n"
             })
           )
@@ -451,7 +483,7 @@ var _4 date.Date
           yield One """  return result, fmt.Errorf("%s is not a valid enum name", enumName )"""
           yield One "\n}\n\n"
 
-          yield One $"func {formName}EnumGETter[result any](enumName string, enumValue string, "
+          yield One $"func {formName}EnumGETter[result any](enumName string, "
           yield! ctx.Apis.Enums |> Map.values |> Seq.map(fun e -> 
             One($$"""on{{e.EnumName}} func ([]{{e.UnderlyingEnum.TypeName}}) (result,error), """)
           )
@@ -473,9 +505,10 @@ var _4 date.Date
         seq{
           yield One $"func {formName}EnumPOSTter(enumName string, enumValue string, "
           yield! ctx.Apis.Enums |> Map.values |> Seq.map(fun e -> 
-            One($$"""on{{e.EnumName}} func ({{e.UnderlyingEnum.TypeName}}) (ballerina.Unit,error), """)
+            One($$"""on{{e.EnumName}} func ({{e.UnderlyingEnum.TypeName}}) ({{codegenConfig.Unit.GeneratedTypeName}},error), """)
           )
-          yield One ") (ballerina.Unit,error) {\n"
+          yield One $$""") ({{codegenConfig.Unit.GeneratedTypeName}},error) {"""
+          yield One "\n"
           yield One "  switch enumName {\n"
           yield! ctx.Apis.Enums |> Map.values |> Seq.map(fun e -> 
             Many(seq{
@@ -488,7 +521,8 @@ var _4 date.Date
             })
           )
           yield One "  }\n"
-          yield One "  var result = ballerina.DefaultUnit\n"
+          yield One $$"""  var result {{codegenConfig.Unit.GeneratedTypeName}}"""
+          yield One "\n"
           yield One """  return result, fmt.Errorf("%s,%s is not a valid enum name/value combination", enumName, enumValue )"""
           yield One "\n}\n\n"
         }
@@ -521,9 +555,9 @@ var _4 date.Date
 
       let streamPOSTter = 
         seq{
-          yield One $"func {formName}StreamPOSTter[serializedResult any](streamName string, id uuid.UUID, "
+          yield One $"func {formName}StreamPOSTter[serializedResult any](streamName string, id {codegenConfig.Guid.GeneratedTypeName}, "
           yield! ctx.Apis.Streams |> Map.values |> Seq.map(fun e -> 
-            One($$"""get{{e.StreamName}} func(uuid.UUID) ({{e.TypeId.TypeName}}, error), serialize{{e.StreamName}} func({{e.TypeId.TypeName}}) (serializedResult, error), """)
+            One($$"""get{{e.StreamName}} func({{codegenConfig.Guid.GeneratedTypeName}}) ({{e.TypeId.TypeName}}, error), serialize{{e.StreamName}} func({{e.TypeId.TypeName}}) (serializedResult, error), """)
           )
           yield One ") (serializedResult,error) {\n"
           yield One "  var result serializedResult\n"
@@ -545,41 +579,8 @@ var _4 date.Date
           yield One "\n}\n\n"
         }
 
-// func PersonStreamPOSTter[operationResult any](streamName string, id uuid, getcities func(uuid) (CityRef, error), oncities func(CityRef) (operationResult,error), ) {
-//   switch over streamName, then return call id |> get |> oncities
-// } 
-
-      // let entitiesOPEnum opName op = 
-      //   seq{
-      //     yield One(sprintf "type %sEntity%sType int" formName opName)
-      //     yield One("\nconst (\n")
-      //     let oppableEntities = ctx.Apis.Entities |> Map.values |> Seq.filter (snd >> (Set.contains op)) |> Seq.map fst
-      //     yield! oppableEntities |> Seq.mapi (fun i e -> 
-      //       One(sprintf "  %s%s%sType%s\n" e.EntityName.ToFirstUpper formName opName (if i = 0 then ($" {formName}Entity{opName}Type = iota") else ""))
-      //     )
-      //     yield One(")\n\n")
-      //   }
-
-      // let entitiesOPSelector opName op = 
-      //   seq{
-      //     yield One $$"""func {{formName}}Entity{{opName}}Selector[searchParams any, c any](entityName string, searchArgs searchParams, """
-      //     let oppableEntities = ctx.Apis.Entities |> Map.values |> Seq.filter (snd >> (Set.contains op)) |> Seq.map fst
-      //     yield! oppableEntities |> Seq.map (fun e -> 
-      //       One(sprintf "get%s func(searchParams) c, " e.EntityName)
-      //     )
-      //     yield One ") (c,error) {\n"
-      //     yield One "  switch entityName {\n"
-      //     yield! oppableEntities |> Seq.map(fun e -> 
-      //       One(sprintf "  case \"%s%s%sType\": return get%s(searchArgs),nil\n" e.EntityName.ToFirstUpper formName opName e.EntityName)
-      //     )
-      //     yield One "  }\n"
-      //     yield One "  var result c\n"
-      //     yield One """return result, fmt.Errorf("%s is not a valid entity name", entityName )"""
-      //     yield One "\n}\n\n"
-      //   }
-
-      let! generatedTypes = sum.All(ctx.Types |> Seq.map(fun t -> 
-        sum{
+      let! generatedTypes = state.All(ctx.Types |> Seq.map(fun t -> 
+        state{
           match t.Value.Type with
           | ExprType.UnionType cases ->
             let! enumCases = 
@@ -588,7 +589,7 @@ var _4 date.Date
                   if case.Fields.IsUnitType then
                     return case.CaseName
                   else return! sum.Throw($$"""Error: Go only supports enums, meaning unions where the cases have no fields.""" |> Errors.Singleton)
-                }) |> sum.All
+                }) |> sum.All |> state.OfSum
             return StringBuilder.Many(seq{
               yield StringBuilder.One "\n"
               yield StringBuilder.One $$"""type {{t.Key}} string"""
@@ -606,10 +607,10 @@ var _4 date.Date
               yield StringBuilder.One "}\n"
             })
           | _ ->
-            let! fields = ExprType.GetFields t.Value.Type
+            let! fields = ExprType.GetFields t.Value.Type |> state.OfSum
             let typeStart = $$"""type {{t.Value.TypeId.TypeName}} struct {
   """
-            let! fieldTypes = sum.All(fields |> Seq.map (snd >> ExprType.ToGolangTypeAnnotation) |> List.ofSeq)
+            let! fieldTypes = state.All(fields |> Seq.map (snd >> ExprType.ToGolangTypeAnnotation codegenConfig) |> List.ofSeq)
             let fieldDeclarations = Many (seq{
               for fieldType,fieldName in fields |> Seq.map fst |> Seq.zip fieldTypes do
                 yield One "  "
@@ -659,7 +660,6 @@ var _4 date.Date
             })
           }) |> List.ofSeq)
       return StringBuilder.Many(seq{
-        yield heading
         yield! enumCasesGETters
         yield! enumCasesPOSTter
         yield! streamGETter
@@ -675,6 +675,25 @@ var _4 date.Date
         yield! generatedTypes
       })
     }
+    match result.run((), { UsedImports=Set.empty }) with
+    | Right e -> Right e
+    | Left (res,s') -> 
+      Left(
+        let imports = match s' with | Some s' -> s'.UsedImports | _ -> Set.empty
+        let imports = if ctx.Apis.Enums |> Map.isEmpty |> not then imports + (codegenConfig.List.RequiredImport |> Option.toList |> Set.ofList) + (["golang.org/x/exp/slices"] |> Set.ofList) else imports
+        let imports = imports + (codegenConfig.Guid.RequiredImport |> Option.toList |> Set.ofList)
+        let imports = imports + (codegenConfig.Unit.RequiredImport |> Option.toList |> Set.ofList)
+        let heading = StringBuilder.One $$"""package {{packageName}}
+
+    import (
+      "fmt"
+      {{imports |> Seq.map(sprintf "  \"%s\"\n") |> Seq.fold (+) ""}}
+    )
+    """
+        Many(seq{
+          yield heading
+          yield res
+        }))
 
 
 type CrudMethod with
@@ -723,14 +742,14 @@ type EntityApi with
     //   }
     // }
 type ParsedFormsContext with
-  static member parseApis (apisJson:seq<string * JsonValue>) : State<Unit,Unit,ParsedFormsContext,Errors> = 
+  static member parseApis enumValueFieldName (apisJson:seq<string * JsonValue>) : State<Unit,Unit,ParsedFormsContext,Errors> = 
     state{
       match apisJson |> Seq.tryFind (fst >> (=) "enumOptions") |> Option.map snd,
         apisJson |> Seq.tryFind (fst >> (=) "searchableStreams") |> Option.map snd,
         apisJson |> Seq.tryFind (fst >> (=) "entities") |> Option.map snd with
       | Some (JsonValue.Record enums), Some (JsonValue.Record streams), Some (JsonValue.Record entities) ->
         for enumName,enumJson in enums do
-          do! EnumApi.parse enumName enumJson
+          do! EnumApi.parse enumValueFieldName enumName enumJson
         for streamName,streamJson in streams do
           do! StreamApi.parse streamName streamJson
         for entityName,entityJson in entities do
@@ -784,14 +803,14 @@ type ParsedFormsContext with
         | _ -> 
           return! state.Throw($$"""Error: type {{typeName}} should be a record with only 'extends' and 'fields'.""" |> Errors.Singleton)   
         }
-  static member parse (json:JsonValue) : State<Unit,Unit,ParsedFormsContext,Errors> = 
+  static member parse generatedLanguageSpecificConfig (json:JsonValue) : State<Unit,Unit,ParsedFormsContext,Errors> = 
     state{
       match json with
       | JsonValue.Record properties ->
         match properties |> Seq.tryFind (fst >> ((=) "types")) |> Option.map snd, properties |> Seq.tryFind (fst >> ((=) "apis")) |> Option.map snd with
         | Some(JsonValue.Record typesJson), Some(JsonValue.Record apisJson) -> 
           do! ParsedFormsContext.parseTypes typesJson
-          do! ParsedFormsContext.parseApis apisJson
+          do! ParsedFormsContext.parseApis generatedLanguageSpecificConfig.EnumValueFieldName apisJson
         | _ -> 
           return! state.Throw($"Error: the root of the form config should contain a record with fields 'types', 'apis'." |> Errors.Singleton)
       | _ -> 
@@ -1319,94 +1338,6 @@ renderer defaultInfiniteStream"
     }
   }
 
-type BuiltIns = {
-  Primitives:Map<PrimitiveType, BuiltinTypeDef>
-  Generics:Map<GenericType, BuiltinTypeDef>
-  Custom:Map<string, BuiltinTypeDef>
-}
-and GenericType = Option | List | Set | Map
-and BuiltinTypeDef = {
-  GeneratedTypeName: string
-  RequiredImport:Option<string>
-  SupportedRenderers:Set<string>
-}
-
-let builtins = { 
-  Primitives=[
-    (PrimitiveType.GuidType, {
-      GeneratedTypeName="uuid.UUID"
-      RequiredImport=None
-      SupportedRenderers=["defaultGUID"] |> Set.ofSeq
-    })
-  ] |> Map.ofSeq
-  Generics=[
-    (GenericType.Option, {
-      GeneratedTypeName="ballerina.Option"
-      RequiredImport=Some "ballerina.com/core"
-      SupportedRenderers=["defaultEnum"; "defaultInfiniteStream"] |> Set.ofSeq
-    })
-  ] |> Map.ofSeq
-  Custom=[
-    ("injectedCategory", {
-      GeneratedTypeName="ballerina.Unit"
-      RequiredImport=None
-      SupportedRenderers=["defaultInjectedCategory"] |> Set.ofSeq
-    })
-  ] |> Map.ofSeq
-
-}
-open System.Text.Json
-open System.Text.Json.Serialization
-
-let options =
-    JsonFSharpOptions.Default()
-        .ToJsonSerializerOptions()
-
-// 3. Either way, pass the options to Serialize/Deserialize.
-JsonSerializer.Serialize(builtins, options) |> Console.WriteLine
-let builtinsText = """{
-  "Primitives": [
-    [
-      {
-        "Case": "GuidType"
-      },
-      {
-        "GeneratedTypeName": "uuid.UUID",
-        "RequiredImport": null,
-        "SupportedRenderers": [
-          "defaultGUID"
-        ]
-      }
-    ]
-  ],
-  "Generics": [
-    [
-      {
-        "Case": "Option"
-      },
-      {
-        "GeneratedTypeName": "ballerina.Option",
-        "RequiredImport": "ballerina.com/core",
-        "SupportedRenderers": [
-          "defaultEnum",
-          "defaultInfiniteStream"
-        ]
-      }
-    ]
-  ],
-  "Custom": {
-    "injectedCategory": {
-      "GeneratedTypeName": "ballerina.Unit",
-      "RequiredImport": null,
-      "SupportedRenderers": [
-        "defaultInjectedCategory"
-      ]
-    }
-  }
-}"""
-Console.WriteLine(JsonSerializer.Deserialize<BuiltIns>(builtinsText, options))
-// Console.ReadLine() |> ignore
-
 let injectedCategoryType:TypeId = { TypeName="injectedCategory"; TypeId=Guid.CreateVersion7() }
 let sampleInjectedTypes = [] // [injectedCategoryType]
 let samplePrimitiveRenderers:Map<string, PrimitiveRenderer> =
@@ -1442,7 +1373,7 @@ let samplePrimitiveRenderers:Map<string, PrimitiveRenderer> =
 //   do printfn "Parsing errors: %A" err
 
 type FormsGenTarget = 
-| ts = 1
+| csharp = 1
 | golang = 2
 
 open System.CommandLine
@@ -1472,6 +1403,10 @@ let formsOptions = {|
     (new Option<string>(
       "-form_name",
       "Name of the form, prefixed to disambiguate generated symbols.", IsRequired=true))
+  codegen_config_path = 
+    (new Option<string>(
+      "-codegen_config",
+      "Path of the codegen configuration path.", IsRequired=true))
 |}
 
 [<EntryPoint>]
@@ -1485,9 +1420,10 @@ let main args =
   formsCommand.AddOption(formsOptions.output)
   formsCommand.AddOption(formsOptions.package_name)
   formsCommand.AddOption(formsOptions.form_name)
+  formsCommand.AddOption(formsOptions.codegen_config_path)
 
   // dotnet run -- forms -input person-config.json -validate -codegen ts
-  formsCommand.SetHandler(Action<_,_,_,_,_,_>(fun (validate:bool) (language:FormsGenTarget) (inputPath:string) (outputPath:string) (generatedPackage:string) (formName:string) ->
+  formsCommand.SetHandler(Action<_,_,_,_,_,_,_>(fun (validate:bool) (language:FormsGenTarget) (inputPath:string) (outputPath:string) (generatedPackage:string) (formName:string) (codegenConfigPath:string) ->
     if File.Exists inputPath |> not then
       eprintfn "Fatal error: the input file %A does not exist" inputPath
       System.Environment.Exit -1
@@ -1496,37 +1432,47 @@ let main args =
     // samplePrimitiveRenderers
     let injectedTypes = [injectedCategoryType] |> Seq.map (fun injectedTypeName -> injectedTypeName.TypeName, (injectedTypeName, ExprType.RecordType Map.empty) |> TypeBinding.Create) |> Map.ofSeq
     let initialContext = { ParsedFormsContext.Empty with Types=injectedTypes }
-    match ((ParsedFormsContext.parse jsonValue).run((), initialContext)) with
+    let generatedLanguageSpecificConfig = 
+      match language with
+      | FormsGenTarget.golang -> { EnumValueFieldName="Value"; StreamIdFieldName="Id"; StreamDisplayValueFieldName="DisplayValue" }
+      | _ -> { EnumValueFieldName="value"; StreamIdFieldName="id"; StreamDisplayValueFieldName="displayValue" }
+    match ((ParsedFormsContext.parse generatedLanguageSpecificConfig jsonValue).run((), initialContext)) with
     | Left(_,Some parsedForms)  -> 
-      match ParsedFormsContext.Validate parsedForms with
+      match ParsedFormsContext.Validate generatedLanguageSpecificConfig parsedForms with
       | Left validatedForms ->
-        match ParsedFormsContext.ToGolang parsedForms [] generatedPackage formName with
-        | Left generatedCode -> 
-          // do Console.ReadLine() |> ignore
-          do printfn "forms are parsed and validated"
-          try
-            do System.IO.Directory.CreateDirectory (System.IO.Path.GetDirectoryName outputPath) |> ignore
-            let generatedCode = generatedCode |> StringBuilder.ToString
-            do System.IO.File.WriteAllText(outputPath, generatedCode)
-            do printfn $$"""Code is generated at {{outputPath}}"""
-          with
-          | err -> 
-            do eprintfn $$"""Fatal error {{err.Message}}: cannot create output path: {{outputPath}}"""
-        | Right err -> 
-          do printfn "Code generation errors: %A" err
+        match language with
+        | FormsGenTarget.golang ->
+          let codegenConfig = System.IO.File.ReadAllText codegenConfigPath
+          let codegenConfig = JsonSerializer.Deserialize<CodeGenConfig>(codegenConfig, JsonFSharpOptions.Default().ToJsonSerializerOptions())
+          match ParsedFormsContext.ToGolang codegenConfig parsedForms generatedPackage formName with
+          | Left generatedCode -> 
+            // do Console.ReadLine() |> ignore
+            do printfn "forms are parsed and validated"
+            try
+              do System.IO.Directory.CreateDirectory (System.IO.Path.GetDirectoryName outputPath) |> ignore
+              let generatedCode = generatedCode |> StringBuilder.ToString
+              do System.IO.File.WriteAllText(outputPath, generatedCode)
+              do printfn $$"""Code is generated at {{outputPath}}"""
+            with
+            | err -> 
+              do eprintfn $$"""Fatal error {{err.Message}}: cannot create output path: {{outputPath}}"""
+          | Right err -> 
+            do printfn "Code generation errors: %A" err
+        | _ -> 
+          do printfn "Unsupported code generation target: %A" language
       | Right err -> 
         do printfn "Validation errors: %A" err
     | Right err -> 
       do printfn "Parsing errors: %A" err
     | _ -> 
       do printfn "Error: no output when parsing."
-    ), formsOptions.mode, formsOptions.language, formsOptions.input, formsOptions.output, formsOptions.package_name, formsOptions.form_name)
+    ), formsOptions.mode, formsOptions.language, formsOptions.input, formsOptions.output, formsOptions.package_name, formsOptions.form_name, formsOptions.codegen_config_path)
 
   rootCommand.Invoke(args)
 
 (*
-dotnet run -- forms -input ./input-forms/email-provider-selection.json -output ./generated-output/models/email-provider-selection.gen.go -validate -codegen golang -package_name email_provider_selection -form_name EmailProviderSelection
-dotnet run -- forms -input ./input-forms/go-live-date.json -output ./generated-output/models/go-live-date.gen.go -validate -codegen golang -package_name go_live_date  -form_name GoLiveDate
-dotnet run -- forms -input ./input-forms/quality-check-mm-invoice.json -output ./generated-output/models/quality-check-mm-invoice.gen.go -validate -codegen golang -package_name quality_check_mm_invoice -form_name QualityCheckMMInvoice
-dotnet run -- forms -input ./input-forms/users-blp.json -output ./generated-output/models/users-blp.gen.go -validate -codegen golang -package_name users_blp -form_name UsersBlp
+dotnet run -- forms -input ./input-forms/email-provider-selection.json -output ./generated-output/models/email-provider-selection.gen.go -validate -codegen golang -package_name email_provider_selection -form_name EmailProviderSelection -codegen_config ./input-forms/go-config.json
+dotnet run -- forms -input ./input-forms/go-live-date.json -output ./generated-output/models/go-live-date.gen.go -validate -codegen golang -package_name go_live_date  -form_name GoLiveDate -codegen_config ./input-forms/go-config.json
+dotnet run -- forms -input ./input-forms/quality-check-mm-invoice.json -output ./generated-output/models/quality-check-mm-invoice.gen.go -validate -codegen golang -package_name quality_check_mm_invoice -form_name QualityCheckMMInvoice -codegen_config ./input-forms/go-config.json
+dotnet run -- forms -input ./input-forms/users-blp.json -output ./generated-output/models/users-blp.gen.go -validate -codegen golang -package_name users_blp -form_name UsersBlp -codegen_config ./input-forms/go-config.json
 *)

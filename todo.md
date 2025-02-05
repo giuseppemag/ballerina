@@ -98,21 +98,24 @@ Todo (✅/❌)
         ✅ enums POST
         ✅ streams GET
         ✅ streams POST
-      ❌ add optional extra config json with all required parameters
-        ❌ make it part of the config file itself
-        ❌ injected primitives, with their respective imports
-          ❌ use injected `guid` in `streamPOSTer` in particular
-        ❌ injected generics - `Option`, `Map`, `Set`, `List`/array
-        ❌ make the current primitives with their respective imports a default seed that gets overridden by the injected primitives
-        ❌ do not add imports unless they are used (for example, slices)
+      ✅ add extra config json with all required parameters
+        ✅ injected primitives, with their respective imports
+          ✅ use injected `guid` in `streamPOSTer` in particular
+        ✅ injected generics - `Option`, `Map`, `Set`, `List`/array
+        ✅ do not add imports unless they are used (for example, slices)
+          ✅ test with all the given samples
+        ✅ make sure no references remain to Ballerina types unless part of the codegen config
         ✅ remove `injectedCategoryType` from hardcoded seeds
       ❌ accept *.json as input name
         ❌ generate output file names from input names and output path
+        ❌ educated guess of `package_name` from file name
+        ❌ educated guess of `form_name` from `package_name`
+      ✅ validate that field names are capitalized when the generated language is Go
+      ❌ errors related to wrong stream/enum structure are impenetrable, improve them
       ❌ invalid json errors should be handled more gracefully
-      ❌ educated guess of `package_name` from file name
-      ❌ educated guess of `form_name` from `package_name`
-      ❌ test on all sample form configs and then make a new release
+      ❌ include go-config.json and person-config.json in repository for completeness
       ❌ write to Sven a "why not just a package somewhere?"
+      ❌ test on all sample form configs and then make a new release
       ✅ rename `Multiselection` to `MultiSelection`
       ✅ streams need to validate that the underlying type has id and displayvalue
       ❌ parse the JSON into the representation forms
