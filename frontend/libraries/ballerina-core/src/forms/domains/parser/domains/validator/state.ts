@@ -181,11 +181,6 @@ export const FormsConfig = {
         Object.entries(form.fields).forEach(([fieldName, field]: [fieldName: string, field: any]) =>
           {  
             const fieldType = formType.fields.get(fieldName)!
-            if(fieldType.kind == "application" && fieldType.value == "List" ){
-              console.debug("parsing field", fieldName, field)
-              console.debug('fieldType', formType.fields.get(fieldName)!);
-            }
-
             const bwcompatiblefield = fieldType.kind  == "application" && fieldType.value == "List" && typeof field.elementRenderer == "string" ? {
               renderer: field.renderer,
               label: field?.label,
@@ -200,10 +195,6 @@ export const FormsConfig = {
               }
             }: field
 
-            if(fieldType.kind == "application" && fieldType.value == "List" ){
-              console.debug('bwcompatiblefield', bwcompatiblefield);
-
-            }
             return parsedForm.fields = parsedForm.fields.set(fieldName, ParsedRenderer.Operations.ParseRenderer(fieldType, bwcompatiblefield, parsedTypes))  
           }       
         )

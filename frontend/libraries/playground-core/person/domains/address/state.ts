@@ -1,11 +1,11 @@
-import { CollectionReference, Sum, FormStateFromEntity, SearchableInfiniteStreamState, CommonFormState, Predicate, CollectionSelection, unit, Unit } from "ballerina-core";
+import { CollectionReference, Sum, FormStateFromEntity, SearchableInfiniteStreamState, CommonFormState, Predicate, CollectionSelection, unit, Unit, StreamValue } from "ballerina-core";
 import { AddressApi } from "./apis/mocks";
 import { OrderedMap } from "immutable";
 import { PersonFormPredicateContext } from "../predicates";
 
 
 
-export type City = CollectionReference;
+export type City = StreamValue;
 export const City = CollectionReference;
 export type Address = {
   street: string;

@@ -5,14 +5,14 @@ import { Debounced } from "../../../../../debounced/state";
 import { InfiniteStreamState } from "../../../../../infinite-data-stream/state";
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
-import { CollectionReference } from "../../../collection/domains/reference/state";
+import { CollectionReference, StreamValue } from "../../../collection/domains/reference/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import { FieldValidation, FieldValidationWithPath, FormValidatorSynchronized, OnChange, ValidationError } from "../../../singleton/state";
 import { SearchableInfiniteStreamState } from "../searchable-infinite-stream/state";
 import { InfiniteStreamMultiselectView } from "./state";
 
 
-export const InfiniteMultiselectDropdownForm = <Element extends CollectionReference, Context extends FormLabel, ForeignMutationsExpected>(
+export const InfiniteMultiselectDropdownForm = <Element extends StreamValue, Context extends FormLabel, ForeignMutationsExpected>(
   validation? :BasicFun<OrderedMap<Guid, Element>, Promise<FieldValidation>>
 ) => {
   const Co = CoTypedFactory<Context & Value<OrderedMap<Guid, Element>> & { disabled:boolean }, SearchableInfiniteStreamState<Element>>();
@@ -93,9 +93,9 @@ export const InfiniteMultiselectDropdownForm = <Element extends CollectionRefere
           ),
         toggleSelection: element =>
           props.foreignMutations.onChange(
-            props.context.value.has(element.id) ?
-              OrderedMapRepo.Updaters.remove(element.id) :
-              OrderedMapRepo.Updaters.set(element.id, element),
+            props.context.value.has(element.Id) ?
+              OrderedMapRepo.Updaters.remove(element.Id) :
+              OrderedMapRepo.Updaters.set(element.Id, element),
             List()),
       }}
     />

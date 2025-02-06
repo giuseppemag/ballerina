@@ -4,17 +4,17 @@ import { BasicFun } from "../../../../../fun/state";
 import { InfiniteStreamState } from "../../../../../infinite-data-stream/state";
 import { View } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
-import { CollectionReference } from "../../../collection/domains/reference/state";
+import { StreamValue } from "../../../collection/domains/reference/state";
 import { CollectionSelection } from "../../../collection/domains/selection/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import { OnChange, CommonFormState } from "../../../singleton/state";
 
 
-export type SearchableInfiniteStreamState<Element extends CollectionReference> = 
+export type SearchableInfiniteStreamState<Element extends StreamValue> = 
   { commonFormState: CommonFormState,
     customFormState: { searchText: Debounced<Value<string>>; status: "open" | "closed"; stream: InfiniteStreamState<Element>; getChunk: BasicFun<string, InfiniteStreamState<Element>["getChunk"]>; }
    };
-export const SearchableInfiniteStreamState = <Element extends CollectionReference>() => ({
+export const SearchableInfiniteStreamState = <Element extends StreamValue>() => ({
   Default: (searchText: string, getChunk: BasicFun<string, InfiniteStreamState<Element>["getChunk"]>): SearchableInfiniteStreamState<Element> => ({
     commonFormState: CommonFormState.Default(),
     customFormState: {
@@ -44,7 +44,7 @@ export const SearchableInfiniteStreamState = <Element extends CollectionReferenc
     }
   }
 });
-export type SearchableInfiniteStreamView<Element extends CollectionReference, Context extends FormLabel, ForeignMutationsExpected> = 
+export type SearchableInfiniteStreamView<Element extends StreamValue, Context extends FormLabel, ForeignMutationsExpected> = 
   View<
     Context & Value<CollectionSelection<Element>> & SearchableInfiniteStreamState<Element> & {
       hasMoreValues:boolean,

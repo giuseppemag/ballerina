@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { CollectionReference, CollectionSelection, Guid, FormStateFromEntity, DateFormState, EnumFormState, FormLabel, BaseEnumContext, SearchableInfiniteStreamState, CommonFormState, Predicate, ListFieldState, Maybe, unit } from "ballerina-core";
+import { CollectionReference, CollectionSelection, Guid, FormStateFromEntity, DateFormState, EnumFormState, FormLabel, BaseEnumContext, SearchableInfiniteStreamState, CommonFormState, Predicate, ListFieldState, Maybe, unit, StreamValue, EnumValue } from "ballerina-core";
 import { List, OrderedMap } from "immutable";
 import { Interest, PersonApi } from "./apis/mocks";
 import { Address, AddressFormState, City } from "./domains/address/state";
@@ -8,8 +8,8 @@ import Immutable from "immutable";
 import { v4 } from "uuid";
 
 
-export type Gender = CollectionReference;
-export type Department = CollectionReference;
+export type Gender = EnumValue;
+export type Department = StreamValue;
 export const Department = CollectionReference;
 
 export type Person = {
@@ -41,16 +41,16 @@ export const Person = {
         surname: faker.person.lastName(),
         birthday: new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45),
         subscribeToNewsletter: Math.random() > 0.5,
-        gender: CollectionSelection<CollectionReference>().Default.right("no selection"),
+        gender: CollectionSelection<EnumValue>().Default.right("no selection"),
         interests: OrderedMap(),
         departments: OrderedMap(),
         address: {
           street: faker.location.street(),
           number: Math.floor(Math.random() * 500),
           city: Math.random() > 0.5 ?
-            CollectionSelection<CollectionReference>().Default.right("no selection")
+            CollectionSelection<StreamValue>().Default.right("no selection")
             :
-            CollectionSelection<CollectionReference>().Default.left(City.Default(v4(), faker.location.city()))
+            CollectionSelection<StreamValue>().Default.left(City.Default.stream(v4(), faker.location.city()))
         }
       })
     }),
@@ -68,8 +68,8 @@ export const Person = {
 };
 export type PersonFormState = FormStateFromEntity<Person, {
   birthday: DateFormState;
-  gender: EnumFormState<PersonFormPredicateContext & FormLabel & BaseEnumContext<PersonFormPredicateContext, Gender>, Gender>;
-  interests: EnumFormState<PersonFormPredicateContext & FormLabel & BaseEnumContext<PersonFormPredicateContext, Interest>, Interest>;
+  gender: EnumFormState<PersonFormPredicateContext & FormLabel & BaseEnumContext<Gender>, Gender>;
+  interests: EnumFormState<PersonFormPredicateContext & FormLabel & BaseEnumContext<Interest>, Interest>;
   departments: SearchableInfiniteStreamState<Department>;
   address: AddressFormState
 }>;
@@ -81,8 +81,8 @@ export const PersonFormState = {
       surname: { commonFormState: CommonFormState.Default(), customFormState: unit },
       subscribeToNewsletter: { commonFormState: CommonFormState.Default(), customFormState: unit },
       birthday: { commonFormState: CommonFormState.Default(), customFormState: DateFormState.Default() },
-      gender: { commonFormState: CommonFormState.Default(), customFormState: EnumFormState<PersonFormPredicateContext & FormLabel & BaseEnumContext<PersonFormPredicateContext, Gender>, Gender>().Default() },
-      interests: { commonFormState: CommonFormState.Default(), customFormState: EnumFormState<PersonFormPredicateContext & FormLabel & BaseEnumContext<PersonFormPredicateContext, Interest>, Interest>().Default() },
+      gender: { commonFormState: CommonFormState.Default(), customFormState: EnumFormState<PersonFormPredicateContext & FormLabel & BaseEnumContext<Gender>, Gender>().Default() },
+      interests: { commonFormState: CommonFormState.Default(), customFormState: EnumFormState<PersonFormPredicateContext & FormLabel & BaseEnumContext<Interest>, Interest>().Default() },
       departments: { commonFormState: CommonFormState.Default(), customFormState: SearchableInfiniteStreamState<Department>().Default("", PersonApi.getDepartments()) },
       address: { commonFormState: CommonFormState.Default(), customFormState:  AddressFormState.Default() }
     }

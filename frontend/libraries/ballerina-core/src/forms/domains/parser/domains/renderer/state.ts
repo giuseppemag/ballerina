@@ -1,5 +1,5 @@
 import { List, Map, OrderedMap, Set } from "immutable";
-import { Base64FileForm, BaseEnumContext, BasicFun, BasicPredicate, BooleanForm, BoolExpr, CollectionReference, CollectionSelection, CommonFormState, DateForm, DateFormState, EnumForm, EnumFormState, EnumMultiselectForm, EnumOptionsSources, FormLabel, Guid, InfiniteMultiselectDropdownForm, InjectedPrimitives, ListFieldState, ListForm, MapFieldState, MapForm, Maybe, MaybeBooleanForm, NumberForm, OrderedMapRepo, ParsedForms, ParsedType, SearchableInfiniteStreamForm, SearchableInfiniteStreamState, SecretForm, StringForm, Template, Unit, Value } from "../../../../../../main";
+import { Base64FileForm, BaseEnumContext, BasicFun, BasicPredicate, BooleanForm, BoolExpr, CollectionReference, CollectionSelection, CommonFormState, DateForm, DateFormState, EnumForm, EnumFormState, EnumMultiselectForm, EnumOptionsSources, EnumValue, FormLabel, Guid, InfiniteMultiselectDropdownForm, InjectedPrimitives, ListFieldState, ListForm, MapFieldState, MapForm, Maybe, MaybeBooleanForm, NumberForm, OrderedMapRepo, ParsedForms, ParsedType, SearchableInfiniteStreamForm, SearchableInfiniteStreamState, SecretForm, StreamValue, StringForm, Template, Unit, Value } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 
 type Form = {
@@ -226,27 +226,27 @@ export const ParsedRenderer = {
           .withView(formViews[viewKind][viewName]())
           .mapContext<any & CommonFormState & Value<string>>(_ => ({ ..._, label, tooltip, details }))
       if (viewKind == "enumSingleSelection" && rendererConfig.kind == "enum")
-        return EnumForm<any & FormLabel & BaseEnumContext<Value<CollectionReference>>, Unit, Value<CollectionReference>>()
+        return EnumForm<any & FormLabel & BaseEnumContext<EnumValue>, Unit, EnumValue>()
           .withView(formViews[viewKind][viewName]())
-          .mapContext<any & EnumFormState<any & BaseEnumContext<Value<CollectionReference>>, Value<CollectionReference>> & Value<CollectionSelection<Value<CollectionReference>>>>(_ => ({
+          .mapContext<any & EnumFormState<any & BaseEnumContext<EnumValue>, EnumValue> & Value<CollectionSelection<EnumValue>>>(_ => ({
             ..._, label, tooltip, details, getOptions: () => {
-              return ((enumOptionsSources as any)(rendererConfig.options)() as Promise<any>).then(options => Map(options.map((o: {value: CollectionReference}) => [o.value.id, o])))
+              return ((enumOptionsSources as any)(rendererConfig.options)() as Promise<any>).then(options => Map(options.map((o: EnumValue) => [o.Value, o])))
             }
           })) 
       if (viewKind == "enumMultiSelection" && rendererConfig.kind == "enum")
-        return EnumMultiselectForm<any & FormLabel & BaseEnumContext<Value<CollectionReference>>, Unit, Value<CollectionReference>>()
+        return EnumMultiselectForm<any & FormLabel & BaseEnumContext<EnumValue>, Unit, EnumValue>()
           .withView(formViews[viewKind][viewName]() )
-          .mapContext<any & EnumFormState<any & BaseEnumContext<Value<CollectionReference>>, Value<CollectionReference>> & Value<OrderedMap<Guid, CollectionReference>>>(_ => ({
-            ..._, label, details, tooltip, getOptions: () => ((enumOptionsSources as any)(rendererConfig.options)() as Promise<any>).then(options => OrderedMap(options.map((o: {value: CollectionReference}) => [o.value.id, o])))
+          .mapContext<any & EnumFormState<any & BaseEnumContext<EnumValue>, EnumValue> & Value<OrderedMap<Guid, EnumValue>>>(_ => ({
+            ..._, label, details, tooltip, getOptions: () => ((enumOptionsSources as any)(rendererConfig.options)() as Promise<any>).then(options => OrderedMap(options.map((o: EnumValue) => [o.Value, o])))
           })) 
       if (viewKind == "streamSingleSelection")
-        return SearchableInfiniteStreamForm<CollectionReference, any & FormLabel, Unit>()
+        return SearchableInfiniteStreamForm<StreamValue, any & FormLabel, Unit>()
           .withView(formViews[viewKind][viewName]() )
-          .mapContext<any & SearchableInfiniteStreamState<CollectionReference> & Value<CollectionSelection<CollectionReference>>>(_ => ({ ..._, label, tooltip, details })) 
+          .mapContext<any & SearchableInfiniteStreamState<StreamValue> & Value<CollectionSelection<StreamValue>>>(_ => ({ ..._, label, tooltip, details })) 
       if (viewKind == "streamMultiSelection")
-        return InfiniteMultiselectDropdownForm<CollectionReference, any & FormLabel, Unit>()
+        return InfiniteMultiselectDropdownForm<StreamValue, any & FormLabel, Unit>()
           .withView(formViews[viewKind][viewName]() )
-          .mapContext<any & FormLabel & CommonFormState & SearchableInfiniteStreamState<CollectionReference> & Value<OrderedMap<Guid, CollectionReference>>>(_ => ({ ..._, label, tooltip, details })) 
+          .mapContext<any & FormLabel & CommonFormState & SearchableInfiniteStreamState<StreamValue> & Value<OrderedMap<Guid, StreamValue>>>(_ => ({ ..._, label, tooltip, details })) 
       if (viewKind == "base64File")
         return Base64FileForm<any & FormLabel, Unit>()
         .withView(((formViews )[viewKind] )[viewName]() )

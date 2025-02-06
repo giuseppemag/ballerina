@@ -5,6 +5,20 @@ import { BasicFun } from "../../../../../fun/state";
 import { InjectedPrimitives, Maybe, ParsedType, TypeName } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 
+const sortObjectKeys = (obj: Record<string, any>) =>
+  Object.keys(obj)
+      .sort()
+      .reduce((sortedObj, key) => {
+      sortedObj[key] = obj[key]!;
+      return sortedObj;
+      }, {} as any);
+  
+const simpleMapKeyToIdentifer = (key: any): string  => {
+  if(typeof key == "object")
+    return JSON.stringify(sortObjectKeys(key));
+  return JSON.stringify(key);
+}
+
 export const PrimitiveTypes =
   [ 
     "guid", //resolves to string
@@ -38,8 +52,8 @@ export type BuiltInApiConverters = {
   "base64File": ApiConverter<string>
   "secret": ApiConverter<string>
   "Date": ApiConverter<Maybe<Date>>
-  "SingleSelection": ApiConverter<CollectionSelection<any>>
-  "MultiSelection": ApiConverter<OrderedMap<string, any>>
+  "SingleSelection": ApiConverter<CollectionSelection<CollectionReference>>
+  "MultiSelection": ApiConverter<OrderedMap<string, CollectionReference>>
   "List": ApiConverter<List<any>>,
   "Map": ApiConverter<List<[any, any]>>
 }
@@ -150,7 +164,7 @@ export const fromAPIRawValue = <T extends { [key in keyof T]: { type: any; state
     return converters[t.value].fromAPIRawValue(raw)
   }
   if(t.kind == "union") {
-    return CollectionReference.Default(raw, raw, "enum")
+    return CollectionReference.Default.enum(raw)
   }
   if (t.kind == "application") {
     if (t.value == "SingleSelection") {
@@ -197,7 +211,7 @@ export const toAPIRawValue = <T extends { [key in keyof T]: { type: any; state: 
   if (t.kind == "primitive")
     return ValueOrErrors.Operations.Return(converters[t.value as string | keyof T].toAPIRawValue([raw, formState.modifiedByUser]))
   if(t.kind == "union"){
-    return ValueOrErrors.Operations.Return(raw.id)
+    return ValueOrErrors.Operations.Return(raw.Value)
   }
   if (t.kind == "application") {
     if (t.value == "SingleSelection") {
@@ -221,7 +235,7 @@ export const toAPIRawValue = <T extends { [key in keyof T]: { type: any; state: 
         ))))
     }
     if (t.value == "Map") {
-      const [converterResult, toIdentiferAndDisplayName] = converters[t.value].toAPIRawValue([raw, formState.modifiedByUser])
+      const converterResult = List(converters[t.value].toAPIRawValue([raw, formState.modifiedByUser]))
       const parsedMap: List<ValueOrErrors<{key: ValueOrErrors<any, any>, value: ValueOrErrors<any, any>}, any>> = converterResult.map((keyValue: any, index: number) => {
         return toAPIRawValue(
             t.args[0],
@@ -243,12 +257,14 @@ export const toAPIRawValue = <T extends { [key in keyof T]: { type: any; state: 
       )
       
       const nonUniqueKeyErrors = parsedMap.filter(_ => _.kind == "value").reduce((acc, _) => { 
-        const [id, displayName] = toIdentiferAndDisplayName(_.value.key)
-        acc.ids.contains(id) ? acc.errors = acc.errors.push(ValueOrErrors.Default.throw(List([`Keys in the map are not unique: ${displayName}`]))) : acc.ids = acc.ids.push(id)
+        const id = simpleMapKeyToIdentifer(_.value.key)
+        acc.ids.contains(id) ? acc.errors = acc.errors.push(ValueOrErrors.Default.throw(List([`Keys in the map are not unique`]))) : acc.ids = acc.ids.push(id)
         return acc
       }, {ids: List<string>(), errors: List<ValueOrErrors<any, string>>()}).errors
 
-      return ValueOrErrors.Operations.All(parsedMap.concat(nonUniqueKeyErrors))
+      return ValueOrErrors.Operations.All(parsedMap.concat(nonUniqueKeyErrors)).Then(parsedMap => 
+        ValueOrErrors.Default.return(parsedMap.toArray())
+      )
     }
   }
   

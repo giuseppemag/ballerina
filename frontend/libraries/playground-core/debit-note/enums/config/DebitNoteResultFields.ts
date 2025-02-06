@@ -1,19 +1,19 @@
-import { CollectionReference, BoolExpr, Unit } from "ballerina-core";
+import { CollectionReference, EnumValue } from "ballerina-core";
 
-const debitNoteResultFields: Array<[CollectionReference, BoolExpr<Unit>]> = [
-  [CollectionReference.Default("ConfigurableNumber", "ConfigurableNumber"), BoolExpr.Default.true()],
-  [CollectionReference.Default("Currency", "Currency"), BoolExpr.Default.true()],
-  [CollectionReference.Default("DocumentName", "DocumentName"), BoolExpr.Default.true()],
-  [CollectionReference.Default("ExternalDmsID", "ExternalDmsID"), BoolExpr.Default.true()],
-  [CollectionReference.Default("LastChangeDate", "LastChangeDate"), BoolExpr.Default.true()],
-  [CollectionReference.Default("LastChangeDateTime", "LastChangeDateTime"), BoolExpr.Default.true()],
-  [CollectionReference.Default("Positions", "Positions"), BoolExpr.Default.true()],
-  [CollectionReference.Default("DebitNoteDate", "DebitNoteDate"), BoolExpr.Default.true()],
-  [CollectionReference.Default("DebitNoteNum", "DebitNoteNum"), BoolExpr.Default.true()],
-  [CollectionReference.Default("ReferenceNum", "ReferenceNum"), BoolExpr.Default.true()],
-  [CollectionReference.Default("ReceiverID", "ReceiverID"), BoolExpr.Default.true()],
-  [CollectionReference.Default("SenderID", "SenderID"), BoolExpr.Default.true()],
-  [CollectionReference.Default("PostingDate", "PostingDate"), BoolExpr.Default.true()]
+const debitNoteResultFields: Array<EnumValue> = [
+  CollectionReference.Default.enum("ConfigurableNumber" ),
+  CollectionReference.Default.enum("Currency" ),
+  CollectionReference.Default.enum("DocumentName" ),
+  CollectionReference.Default.enum("ExternalDmsID" ),
+  CollectionReference.Default.enum("LastChangeDate" ),
+  CollectionReference.Default.enum("LastChangeDateTime" ),
+  CollectionReference.Default.enum("Positions" ),
+  CollectionReference.Default.enum("DebitNoteDate" ),
+  CollectionReference.Default.enum("DebitNoteNum" ),
+  CollectionReference.Default.enum("ReferenceNum" ),
+  CollectionReference.Default.enum("ReceiverID" ),
+  CollectionReference.Default.enum("SenderID" ),
+  CollectionReference.Default.enum("PostingDate" ),
 ];
 
 export default debitNoteResultFields;

@@ -11,6 +11,7 @@ import {
   StreamPosition,
   OrderedMapRepo,
   CollectionSelection,
+  EnumValue,
 } from "ballerina-core";
 import { Range, List, OrderedMap } from "immutable";
 import { v4 } from "uuid";
@@ -24,109 +25,70 @@ import informationCardField from "./enums/config/InformationCardField";
 
 import keyValueFields from "./enums/config/KeyValueFields";
 
-const filterGroupOpEnum: Array<[CollectionReference, BoolExpr<Unit>]> = [
-  [CollectionReference.Default("and", "and"), BoolExpr.Default.true()],
-  [CollectionReference.Default("or", "or"), BoolExpr.Default.true()],
+const filterGroupOpEnum: Array<EnumValue> = [
+  CollectionReference.Default.enum("and"),
+  CollectionReference.Default.enum("or"),
 ];
 
-const contextEnum: Array<[CollectionReference, BoolExpr<Unit>]> = [
-  [CollectionReference.Default("invoice", "invoice"), BoolExpr.Default.true()],
-  [CollectionReference.Default("invoicePosition", "invoicePosition"), BoolExpr.Default.true()],
-  [
-    CollectionReference.Default("accountingPosition", "accountingPosition"),
-    BoolExpr.Default.true(),
-  ],
-  [
-    CollectionReference.Default("additionalCostPosition", "additionalCostPosition"),
-    BoolExpr.Default.true(),
-  ],
-  [CollectionReference.Default("purchaseOrder", "purchaseOrder"), BoolExpr.Default.true()],
-  [
-    CollectionReference.Default("purchaseOrderPosition", "purchaseOrderPosition"),
-    BoolExpr.Default.true(),
-  ],
-  [CollectionReference.Default("deliveryNote", "deliveryNote"), BoolExpr.Default.true()],
-  [
-    CollectionReference.Default("deliveryNotePosition", "deliveryNotePosition"),
-    BoolExpr.Default.true(),
-  ],
-  [CollectionReference.Default("orderConfirmation", "orderConfirmation"), BoolExpr.Default.true()],
-  [
-    CollectionReference.Default("orderConfirmationPosition", "orderConfirmationPosition"),
-    BoolExpr.Default.true(),
-  ],
-  [CollectionReference.Default("surcharge", "surcharge"), BoolExpr.Default.true()],
-  [CollectionReference.Default("header", "header"), BoolExpr.Default.true()],
-  [CollectionReference.Default("position", "position"), BoolExpr.Default.true()],
-  [
-    CollectionReference.Default("purchaseRequisition", "purchaseRequisition"),
-    BoolExpr.Default.true(),
-  ],
-  [CollectionReference.Default("anyPosition", "anyPosition"), BoolExpr.Default.true()],
-  [CollectionReference.Default("paymentAdvice", "paymentAdvice"), BoolExpr.Default.true()],
-  [
-    CollectionReference.Default("paymentAdvicePosition", "paymentAdvicePosition"),
-    BoolExpr.Default.true(),
-  ],
-  [
-    CollectionReference.Default("supplierPurchaseOrder", "supplierPurchaseOrder"),
-    BoolExpr.Default.true(),
-  ],
-  [
-    CollectionReference.Default("supplierPurchaseOrderPosition", "supplierPurchaseOrderPosition"),
-    BoolExpr.Default.true(),
-  ],
-  [CollectionReference.Default("allPositions", "allPositions"), BoolExpr.Default.true()],
-  [CollectionReference.Default("debitNote", "debitNote"), BoolExpr.Default.true()],
-  [CollectionReference.Default("debitNotePosition", "debitNotePosition"), BoolExpr.Default.true()],
+const contextEnum: Array<EnumValue> = [
+  CollectionReference.Default.enum("invoice"),
+  CollectionReference.Default.enum("invoicePosition"),
+  CollectionReference.Default.enum("accountingPosition"),
+  CollectionReference.Default.enum("additionalCostPosition"),
+  CollectionReference.Default.enum("purchaseOrder"),
+  CollectionReference.Default.enum("purchaseOrderPosition"),
+  CollectionReference.Default.enum("deliveryNote"),
+  CollectionReference.Default.enum("deliveryNotePosition"),
+  CollectionReference.Default.enum("orderConfirmation"),
+  CollectionReference.Default.enum("orderConfirmationPosition"),
+  CollectionReference.Default.enum("surcharge"),
+  CollectionReference.Default.enum("header"),
+  CollectionReference.Default.enum("position"),
+  CollectionReference.Default.enum("purchaseRequisition"),
+  CollectionReference.Default.enum("anyPosition"),
+  CollectionReference.Default.enum("paymentAdvice"),
+  CollectionReference.Default.enum("paymentAdvicePosition"),
+  CollectionReference.Default.enum("supplierPurchaseOrder"),
+  CollectionReference.Default.enum("supplierPurchaseOrderPosition"),
+  CollectionReference.Default.enum("allPositions"),
+  CollectionReference.Default.enum("debitNote"),
+  CollectionReference.Default.enum("debitNotePosition"),
 ];
 
-const filtersOpEnum: Array<[CollectionReference, BoolExpr<Unit>]> = [
-  [CollectionReference.Default("eq", "eq"), BoolExpr.Default.true()],
-  [CollectionReference.Default("neq", "neq"), BoolExpr.Default.true()],
-  [CollectionReference.Default("gt", "gt"), BoolExpr.Default.true()],
-  [CollectionReference.Default("gte", "gte"), BoolExpr.Default.true()],
-  [CollectionReference.Default("lt", "lt"), BoolExpr.Default.true()],
-  [CollectionReference.Default("lte", "lte"), BoolExpr.Default.true()],
-  [CollectionReference.Default("contains", "contains"), BoolExpr.Default.true()],
-  [CollectionReference.Default("notContains", "notContains"), BoolExpr.Default.true()],
-  [CollectionReference.Default("match", "match"), BoolExpr.Default.true()],
-  [CollectionReference.Default("notMatch", "notMatch"), BoolExpr.Default.true()],
-  [CollectionReference.Default("isNull", "isNull"), BoolExpr.Default.true()],
-  [CollectionReference.Default("isNotNull", "isNotNull"), BoolExpr.Default.true()],
-  [
-    CollectionReference.Default("groupedDataContains", "groupedDataContains"),
-    BoolExpr.Default.true(),
-  ],
-  [
-    CollectionReference.Default("groupedDataNotContains", "groupedDataNotContains"),
-    BoolExpr.Default.true(),
-  ],
-  [
-    CollectionReference.Default("groupedDataContainsPrefix", "groupedDataContainsPrefix"),
-    BoolExpr.Default.true(),
-  ],
-  [
-    CollectionReference.Default("groupedDataNotContainsPrefix", "groupedDataNotContainsPrefix"),
-    BoolExpr.Default.true(),
-  ],
+const filtersOpEnum: Array<EnumValue> = [
+  CollectionReference.Default.enum("eq"),
+  CollectionReference.Default.enum("neq"),
+  CollectionReference.Default.enum("gt"),
+  CollectionReference.Default.enum("gte"),
+  CollectionReference.Default.enum("lt"),
+  CollectionReference.Default.enum("lte"),
+  CollectionReference.Default.enum("contains"),
+  CollectionReference.Default.enum("notContains"),
+  CollectionReference.Default.enum("match"),
+  CollectionReference.Default.enum("notMatch"),
+  CollectionReference.Default.enum("isNull"),
+  CollectionReference.Default.enum("isNotNull"),
+  CollectionReference.Default.enum("groupedDataContai"),
+  CollectionReference.Default.enum("groupedDataNotContai"),
+  CollectionReference.Default.enum("groupedDataContainsPref"),
+  CollectionReference.Default.enum("groupedDataNotContainsPref"),
 ];
 
-const filtersValueAnyOfEnum: Array<[CollectionReference, BoolExpr<Unit>]> = [
-  [CollectionReference.Default("string", "string"), BoolExpr.Default.true()],
-  [CollectionReference.Default("number", "number"), BoolExpr.Default.true()],
-  [CollectionReference.Default("date-time", "date-time"), BoolExpr.Default.true()],
-  [CollectionReference.Default("boolean", "boolean"), BoolExpr.Default.true()],
+const filtersValueAnyOfEnum: Array<EnumValue> = [
+  CollectionReference.Default.enum("string"),
+  CollectionReference.Default.enum("number"),
+  CollectionReference.Default.enum("date-time"),
+  CollectionReference.Default.enum("boolean"),
 ];
 
 const streamApis: InfiniteStreamSources = (streamName: string) => {
   switch (streamName) {
     case "requiredKeyValueField":
       return (_searchText: string) => (_streamPosition: [StreamPosition]) => {
-        const mapped = OrderedMapRepo.Default.fromSmallIdentifiables(
+        const mapped = OrderedMapRepo.Default.fromIdentifiables(
           Range(0, 20)
             .map(() =>
-              CollectionReference.Default(
+              CollectionReference.Default.stream(
                 v4(),
                 _searchText + faker.company.buzzNoun() + " required key-value fields"
               )

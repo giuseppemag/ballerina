@@ -2,8 +2,8 @@ export const PersonFormsConfig = {
   types: {
     CollectionReference: {
       fields: {
-        displayValue: "string",
-        id: "guid",
+        DisplayValue: "string",
+        Id: "guid",
       },
     },
     CityRef: {
@@ -27,7 +27,7 @@ export const PersonFormsConfig = {
     },
     GenderRef: {
       fields: {
-        value: "GendersEnum",
+        Value: "GendersEnum",
       },
     },
     ColorsEnum: {
@@ -40,7 +40,7 @@ export const PersonFormsConfig = {
     },
     ColorRef: {
       fields: {
-        value: "ColorsEnum",
+        Value: "ColorsEnum",
       },
     },
     InterestsEnum: {
@@ -54,7 +54,7 @@ export const PersonFormsConfig = {
     },
     InterestRef: {
       fields: {
-        value: "InterestsEnum",
+        Value: "InterestsEnum",
       },
     },
     PermissionsEnum: {
@@ -68,7 +68,7 @@ export const PersonFormsConfig = {
     },
     PermissionRef: {
       fields: {
-        value: "PermissionsEnum",
+        Value: "PermissionsEnum",
       },
     },
     DepartmentRef: {
@@ -118,12 +118,11 @@ export const PersonFormsConfig = {
         shoeColours: { fun: "MultiSelection", args: ["ColorRef"] },
         friendsBirthdays: { fun: "Map", args: ["string", "Date"] },
         holidays: { fun: "List", args: ["Date"] },
-      },
+      },    
     },
   },
   apis: {
     enumOptions: {
-      departments: "DepartmentRef",
       genders: "GenderRef",
       colors: "ColorRef",
       interests: "InterestRef",
@@ -317,14 +316,14 @@ export const PersonFormsConfig = {
           label: "other addresses",
           renderer: "defaultList",
           //bw compatability case
-          elementRenderer: "address",
-          elementLabel: "address",
-          elementTooltip: "address tooltip",
-          // elementRenderer: {
-          //   renderer: "address",
-          //   label: "address",
-          //   visible: { kind: "true" },
-          // },
+          // elementRenderer: "address",
+          // elementLabel: "address",
+          // elementTooltip: "address tooltip",
+          elementRenderer: {
+            renderer: "address",
+            label: "address",
+            visible: { kind: "true" },
+          },
           visible: { kind: "true" },
         },
         emails: {

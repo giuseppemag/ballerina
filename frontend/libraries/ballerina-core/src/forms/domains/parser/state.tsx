@@ -1,6 +1,6 @@
 import { List, Map, OrderedMap, OrderedSet, Set } from "immutable";
 import { BoolExpr, Unit, Guid, LeafPredicatesEvaluators, Predicate, ParsedFormJSON, BuiltIns, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, CommonFormState, CreateFormState, EditFormContext, CreateFormContext, Synchronized, simpleUpdater, TypeName, ListFieldState, ListForm, BuiltInApiConverters, defaultValue, fromAPIRawValue, toAPIRawValue, EditFormForeignMutationsExpected, MapFieldState, MapForm, ParsedType, Base64FileForm, SecretForm, InjectedPrimitives, Injectables, ApiConverters, Maybe, ApiResponseChecker, Debounced, ParsedFormConfig } from "../../../../main";
-import { CollectionReference } from "../collection/domains/reference/state";
+import { CollectionReference, StreamValue } from "../collection/domains/reference/state";
 import { SearchableInfiniteStreamState } from "../primitives/domains/searchable-infinite-stream/state";
 import { Form } from "../singleton/template";
 import { ParsedRenderer } from "./domains/renderer/state";
@@ -110,7 +110,7 @@ export type ParsedForms<T> = Map<string, ParsedForm<T> & { form: EntityFormTempl
 export type FormParsingErrors = List<string>
 export type FormParsingResult = Sum<ParsedLaunchers, FormParsingErrors>
 export type StreamName = string
-export type InfiniteStreamSources = BasicFun<StreamName, SearchableInfiniteStreamState<CollectionReference>["customFormState"]["getChunk"]>
+export type InfiniteStreamSources = BasicFun<StreamName, SearchableInfiniteStreamState<StreamValue>["customFormState"]["getChunk"]>
 export type EntityName = string
 export type EntityApis = {
   create: BasicFun<EntityName, BasicFun<any, Promise<Unit>>>
@@ -121,7 +121,7 @@ export type EntityApis = {
 export type EnumName = string
 
 
-export type EnumOptionsSources = BasicFun<EnumName, BasicFun<Unit, Promise<Array<{value: CollectionReference}>>>>
+export type EnumOptionsSources = BasicFun<EnumName, BasicFun<Unit, Promise<Array<{Value: string}>>>>
 export const parseForms =
   <LeafPredicates, T extends { [key in keyof T]: { type: any; state: any; }; },>(
     builtIns: BuiltIns,

@@ -1,4 +1,4 @@
-import { CommonFormState, AsyncState, FormLabel, BooleanView, NumberView, StringView, DateView, CollectionReference, EnumView, EnumMultiselectView, SearchableInfiniteStreamView, InfiniteStreamMultiselectView, BaseEnumContext, MaybeBooleanView, ListFieldView, unit, Value } from "ballerina-core";
+import { CommonFormState, AsyncState, FormLabel, BooleanView, NumberView, StringView, DateView, CollectionReference, EnumView, EnumMultiselectView, SearchableInfiniteStreamView, InfiniteStreamMultiselectView, BaseEnumContext, MaybeBooleanView, ListFieldView, unit, Value, EnumValue, StreamValue } from "ballerina-core";
 
 export const MostUglyValidationDebugView = (props: { context: {commonFormState: CommonFormState} }) =>
   props.context.commonFormState.modifiedByUser && props.context.commonFormState.validation.sync && AsyncState.Operations.isLoading(props.context.commonFormState.validation.sync) ?
@@ -82,19 +82,19 @@ export const PersonFieldViews = {
         </>,
   },
   enumSingleSelection: {
-    defaultEnum: <Context extends FormLabel & BaseEnumContext<Value<Element>>, Element extends CollectionReference, ForeignMutationsExpected>(): 
-    EnumView<Context, Value<Element>, ForeignMutationsExpected> =>
+    defaultEnum: <Context extends FormLabel & BaseEnumContext<Element>, Element extends EnumValue, ForeignMutationsExpected>(): 
+    EnumView<Context, Element, ForeignMutationsExpected> =>
       props => <>
         {props.context.label && <h3>{props.context.label}</h3>}
         {props.context.activeOptions == "loading" ?
           "loading options" :
-          <select value={props.context.value.kind == "l" ? props.context.value.value.value.id : undefined}
+          <select value={props.context.value.kind == "l" ? props.context.value.value.Value : undefined}
             onChange={e => props.foreignMutations.setNewValue(e.currentTarget.value)}>
             <>
               <option></option>
               {props.context.activeOptions.map(o =>
-                <option value={o.value.id}>
-                  {o.value.displayName}
+                <option value={o.Value}>
+                  {o.Value}
                 </option>
               )}
             </>
@@ -104,8 +104,8 @@ export const PersonFieldViews = {
       </>,
   },
   enumMultiSelection: {
-    defaultEnumMultiselect: <Context extends FormLabel & BaseEnumContext<Value<Element>>, Element extends CollectionReference, ForeignMutationsExpected>(): 
-      EnumMultiselectView<Context, Value<Element>, ForeignMutationsExpected> =>
+    defaultEnumMultiselect: <Context extends FormLabel & BaseEnumContext<Element>, Element extends EnumValue, ForeignMutationsExpected>(): 
+      EnumMultiselectView<Context, Element, ForeignMutationsExpected> =>
       props => <>
         {props.context.label && <h3>{props.context.label}</h3>}
         {props.context.activeOptions == "loading" ?
@@ -115,8 +115,8 @@ export const PersonFieldViews = {
           onChange={e => props.foreignMutations.setNewValue(Array.from(e.currentTarget.options).filter(_ => _.selected).map(_ => _.value))}>
           <>
             {props.context.activeOptions.map(o =>
-              <option value={o.value.id}>
-                {o.value.displayName}
+              <option value={o.Value}>
+                {o.Value}
               </option>
             )}
           </>
@@ -126,14 +126,14 @@ export const PersonFieldViews = {
       </>,
   },
   streamSingleSelection: {
-    defaultInfiniteStream: <Element extends CollectionReference, Context extends FormLabel, ForeignMutationsExpected>():
+    defaultInfiniteStream: <Element extends StreamValue, Context extends FormLabel, ForeignMutationsExpected>():
       SearchableInfiniteStreamView<Element, Context, ForeignMutationsExpected> =>
       props =>
         <>
           {props.context.label && <h3>{props.context.label}</h3>}
           {props.context.tooltip && <p>{props.context.tooltip}</p>}
           <button disabled={props.context.disabled} onClick={() => props.foreignMutations.toggleOpen()}>
-            {props.context.value.kind == "l" && props.context.value.value.displayName} {props.context.customFormState.status == "open" ? "➖" : "➕"}
+            {props.context.value.kind == "l" && props.context.value.value.DisplayValue} {props.context.customFormState.status == "open" ? "➖" : "➕"}
           </button>
           <button disabled={props.context.disabled} onClick={() => props.foreignMutations.clearSelection()
           }>❌</button>
@@ -149,7 +149,7 @@ export const PersonFieldViews = {
                       chunk.data.valueSeq().map(element =>
                         <li>
                           <button disabled={props.context.disabled} onClick={() => props.foreignMutations.select(element)}>
-                            {element.displayName} {props.context.value.kind == "l" && props.context.value.value.id == element.id ? "✅" : ""}
+                            {element.DisplayValue} {props.context.value.kind == "l" && props.context.value.value.Id == element.Id ? "✅" : ""}
                           </button>
                         </li>
                       )
@@ -165,13 +165,13 @@ export const PersonFieldViews = {
         </>,
   },
   streamMultiSelection: {
-    defaultInfiniteStreamMultiselect: <Element extends CollectionReference, Context extends FormLabel, ForeignMutationsExpected>():
+    defaultInfiniteStreamMultiselect: <Element extends StreamValue, Context extends FormLabel, ForeignMutationsExpected>():
       InfiniteStreamMultiselectView<Element, Context, ForeignMutationsExpected> =>
       props =>
         <>
           {props.context.label && <h3>{props.context.label}</h3>}
           <button disabled={props.context.disabled} onClick={() => props.foreignMutations.toggleOpen()}>
-            {props.context.value.map(_ => _.displayName).join(", ")} {props.context.customFormState.status == "open" ? "➖" : "➕"}
+            {props.context.value.map(_ => _.DisplayValue).join(", ")} {props.context.customFormState.status == "open" ? "➖" : "➕"}
           </button>
           <button disabled={props.context.disabled} onClick={() => props.foreignMutations.clearSelection()}>
             ❌
@@ -188,7 +188,7 @@ export const PersonFieldViews = {
                       <li>
                         <button disabled={props.context.disabled} onClick={() => props.foreignMutations.toggleSelection(element)
                         }>
-                          {element.displayName} {props.context.value.has(element.id) ? "✅" : ""}
+                          {element.DisplayValue} {props.context.value.has(element.Id) ? "✅" : ""}
                         </button>
                       </li>
                     )

@@ -8,7 +8,7 @@ import { BasicFun } from "../fun/state";
 
 export type StreamingStatus = "reload" | "loadMore" | false;
 
-type Identifiable = { id: string };
+type Identifiable = { Id: string };
 
 export type StreamPosition = {
   chunkSize: number;
@@ -68,12 +68,12 @@ export const StreamPosition = {
 
 export type Chunk<Element extends Identifiable> = {
   hasMoreValues: boolean;
-  data: OrderedMap<Element["id"], Element>;
+  data: OrderedMap<Element["Id"], Element>;
 };
 export const Chunk = <Element extends Identifiable>() => ({
   Default:(
     hasMoreValues: boolean,
-    data: OrderedMap<Element["id"], Element>,
+    data: OrderedMap<Element["Id"], Element>,
   ) : Chunk<Element> => ({
     hasMoreValues, data
   })
@@ -171,5 +171,5 @@ export const InfiniteStreamState = <Element extends Identifiable>() => ({
 });
 
 export type InfiniteStreamReadonlyState = Unit;
-export type InfiniteStreamWritableState<Element extends { id: string }> =
+export type InfiniteStreamWritableState<Element extends { Id: string }> =
   InfiniteStreamState<Element>;

@@ -13,15 +13,32 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
     "Date": { fromAPIRawValue: _ => typeof _ == "string" ? new Date(Date.parse(_)) : typeof _ == "number" ? new Date(_) : new Date(Date.now()), toAPIRawValue: ([_, __])  => _ },
     "SingleSelection": {
         fromAPIRawValue: _ => _ == undefined ? CollectionSelection().Default.right("no selection") :
-            CollectionSelection().Default.left(
-                _
-            ),
+            typeof _ == "object" && "Value" in _ ?
+            CollectionSelection().Default.left(CollectionReference.Default.enum(_.Value)) :
+            typeof _ == "object" && "Id" in _ && "DisplayValue" in _ ?
+            CollectionSelection().Default.left(CollectionReference.Default.stream(_.Id, _.DisplayValue)) :
+            CollectionSelection().Default.right("no selection"),
         toAPIRawValue: ([_, __]) => {
-			return _.kind == "r" ? undefined : _.value}
+			return _.kind == "r" ? undefined :
+            _.value.kind == "enum" ? { Value: _.value.Value } :
+            {Id: _.value.Id, DisplayValue: _.value.DisplayValue}
+        }
     },
     "MultiSelection": {
-        fromAPIRawValue: _ => _ == undefined ? OrderedMap() : OrderedMap(_.map((_: any) => ([_.id, _]))),
-        toAPIRawValue: ([_, __]) =>  _.valueSeq().toArray()
+        fromAPIRawValue: _ => { 
+            return _ == undefined ? OrderedMap() :
+            OrderedMap(_.map(
+                (_: any) => (
+                    typeof _ == "object" && "Value" in _ ?
+                    [_.Value, CollectionReference.Default.enum(_.Value)] :
+                    typeof _ == "object" && "Id" in _ && "DisplayValue" in _ ?
+                    [_.Id, CollectionReference.Default.stream(_.Id, _.DisplayValue)] :
+                    undefined
+                )))
+            },
+
+        toAPIRawValue: ([_, __]) =>  _.valueSeq().toArray().map(_ => _.kind == "enum" ? { Value: _.Value } :
+            {Id: _.Id, DisplayValue: _.DisplayValue})
     },
     "List": {
         fromAPIRawValue: _ => _ == undefined ? List() : List(_),
@@ -29,12 +46,6 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
     },
     "Map": {
 		fromAPIRawValue: _ => _ == undefined ? List() : List(_.map(( _ : {key: any, value: any}) => ([_.key, _.value]))),
-        toAPIRawValue: ([_, __]) => {
-			const first = _.first()
-			if(first && typeof first[0] == "string") return [_, ((_: string )=> [_, _])]
-			if(first && typeof first[0] == "object" && "value" in first[0] && typeof first[0]["value"] == "object"  && "value" in first[0]["value"] &&  typeof first[0]["value"]["value"] == "object" &&  "id" in first[0]["value"]["value"] && "displayName" in first[0]["value"]["value"]) return [_, ((_: Value<CollectionReference>) => [_.value.id, _.value.displayName])]
-            if(first && typeof first[0] == "object" && "value" in first[0] && typeof first[0]["value"] == "object"  && "id" in first[0]["value"] && "displayName" in first[0]["value"]) return [_, ((_: CollectionReference) => [_.id, _.displayName])]
-			return [_, (_: any) => [JSON.stringify(_), JSON.stringify(_)]]
-		}
+        toAPIRawValue: ([_, __]) => _.valueSeq().toArray()
 	}
 }

@@ -6,10 +6,10 @@ import { AddressApi } from "../../address/apis/mocks"
 import { v4 } from "uuid"
 import { PersonApi } from "../../../apis/mocks"
 
-const permissions = [ {value: "create"}, {value: "read"}, {value: "update"}, {value: "delete"}]
-const colors = [ {value: faker.color.human()}, {value: faker.color.human()}, {value: faker.color.human()}, {value: faker.color.human()}]
-const genders = [ {value: "M"}, {value: "F"}, {value: "X"}, {value: "Y"}]
-const interests = [ {value: "finance"}, {value: "marketing"}, {value: "management"}, {value: "development"}]
+const permissions = [ {Value: "Create "}, {Value: "Reat"}, {Value: "Update"}, {Value: "Delete"}]
+const colors = [ {Value: 'Red'}, {Value: 'Green'}, {Value: 'Blue'}]
+const genders = [ {Value: "M"}, {Value: "F"}, {Value: "X"}]
+const interests = [ {Value: "Soccer"}, {Value: "Hockey"}, {Value: "BoardGames"}, {Value: "HegelianPhilosophy"}]
 
 const streamApis: InfiniteStreamSources = (streamName: string) =>
   streamName == "departments" ?
@@ -25,23 +25,25 @@ const streamApis: InfiniteStreamSources = (streamName: string) =>
           data: OrderedMap(),
         })
       })
+
 const enumApis: EnumOptionsSources = (enumName: string) =>
   enumName == "colors" ?
-    () => PromiseRepo.Default.mock(() => colors.map(_ => ({ value: CollectionReference.Default(_.value, _.value, "enum")  })), undefined, 1, 0)
+    () => PromiseRepo.Default.mock(() => colors, undefined, 1, 0)
     :
     enumName == "permissions" ?
-      () => PromiseRepo.Default.mock(() => permissions.map(_ =>({ value: CollectionReference.Default(_.value, _.value, "enum"),  })), undefined, 1, 0)
+      () => PromiseRepo.Default.mock(() => permissions, undefined, 1, 0)
     :
     enumName == "genders" ?
-      () => PromiseRepo.Default.mock(() => genders.map(_ => ({ value: CollectionReference.Default(_.value, _.value, "enum"),  })), undefined, 1, 0)
+      () => PromiseRepo.Default.mock(() => genders, undefined, 1, 0)
       :
       enumName == "interests" ?
-        () => PromiseRepo.Default.mock(() => interests.map(_ => ({value: CollectionReference.Default(_.value, _.value, "enum"),  })), undefined, 1, 0)
+        () => PromiseRepo.Default.mock(() => interests, undefined, 1, 0)
         :
         () => PromiseRepo.Default.mock(() => {
           alert(`Cannot find enum API ${enumName}`)
           return []
         })
+
 const entityApis: EntityApis = {
   create: (apiName: string) =>
     apiName == "person" ?
@@ -74,7 +76,7 @@ const entityApis: EntityApis = {
               city: Math.random() > 0.5 ?
                 undefined
                 :
-                City.Default(v4(), faker.location.city())
+                City.Default.stream(v4(), faker.location.city())
             },
             addresses: List([{
               street: faker.location.street(),
@@ -82,7 +84,7 @@ const entityApis: EntityApis = {
               city: Math.random() > 0.5 ?
                 undefined
                 :
-                City.Default(v4(), faker.location.city())
+                City.Default.stream(v4(), faker.location.city())
             }]),
             emails: ["john@doe.it", "johnthedon@doe.com"],
             "addressesWithLabel": [
@@ -94,31 +96,31 @@ const entityApis: EntityApis = {
                   city: Math.random() > 0.5 ?
                     undefined
                     :
-                    City.Default(v4(), faker.location.city())
+                    City.Default.stream(v4(), faker.location.city())
                 }
               }
             ],
             "addressesByCity": [
               {
-                key: City.Default(v4(), faker.location.city()),
+                key: City.Default.stream(v4(), faker.location.city()),
                 value: {
                   street: faker.location.street(),
                   number: Math.floor(Math.random() * 500),
                   city: Math.random() > 0.5 ?
                     undefined
                     :
-                    City.Default(v4(), faker.location.city())
+                    City.Default.stream(v4(), faker.location.city())
                 }
               },
               {
-                key: City.Default(v4(), faker.location.city()),
+                key: City.Default.stream(v4(), faker.location.city()),
                 value: {
                   street: faker.location.street(),
                   number: Math.floor(Math.random() * 500),
                   city: Math.random() > 0.5 ?
                     undefined
                     :
-                    City.Default(v4(), faker.location.city())
+                    City.Default.stream(v4(), faker.location.city())
                 }
               }
             ],
