@@ -373,7 +373,7 @@ type EnumApi with
       let! enumType = ExprType.find ctx enumApi.TypeId
       let! enumType = ExprType.resolveLookup ctx enumType
       let! fields = ExprType.GetFields enumType
-      let error = sum.Throw($$"""Error: type {{enumType}} in enum {{enumApi.EnumName}} is invalid: expected only one field '{{valueFieldName}}' of type 'enum'""" |> Errors.Singleton)
+      let error = sum.Throw($$"""Error: type {{enumType}} in enum {{enumApi.EnumName}} is invalid: expected only one field '{{valueFieldName}}' of type 'enum' but found {{fields}}""" |> Errors.Singleton)
       match fields with
       | [(value, valuesType)] when value = valueFieldName ->
         let! valuesType = ExprType.resolveLookup ctx valuesType
@@ -401,7 +401,7 @@ type EnumApi with
             )
           )
         )
-      | _ -> return! state.Throw($$"""Error: invalid enum reference type passed to enum '{{enumName}}""" |> Errors.Singleton)
+      | _ -> return! state.Throw($$"""Error: invalid enum reference type passed to enum '{{enumName}}'. Expected { {{valueFieldName}}:ENUM }, found {{fields}}.""" |> Errors.Singleton)
     }
 
 type StreamApi with
@@ -410,7 +410,7 @@ type StreamApi with
       let! streamType = ExprType.find ctx streamApi.TypeId
       let! streamType = ExprType.resolveLookup ctx streamType
       let! fields = ExprType.GetFields streamType
-      let error = sum.Throw($$"""Error: type {{streamType}} in stream {{streamApi.StreamName}} is invalid: expected fields id:Guid, displayValue:string""" |> Errors.Singleton)
+      let error = sum.Throw($$"""Error: type {{streamType}} in stream {{streamApi.StreamName}} is invalid: expected fields id:Guid, displayValue:string but found {{fields}}""" |> Errors.Singleton)
       match fields |> Seq.tryFind (snd >> (function ExprType.PrimitiveType(PrimitiveType.GuidType) -> true | _ -> false)) with
       | Some (id,_) when id = generatedLanguageSpecificConfig.StreamIdFieldName -> 
         match fields |> Seq.tryFind (snd >> (function ExprType.PrimitiveType(PrimitiveType.StringType) -> true | _ -> false)) with
@@ -440,6 +440,10 @@ type StringBuilder = | One of string | Many of seq<StringBuilder> with
     acc.ToString()
 
 type String with
+  static member ToPascalCase (separators:char array) (self:String) =
+    let elements = self.Split separators
+    let elements = elements |> Seq.map String.ToFirstUpper
+    elements |> Seq.fold (+) String.Empty
   member self.ToFirstUpper =  
     if self |> String.IsNullOrEmpty then self
     else String.Concat(self[0].ToString().ToUpper(), self.AsSpan(1))
@@ -1390,19 +1394,19 @@ let formsOptions = {|
   input = 
     (new Option<string>(
       "-input",
-      "Relative path of json form config.", IsRequired=true))
+      "Path of json file to process. Use a folder path to process all files in the folder.", IsRequired=true))
   output = 
     (new Option<string>(
       "-output",
-      "Relative path of the generated source file(s). Will be created if it does not exist.", IsRequired=true))
+      "Relative path of the generated source file(s) directory. Will be created if it does not exist.", IsRequired=true))
   package_name = 
     (new Option<string>(
       "-package_name",
-      "Name of the generated package.", IsRequired=true))
+      "Name of the generated package. Inferred from the filename if absent."))
   form_name = 
     (new Option<string>(
       "-form_name",
-      "Name of the form, prefixed to disambiguate generated symbols.", IsRequired=true))
+      "Name of the form, prefixed to disambiguate generated symbols. Inferred from the filename if absent."))
   codegen_config_path = 
     (new Option<string>(
       "-codegen_config",
@@ -1424,55 +1428,79 @@ let main args =
 
   // dotnet run -- forms -input person-config.json -validate -codegen ts
   formsCommand.SetHandler(Action<_,_,_,_,_,_,_>(fun (validate:bool) (language:FormsGenTarget) (inputPath:string) (outputPath:string) (generatedPackage:string) (formName:string) (codegenConfigPath:string) ->
-    if File.Exists inputPath |> not then
-      eprintfn "Fatal error: the input file %A does not exist" inputPath
-      System.Environment.Exit -1
-    let inputConfig = File.ReadAllText inputPath
-    let jsonValue = JsonValue.Parse inputConfig
-    // samplePrimitiveRenderers
-    let injectedTypes = [injectedCategoryType] |> Seq.map (fun injectedTypeName -> injectedTypeName.TypeName, (injectedTypeName, ExprType.RecordType Map.empty) |> TypeBinding.Create) |> Map.ofSeq
-    let initialContext = { ParsedFormsContext.Empty with Types=injectedTypes }
-    let generatedLanguageSpecificConfig = 
-      match language with
-      | FormsGenTarget.golang -> { EnumValueFieldName="Value"; StreamIdFieldName="Id"; StreamDisplayValueFieldName="DisplayValue" }
-      | _ -> { EnumValueFieldName="value"; StreamIdFieldName="id"; StreamDisplayValueFieldName="displayValue" }
-    match ((ParsedFormsContext.parse generatedLanguageSpecificConfig jsonValue).run((), initialContext)) with
-    | Left(_,Some parsedForms)  -> 
-      match ParsedFormsContext.Validate generatedLanguageSpecificConfig parsedForms with
-      | Left validatedForms ->
+    let inputPaths = 
+      if System.IO.File.Exists inputPath |> not then 
+        System.IO.Directory.EnumerateFiles(inputPath, "*.json") |> Seq.toList
+      else 
+        [inputPath]
+    for inputPath in inputPaths do
+      let inputFileNameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension inputPath    
+      // let inputDirectory = System.IO.Path.GetDirectoryName inputPath
+      let inputFileName = inputFileNameWithoutExtension |> String.ToPascalCase [|'-'; '_'|]
+      let generatedPackage,formName = 
+        (if generatedPackage = null then inputFileName else generatedPackage), 
+        (if formName = null then inputFileName else formName)
+      if File.Exists inputPath |> not then
+        eprintfn "Fatal error: the input file %A does not exist" inputPath
+        System.Environment.Exit -1
+      let jsonValue = 
+        try
+          let inputConfig = File.ReadAllText inputPath
+          JsonValue.Parse inputConfig
+        with
+        | err -> 
+          do eprintfn $$"""Fatal error {{err.Message.Substring(0, 500)}}."""
+          do System.Environment.Exit -1
+          failwith ""      
+      // samplePrimitiveRenderers
+      let injectedTypes = [injectedCategoryType] |> Seq.map (fun injectedTypeName -> injectedTypeName.TypeName, (injectedTypeName, ExprType.RecordType Map.empty) |> TypeBinding.Create) |> Map.ofSeq
+      let initialContext = { ParsedFormsContext.Empty with Types=injectedTypes }
+      let generatedLanguageSpecificConfig = 
         match language with
-        | FormsGenTarget.golang ->
-          let codegenConfig = System.IO.File.ReadAllText codegenConfigPath
-          let codegenConfig = JsonSerializer.Deserialize<CodeGenConfig>(codegenConfig, JsonFSharpOptions.Default().ToJsonSerializerOptions())
-          match ParsedFormsContext.ToGolang codegenConfig parsedForms generatedPackage formName with
-          | Left generatedCode -> 
-            // do Console.ReadLine() |> ignore
-            do printfn "forms are parsed and validated"
-            try
-              do System.IO.Directory.CreateDirectory (System.IO.Path.GetDirectoryName outputPath) |> ignore
-              let generatedCode = generatedCode |> StringBuilder.ToString
-              do System.IO.File.WriteAllText(outputPath, generatedCode)
-              do printfn $$"""Code is generated at {{outputPath}}"""
-            with
-            | err -> 
-              do eprintfn $$"""Fatal error {{err.Message}}: cannot create output path: {{outputPath}}"""
-          | Right err -> 
-            do printfn "Code generation errors: %A" err
-        | _ -> 
-          do printfn "Unsupported code generation target: %A" language
+        | FormsGenTarget.golang -> { EnumValueFieldName="Value"; StreamIdFieldName="Id"; StreamDisplayValueFieldName="DisplayValue" }
+        | _ -> { EnumValueFieldName="value"; StreamIdFieldName="id"; StreamDisplayValueFieldName="displayValue" }
+      match ((ParsedFormsContext.parse generatedLanguageSpecificConfig jsonValue).run((), initialContext)) with
+      | Left(_,Some parsedForms)  -> 
+        match ParsedFormsContext.Validate generatedLanguageSpecificConfig parsedForms with
+        | Left validatedForms ->
+          match language with
+          | FormsGenTarget.golang ->
+            let codegenConfig = 
+              try
+                let codegenConfig = System.IO.File.ReadAllText codegenConfigPath
+                JsonSerializer.Deserialize<CodeGenConfig>(codegenConfig, JsonFSharpOptions.Default().ToJsonSerializerOptions())
+              with
+              | err -> 
+                do eprintfn $$"""Fatal error {{err.Message}}."""
+                do System.Environment.Exit -1
+                failwith ""
+            match ParsedFormsContext.ToGolang codegenConfig parsedForms generatedPackage formName with
+            | Left generatedCode -> 
+              // do Console.ReadLine() |> ignore
+              do printfn "forms are parsed and validated"
+              let outputPath = System.IO.Path.Combine [| outputPath; $$"""{{inputFileNameWithoutExtension}}.gen.go""" |]
+              try
+                do System.IO.Directory.CreateDirectory (System.IO.Path.GetDirectoryName outputPath) |> ignore
+                let generatedCode = generatedCode |> StringBuilder.ToString
+                do System.IO.File.WriteAllText(outputPath, generatedCode)
+                do printfn $$"""Code is generated at {{outputPath}}"""
+              with
+              | err -> 
+                do eprintfn $$"""Fatal error {{err.Message}}: cannot create output path: {{outputPath}}"""
+            | Right err -> 
+              do printfn "Code generation errors: %A" err
+          | _ -> 
+            do printfn "Unsupported code generation target: %A" language
+        | Right err -> 
+          do printfn "Validation errors: %A" err
       | Right err -> 
-        do printfn "Validation errors: %A" err
-    | Right err -> 
-      do printfn "Parsing errors: %A" err
-    | _ -> 
-      do printfn "Error: no output when parsing."
+        do printfn "Parsing errors: %A" err
+      | _ -> 
+        do printfn "Error: no output when parsing."
     ), formsOptions.mode, formsOptions.language, formsOptions.input, formsOptions.output, formsOptions.package_name, formsOptions.form_name, formsOptions.codegen_config_path)
 
   rootCommand.Invoke(args)
 
 (*
-dotnet run -- forms -input ./input-forms/email-provider-selection.json -output ./generated-output/models/email-provider-selection.gen.go -validate -codegen golang -package_name email_provider_selection -form_name EmailProviderSelection -codegen_config ./input-forms/go-config.json
-dotnet run -- forms -input ./input-forms/go-live-date.json -output ./generated-output/models/go-live-date.gen.go -validate -codegen golang -package_name go_live_date  -form_name GoLiveDate -codegen_config ./input-forms/go-config.json
-dotnet run -- forms -input ./input-forms/quality-check-mm-invoice.json -output ./generated-output/models/quality-check-mm-invoice.gen.go -validate -codegen golang -package_name quality_check_mm_invoice -form_name QualityCheckMMInvoice -codegen_config ./input-forms/go-config.json
-dotnet run -- forms -input ./input-forms/users-blp.json -output ./generated-output/models/users-blp.gen.go -validate -codegen golang -package_name users_blp -form_name UsersBlp -codegen_config ./input-forms/go-config.json
+dotnet run -- forms -input ./input-forms/project-room -output ./generated-output/models -validate -codegen golang -codegen_config ./input-forms/go-config.json
 *)

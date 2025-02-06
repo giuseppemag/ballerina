@@ -1,0 +1,78 @@
+{
+  "types": {
+    "Person": {
+      "fields": {
+        "listMapList": {
+          "fun": "List",
+          "args": [{
+            "fun": "Map",
+            "args": ["string", { "fun": "List", "args": ["string"] }]
+          }]
+        }
+      }
+    }
+  },
+  "apis": {
+    "enumOptions": {},
+    "searchableStreams": {},
+    "entities": {
+      "person": {
+        "type": "Person",
+        "methods": ["create", "get", "update", "default"]
+      }
+    }
+  },
+  "forms": {
+    "person": {
+      "type": "Person",
+      "fields": {
+        "listMapList": {
+          "label": "list map list",
+          "renderer": "defaultList",
+          "elementRenderer": {
+            "renderer": "defaultMap",
+            "keyRenderer": {
+              "label": "string",
+              "renderer": "defaultString",
+              "visible": { "kind": "true" }
+            },
+            "valueRenderer": {
+              "renderer": "defaultList",
+              "elementRenderer": {
+                "renderer": "defaultString",
+                "visible": { "kind": "true" }
+              },
+              "visible": { "kind": "true" }
+            },
+            "visible": { "kind": "true" }
+          },
+          "visible": { "kind": "true" }
+        },
+        "visible": { "kind": "true" }
+      }
+    },
+    "tabs": {
+      "main": {
+        "columns": {
+          "main": {
+            "groups": {
+              "main": ["listMapList"]
+            }
+          }
+        }
+      }
+    }
+  },
+  "launchers": {
+    "create-person": {
+      "kind": "create",
+      "form": "person",
+      "api": "person"
+    },
+    "edit-person": {
+      "kind": "edit",
+      "form": "person",
+      "api": "person"
+    }
+  }
+}

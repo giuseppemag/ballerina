@@ -106,19 +106,20 @@ Todo (✅/❌)
           ✅ test with all the given samples
         ✅ make sure no references remain to Ballerina types unless part of the codegen config
         ✅ remove `injectedCategoryType` from hardcoded seeds
-      ❌ accept *.json as input name
-        ❌ generate output file names from input names and output path
-        ❌ educated guess of `package_name` from file name
-        ❌ educated guess of `form_name` from `package_name`
+      ✅ accept *.json as input name
+        ✅ generate output file names from input names and output path
+        ✅ educated guess of `package_name` from file name
+        ✅ educated guess of `form_name` from `package_name`
       ✅ validate that field names are capitalized when the generated language is Go
-      ❌ errors related to wrong stream/enum structure are impenetrable, improve them
-      ❌ invalid json errors should be handled more gracefully
+      ✅ test on all sample form configs and then make a new release
+      ✅ errors related to wrong stream/enum structure are impenetrable, improve them
+      ✅ non-existing file errors should be handled more gracefully
+      ✅ invalid json errors should be handled more gracefully
       ❌ include go-config.json and person-config.json in repository for completeness
-      ❌ write to Sven a "why not just a package somewhere?"
-      ❌ test on all sample form configs and then make a new release
       ✅ rename `Multiselection` to `MultiSelection`
       ✅ streams need to validate that the underlying type has id and displayvalue
       ❌ parse the JSON into the representation forms
+        ❌ make all nested renderers properly recurrent in structure
         ❌ use topological sort
         ❌ parse fields
         ❌ parse nested (ListElement, Key, Value, etc.) renderers as a structure, not a string for consistency
@@ -131,6 +132,7 @@ Todo (✅/❌)
             ❌ `flag` values come from some type in the config (ideally imported)
       ❌ define `import` command, generate with some sort of linking strategy for shared files
       ❌ the functionality of the validator is now mature
+      ❌ write to Sven a "why not just a package somewhere?"
       ❌ all utility methods should be capitalized in Program.fs
       ❌ adjust person-config in FE and use that from cmd line, delete the copy
       ❌ move string builder to ballerina-core
