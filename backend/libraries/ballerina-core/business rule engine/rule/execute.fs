@@ -25,7 +25,7 @@ type BusinessRuleExecutionState = {
   static member addCurrentExecutedRule businessRuleId allModifiedTargets = fun s -> 
     { s with CurrentExecutedRules = s.CurrentExecutedRules |> Map.add businessRuleId allModifiedTargets }
   static member addCurrentModifiedFields k v = fun s ->     
-    { s with CurrentModifiedFields = s.CurrentModifiedFields |> Map.update k (fun () -> v) (EntitiesIdentifiers.merge v) }
+    { s with CurrentModifiedFields = s.CurrentModifiedFields |> Map.upsert k (fun () -> v) (EntitiesIdentifiers.merge v) }
   static member updaters = 
     {|
       CurrentExecutedRules = fun u s -> { s with CurrentExecutedRules=u(s.CurrentExecutedRules)}

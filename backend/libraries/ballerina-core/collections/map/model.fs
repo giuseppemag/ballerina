@@ -20,8 +20,12 @@ type Map<'k,'v when 'k : comparison> with
   static member mergeMany
     ((+):'v -> 'v -> 'v) (maps:seq<Map<'k,'v>>) : Map<'k,'v> =
       maps |> Seq.fold (fun m1 m2 -> m1 |> Map.merge (+) m2) Map.empty
-  static member update
+  static member upsert
     (k:'k) (z:Unit -> 'v) (u:Updater<'v>) (m:Map<'k,'v>) : Map<'k,'v> =
       match m |> Map.tryFind k with
       | None -> m |> Map.add k (z())
       | Some v -> m |> Map.add k (u v)
+  static member update k u m =
+    match m |> Map.tryFind k with
+    | None -> m
+    | Some v -> m |> Map.add k (u v)

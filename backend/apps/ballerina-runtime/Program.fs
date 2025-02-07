@@ -11,6 +11,7 @@ open Ballerina.Sum
 open Ballerina.Errors
 open Ballerina.StateWithError
 open Ballerina.SeqStateWithError
+open Ballerina.Collections.Map
 open System.Text.Json
 open System.Text.Json.Serialization
 
@@ -79,19 +80,17 @@ and FormTabs = { FormTabs:Map<string, FormColumns> }
 and FormColumns = { FormColumns: Map<string, FormGroups> }
 and FormGroups = { FormGroups:Map<string, List<FieldConfigId>> }
 and FieldConfigId = { FieldName:string; FieldId:Guid }
-and FieldConfig = { FieldName:string; FieldId:Guid; Label:Option<string>; Tooltip:Option<string>; Renderer:FieldRenderer; Visible:Expr; Disabled:Option<Expr> } with 
+and FieldConfig = { FieldName:string; FieldId:Guid; Label:Option<string>; Tooltip:Option<string>; Renderer:Renderer; Visible:Expr; Disabled:Option<Expr> } with 
   static member Id (f:FieldConfig) : FieldConfigId = { FieldName=f.FieldName; FieldId=f.FieldId }
   static member Name (f:FieldConfig) = f.FieldName
-and FieldRenderer = 
+and Renderer = 
   | PrimitiveRenderer of PrimitiveRenderer
-  | MapRenderer of {| Map:FieldRenderer; Key:KeyRenderer; Value:ValueRenderer |}
-  | ListRenderer of {| List:FieldRenderer; Element:ElementRenderer |}
-  | EnumRenderer of EnumApiId * FieldRenderer
-  | StreamRenderer of StreamApiId * FieldRenderer
+  | MapRenderer of {| Map:Renderer; Key:NestedRenderer; Value:NestedRenderer |}
+  | ListRenderer of {| List:Renderer; Element:NestedRenderer |}
+  | EnumRenderer of EnumApiId * Renderer
+  | StreamRenderer of StreamApiId * Renderer
   | FormRenderer of FormConfigId
-and KeyRenderer = { Label:Option<string>; Tooltip:Option<string>; Renderer:FieldRenderer; Visible:Expr; Disabled:Option<Expr> }
-and ValueRenderer = { Label:Option<string>; Tooltip:Option<string>; Renderer:FieldRenderer; Visible:Expr; Disabled:Option<Expr> }
-and ElementRenderer = { Label:Option<string>; Tooltip:Option<string>; Renderer:FieldRenderer; Visible:Expr; Disabled:Option<Expr> }
+and NestedRenderer = { Label:Option<string>; Tooltip:Option<string>; Renderer:Renderer; Visible:Expr; Disabled:Option<Expr> }
 and PrimitiveRendererId = { PrimitiveRendererName:string; PrimitiveRendererId:Guid }
 and PrimitiveRenderer = { PrimitiveRendererName:string; PrimitiveRendererId:Guid; Type:ExprType } with static member ToPrimitiveRendererId (r:PrimitiveRenderer) = { PrimitiveRendererName=r.PrimitiveRendererName; PrimitiveRendererId=r.PrimitiveRendererId }
 
@@ -116,7 +115,7 @@ type ParsedFormsContext = {
       Apis=fun u -> fun s -> { s with ParsedFormsContext.Apis = u(s.Apis)};
       Forms=fun u -> fun s -> { s with ParsedFormsContext.Forms = u(s.Forms)};
       Launchers=fun u -> fun s -> { s with ParsedFormsContext.Launchers = u(s.Launchers)};
-    |}
+    |}  
 
 type GoCodeGenState = {
   UsedImports:Set<string>
@@ -126,52 +125,56 @@ type GoCodeGenState = {
       UsedImports=fun u -> fun s -> { s with UsedImports = u(s.UsedImports)};
     |}
 
-type FieldRenderer with
-  static member GetTypesFreeVars (ctx:ParsedFormsContext) (fr:FieldRenderer) : Sum<Set<TypeId>, Errors> = 
+type NestedRenderer with
+  static member Validate (ctx:ParsedFormsContext) (fr:NestedRenderer) : Sum<ExprType, Errors> = 
+    Renderer.Validate ctx fr.Renderer
+
+and Renderer with
+  static member GetTypesFreeVars (ctx:ParsedFormsContext) (fr:Renderer) : Sum<Set<TypeId>, Errors> = 
     let (+) = sum.Lift2 Set.union
-    let (!) = FieldRenderer.GetTypesFreeVars ctx 
+    let (!) = Renderer.GetTypesFreeVars ctx 
     match fr with
-    | FieldRenderer.EnumRenderer(e,f) -> 
+    | Renderer.EnumRenderer(e,f) -> 
       (ctx.Apis.Enums |> Map.tryFindWithError e.EnumName "enum" e.EnumName |> Sum.map (EnumApi.Type >> Set.singleton)) + !f
-    | FieldRenderer.FormRenderer f ->
+    | Renderer.FormRenderer f ->
       sum{ 
         let! f = ctx.Forms |> Map.tryFindWithError f.FormName "form" f.FormName
         return! f |> FormConfig.GetTypesFreeVars ctx
       }
-    | FieldRenderer.ListRenderer l ->
+    | Renderer.ListRenderer l ->
       !l.Element.Renderer + !l.List
-    | FieldRenderer.MapRenderer m ->
+    | Renderer.MapRenderer m ->
       !m.Map + !m.Key.Renderer + !m.Value.Renderer
-    | FieldRenderer.PrimitiveRenderer p -> sum{ return p.Type |> ExprType.GetTypesFreeVars }
-    | FieldRenderer.StreamRenderer (s,f) ->
+    | Renderer.PrimitiveRenderer p -> sum{ return p.Type |> ExprType.GetTypesFreeVars }
+    | Renderer.StreamRenderer (s,f) ->
       (ctx.Apis.Streams |> Map.tryFindWithError s.StreamName "stream" s.StreamName |> Sum.map (StreamApi.Type >> Set.singleton)) + !f
-  static member Validate (ctx:ParsedFormsContext) (fr:FieldRenderer) : Sum<ExprType, Errors> = 
-    let (!) = FieldRenderer.Validate ctx
+  static member Validate (ctx:ParsedFormsContext) (fr:Renderer) : Sum<ExprType, Errors> = 
+    let (!) = Renderer.Validate ctx
     sum{
       match fr with
-      | FieldRenderer.EnumRenderer(enum, enumRenderer) -> 
+      | Renderer.EnumRenderer(enum, enumRenderer) -> 
         let! enum = ctx.Apis.Enums |> Map.tryFindWithError enum.EnumName "enum" enum.EnumName
         let! enumType = ctx.Types |> Map.tryFindWithError enum.TypeId.TypeName "enum type" enum.EnumName
         let! enumRendererType = !enumRenderer
         return ExprType.Substitute (Map.empty |> Map.add { VarName="a1" } enumType.Type) enumRendererType
-      | FieldRenderer.FormRenderer f ->
+      | Renderer.FormRenderer f ->
         let! f = ctx.Forms |> Map.tryFindWithError f.FormName "form" f.FormName
         let! formType = ctx.Types |> Map.tryFindWithError f.TypeId.TypeName "form type" f.FormName
         return formType.Type
-      | FieldRenderer.ListRenderer(l) -> 
+      | Renderer.ListRenderer(l) -> 
         let! genericListRenderer = !l.List
         let! elementRendererType = !l.Element.Renderer
         let listRenderer = ExprType.Substitute (Map.empty |> Map.add { VarName="a1" } elementRendererType) genericListRenderer
         return listRenderer
-      | FieldRenderer.MapRenderer(m) -> 
+      | Renderer.MapRenderer(m) -> 
         let! genericMapRenderer = !m.Map
         let! keyRendererType = !m.Key.Renderer
         let! valueRendererType = !m.Value.Renderer
         let mapRenderer = ExprType.Substitute (Map.empty |> Map.add { VarName="a1" } keyRendererType |> Map.add { VarName="a2" } valueRendererType) genericMapRenderer
         return mapRenderer
-      | FieldRenderer.PrimitiveRenderer p -> 
+      | Renderer.PrimitiveRenderer p -> 
         return p.Type
-      | FieldRenderer.StreamRenderer (stream, streamRenderer) ->
+      | Renderer.StreamRenderer (stream, streamRenderer) ->
         let! stream = ctx.Apis.Streams |> Map.tryFindWithError stream.StreamName "stream" stream.StreamName
         let streamType = ExprType.LookupType stream.TypeId
         let! streamRendererType = !streamRenderer
@@ -185,7 +188,7 @@ and FieldConfig with
       | RecordType fields ->
         match fields |> Map.tryFind fc.FieldName with
         | Some fieldType -> 
-          let! rendererType = FieldRenderer.Validate ctx fc.Renderer
+          let! rendererType = Renderer.Validate ctx fc.Renderer
           let result = ExprType.Unify Map.empty (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq) rendererType fieldType |> Sum.map ignore
           return! result
         | None -> 
@@ -200,7 +203,7 @@ and FormConfig with
     sum{ return Set.singleton fc.TypeId } + 
       (
         fc.Fields 
-          |> Map.values |> Seq.map(fun f -> f.Renderer |> FieldRenderer.GetTypesFreeVars ctx) 
+          |> Map.values |> Seq.map(fun f -> f.Renderer |> Renderer.GetTypesFreeVars ctx) 
           |> Seq.fold (+) (sum{ return Set.empty })
       )
   static member Validate (ctx:ParsedFormsContext) (formConfig:FormConfig) : Sum<Unit, Errors> = 
@@ -241,8 +244,130 @@ type FormApis with
   static member GetTypesFreeVars (fa:FormApis) : Set<TypeId> = 
     extractTypes fa.Enums + extractTypes fa.Streams + extractTypes (fa.Entities |> Map.map (fun _ -> fst))
 
+type Renderer with
+  static member parse (parentJson:JsonValue) (json:JsonValue) : State<Renderer,CodeGenConfig,ParsedFormsContext,Errors> =
+    state{
+      // "renderer": "defaultCategory",
+      // "renderer": "defaultString",
+      // {
+      //   "renderer": "defaultInfiniteStream",
+      //   "stream": "cities",
+      //   "visible": {
+      //     "kind": "true"
+      //   }
+      // }
+      // "gender": {
+      //   "label": "gender",
+      //   "renderer": "defaultEnum",
+      //   "options": "genders",
+      // "dependants": {
+      //   "label": "dependants",
+      //   "renderer": "defaultMap",
+      //   "tooltip": "someone who depends on you",
+      //   "keyRenderer": {
+      //     "label": "name",
+      //     "tooltip": "their name",
+      //     "renderer": "defaultString",
+      //     "visible": {
+      //       "kind": "true"
+      //     }
+      //   },
+      //   "valueRenderer": {
+      //     "label": "category",
+      //     "tooltip": "their category",
+      //     "renderer": "defaultCategory",
+      //     "visible": {
+      //       "kind": "true"
+      //     }
+      //   },
+      //   "visible": {
+      //     "kind": "true"
+      //   }
+      // },
+      // "relatives": {
+      //   "label": "relatives",
+      //   "tooltip": "someone who you are related to",
+      //   "renderer": "defaultList",
+      //   "elementRenderer": {
+      //     "label": "one relative",
+      //     "tooltip": "relative",
+      //     "renderer": "defaultCategory",
+      //     "visible": {
+      //       "kind": "true"
+      //     }
+      //   },
+      //   "visible": {
+      //     "kind": "true"
+      //   }
+      // },
+      // check the renderer: if it's a primitive or a built-in, assign it and done
+      // if it's an enum, look up the options from the parent config
+      // if it's a stream, look up the stream from the parent config
+      // if it's a list or a set, find the ElementRenderer in the parent config, call ElementRenderer.parse on that
+      // if it's a map, find the KeyRenderer in the parent config, call KeyRenderer.parse on that, do the same for ValueRenderer
+      return PrimitiveRenderer { PrimitiveRendererName="TODO parse - placeholder"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.UnitType }
+    }
+
+and NestedRenderer with
+  static member parse (json:JsonValue) : State<NestedRenderer,CodeGenConfig,ParsedFormsContext,Errors> =
+    state{
+      return { Label=Some "TODO: placeholder value renderer"; Tooltip=None; Renderer=PrimitiveRenderer { PrimitiveRendererName="TODO parse - placeholder"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.UnitType }; Visible=Expr.Value <| Value.ConstString "TODO: placeholder"; Disabled=None }
+    }
+
+type String with
+  static member parse (json:JsonValue) : Sum<string,Errors> =
+    sum{
+      match json with
+      | JsonValue.String s -> return s
+      | _ ->
+        return! sum.Throw($$"""Error: expected a string. Instead found {{json}}.""" |> Errors.Singleton)      
+    }
+
+type FieldConfig with
+  static member parse (fieldName:string) (json:JsonValue) : State<FieldConfig,CodeGenConfig,ParsedFormsContext,Errors> =
+    state{
+      match json with 
+      | JsonValue.Record fields ->
+        let label = fields |> Seq.tryFind (fst >> (=) "label") |> Option.map (snd >> String.parse >> Sum.toOption) |> Option.flatten
+        let tooltip = fields |> Seq.tryFind (fst >> (=) "tooltip") |> Option.map (snd >> String.parse >> Sum.toOption) |> Option.flatten
+        match fields |> Seq.tryFind (fst >> (=) "renderer") |> Option.map snd with
+        | None -> 
+          return! state.Throw($$"""Error: a field config must have a 'renderer' field. Found {{fields}}.""" |> Errors.Singleton)
+        | Some rendererJson ->
+          let! renderer = Renderer.parse json rendererJson
+          return { 
+            FieldName=fieldName; FieldId=Guid.CreateVersion7(); Label= label; Tooltip=tooltip; Renderer=renderer; 
+            Visible=Expr.Value <| Value.ConstString "TODO: placeholder string in field config"; Disabled=None 
+          }
+      | _ -> 
+        return! state.Throw($$"""Error: a field must be a record. Instead found {{json}}.""" |> Errors.Singleton)
+    }    
+
+type FormConfig with
+  static member parse (json:JsonValue) : State<{| TypeId:TypeId; Fields:Map<string, FieldConfig>; Tabs:FormTabs |},CodeGenConfig,ParsedFormsContext,Errors> =
+    state{
+      match json with
+      | JsonValue.Record fields ->
+        match fields |> Seq.tryFind (fst >> (=) "type"), fields |> Seq.tryFind (fst >> (=) "fields") with
+        | Some (_, JsonValue.String typeName), Some (_, JsonValue.Record formFields) ->
+          let! fieldConfigs = 
+            formFields |> Seq.map(fun (fieldName,fieldJson) ->
+              state{
+                let! parsedField = FieldConfig.parse fieldName fieldJson
+                return fieldName,parsedField
+              }
+            ) |> state.All
+          let fieldConfigs = fieldConfigs |> Map.ofSeq
+          let! s = state.GetState()
+          let! typeBinding = s.Types |> Map.tryFindWithError typeName "type" typeName |> state.OfSum
+          return {| TypeId=typeBinding.TypeId; Fields=fieldConfigs; Tabs={ FormTabs=Map.empty } |}
+        | _ -> return! state.Throw($$"""Error: form must have two fields: 'type' ('string') and 'fields' ('record'). Instead found {{fields}}.""" |> Errors.Singleton)
+      | _ ->
+        return! state.Throw($$"""Error: form is not a record, found {{json}}.""" |> Errors.Singleton)
+    }
+
 type ExprType with
-  static member parseUnionCase (json:JsonValue) : State<UnionCase,Unit,ParsedFormsContext,Errors> = 
+  static member parseUnionCase (json:JsonValue) : State<UnionCase,CodeGenConfig,ParsedFormsContext,Errors> = 
     state{
       let error = state.Throw($$"""Error: unsupported union case {{json}}.""" |> Errors.Singleton)
       match json with
@@ -255,7 +380,7 @@ type ExprType with
         | _ -> return! error
       | _ -> return! error
     }
-  static member parse (json:JsonValue) : State<ExprType,Unit,ParsedFormsContext,Errors> = 
+  static member parse (json:JsonValue) : State<ExprType,CodeGenConfig,ParsedFormsContext,Errors> = 
     let (!) = ExprType.parse
     state{
       match json with
@@ -309,8 +434,8 @@ type ExprType with
       sum{ return cs }
     | _ -> sum.Throw(sprintf "Error: type %A is no union and thus has no cases" t |> Errors.Singleton)    
 type ExprType with
-  static member ToGolangTypeAnnotation (config:CodeGenConfig) (t:ExprType) : State<string, Unit, GoCodeGenState, Errors> =
-    let (!) = ExprType.ToGolangTypeAnnotation config
+  static member ToGolangTypeAnnotation (t:ExprType) : State<string, CodeGenConfig, GoCodeGenState, Errors> =
+    let (!) = ExprType.ToGolangTypeAnnotation
     let error = sum.Throw(sprintf "Error: cannot generate type annotation for type %A" t |> Errors.Singleton) |> state.OfSum
     let registerImportAndReturn t = 
       state{
@@ -318,6 +443,7 @@ type ExprType with
         return t.GeneratedTypeName
       }
     state{ 
+      let! config = state.GetContext()
       match t with
       | ExprType.LookupType t -> return t.TypeName
       | ExprType.PrimitiveType p ->
@@ -385,7 +511,7 @@ type EnumApi with
       | _ -> 
         return! error
     }
-  static member parse valueFieldName (enumName:string) (enumTypeJson:JsonValue) : State<Unit,Unit,ParsedFormsContext,Errors> = 
+  static member parse valueFieldName (enumName:string) (enumTypeJson:JsonValue) : State<Unit,CodeGenConfig,ParsedFormsContext,Errors> = 
     state{
       let! enumType = ExprType.parse enumTypeJson
       let! enumTypeId = enumType |> ExprType.asLookupId |> state.OfSum
@@ -419,7 +545,7 @@ type StreamApi with
         | _ -> return! error
       | _ -> return! error
     }
-  static member parse (streamName:string) (streamTypeJson:JsonValue) : State<Unit,Unit,ParsedFormsContext,Errors> = 
+  static member parse (streamName:string) (streamTypeJson:JsonValue) : State<Unit,CodeGenConfig,ParsedFormsContext,Errors> = 
     state{
       let! streamType = ExprType.parse streamTypeJson
       let! streamTypeId = streamType |> ExprType.asLookupId |> state.OfSum
@@ -614,7 +740,7 @@ type ParsedFormsContext with
             let! fields = ExprType.GetFields t.Value.Type |> state.OfSum
             let typeStart = $$"""type {{t.Value.TypeId.TypeName}} struct {
   """
-            let! fieldTypes = state.All(fields |> Seq.map (snd >> ExprType.ToGolangTypeAnnotation codegenConfig) |> List.ofSeq)
+            let! fieldTypes = state.All(fields |> Seq.map (snd >> ExprType.ToGolangTypeAnnotation) |> List.ofSeq)
             let fieldDeclarations = Many (seq{
               for fieldType,fieldName in fields |> Seq.map fst |> Seq.zip fieldTypes do
                 yield One "  "
@@ -679,7 +805,7 @@ type ParsedFormsContext with
         yield! generatedTypes
       })
     }
-    match result.run((), { UsedImports=Set.empty }) with
+    match result.run(codegenConfig, { UsedImports=Set.empty }) with
     | Right e -> Right e
     | Left (res,s') -> 
       Left(
@@ -701,7 +827,7 @@ type ParsedFormsContext with
 
 
 type CrudMethod with
-  static member parse (crudMethodJson:JsonValue) : State<CrudMethod,Unit,ParsedFormsContext,Errors> = 
+  static member parse (crudMethodJson:JsonValue) : State<CrudMethod,CodeGenConfig,ParsedFormsContext,Errors> = 
     state{
       match crudMethodJson with
       | JsonValue.String "create" -> return CrudMethod.Create
@@ -715,7 +841,7 @@ type CrudMethod with
 
 
 type EntityApi with
-  static member parse (entityName:string) (entityTypeJson:JsonValue) : State<Unit,Unit,ParsedFormsContext,Errors> = 
+  static member parse (entityName:string) (entityTypeJson:JsonValue) : State<Unit,CodeGenConfig,ParsedFormsContext,Errors> = 
     state{
       match entityTypeJson with
       | JsonValue.Record entityTypeFieldJsons ->
@@ -737,16 +863,8 @@ type EntityApi with
       | _ -> 
         return! state.Throw($$"""Error: an entity api must be a record.""" |> Errors.Singleton)
     }
-    // lookup type from 'type'
-    // then do an All that parses crud methods from 'methods'
-    // "entities": {
-    //   "person": {
-    //     "type": "Person",
-    //     "methods": ["create", "get", "update", "default"]
-    //   }
-    // }
 type ParsedFormsContext with
-  static member parseApis enumValueFieldName (apisJson:seq<string * JsonValue>) : State<Unit,Unit,ParsedFormsContext,Errors> = 
+  static member parseApis enumValueFieldName (apisJson:seq<string * JsonValue>) : State<Unit,CodeGenConfig,ParsedFormsContext,Errors> = 
     state{
       match apisJson |> Seq.tryFind (fst >> (=) "enumOptions") |> Option.map snd,
         apisJson |> Seq.tryFind (fst >> (=) "searchableStreams") |> Option.map snd,
@@ -762,7 +880,7 @@ type ParsedFormsContext with
       | _ -> 
         return! state.Throw($$"""Error: the apis needs fields 'enumOptions', 'searchableStreams', and 'entities'.""" |> Errors.Singleton)
     }
-  static member parseTypes (typesJson:seq<string * JsonValue>) : State<Unit,Unit,ParsedFormsContext,Errors> = 
+  static member parseTypes (typesJson:seq<string * JsonValue>) : State<Unit,CodeGenConfig,ParsedFormsContext,Errors> = 
     state{
       for typeName,typeJson in typesJson do
         match typeJson with
@@ -807,574 +925,30 @@ type ParsedFormsContext with
         | _ -> 
           return! state.Throw($$"""Error: type {{typeName}} should be a record with only 'extends' and 'fields'.""" |> Errors.Singleton)   
         }
-  static member parse generatedLanguageSpecificConfig (json:JsonValue) : State<Unit,Unit,ParsedFormsContext,Errors> = 
+  static member parseForms (formsJson:(string*JsonValue)[]) : State<Unit,CodeGenConfig,ParsedFormsContext,Errors> = 
+    state{
+      for formName, formJson in formsJson do
+        let! formBody = FormConfig.parse formJson
+        do! state.SetState(ParsedFormsContext.Updaters.Forms (Map.add formName { FormConfig.Fields=formBody.Fields; FormConfig.Tabs=formBody.Tabs; FormConfig.TypeId=formBody.TypeId; FormId=Guid.CreateVersion7(); FormName = formName }))
+    }
+  static member parse generatedLanguageSpecificConfig (json:JsonValue) : State<Unit,CodeGenConfig,ParsedFormsContext,Errors> = 
     state{
       match json with
       | JsonValue.Record properties ->
-        match properties |> Seq.tryFind (fst >> ((=) "types")) |> Option.map snd, properties |> Seq.tryFind (fst >> ((=) "apis")) |> Option.map snd with
-        | Some(JsonValue.Record typesJson), Some(JsonValue.Record apisJson) -> 
+        match properties |> Seq.tryFind (fst >> ((=) "types")) |> Option.map snd, properties |> Seq.tryFind (fst >> ((=) "apis")) |> Option.map snd, properties |> Seq.tryFind (fst >> ((=) "forms")) |> Option.map snd with
+        | Some(JsonValue.Record typesJson), Some(JsonValue.Record apisJson), Some(JsonValue.Record formsJson) -> 
           do! ParsedFormsContext.parseTypes typesJson
           do! ParsedFormsContext.parseApis generatedLanguageSpecificConfig.EnumValueFieldName apisJson
+          do! ParsedFormsContext.parseForms formsJson
+          let! s = state.GetState()
+          do printfn $$"""{{s.Forms}}"""
+          do Console.ReadLine() |> ignore
         | _ -> 
           return! state.Throw($"Error: the root of the form config should contain a record with fields 'types', 'apis'." |> Errors.Singleton)
       | _ -> 
         return! state.Throw($"Error: the root of the form config should be a record." |> Errors.Singleton)
     }
   
-
-let sampleTypes injectedTypes = 
-  let injectedTypes = injectedTypes |> Seq.map (fun injectedTypeName -> injectedTypeName.TypeName, (injectedTypeName, ExprType.RecordType Map.empty) |> TypeBinding.Create) |> Map.ofSeq
-  let collectionReferenceType = 
-    ExprType.RecordType(
-      [
-        ("Id", ExprType.PrimitiveType PrimitiveType.GuidType)
-        ("DisplayValue", ExprType.PrimitiveType PrimitiveType.StringType)
-      ] |> Map.ofList)
-  sum{
-    let CityRefName = "CityRef" |> TypeId.Create
-    let AddressName = "Address" |> TypeId.Create
-    let GenderRefName = "GenderRef" |> TypeId.Create
-    let ColorRefName = "ColorRef" |> TypeId.Create
-    let InterestRefName = "InterestRef" |> TypeId.Create
-    let DepartmentRefName = "DepartmentRef" |> TypeId.Create
-    let PermissionRefName = "PermissionRef" |> TypeId.Create
-    let PersonName = "Person" |> TypeId.Create
-    let! injectedCategoryName = injectedTypes |> Map.tryFind "injectedCategory" |> Option.map (fun tb -> tb.TypeId) |> withError "Error: missing injectedCategory from injected types"
-
-    let! cityRef = ExprType.Extend collectionReferenceType (ExprType.RecordType Map.empty)
-    let address = 
-      ExprType.RecordType ([
-          "street", ExprType.PrimitiveType PrimitiveType.StringType
-          "number", ExprType.PrimitiveType PrimitiveType.IntType
-          "city", ExprType.OptionType(ExprType.LookupType CityRefName)
-      ] |> Map.ofList)
-    let! genderRef = ExprType.Extend collectionReferenceType (ExprType.RecordType Map.empty)
-    let! colorRef = ExprType.Extend collectionReferenceType (ExprType.RecordType Map.empty)
-    let! interestRef = ExprType.Extend collectionReferenceType (ExprType.RecordType Map.empty)
-    let! departmentRef = ExprType.Extend collectionReferenceType (ExprType.RecordType Map.empty)
-    let! permissionRef = ExprType.Extend collectionReferenceType (ExprType.RecordType Map.empty)
-    let person = 
-      ExprType.RecordType([
-          "name", ExprType.PrimitiveType PrimitiveType.StringType
-          "surname", ExprType.PrimitiveType PrimitiveType.StringType
-          "birthday", ExprType.PrimitiveType PrimitiveType.DateOnlyType
-          "subscribeToNewsletter", ExprType.PrimitiveType PrimitiveType.BoolType
-          "favoriteColor", ExprType.LookupType ColorRefName |> ExprType.OptionType
-          "gender", ExprType.LookupType GenderRefName |> ExprType.OptionType
-          "interests", ExprType.SetType(ExprType.LookupType InterestRefName)
-          "departments", ExprType.SetType(ExprType.LookupType DepartmentRefName)
-          "mainAddress", ExprType.LookupType AddressName
-          "dependants", ExprType.MapType(ExprType.PrimitiveType PrimitiveType.StringType, ExprType.LookupType injectedCategoryName)
-          "friendsByCategory", ExprType.MapType(ExprType.LookupType injectedCategoryName, ExprType.PrimitiveType PrimitiveType.StringType)
-          "relatives", ExprType.ListType(ExprType.LookupType injectedCategoryName)
-          "addresses", ExprType.ListType(ExprType.LookupType AddressName)
-          "emails", ExprType.ListType(ExprType.PrimitiveType PrimitiveType.StringType)
-          "addressesWithLabel", ExprType.MapType(ExprType.PrimitiveType PrimitiveType.StringType, ExprType.LookupType AddressName)
-          "addressesByCity", ExprType.MapType(ExprType.LookupType CityRefName |> ExprType.OptionType, ExprType.LookupType AddressName)
-          "addressesWithColorLabel", ExprType.MapType(ExprType.LookupType ColorRefName |> ExprType.OptionType, ExprType.LookupType AddressName)
-          "permissions", ExprType.MapType(ExprType.LookupType PermissionRefName |> ExprType.OptionType, ExprType.PrimitiveType PrimitiveType.BoolType)
-          "cityByDepartment", ExprType.MapType(ExprType.LookupType DepartmentRefName |> ExprType.OptionType, ExprType.LookupType CityRefName |> ExprType.OptionType)
-          "shoeColors", ExprType.SetType(ExprType.LookupType ColorRefName)
-          "friendsBirthdays", ExprType.MapType(ExprType.PrimitiveType PrimitiveType.StringType, ExprType.PrimitiveType PrimitiveType.DateOnlyType)
-          "holidays", ExprType.ListType(ExprType.PrimitiveType PrimitiveType.DateOnlyType)
-          "category", ExprType.LookupType injectedCategoryName
-        ] |> Map.ofList)
-    return [
-      yield! injectedTypes |> Seq.map (fun t -> t.Key, t.Value)
-      CityRefName.TypeName,(CityRefName, cityRef) |> TypeBinding.Create
-      AddressName.TypeName,(AddressName, address) |> TypeBinding.Create
-      GenderRefName.TypeName,(GenderRefName, genderRef) |> TypeBinding.Create
-      ColorRefName.TypeName,(ColorRefName, colorRef) |> TypeBinding.Create
-      InterestRefName.TypeName,(InterestRefName, interestRef) |> TypeBinding.Create
-      DepartmentRefName.TypeName,(DepartmentRefName, departmentRef) |> TypeBinding.Create
-      PermissionRefName.TypeName,(PermissionRefName, permissionRef) |> TypeBinding.Create
-      PersonName.TypeName,(PersonName, person) |> TypeBinding.Create
-    ] |> Map.ofList
-  }
-
-let formApis injectedTypes = 
-  sum{
-    let! instantiatedSampleTypes = sampleTypes injectedTypes
-    let! genderRefType = instantiatedSampleTypes |> Map.tryFind "GenderRef" |> withError "Error: cannot find type  GenderRef"
-    let! colorRefType = instantiatedSampleTypes |> Map.tryFind "ColorRef" |> withError "Error: cannot find type  ColorRef"
-    let! interestRefType = instantiatedSampleTypes |> Map.tryFind "InterestRef" |> withError "Error: cannot find type  InterestRef"
-    let! permissionRefType = instantiatedSampleTypes |> Map.tryFind "PermissionRef" |> withError "Error: cannot find type 
-     PermissionRef"
-    let! cityRefType = instantiatedSampleTypes |> Map.tryFind "CityRef" |> withError "Error: cannot find CityRef"
-    let! departmentRefType = instantiatedSampleTypes |> Map.tryFind "DepartmentRef" |> withError "Error: cannot find type 
-     DepartmentRef"
-    let! personType = instantiatedSampleTypes |> Map.tryFind "Person" |> withError "Error: cannot find type Person"
-    return instantiatedSampleTypes,{
-      Enums=
-        [
-          // ("genders", genderRefType.TypeId)
-          // ("colors", colorRefType.TypeId)
-          // ("interests", interestRefType.TypeId)
-          // ("permissions", permissionRefType.TypeId)
-        ] |> Seq.map ((fst <*> EnumApi.Create)) |> Map.ofSeq;
-      Streams=
-        [
-          ("cities", cityRefType.TypeId)
-          ("departments", departmentRefType.TypeId)
-        ] |> Seq.map (dup >> (fst <*> StreamApi.Create)) |> Map.ofSeq;
-      Entities=
-        [
-          ("person", personType.TypeId, [CrudMethod.Create; Get; Update; Default] |> Set.ofList)
-        ] |> Seq.map (fun (n,tn,m) -> n,(EntityApi.Create(n,tn),m)) |> Map.ofSeq;
-    }
-  }
-
-let instantiateSampleForms injectedTypes (primitiveRenderers:Map<string, PrimitiveRenderer>) = 
-  sum{
-    let! types, apis = formApis injectedTypes
-    let! defaultString = primitiveRenderers |> Map.tryFind "defaultString" |> withError "Cannot find primitive renderer defaultString"
-    let! defaultNumber = primitiveRenderers |> Map.tryFind "defaultNumber" |> withError "Cannot find primitive renderer defaultNumber"
-    let! defaultDate = primitiveRenderers |> Map.tryFind "defaultDate" |> withError "Cannot find primitive renderer defaultDate"
-    let! defaultInfiniteStream = primitiveRenderers |> Map.tryFind "defaultInfiniteStream" |> withError "Cannot find primitive     
-renderer defaultInfiniteStream"
-    let! defaultEnum = primitiveRenderers |> Map.tryFind "defaultEnum" |> withError "Cannot find primitive renderer defaultEnum"
-    let! defaultEnumMultiselect = primitiveRenderers |> Map.tryFind "defaultEnumMultiselect" |> withError "Cannot find primitive renderer defaultEnumMultiselect"
-    let! defaultInfiniteStreamMultiselect = primitiveRenderers |> Map.tryFind "defaultInfiniteStreamMultiselect" |> withError "Cannot find primitive renderer 'defaultInfiniteStreamMultiselect'"
-    let! defaultMap = primitiveRenderers |> Map.tryFind "defaultMap" |> withError "Cannot find primitive renderer defaultMap"
-    let! defaultList = primitiveRenderers |> Map.tryFind "defaultList" |> withError "Cannot find primitive renderer defaultList"
-    let! defaultBoolean = primitiveRenderers |> Map.tryFind "defaultBoolean" |> withError "Cannot find primitive renderer defaultBoolean"
-    let! defaultCategory = primitiveRenderers |> Map.tryFind "defaultCategory" |> withError "Cannot find primitive renderer defaultCategory"
-    let! citiesStream = apis.Streams |> Map.tryFind "cities" |> withError "Cannot find stream API for cities"
-    let! addressType = types |> Map.tryFind "Address" |> withError "Cannot find type Address"
-    let! personType = types |> Map.tryFind "Person" |> withError "Cannot find type Person"
-    let addressFields = 
-      [
-        { FieldName="street"; FieldId=Guid.CreateVersion7(); 
-           Label=None; Tooltip=None;
-          Renderer=PrimitiveRenderer defaultString; 
-          Visible=Expr.Binary(Or, 
-            Expr.RecordFieldLookup(Expr.VarLookup({ VarName = "root" }), "subscribeToNewsletter"),
-            Expr.Binary(Equals, 
-              Expr.RecordFieldLookup(Expr.VarLookup({ VarName = "local" }), "number"),
-              Expr.Value(Value.ConstInt 10)
-            )
-          ); 
-          Disabled=None }
-        { FieldName="number"; FieldId=Guid.CreateVersion7(); 
-          Label=None; Tooltip=None;
-          Renderer=PrimitiveRenderer defaultNumber; 
-          Visible=Expr.Value(Value.ConstBool true);
-          Disabled=None }            
-        { FieldName="city"; FieldId=Guid.CreateVersion7(); 
-          Label=None; Tooltip=None;
-          Renderer=StreamRenderer(citiesStream |> StreamApi.Id, PrimitiveRenderer defaultInfiniteStream); 
-          Visible=Expr.Value(Value.ConstBool true);
-          Disabled=None }            
-      ] |> Seq.map (dup >> (FieldConfig.Name <*> id)) |> Map.ofSeq;
-    let! streetField = addressFields |> Map.tryFind "street" |> withError "Cannot find 'street' field in form 'address'"
-    let! numberField = addressFields |> Map.tryFind "number" |> withError "Cannot find 'number' field in form 'address'"
-    let! cityField = addressFields |> Map.tryFind "city" |> withError "Cannot find 'city' field in form 'address'"
-    let addressForm:FormConfig = {
-      FormName="address"; 
-      FormId=Guid.CreateVersion7(); 
-      TypeId=addressType.TypeId;
-      Fields=addressFields
-      Tabs=
-        {
-          FormTabs=[
-            ("main", {
-              FormColumns= [
-                ("main", {
-                  FormGroups= [
-                    ("main", [streetField; numberField; cityField] |> List.map FieldConfig.Id)
-                  ] |> Map.ofSeq
-                })
-              ] |> Map.ofSeq
-            })
-          ] |> Map.ofSeq
-        }
-    }
-    let! colorOptions = apis.Enums |> Map.tryFind "colors" |> withError "Cannot find 'colors' enum api"
-    let! genderOptions = apis.Enums |> Map.tryFind "genders" |> withError "Cannot find 'genders' enum api"
-    let! interestOptions = apis.Enums |> Map.tryFind "interests" |> withError "Cannot find 'interests' enum api"
-    let! departmentsStream = apis.Streams |> Map.tryFind "departments" |> withError "Cannot find 'departments' stream api"
-    let! permissionOptions = apis.Enums |> Map.tryFind "permissions" |> withError "Cannot find 'permissions' enum api"
-    let personFields = 
-      [
-        { FieldName="category"; FieldId=Guid.CreateVersion7(); 
-          Label=Some "category"; Tooltip=None;
-          Renderer=PrimitiveRenderer defaultCategory; 
-          Visible=Expr.Value(Value.ConstBool true);
-          Disabled=None }
-        { FieldName="name"; FieldId=Guid.CreateVersion7(); 
-          Label=Some "first name"; Tooltip=Some "Any name will do";
-          Renderer=PrimitiveRenderer defaultString; 
-          Visible=Expr.Value(Value.ConstBool true);
-          Disabled=None }
-        { FieldName="surname"; FieldId=Guid.CreateVersion7(); 
-          Label=Some "last name"; Tooltip=None;
-          Renderer=PrimitiveRenderer defaultString; 
-          Visible=Expr.Value(Value.ConstBool true);
-          Disabled=None }
-        { FieldName="birthday"; FieldId=Guid.CreateVersion7(); 
-          Label=None; Tooltip=Some "Happy birthday!";
-          Renderer=PrimitiveRenderer defaultDate; 
-          Visible=Expr.Value(Value.ConstBool true);
-          Disabled=None }
-        { FieldName="favoriteColor"; FieldId=Guid.CreateVersion7(); 
-          Label=None; Tooltip=None;
-          Renderer=FieldRenderer.EnumRenderer(colorOptions |> EnumApi.Id, PrimitiveRenderer defaultEnum); 
-          Visible=Expr.Value(Value.ConstBool true);
-          Disabled=None }
-        { FieldName="gender"; FieldId=Guid.CreateVersion7(); 
-          Label=None; Tooltip=None;
-          Renderer=FieldRenderer.EnumRenderer(genderOptions |> EnumApi.Id, PrimitiveRenderer defaultEnum); 
-          Visible=
-            Expr.Binary(
-              Or,
-              Expr.RecordFieldLookup(Expr.VarLookup({ VarName = "flag" }), "X"),
-              Expr.RecordFieldLookup(Expr.VarLookup({ VarName = "flag" }), "Y")
-            );
-          Disabled=None }
-        { FieldName="dependants"; FieldId=Guid.CreateVersion7(); 
-          Label=Some "dependants"; Tooltip=None;
-          Renderer=FieldRenderer.MapRenderer({| 
-            Map=PrimitiveRenderer defaultMap; 
-            Key={
-              Label=Some "name"; Tooltip=Some "their name";
-              Renderer=FieldRenderer.PrimitiveRenderer defaultString; 
-              Visible=Expr.Value(Value.ConstBool true);
-              Disabled=None
-            }; 
-            Value={
-              Label=Some "category"; Tooltip=Some "their category";
-              Renderer=FieldRenderer.PrimitiveRenderer defaultCategory; 
-              Visible=Expr.Value(Value.ConstBool true);
-              Disabled=None
-            }; 
-          |}); 
-          Visible=Expr.Value(Value.ConstBool true);
-          Disabled=None }
-        { FieldName="friendsByCategory"; FieldId=Guid.CreateVersion7(); 
-          Label=Some "friends by category"; Tooltip=None;
-          Renderer=FieldRenderer.MapRenderer({| 
-            Map=PrimitiveRenderer defaultMap; 
-            Key={
-              Label=Some "category"; Tooltip=None;
-              Renderer=FieldRenderer.PrimitiveRenderer defaultDate; 
-              Visible=Expr.Value(Value.ConstBool true);
-              Disabled=None
-            }; 
-            Value={
-              Label=Some "name"; Tooltip=None;
-              Renderer=FieldRenderer.PrimitiveRenderer defaultString; 
-              Visible=Expr.Value(Value.ConstBool true);
-              Disabled=None
-            }; 
-          |}); 
-          Visible=Expr.Value(Value.ConstBool true);
-          Disabled=None }
-        { FieldName="relatives"; FieldId=Guid.CreateVersion7(); 
-          Label=Some "relatives"; Tooltip=Some "someone whom you are related to";
-          Renderer=FieldRenderer.ListRenderer {| 
-            List=FieldRenderer.PrimitiveRenderer defaultList;
-            Element={
-              Label=Some "relative"; Tooltip=Some "one relative";
-              Renderer=FieldRenderer.PrimitiveRenderer defaultDate; 
-              Visible=Expr.Value(Value.ConstBool true);
-              Disabled=None
-            }
-          |}; 
-          Visible=Expr.Value(Value.ConstBool true);
-          Disabled=None }
-        { FieldName="subscribeToNewsletter"; FieldId=Guid.CreateVersion7(); 
-          Label=Some "subscribe to newsletter"; Tooltip=None;
-          Renderer=PrimitiveRenderer defaultBoolean;
-          Visible=Expr.Value(Value.ConstBool true);
-          Disabled=None }
-        { FieldName="interests"; FieldId=Guid.CreateVersion7(); 
-          Label=Some "interests"; Tooltip=None;
-          Renderer=FieldRenderer.EnumRenderer(interestOptions |> EnumApi.Id, PrimitiveRenderer defaultEnumMultiselect);
-          Visible=
-            Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter");
-          Disabled=None }
-        { FieldName="departments"; FieldId=Guid.CreateVersion7(); 
-          Label=Some "departments"; Tooltip=None;
-          Renderer=FieldRenderer.StreamRenderer(departmentsStream |> StreamApi.Id, PrimitiveRenderer defaultInfiniteStreamMultiselect);
-          Visible=Expr.Value(Value.ConstBool true);
-          Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
-        { FieldName="mainAddress"; FieldId=Guid.CreateVersion7(); 
-          Label=Some "main address"; Tooltip=None;
-          Renderer=FieldRenderer.FormRenderer(FormConfig.Id addressForm);
-          Visible=Expr.Value(Value.ConstBool true);
-          Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
-        { FieldName="addresses"; FieldId=Guid.CreateVersion7(); 
-          Label=Some "other addresses"; Tooltip=None;
-          Renderer=FieldRenderer.ListRenderer({|
-            List=PrimitiveRenderer defaultList;
-            Element={
-              Label=Some "address"; Tooltip=None;
-              Renderer=FieldRenderer.FormRenderer(FormConfig.Id addressForm); 
-              Visible=Expr.Value(Value.ConstBool true);
-              Disabled=None
-            };
-          |});
-          Visible=Expr.Value(Value.ConstBool true);
-          Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
-        { FieldName="emails"; FieldId=Guid.CreateVersion7(); 
-          Label=Some "emails"; Tooltip=None;
-          Renderer=FieldRenderer.ListRenderer({|
-            List=PrimitiveRenderer defaultList;
-            Element={
-              Label=Some "email"; Tooltip=None;
-              Renderer=FieldRenderer.PrimitiveRenderer defaultString; 
-              Visible=Expr.Value(Value.ConstBool true);
-              Disabled=None
-            };
-          |});
-          Visible=Expr.Value(Value.ConstBool true);
-          Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
-        { FieldName="addressesWithLabel"; FieldId=Guid.CreateVersion7(); 
-          Label=Some "addresses with label"; Tooltip=None;
-          Renderer=FieldRenderer.MapRenderer({|
-            Map=PrimitiveRenderer defaultMap;
-            Key={
-              Label=Some "address label"; Tooltip=None;
-              Renderer=FieldRenderer.PrimitiveRenderer defaultString; 
-              Visible=Expr.Value(Value.ConstBool true);
-              Disabled=None
-            };
-            Value={
-              Label=Some "address"; Tooltip=None;
-              Renderer=FieldRenderer.FormRenderer(FormConfig.Id addressForm); 
-              Visible=Expr.Value(Value.ConstBool true);
-              Disabled=None
-            };
-          |});
-          Visible=Expr.Value(Value.ConstBool true);
-          Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
-        { FieldName="addressesByCity"; FieldId=Guid.CreateVersion7(); 
-          Label=Some "addresses by city"; Tooltip=None;
-          Renderer=FieldRenderer.MapRenderer({|
-            Map=PrimitiveRenderer defaultMap;
-            Key={
-              Label=Some "city"; Tooltip=Some "a nice place to live";
-              Renderer=FieldRenderer.StreamRenderer(citiesStream |> StreamApi.Id, PrimitiveRenderer defaultInfiniteStream); 
-              Visible=Expr.Value(Value.ConstBool true);
-              Disabled=None
-            };
-            Value={
-              Label=Some "address"; Tooltip=None;
-              Renderer=FieldRenderer.FormRenderer(FormConfig.Id addressForm); 
-              Visible=Expr.Value(Value.ConstBool true);
-              Disabled=None
-            };
-          |});
-          Visible=Expr.Value(Value.ConstBool true);
-          Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
-        { FieldName="addressesWithColorLabel"; FieldId=Guid.CreateVersion7(); 
-          Label=Some "addresses with color label"; Tooltip=None;
-          Renderer=FieldRenderer.MapRenderer({|
-            Map=PrimitiveRenderer defaultMap;
-            Key={
-              Label=Some "color"; Tooltip=None;
-              Renderer=FieldRenderer.EnumRenderer(colorOptions |> EnumApi.Id, PrimitiveRenderer defaultEnum); 
-              Visible=Expr.Value(Value.ConstBool true);
-              Disabled=None
-            };
-            Value={
-              Label=Some "address"; Tooltip=None;
-              Renderer=FieldRenderer.FormRenderer(FormConfig.Id addressForm); 
-              Visible=Expr.Value(Value.ConstBool true);
-              Disabled=None
-            };
-          |});
-          Visible=Expr.Value(Value.ConstBool true);
-          Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
-        { FieldName="permissions"; FieldId=Guid.CreateVersion7(); 
-          Label=Some "permissions"; Tooltip=None;
-          Renderer=FieldRenderer.MapRenderer({|
-            Map=PrimitiveRenderer defaultMap;
-            Key={
-              Label=Some "permission"; Tooltip=None;
-              Renderer=FieldRenderer.EnumRenderer(permissionOptions |> EnumApi.Id, PrimitiveRenderer defaultEnum); 
-              Visible=Expr.Value(Value.ConstBool true);
-              Disabled=None
-            };
-            Value={
-              Label=Some "granted"; Tooltip=None;
-              Renderer=FieldRenderer.PrimitiveRenderer defaultBoolean; 
-              Visible=Expr.Value(Value.ConstBool true);
-              Disabled=None
-            };
-          |});
-          Visible=Expr.Value(Value.ConstBool true);
-          Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
-        { FieldName="cityByDepartment"; FieldId=Guid.CreateVersion7(); 
-          Label=Some "city by department"; Tooltip=None;
-          Renderer=FieldRenderer.MapRenderer({|
-            Map=PrimitiveRenderer defaultMap;
-            Key={
-              Label=Some "department"; Tooltip=None;
-              Renderer=FieldRenderer.StreamRenderer(departmentsStream |> StreamApi.Id, FieldRenderer.PrimitiveRenderer defaultInfiniteStream); 
-              Visible=Expr.Value(Value.ConstBool true);
-              Disabled=None
-            };
-            Value={
-              Label=Some "city"; Tooltip=None;
-              Renderer=FieldRenderer.StreamRenderer(citiesStream |> StreamApi.Id, FieldRenderer.PrimitiveRenderer defaultInfiniteStream); 
-              Visible=Expr.Value(Value.ConstBool true);
-              Disabled=None
-            };
-          |});
-          Visible=Expr.Value(Value.ConstBool true);
-          Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
-        { FieldName="shoeColors"; FieldId=Guid.CreateVersion7(); 
-          Label=Some "shoe colors"; Tooltip=None;
-          Renderer=FieldRenderer.EnumRenderer(colorOptions |> EnumApi.Id, FieldRenderer.PrimitiveRenderer defaultEnumMultiselect);
-          Visible=Expr.Value(Value.ConstBool true);
-          Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
-        { FieldName="friendsBirthdays"; FieldId=Guid.CreateVersion7(); 
-          Label=Some "friends' birthdays"; Tooltip=None;
-          Renderer=FieldRenderer.MapRenderer({|
-            Map=PrimitiveRenderer defaultMap;
-            Key={
-              Label=Some "name"; Tooltip=None;
-              Renderer=FieldRenderer.PrimitiveRenderer defaultString; 
-              Visible=Expr.Value(Value.ConstBool true);
-              Disabled=None
-            };
-            Value={
-              Label=Some "birthday"; Tooltip=None;
-              Renderer=FieldRenderer.PrimitiveRenderer defaultDate; 
-              Visible=Expr.Value(Value.ConstBool true);
-              Disabled=None
-            };
-          |});
-          Visible=Expr.Value(Value.ConstBool true);
-          Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
-        { FieldName="holidays"; FieldId=Guid.CreateVersion7(); 
-          Label=Some "holidays"; Tooltip=None;
-          Renderer=FieldRenderer.ListRenderer({|
-            List=PrimitiveRenderer defaultList;
-            Element={
-              Label=Some "holiday"; Tooltip=None;
-              Renderer=FieldRenderer.PrimitiveRenderer defaultDate; 
-              Visible=Expr.Value(Value.ConstBool true);
-              Disabled=None
-            };
-          |});
-          Visible=Expr.Value(Value.ConstBool true);
-          Disabled=Some(Expr.Unary(Not,Expr.RecordFieldLookup(Expr.VarLookup({ VarName="local" }), "subscribeToNewsletter"))) }
-      ] |> Seq.map (dup >> (FieldConfig.Name <*> id)) |> Map.ofSeq;
-    let! categoryField = personFields |> Map.tryFind "category" |> withError "Error: cannot find field 'category'"
-    let! nameField = personFields |> Map.tryFind "name" |> withError "Error: cannot find field 'name'"
-    let! surnameField = personFields |> Map.tryFind "surname" |> withError "Error: cannot find field 'surname'"
-    let! birthdayField = personFields |> Map.tryFind "birthday" |> withError "Error: cannot find field 'birthday'"
-    let! genderField = personFields |> Map.tryFind "gender" |> withError "Error: cannot find field 'gender'"
-    let! emailsField = personFields |> Map.tryFind "emails" |> withError "Error: cannot find field 'emails'"
-    let! dependantsField = personFields |> Map.tryFind "dependants" |> withError "Error: cannot find field 'dependants'"
-    let! friendsByCategoryField = personFields |> Map.tryFind "friendsByCategory" |> withError "Error: cannot find field 'friendsByCategory'"
-    let! relativesField = personFields |> Map.tryFind "relatives" |> withError "Error: cannot find field 'relatives'"
-    let! friendsBirthdaysField = personFields |> Map.tryFind "friendsBirthdays" |> withError "Error: cannot find field 'friendsBirthdays'"
-    let! shoeColorsField = personFields |> Map.tryFind "shoeColors" |> withError "Error: cannot find field 'shoeColors'"
-    let! subscribeToNewsletterField = personFields |> Map.tryFind "subscribeToNewsletter" |> withError "Error: cannot find field 'subscribeToNewsletter'"
-    let! interestsField = personFields |> Map.tryFind "interests" |> withError "Error: cannot find field 'interests'"
-    let! favoriteColorField = personFields |> Map.tryFind "favoriteColor" |> withError "Error: cannot find field 'favoriteColor'"
-    let! departmentsField = personFields |> Map.tryFind "departments" |> withError "Error: cannot find field 'departments'"
-    let! mainAddressField = personFields |> Map.tryFind "mainAddress" |> withError "Error: cannot find field 'mainAddress'"
-    let! addressesField = personFields |> Map.tryFind "addresses" |> withError "Error: cannot find field 'addresses'"
-    let! addressesWithLabelField = personFields |> Map.tryFind "addressesWithLabel" |> withError "Error: cannot find field 'addressesWithLabel'"
-    let! addressesByCityField = personFields |> Map.tryFind "addressesByCity" |> withError "Error: cannot find field 'addressesByCity'"
-    let! addressesWithColorLabelField = personFields |> Map.tryFind "addressesWithColorLabel" |> withError "Error: cannot find field 'addressesWithColorLabel'"
-    let! permissionsField = personFields |> Map.tryFind "permissions" |> withError "Error: cannot find field 'permissions'"
-    let! cityByDepartmentField = personFields |> Map.tryFind "cityByDepartment" |> withError "Error: cannot find field 'cityByDepartment'"
-    let! holidaysField = personFields |> Map.tryFind "holidays" |> withError "Error: cannot find field 'holidays'"
-    let personForm:FormConfig = {
-      FormName="person"; 
-      FormId=Guid.CreateVersion7(); 
-      TypeId=personType.TypeId;
-      Fields=personFields
-      Tabs=
-        {
-          FormTabs=[
-            ("main", {
-              FormColumns= [
-                ("demographics", {
-                  FormGroups= [
-                    ("main", [categoryField; nameField; surnameField; birthdayField; genderField; emailsField; dependantsField; friendsByCategoryField; relativesField; friendsBirthdaysField; shoeColorsField] |> List.map FieldConfig.Id)
-                  ] |> Map.ofSeq
-                })
-                ("mailing", {
-                  FormGroups= [
-                  ("main", [subscribeToNewsletterField; interestsField; favoriteColorField] |> List.map FieldConfig.Id)
-                  ] |> Map.ofSeq
-                })
-                ("addresses", {
-                  FormGroups= [
-                    ("main", [departmentsField; mainAddressField; addressesField; addressesWithLabelField; addressesByCityField; addressesWithColorLabelField; permissionsField; cityByDepartmentField; holidaysField] |> List.map FieldConfig.Id)
-                  ] |> Map.ofSeq
-                })                         
-              ] |> Map.ofSeq
-            })
-          ] |> Map.ofSeq
-        }
-    }
-    let! personApi = apis.Entities |> Map.tryFind "person" |> withError "Error: cannot find entity api 'person'"
-    let createPerson:FormLauncher = {
-      LauncherName="create-person"; LauncherId=Guid.CreateVersion7();
-      Mode=FormLauncherMode.Create; 
-      Form=personForm |> FormConfig.Id;
-      EntityApi=personApi |> fst |> EntityApi.Id
-    }
-    let editPerson:FormLauncher = {
-      LauncherName="edit-person"; LauncherId=Guid.CreateVersion7();
-      Mode=FormLauncherMode.Edit; 
-      Form=personForm |> FormConfig.Id;
-      EntityApi=personApi |> fst |> EntityApi.Id
-    }
-    return {
-      Types=types;
-      Apis=apis;
-      Forms=[
-        addressForm
-        personForm
-      ] |> Seq.map(dup >> (FormConfig.Name <*> id)) |> Map.ofSeq;
-      Launchers=[ 
-        createPerson
-        editPerson
-      ] |> Seq.map(dup >> (FormLauncher.Name <*> id)) |> Map.ofSeq
-    }
-  }
-
-let injectedCategoryType:TypeId = { TypeName="injectedCategory"; TypeId=Guid.CreateVersion7() }
-let sampleInjectedTypes = [] // [injectedCategoryType]
-let samplePrimitiveRenderers:Map<string, PrimitiveRenderer> =
-  [
-    "defaultBoolean", { PrimitiveRendererName="defaultBoolean"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.BoolType }
-    "defaultString", { PrimitiveRendererName="defaultString"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.StringType }
-    "defaultNumber", { PrimitiveRendererName="defaultNumber"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.IntType }
-    "defaultDate", { PrimitiveRendererName="defaultDate"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.DateOnlyType }
-    "defaultInfiniteStream", { PrimitiveRendererName="defaultInfiniteStream"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.OptionType(ExprType.VarType({ VarName="'a1"})) }
-    "defaultInfiniteStreamMultiselect", { PrimitiveRendererName="defaultInfiniteStreamMultiselect"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.SetType(ExprType.VarType({ VarName="'a1"})) }
-    "defaultEnum", { PrimitiveRendererName="defaultEnum"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.OptionType(ExprType.VarType({ VarName="'a1"})) }
-    "defaultEnumMultiselect", { PrimitiveRendererName="defaultEnumMultiselect"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.SetType(ExprType.VarType({ VarName="'a1"})) }    
-    "defaultMap", { PrimitiveRendererName="defaultMap"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.MapType(ExprType.VarType({ VarName="'a1"}), ExprType.VarType({ VarName="'a2"})) }
-    "defaultList", { PrimitiveRendererName="defaultList"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.ListType(ExprType.VarType({ VarName="'a1"})) }    
-    "defaultCategory", { PrimitiveRendererName="defaultCategory"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.LookupType injectedCategoryType }    
-  ] |> Map.ofSeq
-// let sampleForms = instantiateSampleForms sampleInjectedTypes samplePrimitiveRenderers
-
-// match sampleForms with
-// | Left sampleForms -> 
-//   match ParsedFormsContext.Validate sampleForms with
-//   | Left validatedForms ->
-//     match ParsedFormsContext.ToGolang sampleForms [] "person_form" with
-//     | Left generatedCode -> 
-//       do printfn "forms are parsed and validated"
-//       // do Console.ReadLine() |> ignore
-//       do System.IO.File.WriteAllText("./generated-output/models/models.gen.go", generatedCode |> StringBuilder.ToString)
-//     | Right err -> 
-//       do printfn "Code generation errors: %A" err
-//   | Right err -> 
-//     do printfn "Validation errors: %A" err
-// | Right err -> 
-//   do printfn "Parsing errors: %A" err
 
 type FormsGenTarget = 
 | csharp = 1
@@ -1453,27 +1027,28 @@ let main args =
           do System.Environment.Exit -1
           failwith ""      
       // samplePrimitiveRenderers
-      let injectedTypes = [injectedCategoryType] |> Seq.map (fun injectedTypeName -> injectedTypeName.TypeName, (injectedTypeName, ExprType.RecordType Map.empty) |> TypeBinding.Create) |> Map.ofSeq
+      let codegenConfig = 
+        try
+          let codegenConfig = System.IO.File.ReadAllText codegenConfigPath
+          JsonSerializer.Deserialize<CodeGenConfig>(codegenConfig, JsonFSharpOptions.Default().ToJsonSerializerOptions())
+        with
+        | err -> 
+          do eprintfn $$"""Fatal error {{err.Message}}."""
+          do System.Environment.Exit -1
+          failwith ""      
+      let injectedTypes:Map<string, TypeBinding> = 
+        codegenConfig.Custom |> Seq.map (fun c -> c.Key, (c.Key |> TypeId.Create,ExprType.RecordType Map.empty) |> TypeBinding.Create) |> Map.ofSeq
       let initialContext = { ParsedFormsContext.Empty with Types=injectedTypes }
       let generatedLanguageSpecificConfig = 
         match language with
         | FormsGenTarget.golang -> { EnumValueFieldName="Value"; StreamIdFieldName="Id"; StreamDisplayValueFieldName="DisplayValue" }
         | _ -> { EnumValueFieldName="value"; StreamIdFieldName="id"; StreamDisplayValueFieldName="displayValue" }
-      match ((ParsedFormsContext.parse generatedLanguageSpecificConfig jsonValue).run((), initialContext)) with
+      match ((ParsedFormsContext.parse generatedLanguageSpecificConfig jsonValue).run(codegenConfig, initialContext)) with
       | Left(_,Some parsedForms)  -> 
         match ParsedFormsContext.Validate generatedLanguageSpecificConfig parsedForms with
         | Left validatedForms ->
           match language with
           | FormsGenTarget.golang ->
-            let codegenConfig = 
-              try
-                let codegenConfig = System.IO.File.ReadAllText codegenConfigPath
-                JsonSerializer.Deserialize<CodeGenConfig>(codegenConfig, JsonFSharpOptions.Default().ToJsonSerializerOptions())
-              with
-              | err -> 
-                do eprintfn $$"""Fatal error {{err.Message}}."""
-                do System.Environment.Exit -1
-                failwith ""
             match ParsedFormsContext.ToGolang codegenConfig parsedForms generatedPackage formName with
             | Left generatedCode -> 
               // do Console.ReadLine() |> ignore

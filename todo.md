@@ -13,126 +13,30 @@ Todo (✅/❌)
     ❌ define a `Pair` domain with the `<*>` operator
     ✅ define a `Sum`  domain with the `<+>` operator
     ✅ read the json with FSharp.Data
-    ❌ parse the json into the first naive structure
-      ✅ use the type definitions from the business rule schema as a representation target
-      ✅ use expressions from the business rule schema plus API types as a representation target
-      ✅ use the Error monad, not Option, for meaningful error messages
-        ✅ use a properly monoidal type that works with `Any`, wrap it in `withError` for compatibility
-        ✅ quickly test that Sum.Any actually yields all the errors, or the first successful result
-        ✅ implement `Sum.All`, it will be necessary for the mass typechecking and validations
-      ✅ use expressions from the business rule schema plus new form types as a representation target for the massive `Person` sample
-      ✅ think about the types for enums, streams, etc: they do not look good, define a whole record with an `Id` static member
-      ✅ define state monad with errors as a composition of state and sum
-      ✅ ensure existence and structural reasonableness of all referenced types
-        ✅ in other type definitions
-        ✅ in APIs
-        ✅ in forms
-        ✅ in launchers
-        ✅ records should not have duplicated field names 
-        ✅ instantiate sampleForms with primitives and injected fields
-          ✅ gather all instantiated types
-          ✅ gather all definition types
-          ✅ check that they are all a subset of the definitions
-          ✅ produce a clear error message with the missing type names
-      ✅ convert the exiting type-checker to `Sum` through `withError`
-      ✅ type-check the form instances field lookups 
-        ✅ with the map of types by type-id as bindings context in addition to the schema
-        ✅ `byStructure: FieldRenderer -> ExprType`
-        ✅ `byFieldName : FieldConfig -> ExprType`
-        ✅ `Unify : ExprType * ExprType -> Sum<Set<VarBindings>, Errors>`
-      ✅ type-check the launchers
-        ✅ form type and launcher type are the same
-        ✅ the methods are correct
-      ✅ create some basic sample in Go 
-        ✅ structs
-        ✅ enums
-        ✅ visitor-wrapper for type-safe API selectors
-      ❌ from the schema and the forms, generate Go code for
-        ✅ one struct per type
-          ✅ generate proper type names
-          ✅ single selections should be `Option`
-          ✅ generate constructor arguments
-          ✅ generate constructor assignments
-        ✅ one enum with all enum types
-        ✅ one enum with all stream types
-        ✅ one enum with all entity types
-        ✅ one visitor-style generic dispatcher for enums, streams, and entities (APIs)
-          ✅ entities enum: per CRUD method
-          ✅ entities visitor: per CRUD method
-          ✅ the streams visitor needs an injected, or a generic, payload object
-          ✅ error, not panic
-        ✅ `CollectionReference` should not be a built-in, just add it to the declarations of the forms
-          ✅ adjust the sample
-        ✅ use https://pkg.go.dev/time for datetime
-        ✅ use https://pkg.go.dev/github.com/google/uuid for uuid
-        ✅ which packages are imported is a parameter
-        ✅ allow injection of primitives, but only for things like `filterGroup`
-        ✅ make all types serializable with https://pkg.go.dev/encoding/json
-          ✅ make all fields public
-          ✅ test filled maps, sets, options
-        ✅ package imports only if the relevant types (date/uuid) are used, or use them in a forced way to make the errors disappear
-      ✅ define library with common utilities
-      ✅ `All` requires a non-empty list and a semigroup, not a monoid
-      ✅ parse the JSON into the representation types
-        ✅ fill the types Map
-          ✅ add fields to each type
-          ✅ apply type extensions
-      ✅ parse the JSON into the representation APIs
-        ✅ parse enums
-        ✅ parse streams
-        ✅ parse entities
-     ✅ connect command line parameters to right invocations
-        ✅ output of code generation
-        ✅ package of the output code
-        ✅ package_name as a parameter
-        ✅ form-name as a prefix parameter in all stream names, enum names, entity names
-      ✅ `dotnet publish` as standalone executable
-      ✅ first go-live
-      ✅ specify enums as enums
-        ✅ actually generate the enums at the top level!!!
-      ✅ enums need to validate that the underlying type has just an "enum" value
-      ✅ proper type-safe visitors for enums and streams
-        ✅ enums GET
-          ✅ flip it: define some processors that take as input the array of cases of type `XXXRef`, not `XXXEnum`
-          ✅ `values` -> `value`
-        ✅ enums POST
-        ✅ streams GET
-        ✅ streams POST
-      ✅ add extra config json with all required parameters
-        ✅ injected primitives, with their respective imports
-          ✅ use injected `guid` in `streamPOSTer` in particular
-        ✅ injected generics - `Option`, `Map`, `Set`, `List`/array
-        ✅ do not add imports unless they are used (for example, slices)
-          ✅ test with all the given samples
-        ✅ make sure no references remain to Ballerina types unless part of the codegen config
-        ✅ remove `injectedCategoryType` from hardcoded seeds
-      ✅ accept *.json as input name
-        ✅ generate output file names from input names and output path
-        ✅ educated guess of `package_name` from file name
-        ✅ educated guess of `form_name` from `package_name`
-      ✅ validate that field names are capitalized when the generated language is Go
-      ✅ test on all sample form configs and then make a new release
-      ✅ errors related to wrong stream/enum structure are impenetrable, improve them
-      ✅ non-existing file errors should be handled more gracefully
-      ✅ invalid json errors should be handled more gracefully
-      ❌ include go-config.json and person-config.json in repository for completeness
+    ❌ parse and validate the json of a form config
       ✅ rename `Multiselection` to `MultiSelection`
       ✅ streams need to validate that the underlying type has id and displayvalue
       ❌ parse the JSON into the representation forms
-        ❌ make all nested renderers properly recurrent in structure
-        ❌ use topological sort
+        ✅ make all nested renderers properly recurrent in structure
+        ✅ fully align visibility predicate syntax to Expr
         ❌ parse fields
-        ❌ parse nested (ListElement, Key, Value, etc.) renderers as a structure, not a string for consistency
-        ❌ delete the sample parsed form
+          ❌ parse nested (ListElement, Key, Value, etc.) renderers as a structure, not a string for consistency
         ❌ parse visibility and disabled predicates
-          ❌ type-check the form instances' `visible` and `disabled` predicates
-            ❌ fully align syntax to conditionals
-            ❌ inject `root` variable at form instantiation, not at form definition 
-            ❌ `local` variable can be injected any time, also at form definition
-            ❌ `flag` values come from some type in the config (ideally imported)
+        ❌ parse tabs, columns, groups
+      ❌ parse the JSON into the representation launchers
+        ❌ type-check the form instances' `visible` and `disabled` predicates when validating launchers
+          ❌ inject `root` variable at launcher scope, not form scope 
+          ❌ `local` variable is injected at form definition
+          ❌ `flag` values come from some type in the config (ideally imported)
+            ❌ needs an entity API with GET
+            ❌ needs to be specified in the launcher
+      ✅ delete the sample parsed form
+      ✅ `let injectedTypes = []` should come from `codegenConfig.Custom`
+      ❌ type names and enum case names should be valid names (verified at codegen time)
+        ❌ enum case names can be cleanup, at least wrt patterns like ":" in the variable name (the string value is fine)
       ❌ define `import` command, generate with some sort of linking strategy for shared files
+      ❌ improve the generated whitespace
       ❌ the functionality of the validator is now mature
-      ❌ write to Sven a "why not just a package somewhere?"
       ❌ all utility methods should be capitalized in Program.fs
       ❌ adjust person-config in FE and use that from cmd line, delete the copy
       ❌ move string builder to ballerina-core
@@ -147,32 +51,39 @@ Todo (✅/❌)
         ❌ move relevant sources to a separate folder in ballerina-core (forms engine)
           ❌ move the new types (`Errors`, `Form`, etc.) to ballerina-core
           ❌ move the new type checkers to ballerina-core
-    ❌ the Go type generator is now reasonably mature
-    ❌ check the consistency of the used data structures: `Type` vs `TypeId`
-    ❌ convert all instances of Map.tryFind ... withError ... to `Map.tryFindWithError`
-    ❌ accept empty `apis` blocks
     ❌ pretty print types in errors
     ❌ add source context to errors for pretty printing
       ❌ probably needs the state monad with an error decorator accumulated from the parent
       ❌ distinguish state from parsed context
-    ❌ add tests
+    ❌ the Go type generator is now reasonably mature
+      ❌ write a "why not just a package somewhere?"
+      ❌ write a language shootout
+        ❌ ORM, advanced types, advanced type inference, monads
+    ❌ check the consistency of the used data structures: `Type` vs `TypeId`
+    ❌ convert all instances of Map.tryFind ... withError ... to `Map.tryFindWithError`
+    ❌ accept empty `apis` blocks
     ❌ make ExprType.resolveLookup recursive
+    ❌ the tool is now complete and its code is clean
+    ❌ add tests
     ❌ help command
     ❌ somewhat painful but
       ❌ `string -> T` is built up while parsing
       ❌ `TId -> T` is the parsed context
-    ❌ the tool is now complete and its code is clean
     ❌ define webservice variant
     ❌ generate Typescript and C# code from forms-config
     ❌ allow recursive types (needs adjustment in frontend too)
       ❌ be careful with out-of-order extensions
     ❌ the tool is now very mature and ready for extensive use - further change should be discouraged unless there's a strong case for it
+    ❌ extensibility of primitives as existentially-typed algebras
+    ❌ proper union-cases and matching, especially for the configs (ERP = (SAP=S2+S3+...) + BC)
+    ❌ use topological sorting of forms
     ❌ entites visitors
       ❌ entites GET - identical to stream GETter: pairs of get + serialize
       ❌ entities GETDefault - identical to stream GETter: pairs of get + serialize
       ❌ entities POST - how do we represent changes?
       ❌ entities PATCH - how do we represent changes?
       ❌ make all these functions partially applied in the actual parameters vs the visitor parameters
+    ❌ should we model the forms as algebras? Do we need a GUI for this?
     ✅ allow union types (needs adjustment in frontend too)
   ✅ models
     ✅ users
