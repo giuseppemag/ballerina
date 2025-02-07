@@ -9,7 +9,7 @@ import { FieldValidation, FieldValidationWithPath, FormValidatorSynchronized, On
 import { BaseEnumContext, EnumFormState, EnumView } from "./state";
 
 
-export const EnumForm = <Context extends FormLabel & BaseEnumContext<Element>, ForeignMutationsExpected, Element extends Value<CollectionReference>>(
+export const EnumForm = <Context extends FormLabel & BaseEnumContext<Element>, ForeignMutationsExpected, Element extends { Value: CollectionReference }>(
   validation?: BasicFun<CollectionSelection<Element>, Promise<FieldValidation>>
 ) => {
   const Co = CoTypedFactory<Context & Value<CollectionSelection<Element>> & { disabled:boolean }, EnumFormState<Context, Element>>()

@@ -2,8 +2,8 @@ export const PersonFormsConfig = {
   types: {
     CollectionReference: {
       fields: {
-        displayValue: "string",
-        id: "guid",
+        DisplayValue: "string",
+        Id: "guid",
       },
     },
     CityRef: {
@@ -27,7 +27,7 @@ export const PersonFormsConfig = {
     },
     GenderRef: {
       fields: {
-        value: "GendersEnum",
+        Value: "GendersEnum",
       },
     },
     ColorsEnum: {
@@ -40,7 +40,7 @@ export const PersonFormsConfig = {
     },
     ColorRef: {
       fields: {
-        value: "ColorsEnum",
+        Value: "ColorsEnum",
       },
     },
     InterestsEnum: {
@@ -54,7 +54,7 @@ export const PersonFormsConfig = {
     },
     InterestRef: {
       fields: {
-        value: "InterestsEnum",
+        Value: "InterestsEnum",
       },
     },
     PermissionsEnum: {
@@ -68,7 +68,7 @@ export const PersonFormsConfig = {
     },
     PermissionRef: {
       fields: {
-        value: "PermissionsEnum",
+        Value: "PermissionsEnum",
       },
     },
     DepartmentRef: {

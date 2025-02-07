@@ -121,7 +121,7 @@ export type EntityApis = {
 export type EnumName = string
 
 
-export type EnumOptionsSources = BasicFun<EnumName, BasicFun<Unit, Promise<Array<{value: CollectionReference}>>>>
+export type EnumOptionsSources = BasicFun<EnumName, BasicFun<Unit, Promise<Array<CollectionReference>>>>
 export const parseForms =
   <LeafPredicates, T extends { [key in keyof T]: { type: any; state: any; }; },>(
     builtIns: BuiltIns,
@@ -243,8 +243,7 @@ export const parseForms =
         const initialState = parsedForm.initialFormState
         const api = {
           get: (id: string) => entityApis.get(launcher.api)(id).then((raw: any) => {
-            const x =fromAPIRawValue(parsedForm.formDef.type , formsConfig.types, builtIns, apiConverters, injectedPrimitives)(raw)
-            return x
+            return fromAPIRawValue(parsedForm.formDef.type , formsConfig.types, builtIns, apiConverters, injectedPrimitives)(raw)
           }),
           update: (id: any, parsed: any) => {
             return parsed.kind =="errors" ? Promise.reject(parsed.errors) : entityApis.update(launcher.api)(id, parsed.value)  

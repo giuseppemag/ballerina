@@ -4,7 +4,7 @@ import { StreamDataLoader } from "./coroutines/runner";
 import { InfiniteStreamReadonlyState, InfiniteStreamWritableState } from "./state";
 
 export const InfiniteStreamTemplate =
-  <Element extends { id: string }>() => Template.Default<
+  <Element extends { Id: string }>() => Template.Default<
     InfiniteStreamReadonlyState,
     InfiniteStreamWritableState<Element>,
     Unit

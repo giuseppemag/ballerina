@@ -12,7 +12,7 @@ export * from "./parent/domains/child2/template"
 
 export * from "./person/state"
 export * from "./person/apis/mocks"
-export * from "./person/domains/predicates"
+// export * from "./person/domains/predicates"
 export * from "./person/domains/address/state"
 // export * from "../../apps/web/src/domains/person/domains/address/template"
 export * from "./person/domains/address/apis/mocks"
