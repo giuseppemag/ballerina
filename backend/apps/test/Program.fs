@@ -175,13 +175,37 @@ module Program =
     mockedOauthCommand.SetHandler(fun () -> oauthEventLoop())
     msGraphOauthCommand.SetHandler((
       fun tenant clientId clientSecret ->
-        msGraphEventLoop tenant clientId clientSecret
+        if
+          tenant = Unchecked.defaultof<Guid> ||
+          clientId = Unchecked.defaultof<Guid> ||
+          String.IsNullOrEmpty clientSecret
+        then
+          let message =
+            "Invalid parameters supplied\nREQUIRED:\ntenant: Guid, client: Guid, secret: string" +
+            "\nSee https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-configure-app-access-web-apis to setup up app permissions in your tenant."
+          printfn "%s" message
+        else  
+          msGraphEventLoop tenant clientId clientSecret
       ),
       msTenantArg, msClientArg, msSecretArg
     )
     spotifyOauthCommand.SetHandler((
       fun clientId clientSecret authorizationCode ->
-        spotifyEventLoop clientId clientSecret authorizationCode
+        if
+          String.IsNullOrEmpty clientId ||
+          String.IsNullOrEmpty clientSecret ||
+          String.IsNullOrEmpty authorizationCode
+        then
+          let message =
+            "Invalid parameters supplied\nREQUIRED:\nclient: string, secret: string, code: string" +
+            "\nSee https://developer.spotify.com/documentation/web-api to setup an API for spotify." +
+            "\nYou can obtain the authorization code using"+
+            "\nhttps://accounts.spotify.com/authorize?client_id=<api_client_id>&response_type=code&redirect_uri=http://localhost:5000" +
+            "\nto redirect to your localhost. After the browser times out, you will see the authorization code appended to the URL." +
+            "\nA full smooth implementation requires a front end application that forwards the code to your backend."
+          printfn "%s" message
+        else
+          spotifyEventLoop clientId clientSecret authorizationCode
       ),
       spotifyClientArg, spotifySecretArg, spotifyAuthorizationCode
     )
