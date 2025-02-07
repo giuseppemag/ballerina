@@ -16,9 +16,9 @@ let abEventLoop (createScope:Unit -> IServiceScope) =
     use scope = createScope()
     use db = scope.ServiceProvider.GetService<BallerinaContext>()
     db.ABEvents.RemoveRange(db.ABEvents)
-    // db.ABs.RemoveRange(db.ABs)
-    // db.ABs.Add({ ABId=Guid.CreateVersion7(); ACount=0; BCount=0; AFailCount=0; BFailCount=0 }) |> ignore
-    // db.ABs.Add({ ABId=Guid.CreateVersion7(); ACount=0; BCount=0; AFailCount=0; BFailCount=0 }) |> ignore
+    db.ABs.RemoveRange(db.ABs)
+    db.ABs.Add({ ABId=Guid.NewGuid(); ACount=0; BCount=0; AFailCount=0; BFailCount=0 }) |> ignore
+    db.ABs.Add({ ABId=Guid.NewGuid(); ACount=0; BCount=0; AFailCount=0; BFailCount=0 }) |> ignore
     db.SaveChanges() |> ignore
     db.ChangeTracker.Clear()
     { 
@@ -31,7 +31,10 @@ let abEventLoop (createScope:Unit -> IServiceScope) =
   let getSnapshot() =
     let scope = createScope()
     let db = scope.ServiceProvider.GetService<BallerinaContext>()
-    (), { ABs = abrepos.logical.AB db (db.ABs); ABEvents = abrepos.logical.ABEvent db (db.ABEvents) }, db.ABEvents.AsNoTracking().Where(fun e -> e.ProcessingStatus = ABEventStatus.Enqueued).OrderBy(fun e -> (e.CreatedAt, e.ABEventId)).ToArray() |> Seq.map (fun e -> e.ABEventId, e |> absample.efmodels.ABEvent.ToUnion) |> Map.ofSeq, (db, scope)
+    ((),
+    { ABs = abrepos.logical.AB db (db.ABs); ABEvents = abrepos.logical.ABEvent db (db.ABEvents) },
+    db.ABEvents.AsNoTracking().Where(fun e -> e.ProcessingStatus = ABEventStatus.Enqueued).OrderBy(fun e -> (e.CreatedAt, e.ABEventId)).ToArray() |> Seq.map (fun e -> e.ABEventId, e |> absample.efmodels.ABEvent.ToUnion) |> Map.ofSeq, 
+    (db, scope))
   let updateEvents (dataSource:BallerinaContext * IServiceScope) events u_e =
     let db = dataSource |> fst
     let events' = u_e events
