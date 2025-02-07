@@ -9,43 +9,47 @@ import { FieldValidation, FieldValidationWithPath, FormValidatorSynchronized, On
 import { BaseEnumContext, EnumFormState, EnumView } from "./state";
 
 
-export const EnumForm = <Context extends FormLabel & BaseEnumContext<Context, Element>, ForeignMutationsExpected, Element extends CollectionReference>(
+export const EnumForm = <Context extends FormLabel & BaseEnumContext<Element>, ForeignMutationsExpected, Element extends Value<CollectionReference>>(
   validation?: BasicFun<CollectionSelection<Element>, Promise<FieldValidation>>
 ) => {
   const Co = CoTypedFactory<Context & Value<CollectionSelection<Element>> & { disabled:boolean }, EnumFormState<Context, Element>>()
   return Template.Default<Context & Value<CollectionSelection<Element>> & { disabled:boolean }, EnumFormState<Context, Element>, ForeignMutationsExpected & { onChange: OnChange<CollectionSelection<Element>>; },
-    EnumView<Context, Element, ForeignMutationsExpected>>(props => <>
+    EnumView<Context, Element, ForeignMutationsExpected>>(props => {
+      return <>
       <props.view {...props}
         context={{
           ...props.context,
-          activeOptions: !AsyncState.Operations.hasValue(props.context.options.sync) ? "loading"
-            : props.context.options.sync.value.valueSeq().filter(o => o[1](props.context)).map(o => o[0]).toArray()
+          activeOptions: !AsyncState.Operations.hasValue(props.context.customFormState.options.sync) ? "loading"
+            : props.context.customFormState.options.sync.value.valueSeq().toArray()
         }}
         foreignMutations={{
           ...props.foreignMutations,
           setNewValue: (_) => {
-            if (!AsyncState.Operations.hasValue(props.context.options.sync)) return
-            const newSelection = props.context.options.sync.value.get(_);
+            if (!AsyncState.Operations.hasValue(props.context.customFormState.options.sync)) return
+            const newSelection = props.context.customFormState.options.sync.value.get(_);
             if (newSelection == undefined)
               return props.foreignMutations.onChange(replaceWith(CollectionSelection<Element>().Default.right("no selection")), List());
             else
-              return props.foreignMutations.onChange(replaceWith(CollectionSelection<Element>().Default.left(newSelection[0])), List());
+              return props.foreignMutations.onChange(replaceWith(CollectionSelection<Element>().Default.left(newSelection)), List());
 
           }
         }} />
-    </>
+    </>}
     ).any([
       ValidateRunner<Context & { disabled:boolean }, EnumFormState<Context, Element>, ForeignMutationsExpected, CollectionSelection<Element>>(
         validation ? _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation) : undefined
       ),
       Co.Template<ForeignMutationsExpected & { onChange: OnChange<CollectionSelection<Element>>; }>(
         Co.GetState().then(current =>
-          Synchronize<Unit, OrderedMap<Guid, [Element, BasicPredicate<Context>]>>(current.getOptions, () => "transient failure", 5, 50)
-            .embed(_ => _.options, _ => current => ({ ...current, options: _(current.options) }))
+          { 
+            return Synchronize<Unit, OrderedMap<Guid, Element>>(current.getOptions, () => "transient failure", 5, 50)
+            .embed(_ =>  _.customFormState.options,
+               _ => current => ({ ...current, customFormState: { ...current.customFormState, options: _(current.customFormState.options) } })
+              )}
         ),
         {
           interval: 15,
-          runFilter: props => !AsyncState.Operations.hasValue(props.context.options.sync)
+          runFilter: props => !AsyncState.Operations.hasValue(props.context.customFormState.options.sync)
         }
       )
     ]);

@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { Guid, CollectionSelection, CollectionReference, Mapping, MappingBuilder, unit } from "ballerina-core";
+import { Guid, CollectionSelection, CollectionReference } from "ballerina-core";
 import { OrderedMap } from "immutable";
 import { v4 } from "uuid";
 import { Interest } from "../../apis/mocks";
@@ -47,20 +47,3 @@ export const PersonConfig = {
   }
   )
 };
-
-// export const personConfigToPersonMapping = Mapping.Default.fromMapping<PersonConfig, Person>(
-//   MappingBuilder.Default<PersonConfig, Person>(unit)
-//     ("name")(_ => _("person")("name"))
-//     ("surname")(_ => _("person")("surname"))
-//     ("birthday")(_ => _("person")("birthday"))
-//     ("departments")(_ => _("person")("departments"))
-//     ("gender")(_ => _("person")("gender"))
-//     ("subscribeToNewsletter")(_ => _("mailing")("subscribeToNewsletter"))
-//     ("interests")(_ => _("mailing")("interests"))
-//     ("address")(
-//       MappingBuilder.Default<PersonConfig, Address>(unit)
-//         ("street")(_ => _("address")("street"))
-//         ("number")(_ => _("address")("number"))
-//         ("city")(_ => _("address")("city"))
-//   )
-// );

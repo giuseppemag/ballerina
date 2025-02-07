@@ -289,8 +289,6 @@ export const DebitNoteHeaderConfig = {
     },
   },
 
-  mappings: {},
-
   forms: {
     anyOfTypesForm: {
       type: "AnyOfTypes",

@@ -3,7 +3,7 @@ import { SimpleCallback, BasicFun, Unit, ValidateRunner, Updater, BasicUpdater, 
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
-import { FieldValidation, FieldValidationWithPath, FormValidatorSynchronized, OnChange, SharedFormState } from "../../../singleton/state";
+import { FieldValidation, FieldValidationWithPath, FormValidatorSynchronized, OnChange, CommonFormState } from "../../../singleton/state";
 import { ListFieldState, ListFieldView } from "./state";
 
 export const ListForm = <Element, ElementFormState, Context extends FormLabel, ForeignMutationsExpected>(

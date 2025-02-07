@@ -16,6 +16,7 @@ export const PersonConfigFormsLeafPredicates = {
 }),
 	field: (_: PersonConfigFormsLeafPredicates["field"]): Predicate<ConfigFormsContext> => Predicate(current =>
 		_.location == "local" ? current.value[_.field] == _.value : current.rootValue[_.field] == _.value),
+		
 	isEmpty: (_: PersonConfigFormsLeafPredicates["isEmpty"]): Predicate<ConfigFormsContext> => Predicate(current =>
 		_.location == "local" ? current.value[_.field].isEmpty() : current.rootValue[_.field].isEmpty())
 }

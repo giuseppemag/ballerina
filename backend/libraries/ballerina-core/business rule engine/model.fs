@@ -156,8 +156,8 @@ type ExprType with
     match t1, t2 with
     | RecordType fields1, RecordType fields2 
       when fields1 |> Map.keys |> Set.ofSeq |> Set.intersect (fields2 |> Map.keys |> Set.ofSeq) |> Set.isEmpty
-      -> Map.merge (fun a _ -> a) fields1 fields2 |> ExprType.RecordType |> Some
-    | _ -> None
+      -> Map.merge (fun a _ -> a) fields1 fields2 |> ExprType.RecordType |> Left
+    | _ -> Right(Errors.Singleton $$"""Error: cannot merge types {{t1}} and {{t2}}.""")
   static member GetTypesFreeVars (t:ExprType) : Set<TypeId> = 
     let (!) = ExprType.GetTypesFreeVars
     match t with

@@ -1,11 +1,15 @@
 package ballerina
 
 import (
-	"github.com/google/uuid"
+	// "github.com/google/uuid"
 )
 
-type Set[a comparable] map[a]Unit
-type Map[a comparable, b any] map[a]b
+type KeyValue[k comparable, v any] struct {
+	Key k
+	Value v
+}
+type Set[a comparable] []a
+type Map[a comparable, b any] []KeyValue[a,b]
 
 type Sum[a any, b any] interface {}
 type left[a any, b any] struct { Sum[a,b]; value a }
@@ -20,7 +24,7 @@ func Right[a any, b any](value b) Sum[a,b] {
 	p.value = value
 	return p
 }
-func Match[a any, b any, c any](self Sum[a,b], onLeft func(a) c, onRight func (b) c, fallback func () c) c {
+func MatchSum[a any, b any, c any](self Sum[a,b], onLeft func(a) c, onRight func (b) c, fallback func () c) c {
 	switch v := self.(type) {
 	case left[a,b]:
 		return onLeft(v.value)
@@ -39,17 +43,4 @@ func MapLeft[a any, b any, a1 any](self Sum[a,b], f func(a) a1) Sum[a1,b] {
 	default:
 		return v
 	}
-}
-
-type Option[a any] struct { Sum[a, Unit] }
-func Some[a any](value a) Option[a] {
-	return Left[a,Unit](value).(Option[a])
-}
-func None[a any]() Option[a] {
-	return Right[a,Unit](DefaultUnit).(Option[a])
-}
-
-type CollectionReference struct {
-	Id uuid.UUID
-	Value string
 }

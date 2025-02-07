@@ -11,26 +11,6 @@ export type Paths<Entity, NestedPaths = Unit> = {
     : [f]
 }
 
-// type OtherNestedThing = { x:boolean, y:string }
-// type Address = { city:string, street:string, number:number, other:OtherNestedThing }
-// type Person = { name:string, surname:string, birthday:Date, address:Address, other:OtherNestedThing }
-// type OtherNestedThingPaths = Paths<OtherNestedThing, Unit>
-// type AddressPaths = Paths<Address, { other:OtherNestedThingPaths }>
-// type PersonPaths = ToPathUnions<Paths<Person, { address:AddressPaths, other:OtherNestedThingPaths }>>
-// const f = (_:PersonPaths) => {
-//   if (_[0] == "name") return
-//   if (_[0] == "surname") return
-//   if (_[0] == "birthday") return
-//   if (_[0] == "address") {
-//     _[1][0] == "city"
-//     if (_[1][0] == "other") {
-//       _[1][1][0] == "x"
-//     }
-//     return
-//   }
-//   _[1][0] == "x"
-// }
-
 export type ValidationError = string
 export type FieldValidation = Array<ValidationError>
 export type Path = Array<string>
@@ -43,18 +23,20 @@ export const FieldValidationWithPath = {
   }
 }
 export type FormValidatorSynchronized = Synchronized<Unit, FieldValidationWithPath>
-export type SharedFormState = { modifiedByUser: boolean, validation: Debounced<FormValidatorSynchronized> }
-export const SharedFormState = {
-  Default: (): SharedFormState => ({
+export type CommonFormState = { modifiedByUser: boolean, validation: Debounced<FormValidatorSynchronized> }
+export const CommonFormState = {
+  Default: (): CommonFormState => ({
     modifiedByUser: false,
     // start the validation so that it immediately runs and registers the first errors such as missing values and such
     validation: Debounced.Updaters.Template.value<FormValidatorSynchronized>(Synchronized.Updaters.value(replaceWith(unit)))(Debounced.Default(Synchronized.Default(unit)))
   })
 }
 export type EntityFormState<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> =
-  { [f in Fields]: FieldStates[f] & SharedFormState } & SharedFormState
+  { formFieldStates: { [f in Fields]: { customFormState: FieldStates[f], commonFormState: CommonFormState, formFieldStates: FieldStates[f], elementFormStates: FieldStates[f] }}, 
+    commonFormState: CommonFormState }
+
 export type EntityFormContext<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> =
-  Context & EntityFormState<Entity, Fields, FieldStates, Context, ForeignMutationsExpected> & { visibleFields: OrderedMap<Fields, BasicPredicate<Context>>, disabledFields: OrderedMap<Fields, BasicPredicate<Context>>, header?: string } & Value<Entity>
+  Context & EntityFormState<Entity, Fields, FieldStates, Context, ForeignMutationsExpected> & { extraContext: any, visibleFields: OrderedMap<Fields, BasicPredicate<Context>>, disabledFields: OrderedMap<Fields, BasicPredicate<Context>>, header?: string } & Value<Entity>
 export type OnChange<Entity> = (updater: BasicUpdater<Entity>, path: List<string>) => void
 export type EntityFormForeignMutationsExpected<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> =
   ForeignMutationsExpected & { onChange: OnChange<Entity> }
@@ -84,5 +66,25 @@ export type EmbeddedFieldTemplate<Entity, Fields extends (keyof Entity) & (keyof
   >
 
 export type FormStateFromEntity<E, S> = {
-  [f in keyof E]: f extends keyof S ? S[f] & SharedFormState : SharedFormState
-} & SharedFormState
+  formFieldStates: { [f in keyof E]: f extends keyof S ? {customFormState: S[f], commonFormState: CommonFormState} : {customFormState: Unit, commonFormState: CommonFormState} }
+} & {commonFormState: CommonFormState}
+
+// type OtherNestedThing = { x:boolean, y:string }
+// type Address = { city:string, street:string, number:number, other:OtherNestedThing }
+// type Person = { name:string, surname:string, birthday:Date, address:Address, other:OtherNestedThing }
+// type OtherNestedThingPaths = Paths<OtherNestedThing, Unit>
+// type AddressPaths = Paths<Address, { other:OtherNestedThingPaths }>
+// type PersonPaths = ToPathUnions<Paths<Person, { address:AddressPaths, other:OtherNestedThingPaths }>>
+// const f = (_:PersonPaths) => {
+//   if (_[0] == "name") return
+//   if (_[0] == "surname") return
+//   if (_[0] == "birthday") return
+//   if (_[0] == "address") {
+//     _[1][0] == "city"
+//     if (_[1][0] == "other") {
+//       _[1][1][0] == "x"
+//     }
+//     return
+//   }
+//   _[1][0] == "x"
+// }

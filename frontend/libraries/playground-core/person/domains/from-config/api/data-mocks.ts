@@ -6,30 +6,10 @@ import { AddressApi } from "../../address/apis/mocks"
 import { v4 } from "uuid"
 import { PersonApi } from "../../../apis/mocks"
 
-const permissions: Array<[CollectionReference, BoolExpr<Unit>]> = [
-  [CollectionReference.Default(v4(), "create"), BoolExpr.Default.true()],
-  [CollectionReference.Default(v4(), "read"), BoolExpr.Default.true()],
-  [CollectionReference.Default(v4(), "update"), BoolExpr.Default.true()],
-  [CollectionReference.Default(v4(), "delete"), BoolExpr.Default.true()]
-]
-const colors: Array<[CollectionReference, BoolExpr<Unit>]> = [
-  [CollectionReference.Default(v4(), faker.color.human()), BoolExpr.Default.true()],
-  [CollectionReference.Default(v4(), faker.color.human()), BoolExpr.Default.true()],
-  [CollectionReference.Default(v4(), faker.color.human()), BoolExpr.Default.true()],
-  [CollectionReference.Default(v4(), faker.color.human()), BoolExpr.Default.true()]
-]
-const genders: Array<[CollectionReference, BoolExpr<Unit>]> = [
-  [CollectionReference.Default(v4(), "M"), BoolExpr.Default.true()],
-  [CollectionReference.Default(v4(), "F"), BoolExpr.Default.true()],
-  [CollectionReference.Default(v4(), "X"), BoolExpr.Default.true()],
-  [CollectionReference.Default(v4(), "Y"), BoolExpr.Default.true()]
-]
-const interests: Array<[CollectionReference, BoolExpr<Unit>]> = [
-  [CollectionReference.Default(v4(), "finance"), BoolExpr.Default.true()],
-  [CollectionReference.Default(v4(), "marketing"), BoolExpr.Default.true()],
-  [CollectionReference.Default(v4(), "management"), BoolExpr.Default.true()],
-  [CollectionReference.Default(v4(), "development"), BoolExpr.Default.true()],
-]
+const permissions = [ {value: "create"}, {value: "read"}, {value: "update"}, {value: "delete"}]
+const colors = [ {value: faker.color.human()}, {value: faker.color.human()}, {value: faker.color.human()}, {value: faker.color.human()}]
+const genders = [ {value: "M"}, {value: "F"}, {value: "X"}, {value: "Y"}]
+const interests = [ {value: "finance"}, {value: "marketing"}, {value: "management"}, {value: "development"}]
 
 const streamApis: InfiniteStreamSources = (streamName: string) =>
   streamName == "departments" ?
@@ -47,16 +27,16 @@ const streamApis: InfiniteStreamSources = (streamName: string) =>
       })
 const enumApis: EnumOptionsSources = (enumName: string) =>
   enumName == "colors" ?
-    () => PromiseRepo.Default.mock(() => colors)
+    () => PromiseRepo.Default.mock(() => colors.map(_ => ({ value: CollectionReference.Default(_.value, _.value, "enum")  })), undefined, 1, 0)
     :
     enumName == "permissions" ?
-      () => PromiseRepo.Default.mock(() => permissions)
+      () => PromiseRepo.Default.mock(() => permissions.map(_ =>({ value: CollectionReference.Default(_.value, _.value, "enum"),  })), undefined, 1, 0)
     :
     enumName == "genders" ?
-      () => PromiseRepo.Default.mock(() => genders)
+      () => PromiseRepo.Default.mock(() => genders.map(_ => ({ value: CollectionReference.Default(_.value, _.value, "enum"),  })), undefined, 1, 0)
       :
       enumName == "interests" ?
-        () => PromiseRepo.Default.mock(() => interests)
+        () => PromiseRepo.Default.mock(() => interests.map(_ => ({value: CollectionReference.Default(_.value, _.value, "enum"),  })), undefined, 1, 0)
         :
         () => PromiseRepo.Default.mock(() => {
           alert(`Cannot find enum API ${enumName}`)
@@ -84,9 +64,9 @@ const entityApis: EntityApis = {
             surname: faker.person.lastName(),
             birthday: new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45),
             subscribeToNewsletter: Math.random() > 0.5,
-            favoriteColor: Math.random() > 0.5 ? colors[0][0] : undefined,
+            favoriteColor: colors[Math.round(Math.random() * 10) % 4],
             gender: undefined,
-            interests: [interests[1][0], interests[2][0]],
+            interests: [interests[1], interests[2]],
             departments: [],
             mainAddress: {
               street: faker.location.street(),

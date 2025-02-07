@@ -1,4 +1,4 @@
-import { simpleUpdater, BasicUpdater, Updater, SimpleCallback } from "../../../../../../main";
+import { simpleUpdater, BasicUpdater, Updater, SimpleCallback, replaceWith, simpleUpdaterWithChildren } from "../../../../../../main";
 import { Debounced } from "../../../../../debounced/state";
 import { BasicFun } from "../../../../../fun/state";
 import { InfiniteStreamState } from "../../../../../infinite-data-stream/state";
@@ -7,33 +7,39 @@ import { Value } from "../../../../../value/state";
 import { CollectionReference } from "../../../collection/domains/reference/state";
 import { CollectionSelection } from "../../../collection/domains/selection/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
-import { OnChange, SharedFormState } from "../../../singleton/state";
+import { OnChange, CommonFormState } from "../../../singleton/state";
 
 
 export type SearchableInfiniteStreamState<Element extends CollectionReference> = 
-  SharedFormState &
-  { searchText: Debounced<Value<string>>; status: "open" | "closed"; stream: InfiniteStreamState<Element>; getChunk: BasicFun<string, InfiniteStreamState<Element>["getChunk"]>; };
+  { commonFormState: CommonFormState,
+    customFormState: { searchText: Debounced<Value<string>>; status: "open" | "closed"; stream: InfiniteStreamState<Element>; getChunk: BasicFun<string, InfiniteStreamState<Element>["getChunk"]>; }
+   };
 export const SearchableInfiniteStreamState = <Element extends CollectionReference>() => ({
   Default: (searchText: string, getChunk: BasicFun<string, InfiniteStreamState<Element>["getChunk"]>): SearchableInfiniteStreamState<Element> => ({
-    ...SharedFormState.Default(),
-    searchText: Debounced.Default(Value.Default(searchText)),
-    status: "closed",
-    getChunk,
-    stream: InfiniteStreamState<Element>().Default(10, getChunk(searchText))
+    commonFormState: CommonFormState.Default(),
+    customFormState: {
+      searchText: Debounced.Default(Value.Default(searchText)),
+      status: "closed",
+      getChunk,
+      stream: InfiniteStreamState<Element>().Default(10, getChunk(searchText))
+    }
   }),
   Updaters: {
     Core: {
-      ...simpleUpdater<SearchableInfiniteStreamState<Element>>()("status"),
-      ...simpleUpdater<SearchableInfiniteStreamState<Element>>()("stream"),
-      ...simpleUpdater<SearchableInfiniteStreamState<Element>>()("searchText"),
+      ...simpleUpdaterWithChildren<SearchableInfiniteStreamState<Element>>()({
+        ...simpleUpdater<SearchableInfiniteStreamState<Element>["customFormState"]>()("status"),
+        ...simpleUpdater<SearchableInfiniteStreamState<Element>["customFormState"]>()("stream"),
+        ...simpleUpdater<SearchableInfiniteStreamState<Element>["customFormState"]>()("searchText"),
+      })("customFormState"),
     },
     Template: {
-      searchText: (_: BasicUpdater<string>): Updater<SearchableInfiniteStreamState<Element>> => SearchableInfiniteStreamState<Element>().Updaters.Core.searchText(
-        Debounced.Updaters.Template.value(
-          Value.Updaters.value(
-            _
+      searchText: (_: BasicUpdater<string>): Updater<SearchableInfiniteStreamState<Element>> =>
+        SearchableInfiniteStreamState<Element>().Updaters.Core.customFormState.children.searchText(
+          Debounced.Updaters.Template.value(
+            Value.Updaters.value(
+              _
+            )
           )
-        )
       )
     }
   }

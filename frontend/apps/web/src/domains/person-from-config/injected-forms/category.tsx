@@ -1,4 +1,4 @@
-import { FormLabel, View, Value, SharedFormState, OnChange, SimpleCallback, BasicFun, FieldValidation, Template, replaceWith, ValidateRunner, FieldValidationWithPath, Unit, simpleUpdater } from "ballerina-core";
+import { FormLabel, View, Value, CommonFormState, OnChange, SimpleCallback, BasicFun, FieldValidation, Template, replaceWith, ValidateRunner, FieldValidationWithPath, Unit, simpleUpdater, simpleUpdaterWithChildren } from "ballerina-core";
 import { List } from "immutable";
 
 export type Category = { category: "child" | "adult" | "senior", kind: "category"}
@@ -8,31 +8,37 @@ export type Category = { category: "child" | "adult" | "senior", kind: "category
 // }
 
 export type CategoryState = {
-  likelyOutdated: boolean;
+  customFormState: {
+    likelyOutdated: boolean;
+  }
 }
 
 export const CategoryState = ({
   Default: (): CategoryState => ({
-    likelyOutdated: false
+    customFormState: {
+      likelyOutdated: false
+    }
   }),
   Updaters: {
     Core: {
-      ...simpleUpdater<CategoryState>()("likelyOutdated")
+      ...simpleUpdaterWithChildren<CategoryState>()({
+        ...simpleUpdater<CategoryState["customFormState"]>()("likelyOutdated")
+      })("customFormState")
     }
   }
 })
 
 export type CategoryView<Context extends FormLabel, ForeignMutationsExpected> = 
   View<
-    Context & Value<Category> & SharedFormState & { disabled:boolean }, 
-    SharedFormState & CategoryState, 
+    Context & Value<Category> & { commonFormState: CommonFormState, customFormState: CategoryState["customFormState"] } & { disabled:boolean }, 
+    {commonFormState: CommonFormState, customFormState: CategoryState["customFormState"]}, 
     ForeignMutationsExpected & { onChange: OnChange<Category>; setNewValue: SimpleCallback<Category> }
   >;
 
 
 export const CategoryForm = <Context extends FormLabel, ForeignMutationsExpected>(
   validation?:BasicFun<Category, Promise<FieldValidation>>) => {
-  return Template.Default<Context & Value<Category> & { disabled:boolean }, SharedFormState & CategoryState, ForeignMutationsExpected & { onChange: OnChange<Category>; }, CategoryView<Context, ForeignMutationsExpected>>(props => <>
+  return Template.Default<Context & Value<Category> & { disabled:boolean }, {commonFormState: CommonFormState, customFormState: CategoryState["customFormState"]}, ForeignMutationsExpected & { onChange: OnChange<Category>; }, CategoryView<Context, ForeignMutationsExpected>>(props => <>
     <props.view {...props}
       foreignMutations={{
         ...props.foreignMutations,
@@ -40,15 +46,15 @@ export const CategoryForm = <Context extends FormLabel, ForeignMutationsExpected
       }} />
   </>
   ).any([
-    ValidateRunner<Context & { disabled:boolean }, SharedFormState & CategoryState, ForeignMutationsExpected, Category>(
+    ValidateRunner<Context & { disabled:boolean }, {commonFormState: CommonFormState, customFormState: CategoryState["customFormState"]}, ForeignMutationsExpected, Category>(
       validation ? _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation) : undefined
     ),
   ])
 }
 
-export const categoryForm = (fieldViews: any, viewType: any, viewName: any, label: string, tooltip?: string) => CategoryForm<any & FormLabel, Unit>()
+export const categoryForm = (fieldViews: any, viewType: any, viewName: any, label: string, tooltip?: string, details?: string) => CategoryForm<any & FormLabel, Unit>()
   .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
-  .mapContext<any & SharedFormState & Value<Category>>(_ => ({ ..._, label, tooltip })) as any
+  .mapContext<any & CommonFormState & Value<Category>>(_ => ({ ..._, label, tooltip, details })) as any
 
 export type PersonFormInjectedTypes = {
   injectedCategory: { type: Category, state: CategoryState }

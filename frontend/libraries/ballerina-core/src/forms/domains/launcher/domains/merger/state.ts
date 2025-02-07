@@ -8,7 +8,6 @@ const INITIAL_CONFIG = {
     searchableStreams: {},
     entities: {},
   },
-  mappings: {},
   launchers: {}
 }
 
@@ -28,7 +27,6 @@ export const FormsConfigMerger = {
             searchableStreams: merge(acc.apis.searchableStreams, current.apis.searchableStreams),
             entities: merge(acc.apis.entities, current.apis.entities),
           },
-          mappings: merge(acc.mappings, current.mappings),
           launchers: merge(acc.launchers, current.launchers),
         }
       }, {...INITIAL_CONFIG})

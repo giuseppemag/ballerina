@@ -4,7 +4,7 @@ open Sum
 
 type State<'a,'c,'s,'e> = State of ('c * 's -> Sum<'a * Option<'s>, 'e>)
 with 
-  member this.run = let (State p) = this in p
+  member this.run (c,s) = let (State p) = this in p(c,s)
   static member map<'b> (f:'a -> 'b) ((State p):State<'a,'c,'s,'e>) : State<'b,'c,'s,'e> =
     State(fun s0 ->
       match p s0 with
@@ -27,6 +27,8 @@ with
 
 
 type StateBuilder() = 
+  member _.Map f p = 
+    State.map f p
   member _.Zero<'c,'s,'e>() = 
     State.fromValue<'c,'s,'e>()
   member _.Return<'a,'c,'s,'e>(result:'a) = 
@@ -54,6 +56,11 @@ type StateBuilder() =
       let! res = p
       return res
     }
+  member _.Catch (State p) =
+    State(fun cs -> 
+      match p cs with
+      | Left (res,u_s) -> Left (Left res, u_s)
+      | Right err -> Left(Right err, None))
   member _.Throw (e:'e) =
     State(fun _ -> Sum.Right e)
   member state.Delay p = 
@@ -63,5 +70,34 @@ type StateBuilder() =
     | Some first -> 
       state.Combine(body first, state.For(seq |> Seq.tail, body))
     | None -> state{ return () }
+  member state.All<'a,'c,'s,'e>
+    (e:{| concat:'e * 'e -> 'e |}, ps:List<State<'a,'c,'s,'e>>) =
+    match ps with
+    | [] -> state.Return []
+    | p::ps ->
+      state{
+        let! p_res = p |> state.Catch
+        let! ps_res = state.All(e,ps) |> state.Catch
+        match p_res, ps_res with
+        | Left r,Left rs ->
+          return r::rs
+        | Right (err:'e), Right (errs:'e) -> 
+          let allErrs = e.concat(err,errs)
+          return! state.Throw(allErrs)
+        | Right (err:'e),_ | _,Right (err:'e) -> 
+          return! state.Throw err
+      }
+  member inline state.All<'a,'c,'s,'b 
+    when 'b : (static member Concat:'b * 'b -> 'b)>
+    (ps:List<State<'a,'c,'s,'b>>) =
+    state.All({| concat='b.Concat |}, ps)
+  member inline state.All<'a,'c,'s,'b 
+    when 'b : (static member Concat:'b * 'b -> 'b)>
+    (ps:seq<State<'a,'c,'s,'b>>) =
+    state.All({| concat='b.Concat |}, ps |> Seq.toList)
+  member state.OfSum s =
+    match s with
+    | Left res -> state.Return res
+    | Right err -> state.Throw err
 
 let state = StateBuilder()
