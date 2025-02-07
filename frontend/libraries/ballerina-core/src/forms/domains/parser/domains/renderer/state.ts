@@ -212,7 +212,7 @@ export const ParsedRenderer = {
       if (viewKind == "boolean")
         return BooleanForm<any & FormLabel, Unit>()
           .withView(formViews[viewKind][viewName]())
-          .mapContext<any & CommonFormState & Value<boolean>>(_ => ({ ..._, label, tooltip, details }))
+          .mapContext<any & CommonFormState & Value<boolean>>(_ => ({ ..._, label, tooltip, details })) 
       if (viewKind == "date")
         return DateForm<any & FormLabel, Unit>()
           .withView(formViews[viewKind][viewName]())
@@ -226,18 +226,18 @@ export const ParsedRenderer = {
           .withView(formViews[viewKind][viewName]())
           .mapContext<any & CommonFormState & Value<string>>(_ => ({ ..._, label, tooltip, details }))
       if (viewKind == "enumSingleSelection" && rendererConfig.kind == "enum")
-        return EnumForm<any & FormLabel & BaseEnumContext<Value<CollectionReference>>, Unit, Value<CollectionReference>>()
+        return EnumForm<any & FormLabel & BaseEnumContext<{ Value: CollectionReference }>, Unit, { Value: CollectionReference }>()
           .withView(formViews[viewKind][viewName]())
-          .mapContext<any & EnumFormState<any & BaseEnumContext<Value<CollectionReference>>, Value<CollectionReference>> & Value<CollectionSelection<Value<CollectionReference>>>>(_ => ({
+          .mapContext<any & EnumFormState<any & BaseEnumContext<{ Value: CollectionReference }>, { Value: CollectionReference }> & Value<CollectionSelection<{ Value: CollectionReference }>>>(_ => ({
             ..._, label, tooltip, details, getOptions: () => {
-              return ((enumOptionsSources as any)(rendererConfig.options)() as Promise<any>).then(options => Map(options.map((o: {value: CollectionReference}) => [o.value.id, o])))
+              return ((enumOptionsSources as any)(rendererConfig.options)() as Promise<any>).then(options => Map(options.map((o: CollectionReference) => [o.Id, {Value: o}])))
             }
           })) 
       if (viewKind == "enumMultiSelection" && rendererConfig.kind == "enum")
-        return EnumMultiselectForm<any & FormLabel & BaseEnumContext<Value<CollectionReference>>, Unit, Value<CollectionReference>>()
+        return EnumMultiselectForm<any & FormLabel & BaseEnumContext<{ Value: CollectionReference }>, Unit, { Value: CollectionReference }>()
           .withView(formViews[viewKind][viewName]() )
-          .mapContext<any & EnumFormState<any & BaseEnumContext<Value<CollectionReference>>, Value<CollectionReference>> & Value<OrderedMap<Guid, CollectionReference>>>(_ => ({
-            ..._, label, details, tooltip, getOptions: () => ((enumOptionsSources as any)(rendererConfig.options)() as Promise<any>).then(options => OrderedMap(options.map((o: {value: CollectionReference}) => [o.value.id, o])))
+          .mapContext<any & EnumFormState<any & BaseEnumContext<{ Value: CollectionReference }>, { Value: CollectionReference }> & Value<OrderedMap<Guid, CollectionReference>>>(_ => ({
+            ..._, label, details, tooltip, getOptions: () => ((enumOptionsSources as any)(rendererConfig.options)() as Promise<any>).then(options => OrderedMap(options.map((o: CollectionReference) => [o.Id, {Value: o}])))
           })) 
       if (viewKind == "streamSingleSelection")
         return SearchableInfiniteStreamForm<CollectionReference, any & FormLabel, Unit>()

@@ -3,7 +3,7 @@ import { replaceWith } from "../../fun/domains/updater/domains/replaceWith/state
 import { InfiniteStreamState, StreamPosition } from "../state";
 import { StreamCo } from "./builder";
 
-export const InfiniteStreamLoader = <Element extends { id: string }>() => {
+export const InfiniteStreamLoader = <Element extends { Id: string }>() => {
   const Co = StreamCo<Element>();
   const updaters = InfiniteStreamState<Element>().Updaters;
   // const operations = InfiniteStreamState<Element>().Operations;

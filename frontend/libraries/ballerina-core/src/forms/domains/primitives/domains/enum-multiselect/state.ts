@@ -8,7 +8,7 @@ import { OnChange } from "../../../singleton/state";
 import { BaseEnumContext, EnumFormState } from "../enum/state";
 
 
-export type EnumMultiselectView<Context extends FormLabel & BaseEnumContext<Element>, Element extends Value<CollectionReference>, ForeignMutationsExpected> = View<
+export type EnumMultiselectView<Context extends FormLabel & BaseEnumContext<Element>, Element extends { Value: CollectionReference }, ForeignMutationsExpected> = View<
   Context & Value<OrderedMap<Guid, Element>> & EnumFormState<Context, Element> & {
     selectedIds: Array<Guid>;
     activeOptions: "loading" | Array<Element>;

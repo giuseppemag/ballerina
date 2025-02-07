@@ -9,7 +9,7 @@ import { BaseEnumContext, EnumFormState } from "../enum/state";
 import { EnumMultiselectView } from "./state";
 
 
-export const EnumMultiselectForm = <Context extends FormLabel & BaseEnumContext<Element>, ForeignMutationsExpected, Element extends Value<CollectionReference>>(
+export const EnumMultiselectForm = <Context extends FormLabel & BaseEnumContext<Element>, ForeignMutationsExpected, Element extends { Value: CollectionReference }>(
   validation?: BasicFun<OrderedMap<Guid, Element>, Promise<FieldValidation>>
 ) => {
   const Co = CoTypedFactory<Context & Value<OrderedMap<Guid, Element>> & EnumFormState<Context, Element> & { disabled:boolean }, EnumFormState<Context, Element>>()
@@ -17,7 +17,7 @@ export const EnumMultiselectForm = <Context extends FormLabel & BaseEnumContext<
     <props.view {...props}
       context={{
         ...props.context,
-        selectedIds: props.context.value.map(_ => _.value.id).valueSeq().toArray(),
+        selectedIds: props.context.value.map(_ => _.Value.Id).valueSeq().toArray(),
         activeOptions: !AsyncState.Operations.hasValue(props.context.customFormState.options.sync) ? "loading"
         : props.context.customFormState.options.sync.value.valueSeq().toArray()
       }}
@@ -30,7 +30,7 @@ export const EnumMultiselectForm = <Context extends FormLabel & BaseEnumContext<
             .flatMap(_ => { 
               const selectedItem = options.get(_);
               if (selectedItem != undefined) {
-                const item: [string, Element] = [selectedItem.value.id, selectedItem];
+                const item: [string, Element] = [selectedItem.Value.Id, selectedItem];
                 return [item];
               }
               return [];

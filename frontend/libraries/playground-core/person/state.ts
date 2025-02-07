@@ -3,7 +3,7 @@ import { CollectionReference, CollectionSelection, Guid, FormStateFromEntity, Da
 import { List, OrderedMap } from "immutable";
 import { Interest, PersonApi } from "./apis/mocks";
 import { Address, AddressFormState, City } from "./domains/address/state";
-import { PersonFormPredicateContext } from "./domains/predicates";
+// import { PersonFormPredicateContext } from "./domains/predicates";
 import Immutable from "immutable";
 import { v4 } from "uuid";
 
@@ -55,37 +55,37 @@ export const Person = {
       })
     }),
   Operations: {
-    VisibleFields: OrderedMap<keyof Person, Predicate<PersonFormPredicateContext>>([
-      ["name", PersonFormPredicateContext.Predicates.True],
-      ["surname", PersonFormPredicateContext.Predicates.True],
-      ["gender", PersonFormPredicateContext.Predicates.True],
-      ["subscribeToNewsletter", PersonFormPredicateContext.Predicates.True],
-      ["interests", PersonFormPredicateContext.Predicates.SubscribedToNewsletter],
-      ["departments", PersonFormPredicateContext.Predicates.True],
-      ["address", PersonFormPredicateContext.Predicates.BC.or(PersonFormPredicateContext.Predicates.FO)],
-    ])
+    // VisibleFields: OrderedMap<keyof Person, Predicate<PersonFormPredicateContext>>([
+    //   ["name", PersonFormPredicateContext.Predicates.True],
+    //   ["surname", PersonFormPredicateContext.Predicates.True],
+    //   ["gender", PersonFormPredicateContext.Predicates.True],
+    //   ["subscribeToNewsletter", PersonFormPredicateContext.Predicates.True],
+    //   ["interests", PersonFormPredicateContext.Predicates.SubscribedToNewsletter],
+    //   ["departments", PersonFormPredicateContext.Predicates.True],
+    //   ["address", PersonFormPredicateContext.Predicates.BC.or(PersonFormPredicateContext.Predicates.FO)],
+    // ])
   }
 };
-export type PersonFormState = FormStateFromEntity<Person, {
-  birthday: DateFormState;
-  gender: EnumFormState<PersonFormPredicateContext & FormLabel & BaseEnumContext<PersonFormPredicateContext, Gender>, Gender>;
-  interests: EnumFormState<PersonFormPredicateContext & FormLabel & BaseEnumContext<PersonFormPredicateContext, Interest>, Interest>;
-  departments: SearchableInfiniteStreamState<Department>;
-  address: AddressFormState
-}>;
-export const PersonFormState = {
-  Default: (): PersonFormState => ({
-    commonFormState: CommonFormState.Default(),
-    formFieldStates: {
-      name: { commonFormState: CommonFormState.Default(), customFormState: unit },
-      surname: { commonFormState: CommonFormState.Default(), customFormState: unit },
-      subscribeToNewsletter: { commonFormState: CommonFormState.Default(), customFormState: unit },
-      birthday: { commonFormState: CommonFormState.Default(), customFormState: DateFormState.Default() },
-      gender: { commonFormState: CommonFormState.Default(), customFormState: EnumFormState<PersonFormPredicateContext & FormLabel & BaseEnumContext<PersonFormPredicateContext, Gender>, Gender>().Default() },
-      interests: { commonFormState: CommonFormState.Default(), customFormState: EnumFormState<PersonFormPredicateContext & FormLabel & BaseEnumContext<PersonFormPredicateContext, Interest>, Interest>().Default() },
-      departments: { commonFormState: CommonFormState.Default(), customFormState: SearchableInfiniteStreamState<Department>().Default("", PersonApi.getDepartments()) },
-      address: { commonFormState: CommonFormState.Default(), customFormState:  AddressFormState.Default() }
-    }
-  })
-};
+// export type PersonFormState = FormStateFromEntity<Person, {
+//   birthday: DateFormState;
+//   gender: EnumFormState<PersonFormPredicateContext & FormLabel & BaseEnumContext<Gender>, Gender>;
+//   interests: EnumFormState<PersonFormPredicateContext & FormLabel & BaseEnumContext<{Value: CollectionReference}>, {Value: CollectionReference}>;
+//   departments: SearchableInfiniteStreamState<Department>;
+//   address: AddressFormState
+// }>;
+// export const PersonFormState = {
+//   Default: (): PersonFormState => ({
+//     commonFormState: CommonFormState.Default(),
+//     formFieldStates: {
+//       name: { commonFormState: CommonFormState.Default(), customFormState: unit },
+//       surname: { commonFormState: CommonFormState.Default(), customFormState: unit },
+//       subscribeToNewsletter: { commonFormState: CommonFormState.Default(), customFormState: unit },
+//       birthday: { commonFormState: CommonFormState.Default(), customFormState: DateFormState.Default() },
+//       gender: { commonFormState: CommonFormState.Default(), customFormState: EnumFormState<FormLabel & BaseEnumContext<{Gender}>, Gender>().Default() },
+//       interests: { commonFormState: CommonFormState.Default(), customFormState: EnumFormState<FormLabel & BaseEnumContext<Interest>, Interest>().Default() },
+//       departments: { commonFormState: CommonFormState.Default(), customFormState: SearchableInfiniteStreamState<Department>().Default("", PersonApi.getDepartments()) },
+//       address: { commonFormState: CommonFormState.Default(), customFormState:  AddressFormState.Default() }
+//     }
+//   })
+// };
 

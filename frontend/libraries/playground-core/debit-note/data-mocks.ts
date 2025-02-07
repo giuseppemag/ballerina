@@ -1,16 +1,12 @@
 import {
   CollectionReference,
-  BoolExpr,
-  Unit,
   InfiniteStreamSources,
   PromiseRepo,
   EnumOptionsSources,
   EntityApis,
-  unit,
   Guid,
   StreamPosition,
   OrderedMapRepo,
-  CollectionSelection,
 } from "ballerina-core";
 import { Range, List, OrderedMap } from "immutable";
 import { v4 } from "uuid";
@@ -24,111 +20,73 @@ import informationCardField from "./enums/config/InformationCardField";
 
 import keyValueFields from "./enums/config/KeyValueFields";
 
-const filterGroupOpEnum: Array<[CollectionReference, BoolExpr<Unit>]> = [
-  [CollectionReference.Default("and", "and"), BoolExpr.Default.true()],
-  [CollectionReference.Default("or", "or"), BoolExpr.Default.true()],
+const filterGroupOpEnum: Array<{Value: string}> = [
+  { Value: "and"},
+  { Value: "or" }
 ];
 
-const contextEnum: Array<[CollectionReference, BoolExpr<Unit>]> = [
-  [CollectionReference.Default("invoice", "invoice"), BoolExpr.Default.true()],
-  [CollectionReference.Default("invoicePosition", "invoicePosition"), BoolExpr.Default.true()],
-  [
-    CollectionReference.Default("accountingPosition", "accountingPosition"),
-    BoolExpr.Default.true(),
-  ],
-  [
-    CollectionReference.Default("additionalCostPosition", "additionalCostPosition"),
-    BoolExpr.Default.true(),
-  ],
-  [CollectionReference.Default("purchaseOrder", "purchaseOrder"), BoolExpr.Default.true()],
-  [
-    CollectionReference.Default("purchaseOrderPosition", "purchaseOrderPosition"),
-    BoolExpr.Default.true(),
-  ],
-  [CollectionReference.Default("deliveryNote", "deliveryNote"), BoolExpr.Default.true()],
-  [
-    CollectionReference.Default("deliveryNotePosition", "deliveryNotePosition"),
-    BoolExpr.Default.true(),
-  ],
-  [CollectionReference.Default("orderConfirmation", "orderConfirmation"), BoolExpr.Default.true()],
-  [
-    CollectionReference.Default("orderConfirmationPosition", "orderConfirmationPosition"),
-    BoolExpr.Default.true(),
-  ],
-  [CollectionReference.Default("surcharge", "surcharge"), BoolExpr.Default.true()],
-  [CollectionReference.Default("header", "header"), BoolExpr.Default.true()],
-  [CollectionReference.Default("position", "position"), BoolExpr.Default.true()],
-  [
-    CollectionReference.Default("purchaseRequisition", "purchaseRequisition"),
-    BoolExpr.Default.true(),
-  ],
-  [CollectionReference.Default("anyPosition", "anyPosition"), BoolExpr.Default.true()],
-  [CollectionReference.Default("paymentAdvice", "paymentAdvice"), BoolExpr.Default.true()],
-  [
-    CollectionReference.Default("paymentAdvicePosition", "paymentAdvicePosition"),
-    BoolExpr.Default.true(),
-  ],
-  [
-    CollectionReference.Default("supplierPurchaseOrder", "supplierPurchaseOrder"),
-    BoolExpr.Default.true(),
-  ],
-  [
-    CollectionReference.Default("supplierPurchaseOrderPosition", "supplierPurchaseOrderPosition"),
-    BoolExpr.Default.true(),
-  ],
-  [CollectionReference.Default("allPositions", "allPositions"), BoolExpr.Default.true()],
-  [CollectionReference.Default("debitNote", "debitNote"), BoolExpr.Default.true()],
-  [CollectionReference.Default("debitNotePosition", "debitNotePosition"), BoolExpr.Default.true()],
+const contextEnum: Array<{Value: string}> = [
+  {Value: "invoice"},
+  {Value: "invoicePosition"},
+  {Value: "accountingPosition"},
+  {Value: "additionalCostPosition"},
+  {Value: "purchaseOrder"},
+  {Value: "purchaseOrderPosition"},
+  {Value: "deliveryNote"},
+  {Value: "deliveryNotePosition"},
+  {Value: "orderConfirmation"},
+  {Value: "orderConfirmationPosition"},
+  {Value: "surcharge"},
+  {Value: "header"},
+  {Value: "position"},
+  {Value: "purchaseRequisition"},
+  {Value: "anyPosition"},
+  {Value: "paymentAdvice"},
+  {Value: "paymentAdvicePosition"},
+  {Value: "supplierPurchaseOrder"},
+  {Value: "supplierPurchaseOrderPosition"},
+  {Value: "allPositions"},
+  {Value: "debitNote"},
+  {Value: "debitNotePosition"},
 ];
 
-const filtersOpEnum: Array<[CollectionReference, BoolExpr<Unit>]> = [
-  [CollectionReference.Default("eq", "eq"), BoolExpr.Default.true()],
-  [CollectionReference.Default("neq", "neq"), BoolExpr.Default.true()],
-  [CollectionReference.Default("gt", "gt"), BoolExpr.Default.true()],
-  [CollectionReference.Default("gte", "gte"), BoolExpr.Default.true()],
-  [CollectionReference.Default("lt", "lt"), BoolExpr.Default.true()],
-  [CollectionReference.Default("lte", "lte"), BoolExpr.Default.true()],
-  [CollectionReference.Default("contains", "contains"), BoolExpr.Default.true()],
-  [CollectionReference.Default("notContains", "notContains"), BoolExpr.Default.true()],
-  [CollectionReference.Default("match", "match"), BoolExpr.Default.true()],
-  [CollectionReference.Default("notMatch", "notMatch"), BoolExpr.Default.true()],
-  [CollectionReference.Default("isNull", "isNull"), BoolExpr.Default.true()],
-  [CollectionReference.Default("isNotNull", "isNotNull"), BoolExpr.Default.true()],
-  [
-    CollectionReference.Default("groupedDataContains", "groupedDataContains"),
-    BoolExpr.Default.true(),
-  ],
-  [
-    CollectionReference.Default("groupedDataNotContains", "groupedDataNotContains"),
-    BoolExpr.Default.true(),
-  ],
-  [
-    CollectionReference.Default("groupedDataContainsPrefix", "groupedDataContainsPrefix"),
-    BoolExpr.Default.true(),
-  ],
-  [
-    CollectionReference.Default("groupedDataNotContainsPrefix", "groupedDataNotContainsPrefix"),
-    BoolExpr.Default.true(),
-  ],
+const filtersOpEnum: Array<{Value: string}> = [
+  {Value: "eq"},
+  {Value: "neq"},
+  {Value: "gt"},
+  {Value: "gte"},
+  {Value: "lt"},
+  {Value: "lte"},
+  {Value: "contains"},
+  {Value: "notContains"},
+  {Value: "match"},
+  {Value: "notMatch"},
+  {Value: "isNull"},
+  {Value: "isNotNull"},
+  {Value: "groupedDataContai"},
+  {Value: "groupedDataNotContai"},
+  {Value: "groupedDataContainsPref"},
+  {Value: "groupedDataNotContainsPref"},
 ];
 
-const filtersValueAnyOfEnum: Array<[CollectionReference, BoolExpr<Unit>]> = [
-  [CollectionReference.Default("string", "string"), BoolExpr.Default.true()],
-  [CollectionReference.Default("number", "number"), BoolExpr.Default.true()],
-  [CollectionReference.Default("date-time", "date-time"), BoolExpr.Default.true()],
-  [CollectionReference.Default("boolean", "boolean"), BoolExpr.Default.true()],
+const filtersValueAnyOfEnum: Array<{Value: string}> = [
+  {Value: "string"},
+  {Value: "number"},
+  {Value: "date-time"},
+  {Value: "boolean"},
 ];
 
 const streamApis: InfiniteStreamSources = (streamName: string) => {
   switch (streamName) {
     case "requiredKeyValueField":
       return (_searchText: string) => (_streamPosition: [StreamPosition]) => {
-        const mapped = OrderedMapRepo.Default.fromSmallIdentifiables(
+        const mapped = OrderedMapRepo.Default.fromIdentifiables(
           Range(0, 20)
             .map(() =>
               CollectionReference.Default(
                 v4(),
-                _searchText + faker.company.buzzNoun() + " required key-value fields"
+                _searchText + faker.company.buzzNoun() + " required key-value fields",
+                "stream"
               )
             )
             .toArray()
@@ -153,52 +111,52 @@ const streamApis: InfiniteStreamSources = (streamName: string) => {
 const enumApis: EnumOptionsSources = (enumName: string) => {
   switch (enumName) {
     case "requiredKeyValueFieldsEnum": {
-      return () => PromiseRepo.Default.mock(() => keyValueFields);
+      return () => PromiseRepo.Default.mock(() => keyValueFields).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
     }
     case "highConfidenceKeyValueFieldsEnum": {
-      return () => PromiseRepo.Default.mock(() => keyValueFields);
+      return () => PromiseRepo.Default.mock(() => keyValueFields).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
     }
     case "documentNumberDefaultingsFromKeyValueEnum": {
-      return () => PromiseRepo.Default.mock(() => keyValueFields);
+      return () => PromiseRepo.Default.mock(() => keyValueFields).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
     }
     case "documentDateDefaultingsFromKeyValueEnum": {
-      return () => PromiseRepo.Default.mock(() => keyValueFields);
+      return () => PromiseRepo.Default.mock(() => keyValueFields).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
     }
     case "configurableNumberDefaultingsFromKeyValueEnum": {
-      return () => PromiseRepo.Default.mock(() => keyValueFields);
+      return () => PromiseRepo.Default.mock(() => keyValueFields).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
     }
     case "configurableNumber2DefaultingsFromKeyValueEnum": {
-      return () => PromiseRepo.Default.mock(() => keyValueFields);
+      return () => PromiseRepo.Default.mock(() => keyValueFields).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
     }
     case "informationKeysEnum": {
-      return () => PromiseRepo.Default.mock(() => keyValueFields);
+      return () => PromiseRepo.Default.mock(() => keyValueFields).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
     }
     case "informationKeysDisabledEnum": {
-      return () => PromiseRepo.Default.mock(() => keyValueFields);
+      return () => PromiseRepo.Default.mock(() => keyValueFields).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
     }
     case "contextEnum": {
-      return () => PromiseRepo.Default.mock(() => contextEnum);
+      return () => PromiseRepo.Default.mock(() => contextEnum).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
     }
     case "filterGroupOpEnum": {
-      return () => PromiseRepo.Default.mock(() => filterGroupOpEnum);
+      return () => PromiseRepo.Default.mock(() => filterGroupOpEnum).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
     }
     case "accountingPositionFieldsEnum": {
-      return () => PromiseRepo.Default.mock(() => accountingPositionFields);
+      return () => PromiseRepo.Default.mock(() => accountingPositionFields).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
     }
     case "filtersOpEnum": {
-      return () => PromiseRepo.Default.mock(() => filtersOpEnum);
+      return () => PromiseRepo.Default.mock(() => filtersOpEnum).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
     }
     case "informationCardFieldsEnum": {
-      return () => PromiseRepo.Default.mock(() => informationCardField);
+      return () => PromiseRepo.Default.mock(() => informationCardField).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
     }
     case "informationCardFieldsDisabledEnum": {
-      return () => PromiseRepo.Default.mock(() => informationCardField);
+      return () => PromiseRepo.Default.mock(() => informationCardField).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
     }
     case "debitNoteResultFieldsEnum": {
-      return () => PromiseRepo.Default.mock(() => debitNoteResultFields);
+      return () => PromiseRepo.Default.mock(() => debitNoteResultFields).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
     }
     case "filtersValueAnyOfEnum": {
-      return () => PromiseRepo.Default.mock(() => filtersValueAnyOfEnum);
+      return () => PromiseRepo.Default.mock(() => filtersValueAnyOfEnum).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
     }
     default: {
       alert(`Cannot find enum API ${enumName}`);

@@ -93,9 +93,9 @@ export const InfiniteMultiselectDropdownForm = <Element extends CollectionRefere
           ),
         toggleSelection: element =>
           props.foreignMutations.onChange(
-            props.context.value.has(element.id) ?
-              OrderedMapRepo.Updaters.remove(element.id) :
-              OrderedMapRepo.Updaters.set(element.id, element),
+            props.context.value.has(element.Id) ?
+              OrderedMapRepo.Updaters.remove(element.Id) :
+              OrderedMapRepo.Updaters.set(element.Id, element),
             List()),
       }}
     />
