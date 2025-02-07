@@ -52,7 +52,7 @@ export const RawFieldType = {
   isSingleSelection: <T>(_: RawFieldType<T>): _ is {fun: "SingleSelection", args: Array<RawFieldType<T>>} => RawFieldType.isApplication(_) && _.fun == "SingleSelection" && _.args.length == 1,
   isMultiSelection: <T>(_: RawFieldType<T>): _ is {fun: "MultiSelection", args: Array<RawFieldType<T>>} => RawFieldType.isApplication(_) && _.fun == "MultiSelection" && _.args.length == 1,
   isUnionCase: <T>(_: RawFieldType<T>): _ is {case: string, fields: object} => typeof _ == "object" && "case" in _ && "fields" in _,
-  isUnion: <T>(_: RawFieldType<T>): _ is {fun: "Union", args: Array<{case: string, fields: object}>} => hasFun(_) && isGenericType(_.fun) && hasArgs(_) && _.fun == "Union" && _.args.length > 1 && _.args.every(__ => typeof __ == "object" && "case" in __ && "fields" in __),
+  isUnion: <T>(_: RawFieldType<T>): _ is {fun: "Union", args: Array<{case: string, fields: object}>} => hasFun(_) && isGenericType(_.fun) && hasArgs(_) && _.fun == "Union" && _.args.length > 0 ? _.args.every(__ => typeof __ == "object" && "case" in __ && "fields" in __) : true,
   isForm: <T>(_: RawFieldType<T>): _ is {fields: Object} => typeof _ == "object" && "fields" in _ && isObject(_.fields),
 }
 
