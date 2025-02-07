@@ -438,7 +438,7 @@
         },
         "gender": {
           "label": "gender",
-          "renderer": "defaultEnum",
+          "renderer": "defaultStream",
           "options": "genders",
           "visible": {
             "kind": "or",

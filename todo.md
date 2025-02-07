@@ -19,8 +19,9 @@ Todo (✅/❌)
       ❌ parse the JSON into the representation forms
         ✅ make all nested renderers properly recurrent in structure
         ✅ fully align visibility predicate syntax to Expr
-        ❌ parse fields
-          ❌ parse nested (ListElement, Key, Value, etc.) renderers as a structure, not a string for consistency
+        ✅ parse fields
+          ✅ parse nested (ListElement, Key, Value, etc.) renderers as a structure, not a string for consistency
+        ❌ the parsing of enums and streams needs further disambiguation
         ❌ parse visibility and disabled predicates
         ❌ parse tabs, columns, groups
       ❌ parse the JSON into the representation launchers
@@ -30,6 +31,7 @@ Todo (✅/❌)
           ❌ `flag` values come from some type in the config (ideally imported)
             ❌ needs an entity API with GET
             ❌ needs to be specified in the launcher
+      ❌ there are unparsed placeholders for the labels and tooltips
       ✅ delete the sample parsed form
       ✅ `let injectedTypes = []` should come from `codegenConfig.Custom`
       ❌ type names and enum case names should be valid names (verified at codegen time)
@@ -61,6 +63,9 @@ Todo (✅/❌)
         ❌ ORM, advanced types, advanced type inference, monads
     ❌ check the consistency of the used data structures: `Type` vs `TypeId`
     ❌ convert all instances of Map.tryFind ... withError ... to `Map.tryFindWithError`
+    ❌ `Map.tryFindWithError streamName "streams" streamName |> state.OfSum` should just be `findStream`
+      ❌ adjust all others
+    ❌ adjust all patterns like `|> Seq.tryFind (fst >> (=) "stream") |> Option.map snd` to `JsonValue.tryFindField`
     ❌ accept empty `apis` blocks
     ❌ make ExprType.resolveLookup recursive
     ❌ the tool is now complete and its code is clean

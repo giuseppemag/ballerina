@@ -43,7 +43,7 @@ and CodegenConfigTypeDef = {
   GeneratedTypeName: string
   RequiredImport:Option<string>
   SupportedRenderers:Set<string>
-}    
+}
 
 type CrudMethod = Create | Get | Update | Default
 type FormLauncherId = { LauncherName:string; LauncherId:Guid }
@@ -89,10 +89,23 @@ and Renderer =
   | ListRenderer of {| List:Renderer; Element:NestedRenderer |}
   | EnumRenderer of EnumApiId * Renderer
   | StreamRenderer of StreamApiId * Renderer
-  | FormRenderer of FormConfigId
+  | FormRenderer of FormConfigId * ExprType
 and NestedRenderer = { Label:Option<string>; Tooltip:Option<string>; Renderer:Renderer; Visible:Expr; Disabled:Option<Expr> }
 and PrimitiveRendererId = { PrimitiveRendererName:string; PrimitiveRendererId:Guid }
 and PrimitiveRenderer = { PrimitiveRendererName:string; PrimitiveRendererId:Guid; Type:ExprType } with static member ToPrimitiveRendererId (r:PrimitiveRenderer) = { PrimitiveRendererName=r.PrimitiveRendererName; PrimitiveRendererId=r.PrimitiveRendererId }
+
+type NestedRenderer with
+  member self.Type = self.Renderer.Type
+and Renderer with
+  member self.Type = 
+    match self with
+    | PrimitiveRenderer p -> p.Type
+    | MapRenderer r -> ExprType.MapType(r.Key.Type, r.Value.Type)
+    | ListRenderer r -> ExprType.ListType r.Element.Type
+    | EnumRenderer (_,r) | StreamRenderer (_,r) -> r.Type
+    | FormRenderer (_,t) -> t
+    | _ -> failwith ""
+
 
 let inline extractTypes<'k, 'v when 'v : (static member Type : 'v -> TypeId) and 'k : comparison> (m:Map<'k, 'v>) =
   m |> Map.values |> Seq.map(fun e -> e |> 'v.Type |> Set.singleton) |> Seq.fold (+) Set.empty
@@ -136,7 +149,7 @@ and Renderer with
     match fr with
     | Renderer.EnumRenderer(e,f) -> 
       (ctx.Apis.Enums |> Map.tryFindWithError e.EnumName "enum" e.EnumName |> Sum.map (EnumApi.Type >> Set.singleton)) + !f
-    | Renderer.FormRenderer f ->
+    | Renderer.FormRenderer (f,_) ->
       sum{ 
         let! f = ctx.Forms |> Map.tryFindWithError f.FormName "form" f.FormName
         return! f |> FormConfig.GetTypesFreeVars ctx
@@ -157,7 +170,7 @@ and Renderer with
         let! enumType = ctx.Types |> Map.tryFindWithError enum.TypeId.TypeName "enum type" enum.EnumName
         let! enumRendererType = !enumRenderer
         return ExprType.Substitute (Map.empty |> Map.add { VarName="a1" } enumType.Type) enumRendererType
-      | Renderer.FormRenderer f ->
+      | Renderer.FormRenderer (f,_) ->
         let! f = ctx.Forms |> Map.tryFindWithError f.FormName "form" f.FormName
         let! formType = ctx.Types |> Map.tryFindWithError f.TypeId.TypeName "form type" f.FormName
         return formType.Type
@@ -245,73 +258,81 @@ type FormApis with
     extractTypes fa.Enums + extractTypes fa.Streams + extractTypes (fa.Entities |> Map.map (fun _ -> fst))
 
 type Renderer with
-  static member parse (parentJson:JsonValue) (json:JsonValue) : State<Renderer,CodeGenConfig,ParsedFormsContext,Errors> =
+  static member parse (parentJsonFields:(string*JsonValue)[]) (json:JsonValue) : State<Renderer,CodeGenConfig,ParsedFormsContext,Errors> =
     state{
-      // "renderer": "defaultCategory",
-      // "renderer": "defaultString",
-      // {
-      //   "renderer": "defaultInfiniteStream",
-      //   "stream": "cities",
-      //   "visible": {
-      //     "kind": "true"
-      //   }
-      // }
-      // "gender": {
-      //   "label": "gender",
-      //   "renderer": "defaultEnum",
-      //   "options": "genders",
-      // "dependants": {
-      //   "label": "dependants",
-      //   "renderer": "defaultMap",
-      //   "tooltip": "someone who depends on you",
-      //   "keyRenderer": {
-      //     "label": "name",
-      //     "tooltip": "their name",
-      //     "renderer": "defaultString",
-      //     "visible": {
-      //       "kind": "true"
-      //     }
-      //   },
-      //   "valueRenderer": {
-      //     "label": "category",
-      //     "tooltip": "their category",
-      //     "renderer": "defaultCategory",
-      //     "visible": {
-      //       "kind": "true"
-      //     }
-      //   },
-      //   "visible": {
-      //     "kind": "true"
-      //   }
-      // },
-      // "relatives": {
-      //   "label": "relatives",
-      //   "tooltip": "someone who you are related to",
-      //   "renderer": "defaultList",
-      //   "elementRenderer": {
-      //     "label": "one relative",
-      //     "tooltip": "relative",
-      //     "renderer": "defaultCategory",
-      //     "visible": {
-      //       "kind": "true"
-      //     }
-      //   },
-      //   "visible": {
-      //     "kind": "true"
-      //   }
-      // },
-      // check the renderer: if it's a primitive or a built-in, assign it and done
-      // if it's an enum, look up the options from the parent config
-      // if it's a stream, look up the stream from the parent config
-      // if it's a list or a set, find the ElementRenderer in the parent config, call ElementRenderer.parse on that
-      // if it's a map, find the KeyRenderer in the parent config, call KeyRenderer.parse on that, do the same for ValueRenderer
-      return PrimitiveRenderer { PrimitiveRendererName="TODO parse - placeholder"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.UnitType }
+      let! config = state.GetContext()
+      let! formsState = state.GetState()
+      match json with
+      | JsonValue.String s ->
+        if config.Bool.SupportedRenderers |> Set.contains s then
+          return PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.BoolType }
+        elif config.Date.SupportedRenderers |> Set.contains s then
+          return PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.DateOnlyType }
+        elif config.Guid.SupportedRenderers |> Set.contains s then
+          return PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.GuidType }
+        elif config.Int.SupportedRenderers |> Set.contains s then
+          return PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.IntType }
+        elif config.String.SupportedRenderers |> Set.contains s then
+          return PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.StringType }
+        elif config.Option.SupportedRenderers |> Set.contains s || config.Set.SupportedRenderers |> Set.contains s then
+          let containerTypeConstructor = if config.Option.SupportedRenderers |> Set.contains s then ExprType.OptionType else ExprType.SetType
+          match parentJsonFields |> Seq.tryFind (fst >> (=) "stream") |> Option.map snd with
+          | Some(JsonValue.String streamName) ->
+            let! stream = formsState.Apis.Streams |> Map.tryFindWithError streamName "streams" streamName |> state.OfSum
+            let! streamType = formsState.Types |> Map.tryFindWithError stream.TypeId.TypeName "types" stream.TypeId.TypeName |> state.OfSum
+            return StreamRenderer (stream |> StreamApi.Id, PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=containerTypeConstructor(streamType.Type)  })
+          | _ ->          
+            match parentJsonFields |> Seq.tryFind (fst >> (=) "options") |> Option.map snd with
+            | Some(JsonValue.String enumName) ->
+              let! enum = formsState.Apis.Enums |> Map.tryFindWithError enumName "enums" enumName |> state.OfSum
+              let! enumType = formsState.Types |> Map.tryFindWithError enum.TypeId.TypeName "types" enum.TypeId.TypeName |> state.OfSum
+              return EnumRenderer (enum |> EnumApi.Id, PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=containerTypeConstructor(enumType.Type)  })
+            | _ ->          
+              return! state.Throw($$"""Not implemented Option renderer for {{json}}""" |> Errors.Singleton)
+        elif config.Map.SupportedRenderers |> Set.contains s then
+          match parentJsonFields |> Seq.tryFind (fst >> (=) "keyRenderer") |> Option.map snd, parentJsonFields |> Seq.tryFind (fst >> (=) "valueRenderer") |> Option.map snd with
+          | Some keyRendererJson, Some valueRendererJson ->
+            let! keyRenderer = NestedRenderer.parse keyRendererJson
+            let! valueRenderer = NestedRenderer.parse valueRendererJson
+            return MapRenderer {| Map=PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.MapType(keyRenderer.Renderer.Type, valueRenderer.Renderer.Type)  }; Key=keyRenderer; Value=valueRenderer |}
+          | _ ->          
+            return! state.Throw($$"""Error: Map renderers need both `keyRenderer` and `valueRenderer` in {{parentJsonFields}}""" |> Errors.Singleton)
+        elif config.List.SupportedRenderers |> Set.contains s then
+          match parentJsonFields |> Seq.tryFind (fst >> (=) "elementRenderer") |> Option.map snd with
+          | Some elementRendererJson ->
+            let! elementRenderer = NestedRenderer.parse elementRendererJson
+            return ListRenderer {| List=PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.ListType elementRenderer.Renderer.Type  }; Element=elementRenderer |}
+          | _ ->          
+            return! state.Throw($$"""Error: Map renderers need both `keyRenderer` and `valueRenderer` in {{parentJsonFields}}""" |> Errors.Singleton)
+        else
+          match config.Custom |> Seq.tryFind (fun c -> c.Value.SupportedRenderers |> Set.contains s) with
+          | Some c -> 
+            let! t = formsState.Types |> Map.tryFindWithError c.Key "types" c.Key |> state.OfSum
+            return PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=t.Type }
+          | _ -> 
+            match formsState.Forms |> Map.tryFind s with
+            | Some form -> 
+              let! formType = formsState.Types |> Map.tryFindWithError form.TypeId.TypeName "types" form.TypeId.TypeName |> state.OfSum
+              return FormRenderer (form |> FormConfig.Id, formType.Type)
+            | _ -> 
+              return! state.Throw($$"""Error: invalid renderer {{json}}""" |> Errors.Singleton)
+      | _ -> 
+        return! state.Throw($$"""Error: invalid renderer {{json}}""" |> Errors.Singleton)
     }
 
 and NestedRenderer with
   static member parse (json:JsonValue) : State<NestedRenderer,CodeGenConfig,ParsedFormsContext,Errors> =
     state{
-      return { Label=Some "TODO: placeholder value renderer"; Tooltip=None; Renderer=PrimitiveRenderer { PrimitiveRendererName="TODO parse - placeholder"; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.UnitType }; Visible=Expr.Value <| Value.ConstString "TODO: placeholder"; Disabled=None }
+      match json with
+      | JsonValue.Record jsonFields ->
+        match jsonFields |> Seq.tryFind (fst >> (=) "renderer") |> Option.map snd with
+        | Some rendererJson ->
+          let! renderer = Renderer.parse jsonFields rendererJson
+          return { Label=Some "TODO: placeholder label nested renderer"; Tooltip=Some "TODO: placeholder tooltip nested renderer"; Renderer=renderer; Visible=Expr.Value <| Value.ConstString "TODO: placeholder"; Disabled=None }
+        | _ ->
+          return! state.Throw($$"""Error: expected a record with field 'renderer'. Instead found {{json}}.""" |> Errors.Singleton)      
+      | _ -> 
+        return! state.Throw($$"""Error: expected a record with field 'renderer'. Instead found {{json}}.""" |> Errors.Singleton)
     }
 
 type String with
@@ -334,7 +355,7 @@ type FieldConfig with
         | None -> 
           return! state.Throw($$"""Error: a field config must have a 'renderer' field. Found {{fields}}.""" |> Errors.Singleton)
         | Some rendererJson ->
-          let! renderer = Renderer.parse json rendererJson
+          let! renderer = Renderer.parse fields rendererJson
           return { 
             FieldName=fieldName; FieldId=Guid.CreateVersion7(); Label= label; Tooltip=tooltip; Renderer=renderer; 
             Visible=Expr.Value <| Value.ConstString "TODO: placeholder string in field config"; Disabled=None 

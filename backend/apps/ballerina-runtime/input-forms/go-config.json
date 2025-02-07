@@ -10,6 +10,6 @@
   "List":{ "GeneratedTypeName": "ballerina.Array", "RequiredImport": "ballerina.com/core", "SupportedRenderers": ["defaultList"], "MappingFunction":"ballerina.MapArray" },
   "Map":{ "GeneratedTypeName": "ballerina.Map", "RequiredImport": "ballerina.com/core", "SupportedRenderers": ["defaultMap"] },
   "Custom": {
-    "injectedCategory": { "GeneratedTypeName": "ballerina.Unit", "RequiredImport": "ballerina.com/core", "SupportedRenderers": [ "defaultInjectedCategory" ] }
+    "injectedCategory": { "GeneratedTypeName": "ballerina.Unit", "RequiredImport": "ballerina.com/core", "SupportedRenderers": [ "defaultCategory" ] }
   }
 }
