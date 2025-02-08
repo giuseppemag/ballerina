@@ -26,10 +26,10 @@ type CodeGenConfig = {
   Date:CodegenConfigTypeDef
   Guid:CodegenConfigTypeDef
   Unit:CodegenConfigTypeDef
-  Option:CodegenConfigTypeDef
+  Option:EnumStreamCodegenConfigTypeDef
+  Set:EnumStreamCodegenConfigTypeDef
   List:CodegenConfigListDef
   Map:CodegenConfigTypeDef
-  Set:CodegenConfigTypeDef
   Custom:Map<string, CodegenConfigTypeDef>
 }
 and GenericType = Option | List | Set | Map
@@ -43,6 +43,11 @@ and CodegenConfigTypeDef = {
   GeneratedTypeName: string
   RequiredImport:Option<string>
   SupportedRenderers:Set<string>
+}
+and EnumStreamCodegenConfigTypeDef = {
+  GeneratedTypeName: string
+  RequiredImport:Option<string>
+  SupportedRenderers:{| Enum:Set<string>; Stream:Set<string> |}
 }
 
 type CrudMethod = Create | Get | Update | Default
@@ -104,7 +109,6 @@ and Renderer with
     | ListRenderer r -> ExprType.ListType r.Element.Type
     | EnumRenderer (_,r) | StreamRenderer (_,r) -> r.Type
     | FormRenderer (_,t) -> t
-    | _ -> failwith ""
 
 
 let inline extractTypes<'k, 'v when 'v : (static member Type : 'v -> TypeId) and 'k : comparison> (m:Map<'k, 'v>) =
@@ -274,21 +278,24 @@ type Renderer with
           return PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.IntType }
         elif config.String.SupportedRenderers |> Set.contains s then
           return PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.StringType }
-        elif config.Option.SupportedRenderers |> Set.contains s || config.Set.SupportedRenderers |> Set.contains s then
-          let containerTypeConstructor = if config.Option.SupportedRenderers |> Set.contains s then ExprType.OptionType else ExprType.SetType
+        elif config.Option.SupportedRenderers.Enum |> Set.contains s || config.Set.SupportedRenderers.Enum |> Set.contains s then
+          let containerTypeConstructor = if config.Option.SupportedRenderers.Enum |> Set.contains s then ExprType.OptionType else ExprType.SetType
+          match parentJsonFields |> Seq.tryFind (fst >> (=) "options") |> Option.map snd with
+          | Some(JsonValue.String enumName) ->
+            let! enum = formsState.Apis.Enums |> Map.tryFindWithError enumName "enums" enumName |> state.OfSum
+            let! enumType = formsState.Types |> Map.tryFindWithError enum.TypeId.TypeName "types" enum.TypeId.TypeName |> state.OfSum
+            return EnumRenderer (enum |> EnumApi.Id, PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=containerTypeConstructor(enumType.Type)  })
+          | _ ->          
+            return! state.Throw($$"""Error: invalid enum renderer {{json}} (the 'options' property is missing)""" |> Errors.Singleton)
+        elif config.Option.SupportedRenderers.Stream |> Set.contains s || config.Set.SupportedRenderers.Stream |> Set.contains s then
+          let containerTypeConstructor = if config.Option.SupportedRenderers.Stream |> Set.contains s then ExprType.OptionType else ExprType.SetType
           match parentJsonFields |> Seq.tryFind (fst >> (=) "stream") |> Option.map snd with
           | Some(JsonValue.String streamName) ->
             let! stream = formsState.Apis.Streams |> Map.tryFindWithError streamName "streams" streamName |> state.OfSum
             let! streamType = formsState.Types |> Map.tryFindWithError stream.TypeId.TypeName "types" stream.TypeId.TypeName |> state.OfSum
             return StreamRenderer (stream |> StreamApi.Id, PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=containerTypeConstructor(streamType.Type)  })
           | _ ->          
-            match parentJsonFields |> Seq.tryFind (fst >> (=) "options") |> Option.map snd with
-            | Some(JsonValue.String enumName) ->
-              let! enum = formsState.Apis.Enums |> Map.tryFindWithError enumName "enums" enumName |> state.OfSum
-              let! enumType = formsState.Types |> Map.tryFindWithError enum.TypeId.TypeName "types" enum.TypeId.TypeName |> state.OfSum
-              return EnumRenderer (enum |> EnumApi.Id, PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=containerTypeConstructor(enumType.Type)  })
-            | _ ->          
-              return! state.Throw($$"""Not implemented Option renderer for {{json}}""" |> Errors.Singleton)
+            return! state.Throw($$"""Error: invalid stream renderer for {{json}} (the 'stream' property is missing)""" |> Errors.Singleton)
         elif config.Map.SupportedRenderers |> Set.contains s then
           match parentJsonFields |> Seq.tryFind (fst >> (=) "keyRenderer") |> Option.map snd, parentJsonFields |> Seq.tryFind (fst >> (=) "valueRenderer") |> Option.map snd with
           | Some keyRendererJson, Some valueRendererJson ->
@@ -458,7 +465,7 @@ type ExprType with
   static member ToGolangTypeAnnotation (t:ExprType) : State<string, CodeGenConfig, GoCodeGenState, Errors> =
     let (!) = ExprType.ToGolangTypeAnnotation
     let error = sum.Throw(sprintf "Error: cannot generate type annotation for type %A" t |> Errors.Singleton) |> state.OfSum
-    let registerImportAndReturn t = 
+    let registerImportAndReturn (t:CodegenConfigTypeDef) = 
       state{
         do! t.RequiredImport |> Option.toList |> Set.ofList |> Set.union |> GoCodeGenState.Updaters.UsedImports |> state.SetState
         return t.GeneratedTypeName
@@ -976,6 +983,7 @@ type FormsGenTarget =
 | golang = 2
 
 open System.CommandLine
+open System.Text.RegularExpressions
 
 let formsOptions = {|
   mode = new Option<bool>(name= "-validate", description= "Type check the given forms config.");

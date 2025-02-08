@@ -21,8 +21,41 @@ Todo (✅/❌)
         ✅ fully align visibility predicate syntax to Expr
         ✅ parse fields
           ✅ parse nested (ListElement, Key, Value, etc.) renderers as a structure, not a string for consistency
-        ❌ the parsing of enums and streams needs further disambiguation
+        ✅ the parsing of enums and streams needs further disambiguation
         ❌ parse visibility and disabled predicates
+```
+          "visible": {
+            "kind": "or",
+            "operands": [
+              {
+                "kind": "fieldLookup",
+                "operands": [
+                  {
+                    "kind": "varLookup",
+                    "varName": "global"
+                  },
+                  "IsAdmin"
+                ]
+              },
+              {
+                "kind": "isCase",
+                "operands": [
+                  {
+                    "kind": "fieldLookup",
+                    "operands": [
+                      {
+                        "kind": "varLookup",
+                        "varName": "global"
+                      },
+                      "ERP"
+                    ]
+                  },
+                  "SAP"
+                ]
+              }
+            ]
+          }
+```        
         ❌ parse tabs, columns, groups
       ❌ parse the JSON into the representation launchers
         ❌ type-check the form instances' `visible` and `disabled` predicates when validating launchers
@@ -32,10 +65,12 @@ Todo (✅/❌)
             ❌ needs an entity API with GET
             ❌ needs to be specified in the launcher
       ❌ there are unparsed placeholders for the labels and tooltips
+      ❌ build a TS prototype of the predicates parser and interpreter
       ✅ delete the sample parsed form
       ✅ `let injectedTypes = []` should come from `codegenConfig.Custom`
       ❌ type names and enum case names should be valid names (verified at codegen time)
-        ❌ enum case names can be cleanup, at least wrt patterns like ":" in the variable name (the string value is fine)
+        ❌ enum case names can be cleaned up, at least wrt patterns like ":" in the variable name (the string value is fine)
+        ❌ `Regex.Replace(original, @"[^a-zA-Z0-9/-]+", "_")`
       ❌ define `import` command, generate with some sort of linking strategy for shared files
       ❌ improve the generated whitespace
       ❌ the functionality of the validator is now mature

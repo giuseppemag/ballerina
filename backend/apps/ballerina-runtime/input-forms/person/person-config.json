@@ -438,7 +438,7 @@
         },
         "gender": {
           "label": "gender",
-          "renderer": "defaultStream",
+          "renderer": "defaultInfiniteStream",
           "options": "genders",
           "visible": {
             "kind": "or",
@@ -454,7 +454,7 @@
                 ]
               },
               {
-                "kind": "equals",
+                "kind": "isCase",
                 "operands": [
                   {
                     "kind": "fieldLookup",
@@ -466,13 +466,7 @@
                       "ERP"
                     ]
                   },
-                  {
-                    "kind": "cons",
-                    "value": {
-                      "case": "SAP",
-                      "fields": {}
-                    }
-                  }
+                  "SAP"
                 ]
               }
             ]
@@ -551,13 +545,14 @@
           "renderer": "defaultEnumMultiselect",
           "options": "interests",
           "visible": {
-            "kind": "leaf",
-            "operation": "field",
-            "arguments": {
-              "location": "local",
-              "field": "subscribeToNewsletter",
-              "value": true
-            }
+            "kind": "fieldLookup",
+            "operands": [
+              {
+                "kind": "varLookup",
+                "varName": "root"
+              },
+              "subscribeToNewsletter"
+            ]
           }
         },
         "departments": {
