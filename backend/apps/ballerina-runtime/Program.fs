@@ -12,6 +12,7 @@ open Ballerina.Errors
 open Ballerina.StateWithError
 open Ballerina.SeqStateWithError
 open Ballerina.Collections.Map
+open Ballerina.BusinessRuleTypeChecking
 open System.Text.Json
 open System.Text.Json.Serialization
 
@@ -57,7 +58,7 @@ and EnumStreamCodegenConfigTypeDef = {
 
 type CrudMethod = Create | Get | Update | Default
 type FormLauncherId = { LauncherName:string; LauncherId:Guid }
-and FormLauncher = { LauncherName:string; LauncherId:Guid; Form:FormConfigId; EntityApi:EntityApiId; Mode:FormLauncherMode } with static member Name (l:FormLauncher) : string = l.LauncherName; static member Id (l:FormLauncher) : FormLauncherId = { LauncherName=l.LauncherName; LauncherId=l.LauncherId }
+and FormLauncher = { LauncherName:string; LauncherId:Guid; Form:FormConfigId; EntityApi:EntityApiId; ConfigEntityApi:EntityApiId; Mode:FormLauncherMode } with static member Name (l:FormLauncher) : string = l.LauncherName; static member Id (l:FormLauncher) : FormLauncherId = { LauncherName=l.LauncherName; LauncherId=l.LauncherId }
 and FormLauncherMode = | Create | Edit
 and EnumApiId = { EnumName:string; EnumId:Guid }
 and EnumApi = { EnumName:string; EnumId:Guid; TypeId:TypeId; UnderlyingEnum:TypeId } with static member Id (e:EnumApi) = { EnumName=e.EnumName; EnumId=e.EnumId }; static member Create (n,t,c) : EnumApi = { EnumName=n; TypeId=t; EnumId=Guid.CreateVersion7(); UnderlyingEnum=c }; static member Type (a:EnumApi) : TypeId = a.TypeId
@@ -218,6 +219,16 @@ and FieldConfig with
       | _ ->       
         return! sum.Throw(Errors.Singleton(sprintf "Error: form type %A is not a record type" formType))
     }
+  static member ValidatePredicates (ctx:ParsedFormsContext) (globalType:ExprType) (rootType:ExprType) (localType:ExprType) (fc:FieldConfig) : Sum<Unit, Errors> = 
+    sum{
+      let schema = {
+        tryFindEntity = fun _ -> None
+        tryFindField = fun _ -> None
+      }
+      let vars = [ ("global",globalType);("root",rootType);("local",localType); ] |> Seq.map (VarName.Create <*> id) |> Map.ofSeq
+      let! visibleExprType,_ = Expr.typeCheck (ctx.Types |> Seq.map(fun tb -> tb.Value.TypeId,tb.Value.Type) |> Map.ofSeq) schema vars fc.Visible
+      do! ExprType.Unify Map.empty (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq) visibleExprType (ExprType.PrimitiveType PrimitiveType.BoolType) |> Sum.map ignore
+    }
 
 and FormConfig with
   static member GetTypesFreeVars (ctx:ParsedFormsContext) (fc:FormConfig) : Sum<Set<TypeId>, Errors> = 
@@ -231,7 +242,12 @@ and FormConfig with
   static member Validate (ctx:ParsedFormsContext) (formConfig:FormConfig) : Sum<Unit, Errors> = 
     sum{
       let! formType = ctx.Types |> Map.tryFindWithError formConfig.TypeId.TypeName "form type" formConfig.TypeId.TypeName
-      return! sum.All(formConfig.Fields |> Map.values |> Seq.map (FieldConfig.Validate ctx formType.Type) |> Seq.toList) |> Sum.map ignore
+      do! sum.All(formConfig.Fields |> Map.values |> Seq.map (FieldConfig.Validate ctx formType.Type) |> Seq.toList) |> Sum.map ignore
+    }
+  static member ValidatePredicates (ctx:ParsedFormsContext) (globalType:ExprType) (formConfig:FormConfig) : Sum<Unit, Errors> = 
+    sum{
+      let! formType = ctx.Types |> Map.tryFindWithError formConfig.TypeId.TypeName "form type" formConfig.TypeId.TypeName
+      do! sum.All(formConfig.Fields |> Map.values |> Seq.map (FieldConfig.ValidatePredicates ctx globalType formType.Type formType.Type) |> Seq.toList) |> Sum.map ignore
     }
     
 and FormLauncher with
@@ -248,7 +264,10 @@ and FormLauncher with
       let! formType = ctx.Types |> Map.tryFindWithError formConfig.TypeId.TypeName "form type" formConfig.TypeId.TypeName
       let! entityApi = ctx.Apis.Entities |> Map.tryFindWithError formLauncher.EntityApi.EntityName "entity API" formLauncher.EntityApi.EntityName
       let! entityApiType = ctx.Types |> Map.tryFindWithError (entityApi |> fst).TypeId.TypeName "entity API type" (entityApi |> fst).TypeId.TypeName
+      let! configEntityApi = ctx.Apis.Entities |> Map.tryFindWithError formLauncher.ConfigEntityApi.EntityName "entity API" formLauncher.ConfigEntityApi.EntityName
+      let! configEntityApiType = ctx.Types |> Map.tryFindWithError (configEntityApi |> fst).TypeId.TypeName "config entity API type" (configEntityApi |> fst).TypeId.TypeName
       do! ExprType.Unify Map.empty (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq) formType.Type entityApiType.Type |> Sum.map ignore
+      do! FormConfig.ValidatePredicates ctx configEntityApiType.Type formConfig
       match formLauncher.Mode with
       | FormLauncherMode.Create ->
         if Set.ofList [CrudMethod.Create; CrudMethod.Default] |> Set.isSuperset (entityApi |> snd) then
@@ -260,6 +279,23 @@ and FormLauncher with
           return ()
         else
           return! sum.Throw(Errors.Singleton(sprintf "Error in launcher %A: entity APIs for 'edit' launchers need at least methods GET and UPDATE, found %A" formLauncher.LauncherName (entityApi |> snd)))
+    }
+  static member parse (json:JsonValue) : State<_, CodeGenConfig, ParsedFormsContext, Errors> =
+    let error = $$"""Error: invalid launcher {{json}}.""" |> Errors.Singleton |> state.Throw
+    state{
+      match json with
+      | JsonValue.Record launcherFields ->
+        match launcherFields |> Utils.tryFindField "kind",launcherFields |> Utils.tryFindField "api",launcherFields |> Utils.tryFindField "form",launcherFields |> Utils.tryFindField "configApi" with
+        | Some(JsonValue.String kind), Some(JsonValue.String entityApiName), Some(JsonValue.String formName), Some(JsonValue.String configApiName) when kind = "create" || kind = "edit" ->
+          let! s = state.GetState()
+          let! form = s.Forms |> Map.tryFindWithError formName "forms" formName |> state.OfSum
+          let! api = s.Apis.Entities |> Map.tryFindWithError entityApiName "entity APIs" entityApiName |> state.OfSum
+          let! configApi = s.Apis.Entities |> Map.tryFindWithError configApiName "entity APIs" configApiName |> state.OfSum
+          return (if kind = "create" then FormLauncherMode.Create else FormLauncherMode.Edit), form |> FormConfig.Id, api |> fst |> EntityApi.Id, configApi |> fst |> EntityApi.Id
+        | _ -> 
+          return! error
+      | _ -> 
+        return! error
     }
 
 type FormApis with
@@ -783,10 +819,10 @@ type ParsedFormsContext with
       let! usedTypes = ParsedFormsContext.GetTypesFreeVars ctx
       let availableTypes = ctx.Types |> Map.values |> Seq.map(fun tb -> tb.TypeId) |> Set.ofSeq
       if Set.isSuperset availableTypes usedTypes then 
-        do! sum.All(ctx.Forms |> Map.values |> Seq.map(FormConfig.Validate ctx) |> Seq.toList) |> Sum.map ignore
-        do! sum.All(ctx.Launchers |> Map.values |> Seq.map(FormLauncher.Validate ctx) |> Seq.toList) |> Sum.map ignore
         do! sum.All(ctx.Apis.Enums |> Map.values |> Seq.map (EnumApi.validate codegenTargetConfig.EnumValueFieldName ctx) |> Seq.toList) |> Sum.map ignore
         do! sum.All(ctx.Apis.Streams |> Map.values |> Seq.map (StreamApi.validate codegenTargetConfig ctx) |> Seq.toList) |> Sum.map ignore
+        do! sum.All(ctx.Forms |> Map.values |> Seq.map(FormConfig.Validate ctx) |> Seq.toList) |> Sum.map ignore
+        do! sum.All(ctx.Launchers |> Map.values |> Seq.map(FormLauncher.Validate ctx) |> Seq.toList) |> Sum.map ignore
       else 
         let missingTypeErrors = (usedTypes - availableTypes) |> Set.map (fun t -> Errors.Singleton (sprintf "Error: missing type definition for %s" t.TypeName)) |> Seq.fold (curry Errors.Concat) (Errors.Zero())
         return! sum.Throw(missingTypeErrors)
@@ -1127,18 +1163,25 @@ type ParsedFormsContext with
         let! formBody = FormConfig.parse formJson
         do! state.SetState(ParsedFormsContext.Updaters.Forms (Map.add formName { FormConfig.Fields=formBody.Fields; FormConfig.Tabs=formBody.Tabs; FormConfig.TypeId=formBody.TypeId; FormId=Guid.CreateVersion7(); FormName = formName }))
     }
+  static member parseLaunchers (launchersJson:(string*JsonValue)[]) : State<Unit,CodeGenConfig,ParsedFormsContext,Errors> = 
+    state{
+      for launcherName, launcherJson in launchersJson do
+        let! (mode, formId, apiId, configApiId) = FormLauncher.parse launcherJson
+        do! state.SetState(ParsedFormsContext.Updaters.Launchers (Map.add launcherName { LauncherName=launcherName; LauncherId=Guid.CreateVersion7(); Mode=mode; Form=formId; EntityApi=apiId; ConfigEntityApi=configApiId }))
+    }
   static member parse generatedLanguageSpecificConfig (json:JsonValue) : State<Unit,CodeGenConfig,ParsedFormsContext,Errors> = 
     state{
       match json with
       | JsonValue.Record properties ->
-        match properties |> Seq.tryFind (fst >> ((=) "types")) |> Option.map snd, properties |> Seq.tryFind (fst >> ((=) "apis")) |> Option.map snd, properties |> Seq.tryFind (fst >> ((=) "forms")) |> Option.map snd with
-        | Some(JsonValue.Record typesJson), Some(JsonValue.Record apisJson), Some(JsonValue.Record formsJson) -> 
+        match properties |> Seq.tryFind (fst >> ((=) "types")) |> Option.map snd, properties |> Seq.tryFind (fst >> ((=) "apis")) |> Option.map snd, properties |> Seq.tryFind (fst >> ((=) "forms")) |> Option.map snd, properties |> Utils.tryFindField "launchers" with
+        | Some(JsonValue.Record typesJson), Some(JsonValue.Record apisJson), Some(JsonValue.Record formsJson), Some(JsonValue.Record launchersJson) -> 
           do! ParsedFormsContext.parseTypes typesJson
           do! ParsedFormsContext.parseApis generatedLanguageSpecificConfig.EnumValueFieldName apisJson
           do! ParsedFormsContext.parseForms formsJson
-          let! s = state.GetState()
-          do printfn $$"""{{s.Forms}}"""
-          do Console.ReadLine() |> ignore
+          do! ParsedFormsContext.parseLaunchers launchersJson
+          // let! s = state.GetState()
+          // do printfn $$"""{{s}}"""
+          // do Console.ReadLine() |> ignore
         | _ -> 
           return! state.Throw($"Error: the root of the form config should contain a record with fields 'types', 'apis'." |> Errors.Singleton)
       | _ -> 

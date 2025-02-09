@@ -49,7 +49,7 @@ and RuleDependency = { ChangedEntityType:EntityDescriptorId; RestrictedVariable:
 and RuleDependencies = { dependencies:Map<EntityDescriptorId * FieldDescriptorId, Set<RuleDependency>> }
 
 and Assignment = { Variable:VarName * List<FieldDescriptorId>; Value:Expr }
-and VarName = { VarName:string }
+and VarName = { VarName:string } with static member Create s = { VarName=s }
 and TypeVarBindings = Map<VarName, ExprType>
 and TypeBinding = { TypeId:TypeId; Type:ExprType }
 and TypeBindings = Map<TypeId, ExprType>

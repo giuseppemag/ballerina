@@ -24,13 +24,15 @@ Todo (✅/❌)
         ✅ the parsing of enums and streams needs further disambiguation
         ✅ parse visibility and disabled predicates
         ✅ parse and validate tabs, columns, groups
-      ❌ parse the JSON into the representation launchers
+      ✅ parse the JSON into the representation launchers
       ❌ type-check the form instances' `visible` and `disabled` predicates when validating launchers
         ❌ inject `root` variable at launcher scope, not form scope 
         ❌ `local` variable is injected at form definition
         ❌ `flag` values come from some type in the config (ideally imported)
           ❌ needs an entity API with GET
           ❌ needs to be specified in the launcher
+        ❌ also validate the disabled predicate
+        ❌ also validate recursively
       ❌ there are unparsed placeholders for the labels and tooltips
       ❌ build a TS prototype of the predicates parser and interpreter
       ✅ delete the sample parsed form
@@ -43,6 +45,14 @@ Todo (✅/❌)
       ❌ define `import` command, generate with some sort of linking strategy for shared files
       ❌ all utility methods should be capitalized in Program.fs
       ❌ adjust person-config in FE and use that from cmd line, delete the copy
+      ❌ pretty print types in errors
+      ❌ introduce `sum.Both`, `state.Both`
+      ❌ introduce a natural transformation that flips state and option, use it to parse the `disabledJson` elegantly
+      ❌ use `Utils.tryFindField` everywhere applicable
+      ❌ all the `match` expressions that search fields should become monadic instances of nested `state.Both`, or maybe instances of up to 5; remove those ugly matches in any case
+      ❌ add source context to errors for pretty printing
+        ❌ probably needs the state monad with an error decorator accumulated from the parent
+        ❌ distinguish state from parsed context
       ❌ move string builder to ballerina-core
       ❌ move the new type parsers to ballerina-core
         ❌ break the form engine in all possible ways
@@ -55,16 +65,11 @@ Todo (✅/❌)
         ❌ move relevant sources to a separate folder in ballerina-core (forms engine)
           ❌ move the new types (`Errors`, `Form`, etc.) to ballerina-core
           ❌ move the new type checkers to ballerina-core
-    ❌ pretty print types in errors
-    ❌ introduce `sum.Both`, `state.Both`
-    ❌ introduce a natural transformation that flips state and option, use it to parse the `disabledJson` elegantly
-    ❌ add source context to errors for pretty printing
-      ❌ probably needs the state monad with an error decorator accumulated from the parent
-      ❌ distinguish state from parsed context
     ❌ the Go type generator is now reasonably mature
       ❌ write a "why not just a package somewhere?"
       ❌ write a language shootout
         ❌ ORM, advanced types, advanced type inference, monads
+    ❌ fix Ballerina as a namespace for proper nesting
     ❌ check the consistency of the used data structures: `Type` vs `TypeId`
     ❌ convert all instances of Map.tryFind ... withError ... to `Map.tryFindWithError`
     ❌ `Map.tryFindWithError streamName "streams" streamName |> state.OfSum` should just be `findStream`

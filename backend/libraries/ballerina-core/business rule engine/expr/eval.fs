@@ -131,7 +131,7 @@ let rec fieldLookups (e:Expr) =
 type BusinessRule with
   member rule.Dependencies : Schema -> Set<FieldDescriptorId> -> RuleDependencies = fun schema changedFields ->
     // let variables = scope rule.Condition |> Seq.map (fun v -> v.varName, v.entityType) |> Map.ofSeq
-    let conditionType = typeCheck schema Map.empty rule.Condition
+    let conditionType = typeCheck Map.empty schema Map.empty rule.Condition
     match conditionType with
     | Right errors -> failwithf "Condition %A does not type check with errors %A" (rule.Condition) errors.Errors
     | Left (_,vars) ->
@@ -141,7 +141,7 @@ type BusinessRule with
           // printfn "action.Value %A fieldLookups %A" action.Value fieldLookups
           // Console.ReadLine() |> ignore
           for (varName, fields) in fieldLookups do
-            match typeCheck schema vars (Expr.VarLookup varName) with
+            match typeCheck Map.empty schema vars (Expr.VarLookup varName) with
             | Left (SchemaLookupType varType, _) ->
               let rec lookupPrefixes = 
                 function
@@ -162,7 +162,7 @@ type BusinessRule with
                 // if lookupFields |> List.length >= 2 then
                 // do printfn "typeCheckFull of %A with %A" ((Expr.VarLookup varName =>> lookupFields)) vars
                 // do Console.ReadLine() |> ignore
-                match typeCheck schema vars (Expr.VarLookup varName =>> lookupFields) with
+                match typeCheck Map.empty schema vars (Expr.VarLookup varName =>> lookupFields) with
                 | Left (SchemaLookupType lookupType, _) ->
                   let dependency:RuleDependency = {
                     ChangedEntityType = lookupType
