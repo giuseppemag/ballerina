@@ -465,12 +465,86 @@ type FieldConfig with
     }    
 
 type FormConfig with
+  static member parseGroup (fieldConfigs:Map<string,FieldConfig>) (json:JsonValue) : State<List<FieldConfigId>, CodeGenConfig, ParsedFormsContext, Errors> = 
+    let error = $$"""Error: cannot parse group {{json}}""" |> Errors.Singleton |> state.Throw
+    state{
+      match json with
+      | JsonValue.Array fields ->
+        let! fields = 
+          seq{
+            for fieldJson in fields do
+            yield state{
+              match fieldJson with
+              | JsonValue.String fieldName ->
+                return! fieldConfigs |> Map.tryFindWithError fieldName "field name" fieldName |> Sum.map (FieldConfig.Id) |> state.OfSum
+              | _ -> return! $$"""Error: cannot parse field name {{fieldJson}}""" |> Errors.Singleton |> state.Throw
+            }
+          } |> state.All
+        return fields
+      | _ -> 
+        return! error
+    }
+  static member parseGroups fieldConfigs (json:JsonValue) : State<FormGroups, CodeGenConfig, ParsedFormsContext, Errors> = 
+    let error = $$"""Error: cannot parse groups {{json}}""" |> Errors.Singleton |> state.Throw
+    state{
+      match json with
+      | JsonValue.Record [| "groups",JsonValue.Record groups |] ->
+        let! groups = 
+          seq{
+            for groupName,groupJson in groups do
+            yield state{
+              let! column = FormConfig.parseGroup fieldConfigs groupJson
+              return groupName,column
+            }
+          } |> state.All |> state.Map Map.ofList
+        return { FormGroups=groups }
+      | _ -> 
+        return! error
+    }
+
+  static member parseColumns fieldConfigs (json:JsonValue) : State<FormColumns, CodeGenConfig, ParsedFormsContext, Errors> = 
+    let error = $$"""Error: cannot parse columns {{json}}""" |> Errors.Singleton |> state.Throw
+    state{
+      match json with
+      | JsonValue.Record [| "columns",JsonValue.Record columns |] ->
+        let! columns = 
+          seq{
+            for columnName,columnJson in columns do
+            yield state{
+              let! column = FormConfig.parseGroups fieldConfigs columnJson
+              return columnName,column
+            }
+          } |> state.All |> state.Map Map.ofList
+        return { FormColumns=columns }
+      | _ -> 
+        return! error
+    }
+
+  static member parseTabs fieldConfigs (json:JsonValue) : State<FormTabs, CodeGenConfig, ParsedFormsContext, Errors> = 
+    let error = $$"""Error: cannot parse tabs {{json}}""" |> Errors.Singleton |> state.Throw
+    state{
+      match json with
+      | JsonValue.Record tabs ->
+        let! tabs = 
+          seq{
+            for tabName,tabJson in tabs do
+            yield state{
+              let! column = FormConfig.parseColumns fieldConfigs tabJson
+              return tabName,column
+            }
+          } |> state.All |> state.Map Map.ofList
+        return { FormTabs=tabs }
+      | _ -> 
+        return! error
+    }
+  
+
   static member parse (json:JsonValue) : State<{| TypeId:TypeId; Fields:Map<string, FieldConfig>; Tabs:FormTabs |},CodeGenConfig,ParsedFormsContext,Errors> =
     state{
       match json with
       | JsonValue.Record fields ->
-        match fields |> Seq.tryFind (fst >> (=) "type"), fields |> Seq.tryFind (fst >> (=) "fields") with
-        | Some (_, JsonValue.String typeName), Some (_, JsonValue.Record formFields) ->
+        match fields |> Seq.tryFind (fst >> (=) "type"), fields |> Seq.tryFind (fst >> (=) "fields"), fields |> Utils.tryFindField "tabs" with
+        | Some (_, JsonValue.String typeName), Some (_, JsonValue.Record formFields), Some tabsJson ->
           let! fieldConfigs = 
             formFields |> Seq.map(fun (fieldName,fieldJson) ->
               state{
@@ -481,7 +555,8 @@ type FormConfig with
           let fieldConfigs = fieldConfigs |> Map.ofSeq
           let! s = state.GetState()
           let! typeBinding = s.Types |> Map.tryFindWithError typeName "type" typeName |> state.OfSum
-          return {| TypeId=typeBinding.TypeId; Fields=fieldConfigs; Tabs={ FormTabs=Map.empty } |}
+          let! tabs = FormConfig.parseTabs fieldConfigs tabsJson
+          return {| TypeId=typeBinding.TypeId; Fields=fieldConfigs; Tabs=tabs |}
         | _ -> return! state.Throw($$"""Error: form must have two fields: 'type' ('string') and 'fields' ('record'). Instead found {{fields}}.""" |> Errors.Singleton)
       | _ ->
         return! state.Throw($$"""Error: form is not a record, found {{json}}.""" |> Errors.Singleton)

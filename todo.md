@@ -16,14 +16,14 @@ Todo (✅/❌)
     ❌ parse and validate the json of a form config
       ✅ rename `Multiselection` to `MultiSelection`
       ✅ streams need to validate that the underlying type has id and displayvalue
-      ❌ parse the JSON into the representation forms
+      ✅ parse the JSON into the representation forms
         ✅ make all nested renderers properly recurrent in structure
         ✅ fully align visibility predicate syntax to Expr
         ✅ parse fields
           ✅ parse nested (ListElement, Key, Value, etc.) renderers as a structure, not a string for consistency
         ✅ the parsing of enums and streams needs further disambiguation
         ✅ parse visibility and disabled predicates
-        ❌ parse tabs, columns, groups
+        ✅ parse and validate tabs, columns, groups
       ❌ parse the JSON into the representation launchers
       ❌ type-check the form instances' `visible` and `disabled` predicates when validating launchers
         ❌ inject `root` variable at launcher scope, not form scope 
@@ -38,9 +38,9 @@ Todo (✅/❌)
       ❌ type names and enum case names should be valid names (verified at codegen time)
         ❌ enum case names can be cleaned up, at least wrt patterns like ":" in the variable name (the string value is fine)
         ❌ `Regex.Replace(original, @"[^a-zA-Z0-9/-]+", "_")`
-      ❌ define `import` command, generate with some sort of linking strategy for shared files
       ❌ improve the generated whitespace
       ❌ the functionality of the validator is now mature
+      ❌ define `import` command, generate with some sort of linking strategy for shared files
       ❌ all utility methods should be capitalized in Program.fs
       ❌ adjust person-config in FE and use that from cmd line, delete the copy
       ❌ move string builder to ballerina-core
