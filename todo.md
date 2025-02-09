@@ -22,48 +22,15 @@ Todo (✅/❌)
         ✅ parse fields
           ✅ parse nested (ListElement, Key, Value, etc.) renderers as a structure, not a string for consistency
         ✅ the parsing of enums and streams needs further disambiguation
-        ❌ parse visibility and disabled predicates
-```
-          "visible": {
-            "kind": "or",
-            "operands": [
-              {
-                "kind": "fieldLookup",
-                "operands": [
-                  {
-                    "kind": "varLookup",
-                    "varName": "global"
-                  },
-                  "IsAdmin"
-                ]
-              },
-              {
-                "kind": "isCase",
-                "operands": [
-                  {
-                    "kind": "fieldLookup",
-                    "operands": [
-                      {
-                        "kind": "varLookup",
-                        "varName": "global"
-                      },
-                      "ERP"
-                    ]
-                  },
-                  "SAP"
-                ]
-              }
-            ]
-          }
-```        
+        ✅ parse visibility and disabled predicates
         ❌ parse tabs, columns, groups
       ❌ parse the JSON into the representation launchers
-        ❌ type-check the form instances' `visible` and `disabled` predicates when validating launchers
-          ❌ inject `root` variable at launcher scope, not form scope 
-          ❌ `local` variable is injected at form definition
-          ❌ `flag` values come from some type in the config (ideally imported)
-            ❌ needs an entity API with GET
-            ❌ needs to be specified in the launcher
+      ❌ type-check the form instances' `visible` and `disabled` predicates when validating launchers
+        ❌ inject `root` variable at launcher scope, not form scope 
+        ❌ `local` variable is injected at form definition
+        ❌ `flag` values come from some type in the config (ideally imported)
+          ❌ needs an entity API with GET
+          ❌ needs to be specified in the launcher
       ❌ there are unparsed placeholders for the labels and tooltips
       ❌ build a TS prototype of the predicates parser and interpreter
       ✅ delete the sample parsed form
@@ -89,6 +56,8 @@ Todo (✅/❌)
           ❌ move the new types (`Errors`, `Form`, etc.) to ballerina-core
           ❌ move the new type checkers to ballerina-core
     ❌ pretty print types in errors
+    ❌ introduce `sum.Both`, `state.Both`
+    ❌ introduce a natural transformation that flips state and option, use it to parse the `disabledJson` elegantly
     ❌ add source context to errors for pretty printing
       ❌ probably needs the state monad with an error decorator accumulated from the parent
       ❌ distinguish state from parsed context

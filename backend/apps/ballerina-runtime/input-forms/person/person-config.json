@@ -358,10 +358,7 @@
                       "number"
                     ]
                   },
-                  {
-                    "kind": "intConstant",
-                    "value": 10
-                  }
+                  10
                 ]
               }
             ]
@@ -369,16 +366,12 @@
         },
         "number": {
           "renderer": "defaultNumber",
-          "visible": {
-            "kind": "true"
-          }
+          "visible": true
         },
         "city": {
           "renderer": "defaultInfiniteStream",
           "stream": "cities",
-          "visible": {
-            "kind": "true"
-          }
+          "visible": true
         }
       },
       "tabs": {
@@ -403,42 +396,32 @@
         "category": {
           "label": "category",
           "renderer": "defaultCategory",
-          "visible": {
-            "kind": "true"
-          }
+          "visible": true
         },
         "name": {
           "label": "first name",
           "tooltip": "Any name will do",
           "renderer": "defaultString",
-          "visible": {
-            "kind": "true"
-          }
+          "visible": true
         },
         "surname": {
           "label": "last name",
           "renderer": "defaultString",
-          "visible": {
-            "kind": "true"
-          }
+          "visible": true
         },
         "birthday": {
           "renderer": "defaultDate",
           "tooltip": "happy birthday!",
-          "visible": {
-            "kind": "true"
-          }
+          "visible": true
         },
         "favoriteColor": {
           "renderer": "defaultEnum",
           "options": "colors",
-          "visible": {
-            "kind": "true"
-          }
+          "visible": true
         },
         "gender": {
           "label": "gender",
-          "renderer": "defaultInfiniteStream",
+          "renderer": "defaultEnum",
           "options": "genders",
           "visible": {
             "kind": "or",
@@ -480,21 +463,15 @@
             "label": "name",
             "tooltip": "their name",
             "renderer": "defaultString",
-            "visible": {
-              "kind": "true"
-            }
+            "visible": true
           },
           "valueRenderer": {
             "label": "category",
             "tooltip": "their category",
             "renderer": "defaultCategory",
-            "visible": {
-              "kind": "true"
-            }
+            "visible": true
           },
-          "visible": {
-            "kind": "true"
-          }
+          "visible": true
         },
         "friendsByCategory": {
           "label": "friends by category",
@@ -502,20 +479,14 @@
           "keyRenderer": {
             "label": "category",
             "renderer": "defaultCategory",
-            "visible": {
-              "kind": "true"
-            }
+            "visible": true
           },
           "valueRenderer": {
             "label": "name",
             "renderer": "defaultString",
-            "visible": {
-              "kind": "true"
-            }
+            "visible": true
           },
-          "visible": {
-            "kind": "true"
-          }
+          "visible": true
         },
         "relatives": {
           "label": "relatives",
@@ -525,20 +496,14 @@
             "label": "one relative",
             "tooltip": "relative",
             "renderer": "defaultCategory",
-            "visible": {
-              "kind": "true"
-            }
+            "visible": true
           },
-          "visible": {
-            "kind": "true"
-          }
+          "visible": true
         },
         "subscribeToNewsletter": {
           "label": "subscribe to newsletter",
           "renderer": "defaultBoolean",
-          "visible": {
-            "kind": "true"
-          }
+          "visible": true
         },
         "interests": {
           "label": "interests",
@@ -559,9 +524,8 @@
           "label": "departments",
           "renderer": "defaultInfiniteStreamMultiselect",
           "stream": "departments",
-          "visible": {
-            "kind": "true"
-          },
+          "visible": true
+          ,
           "disabled": {
             "kind": "fieldLookup",
             "operands": [
@@ -576,9 +540,7 @@
         "mainAddress": {
           "label": "main address",
           "renderer": "address",
-          "visible": {
-            "kind": "true"
-          }
+          "visible": true
         },
         "addresses": {
           "label": "other addresses",
@@ -586,13 +548,9 @@
           "elementRenderer": {
             "label": "address",
             "renderer": "address",
-            "visible": {
-              "kind": "true"
-            }
+            "visible": true
           },
-          "visible": {
-            "kind": "true"
-          }
+          "visible": true
         },
         "emails": {
           "label": "emails",
@@ -600,13 +558,9 @@
           "elementRenderer": {
             "label": "email",
             "renderer": "defaultString",
-            "visible": {
-              "kind": "true"
-            }
+            "visible": true
           },
-          "visible": {
-            "kind": "true"
-          }
+          "visible": true
         },
         "addressesWithLabel": {
           "label": "addresses with label",
@@ -614,20 +568,14 @@
           "keyRenderer": {
             "label": "address label",
             "renderer": "defaultString",
-            "visible": {
-              "kind": "true"
-            }
+            "visible": true
           },
           "valueRenderer": {
             "label": "address",
             "renderer": "address",
-            "visible": {
-              "kind": "true"
-            }
+            "visible": true
           },
-          "visible": {
-            "kind": "true"
-          }
+          "visible": true
         },
         "addressesByCity": {
           "label": "addresses by city",
@@ -637,20 +585,14 @@
             "tooltip": "a nice place to live",
             "renderer": "defaultInfiniteStream",
             "stream": "cities",
-            "visible": {
-              "kind": "true"
-            }
+            "visible": true
           },
           "valueRenderer": {
             "label": "address",
             "renderer": "address",
-            "visible": {
-              "kind": "true"
-            }
+            "visible": true
           },
-          "visible": {
-            "kind": "true"
-          }
+          "visible": true
         },
         "addressesWithColorLabel": {
           "renderer": "defaultMap",
@@ -659,20 +601,14 @@
             "label": "color",
             "renderer": "defaultEnum",
             "options": "colors",
-            "visible": {
-              "kind": "true"
-            }
+            "visible": true
           },
           "valueRenderer": {
             "label": "address",
             "renderer": "address",
-            "visible": {
-              "kind": "true"
-            }
+            "visible": true
           },
-          "visible": {
-            "kind": "true"
-          }
+          "visible": true
         },
         "permissions": {
           "label": "permissions",
@@ -681,20 +617,14 @@
             "label": "permission",
             "renderer": "defaultEnum",
             "options": "permissions",
-            "visible": {
-              "kind": "true"
-            }
+            "visible": true
           },
           "valueRenderer": {
             "label": "granted",
             "renderer": "defaultBoolean",
-            "visible": {
-              "kind": "true"
-            }
+            "visible": true
           },
-          "visible": {
-            "kind": "true"
-          }
+          "visible": true
         },
         "cityByDepartment": {
           "label": "city by department",
@@ -703,29 +633,21 @@
             "label": "department",
             "renderer": "defaultInfiniteStream",
             "stream": "departments",
-            "visible": {
-              "kind": "true"
-            }
+            "visible": true
           },
           "valueRenderer": {
             "label": "city",
             "renderer": "defaultInfiniteStream",
             "stream": "cities",
-            "visible": {
-              "kind": "true"
-            }
+            "visible": true
           },
-          "visible": {
-            "kind": "true"
-          }
+          "visible": true
         },
         "shoeColours": {
           "label": "shoe colours",
           "renderer": "defaultEnumMultiselect",
           "options": "colors",
-          "visible": {
-            "kind": "true"
-          }
+          "visible": true
         },
         "friendsBirthdays": {
           "renderer": "defaultMap",
@@ -733,20 +655,14 @@
           "keyRenderer": {
             "label": "name",
             "renderer": "defaultString",
-            "visible": {
-              "kind": "true"
-            }
+            "visible": true
           },
           "valueRenderer": {
             "label": "birthday",
             "renderer": "defaultDate",
-            "visible": {
-              "kind": "true"
-            }
+            "visible": true
           },
-          "visible": {
-            "kind": "true"
-          }
+          "visible": true
         },
         "holidays": {
           "label": "holidays",
@@ -754,13 +670,9 @@
           "elementRenderer": {
             "label": "holiday",
             "renderer": "defaultDate",
-            "visible": {
-              "kind": "true"
-            }
+            "visible": true
           },
-          "visible": {
-            "kind": "true"
-          }
+          "visible": true
         }
       },
       "tabs": {

@@ -69,22 +69,30 @@ and ExprType =
   | ListType of ExprType
   | SetType of ExprType
 and UnionCase = { CaseName:string; Fields:ExprType }
+and CaseName = { CaseName:string }
 and VarTypes = Map<VarName, ExprType>
 and Vars = Map<VarName, Var>
 and EntityDescriptorId = { EntityDescriptorId:Guid; EntityName:string }
 and Var = EntityDescriptorId * EntityIdentifier
 and PrimitiveType = DateOnlyType | DateTimeType | IntType | FloatType | StringType | BoolType | GuidType | RefType of EntityDescriptorId
-and Value = ConstInt of int | ConstFloat of float | ConstString of string | ConstBool of bool | ConstGuid of Guid | Var of Var 
+and Value = ConstInt of int | ConstFloat of float | ConstString of string | ConstBool of bool | ConstGuid of Guid | Var of Var | CaseCons of string * Value | Tuple of List<Value> | Record of Map<string, Value> | Lambda of VarName * Expr
 // | Field of FieldDescriptor
 and Expr = 
   | Value of Value
+  | Apply of Expr * Expr
   | Binary of BinaryOperator * Expr * Expr
   | Unary of UnaryOperator * Expr
   | VarLookup of VarName
   | FieldLookup of Expr * FieldDescriptorId
+  | MakeRecord of Map<string, Expr>
   | RecordFieldLookup of Expr * string
   | Exists of VarName * EntityDescriptorId * Expr
   | SumBy of VarName * EntityDescriptorId * Expr
+  | MakeTuple of List<Expr>
+  | Project of Expr * int
+  | MakeCase of string * Expr
+  | MatchCase of Expr * Map<string,VarName * Expr>
+  | IsCase of CaseName * Expr
 and UnaryOperator = Not | Minus
 and BinaryOperator = Plus | Minus | GreaterThan | Equals | GreaterThanEquals | Times | DividedBy | And | Or
 

@@ -70,6 +70,27 @@ type StateBuilder() =
     | Some first -> 
       state.Combine(body first, state.For(seq |> Seq.tail, body))
     | None -> state{ return () }
+  member state.Any<'a,'c,'s,'e>
+    (e:{| zero:Unit -> 'e; concat:'e * 'e -> 'e |}, ps:List<State<'a,'c,'s,'e>>) =
+    match ps with
+    | [] -> state.Throw (e.zero())
+    | p::ps ->
+      state{
+        match! p |> state.Catch with
+        | Left result -> return result
+        | Right error ->
+          match! state.Any(e,ps) |> state.Catch with
+          | Left result -> return result
+          | Right error' -> return! error |> state.Throw 
+      }
+  member inline state.Any<'a,'c,'s,'b 
+    when 'b : (static member Zero:Unit -> 'b) and 'b : (static member Concat:'b * 'b -> 'b)>
+    (ps:List<State<'a,'c,'s,'b>>) =
+    state.Any({| zero='b.Zero; concat='b.Concat |}, ps)
+  member inline state.Any<'a,'c,'s,'b 
+    when 'b : (static member Zero:Unit -> 'b) and 'b : (static member Concat:'b * 'b -> 'b)>
+    (ps:seq<State<'a,'c,'s,'b>>) =
+    state.Any(ps |> Seq.toList)
   member state.All<'a,'c,'s,'e>
     (e:{| concat:'e * 'e -> 'e |}, ps:List<State<'a,'c,'s,'e>>) =
     match ps with

@@ -19,6 +19,11 @@ let dup a = (a,a)
 let (<*>) f g = fun (a,b) -> (f a, g b)
 
 
+type Utils = class end with
+  static member tryFindField name fields = 
+    fields |> Seq.tryFind (fst >> (=) name) |> Option.map snd
+
+
 type CodeGenConfig = {
   Int:CodegenConfigTypeDef
   Bool:CodegenConfigTypeDef
@@ -261,6 +266,76 @@ type FormApis with
   static member GetTypesFreeVars (fa:FormApis) : Set<TypeId> = 
     extractTypes fa.Enums + extractTypes fa.Streams + extractTypes (fa.Entities |> Map.map (fun _ -> fst))
 
+type BinaryOperator with
+  static member ByName = 
+    seq{
+      "and",BinaryOperator.And
+      "/",BinaryOperator.DividedBy
+      "equals",BinaryOperator.Equals
+      "=",BinaryOperator.Equals
+      ">",BinaryOperator.GreaterThan
+      ">=",BinaryOperator.GreaterThanEquals
+      "-",BinaryOperator.Minus
+      "or",BinaryOperator.Or
+      "+",BinaryOperator.Plus
+      "*",BinaryOperator.Times
+    } |> Map.ofSeq
+
+type Expr with
+  static member parse (json:JsonValue) : State<Expr, CodeGenConfig, ParsedFormsContext, Errors> = 
+    let error = $$"""Error: invalid expression {{json}}.""" |> Errors.Singleton |> state.Throw
+    state{
+      match json with
+      | JsonValue.Boolean v -> v |> Value.ConstBool |> Expr.Value
+      | JsonValue.String v -> v |> Value.ConstString |> Expr.Value
+      | JsonValue.Number v -> (v |> int) |> Value.ConstInt |> Expr.Value
+      | JsonValue.Record fieldsJson -> 
+        return! state.Any([
+          state{
+            match fieldsJson |> Utils.tryFindField "kind"  with
+            | Some(JsonValue.String operator) when BinaryOperator.ByName |> Map.containsKey operator ->
+              match fieldsJson |> Utils.tryFindField "operands"  with
+              | Some(JsonValue.Array[| firstJson; secondJson |]) ->
+                let! first = Expr.parse firstJson
+                let! second = Expr.parse secondJson
+                let! operator = BinaryOperator.ByName |> Map.tryFindWithError operator "binary operator" operator |> state.OfSum
+                return Expr.Binary(operator, first, second)
+              | _ -> return! error
+            | _ -> return! error
+          }
+          state{
+            match fieldsJson |> Utils.tryFindField "kind"  with
+            | Some(JsonValue.String "fieldLookup") ->
+              match fieldsJson |> Utils.tryFindField "operands"  with
+              | Some(JsonValue.Array[| firstJson; JsonValue.String fieldName |]) ->
+                let! first = Expr.parse firstJson
+                return Expr.RecordFieldLookup(first, fieldName)
+              | _ -> return! error
+            | _ -> return! error
+          }          
+          state{
+            match fieldsJson |> Utils.tryFindField "kind"  with
+            | Some(JsonValue.String "isCase") ->
+              match fieldsJson |> Utils.tryFindField "operands"  with
+              | Some(JsonValue.Array[| firstJson; JsonValue.String caseName |]) ->
+                let! first = Expr.parse firstJson
+                return Expr.IsCase({ CaseName=caseName }, first)
+              | _ -> return! error
+            | _ -> return! error
+          }          
+          state{
+            match fieldsJson |> Utils.tryFindField "kind"  with
+            | Some(JsonValue.String "varLookup") ->
+              match fieldsJson |> Utils.tryFindField "varName"  with
+              | Some(JsonValue.String varName) ->
+                return Expr.VarLookup { VarName=varName }
+              | _ -> return! error
+            | _ -> return! error
+          }          
+        ])
+      | _ -> return! error
+    }
+
 type Renderer with
   static member parse (parentJsonFields:(string*JsonValue)[]) (json:JsonValue) : State<Renderer,CodeGenConfig,ParsedFormsContext,Errors> =
     state{
@@ -332,10 +407,19 @@ and NestedRenderer with
     state{
       match json with
       | JsonValue.Record jsonFields ->
-        match jsonFields |> Seq.tryFind (fst >> (=) "renderer") |> Option.map snd with
-        | Some rendererJson ->
+        match jsonFields |> Seq.tryFind (fst >> (=) "renderer") |> Option.map snd, jsonFields |> Utils.tryFindField "visible", jsonFields |> Utils.tryFindField "disabled" with
+        | Some rendererJson, Some visibleJson, disabledJson ->
           let! renderer = Renderer.parse jsonFields rendererJson
-          return { Label=Some "TODO: placeholder label nested renderer"; Tooltip=Some "TODO: placeholder tooltip nested renderer"; Renderer=renderer; Visible=Expr.Value <| Value.ConstString "TODO: placeholder"; Disabled=None }
+          let! visible = Expr.parse visibleJson
+          let! disabled = 
+            match disabledJson with
+            | Some disabledJson -> 
+              state{
+                let! res = Expr.parse disabledJson
+                return Some res
+              }
+            | _ -> state.Return None
+          return { Label=Some "TODO: placeholder label nested renderer"; Tooltip=Some "TODO: placeholder tooltip nested renderer"; Renderer=renderer; Visible=visible; Disabled=disabled }
         | _ ->
           return! state.Throw($$"""Error: expected a record with field 'renderer'. Instead found {{json}}.""" |> Errors.Singleton)      
       | _ -> 
@@ -358,15 +442,24 @@ type FieldConfig with
       | JsonValue.Record fields ->
         let label = fields |> Seq.tryFind (fst >> (=) "label") |> Option.map (snd >> String.parse >> Sum.toOption) |> Option.flatten
         let tooltip = fields |> Seq.tryFind (fst >> (=) "tooltip") |> Option.map (snd >> String.parse >> Sum.toOption) |> Option.flatten
-        match fields |> Seq.tryFind (fst >> (=) "renderer") |> Option.map snd with
-        | None -> 
-          return! state.Throw($$"""Error: a field config must have a 'renderer' field. Found {{fields}}.""" |> Errors.Singleton)
-        | Some rendererJson ->
+        match fields |> Seq.tryFind (fst >> (=) "renderer") |> Option.map snd, fields |> Utils.tryFindField "visible", fields |> Utils.tryFindField "disabled" with
+        | Some rendererJson, Some visibleJson, disabledJson ->
           let! renderer = Renderer.parse fields rendererJson
+          let! visible = Expr.parse visibleJson
+          let! disabled = 
+            match disabledJson with
+            | Some disabledJson -> 
+              state{
+                let! res = Expr.parse disabledJson
+                return Some res
+              }
+            | _ -> state.Return None
           return { 
             FieldName=fieldName; FieldId=Guid.CreateVersion7(); Label= label; Tooltip=tooltip; Renderer=renderer; 
-            Visible=Expr.Value <| Value.ConstString "TODO: placeholder string in field config"; Disabled=None 
+            Visible=visible; Disabled=disabled
           }
+        | _ -> 
+          return! state.Throw($$"""Error: a field config must have a 'renderer' field. Found {{fields}}.""" |> Errors.Singleton)
       | _ -> 
         return! state.Throw($$"""Error: a field must be a record. Instead found {{json}}.""" |> Errors.Singleton)
     }    
