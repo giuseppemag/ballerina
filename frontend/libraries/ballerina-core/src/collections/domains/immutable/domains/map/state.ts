@@ -1,8 +1,10 @@
 import { Map } from "immutable";
 import { Identifiable } from "../../../../../baseEntity/domains/identifiable/state";
-import { Unit } from "../../../../../fun/domains/unit/state";
+import { unit, Unit } from "../../../../../fun/domains/unit/state";
 import { BasicUpdater, Updater } from "../../../../../fun/domains/updater/state";
 import { BasicFun } from "../../../../../fun/state";
+import { Option, Sum } from "../../../sum/state";
+import { ValueOrErrors } from "../../../valueOrErrors/state";
 
 export const MapRepo = {
   Default: {
@@ -29,5 +31,13 @@ export const MapRepo = {
       Updater((current) =>
         current.has(k) ? current.set(k, _(current.get(k)!)) : current.set(k, _(defaultValue({})))
       ),
+  },
+  Operations:{
+    tryFind:<k, v>(k: k, m:Map<k,v>) : Option<v> =>
+      m.has(k) ? Sum.Default.right(m.get(k)!) : Sum.Default.left(unit),
+    tryFindWithError:<k, v, e>(k: k, m:Map<k,v>, e:() => e) : ValueOrErrors<v, e> =>
+      ValueOrErrors.Default.ofOption(
+        m.has(k) ? Sum.Default.right(m.get(k)!) : Sum.Default.left(unit),
+        e)
   }
 };

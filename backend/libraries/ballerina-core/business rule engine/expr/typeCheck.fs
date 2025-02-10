@@ -80,6 +80,15 @@ let typeCheck (typeBindings:TypeBindings) (schema:Schema) (vars:VarTypes) (e:Exp
           | _ -> 
             return! sum.Throw($$"""Error: invalid type of expression {{e}}""" |> Errors.Singleton)
         }
+      | Expr.Binary(Equals, e1, e2) -> 
+        sum{
+          let! t1,vars' = eval vars e1
+          let! t2,vars'' = eval vars' e2
+          if t1 = t2 then
+            return PrimitiveType BoolType,vars''
+          else
+            return! sum.Throw($$"""Error: invalid type of expression {{e}}""" |> Errors.Singleton)
+        }
       | Expr.Binary(Plus, e1, e2) -> 
         sum{
           let! t1,vars' = eval vars e1

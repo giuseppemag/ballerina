@@ -11,5 +11,6 @@
   "Map":{ "GeneratedTypeName": "ballerina.Map", "RequiredImport": "ballerina.com/core", "SupportedRenderers": ["defaultMap"] },
   "Custom": {
     "injectedCategory": { "GeneratedTypeName": "ballerina.Unit", "RequiredImport": "ballerina.com/core", "SupportedRenderers": [ "defaultCategory" ] }
-  }
+  },
+  "IdentifierAllowedRegex": "[^a-zA-Z0-9/-]+"
 }

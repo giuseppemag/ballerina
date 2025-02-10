@@ -1,11 +1,12 @@
 import { List } from "immutable";
 import { BasicFun, BasicFun2, Fun } from "../../../fun/state";
 import { Value } from "../../../value/state";
-import { Updater } from "../../../../main";
+import { Errors } from "../errors/state"
+import { unit, Unit, Updater, Option } from "../../../../main";
 
 export type ValueOrErrors<v, e> = (
   | (Value<v> & { kind: "value" })
-  | { errors: List<e>; kind: "errors" }
+  | (Errors<e> & { kind: "errors" })
 ) & {
   Map: <a, b, e>(
     this: ValueOrErrors<a, e>,
@@ -69,11 +70,19 @@ export const ValueOrErrors = {
       kind: "value",
       ...operations,
     }),
+    throwOne: <v, e>(_: e): ValueOrErrors<v, e> => ({
+      errors: List([_]),
+      kind: "errors",
+      ...operations,
+    }),
     throw: <v, e>(_: List<e>): ValueOrErrors<v, e> => ({
       errors: _,
       kind: "errors",
       ...operations,
     }),
+    ofOption: <v,e>(v:Option<v>, e:BasicFun<Unit,e>) : ValueOrErrors<v,e> =>
+      v.kind == "l" ? ValueOrErrors.Default.throwOne(e(unit))
+      : ValueOrErrors.Default.return(v.value)
   },
   Operations: {
     Return: <v, e>(_: v): ValueOrErrors<v, e> =>

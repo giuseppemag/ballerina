@@ -10,7 +10,6 @@ Todo (✅/❌)
       ✅ rename `web` to `test`
     ✅ receive the command line parameters  
       ✅ form json
-    ❌ define a `Pair` domain with the `<*>` operator
     ✅ define a `Sum`  domain with the `<+>` operator
     ✅ read the json with FSharp.Data
     ❌ parse and validate the json of a form config
@@ -25,21 +24,35 @@ Todo (✅/❌)
         ✅ parse visibility and disabled predicates
         ✅ parse and validate tabs, columns, groups
       ✅ parse the JSON into the representation launchers
-      ❌ type-check the form instances' `visible` and `disabled` predicates when validating launchers
-        ❌ inject `root` variable at launcher scope, not form scope 
-        ❌ `local` variable is injected at form definition
-        ❌ `flag` values come from some type in the config (ideally imported)
-          ❌ needs an entity API with GET
-          ❌ needs to be specified in the launcher
-        ❌ also validate the disabled predicate
-        ❌ also validate recursively
-      ❌ there are unparsed placeholders for the labels and tooltips
+      ✅ type-check the form instances' `visible` and `disabled` predicates when validating launchers
+        ✅ inject `root` variable at launcher scope, not form scope 
+        ✅ `local` variable is injected at form definition
+        ✅ `flag` values come from some type in the config (ideally imported)
+          ✅ needs an entity API with GET
+          ✅ needs to be specified in the launcher
+        ✅ also validate recursively
+        ✅ also validate predicates inside renderers
+        ✅ also validate the disabled predicate
+      ✅ type names and enum case names should be valid names (verified at codegen time)
+        ✅ enum case names can be cleaned up, at least wrt patterns like ":" in the variable name (the string value is fine)
+        ✅ `Regex.Replace(original, @"[^a-zA-Z0-9/-]+", "_")`
       ❌ build a TS prototype of the predicates parser and interpreter
+        ✅ Sum.OfOption
+        ✅ Errors
+        ✅ Expr
+        ✅ Value
+        ✅ Eval
+          ✅ varLookup
+          ✅ IsCase
+        ✅ Map.tryFind
+        ✅ Map.tryFindWithError
+        ❌ structural equality
+        ❌ move `eval` to `Expr` repo
+        ❌ parser/validator
+      ❌ there are unparsed placeholders for the labels and tooltips
+        ❌ add the new field `description` or what's it called to the validator
       ✅ delete the sample parsed form
       ✅ `let injectedTypes = []` should come from `codegenConfig.Custom`
-      ❌ type names and enum case names should be valid names (verified at codegen time)
-        ❌ enum case names can be cleaned up, at least wrt patterns like ":" in the variable name (the string value is fine)
-        ❌ `Regex.Replace(original, @"[^a-zA-Z0-9/-]+", "_")`
       ❌ improve the generated whitespace
       ❌ the functionality of the validator is now mature
       ❌ define `import` command, generate with some sort of linking strategy for shared files
@@ -77,6 +90,7 @@ Todo (✅/❌)
     ❌ adjust all patterns like `|> Seq.tryFind (fst >> (=) "stream") |> Option.map snd` to `JsonValue.tryFindField`
     ❌ accept empty `apis` blocks
     ❌ make ExprType.resolveLookup recursive
+    ❌ the predicate validation should not validate the same form multiple times in the same context, add memoization
     ❌ the tool is now complete and its code is clean
     ❌ add tests
     ❌ help command
@@ -97,6 +111,8 @@ Todo (✅/❌)
       ❌ entities POST - how do we represent changes?
       ❌ entities PATCH - how do we represent changes?
       ❌ make all these functions partially applied in the actual parameters vs the visitor parameters
+    ❌ define a `Pair` domain with the `<*>` operator
+    ❌ build the forms gui editor in MAUI
     ❌ should we model the forms as algebras? Do we need a GUI for this?
     ✅ allow union types (needs adjustment in frontend too)
   ✅ models

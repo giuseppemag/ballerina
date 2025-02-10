@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    // "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    // "noEmit": true,
+    "outDir": "bin",
+    "jsx": "react-jsx",
+    "strict": true,
+    "esModuleInterop": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+    "noErrorTruncation": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": "./",
+    "paths": { "*": ["node_modules/@types/*", "*"] }
+  },
+  "include": ["src/**/*.ts*", "main.ts"],
+  "exclude": ["**/*blp/domains/wx-document-viewer/**"]
+}

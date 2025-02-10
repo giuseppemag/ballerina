@@ -6,6 +6,7 @@
     },
     "workspaces": {
         "packages": [
+            "apps/test",
             "apps/web",
             "apps/mobile",
             "libraries/ballerina-core",

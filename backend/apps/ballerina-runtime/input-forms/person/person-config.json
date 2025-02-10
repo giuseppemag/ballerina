@@ -4,15 +4,15 @@
       "fun": "Union",
       "args": [
         {
-          "case": "SAP",
+          "case": "ERP:SAP",
           "fields": {}
         },
         {
-          "case": "BC",
+          "case": "ERP:BC",
           "fields": {}
         },
         {
-          "case": "FAndO",
+          "case": "ERP:FAndO",
           "fields": {}
         }
       ]
@@ -449,7 +449,7 @@
                       "ERP"
                     ]
                   },
-                  "SAP"
+                  "ERP:SAP"
                 ]
               }
             ]

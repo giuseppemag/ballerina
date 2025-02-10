@@ -18,6 +18,7 @@ export const RightValue = {
 };
 export type Sum<a, b> = { value: a; kind: "l" } | { value: b; kind: "r" };
 export type Either<a, b> = Sum<a, b>;
+export type Option<a> = Sum<Unit, a>;
 export const Sum = Object.assign(
   <a, b>() => ({
     Default: {
@@ -75,8 +76,9 @@ export const Sum = Object.assign(
         r: BasicFun<b, c>
       ): Fun<Sum<a, b>, c> =>
         Fun((_) => (_.kind == "l" ? l(_.value) : r(_.value))),
+      ofOption: <a,b,>(onNone:BasicFun<Unit, b>) : BasicFun<Option<a>, Sum<b,a>> =>
+        Sum.Updaters.map2<Unit, a, b, a>(onNone, id)
     },
   }
 );
 export const Either = Sum;
-export type Option<a> = Sum<Unit, a>;

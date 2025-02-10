@@ -15,6 +15,7 @@ open Ballerina.Collections.Map
 open Ballerina.BusinessRuleTypeChecking
 open System.Text.Json
 open System.Text.Json.Serialization
+open System.Text.RegularExpressions
 
 let dup a = (a,a)
 let (<*>) f g = fun (a,b) -> (f a, g b)
@@ -37,6 +38,7 @@ type CodeGenConfig = {
   List:CodegenConfigListDef
   Map:CodegenConfigTypeDef
   Custom:Map<string, CodegenConfigTypeDef>
+  IdentifierAllowedRegex:string
 }
 and GenericType = Option | List | Set | Map
 and CodegenConfigListDef = {
@@ -204,6 +206,45 @@ and Renderer with
         return ExprType.Substitute (Map.empty |> Map.add { VarName="a1" } streamType) streamRendererType
     }
 
+and NestedRenderer with
+  static member ValidatePredicates (ctx:ParsedFormsContext) (globalType:ExprType) (rootType:ExprType) (localType:ExprType) (r:NestedRenderer) : Sum<Unit, Errors> = 
+    sum{
+      let schema = {
+        tryFindEntity = fun _ -> None
+        tryFindField = fun _ -> None
+      }
+      let vars = [ ("global",globalType);("root",rootType);("local",localType); ] |> Seq.map (VarName.Create <*> id) |> Map.ofSeq
+      let! visibleExprType,_ = Expr.typeCheck (ctx.Types |> Seq.map(fun tb -> tb.Value.TypeId,tb.Value.Type) |> Map.ofSeq) schema vars r.Visible
+      do! ExprType.Unify Map.empty (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq) visibleExprType (ExprType.PrimitiveType PrimitiveType.BoolType) |> Sum.map ignore
+      match r.Disabled with
+      | Some disabled ->
+        let! disabledExprType,_ = Expr.typeCheck (ctx.Types |> Seq.map(fun tb -> tb.Value.TypeId,tb.Value.Type) |> Map.ofSeq) schema vars disabled
+        do! ExprType.Unify Map.empty (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq) disabledExprType (ExprType.PrimitiveType PrimitiveType.BoolType) |> Sum.map ignore
+      |  _ -> return ()
+      do! Renderer.ValidatePredicates ctx globalType rootType localType r.Renderer
+    }
+
+and Renderer with
+  static member ValidatePredicates (ctx:ParsedFormsContext) (globalType:ExprType) (rootType:ExprType) (localType:ExprType) (r:Renderer) : Sum<Unit, Errors> = 
+    let (!) = Renderer.ValidatePredicates ctx globalType rootType localType 
+    let (!!) = NestedRenderer.ValidatePredicates ctx globalType rootType localType 
+    sum{
+      match r with
+      | Renderer.PrimitiveRenderer p -> return ()
+      | Renderer.EnumRenderer(_,e) -> return! !e
+      | Renderer.ListRenderer e -> 
+        do! !e.List
+        do! !!e.Element
+      | Renderer.MapRenderer kv -> 
+        do! !kv.Map
+        do! !!kv.Key
+        do! !!kv.Value
+      | Renderer.StreamRenderer(_,e) -> return! !e
+      | Renderer.FormRenderer(f,e) -> 
+        let! f = ctx.Forms |> Map.tryFindWithError f.FormName "form" f.FormName
+        do! FormConfig.ValidatePredicates ctx globalType rootType f
+    }
+
 and FieldConfig with
   static member Validate (ctx:ParsedFormsContext) (formType:ExprType) (fc:FieldConfig) : Sum<Unit, Errors> = 
     sum{
@@ -228,6 +269,12 @@ and FieldConfig with
       let vars = [ ("global",globalType);("root",rootType);("local",localType); ] |> Seq.map (VarName.Create <*> id) |> Map.ofSeq
       let! visibleExprType,_ = Expr.typeCheck (ctx.Types |> Seq.map(fun tb -> tb.Value.TypeId,tb.Value.Type) |> Map.ofSeq) schema vars fc.Visible
       do! ExprType.Unify Map.empty (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq) visibleExprType (ExprType.PrimitiveType PrimitiveType.BoolType) |> Sum.map ignore
+      match fc.Disabled with
+      | Some disabled ->
+        let! disabledExprType,_ = Expr.typeCheck (ctx.Types |> Seq.map(fun tb -> tb.Value.TypeId,tb.Value.Type) |> Map.ofSeq) schema vars disabled
+        do! ExprType.Unify Map.empty (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq) disabledExprType (ExprType.PrimitiveType PrimitiveType.BoolType) |> Sum.map ignore
+      |  _ -> return ()
+      do! Renderer.ValidatePredicates ctx globalType rootType localType fc.Renderer
     }
 
 and FormConfig with
@@ -244,10 +291,10 @@ and FormConfig with
       let! formType = ctx.Types |> Map.tryFindWithError formConfig.TypeId.TypeName "form type" formConfig.TypeId.TypeName
       do! sum.All(formConfig.Fields |> Map.values |> Seq.map (FieldConfig.Validate ctx formType.Type) |> Seq.toList) |> Sum.map ignore
     }
-  static member ValidatePredicates (ctx:ParsedFormsContext) (globalType:ExprType) (formConfig:FormConfig) : Sum<Unit, Errors> = 
+  static member ValidatePredicates (ctx:ParsedFormsContext) (globalType:ExprType) (rootType:ExprType) (formConfig:FormConfig) : Sum<Unit, Errors> = 
     sum{
       let! formType = ctx.Types |> Map.tryFindWithError formConfig.TypeId.TypeName "form type" formConfig.TypeId.TypeName
-      do! sum.All(formConfig.Fields |> Map.values |> Seq.map (FieldConfig.ValidatePredicates ctx globalType formType.Type formType.Type) |> Seq.toList) |> Sum.map ignore
+      do! sum.All(formConfig.Fields |> Map.values |> Seq.map (FieldConfig.ValidatePredicates ctx globalType rootType formType.Type) |> Seq.toList) |> Sum.map ignore
     }
     
 and FormLauncher with
@@ -265,20 +312,23 @@ and FormLauncher with
       let! entityApi = ctx.Apis.Entities |> Map.tryFindWithError formLauncher.EntityApi.EntityName "entity API" formLauncher.EntityApi.EntityName
       let! entityApiType = ctx.Types |> Map.tryFindWithError (entityApi |> fst).TypeId.TypeName "entity API type" (entityApi |> fst).TypeId.TypeName
       let! configEntityApi = ctx.Apis.Entities |> Map.tryFindWithError formLauncher.ConfigEntityApi.EntityName "entity API" formLauncher.ConfigEntityApi.EntityName
-      let! configEntityApiType = ctx.Types |> Map.tryFindWithError (configEntityApi |> fst).TypeId.TypeName "config entity API type" (configEntityApi |> fst).TypeId.TypeName
-      do! ExprType.Unify Map.empty (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq) formType.Type entityApiType.Type |> Sum.map ignore
-      do! FormConfig.ValidatePredicates ctx configEntityApiType.Type formConfig
-      match formLauncher.Mode with
-      | FormLauncherMode.Create ->
-        if Set.ofList [CrudMethod.Create; CrudMethod.Default] |> Set.isSuperset (entityApi |> snd) then
-          return ()
-        else
-          return! sum.Throw(Errors.Singleton(sprintf "Error in launcher %A: entity APIs for 'create' launchers need at least methods CREATE and DEFAULT, found %A" formLauncher.LauncherName (entityApi |> snd)))
-      | FormLauncherMode.Edit ->
-        if Set.ofList [CrudMethod.Get; CrudMethod.Update] |> Set.isSuperset (entityApi |> snd) then
-          return ()
-        else
-          return! sum.Throw(Errors.Singleton(sprintf "Error in launcher %A: entity APIs for 'edit' launchers need at least methods GET and UPDATE, found %A" formLauncher.LauncherName (entityApi |> snd)))
+      if Set.ofList [CrudMethod.Get] |> Set.isSuperset (configEntityApi |> snd) then
+        let! configEntityApiType = ctx.Types |> Map.tryFindWithError (configEntityApi |> fst).TypeId.TypeName "config entity API type" (configEntityApi |> fst).TypeId.TypeName
+        do! ExprType.Unify Map.empty (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq) formType.Type entityApiType.Type |> Sum.map ignore
+        do! FormConfig.ValidatePredicates ctx configEntityApiType.Type entityApiType.Type formConfig
+        match formLauncher.Mode with
+        | FormLauncherMode.Create ->
+          if Set.ofList [CrudMethod.Create; CrudMethod.Default] |> Set.isSuperset (entityApi |> snd) then
+            return ()
+          else
+            return! sum.Throw(Errors.Singleton(sprintf "Error in launcher %A: entity APIs for 'create' launchers need at least methods CREATE and DEFAULT, found %A" formLauncher.LauncherName (entityApi |> snd)))
+        | FormLauncherMode.Edit ->
+          if Set.ofList [CrudMethod.Get; CrudMethod.Update] |> Set.isSuperset (entityApi |> snd) then
+            return ()
+          else
+            return! sum.Throw(Errors.Singleton(sprintf "Error in launcher %A: entity APIs for 'edit' launchers need at least methods GET and UPDATE, found %A" formLauncher.LauncherName (entityApi |> snd)))
+      else 
+        return! sum.Throw(Errors.Singleton(sprintf "Error in launcher %A: entity APIs for 'config' launchers need at least method GET, found %A" formLauncher.LauncherName (configEntityApi |> snd)))
     }
   static member parse (json:JsonValue) : State<_, CodeGenConfig, ParsedFormsContext, Errors> =
     let error = $$"""Error: invalid launcher {{json}}.""" |> Errors.Singleton |> state.Throw
@@ -829,6 +879,8 @@ type ParsedFormsContext with
     }
   static member ToGolang (codegenConfig:CodeGenConfig) (ctx:ParsedFormsContext) (packageName:string) (formName:string) : Sum<StringBuilder,Errors> = 
     let result = state{
+      let identifierAllowedRegex = Regex codegenConfig.IdentifierAllowedRegex
+      let (!) (s:string) = identifierAllowedRegex.Replace(s, "_")
       let enumCasesGETters = 
         seq{
           yield One $"func {formName}EnumAutoGETter(enumName string) "
@@ -959,13 +1011,13 @@ type ParsedFormsContext with
               yield StringBuilder.One "const ("
               yield StringBuilder.One "\n"
               for enumCase in enumCases do
-                yield StringBuilder.One $$"""  {{t.Key}}{{enumCase}} {{t.Key}} = "{{enumCase}}" """
+                yield StringBuilder.One $$"""  {{t.Key}}{{!enumCase}} {{t.Key}} = "{{enumCase}}" """
                 yield StringBuilder.One "\n"
               yield StringBuilder.One ")"
               yield StringBuilder.One "\n"
               yield StringBuilder.One $$"""var All{{t.Key}}Cases = [...]{{t.Key}}{ """
               for enumCase in enumCases do
-                yield StringBuilder.One $$"""{{t.Key}}{{enumCase}}, """
+                yield StringBuilder.One $$"""{{t.Key}}{{!enumCase}}, """
               yield StringBuilder.One "}\n"
             })
           | _ ->
