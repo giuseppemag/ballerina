@@ -46,9 +46,12 @@ Todo (✅/❌)
           ✅ IsCase
         ✅ Map.tryFind
         ✅ Map.tryFindWithError
+        ✅ move `eval` to `Expr` repo
         ❌ structural equality
-        ❌ move `eval` to `Expr` repo
-        ❌ parser/validator
+          ❌ union case
+          ❌ tuple
+          ❌ record
+        ❌ parser/validator `any => ValueOrError<Expr, string>`
       ❌ there are unparsed placeholders for the labels and tooltips
         ❌ add the new field `description` or what's it called to the validator
       ✅ delete the sample parsed form
