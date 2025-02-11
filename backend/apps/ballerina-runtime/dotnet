@@ -93,8 +93,8 @@
             ]
           }
         },
-        "number": { "renderer": "defaultNumber", "visible": { "kind": "true" } },
-        "city": { "renderer": "defaultInfiniteStream", "stream": "cities", "visible": { "kind": "true" } }
+        "number": { "renderer": "defaultNumber", "visible": true },
+        "city": { "renderer": "defaultInfiniteStream", "stream": "cities", "visible": true }
       },
       "tabs": {
         "main": {
@@ -111,12 +111,12 @@
     "person": {
       "type": "Person",
       "fields": {
-        "category": { "label": "category", "renderer": "defaultCategory", "visible": { "kind": "true" } },
-        "name": { "label": "first name", "tooltip": "Any name will do", "renderer": "defaultString", "visible": { "kind": "true" } },
-        "surname": { "label": "last name", "renderer": "defaultString", "visible": { "kind": "true" } },
-        "birthday": { "renderer": "defaultDate", "tooltip": "happy birthday!", "visible": { "kind": "true" } },
+        "category": { "label": "category", "renderer": "defaultCategory", "visible": true },
+        "name": { "label": "first name", "tooltip": "Any name will do", "renderer": "defaultString", "visible": true },
+        "surname": { "label": "last name", "renderer": "defaultString", "visible": true },
+        "birthday": { "renderer": "defaultDate", "tooltip": "happy birthday!", "visible": true },
         "favoriteColor": {
-          "renderer": "defaultEnum", "options": "colors", "visible": { "kind": "true" }
+          "renderer": "defaultEnum", "options": "colors", "visible": true
         },
         "gender": {
           "label": "gender",
@@ -132,19 +132,19 @@
           "label": "dependants",
           "renderer": "defaultMap",
           "tooltip": "someone who depends on you",
-          "keyRenderer": { "label": "name", "tooltip": "their name", "renderer": "defaultString", "visible": { "kind": "true" } },
-          "valueRenderer": { "label": "category", "tooltip": "their category", "renderer": "defaultCategory", "visible": { "kind": "true" } },
-          "visible": { "kind": "true" }
+          "keyRenderer": { "label": "name", "tooltip": "their name", "renderer": "defaultString", "visible": true },
+          "valueRenderer": { "label": "category", "tooltip": "their category", "renderer": "defaultCategory", "visible": true },
+          "visible": true
         },
         "friendsByCategory": {
           "label": "friends by category",
           "renderer": "defaultMap",
-          "keyRenderer": { "label": "category", "renderer": "defaultCategory", "visible": { "kind": "true" } },
-          "valueRenderer": { "label": "name", "renderer": "defaultString", "visible": { "kind": "true" } },
-          "visible": { "kind": "true" }
+          "keyRenderer": { "label": "category", "renderer": "defaultCategory", "visible": true },
+          "valueRenderer": { "label": "name", "renderer": "defaultString", "visible": true },
+          "visible": true
         },
-        "relatives": { "label": "relatives", "tooltip": "someone who you are related to", "elementTooltip": "one relative", "elementLabel": "relative", "renderer": "defaultList", "elementRenderer":"defaultCategory", "visible": { "kind": "true" } },
-        "subscribeToNewsletter": { "label": "subscribe to newsletter", "renderer": "defaultBoolean", "visible": { "kind": "true" } },
+        "relatives": { "label": "relatives", "tooltip": "someone who you are related to", "elementTooltip": "one relative", "elementLabel": "relative", "renderer": "defaultList", "elementRenderer":"defaultCategory", "visible": true },
+        "subscribeToNewsletter": { "label": "subscribe to newsletter", "renderer": "defaultBoolean", "visible": true },
         "interests": {
           "label": "interests",
           "renderer": "defaultEnumMultiselect", "options": "interests",
@@ -154,60 +154,60 @@
         "departments": { 
           "label": "departments",
           "renderer": "defaultInfiniteStreamMultiselect", "stream": "departments", 
-          "visible": { "kind": "true" }, 
+          "visible": true, 
           "disabled": 
             { "kind": "leaf", "operation": "field", "arguments": { "location": "local", "field": "subscribeToNewsletter", "value": false } }
         },
-        "mainAddress": { "label": "main address", "renderer": "address", "visible": { "kind": "true" }},
-        "addresses": { "label": "other addresses", "renderer": "defaultList", "elementLabel": "address", "elementRenderer":"address", "visible": { "kind": "true" } },
-        "emails": { "label": "emails", "renderer": "defaultList", "elementLabel": "email", "elementRenderer":"defaultString", "visible": { "kind": "true" } },
+        "mainAddress": { "label": "main address", "renderer": "address", "visible": true},
+        "addresses": { "label": "other addresses", "renderer": "defaultList", "elementLabel": "address", "elementRenderer":"address", "visible": true },
+        "emails": { "label": "emails", "renderer": "defaultList", "elementLabel": "email", "elementRenderer":"defaultString", "visible": true },
         "addressesWithLabel": {
           "label": "addresses with label",
           "renderer": "defaultMap",
-          "keyRenderer":{ "label": "address label", "renderer": "defaultString", "visible": { "kind": "true" } },
-          "valueRenderer":{ "label": "address", "renderer": "address", "visible": { "kind": "true" } },
-          "visible": { "kind": "true" } },
+          "keyRenderer":{ "label": "address label", "renderer": "defaultString", "visible": true },
+          "valueRenderer":{ "label": "address", "renderer": "address", "visible": true },
+          "visible": true },
         "addressesByCity": {
             "label": "addresses by city",
             "renderer": "defaultMap",
-            "keyRenderer":{ "label": "city", "tooltip": "a nice place to live", "renderer": "defaultInfiniteStream", "stream": "cities", "visible": { "kind": "true" } }, 
-            "valueRenderer":{"label": "address", "renderer": "address", "visible": { "kind": "true" } }, 
-            "visible": { "kind": "true" } },
+            "keyRenderer":{ "label": "city", "tooltip": "a nice place to live", "renderer": "defaultInfiniteStream", "stream": "cities", "visible": true }, 
+            "valueRenderer":{"label": "address", "renderer": "address", "visible": true }, 
+            "visible": true },
         "addressesWithColorLabel": {
             "renderer": "defaultMap",
             "label": "addresses with color label",
-            "keyRenderer":{ "label":"color", "renderer": "defaultEnum", "options": "colors", "visible": { "kind": "true" } }, 
-            "valueRenderer":{ "label": "address", "renderer": "address", "visible": { "kind": "true" } }, 
-            "visible": { "kind": "true" } },
+            "keyRenderer":{ "label":"color", "renderer": "defaultEnum", "options": "colors", "visible": true }, 
+            "valueRenderer":{ "label": "address", "renderer": "address", "visible": true }, 
+            "visible": true },
         "permissions": {
             "label": "permissions",
             "renderer": "defaultMap",
-            "keyRenderer":{ "label": "permission", "renderer": "defaultEnum", "options": "permissions", "visible": { "kind": "true" } },
-            "valueRenderer":{ "label": "granted", "renderer": "defaultBoolean", "visible": { "kind": "true" } },
-            "visible": { "kind": "true" } },
+            "keyRenderer":{ "label": "permission", "renderer": "defaultEnum", "options": "permissions", "visible": true },
+            "valueRenderer":{ "label": "granted", "renderer": "defaultBoolean", "visible": true },
+            "visible": true },
         "cityByDepartment": {
             "label": "city by department",
             "renderer": "defaultMap",
-            "keyRenderer":{ "label": "department", "renderer": "defaultInfiniteStream", "stream": "departments", "visible": { "kind": "true" } },
-            "valueRenderer":{ "label": "city", "renderer": "defaultInfiniteStream", "stream": "cities", "visible": { "kind": "true" } },
-            "visible": { "kind": "true" } },
+            "keyRenderer":{ "label": "department", "renderer": "defaultInfiniteStream", "stream": "departments", "visible": true },
+            "valueRenderer":{ "label": "city", "renderer": "defaultInfiniteStream", "stream": "cities", "visible": true },
+            "visible": true },
         "shoeColours": {
             "label": "shoe colours",
-            "renderer": "defaultEnumMultiselect", "options": "colors", "visible": { "kind": "true" }
+            "renderer": "defaultEnumMultiselect", "options": "colors", "visible": true
           },
         "friendsBirthdays": {
             "renderer": "defaultMap",
             "label": "friends birthdays",
-            "keyRenderer":{ "label": "name", "renderer": "defaultString", "visible": { "kind": "true" } },
-            "valueRenderer":{ "label": "birthday", "renderer": "defaultDate", "visible": { "kind": "true" } },
-            "visible": { "kind": "true" }
+            "keyRenderer":{ "label": "name", "renderer": "defaultString", "visible": true },
+            "valueRenderer":{ "label": "birthday", "renderer": "defaultDate", "visible": true },
+            "visible": true
           },
         "holidays": {
             "label": "holidays",
             "renderer": "defaultList",
             "elementLabel": "holiday",
             "elementRenderer": "defaultDate",
-            "visible": { "kind": "true" }
+            "visible": true
         }
       },
       "tabs": {

@@ -47,28 +47,28 @@ Todo (✅/❌)
         ✅ Map.tryFind
         ✅ Map.tryFindWithError
         ✅ move `eval` to `Expr` repo
-        ❌ structural equality
-          ❌ union case
-          ❌ tuple
-          ❌ record
+        ✅ structural equality
+          ✅ union case
+          ✅ tuple
+          ✅ record
         ❌ parser/validator `any => ValueOrError<Expr, string>`
       ❌ there are unparsed placeholders for the labels and tooltips
         ❌ add the new field `description` or what's it called to the validator
       ✅ delete the sample parsed form
       ✅ `let injectedTypes = []` should come from `codegenConfig.Custom`
-      ❌ improve the generated whitespace
-      ❌ the functionality of the validator is now mature
       ❌ define `import` command, generate with some sort of linking strategy for shared files
+      ❌ pretty print types in errors
+      ❌ add source context to errors for pretty printing
+        ❌ probably needs the state monad with an error decorator accumulated from the parent
+        ❌ distinguish state from parsed context
+      ❌ the functionality of the validator is now mature
+      ❌ improve the generated whitespace
       ❌ all utility methods should be capitalized in Program.fs
       ❌ adjust person-config in FE and use that from cmd line, delete the copy
-      ❌ pretty print types in errors
       ❌ introduce `sum.Both`, `state.Both`
       ❌ introduce a natural transformation that flips state and option, use it to parse the `disabledJson` elegantly
       ❌ use `Utils.tryFindField` everywhere applicable
       ❌ all the `match` expressions that search fields should become monadic instances of nested `state.Both`, or maybe instances of up to 5; remove those ugly matches in any case
-      ❌ add source context to errors for pretty printing
-        ❌ probably needs the state monad with an error decorator accumulated from the parent
-        ❌ distinguish state from parsed context
       ❌ move string builder to ballerina-core
       ❌ move the new type parsers to ballerina-core
         ❌ break the form engine in all possible ways

@@ -1300,6 +1300,7 @@ let main args =
       else 
         [inputPath]
     for inputPath in inputPaths do
+      do printfn $$"""Processing file {{inputPath}}"""
       let inputFileNameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension inputPath    
       // let inputDirectory = System.IO.Path.GetDirectoryName inputPath
       let inputFileName = inputFileNameWithoutExtension |> String.ToPascalCase [|'-'; '_'|]

@@ -3,11 +3,12 @@ import { Map } from "immutable"
 
 export type ValueRecord = { kind: "record", fields: Map<string, Value> }
 export type ValueUnionCase = { kind: "unionCase", caseName: string, value: Value }
+export type ValueTuple = { kind: "tuple", values: Array<Value> }
 export type Value =
   number | string | boolean | { kind: "guid", value: string }
   | { kind: "unit" }
   | { kind: "varLookup", varName: string }
-  | { kind: "tuple", values: Array<Value> }
+  | ValueTuple
   | ValueRecord
   | ValueUnionCase
 
@@ -22,20 +23,43 @@ export type BinaryOperator = "or" | "equals"
 export type Bindings = Map<string, Value>
 
 export const Value = {
-  Operations:{
-    Equals:(vars:Bindings) => (v1:Value, v2:Value) : ValueOrErrors<boolean, string> =>
+  Default: {
+    tuple: (values: Array<Value>): ValueTuple => ({ kind: "tuple", values })
+  },
+  Operations: {
+    recordToTuple: (r: ValueRecord): ValueTuple => {
+      const valuesSortedByName = r.fields.toSeq().map((v, k) => [k, v]).sortBy(([k, v]) => k).map(([k, v]) => v).valueSeq().toArray()
+      return Value.Default.tuple(valuesSortedByName)
+    },
+    Equals: (vars: Bindings) => (v1: Value, v2: Value): ValueOrErrors<boolean, string> =>
       (typeof v1 == "boolean" || typeof v1 == "number" || typeof v1 == "string") ||
-      (typeof v2 == "boolean" || typeof v2 == "number" || typeof v2 == "string") ?
+        (typeof v2 == "boolean" || typeof v2 == "number" || typeof v2 == "string") ?
         typeof v1 == typeof v2 ?
           ValueOrErrors.Default.return(v1 == v2)
-        : ValueOrErrors.Default.throwOne(`Error: cannot compare expressions of different types ${JSON.stringify(v1)} and ${JSON.stringify(v2)}.`)
+          : ValueOrErrors.Default.throwOne(`Error: cannot compare expressions of different types ${JSON.stringify(v1)} and ${JSON.stringify(v2)}.`)
         : v1.kind == "guid" && v2.kind == "guid" ?
-        ValueOrErrors.Default.return(v1.value == v2.value)
-        // : v1.kind == "tuple" && v2.kind == "tuple" ?
-          // ValueOrErrors.Operations.All()
-        : v1.kind != v2.kind ?
-          ValueOrErrors.Default.throwOne(`Error: cannot compare expressions of different types ${JSON.stringify(v1)} and ${JSON.stringify(v2)}.`)
-        : ValueOrErrors.Default.throwOne(`Error: structural equality is not implemented yet.`)
+          ValueOrErrors.Default.return(v1.value == v2.value)
+          : v1.kind == "unionCase" && v2.kind == "unionCase" ?
+            v1.caseName == v2.caseName ?
+              Value.Operations.Equals(vars)(v1.value, v2.value)
+              : ValueOrErrors.Default.return(false)
+            : v1.kind == "tuple" && v2.kind == "tuple" ?
+              v1.values.length != v2.values.length ?
+                ValueOrErrors.Default.return(false)
+                : v1.values.length == 0 ?
+                  ValueOrErrors.Default.return(true)
+                  : Value.Operations.Equals(vars)(v1.values[0], v2.values[0]).Then(firstEqual =>
+                    firstEqual ?
+                      Value.Operations.Equals(vars)(Value.Default.tuple(v1.values.slice(1)), Value.Default.tuple(v2.values.slice(1)))
+                      : ValueOrErrors.Default.return(false)
+                  )
+              : v1.kind == "record" && v2.kind == "record" ?
+                Value.Operations.Equals(vars)(Value.Operations.recordToTuple(v1), Value.Operations.recordToTuple(v2))
+                : v1.kind == "unit" && v2.kind == "unit" ?
+                  ValueOrErrors.Default.return(true)
+                  : v1.kind != v2.kind ?
+                    ValueOrErrors.Default.throwOne(`Error: cannot compare expressions of different types ${JSON.stringify(v1)} and ${JSON.stringify(v2)}.`)
+                    : ValueOrErrors.Default.throwOne(`Error: structural equality is not implemented yet between ${JSON.stringify(v1)} and ${JSON.stringify(v2)}.`)
   }
 }
 
@@ -73,22 +97,22 @@ export const Expr = {
               : e.kind == "equals" ?
                 Expr.Operations.Evaluate(vars)(e.operands[0]).Then(v1 =>
                   Expr.Operations.Evaluate(vars)(e.operands[1]).Then(v2 =>
-                    Value.Operations.Equals(vars)(v1,v2).Then(eq =>
+                    Value.Operations.Equals(vars)(v1, v2).Then(eq =>
                       ValueOrErrors.Default.return(eq)
                     )
                   )
                 )
-              : e.kind == "or" ?
-                Expr.Operations.Evaluate(vars)(e.operands[0]).Then(v1 =>
-                  Expr.Operations.Evaluate(vars)(e.operands[1]).Then(v2 =>
-                    Expr.Operations.EvaluateAsBoolean(vars)(v1).Then(v1 =>
-                      Expr.Operations.EvaluateAsBoolean(vars)(v2).Then(v2 =>
-                        ValueOrErrors.Default.return(v1 || v2)
+                : e.kind == "or" ?
+                  Expr.Operations.Evaluate(vars)(e.operands[0]).Then(v1 =>
+                    Expr.Operations.Evaluate(vars)(e.operands[1]).Then(v2 =>
+                      Expr.Operations.EvaluateAsBoolean(vars)(v1).Then(v1 =>
+                        Expr.Operations.EvaluateAsBoolean(vars)(v2).Then(v2 =>
+                          ValueOrErrors.Default.return(v1 || v2)
+                        )
                       )
                     )
                   )
-                )
-                : ValueOrErrors.Default.throwOne(`Error: unsupported expression ${JSON.stringify(e)}`),
+                  : ValueOrErrors.Default.throwOne(`Error: unsupported expression ${JSON.stringify(e)}`),
   }
 }
 
@@ -160,5 +184,8 @@ const sample2: Expr =
 let global: Value = { kind: "record", fields: Map<string, Value>().set("IsAdmin", true).set("ERP", { kind: "unionCase", caseName: "ERP:SAP", value: { kind: "unit" } }) }
 let root: Value = { kind: "record", fields: Map<string, Value>().set("subscribeToNewsletter", true) }
 let local: Value = { kind: "record", fields: Map<string, Value>().set("number", 20) }
-let res = Expr.Operations.Evaluate(Map<string, Value>().set("global", global).set("root", root).set("local", local))(sample1)
+
+const sample3: Expr =
+  { kind: "equals", operands: [global, global] }
+let res = Expr.Operations.Evaluate(Map<string, Value>().set("global", global).set("root", root).set("local", local))(sample3)
 console.log(JSON.stringify(res))

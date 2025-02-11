@@ -34,21 +34,21 @@
             "keyRenderer": {
               "label": "string",
               "renderer": "defaultString",
-              "visible": { "kind": "true" }
+              "visible": true
             },
             "valueRenderer": {
               "renderer": "defaultList",
               "elementRenderer": {
                 "renderer": "defaultString",
-                "visible": { "kind": "true" }
+                "visible": true
               },
-              "visible": { "kind": "true" }
+              "visible": true
             },
-            "visible": { "kind": "true" }
+            "visible": true
           },
-          "visible": { "kind": "true" }
+          "visible": true
         },
-        "visible": { "kind": "true" }
+        "visible": true
       }
     },
     "tabs": {
