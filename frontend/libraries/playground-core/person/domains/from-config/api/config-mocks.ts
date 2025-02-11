@@ -39,6 +39,7 @@ export const PersonFormsConfig = {
       ],
     },
     ColorRef: {
+      extends: [],
       fields: {
         Value: "ColorsEnum",
       },
