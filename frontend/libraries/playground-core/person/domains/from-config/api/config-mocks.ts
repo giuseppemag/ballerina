@@ -39,6 +39,7 @@ export const PersonFormsConfig = {
       ],
     },
     ColorRef: {
+      extends: [],
       fields: {
         Value: "ColorsEnum",
       },
@@ -147,31 +148,32 @@ export const PersonFormsConfig = {
       fields: {
         street: {
           renderer: "defaultString",
-          visible: {
-            kind: "or",
-            operands: [
-              {
-                kind: "leaf",
-                operation: "field",
-                arguments: {
-                  location: "root",
-                  field: "subscribeToNewsletter",
-                  value: true,
-                },
-              },
-              {
-                kind: "leaf",
-                operation: "field",
-                arguments: { location: "local", field: "number", value: 10 },
-              },
-            ],
-          },
+          visible: true,
+          // {
+          //   kind: "or",
+          //   operands: [
+          //     {
+          //       kind: "leaf",
+          //       operation: "field",
+          //       arguments: {
+          //         location: "root",
+          //         field: "subscribeToNewsletter",
+          //         value: true,
+          //       },
+          //     },
+          //     {
+          //       kind: "leaf",
+          //       operation: "field",
+          //       arguments: { location: "local", field: "number", value: 10 },
+          //     },
+          //   ],
+          // },
         },
         number: { renderer: "defaultNumber", visible: { kind: "true" } },
         city: {
           renderer: "defaultInfiniteStream",
           stream: "cities",
-          visible: { kind: "true" },
+          visible: true
         },
       },
       tabs: {
@@ -193,28 +195,28 @@ export const PersonFormsConfig = {
           label: "category",
           details: "categories, surely they have no practical uses?",
           renderer: "defaultCategory",
-          visible: { kind: "true" },
+          visible: false
         },
         name: {
           label: "first name",
           tooltip: "Any name will do",
           renderer: "defaultString",
-          visible: { kind: "true" },
+          visible: true
         },
         surname: {
           label: "last name",
           renderer: "defaultString",
-          visible: { kind: "true" },
+          visible: true
         },
         birthday: {
           renderer: "defaultDate",
           tooltip: "happy birthday!",
-          visible: { kind: "true" },
+          visible: true
         },
         favoriteColor: {
           renderer: "defaultEnum",
           options: "colors",
-          visible: { kind: "true" },
+          visible: true
         },
         gender: {
           label: "gender",
@@ -237,15 +239,15 @@ export const PersonFormsConfig = {
             tooltip: "their name",
             details: "a name helps you to identify a person, animal or thing",
             renderer: "defaultString",
-            visible: { kind: "true" },
+            visible: true
           },
           valueRenderer: {
             label: "category",
             tooltip: "their category",
             renderer: "defaultCategory",
-            visible: { kind: "true" },
+            visible: true
           },
-          visible: { kind: "true" },
+          visible: true
         },
         friendsByCategory: {
           label: "friends by category",
@@ -253,14 +255,14 @@ export const PersonFormsConfig = {
           keyRenderer: {
             label: "category",
             renderer: "defaultCategory",
-            visible: { kind: "true" },
+            visible: true
           },
           valueRenderer: {
             label: "name",
             renderer: "defaultString",
-            visible: { kind: "true" },
+            visible: true
           },
-          visible: { kind: "true" },
+          visible: true
         },
         relatives: {
           label: "relatives",
@@ -269,15 +271,15 @@ export const PersonFormsConfig = {
             renderer: "defaultCategory",
             label: "relative",
             toolttip: "a relative",
-            visible: { kind: "true" },
+            visible: true
 
           },
-          visible: { kind: "true" },
+          visible: true
         },
         subscribeToNewsletter: {
           label: "subscribe to newsletter",
           renderer: "defaultBoolean",
-          visible: { kind: "true" },
+          visible: true
         },
         interests: {
           label: "interests",
@@ -297,7 +299,7 @@ export const PersonFormsConfig = {
           label: "departments",
           renderer: "defaultInfiniteStreamMultiselect",
           stream: "departments",
-          visible: { kind: "true" },
+          visible: true,
           disabled: {
             kind: "leaf",
             operation: "field",
@@ -311,7 +313,7 @@ export const PersonFormsConfig = {
         mainAddress: {
           label: "main address",
           renderer: "address",
-          visible: { kind: "true" },
+          visible: true
         },
         addresses: {
           label: "other addresses",
@@ -323,9 +325,9 @@ export const PersonFormsConfig = {
           // elementRenderer: {
           //   renderer: "address",
           //   label: "address",
-          //   visible: { kind: "true" },
+          //   visible: true
           // },
-          visible: { kind: "true" },
+          visible: true
         },
         emails: {
           label: "emails",
@@ -333,9 +335,9 @@ export const PersonFormsConfig = {
           elementRenderer: {
             renderer: "defaultString",
             label: "email",
-            visible: { kind: "true" },
+            visible: true
           },
-          visible: { kind: "true" },
+          visible: true
         },
         addressesWithLabel: {
           label: "addresses with label",
@@ -343,14 +345,14 @@ export const PersonFormsConfig = {
           keyRenderer: {
             label: "address label",
             renderer: "defaultString",
-            visible: { kind: "true" },
+            visible: true
           },
           valueRenderer: {
             label: "address",
             renderer: "address",
-            visible: { kind: "true" },
+            visible: true
           },
-          visible: { kind: "true" },
+          visible: true
         },
         addressesByCity: {
           label: "addresses by city",
@@ -360,14 +362,14 @@ export const PersonFormsConfig = {
             tooltip: "a nice place to live",
             renderer: "defaultInfiniteStream",
             stream: "cities",
-            visible: { kind: "true" },
+            visible: true
           },
           valueRenderer: {
             label: "address",
             renderer: "address",
-            visible: { kind: "true" },
+            visible: true
           },
-          visible: { kind: "true" },
+          visible: true
         },
         addressesWithColorLabel: {
           renderer: "defaultMap",
@@ -376,14 +378,14 @@ export const PersonFormsConfig = {
             label: "color",
             renderer: "defaultEnum",
             options: "colors",
-            visible: { kind: "true" },
+            visible: true
           },
           valueRenderer: {
             label: "address",
             renderer: "address",
-            visible: { kind: "true" },
+            visible: true
           },
-          visible: { kind: "true" },
+          visible: true
         },
         permissions: {
           label: "permissions",
@@ -392,14 +394,14 @@ export const PersonFormsConfig = {
             label: "permission",
             renderer: "defaultEnum",
             options: "permissions",
-            visible: { kind: "true" },
+            visible: true
           },
           valueRenderer: {
             label: "granted",
             renderer: "defaultBoolean",
-            visible: { kind: "true" },
+            visible: true
           },
-          visible: { kind: "true" },
+          visible: true
         },
         cityByDepartment: {
           label: "city by department",
@@ -408,21 +410,21 @@ export const PersonFormsConfig = {
             label: "department",
             renderer: "defaultInfiniteStream",
             stream: "departments",
-            visible: { kind: "true" },
+            visible: true
           },
           valueRenderer: {
             label: "city",
             renderer: "defaultInfiniteStream",
             stream: "cities",
-            visible: { kind: "true" },
+            visible: true
           },
-          visible: { kind: "true" },
+          visible: true
         },
         shoeColours: {
           label: "shoe colours",
           renderer: "defaultEnumMultiselect",
           options: "colors",
-          visible: { kind: "true" },
+          visible: true
         },
         friendsBirthdays: {
           renderer: "defaultMap",
@@ -430,14 +432,14 @@ export const PersonFormsConfig = {
           keyRenderer: {
             label: "name",
             renderer: "defaultString",
-            visible: { kind: "true" },
+            visible: true
           },
           valueRenderer: {
             label: "birthday",
             renderer: "defaultDate",
-            visible: { kind: "true" },
+            visible: true
           },
-          visible: { kind: "true" },
+          visible: true
         },
         holidays: {
           label: "holidays",
@@ -446,9 +448,9 @@ export const PersonFormsConfig = {
             label: "date",
             details: "a day off, time to relax, unwind and enjoy the frivolities of life",
             renderer: "defaultDate",
-            visible: { kind: "true" },
+            visible: true
           },
-          visible: { kind: "true" },
+          visible: true
         },
       },
       tabs: {

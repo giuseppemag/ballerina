@@ -46,6 +46,8 @@ export type BoolExpr<Leaf> =
 export const BoolExpr = {
   Default: Object.assign(<Leaf>(_: BoolExprSerializable<Leaf>): BoolExpr<Leaf> => {
     return Object.assign(
+      typeof _ == "boolean" ? 
+        ({ kind: _ ? "true" as const : "false" as const }) :
       _.kind == "and" || _.kind == "or" ?
         ({ kind: _.kind, operands: [BoolExpr.Default(_.operands[0]), BoolExpr.Default(_.operands[1])] as [BoolExpr<Leaf>, BoolExpr<Leaf>] })
         : _.kind == "not" ?

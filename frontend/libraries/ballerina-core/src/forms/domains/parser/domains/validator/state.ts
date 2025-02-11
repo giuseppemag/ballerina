@@ -94,9 +94,13 @@ export const FormsConfig = {
       let parsedTypes: Map<TypeName, ParsedType<T>> = Map();
       const rawTypesFromConfig = formsConfig.types;
       const rawTypeNames = Set(Object.keys(rawTypesFromConfig))
-      Object.entries(rawTypesFromConfig).forEach(([rawTypeName, rawType]) => {        
-        const parsedType: ParsedType<T> = { kind: "form", value: rawTypeName, fields: Map() };
-          if (RawFieldType.isUnion(rawType)){
+      Object.entries(rawTypesFromConfig).forEach(([rawTypeName, rawType]) => {   
+        if (RawType.isExtendedType<T>(rawType)){
+          parsedTypes = parsedTypes.set(rawTypeName, ParsedType.Default.lookup(rawType.extends[0]));
+          return
+        }
+
+        if (RawFieldType.isUnion(rawType)){
           const parsingResult = ParsedType.Operations.ParseRawFieldType(rawTypeName, rawType, rawTypeNames, injectedPrimitives)
           if(parsingResult.kind == "errors"){
             errors = errors.concat(parsingResult.errors.toArray());
@@ -111,16 +115,7 @@ export const FormsConfig = {
           return
         }
 
-        if (RawType.isMaybeExtendedType(rawType)) 
-          if (RawType.isExtendedType<T>(rawType)){
-            parsedTypes = parsedTypes.set(rawTypeName, ParsedType.Default.lookup(rawType.extends[0]));
-            return
-          }
-          else{
-            errors = errors.push(`invalid 'extends' clause in type ${rawTypeName}: expected string[]`);
-            return
-          }
-
+        const parsedType: ParsedType<T> = { kind: "form", value: rawTypeName, fields: Map() };
         Object.entries(rawType.fields).forEach(([rawFieldName, rawFieldType]: [rawFieldName: any, rawFieldType: any]) => {
           if ((RawFieldType.isMaybeLookup(rawFieldType) && !RawFieldType.isPrimitive(rawFieldType, injectedPrimitives)
                && (injectedPrimitives?.injectedPrimitives.has(rawFieldType as keyof T) || (builtIns.primitives.has(rawFieldType))))){
