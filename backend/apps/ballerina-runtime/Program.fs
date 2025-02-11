@@ -1300,7 +1300,6 @@ let main args =
       else 
         [inputPath]
     for inputPath in inputPaths do
-      do printfn $$"""Processing file {{inputPath}}"""
       let inputFileNameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension inputPath    
       // let inputDirectory = System.IO.Path.GetDirectoryName inputPath
       let inputFileName = inputFileNameWithoutExtension |> String.ToPascalCase [|'-'; '_'|]
@@ -1326,7 +1325,7 @@ let main args =
           JsonSerializer.Deserialize<CodeGenConfig>(codegenConfig, JsonFSharpOptions.Default().ToJsonSerializerOptions())
         with
         | err -> 
-          do eprintfn $$"""Fatal error {{err.Message}}."""
+          do eprintfn $$"""Fatal error when processing {{inputPath}}: {{err.Message}}."""
           do System.Environment.Exit -1
           failwith ""      
       let injectedTypes:Map<string, TypeBinding> = 
@@ -1345,26 +1344,35 @@ let main args =
             match ParsedFormsContext.ToGolang codegenConfig parsedForms generatedPackage formName with
             | Left generatedCode -> 
               // do Console.ReadLine() |> ignore
-              do printfn "forms are parsed and validated"
               let outputPath = System.IO.Path.Combine [| outputPath; $$"""{{inputFileNameWithoutExtension}}.gen.go""" |]
               try
                 do System.IO.Directory.CreateDirectory (System.IO.Path.GetDirectoryName outputPath) |> ignore
                 let generatedCode = generatedCode |> StringBuilder.ToString
                 do System.IO.File.WriteAllText(outputPath, generatedCode)
-                do printfn $$"""Code is generated at {{outputPath}}"""
+                do Console.ForegroundColor <- ConsoleColor.Green
+                do printf $$"""Code for {{inputPath}} is generated at {{outputPath}}.  """
+                do Console.ResetColor()
               with
               | err -> 
-                do eprintfn $$"""Fatal error {{err.Message}}: cannot create output path: {{outputPath}}"""
+                do eprintfn $$"""Fatal error for {{inputPath}} - {{err.Message}}: cannot create output path: {{outputPath}}"""
             | Right err -> 
-              do printfn "Code generation errors: %A" err
+              do eprintfn "\nCode generation errors for {{inputPath}}: %A" err
           | _ -> 
-            do printfn "Unsupported code generation target: %A" language
+            do Console.ForegroundColor <- ConsoleColor.Red
+            do eprintfn "\nUnsupported code generation target for %s: %A" inputPath language
+            do Console.ResetColor()
         | Right err -> 
-          do printfn "Validation errors: %A" err
+          do Console.ForegroundColor <- ConsoleColor.Red
+          do eprintfn "\nValidation errors for %s: %A" inputPath err
+          do Console.ResetColor()
       | Right err -> 
-        do printfn "Parsing errors: %A" err
+        do Console.ForegroundColor <- ConsoleColor.Red
+        do eprintfn "\nParsing errors for %s: %A" inputPath err
+        do Console.ResetColor()
       | _ -> 
-        do printfn "Error: no output when parsing."
+        do Console.ForegroundColor <- ConsoleColor.Red
+        do eprintfn "\nError: no output when parsing %s." inputPath
+        do Console.ResetColor()
     ), formsOptions.mode, formsOptions.language, formsOptions.input, formsOptions.output, formsOptions.package_name, formsOptions.form_name, formsOptions.codegen_config_path)
 
   rootCommand.Invoke(args)

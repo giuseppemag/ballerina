@@ -36,7 +36,7 @@ Todo (✅/❌)
       ✅ type names and enum case names should be valid names (verified at codegen time)
         ✅ enum case names can be cleaned up, at least wrt patterns like ":" in the variable name (the string value is fine)
         ✅ `Regex.Replace(original, @"[^a-zA-Z0-9/-]+", "_")`
-      ❌ build a TS prototype of the predicates parser and interpreter
+      ✅ build a TS prototype of the predicates parser and interpreter
         ✅ Sum.OfOption
         ✅ Errors
         ✅ Expr
@@ -51,12 +51,12 @@ Todo (✅/❌)
           ✅ union case
           ✅ tuple
           ✅ record
-        ❌ parser/validator `any => ValueOrError<Expr, string>`
+        ✅ parser/validator `any => ValueOrError<Expr, string>`
       ❌ there are unparsed placeholders for the labels and tooltips
         ❌ add the new field `description` or what's it called to the validator
       ✅ delete the sample parsed form
       ✅ `let injectedTypes = []` should come from `codegenConfig.Custom`
-      ❌ define `import` command, generate with some sort of linking strategy for shared files
+      ❌ define `import` command
       ❌ pretty print types in errors
       ❌ add source context to errors for pretty printing
         ❌ probably needs the state monad with an error decorator accumulated from the parent
@@ -81,6 +81,7 @@ Todo (✅/❌)
         ❌ move relevant sources to a separate folder in ballerina-core (forms engine)
           ❌ move the new types (`Errors`, `Form`, etc.) to ballerina-core
           ❌ move the new type checkers to ballerina-core
+    ❌ don't mix `printfn` and `Console.WriteLine`: only the latter, with string interpolation
     ❌ the Go type generator is now reasonably mature
       ❌ write a "why not just a package somewhere?"
       ❌ write a language shootout
@@ -116,7 +117,7 @@ Todo (✅/❌)
       ❌ make all these functions partially applied in the actual parameters vs the visitor parameters
     ❌ define a `Pair` domain with the `<*>` operator
     ❌ build the forms gui editor in MAUI
-    ❌ should we model the forms as algebras? Do we need a GUI for this?
+    ❌ codegen the `import` command with some sort of linking strategy for shared files
     ✅ allow union types (needs adjustment in frontend too)
   ✅ models
     ✅ users
