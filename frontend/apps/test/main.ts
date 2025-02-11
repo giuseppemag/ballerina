@@ -45,7 +45,7 @@ export const Value = {
         )).Then(entries =>
           ValueOrErrors.Default.return(Value.Default.record(Map(entries))))
       }
-      if ("kind" in json && "values" in json && json["kind"] == "record" && Array.isArray(json["values"])) {
+      if ("kind" in json && "values" in json && json["kind"] == "tuple" && Array.isArray(json["values"])) {
         return ValueOrErrors.Operations.All(List(
           json["values"].map(elementValue => Value.Operations.parse(elementValue))
         )).Then(values =>
@@ -55,6 +55,22 @@ export const Value = {
         return Value.Operations.parse(json["value"]).Then(value =>
           ValueOrErrors.Default.return(Value.Default.unionCase(json["caseName"], value))
         )
+      }
+      if (typeof json == "object") {
+        return ValueOrErrors.Operations.All(List(
+          Object.entries(json).map(([fieldName, fieldValue]) => 
+            Value.Operations.parse(fieldValue).Then(value =>
+            ValueOrErrors.Default.return([fieldName, value] as [string, Value])))
+        )).Then(entries =>
+          ValueOrErrors.Default.return(
+            Value.Default.record(Map(entries)
+          )))
+      }
+      if (Array.isArray(json)) {
+        return ValueOrErrors.Operations.All(List(
+          json.map(elementValue => Value.Operations.parse(elementValue))
+        )).Then(values =>
+          ValueOrErrors.Default.return(Value.Default.tuple(values.toArray())))
       }
       return ValueOrErrors.Default.throwOne(`Error: cannot parse json into Value ${JSON.stringify(json)}`)
     },
