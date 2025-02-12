@@ -111,52 +111,52 @@ const streamApis: InfiniteStreamSources = (streamName: string) => {
 const enumApis: EnumOptionsSources = (enumName: string) => {
   switch (enumName) {
     case "requiredKeyValueFieldsEnum": {
-      return () => PromiseRepo.Default.mock(() => keyValueFields).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
+      return () => PromiseRepo.Default.mock(() => keyValueFields)
     }
     case "highConfidenceKeyValueFieldsEnum": {
-      return () => PromiseRepo.Default.mock(() => keyValueFields).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
+      return () => PromiseRepo.Default.mock(() => keyValueFields)
     }
     case "documentNumberDefaultingsFromKeyValueEnum": {
-      return () => PromiseRepo.Default.mock(() => keyValueFields).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
+      return () => PromiseRepo.Default.mock(() => keyValueFields)
     }
     case "documentDateDefaultingsFromKeyValueEnum": {
-      return () => PromiseRepo.Default.mock(() => keyValueFields).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
+      return () => PromiseRepo.Default.mock(() => keyValueFields)
     }
     case "configurableNumberDefaultingsFromKeyValueEnum": {
-      return () => PromiseRepo.Default.mock(() => keyValueFields).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
+      return () => PromiseRepo.Default.mock(() => keyValueFields)
     }
     case "configurableNumber2DefaultingsFromKeyValueEnum": {
-      return () => PromiseRepo.Default.mock(() => keyValueFields).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
+      return () => PromiseRepo.Default.mock(() => keyValueFields)
     }
     case "informationKeysEnum": {
-      return () => PromiseRepo.Default.mock(() => keyValueFields).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
+      return () => PromiseRepo.Default.mock(() => keyValueFields)
     }
     case "informationKeysDisabledEnum": {
-      return () => PromiseRepo.Default.mock(() => keyValueFields).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
+      return () => PromiseRepo.Default.mock(() => keyValueFields)
     }
     case "contextEnum": {
-      return () => PromiseRepo.Default.mock(() => contextEnum).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
+      return () => PromiseRepo.Default.mock(() => contextEnum)
     }
     case "filterGroupOpEnum": {
-      return () => PromiseRepo.Default.mock(() => filterGroupOpEnum).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
+      return () => PromiseRepo.Default.mock(() => filterGroupOpEnum)
     }
     case "accountingPositionFieldsEnum": {
-      return () => PromiseRepo.Default.mock(() => accountingPositionFields).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
+      return () => PromiseRepo.Default.mock(() => accountingPositionFields)
     }
     case "filtersOpEnum": {
-      return () => PromiseRepo.Default.mock(() => filtersOpEnum).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
+      return () => PromiseRepo.Default.mock(() => filtersOpEnum)
     }
     case "informationCardFieldsEnum": {
-      return () => PromiseRepo.Default.mock(() => informationCardField).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
+      return () => PromiseRepo.Default.mock(() => informationCardField)
     }
     case "informationCardFieldsDisabledEnum": {
-      return () => PromiseRepo.Default.mock(() => informationCardField).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
+      return () => PromiseRepo.Default.mock(() => informationCardField)
     }
     case "debitNoteResultFieldsEnum": {
-      return () => PromiseRepo.Default.mock(() => debitNoteResultFields).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
+      return () => PromiseRepo.Default.mock(() => debitNoteResultFields)
     }
     case "filtersValueAnyOfEnum": {
-      return () => PromiseRepo.Default.mock(() => filtersValueAnyOfEnum).then(_ => _.map(_ => CollectionReference.Default(_.Value, `enum:${_.Value}`, "enum")));
+      return () => PromiseRepo.Default.mock(() => filtersValueAnyOfEnum)
     }
     default: {
       alert(`Cannot find enum API ${enumName}`);

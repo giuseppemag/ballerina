@@ -69,7 +69,7 @@ export const PersonFormsConfig = {
     },
     PermissionRef: {
       fields: {
-        Value: "PermissionsEnum",
+        Value: "PermissionsEnum", 
       },
     },
     DepartmentRef: {

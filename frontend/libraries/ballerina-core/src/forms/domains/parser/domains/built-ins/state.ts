@@ -1,8 +1,8 @@
 import { Map, List, Set, OrderedMap } from "immutable"
-import { CollectionReference } from "../../../collection/domains/reference/state";
+import { CollectionReference, EnumReference } from "../../../collection/domains/reference/state";
 import { CollectionSelection } from "../../../collection/domains/selection/state";
 import { BasicFun } from "../../../../../fun/state";
-import { InjectedPrimitives, Maybe, ParsedType, TypeName } from "../../../../../../main";
+import { InjectedPrimitives, Maybe, ParsedType, TypeName, UnionCase } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 
 const sortObjectKeys = (obj: Record<string, any>) =>
@@ -52,8 +52,8 @@ export type BuiltInApiConverters = {
   "base64File": ApiConverter<string>;
   "secret": ApiConverter<string>;
   "Date": ApiConverter<Maybe<Date>>;
-  "unionCase": ApiConverter<CollectionReference>;
-  "SingleSelection": ApiConverter<CollectionSelection<CollectionReference | { Value: CollectionReference }>>;
+  "unionCase": ApiConverter<UnionCase>;
+  "SingleSelection": ApiConverter<CollectionSelection<CollectionReference | EnumReference>>;
   "MultiSelection": ApiConverter<OrderedMap<string, CollectionReference>>;
   "List": ApiConverter<List<any>>;
   "Map": ApiConverter<List<[any, any]>>;
@@ -157,7 +157,6 @@ export const defaultValue = <T>(types: Map<TypeName, ParsedType<T>>, builtIns: B
 }
 
 export const fromAPIRawValue = <T extends { [key in keyof T]: { type: any; state: any; } }>(t: ParsedType<T>, types: Map<TypeName, ParsedType<T>>, builtIns: BuiltIns, converters: ApiConverters<T>, injectedPrimitives?: InjectedPrimitives<T>) => (raw: any): any => {  
-  
   if (raw == undefined) {
     return defaultValue(types, builtIns, injectedPrimitives)(t)
   }
@@ -174,7 +173,7 @@ export const fromAPIRawValue = <T extends { [key in keyof T]: { type: any; state
   if (t.kind == "application") {
     if (t.value == "SingleSelection") {
       return CollectionSelection().Updaters.left(fromAPIRawValue(t.args[0], types, builtIns, converters, injectedPrimitives))
-        (converters[t.value].fromAPIRawValue(raw))
+      (converters[t.value].fromAPIRawValue(raw))
     }
     if (t.value == "MultiSelection") {
       return converters["MultiSelection"].fromAPIRawValue(raw).map(fromAPIRawValue(t.args[0], types, builtIns, converters, injectedPrimitives))
@@ -226,8 +225,10 @@ export const toAPIRawValue = <T extends { [key in keyof T]: { type: any; state: 
   if (t.kind == "application") {
     if (t.value == "SingleSelection") {
       const result = converters[t.value].toAPIRawValue([raw, formState.modifiedByUser])
-      if(typeof result != "object") return ValueOrErrors.Operations.Return(result)
-      return toAPIRawValue(t.args[0], types, builtIns, converters, injectedPrimitives)(result, formState)
+      return result.IsSome == false ? ValueOrErrors.Operations.Return(result) :
+      toAPIRawValue(t.args[0], types, builtIns, converters, injectedPrimitives)(result.Value, formState).Then(value => {
+        return ValueOrErrors.Default.return({Value: value, IsSome: result.IsSome})
+      })
     }
     if ((t.value == "MultiSelection")) {
       const result = converters["MultiSelection"].toAPIRawValue([raw, formState.modifiedByUser])
@@ -265,7 +266,6 @@ export const toAPIRawValue = <T extends { [key in keyof T]: { type: any; state: 
           )
         }
       )
-      
       const nonUniqueKeyErrors = parsedMap.filter(_ => _.kind == "value").reduce((acc, _) => { 
         const id = simpleMapKeyToIdentifer(_.value.key)
         acc.ids.contains(id) ? acc.errors = acc.errors.push(ValueOrErrors.Default.throw(List([`Keys in the map are not unique`]))) : acc.ids = acc.ids.push(id)

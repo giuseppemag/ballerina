@@ -1,6 +1,6 @@
 import { CollectionReference, Sum, FormStateFromEntity, SearchableInfiniteStreamState, CommonFormState, Predicate, CollectionSelection, unit } from "ballerina-core";
 import { OrderedMap } from "immutable";
-import { PersonFormPredicateContext } from "../predicates";
+
 import { AddressApi } from "playground-core";
 
 
@@ -20,12 +20,12 @@ export const Address = {
   ): Address => ({
     street, number, city
   }),
-  Operations: {
-    VisibleFields: OrderedMap<keyof Address, Predicate<PersonFormPredicateContext>>([
-      ["city", PersonFormPredicateContext.Predicates.BC.or(PersonFormPredicateContext.Predicates.FO)],
-      ["street", PersonFormPredicateContext.Predicates.SubscribedToNewsletter],
-      ["number", PersonFormPredicateContext.Predicates.True]])
-  }
+  // Operations: {
+  //   VisibleFields: OrderedMap<keyof Address, Predicate<PersonFormPredicateContext>>([
+  //     ["city", PersonFormPredicateContext.Predicates.BC.or(PersonFormPredicateContext.Predicates.FO)],
+  //     ["street", PersonFormPredicateContext.Predicates.SubscribedToNewsletter],
+  //     ["number", PersonFormPredicateContext.Predicates.True]])
+  // }
 };
 
 export type AddressFormState = FormStateFromEntity<Address, {
