@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker"
-import { CollectionReference, BoolExpr, Unit, InfiniteStreamSources, StreamPosition, PromiseRepo, OrderedMapRepo, EnumOptionsSources, EntityApis, unit, Guid, CollectionSelection } from "ballerina-core"
-import { Range, OrderedMap, List } from "immutable"
+import { CollectionReference, InfiniteStreamSources, PromiseRepo, EnumOptionsSources, EntityApis, unit, Guid, GlobalConfigurationSources } from "ballerina-core"
+import { OrderedMap, List } from "immutable"
 import { City } from "../../address/state"
 import { AddressApi } from "../../address/apis/mocks"
 import { v4 } from "uuid"
@@ -10,6 +10,18 @@ const permissions = ["create", "read", "update", "delete"]
 const colors = [ faker.color.human(), faker.color.human(), faker.color.human(), faker.color.human()]
 const genders = ["M", "F", "X", "Y"]
 const interests = ["finance", "marketing", "management", "development"]
+
+const globalApis: GlobalConfigurationSources = (globalConfigName: string) => { 
+  switch (globalConfigName) {
+    case "globalConfiguration":
+      return Promise.resolve({
+        IsAdmin: false,
+        ERP: "BC"
+      })
+    default:
+      return Promise.reject()
+  }
+}
 
 const streamApis: InfiniteStreamSources = (streamName: string) =>
   streamName == "departments" ?
@@ -211,5 +223,6 @@ const entityApis: EntityApis = {
 export const PersonFromConfigApis = {
   streamApis,
   enumApis,
-  entityApis
+  entityApis,
+  globalApis
 }

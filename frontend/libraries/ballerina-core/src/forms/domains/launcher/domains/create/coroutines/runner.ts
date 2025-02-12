@@ -34,6 +34,12 @@ export const createFormRunner = <E, FS>() => {
         5,
         50
       ).embed((_) => _.entity, CreateFormState<E, FS>().Updaters.Core.entity),
+      Synchronize<Unit, any>(
+        () => current.api.getGlobalConfiguration(),
+        (_) => "transient failure",
+        5,
+        50
+      ).embed((_) => _.globalConfiguration, CreateFormState<E, FS>().Updaters.Core.globalConfiguration),
       HandleApiResponse<
         CreateFormWritableState<E, FS>,
         CreateFormContext<E, FS>,
@@ -45,7 +51,18 @@ export const createFormRunner = <E, FS>() => {
       Co.SetState(
         CreateFormState<E, FS>().Updaters.Core.customFormState.children.initApiChecker(ApiResponseChecker.Updaters().toChecked())
       ),
-    ])
+      HandleApiResponse<
+      CreateFormWritableState<E, FS>,
+      CreateFormContext<E, FS>,
+      E
+    >((_) => _.globalConfiguration.sync, {
+      handleSuccess: current.apiHandlers?.onConfigSuccess,
+      handleError: current.apiHandlers?.onConfigError,
+    }),
+    Co.SetState(
+      CreateFormState<E, FS>().Updaters.Core.customFormState.children.configApiChecker(ApiResponseChecker.Updaters().toChecked())
+    ),
+    ]),
   );
 
   const synchronize = Co.Repeat(

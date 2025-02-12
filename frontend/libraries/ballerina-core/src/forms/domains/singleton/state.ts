@@ -36,7 +36,7 @@ export type EntityFormState<Entity, Fields extends (keyof Entity) & (keyof Field
     commonFormState: CommonFormState }
 
 export type EntityFormContext<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> =
-  Context & EntityFormState<Entity, Fields, FieldStates, Context, ForeignMutationsExpected> & { extraContext: any, visibleFields: OrderedMap<Fields, BasicPredicate<Context>>, disabledFields: OrderedMap<Fields, BasicPredicate<Context>>, header?: string } & Value<Entity>
+  Context & EntityFormState<Entity, Fields, FieldStates, Context, ForeignMutationsExpected> & { extraContext: any, visibleFields: OrderedMap<Fields, BasicPredicate<Context>>, disabledFields: OrderedMap<Fields, BasicPredicate<Context>>, header?: string } & Value<Entity> & { rootValue: Entity }
 export type OnChange<Entity> = (updater: BasicUpdater<Entity>, path: List<string>) => void
 export type EntityFormForeignMutationsExpected<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> =
   ForeignMutationsExpected & { onChange: OnChange<Entity> }

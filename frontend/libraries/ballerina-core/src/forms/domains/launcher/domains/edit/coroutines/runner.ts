@@ -20,17 +20,24 @@ export const editFormRunner = <E, FS>() => {
     EditFormWritableState<E, FS>
   >();
 
-  const init = Co.GetState().then((current) =>
-    Co.Seq([
+  const init = Co.GetState().then((current) => {
+    return Co.Seq([
       Co.SetState(
         EditFormState<E, FS>().Updaters.Core.customFormState.children.initApiChecker(ApiResponseChecker.Updaters().toUnchecked())
       ),
-      Synchronize<Unit, E>(
+      Co.All([Synchronize<Unit, E>(
         () => current.api.get(current.entityId),
         (_) => "transient failure",
         5,
         50
       ).embed((_) => _.entity, EditFormState<E, FS>().Updaters.Core.entity),
+      Synchronize<Unit, any>(
+        () => current.api.getGlobalConfiguration(),
+        (_) => "transient failure",
+        5,
+        50
+      ).embed((_) => _.globalConfiguration, EditFormState<E, FS>().Updaters.Core.globalConfiguration),
+    ]),
       HandleApiResponse<
       EditFormWritableState<E, FS>,
       EditFormContext<E, FS>,
@@ -42,8 +49,19 @@ export const editFormRunner = <E, FS>() => {
       Co.SetState(
         EditFormState<E, FS>().Updaters.Core.customFormState.children.initApiChecker(ApiResponseChecker.Updaters().toChecked())
       ),
+      HandleApiResponse<
+      EditFormWritableState<E, FS>,
+      EditFormContext<E, FS>,
+      E
+    >((_) => _.globalConfiguration.sync, {
+      handleSuccess: current.apiHandlers?.onConfigSuccess,
+      handleError: current.apiHandlers?.onConfigError,
+    }),
+    Co.SetState(
+      EditFormState<E, FS>().Updaters.Core.customFormState.children.configApiChecker(ApiResponseChecker.Updaters().toChecked())
+    ),
     ])
-  )
+})
 
   const synchronize = Co.Repeat(
     Co.GetState().then((current) =>
@@ -92,7 +110,7 @@ export const editFormRunner = <E, FS>() => {
   return Co.Template<EditFormForeignMutationsExpected<E, FS>>(init, {
     interval: 15,
     runFilter: (props) =>
-      !AsyncState.Operations.hasValue(props.context.entity.sync) || !ApiResponseChecker.Operations.checked(props.context.customFormState.initApiChecker),
+      !AsyncState.Operations.hasValue(props.context.entity.sync) || !AsyncState.Operations.hasValue(props.context.globalConfiguration.sync) || !ApiResponseChecker.Operations.checked(props.context.customFormState.initApiChecker),
   }).any([
     Co.Template<EditFormForeignMutationsExpected<E, FS>>(synchronize, {
       interval: 15,

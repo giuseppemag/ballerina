@@ -156,7 +156,7 @@ export const defaultValue = <T>(types: Map<TypeName, ParsedType<T>>, builtIns: B
   throw Error(`cannot find type ${JSON.stringify(t)} when resolving defaultValue`)
 }
 
-export const fromAPIRawValue = <T extends { [key in keyof T]: { type: any; state: any; } }>(t: ParsedType<T>, types: Map<TypeName, ParsedType<T>>, builtIns: BuiltIns, converters: ApiConverters<T>, injectedPrimitives?: InjectedPrimitives<T>) => (raw: any): any => {  
+export const fromAPIRawValue = <T extends { [key in keyof T]: { type: any; state: any; } }>(t: ParsedType<T>, types: Map<TypeName, ParsedType<T>>, builtIns: BuiltIns, converters: ApiConverters<T>, injectedPrimitives?: InjectedPrimitives<T>) => (raw: any): any => {
   if (raw == undefined) {
     return defaultValue(types, builtIns, injectedPrimitives)(t)
   }

@@ -23,6 +23,7 @@ export const LoadValidateAndParseFormsConfig = <T extends {[key in keyof T] : {t
       current.fieldViews,
       current.infiniteStreamSources,
       current.enumOptionsSources,
+      current.globalConfigurationSources,
       current.entityApis,
       current.leafPredicates,)(validationResult.value)
   }, _ => "transient failure", 5, 50)

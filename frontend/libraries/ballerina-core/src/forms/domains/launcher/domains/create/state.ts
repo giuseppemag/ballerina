@@ -1,12 +1,12 @@
 import { ApiErrors, ApiResponseChecker, AsyncState, BasicUpdater, CommonFormState, Debounced, ForeignMutationsInput, id, SimpleCallback, simpleUpdater, simpleUpdaterWithChildren, Synchronized, Template, unit, Unit, Updater, Value } from "../../../../../../main"
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state"
-import { BasicFun } from "../../../../../fun/state"
 
 export type CreateFormContext<E,FS> = {
   entityId:string,
   api:{
     default:() => Promise<E>,
-    create: (raw: any) => Promise<ApiErrors>
+    create: (raw: any) => Promise<ApiErrors>,
+    getGlobalConfiguration: () => Promise<any>
   },
   parser: (entity:E, formstate: CreateFormState<E,FS>) => ValueOrErrors<E, ApiErrors>,
   actualForm:Template<Value<E> & {formFieldStates:FS} & { commonFormState: CommonFormState }, {formFieldStates: FS} & { commonFormState: CommonFormState }, { onChange:SimpleCallback<BasicUpdater<E>> }>
@@ -18,9 +18,11 @@ export type CreateFormState<E,FS> = {
   commonFormState: CommonFormState,
   customFormState: {
     initApiChecker: ApiResponseChecker,
+    configApiChecker: ApiResponseChecker,
     createApiChecker: ApiResponseChecker,
     apiRunner: Debounced<Synchronized<Unit, ApiErrors>>
-  }
+  },
+  globalConfiguration: Synchronized<Unit, any>
 }
 
 export const CreateFormState = <E,FS>() => ({
@@ -28,13 +30,15 @@ export const CreateFormState = <E,FS>() => ({
     commonFormState: CommonFormState,
     customFormState: {
       initApiChecker: ApiResponseChecker,
+      configApiChecker: ApiResponseChecker,
       createApiChecker: ApiResponseChecker,
       apiRunner: Debounced<Synchronized<Unit, ApiErrors>>
   }) : CreateFormState<E,FS> => ({
     entity:Synchronized.Default(unit),
     formFieldStates,
     commonFormState,
-    customFormState
+    customFormState,
+    globalConfiguration: Synchronized.Default(unit)
   }),
   Updaters:{
     Core:{
@@ -42,10 +46,12 @@ export const CreateFormState = <E,FS>() => ({
       ...simpleUpdater<CreateFormState<E,FS>>()("formFieldStates"),
       ...simpleUpdaterWithChildren<CreateFormState<E,FS>>()({
           ...simpleUpdater<CreateFormState<E,FS>["customFormState"]>()("initApiChecker"),
+          ...simpleUpdater<CreateFormState<E,FS>["customFormState"]>()("configApiChecker"),
           ...simpleUpdater<CreateFormState<E,FS>["customFormState"]>()("createApiChecker"),
           ...simpleUpdater<CreateFormState<E,FS>["customFormState"]>()("apiRunner"),
       })("customFormState"),
       ...simpleUpdater<CreateFormState<E,FS>>()("commonFormState"),
+      ...simpleUpdater<CreateFormState<E,FS>>()("globalConfiguration"),
     },
     Template:{
       entity:(_:BasicUpdater<E>) : Updater<CreateFormState<E,FS>> => 
@@ -80,6 +86,8 @@ export type CreateFormForeignMutationsExpected<E,FS> = {
   apiHandlers?: {
     onDefaultSuccess?: (_: CreateFormWritableState<E, FS> & CreateFormContext<E, FS> | undefined) => void;
     onDefaultError?: <ApiErrors>(_: ApiErrors | undefined) => void;
+    onConfigSuccess?: (_: CreateFormWritableState<E, FS> & CreateFormContext<E, FS> | undefined) => void;
+    onConfigError?: <ApiErrors>(_: ApiErrors | undefined) => void;
     onCreateSuccess?: (_: CreateFormWritableState<E, FS> & CreateFormContext<E, FS> | undefined) => void;
     onCreateError?: <ApiErrors>(_: ApiErrors | undefined) => void;
   }

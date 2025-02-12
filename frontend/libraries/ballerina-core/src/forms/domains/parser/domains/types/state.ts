@@ -2,10 +2,9 @@ import { Set, List, Map, OrderedMap } from "immutable";
 import { GenericType, GenericTypes, PrimitiveTypes } from "../built-ins/state";
 import { InjectedPrimitives } from "../injectables/state";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
-import { Value } from "../../../../../value/state";
 
 export const isString = (_: any): _ is string => typeof _ == "string"
-export const isObject = (_: any): _ is Object => typeof _ == "object"
+export const isObject = (_: any): _ is object => typeof _ == "object"
 export const isGenericType = (_: any): _ is GenericType => _  && GenericTypes.includes(_)
 export const hasFun = (_: any): _ is { fun: string } => isObject(_) && "fun" in _ && isString(_.fun) 
 export const hasArgs = (_: any): _ is { args: Array<any> } => isObject(_) && "args" in _ && Array.isArray(_.args)
@@ -17,7 +16,7 @@ export type RawType<T> = {
   fields?: OrderedMap<FieldName, RawFieldType<T>>
 }
 export const RawType = {
-    isMaybeExtendedType: <T>(type: RawType<T>): type is RawType<T> & {extends: unknown} => "extends" in type,
+    isMaybeExtendedType: <T>(type: RawType<T>): type is RawType<T> & {extends: unknown} => "extends" in type && Array.isArray(type.extends) && type.extends.length == 1,
     isExtendedType: <T>(type: RawType<T>): type is RawType<T> & {extends: Array<TypeName>} => "extends" in type && Array.isArray(type.extends) && type.extends.length == 1 && (isString(type.extends[0])) ,
     hasFields: <T>(type: RawType<T>): type is {fields: any} => "fields" in type,
     isMaybeUnion: (_: any): _ is RawUnionType => isObject(_) && "fun" in _ && "args" in _ && _.fun == "Union" && Array.isArray(_["args"]) && _["args"].every(__ => typeof __ == "object" && "case" in __ && "fields" in __),
@@ -37,7 +36,7 @@ export type RawUnionType = {
   args?: Array<RawUnionCase>;
 }
 
-export type RawFormType = {fields?: Object}
+export type RawFormType = {fields?: object}
 
 export type RawFieldType<T> = RawApplicationType<T> | string | PrimitiveTypeName<T> | RawUnionType | RawFormType | RawUnionCase;
 export const RawFieldType = { 
@@ -108,24 +107,27 @@ export const ParsedType = {
             ValueOrErrors.Default.return(ParsedType.Default.application("Map", [parsedArgs0, parsedArgs1]))
           )
         )
-      if(RawFieldType.isForm(rawFieldType))
+      if(RawFieldType.isForm(rawFieldType)){
         return ValueOrErrors.Operations
               .All(List(Object.entries(rawFieldType.fields).map(([fieldName, fieldType]) => ParsedType.Operations.ParseRawFieldType(fieldName, fieldType as RawFieldType<T>, types, injectedPrimitives)
               .Then(parsedField => ValueOrErrors.Default.return([fieldName, parsedField] as const))
               )))
               .Then(parsedFields =>  ValueOrErrors.Default.return(Map(parsedFields.map(([fieldName, parsedField]) => [fieldName, parsedField]))))
               .Then(parsedField => ValueOrErrors.Default.return<ParsedType<T>, string>(ParsedType.Default.form(fieldName, parsedField)))
-      if(RawFieldType.isUnionCase(rawFieldType))
+      }
+      if(RawFieldType.isUnionCase(rawFieldType)){
         return ParsedType.Operations.ParseRawFieldType(rawFieldType.case, rawFieldType.fields, types, injectedPrimitives).Then(parsedFields =>
           ValueOrErrors.Default.return(ParsedType.Default.unionCase(rawFieldType.case, parsedFields))
         )
-      if(RawFieldType.isUnion(rawFieldType))
+      }
+      if(RawFieldType.isUnion(rawFieldType)){
         return ValueOrErrors.Operations.All(List(
           rawFieldType.args.map(_ => ParsedType.Operations.ParseRawFieldType(_.case, _, types, injectedPrimitives).Map(parsedFields => ({name: _.case, fields: parsedFields})))))
           .Then(parsedFields =>  ValueOrErrors.Default.return(ParsedType.Default.union(Map(parsedFields.toArray().map(_ => [_.name, _.fields] as const)))))
-           
+      }
       if(RawFieldType.isLookup(rawFieldType, types))
          return ValueOrErrors.Default.return(ParsedType.Default.lookup(rawFieldType))
+
       return ValueOrErrors.Default.throw(List([`Invalid type ${JSON.stringify(rawFieldType)} for field ${JSON.stringify(fieldName)}`]))
     }
   }

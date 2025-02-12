@@ -1,5 +1,5 @@
 import { List, Map, OrderedMap, OrderedSet, Set } from "immutable";
-import { BoolExpr, Unit, Guid, LeafPredicatesEvaluators, Predicate, ParsedFormJSON, BuiltIns, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, CommonFormState, CreateFormState, EditFormContext, CreateFormContext, Synchronized, simpleUpdater, TypeName, ListFieldState, ListForm, BuiltInApiConverters, defaultValue, fromAPIRawValue, toAPIRawValue, EditFormForeignMutationsExpected, MapFieldState, MapForm, ParsedType, Base64FileForm, SecretForm, InjectedPrimitives, Injectables, ApiConverters, Maybe, ApiResponseChecker, Debounced, ParsedFormConfig } from "../../../../main";
+import { BoolExpr, Unit, Guid, LeafPredicatesEvaluators, Predicate, ParsedFormJSON, BuiltIns, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, CommonFormState, CreateFormState, EditFormContext, CreateFormContext, Synchronized, simpleUpdater, TypeName, ListFieldState, ListForm, BuiltInApiConverters, defaultValue, fromAPIRawValue, toAPIRawValue, EditFormForeignMutationsExpected, MapFieldState, MapForm, ParsedType, Base64FileForm, SecretForm, InjectedPrimitives, Injectables, ApiConverters, Maybe, ApiResponseChecker, Debounced, ParsedFormConfig, PredicateValue } from "../../../../main";
 import { CollectionReference, EnumReference } from "../collection/domains/reference/state";
 import { SearchableInfiniteStreamState } from "../primitives/domains/searchable-infinite-stream/state";
 import { Form } from "../singleton/template";
@@ -109,8 +109,12 @@ export type ParsedLaunchers = {
 export type ParsedForms<T> = Map<string, ParsedForm<T> & { form: EntityFormTemplate<any, any, any, any, any> }>
 export type FormParsingErrors = List<string>
 export type FormParsingResult = Sum<ParsedLaunchers, FormParsingErrors>
+export type EnumName = string
+export type EnumOptionsSources = BasicFun<EnumName, BasicFun<Unit, Promise<Array<EnumReference>>>>
 export type StreamName = string
 export type InfiniteStreamSources = BasicFun<StreamName, SearchableInfiniteStreamState<CollectionReference>["customFormState"]["getChunk"]>
+export type ConfigName = string
+export type GlobalConfigurationSources = BasicFun<ConfigName, Promise<any>>
 export type EntityName = string
 export type EntityApis = {
   create: BasicFun<EntityName, BasicFun<any, Promise<Unit>>>
@@ -118,10 +122,7 @@ export type EntityApis = {
   update: BasicFun<EntityName, (id: Guid, entity: any) => Promise<ApiErrors>>
   get: BasicFun<EntityName, BasicFun<Guid, Promise<any>>>
 }
-export type EnumName = string
 
-
-export type EnumOptionsSources = BasicFun<EnumName, BasicFun<Unit, Promise<Array<EnumReference>>>>
 export const parseForms =
   <LeafPredicates, T extends { [key in keyof T]: { type: any; state: any; }; },>(
     builtIns: BuiltIns,
@@ -132,6 +133,7 @@ export const parseForms =
     fieldViews: any,
     infiniteStreamSources: InfiniteStreamSources,
     enumOptionsSources: EnumOptionsSources,
+    globalConfigurationSources: GlobalConfigurationSources,
     entityApis: EntityApis,
     leafPredicates: LeafPredicates) =>
     (formsConfig: ParsedFormJSON<T>):
@@ -242,8 +244,13 @@ export const parseForms =
         const form = parsedForm.form
         const initialState = parsedForm.initialFormState
         const api = {
+          getGlobalConfiguration: () => {
+            return globalConfigurationSources(launcher.configApi).then((raw: any) => {
+              return PredicateValue.Operations.parse(raw)
+            })
+          },
           get: (id: string) => entityApis.get(launcher.api)(id).then((raw: any) => {
-            return fromAPIRawValue(parsedForm.formDef.type , formsConfig.types, builtIns, apiConverters, injectedPrimitives)(raw)
+            return fromAPIRawValue(parsedForm.formDef.type, formsConfig.types, builtIns, apiConverters, injectedPrimitives)(raw)
           }),
           update: (id: any, parsed: any) => {
             return parsed.kind =="errors" ? Promise.reject(parsed.errors) : entityApis.update(launcher.api)(id, parsed.value)  
@@ -256,6 +263,7 @@ export const parseForms =
               ({
                 value: parentContext.entity.sync.kind == "loaded" ? parentContext.entity.sync.value : undefined,
                 entity: parentContext.entity,
+                globalConfiguration: parentContext.globalConfiguration,
                 entityId: parentContext.entityId,
                 commonFormState: parentContext.commonFormState,
                 customFormState: parentContext.customFormState,
@@ -265,10 +273,11 @@ export const parseForms =
                 parser: (value: any, formState: any) => toAPIRawValue(parsedForm.formDef.type , formsConfig.types, builtIns, apiConverters, injectedPrimitives)(value, formState),
                 actualForm: form.withView(containerFormView).mapContext((_: any) => ({
                   value: _.value,
+                  parser: (value: any, formState: any) => toAPIRawValue(parsedForm.formDef.type , formsConfig.types, builtIns, apiConverters, injectedPrimitives)(value, formState),
                   formFieldStates: parentContext.formFieldStates, 
                   rootValue: _.value,
                   extraContext: parentContext.extraContext,
-                  commonFormState: parentContext.commonFormState
+                  commonFormState: parentContext.commonFormState,
                    }))
               }) as any)
               .withViewFromProps(props => props.context.submitButtonWrapper)
@@ -276,6 +285,7 @@ export const parseForms =
             initialState: EditFormState<Entity, FormState>().Default(initialState.formFieldStates, initialState.commonFormState, {
               initApiChecker: ApiResponseChecker.Default(true),
               updateApiChecker: ApiResponseChecker.Default(true),
+              configApiChecker: ApiResponseChecker.Default(true),
               apiRunner: Debounced.Default(Synchronized.Default(unit))
             }),
           })
@@ -285,8 +295,13 @@ export const parseForms =
       formsConfig.launchers.create.forEach((launcher, launcherName) => {
         const parsedForm = parsedForms.get(launcher.form)!
         const form = parsedForm.form
-        const initialState = parsedForm.initialFormState
+        const initialState = parsedForm.initialFormState 
         const api = {
+          getGlobalConfiguration: () => {
+            return globalConfigurationSources(launcher.configApi).then((raw: any) => {
+              return PredicateValue.Operations.parse(raw)
+            })
+          },
           default: (_: Unit) => 
             entityApis.default(launcher.api)(unit).then((raw: any) => 
               fromAPIRawValue(parsedForm.formDef.type , formsConfig.types, builtIns, apiConverters, injectedPrimitives)(raw)),
@@ -304,6 +319,7 @@ export const parseForms =
                   parser: (value: any, formState: any) => toAPIRawValue(parsedForm.formDef.type , formsConfig.types, builtIns, apiConverters, injectedPrimitives)(value, formState),
                   value: parentContext.entity.sync.kind == "loaded" ? parentContext.entity.sync.value : undefined,
                   entity: parentContext.entity,
+                  globalConfiguration: parentContext.globalConfiguration,
                   commonFormState: parentContext.commonFormState,
                   customFormState: parentContext.customFormState,
                   formFieldStates: parentContext.formFieldStates,
@@ -324,12 +340,13 @@ export const parseForms =
              {
               initApiChecker:ApiResponseChecker.Default(true),
               createApiChecker:ApiResponseChecker.Default(true),
+              configApiChecker:ApiResponseChecker.Default(true),
               apiRunner: Debounced.Default(Synchronized.Default(unit))
             }),
           })
         )
       })
-
+      
       if (errors.size > 0) {
         return Sum.Default.right(errors)
       }
@@ -343,6 +360,7 @@ export type FormsParserContext<T extends {[key in keyof T] : {type: any, state: 
   fieldTypeConverters: ApiConverters<T>,
   infiniteStreamSources: InfiniteStreamSources,
   enumOptionsSources: EnumOptionsSources,
+  globalConfigurationSources: GlobalConfigurationSources,
   entityApis: EntityApis,
   leafPredicates: any,
   getFormsConfig: BasicFun<void, Promise<any>>

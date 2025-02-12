@@ -16,10 +16,11 @@ export const Form = <Entity, FieldStates extends { formFieldStates: any}, Contex
         const setFieldTemplate = <field extends Fields>(field: field) => {
           fieldTemplates[field] =
             config[field]
-              .mapContext<EntityFormContext<Entity, Fields, FieldStates, Context, ForeignMutationsExpected> & { disabled:boolean }>(_ => 
+              .mapContext<EntityFormContext<Entity, Fields, FieldStates, Context, ForeignMutationsExpected> & { disabled:boolean } >(_ => 
                 {
                   // disabled flag is passed in from the container form when mapping over fields
                   return ({ 
+                    rootValue: _.rootValue,
                     value: _.value[field],
                     extraContext: _.extraContext,
                     disabled: _.disabled,
@@ -88,6 +89,7 @@ export const Form = <Entity, FieldStates extends { formFieldStates: any}, Contex
         return Template.Default<EntityFormContext<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>, State,
           EntityFormForeignMutationsExpected<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>,
           EntityFormView<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>>(props => {
+            console.debug("singleton template", props.context.value)
             let visibleFieldKeys: OrderedSet<Fields> = OrderedSet()
             props.context.visibleFields.forEach((showField, field) => {
               if (!showField({...props.context.extraContext, value: props.context.value})) return

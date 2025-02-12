@@ -17,6 +17,7 @@ export const FormRunnerErrorsTemplate = (parsedFormsConfig: FormParsingResult) =
   entity: unit,
   commonFormState: unit,
   customFormState: unit,
+  globalConfiguration: unit,
 })
 
 export const FormRunnerTemplate =
@@ -27,6 +28,7 @@ export const FormRunnerTemplate =
           context={{
             entityId: props.context.formRef.kind == "edit" ? props.context.formRef.entityId : undefined,
             entity: props.context.form.value.entity,
+            globalConfiguration: props.context.form.value.globalConfiguration,
             formFieldStates: props.context.form.value.formFieldStates,
             commonFormState: props.context.form.value.commonFormState,
             customFormState: props.context.form.value.customFormState,

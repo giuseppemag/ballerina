@@ -141,7 +141,6 @@ export const PersonFormsConfig = {
       },
     },
   },
-  mappings: {},
   forms: {
     address: {
       type: "Address",
@@ -193,7 +192,7 @@ export const PersonFormsConfig = {
       fields: {
         category: {
           label: "category",
-          details: "categories, surely they have no practical uses?",
+          details: "namespace:translationKey",
           renderer: "defaultCategory",
           visible: false
         },
@@ -446,7 +445,8 @@ export const PersonFormsConfig = {
           renderer: "defaultList",
           elementRenderer: {
             label: "date",
-            details: "a day off, time to relax, unwind and enjoy the frivolities of life",
+            details:
+              "a day off, time to relax, unwind and enjoy the frivolities of life",
             renderer: "defaultDate",
             visible: true
           },
@@ -508,6 +508,1372 @@ export const PersonFormsConfig = {
       kind: "edit",
       form: "person",
       api: "person",
+    },
+  },
+};
+
+export const PersonFromConfigV2 = {
+  types: {
+    ERPEnum: {
+      fun: "Union",
+      args: [
+        {
+          case: "SAP",
+          fields: {},
+        },
+        {
+          case: "BC",
+          fields: {},
+        },
+        {
+          case: "FAndO",
+          fields: {},
+        },
+      ],
+    },
+    CollectionReference: {
+      fields: {
+        DisplayValue: "string",
+        Id: "guid",
+      },
+    },
+    CityRef: {
+      extends: ["CollectionReference"],
+      fields: {},
+    },
+    Address: {
+      fields: {
+        street: "string",
+        number: "number",
+        city: {
+          fun: "SingleSelection",
+          args: ["CityRef"],
+        },
+      },
+    },
+    GendersEnum: {
+      fun: "Union",
+      args: [
+        {
+          case: "M",
+          fields: {},
+        },
+        {
+          case: "F",
+          fields: {},
+        },
+        {
+          case: "X",
+          fields: {},
+        },
+      ],
+    },
+    GenderRef: {
+      fields: {
+        Value: "GendersEnum",
+      },
+    },
+    ColorsEnum: {
+      fun: "Union",
+      args: [
+        {
+          case: "Red",
+          fields: {},
+        },
+        {
+          case: "Green",
+          fields: {},
+        },
+        {
+          case: "Blue",
+          fields: {},
+        },
+      ],
+    },
+    ColorRef: {
+      fields: {
+        Value: "ColorsEnum",
+      },
+    },
+    InterestsEnum: {
+      fun: "Union",
+      args: [
+        {
+          case: "Soccer",
+          fields: {},
+        },
+        {
+          case: "Hockey",
+          fields: {},
+        },
+        {
+          case: "BoardGames",
+          fields: {},
+        },
+        {
+          case: "HegelianPhilosophy",
+          fields: {},
+        },
+      ],
+    },
+    InterestRef: {
+      fields: {
+        Value: "InterestsEnum",
+      },
+    },
+    PermissionsEnum: {
+      fun: "Union",
+      args: [
+        {
+          case: "Create",
+          fields: {},
+        },
+        {
+          case: "Read",
+          fields: {},
+        },
+        {
+          case: "Update",
+          fields: {},
+        },
+        {
+          case: "Delete",
+          fields: {},
+        },
+      ],
+    },
+    PermissionRef: {
+      fields: {
+        Value: "PermissionsEnum",
+      },
+    },
+    DepartmentRef: {
+      extends: ["CollectionReference"],
+      fields: {},
+    },
+    GlobalConfiguration: {
+      extends: [],
+      fields: {
+        IsAdmin: "boolean",
+        ERP: "ERPEnum",
+      },
+    },
+    Person: {
+      fields: {
+        category: "injectedCategory",
+        name: "string",
+        surname: "string",
+        birthday: "Date",
+        subscribeToNewsletter: "boolean",
+        favoriteColor: {
+          fun: "SingleSelection",
+          args: ["ColorRef"],
+        },
+        gender: {
+          fun: "SingleSelection",
+          args: ["GenderRef"],
+        },
+        dependants: {
+          fun: "Map",
+          args: ["string", "injectedCategory"],
+        },
+        friendsByCategory: {
+          fun: "Map",
+          args: ["injectedCategory", "string"],
+        },
+        relatives: {
+          fun: "List",
+          args: ["injectedCategory"],
+        },
+        interests: {
+          fun: "MultiSelection",
+          args: ["InterestRef"],
+        },
+        departments: {
+          fun: "MultiSelection",
+          args: ["DepartmentRef"],
+        },
+        mainAddress: "Address",
+        addresses: {
+          fun: "List",
+          args: ["Address"],
+        },
+        emails: {
+          fun: "List",
+          args: ["string"],
+        },
+        addressesWithLabel: {
+          fun: "Map",
+          args: ["string", "Address"],
+        },
+        addressesByCity: {
+          fun: "Map",
+          args: [
+            {
+              fun: "SingleSelection",
+              args: ["CityRef"],
+            },
+            "Address",
+          ],
+        },
+        addressesWithColorLabel: {
+          fun: "Map",
+          args: [
+            {
+              fun: "SingleSelection",
+              args: ["ColorRef"],
+            },
+            "Address",
+          ],
+        },
+        permissions: {
+          fun: "Map",
+          args: [
+            {
+              fun: "SingleSelection",
+              args: ["PermissionRef"],
+            },
+            "boolean",
+          ],
+        },
+        cityByDepartment: {
+          fun: "Map",
+          args: [
+            {
+              fun: "SingleSelection",
+              args: ["DepartmentRef"],
+            },
+            {
+              fun: "SingleSelection",
+              args: ["CityRef"],
+            },
+          ],
+        },
+        shoeColours: {
+          fun: "MultiSelection",
+          args: ["ColorRef"],
+        },
+        friendsBirthdays: {
+          fun: "Map",
+          args: ["string", "Date"],
+        },
+        holidays: {
+          fun: "List",
+          args: ["Date"],
+        },
+      },
+    },
+  },
+  apis: {
+    enumOptions: {
+      genders: "GenderRef",
+      colors: "ColorRef",
+      interests: "InterestRef",
+      permissions: "PermissionRef",
+    },
+    searchableStreams: {
+      cities: "CityRef",
+      departments: "DepartmentRef",
+    },
+    entities: {
+      person: {
+        type: "Person",
+        methods: ["create", "get", "update", "default"],
+      },
+      globalConfiguration: {
+        type: "GlobalConfiguration",
+        methods: ["get"],
+      },
+    },
+  },
+  forms: {
+    address: {
+      type: "Address",
+      fields: {
+        street: {
+          renderer: "defaultString",
+          // visible: {
+          //   kind: "or",
+          //   operands: [
+          //     {
+          //       kind: "fieldLookup",
+          //       operands: [
+          //         {
+          //           kind: "varLookup",
+          //           varName: "root",
+          //         },
+          //         "subscribeToNewsletter",
+          //       ],
+          //     },
+          //     {
+          //       kind: "equals",
+          //       operands: [
+          //         {
+          //           kind: "fieldLookup",
+          //           operands: [
+          //             {
+          //               kind: "varLookup",
+          //               varName: "local",
+          //             },
+          //             "number",
+          //           ],
+          //         },
+          //         10,
+          //       ],
+          //     },
+          //   ],
+          // },
+          visible: {kind: "true"},
+        },
+        number: {
+          renderer: "defaultNumber",
+          visible: {kind: "true"},
+        },
+        city: {
+          renderer: "defaultInfiniteStream",
+          stream: "cities",
+          visible: {kind: "true"},
+        },
+      },
+      tabs: {
+        main: {
+          columns: {
+            main: {
+              groups: {
+                main: ["street", "number", "city"],
+              },
+            },
+          },
+        },
+      },
+    },
+    person: {
+      type: "Person",
+      fields: {
+        category: {
+          label: "category",
+          renderer: "defaultCategory",
+          visible: {kind: "true"},
+        },
+        name: {
+          label: "first name",
+          tooltip: "Any name will do",
+          renderer: "defaultString",
+          visible: {kind: "true"},
+        },
+        surname: {
+          label: "last name",
+          renderer: "defaultString",
+          visible: {kind: "true"},
+        },
+        birthday: {
+          renderer: "defaultDate",
+          tooltip: "happy birthday!",
+          visible: {kind: "true"},
+        },
+        favoriteColor: {
+          renderer: "defaultEnum",
+          options: "colors",
+          visible: {kind: "true"} ,
+        },
+        gender: {
+          label: "gender",
+          renderer: "defaultEnum",
+          options: "genders",
+          // visible: {
+          //   kind: "or",
+          //   operands: [
+          //     {
+          //       kind: "fieldLookup",
+          //       operands: [
+          //         {
+          //           kind: "varLookup",
+          //           varName: "global",
+          //         },
+          //         "IsAdmin",
+          //       ],
+          //     },
+          //     {
+          //       kind: "isCase",
+          //       operands: [
+          //         {
+          //           kind: "fieldLookup",
+          //           operands: [
+          //             {
+          //               kind: "varLookup",
+          //               varName: "global",
+          //             },
+          //             "ERP",
+          //           ],
+          //         },
+          //         "SAP",
+          //       ],
+          //     },
+          //   ],
+          // },
+          visible: {kind: "true"},
+        },
+        dependants: {
+          label: "dependants",
+          renderer: "defaultMap",
+          tooltip: "someone who depends on you",
+          keyRenderer: {
+            label: "name",
+            tooltip: "their name",
+            renderer: "defaultString",
+            visible: {kind: "true"},
+          },
+          valueRenderer: {
+            label: "category",
+            tooltip: "their category",
+            renderer: "defaultCategory",
+            visible: {kind: "true"},
+          },
+          visible: {kind: "true"},
+        },
+        friendsByCategory: {
+          label: "friends by category",
+          renderer: "defaultMap",
+          keyRenderer: {
+            label: "category",
+            renderer: "defaultCategory",
+            visible: {kind: "true"},
+          },
+          valueRenderer: {
+            label: "name",
+            renderer: "defaultString",
+            visible: {kind: "true"},
+          },
+          visible: {kind: "true"},
+        },
+        relatives: {
+          label: "relatives",
+          tooltip: "someone who you are related to",
+          renderer: "defaultList",
+          elementRenderer: {
+            label: "one relative",
+            tooltip: "relative",
+            renderer: "defaultCategory",
+            visible: {kind: "true"},
+          },
+          visible: {kind: "true"},
+        },
+        subscribeToNewsletter: {
+          label: "subscribe to newsletter",
+          renderer: "defaultBoolean",
+          visible: {kind: "true"},
+        },
+        interests: {
+          label: "interests",
+          renderer: "defaultEnumMultiselect",
+          options: "interests",
+          visible: {
+            kind: "fieldLookup",
+            operands: [
+              {
+                kind: "varLookup",
+                varName: "root",
+              },
+              "subscribeToNewsletter",
+            ],
+          },
+        },
+        departments: {
+          label: "departments",
+          renderer: "defaultInfiniteStreamMultiselect",
+          stream: "departments",
+          visible: {kind: "true"},
+          disabled: {
+            kind: "fieldLookup",
+            operands: [
+              {
+                kind: "varLookup",
+                varName: "local",
+              },
+              "subscribeToNewsletter",
+            ],
+          },
+        },
+        mainAddress: {
+          label: "main address",
+          renderer: "address",
+          visible: {kind: "true"},
+        },
+        addresses: {
+          label: "other addresses",
+          renderer: "defaultList",
+          elementRenderer: {
+            label: "address",
+            renderer: "address",
+            visible: {kind: "true"},
+          },
+          visible: {kind: "true"},
+        },
+        emails: {
+          label: "emails",
+          renderer: "defaultList",
+          elementRenderer: {
+            label: "email",
+            renderer: "defaultString",
+            visible: {kind: "true"},
+          },
+          visible: {kind: "true"},
+        },
+        addressesWithLabel: {
+          label: "addresses with label",
+          renderer: "defaultMap",
+          keyRenderer: {
+            label: "address label",
+            renderer: "defaultString",
+            visible: {kind: "true"},
+          },
+          valueRenderer: {
+            label: "address",
+            renderer: "address",
+            visible: {kind: "true"},
+          },
+          visible: {kind: "true"},
+        },
+        addressesByCity: {
+          label: "addresses by city",
+          renderer: "defaultMap",
+          keyRenderer: {
+            label: "city",
+            tooltip: "a nice place to live",
+            renderer: "defaultInfiniteStream",
+            stream: "cities",
+            visible: {kind: "true"},
+          },
+          valueRenderer: {
+            label: "address",
+            renderer: "address",
+            visible: {kind: "true"},
+          },
+          visible: {kind: "true"},
+        },
+        addressesWithColorLabel: {
+          renderer: "defaultMap",
+          label: "addresses with color label",
+          keyRenderer: {
+            label: "color",
+            renderer: "defaultEnum",
+            options: "colors",
+            visible: {kind: "true"},
+          },
+          valueRenderer: {
+            label: "address",
+            renderer: "address",
+            visible: {kind: "true"},
+          },
+          visible: {kind: "true"},
+        },
+        permissions: {
+          label: "permissions",
+          renderer: "defaultMap",
+          keyRenderer: {
+            label: "permission",
+            renderer: "defaultEnum",
+            options: "permissions",
+            visible: {kind: "true"},
+          },
+          valueRenderer: {
+            label: "granted",
+            renderer: "defaultBoolean",
+            visible: {kind: "true"},
+          },
+          visible: {kind: "true"},
+        },
+        cityByDepartment: {
+          label: "city by department",
+          renderer: "defaultMap",
+          keyRenderer: {
+            label: "department",
+            renderer: "defaultInfiniteStream",
+            stream: "departments",
+            visible: {kind: "true"},
+          },
+          valueRenderer: {
+            label: "city",
+            renderer: "defaultInfiniteStream",
+            stream: "cities",
+            visible: {kind: "true"},
+          },
+          visible: {kind: "true"},
+        },
+        shoeColours: {
+          label: "shoe colours",
+          renderer: "defaultEnumMultiselect",
+          options: "colors",
+          visible: {kind: "true"},
+        },
+        friendsBirthdays: {
+          renderer: "defaultMap",
+          label: "friends birthdays",
+          keyRenderer: {
+            label: "name",
+            renderer: "defaultString",
+            visible: {kind: "true"},
+          },
+          valueRenderer: {
+            label: "birthday",
+            renderer: "defaultDate",
+            visible: {kind: "true"},
+          },
+          visible: {kind: "true"},
+        },
+        holidays: {
+          label: "holidays",
+          renderer: "defaultList",
+          elementRenderer: {
+            label: "holiday",
+            renderer: "defaultDate",
+            visible: {kind: "true"},
+          },
+          visible: {kind: "true"},
+        },
+      },
+      tabs: {
+        main: {
+          columns: {
+            demographics: {
+              groups: {
+                main: [
+                  "category",
+                  "name",
+                  "surname",
+                  "birthday",
+                  "gender",
+                  "emails",
+                  "dependants",
+                  "friendsByCategory",
+                  "relatives",
+                  "friendsBirthdays",
+                  "shoeColours",
+                ],
+              },
+            },
+            mailing: {
+              groups: {
+                main: ["subscribeToNewsletter", "interests", "favoriteColor"],
+              },
+            },
+            addresses: {
+              groups: {
+                main: [
+                  "departments",
+                  "mainAddress",
+                  "addresses",
+                  "addressesWithLabel",
+                  "addressesByCity",
+                  "addressesWithColorLabel",
+                  "permissions",
+                  "cityByDepartment",
+                  "holidays",
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  launchers: {
+    "create-person": {
+      kind: "create",
+      form: "person",
+      api: "person",
+      configApi: "globalConfiguration",
+    },
+    "edit-person": {
+      kind: "edit",
+      form: "person",
+      api: "person",
+      configApi: "globalConfiguration",
+    },
+  },
+};
+
+
+export const PersonFromConfigV3 = {
+  types: {
+    ERPEnum: {
+      fun: "Union",
+      args: [
+        {
+          case: "SAP",
+          fields: {},
+        },
+        {
+          case: "BC",
+          fields: {},
+        },
+        {
+          case: "FAndO",
+          fields: {},
+        },
+      ],
+    },
+    ERPRef: {
+      fields: {
+        Value: "ERPEnum",
+      },
+    },
+    CollectionReference: {
+      fields: {
+        DisplayValue: "string",
+        Id: "guid",
+      },
+    },
+    CityRef: {
+      extends: ["CollectionReference"],
+      fields: {},
+    },
+    Address: {
+      fields: {
+        street: "string",
+        number: "number",
+        city: {
+          fun: "SingleSelection",
+          args: ["CityRef"],
+        },
+      },
+    },
+    GendersEnum: {
+      fun: "Union",
+      args: [
+        {
+          case: "M",
+          fields: {},
+        },
+        {
+          case: "F",
+          fields: {},
+        },
+        {
+          case: "X",
+          fields: {},
+        },
+      ],
+    },
+    GenderRef: {
+      fields: {
+        Value: "GendersEnum",
+      },
+    },
+    ColorsEnum: {
+      fun: "Union",
+      args: [
+        {
+          case: "Red",
+          fields: {},
+        },
+        {
+          case: "Green",
+          fields: {},
+        },
+        {
+          case: "Blue",
+          fields: {},
+        },
+      ],
+    },
+    ColorRef: {
+      fields: {
+        Value: "ColorsEnum",
+      },
+    },
+    InterestsEnum: {
+      fun: "Union",
+      args: [
+        {
+          case: "Soccer",
+          fields: {},
+        },
+        {
+          case: "Hockey",
+          fields: {},
+        },
+        {
+          case: "BoardGames",
+          fields: {},
+        },
+        {
+          case: "HegelianPhilosophy",
+          fields: {},
+        },
+      ],
+    },
+    InterestRef: {
+      fields: {
+        Value: "InterestsEnum",
+      },
+    },
+    PermissionsEnum: {
+      fun: "Union",
+      args: [
+        {
+          case: "Create",
+          fields: {},
+        },
+        {
+          case: "Read",
+          fields: {},
+        },
+        {
+          case: "Update",
+          fields: {},
+        },
+        {
+          case: "Delete",
+          fields: {},
+        },
+      ],
+    },
+    PermissionRef: {
+      fields: {
+        Value: "PermissionsEnum",
+      },
+    },
+    DepartmentRef: {
+      extends: ["CollectionReference"],
+      fields: {},
+    },
+    GlobalConfiguration: {
+      extends: [],
+      fields: {
+        IsAdmin: "boolean",
+        ERP: "ERPRef",
+      },
+    },
+    Person: {
+      fields: {
+        category: "injectedCategory",
+        name: "string",
+        surname: "string",
+        birthday: "Date",
+        subscribeToNewsletter: "boolean",
+        favoriteColor: {
+          fun: "SingleSelection",
+          args: ["ColorRef"],
+        },
+        gender: {
+          fun: "SingleSelection",
+          args: ["GenderRef"],
+        },
+        dependants: {
+          fun: "Map",
+          args: ["string", "injectedCategory"],
+        },
+        friendsByCategory: {
+          fun: "Map",
+          args: ["injectedCategory", "string"],
+        },
+        relatives: {
+          fun: "List",
+          args: ["injectedCategory"],
+        },
+        interests: {
+          fun: "MultiSelection",
+          args: ["InterestRef"],
+        },
+        departments: {
+          fun: "MultiSelection",
+          args: ["DepartmentRef"],
+        },
+        mainAddress: "Address",
+        addresses: {
+          fun: "List",
+          args: ["Address"],
+        },
+        emails: {
+          fun: "List",
+          args: ["string"],
+        },
+        addressesWithLabel: {
+          fun: "Map",
+          args: ["string", "Address"],
+        },
+        addressesByCity: {
+          fun: "Map",
+          args: [
+            {
+              fun: "SingleSelection",
+              args: ["CityRef"],
+            },
+            "Address",
+          ],
+        },
+        addressesWithColorLabel: {
+          fun: "Map",
+          args: [
+            {
+              fun: "SingleSelection",
+              args: ["ColorRef"],
+            },
+            "Address",
+          ],
+        },
+        permissions: {
+          fun: "Map",
+          args: [
+            {
+              fun: "SingleSelection",
+              args: ["PermissionRef"],
+            },
+            "boolean",
+          ],
+        },
+        cityByDepartment: {
+          fun: "Map",
+          args: [
+            {
+              fun: "SingleSelection",
+              args: ["DepartmentRef"],
+            },
+            {
+              fun: "SingleSelection",
+              args: ["CityRef"],
+            },
+          ],
+        },
+        shoeColours: {
+          fun: "MultiSelection",
+          args: ["ColorRef"],
+        },
+        friendsBirthdays: {
+          fun: "Map",
+          args: ["string", "Date"],
+        },
+        holidays: {
+          fun: "List",
+          args: ["Date"],
+        },
+      },
+    },
+  },
+  apis: {
+    enumOptions: {
+      genders: "GenderRef",
+      colors: "ColorRef",
+      interests: "InterestRef",
+      permissions: "PermissionRef",
+    },
+    searchableStreams: {
+      cities: "CityRef",
+      departments: "DepartmentRef",
+    },
+    entities: {
+      person: {
+        type: "Person",
+        methods: ["create", "get", "update", "default"],
+      },
+      globalConfiguration: {
+        type: "GlobalConfiguration",
+        methods: ["get"],
+      },
+    },
+  },
+  forms: {
+    address: {
+      type: "Address",
+      fields: {
+        street: {
+          renderer: "defaultString",
+          visible: {
+            kind: "or",
+            operands: [
+              {
+                kind: "fieldLookup",
+                operands: [
+                  {
+                    kind: "varLookup",
+                    varName: "root",
+                  },
+                  "subscribeToNewsletter",
+                ],
+              },
+              {
+                kind: "equals",
+                operands: [
+                  {
+                    kind: "fieldLookup",
+                    operands: [
+                      {
+                        kind: "varLookup",
+                        varName: "local",
+                      },
+                      "number",
+                    ],
+                  },
+                  10,
+                ],
+              },
+            ],
+          },
+        },
+        number: {
+          renderer: "defaultNumber",
+          visible: true,
+        },
+        city: {
+          renderer: "defaultInfiniteStream",
+          stream: "cities",
+          visible: true,
+        },
+      },
+      tabs: {
+        main: {
+          columns: {
+            main: {
+              groups: {
+                main: ["street", "number", "city"],
+              },
+            },
+          },
+        },
+      },
+    },
+    person: {
+      type: "Person",
+      fields: {
+        category: {
+          label: "category",
+          renderer: "defaultCategory",
+          visible: true,
+        },
+        name: {
+          label: "first name",
+          tooltip: "Any name will do",
+          renderer: "defaultString",
+          visible: true,
+        },
+        surname: {
+          label: "last name",
+          renderer: "defaultString",
+          visible: true,
+        },
+        birthday: {
+          renderer: "defaultDate",
+          tooltip: "happy birthday!",
+          visible: true,
+        },
+        favoriteColor: {
+          renderer: "defaultEnum",
+          options: "colors",
+          visible: true,
+        },
+        gender: {
+          label: "gender",
+          renderer: "defaultEnum",
+          options: "genders",
+          visible: {
+            kind: "or",
+            operands: [
+              {
+                kind: "fieldLookup",
+                operands: [
+                  {
+                    kind: "varLookup",
+                    varName: "global",
+                  },
+                  "IsAdmin",
+                ],
+              },
+              {
+                kind: "isCase",
+                operands: [
+                  {
+                    kind: "fieldLookup",
+                    operands: [
+                      {
+                        kind: "varLookup",
+                        varName: "global",
+                      },
+                      "ERP",
+                    ],
+                  },
+                  "SAP",
+                ],
+              },
+            ],
+          },
+        },
+        dependants: {
+          label: "dependants",
+          renderer: "defaultMap",
+          tooltip: "someone who depends on you",
+          keyRenderer: {
+            label: "name",
+            tooltip: "their name",
+            renderer: "defaultString",
+            visible: true,
+          },
+          valueRenderer: {
+            label: "category",
+            tooltip: "their category",
+            renderer: "defaultCategory",
+            visible: true,
+          },
+          visible: true,
+        },
+        friendsByCategory: {
+          label: "friends by category",
+          renderer: "defaultMap",
+          keyRenderer: {
+            label: "category",
+            renderer: "defaultCategory",
+            visible: true,
+          },
+          valueRenderer: {
+            label: "name",
+            renderer: "defaultString",
+            visible: true,
+          },
+          visible: true,
+        },
+        relatives: {
+          label: "relatives",
+          tooltip: "someone who you are related to",
+          renderer: "defaultList",
+          elementRenderer: {
+            label: "one relative",
+            tooltip: "relative",
+            renderer: "defaultCategory",
+            visible: true,
+          },
+          visible: true,
+        },
+        subscribeToNewsletter: {
+          label: "subscribe to newsletter",
+          renderer: "defaultBoolean",
+          visible: true,
+        },
+        interests: {
+          label: "interests",
+          renderer: "defaultEnumMultiselect",
+          options: "interests",
+          visible: {
+            kind: "fieldLookup",
+            operands: [
+              {
+                kind: "varLookup",
+                varName: "root",
+              },
+              "subscribeToNewsletter",
+            ],
+          },
+        },
+        departments: {
+          label: "departments",
+          renderer: "defaultInfiniteStreamMultiselect",
+          stream: "departments",
+          visible: true,
+          disabled: {
+            kind: "fieldLookup",
+            operands: [
+              {
+                kind: "varLookup",
+                varName: "local",
+              },
+              "subscribeToNewsletter",
+            ],
+          },
+        },
+        mainAddress: {
+          label: "main address",
+          renderer: "address",
+          visible: true,
+        },
+        addresses: {
+          label: "other addresses",
+          renderer: "defaultList",
+          elementRenderer: {
+            label: "address",
+            renderer: "address",
+            visible: true,
+          },
+          visible: true,
+        },
+        emails: {
+          label: "emails",
+          renderer: "defaultList",
+          elementRenderer: {
+            label: "email",
+            renderer: "defaultString",
+            visible: true,
+          },
+          visible: true,
+        },
+        addressesWithLabel: {
+          label: "addresses with label",
+          renderer: "defaultMap",
+          keyRenderer: {
+            label: "address label",
+            renderer: "defaultString",
+            visible: true,
+          },
+          valueRenderer: {
+            label: "address",
+            renderer: "address",
+            visible: true,
+          },
+          visible: true,
+        },
+        addressesByCity: {
+          label: "addresses by city",
+          renderer: "defaultMap",
+          keyRenderer: {
+            label: "city",
+            tooltip: "a nice place to live",
+            renderer: "defaultInfiniteStream",
+            stream: "cities",
+            visible: true,
+          },
+          valueRenderer: {
+            label: "address",
+            renderer: "address",
+            visible: true,
+          },
+          visible: true,
+        },
+        addressesWithColorLabel: {
+          renderer: "defaultMap",
+          label: "addresses with color label",
+          keyRenderer: {
+            label: "color",
+            renderer: "defaultEnum",
+            options: "colors",
+            visible: true,
+          },
+          valueRenderer: {
+            label: "address",
+            renderer: "address",
+            visible: true,
+          },
+          visible: true,
+        },
+        permissions: {
+          label: "permissions",
+          renderer: "defaultMap",
+          keyRenderer: {
+            label: "permission",
+            renderer: "defaultEnum",
+            options: "permissions",
+            visible: true,
+          },
+          valueRenderer: {
+            label: "granted",
+            renderer: "defaultBoolean",
+            visible: true,
+          },
+          visible: true,
+        },
+        cityByDepartment: {
+          label: "city by department",
+          renderer: "defaultMap",
+          keyRenderer: {
+            label: "department",
+            renderer: "defaultInfiniteStream",
+            stream: "departments",
+            visible: true,
+          },
+          valueRenderer: {
+            label: "city",
+            renderer: "defaultInfiniteStream",
+            stream: "cities",
+            visible: true,
+          },
+          visible: true,
+        },
+        shoeColours: {
+          label: "shoe colours",
+          renderer: "defaultEnumMultiselect",
+          options: "colors",
+          visible: true,
+        },
+        friendsBirthdays: {
+          renderer: "defaultMap",
+          label: "friends birthdays",
+          keyRenderer: {
+            label: "name",
+            renderer: "defaultString",
+            visible: true,
+          },
+          valueRenderer: {
+            label: "birthday",
+            renderer: "defaultDate",
+            visible: true,
+          },
+          visible: true,
+        },
+        holidays: {
+          label: "holidays",
+          renderer: "defaultList",
+          elementRenderer: {
+            label: "holiday",
+            renderer: "defaultDate",
+            visible: true,
+          },
+          visible: true,
+        },
+      },
+      tabs: {
+        main: {
+          columns: {
+            demographics: {
+              groups: {
+                main: [
+                  "category",
+                  "name",
+                  "surname",
+                  "birthday",
+                  "gender",
+                  "emails",
+                  "dependants",
+                  "friendsByCategory",
+                  "relatives",
+                  "friendsBirthdays",
+                  "shoeColours",
+                ],
+              },
+            },
+            mailing: {
+              groups: {
+                main: ["subscribeToNewsletter", "interests", "favoriteColor"],
+              },
+            },
+            addresses: {
+              groups: {
+                main: [
+                  "departments",
+                  "mainAddress",
+                  "addresses",
+                  "addressesWithLabel",
+                  "addressesByCity",
+                  "addressesWithColorLabel",
+                  "permissions",
+                  "cityByDepartment",
+                  "holidays",
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  launchers: {
+    "create-person": {
+      kind: "create",
+      form: "person",
+      api: "person",
+      configApi: "globalConfiguration",
+    },
+    "edit-person": {
+      kind: "edit",
+      form: "person",
+      api: "person",
+      configApi: "globalConfiguration",
     },
   },
 };

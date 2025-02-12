@@ -4,7 +4,7 @@ import { unit, FormParsingResult, FormsParserState, FormRunnerState, FormsParser
 import { List, Set, Map } from "immutable";
 // import { PersonView } from "./domains/person/views/main-view";
 import { PersonContainerFormView, PersonNestedContainerFormView, CreatePersonSubmitButtonWrapper, EditPersonSubmitButtonWrapper } from "./domains/person/domains/from-config/views/wrappers";
-import { PersonFormsConfig, PersonFromConfigApis, PersonConfigFormsLeafPredicates, Person } from "playground-core";
+import { PersonFormsConfig, PersonFromConfigApis, PersonConfigFormsLeafPredicates, Person, PersonFromConfigV2, PersonFromConfigV3 } from "playground-core";
 import { PersonFieldViews } from "./domains/person-from-config/views/field-views";
 // import { PersonForm } from "./domains/person/template";
 import { fieldTypeConverters } from "./domains/person/apis/field-converters";
@@ -95,9 +95,10 @@ export const FormsApp = (props: {}) => {
 										fieldViews: PersonFieldViews,
 										infiniteStreamSources: PersonFromConfigApis.streamApis,
 										enumOptionsSources: PersonFromConfigApis.enumApis,
+										globalConfigurationSources: PersonFromConfigApis.globalApis,
 										entityApis: PersonFromConfigApis.entityApis,
 										leafPredicates: PersonConfigFormsLeafPredicates,
-										getFormsConfig: () => PromiseRepo.Default.mock(() => PersonFormsConfig),
+										getFormsConfig: () => PromiseRepo.Default.mock(() => PersonFromConfigV3),
 										injectedPrimitives: Map([["injectedCategory", {fieldView: categoryForm, defaultValue: {category: "adult", kind: "category"}, defaultState: CategoryState.Default() }]]),
 									}}
 									setState={setConfigFormsParser}
