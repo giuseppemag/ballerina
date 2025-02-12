@@ -2,14 +2,14 @@ import { List, OrderedMap } from "immutable";
 import { AsyncState, BasicFun, BasicPredicate, CoTypedFactory, Debounce, Debounced, Guid, replaceWith, Synchronize, Unit, ValidateRunner } from "../../../../../../main";
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
-import { CollectionReference } from "../../../collection/domains/reference/state";
+import { CollectionReference, EnumReference } from "../../../collection/domains/reference/state";
 import { CollectionSelection } from "../../../collection/domains/selection/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import { FieldValidation, FieldValidationWithPath, FormValidatorSynchronized, OnChange, ValidationError } from "../../../singleton/state";
 import { BaseEnumContext, EnumFormState, EnumView } from "./state";
 
 
-export const EnumForm = <Context extends FormLabel & BaseEnumContext<Element>, ForeignMutationsExpected, Element extends { Value: CollectionReference }>(
+export const EnumForm = <Context extends FormLabel & BaseEnumContext<Element>, ForeignMutationsExpected, Element extends EnumReference>(
   validation?: BasicFun<CollectionSelection<Element>, Promise<FieldValidation>>
 ) => {
   const Co = CoTypedFactory<Context & Value<CollectionSelection<Element>> & { disabled:boolean }, EnumFormState<Context, Element>>()

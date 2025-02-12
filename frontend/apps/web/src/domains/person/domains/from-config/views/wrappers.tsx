@@ -86,7 +86,7 @@ export const CreatePersonSubmitButtonWrapper: CreateFormView<any, any> = Templat
       </>
   )
 
-export const PersonShowFormSetupErrors = (validatedFormsConfig: FormConfigValidationAndParseResult, parsedFormsConfig: FormParsingResult) => ({
+export const PersonShowFormSetupErrors = (validatedFormsConfig: FormConfigValidationAndParseResult<Unit>, parsedFormsConfig: FormParsingResult) => ({
   form: Template.Default((props: any) =>
     <>
       {validatedFormsConfig.kind == "errors" && JSON.stringify(validatedFormsConfig.errors)}

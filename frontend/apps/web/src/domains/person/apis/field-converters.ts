@@ -1,4 +1,4 @@
-import { ApiConverters, CollectionReference, CollectionSelection, Value } from "ballerina-core";
+import { ApiConverters, CollectionReference, CollectionSelection, UnionCase } from "ballerina-core";
 import { List, OrderedMap } from "immutable";
 import { PersonFormInjectedTypes } from "src/domains/person-from-config/injected-forms/category";
 
@@ -11,17 +11,16 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
     "base64File": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: ([_, __])  => _ },
     "secret": { fromAPIRawValue: _ => typeof _ == "string" ? _ : "", toAPIRawValue: ([_, isModified])  => isModified ? _ : undefined },
     "Date": { fromAPIRawValue: _ => typeof _ == "string" ? new Date(Date.parse(_)) : typeof _ == "number" ? new Date(_) : new Date(Date.now()), toAPIRawValue: ([_, __])  => _ },
-    "unionCase": { fromAPIRawValue: _ => CollectionReference.Default(_, _, "enum"), toAPIRawValue: ([_, __]) => _.Id },
+    "unionCase": { fromAPIRawValue: _ => _, toAPIRawValue: ([_, __]) => _ },
     "SingleSelection": {
-        fromAPIRawValue: _ => _ == undefined ? CollectionSelection().Default.right("no selection") :
+        fromAPIRawValue: _ => _.IsSome == false ? CollectionSelection().Default.right("no selection") :
             CollectionSelection().Default.left(
-                _
+                _.Value
             ),
-        toAPIRawValue: ([_, __]) => {
-			return _.kind == "r" ? undefined : _.value}
+        toAPIRawValue: ([_, __]) =>  _.kind == "r" ? {IsSome: false, Value: null} : {IsSome: true, Value: _.value}
     },
     "MultiSelection": {
-        fromAPIRawValue: _ => _ == undefined ? OrderedMap() : OrderedMap(_.map((_: any) => ([_.Id, _]))),
+        fromAPIRawValue: _ =>  _ == undefined ? OrderedMap() : OrderedMap(_.map((_: any) => "Value" in _ ?  ([_.Value, _]) : ([_.Id, _]))),
         toAPIRawValue: ([_, __]) =>  _.valueSeq().toArray()
     },
     "List": {

@@ -17,3 +17,15 @@ export const CollectionReference = {
     ...simpleUpdater<CollectionReference>()("DisplayValue"),
   }
 };
+
+export type EnumReference = {
+  Value: string;
+}
+export const EnumReference = {
+  Default: (value: string): EnumReference => ({
+    Value: value
+  }),
+  Updaters: {
+    ...simpleUpdater<EnumReference>()("Value"),
+  }
+}

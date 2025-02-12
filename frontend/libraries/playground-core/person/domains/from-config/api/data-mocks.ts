@@ -6,10 +6,10 @@ import { AddressApi } from "../../address/apis/mocks"
 import { v4 } from "uuid"
 import { PersonApi } from "../../../apis/mocks"
 
-const permissions = [ {Value: "create"}, {Value: "read"}, {Value: "update"}, {Value: "delete"}]
-const colors = [ {Value: faker.color.human()}, {Value: faker.color.human()}, {Value: faker.color.human()}, {Value: faker.color.human()}]
-const genders = [ {Value: "M"}, {Value: "F"}, {Value: "X"}, {Value: "Y"}]
-const interests = [ {Value: "finance"}, {Value: "marketing"}, {Value: "management"}, {Value: "development"}]
+const permissions = ["create", "read", "update", "delete"]
+const colors = [ faker.color.human(), faker.color.human(), faker.color.human(), faker.color.human()]
+const genders = ["M", "F", "X", "Y"]
+const interests = ["finance", "marketing", "management", "development"]
 
 const streamApis: InfiniteStreamSources = (streamName: string) =>
   streamName == "departments" ?
@@ -27,16 +27,16 @@ const streamApis: InfiniteStreamSources = (streamName: string) =>
       })
 const enumApis: EnumOptionsSources = (enumName: string) =>
   enumName == "colors" ?
-    () => PromiseRepo.Default.mock(() => colors.map(_ => (CollectionReference.Default(_.Value, _.Value, "enum"))), undefined, 1, 0)
+    () => PromiseRepo.Default.mock(() => colors.map(_ => ({Value: _})), undefined, 1, 0)
     :
     enumName == "permissions" ?
-      () => PromiseRepo.Default.mock(() => permissions.map(_ =>(CollectionReference.Default(_.Value, _.Value, "enum"))), undefined, 1, 0)
+      () => PromiseRepo.Default.mock(() => permissions.map(_ => ({Value: _})), undefined, 1, 0)
     :
     enumName == "genders" ?
-      () => PromiseRepo.Default.mock(() => genders.map(_ => (CollectionReference.Default(_.Value, _.Value, "enum"))), undefined, 1, 0)
+      () => PromiseRepo.Default.mock(() => genders.map(_ => ({Value: _})), undefined, 1, 0)
       :
       enumName == "interests" ?
-        () => PromiseRepo.Default.mock(() => interests.map(_ => CollectionReference.Default(_.Value, _.Value, "enum")), undefined, 1, 0)
+        () => PromiseRepo.Default.mock(() => interests.map(_ => ({Value: _})), undefined, 1, 0)
         :
         () => PromiseRepo.Default.mock(() => {
           alert(`Cannot find enum API ${enumName}`)
@@ -64,25 +64,26 @@ const entityApis: EntityApis = {
             surname: faker.person.lastName(),
             birthday: new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45),
             subscribeToNewsletter: Math.random() > 0.5,
-            favoriteColor: colors[Math.round(Math.random() * 10) % 4],
-            gender: undefined,
-            interests: [interests[1], interests[2]],
+            favoriteColor: {Value: {Value: colors[Math.round(Math.random() * 10) % 4]}, IsSome: true},
+            gender: {IsSome: false, Value: { Value: ""}},
+            // gender: {Value: "M", IsSome: true},
+            interests: [{Value: interests[1]}, {Value: interests[2]}],
             departments: [],
             mainAddress: {
               street: faker.location.street(),
               number: Math.floor(Math.random() * 500),
               city: Math.random() > 0.5 ?
-                undefined
+                {IsSome: false, Value: {Value: ""}}
                 :
-                City.Default(v4(), faker.location.city())
+                {Value: {...City.Default(v4(), faker.location.city())}, IsSome: true}
             },
             addresses: List([{
               street: faker.location.street(),
               number: Math.floor(Math.random() * 500),
               city: Math.random() > 0.5 ?
-                undefined
+                {IsSome: false, Value: {Value: ""}}
                 :
-                City.Default(v4(), faker.location.city())
+                {Value: {...City.Default(v4(), faker.location.city())}, IsSome: true}
             }]),
             emails: ["john@doe.it", "johnthedon@doe.com"],
             "addressesWithLabel": [
@@ -92,33 +93,33 @@ const entityApis: EntityApis = {
                   street: faker.location.street(),
                   number: Math.floor(Math.random() * 500),
                   city: Math.random() > 0.5 ?
-                    undefined
+                    {IsSome: false, Value: {Value: ""}}
                     :
-                    City.Default(v4(), faker.location.city())
+                    {Value: {...City.Default(v4(), faker.location.city())}, IsSome: true}
                 }
               }
             ],
             "addressesByCity": [
               {
-                key: City.Default(v4(), faker.location.city()),
+                key: {IsSome: true, Value: {...City.Default(v4(), faker.location.city())}},
                 value: {
                   street: faker.location.street(),
                   number: Math.floor(Math.random() * 500),
                   city: Math.random() > 0.5 ?
-                    undefined
+                    {IsSome: false, Value: {Value: ""}}
                     :
-                    City.Default(v4(), faker.location.city())
+                    {IsSome: true, Value: {...City.Default(v4(), faker.location.city())},}
                 }
               },
               {
-                key: City.Default(v4(), faker.location.city()),
+                key: {IsSome: true, Value: {...City.Default(v4(), faker.location.city())}},
                 value: {
                   street: faker.location.street(),
                   number: Math.floor(Math.random() * 500),
                   city: Math.random() > 0.5 ?
-                    undefined
+                    {IsSome: false, Value: {Value: ""}}
                     :
-                    City.Default(v4(), faker.location.city())
+                    {IsSome: true, Value: {...City.Default(v4(), faker.location.city())}}
                 }
               }
             ],
