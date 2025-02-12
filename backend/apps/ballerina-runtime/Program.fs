@@ -20,11 +20,23 @@ open System.Text.RegularExpressions
 let dup a = (a,a)
 let (<*>) f g = fun (a,b) -> (f a, g b)
 
-
 type Utils = class end with
   static member tryFindField name fields = 
     fields |> Seq.tryFind (fst >> (=) name) |> Option.map snd
 
+type Object with
+  member self.ToFSharpString = sprintf "%A" self
+
+type String with
+  member self.ReasonablyClamped = self.Substring(0, min self.Length 50).ReplaceLineEndings(" ") + "..."
+  static member append s2 s1 = s1 + s2
+  static member parse (json:JsonValue) : Sum<string,Errors> =
+    sum{
+      match json with
+      | JsonValue.String s -> return s
+      | _ ->
+        return! sum.Throw($$"""Error: expected a string. Instead found {{json}}.""" |> Errors.Singleton)      
+    }
 
 type CodeGenConfig = {
   Int:CodegenConfigTypeDef
@@ -486,7 +498,7 @@ type Renderer with
               return! state.Throw($$"""Error: invalid renderer {{json}}""" |> Errors.Singleton)
       | _ -> 
         return! state.Throw($$"""Error: invalid renderer {{json}}""" |> Errors.Singleton)
-    }
+    } |> state.MapError(Errors.Map(String.append $$"""when parsing renderer {{json.ToString().ReasonablyClamped}}"""))
 
 and NestedRenderer with
   static member parse (json:JsonValue) : State<NestedRenderer,CodeGenConfig,ParsedFormsContext,Errors> =
@@ -510,16 +522,7 @@ and NestedRenderer with
           return! state.Throw($$"""Error: expected a record with field 'renderer'. Instead found {{json}}.""" |> Errors.Singleton)      
       | _ -> 
         return! state.Throw($$"""Error: expected a record with field 'renderer'. Instead found {{json}}.""" |> Errors.Singleton)
-    }
-
-type String with
-  static member parse (json:JsonValue) : Sum<string,Errors> =
-    sum{
-      match json with
-      | JsonValue.String s -> return s
-      | _ ->
-        return! sum.Throw($$"""Error: expected a string. Instead found {{json}}.""" |> Errors.Singleton)      
-    }
+    } |> state.MapError(Errors.Map(String.append $$"""when parsing renderer {{json.ToString().ReasonablyClamped}}"""))
 
 type FieldConfig with
   static member parse (fieldName:string) (json:JsonValue) : State<FieldConfig,CodeGenConfig,ParsedFormsContext,Errors> =
@@ -548,7 +551,7 @@ type FieldConfig with
           return! state.Throw($$"""Error: a field config must have a 'renderer' field. Found {{fields}}.""" |> Errors.Singleton)
       | _ -> 
         return! state.Throw($$"""Error: a field must be a record. Instead found {{json}}.""" |> Errors.Singleton)
-    }    
+    }  |> state.MapError(Errors.Map(String.append $$"""when parsing field {{fieldName}}"""))
 
 type FormConfig with
   static member parseGroup (fieldConfigs:Map<string,FieldConfig>) (json:JsonValue) : State<List<FieldConfigId>, CodeGenConfig, ParsedFormsContext, Errors> = 
@@ -622,7 +625,7 @@ type FormConfig with
         return { FormTabs=tabs }
       | _ -> 
         return! error
-    }
+    } |> state.MapError(Errors.Map(String.append $$"""when parsing tabs {{json.ToString().ReasonablyClamped}}"""))
   
 
   static member parse (json:JsonValue) : State<{| TypeId:TypeId; Fields:Map<string, FieldConfig>; Tabs:FormTabs |},CodeGenConfig,ParsedFormsContext,Errors> =
@@ -646,7 +649,7 @@ type FormConfig with
         | _ -> return! state.Throw($$"""Error: form must have two fields: 'type' ('string') and 'fields' ('record'). Instead found {{fields}}.""" |> Errors.Singleton)
       | _ ->
         return! state.Throw($$"""Error: form is not a record, found {{json}}.""" |> Errors.Singleton)
-    }
+    } |> state.MapError(Errors.Map(String.append $$"""when parsing form {{json.ToString().ReasonablyClamped}}"""))
 
 type ExprType with
   static member parseUnionCase (json:JsonValue) : State<UnionCase,CodeGenConfig,ParsedFormsContext,Errors> = 
@@ -1163,64 +1166,66 @@ type ParsedFormsContext with
         return ()
       | _ -> 
         return! state.Throw($$"""Error: the apis needs fields 'enumOptions', 'searchableStreams', and 'entities'.""" |> Errors.Singleton)
-    }
+    } |> state.MapError(Errors.Map(String.append $$"""when parsing APIs {{apisJson.ToString().ReasonablyClamped}}"""))
   static member parseTypes (typesJson:seq<string * JsonValue>) : State<Unit,CodeGenConfig,ParsedFormsContext,Errors> = 
     state{
       for typeName,typeJson in typesJson do
-        match typeJson with
-        | JsonValue.Record(typeJsonArgs) ->
-          match typeJsonArgs |> Seq.tryFind (fst >> (=) "extends") |> Option.map snd |> Option.orElseWith ((fun () -> JsonValue.Array[||] |> Some)), typeJsonArgs |> Seq.tryFind (fst >> (=) "fields") |> Option.map snd with
-          | Some (JsonValue.Array extends), Some (JsonValue.Record fields) ->
-            let typeId:TypeId = {  TypeName=typeName; TypeId=Guid.CreateVersion7() }
-            let! s = state.GetState()
-            let! extendedTypes = 
-              extends |> Seq.map (fun extendsJson -> state{
-                let! parsed = ExprType.parse extendsJson
-                return! ExprType.resolveLookup s parsed |> state.OfSum
-              }) |> state.All
-            let! fields = 
-              fields |> Seq.map (fun (fieldName, fieldType) -> 
-                  state{
-                    let! fieldType = ExprType.parse fieldType
-                    return fieldName, fieldType
-                  }) |> Seq.toList |> state.All
-            let fields = fields |> Map.ofList
-            let! exprType = 
-              extendedTypes |> Seq.fold (fun (t1:Sum<ExprType, Errors>) t2 -> 
-                sum{ 
-                  let! t1 = t1
-                  return! ExprType.Extend t1 t2 
-                }) (Left(ExprType.RecordType fields))
-              |> state.OfSum
-            do! state.SetState(
-              ParsedFormsContext.Updaters.Types(
-                Map.add typeName { Type=exprType; TypeId=typeId }
+        return! state{
+          match typeJson with
+          | JsonValue.Record(typeJsonArgs) ->
+            match typeJsonArgs |> Seq.tryFind (fst >> (=) "extends") |> Option.map snd |> Option.orElseWith ((fun () -> JsonValue.Array[||] |> Some)), typeJsonArgs |> Seq.tryFind (fst >> (=) "fields") |> Option.map snd with
+            | Some (JsonValue.Array extends), Some (JsonValue.Record fields) ->
+              let typeId:TypeId = {  TypeName=typeName; TypeId=Guid.CreateVersion7() }
+              let! s = state.GetState()
+              let! extendedTypes = 
+                extends |> Seq.map (fun extendsJson -> state{
+                  let! parsed = ExprType.parse extendsJson
+                  return! ExprType.resolveLookup s parsed |> state.OfSum
+                }) |> state.All
+              let! fields = 
+                fields |> Seq.map (fun (fieldName, fieldType) -> 
+                    state{
+                      let! fieldType = ExprType.parse fieldType
+                      return fieldName, fieldType
+                    }) |> Seq.toList |> state.All
+              let fields = fields |> Map.ofList
+              let! exprType = 
+                extendedTypes |> Seq.fold (fun (t1:Sum<ExprType, Errors>) t2 -> 
+                  sum{ 
+                    let! t1 = t1
+                    return! ExprType.Extend t1 t2 
+                  }) (Left(ExprType.RecordType fields))
+                |> state.OfSum
+              do! state.SetState(
+                ParsedFormsContext.Updaters.Types(
+                  Map.add typeName { Type=exprType; TypeId=typeId }
+                )
               )
-            )
-            return ()
+              return ()
+            | _ -> 
+              let typeId:TypeId = {  TypeName=typeName; TypeId=Guid.CreateVersion7() }
+              let! parsedType = ExprType.parse typeJson
+              do! state.SetState(
+                ParsedFormsContext.Updaters.Types(
+                  Map.add typeName { Type=parsedType; TypeId=typeId }
+                )
+              )
           | _ -> 
-            let typeId:TypeId = {  TypeName=typeName; TypeId=Guid.CreateVersion7() }
-            let! parsedType = ExprType.parse typeJson
-            do! state.SetState(
-              ParsedFormsContext.Updaters.Types(
-                Map.add typeName { Type=parsedType; TypeId=typeId }
-              )
-            )
-        | _ -> 
-          return! state.Throw($$"""Error: type {{typeName}} should be a record with only 'extends' and 'fields'.""" |> Errors.Singleton)   
-        }
+            return! state.Throw($$"""Error: type {{typeName}} should be a record with only 'extends' and 'fields'.""" |> Errors.Singleton)
+        } |> state.MapError(Errors.Map(String.append $"\n...when parsing type {typeName}"))
+      } |> state.MapError(Errors.Map(String.append $"\n...when parsing types"))
   static member parseForms (formsJson:(string*JsonValue)[]) : State<Unit,CodeGenConfig,ParsedFormsContext,Errors> = 
     state{
       for formName, formJson in formsJson do
         let! formBody = FormConfig.parse formJson
         do! state.SetState(ParsedFormsContext.Updaters.Forms (Map.add formName { FormConfig.Fields=formBody.Fields; FormConfig.Tabs=formBody.Tabs; FormConfig.TypeId=formBody.TypeId; FormId=Guid.CreateVersion7(); FormName = formName }))
-    }
+    } |> state.MapError(Errors.Map(String.append $$"""when parsing forms {{formsJson.ToString().ReasonablyClamped}}"""))
   static member parseLaunchers (launchersJson:(string*JsonValue)[]) : State<Unit,CodeGenConfig,ParsedFormsContext,Errors> = 
     state{
       for launcherName, launcherJson in launchersJson do
         let! (mode, formId, apiId, configApiId) = FormLauncher.parse launcherJson
         do! state.SetState(ParsedFormsContext.Updaters.Launchers (Map.add launcherName { LauncherName=launcherName; LauncherId=Guid.CreateVersion7(); Mode=mode; Form=formId; EntityApi=apiId; ConfigEntityApi=configApiId }))
-    }
+    } |> state.MapError(Errors.Map(String.append $$"""when processing launchers {{launchersJson.ToString().ReasonablyClamped}}"""))
   static member parse generatedLanguageSpecificConfig (json:JsonValue) : State<Unit,CodeGenConfig,ParsedFormsContext,Errors> = 
     state{
       match json with
@@ -1325,7 +1330,7 @@ let main args =
           JsonSerializer.Deserialize<CodeGenConfig>(codegenConfig, JsonFSharpOptions.Default().ToJsonSerializerOptions())
         with
         | err -> 
-          do eprintfn $$"""Fatal error when processing {{inputPath}}: {{err.Message}}."""
+          do eprintfn $$"""Fatal error when parsing {{inputPath}}: {{err.Message}}."""
           do System.Environment.Exit -1
           failwith ""      
       let injectedTypes:Map<string, TypeBinding> = 
@@ -1367,7 +1372,9 @@ let main args =
           do Console.ResetColor()
       | Right err -> 
         do Console.ForegroundColor <- ConsoleColor.Red
-        do eprintfn "\nParsing errors for %s: %A" inputPath err
+        do eprintfn "\nParsing errors for %s" inputPath 
+        for error in err.Errors do
+          do eprintfn "%s" error
         do Console.ResetColor()
       | _ -> 
         do Console.ForegroundColor <- ConsoleColor.Red

@@ -11,6 +11,12 @@ with
       | Sum.Left (res,u_s) -> Sum.Left(f res,u_s)
       | Sum.Right e -> Sum.Right e
     )
+  static member mapError<'e1> (f:'e -> 'e1) ((State p):State<'a,'c,'s,'e>) : State<'a,'c,'s,'e1> =
+    State(fun s0 ->
+      match p s0 with
+      | Sum.Left l -> Sum.Left l
+      | Sum.Right e -> Sum.Right (f e)
+    )
   static member fromValue (res:'a) = State(fun _ -> Sum.Left(res, None))
   static member flatten ((State p):State<State<'a,'c,'s,'e>,'c,'s,'e>) : State<'a,'c,'s,'e> = 
     State(fun (c,s0) ->
@@ -29,6 +35,8 @@ with
 type StateBuilder() = 
   member _.Map f p = 
     State.map f p
+  member _.MapError f p = 
+    State.mapError f p
   member _.Zero<'c,'s,'e>() = 
     State.fromValue<'c,'s,'e>()
   member _.Return<'a,'c,'s,'e>(result:'a) = 

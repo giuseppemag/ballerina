@@ -52,15 +52,15 @@ Todo (✅/❌)
           ✅ tuple
           ✅ record
         ✅ parser/validator `any => ValueOrError<Expr, string>`
-      ❌ there are unparsed placeholders for the labels and tooltips
-        ❌ add the new field `description` or what's it called to the validator
       ✅ delete the sample parsed form
       ✅ `let injectedTypes = []` should come from `codegenConfig.Custom`
-      ❌ define `import` command
       ❌ pretty print types in errors
       ❌ add source context to errors for pretty printing
         ❌ probably needs the state monad with an error decorator accumulated from the parent
         ❌ distinguish state from parsed context
+      ❌ there are unparsed placeholders for the labels and tooltips
+        ❌ add the new field `details` or what's it called to the validator
+      ❌ define `import` command
       ❌ the functionality of the validator is now mature
       ❌ improve the generated whitespace
       ❌ all utility methods should be capitalized in Program.fs

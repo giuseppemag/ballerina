@@ -6,6 +6,7 @@ type Errors = { Errors:List<string> } with
   static member Singleton e  = { Errors=[e] }
   static member Zero()  = { Errors=[] }
   static member Concat(e1,e2)  = { Errors=e1.Errors @ e2.Errors }
+  static member Map f e = { e with Errors=e.Errors |> List.map f  }
 let inline withError (e:string) (o:Option<'res>) : Sum<'res,Errors> = o |> Sum.fromOption<'res,Errors> (fun () -> Errors.Singleton e)
 
 
