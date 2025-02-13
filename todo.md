@@ -54,10 +54,20 @@ Todo (✅/❌)
         ✅ parser/validator `any => ValueOrError<Expr, string>`
       ✅ delete the sample parsed form
       ✅ `let injectedTypes = []` should come from `codegenConfig.Custom`
-      ❌ pretty print types in errors
       ❌ add source context to errors for pretty printing
-        ❌ probably needs the state monad with an error decorator accumulated from the parent
-        ❌ distinguish state from parsed context
+        ✅ probably needs the state monad with an error decorator accumulated from the parent
+        ❌ post about the error contexts
+        ❌ use `Utils.tryFindField` everywhere applicable, generate proper errors upon failure
+          ✅ let! ((x,y),z) = Utils.tryFindFieldWithNotFoundError ... 
+        ❌ all matches to jsonvalue patterns should be bindings
+          ❌ JsonValue.Record
+          ❌ JsonValue.Array
+          ❌ JsonValue.String
+          ❌ JsonValue.Boolean
+          ❌ JsonValue.Number
+        ❌ when parsing...
+        ❌ when validating...
+      ❌ pretty print types in errors
       ❌ there are unparsed placeholders for the labels and tooltips
         ❌ add the new field `details` or what's it called to the validator
       ❌ define `import` command
@@ -67,7 +77,6 @@ Todo (✅/❌)
       ❌ adjust person-config in FE and use that from cmd line, delete the copy
       ❌ introduce `sum.Both`, `state.Both`
       ❌ introduce a natural transformation that flips state and option, use it to parse the `disabledJson` elegantly
-      ❌ use `Utils.tryFindField` everywhere applicable
       ❌ all the `match` expressions that search fields should become monadic instances of nested `state.Both`, or maybe instances of up to 5; remove those ugly matches in any case
       ❌ move string builder to ballerina-core
       ❌ move the new type parsers to ballerina-core

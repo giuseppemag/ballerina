@@ -128,5 +128,56 @@ type StateBuilder() =
     match s with
     | Left res -> state.Return res
     | Right err -> state.Throw err
+  member inline state.All2<'a1,'a2,'c,'s,'e
+    when 'e : (static member Concat:'e * 'e -> 'e)>
+    (p1:State<'a1,'c,'s,'e>) (p2:State<'a2,'c,'s,'e>) =
+    state{
+      let! v1 = p1 |> state.Catch
+      let! v2 = p2 |> state.Catch
+      match v1,v2 with
+      | Left v1,Left v2 -> return v1,v2
+      | Right e1,Right e2 -> return! state.Throw('e.Concat(e1,e2))
+      | Right e,_ | _,Right e -> return! state.Throw e
+    }
+  member inline state.All3<'a1,'a2,'a3,'c,'s,'e
+    when 'e : (static member Concat:'e * 'e -> 'e)>
+    (p1:State<'a1,'c,'s,'e>) (p2:State<'a2,'c,'s,'e>) (p3:State<'a3,'c,'s,'e>) =
+    state{
+      let! v1 = state.All2 p1 p2 |> state.Catch
+      let! v2 = p3 |> state.Catch
+      match v1,v2 with
+      | Left (v1,v2),Left v3 -> return v1,v2,v3
+      | Right e1,Right e2 -> return! state.Throw('e.Concat(e1,e2))
+      | Right e,_ | _,Right e -> return! state.Throw e
+    }
+  member inline state.All4<'a1,'a2,'a3,'a4,'c,'s,'e
+    when 'e : (static member Concat:'e * 'e -> 'e)>
+    (p1:State<'a1,'c,'s,'e>) (p2:State<'a2,'c,'s,'e>) (p3:State<'a3,'c,'s,'e>) (p4:State<'a4,'c,'s,'e>) =
+    state{
+      let! v1 = state.All3 p1 p2 p3 |> state.Catch
+      let! v2 = p4 |> state.Catch
+      match v1,v2 with
+      | Left (v1,v2,v3),Left v4 -> return v1,v2,v3,v4
+      | Right e1,Right e2 -> return! state.Throw('e.Concat(e1,e2))
+      | Right e,_ | _,Right e -> return! state.Throw e
+    }
+  member inline state.Either<'a,'c,'s,'e
+    when 'e : (static member Concat:'e * 'e -> 'e)>
+    (p1:State<'a,'c,'s,'e>) (p2:State<'a,'c,'s,'e>) =
+    state{
+      let! v1 = p1 |> state.Catch
+      let! v2 = p2 |> state.Catch
+      match v1,v2 with
+      | Left v,_ | _,Left v -> return v
+      | Right e1,Right e2 -> return! state.Throw('e.Concat(e1,e2))
+    }
 
+  member state.InsideOption(p:Option<State<'a,'c,'s,'e>>) = 
+    state{
+      match p with
+      | Some p -> 
+        let! a = p
+        return Some a
+      | None -> return None
+    }
 let state = StateBuilder()

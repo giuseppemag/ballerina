@@ -491,7 +491,7 @@
         "relatives": {
           "label": "relatives",
           "tooltip": "someone who you are related to",
-          "renderer": "defaultList",
+          "renderer":"defaultList",
           "elementRenderer": {
             "label": "one relative",
             "tooltip": "relative",
