@@ -67,6 +67,7 @@ Todo (✅/❌)
           ❌ JsonValue.Number
         ❌ when parsing...
         ❌ when validating...
+        ❌ replace all instances of `let! s = state.GetState(); s.Types |> Map.tryFind` with some `state.TryFindType`
       ❌ pretty print types in errors
       ❌ there are unparsed placeholders for the labels and tooltips
         ❌ add the new field `details` or what's it called to the validator
