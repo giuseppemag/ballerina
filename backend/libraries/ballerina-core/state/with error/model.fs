@@ -1,6 +1,6 @@
-module Ballerina.StateWithError
+namespace Ballerina.State.WithError
 open Ballerina.Fun
-open Sum
+open Ballerina.Sum
 
 type State<'a,'c,'s,'e> = State of ('c * 's -> Sum<'a * Option<'s>, 'e * Option<'s>>)
 with 
@@ -183,4 +183,3 @@ type StateBuilder() =
         return Some a
       | None -> return None
     }
-let state = StateBuilder()

@@ -90,7 +90,7 @@ Todo (✅/❌)
         ❌ tabs
         ❌ types
         ❌ forms
-        ❌ split the mega-file for the business rules
+        ❌ split the mega-file for the business rules (business rule engine/model)
         ❌ move relevant sources to a separate folder in ballerina-core (forms engine)
           ❌ move the new types (`Errors`, `Form`, etc.) to ballerina-core
           ❌ move the new type checkers to ballerina-core

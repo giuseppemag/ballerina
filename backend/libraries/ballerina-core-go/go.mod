@@ -1,4 +1,4 @@
-module ballerina.com/core
+namespace Ballerina.com/core
 
 go 1.23.5
 

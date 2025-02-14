@@ -4,6 +4,8 @@ open System
 open context
 open absample.models
 
+let co = CoroutineBuilder()
+
 let processAEvents (abId:System.Guid) : Coroutine<Unit, Unit, ABContext, absample.models.ABEvent> =
   co.Repeat(
     co.Any([

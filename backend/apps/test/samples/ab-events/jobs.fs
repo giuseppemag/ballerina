@@ -3,6 +3,7 @@ open System
 open System.Linq
 open Microsoft.Extensions.DependencyInjection
 open Ballerina.Coroutines
+open Ballerina.Coroutines.Runner
 open Migrations
 open Microsoft.EntityFrameworkCore
 open absample.efmodels
@@ -60,4 +61,4 @@ let abEventLoop (createScope:Unit -> IServiceScope) =
   let releaseSnapshot ((db,scope):BallerinaContext * IServiceScope) =
     db.Dispose()
     scope.Dispose()
-  Ballerina.CoroutinesRunner.runLoop init getSnapshot (fun u_s -> ()) updateEvents log releaseSnapshot
+  Ballerina.Coroutines.Runner.runLoop init getSnapshot (fun u_s -> ()) updateEvents log releaseSnapshot

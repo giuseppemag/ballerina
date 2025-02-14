@@ -4,6 +4,8 @@ open System.Threading.Tasks
 open Ballerina.Coroutines
 open Ballerina.Fun
 
+let co = CoroutineBuilder()
+
 type [<CLIMutable>] Token = { TokenId:Guid; Token:string }
 let Token = {|
   Zero = { TokenId=Guid.Empty; Token="" }

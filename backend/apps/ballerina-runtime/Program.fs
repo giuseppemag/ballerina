@@ -9,16 +9,18 @@ open Ballerina.BusinessRules
 open Ballerina.Option
 open Ballerina.Sum
 open Ballerina.Errors
-open Ballerina.StateWithError
-open Ballerina.SeqStateWithError
+open Ballerina.State.WithError
 open Ballerina.Collections.Map
-open Ballerina.BusinessRuleTypeChecking
+open Ballerina.Expr.Eval
+open Ballerina.Expr.TypeCheck
 open System.Text.Json
 open System.Text.Json.Serialization
 open System.Text.RegularExpressions
 
 let dup a = (a,a)
 let (<*>) f g = fun (a,b) -> (f a, g b)
+
+let state = StateBuilder()
 
 type Object with
   member self.ToFSharpString = sprintf "%A" self

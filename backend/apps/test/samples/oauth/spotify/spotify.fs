@@ -47,4 +47,4 @@ let getSnapshot (clientId : string) (clientSecret : string) (authorizationCode :
     ()
 
 let spotifyEventLoop (clientId : string) (clientSecret : string) (authorizationCode : string) =
-  Ballerina.CoroutinesRunner.runLoop init (getSnapshot clientId clientSecret authorizationCode) ((fun _ -> ())) (fun _ _ _ -> ()) (fun () -> Console.Clear(); printfn "Tick: %A" (DateTime.UtcNow)) (fun _ -> ())
+  Ballerina.Coroutines.Runner.runLoop init (getSnapshot clientId clientSecret authorizationCode) ((fun _ -> ())) (fun _ _ _ -> ()) (fun () -> Console.Clear(); printfn "Tick: %A" (DateTime.UtcNow)) (fun _ -> ())

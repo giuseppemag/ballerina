@@ -7,14 +7,16 @@ open Ballerina.Collections.Map
 open Ballerina.Sum
 open Ballerina.Coroutines
 open Ballerina.BusinessRules
-open Ballerina.BusinessRuleExecution
+open Ballerina.BusinessRule.Execute
 open context
-open Ballerina.BusinessRuleTransitiveExecution
-open Ballerina.BusinessRuleEvaluation
-open Ballerina.BusinessRulePreprocessor
+open Ballerina.BusinessRule.TransitiveExecution
+open Ballerina.Expr.Eval
+open Ballerina.BusinessRule.Preprocessor
+open Ballerina.BusinessRule.Predicate
 
 let abcdEventLoop() = 
   let mutable context:Context = init_abcdContext()
+  let co = CoroutineBuilder()
 
   let processABCD : Coroutine<Unit, JobsState, Context, ABCDEvent> = 
     co.Repeat(
@@ -29,7 +31,7 @@ let abcdEventLoop() =
         do! co.Wait(TimeSpan.FromSeconds 0.0)
         let! modifiedFields = co.Do(fun ctx -> 
           let schema = ctx.Schema
-          let results = eval None schema Map.empty businessRule.Condition
+          let results = Expr.eval None schema Map.empty businessRule.Condition
           let allModifiedFields = seq{
               for (vars,result) in results do
                 match result with
@@ -119,6 +121,6 @@ let abcdEventLoop() =
       
   let releaseSnapshot (_:Unit) =
     ()
-  Ballerina.CoroutinesRunner.runLoop init getSnapshot updateState updateEvents log releaseSnapshot
+  Ballerina.Coroutines.Runner.runLoop init getSnapshot updateState updateEvents log releaseSnapshot
     
   ()

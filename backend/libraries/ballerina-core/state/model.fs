@@ -1,4 +1,5 @@
-module Ballerina.State
+namespace Ballerina.State
+
 open Ballerina.Fun
 
 type State<'a,'c,'s> = State of ('c * 's -> 'a * Option<'s>)
@@ -57,5 +58,3 @@ type StateBuilder() =
     | Some first -> 
       state.Combine(body first, state.For(seq |> Seq.tail, body))
     | None -> state{ return () }
-
-let state = StateBuilder()

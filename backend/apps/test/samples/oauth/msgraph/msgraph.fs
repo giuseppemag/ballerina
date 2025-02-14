@@ -47,4 +47,4 @@ let getSnapshot (tenant : Guid) (clientId : Guid) secret =
     ()
 
 let msGraphEventLoop (tenant : Guid) (clientId : Guid) (secret : string) =
-  Ballerina.CoroutinesRunner.runLoop init (getSnapshot tenant clientId secret) ((fun _ -> ())) (fun _ _ _ -> ()) (fun () -> Console.Clear(); printfn "Tick: %A" (DateTime.UtcNow)) (fun _ -> ())
+  Ballerina.Coroutines.Runner.runLoop init (getSnapshot tenant clientId secret) ((fun _ -> ())) (fun _ _ _ -> ()) (fun () -> Console.Clear(); printfn "Tick: %A" (DateTime.UtcNow)) (fun _ -> ())

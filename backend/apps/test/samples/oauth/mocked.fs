@@ -50,4 +50,4 @@ let getSnapshot(): unit * OAuthContext<_, _, _> * Map<Guid, Unit> * unit =
   ()
 
 let oauthEventLoop () =
-  Ballerina.CoroutinesRunner.runLoop init getSnapshot ((fun _ -> ())) (fun _ _ _ -> ()) (fun () -> Console.Clear(); printfn "Tick: %A" (DateTime.UtcNow)) (fun _ -> ())
+  Ballerina.Coroutines.Runner.runLoop init getSnapshot ((fun _ -> ())) (fun _ _ _ -> ()) (fun () -> Console.Clear(); printfn "Tick: %A" (DateTime.UtcNow)) (fun _ -> ())

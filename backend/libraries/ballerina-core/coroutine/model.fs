@@ -1,4 +1,4 @@
-﻿module Ballerina.Coroutines
+﻿namespace Ballerina.Coroutines
 open Ballerina.Fun
 open System
 open System.Threading.Tasks
@@ -60,7 +60,8 @@ and CoroutineResult<'a, 's, 'c, 'e> =
       | Repeat(p) -> 
         Repeat(p |> Coroutine.map f)
 
-let rec bind(p:Coroutine<'a, 's, 'c, 'e>, k:'a -> Coroutine<'b, 's, 'c, 'e>) = 
+type Coroutine<'a, 's, 'c, 'e> with
+  static member bind(p:Coroutine<'a, 's, 'c, 'e>, k:'a -> Coroutine<'b, 's, 'c, 'e>) = 
     Co(fun _ -> Then(p |> Coroutine.map k), None, None)
   
 type CoroutineBuilder() = 
@@ -73,7 +74,7 @@ type CoroutineBuilder() =
   member co.Yield() =
     Co(fun _ -> CoroutineResult.Wait(TimeSpan.FromMilliseconds(0), co.Return()), None, None)
   member _.Bind(p:Coroutine<'a, 's, 'c, 'e>, k:'a -> Coroutine<'b, 's, 'c, 'e>) = 
-    bind(p, k)
+    Coroutine.bind(p, k)
   member _.Combine(p:Coroutine<Unit, 's, 'c, 'e>, k:Coroutine<'a, 's, 'c, 'e>) = 
     Co(fun _ -> CoroutineResult.Combine(p, k), None, None)
   member _.Any(ps:List<Coroutine<'a, 's, 'c, 'e>>) =
@@ -131,8 +132,6 @@ type CoroutineBuilder() =
       return res
     }
     
-let co = CoroutineBuilder()
-
 type WaitingCoroutine<'a, 's, 'c, 'e> = { P:Coroutine<'a, 's, 'c, 'e>; Until:DateTime }
 type EvaluatedCoroutine<'a, 's, 'c, 'e> = 
   | Done of 'a * Option<U<'s>> * Option<U<Map<Guid, 'e>>>
@@ -151,7 +150,6 @@ type EvaluatedCoroutine<'a, 's, 'c, 'e> =
       | Waiting(x, u_s', u_e') -> Waiting(x, u_s >>? u_s', u_e >>? u_e')
       | WaitingOrListening(x, u_s', u_e') -> WaitingOrListening(x, u_s >>? u_s', u_e >>? u_e')
 
-let mutable awaited:Map<Guid, obj> = Map.empty
 type EvaluatedCoroutines<'s, 'c, 'e> = {
     active:Map<Guid, Coroutine<Unit, 's, 'c, 'e>>
     stopped:Set<Guid>
@@ -160,16 +158,17 @@ type EvaluatedCoroutines<'s, 'c, 'e> = {
     waitingOrListening:Map<Guid, WaitingCoroutine<Unit, 's, 'c, 'e>>
   }
 
-type Eval<'s,'c,'e>() = class end
+type Coroutine<'a, 's, 'c, 'e> 
   with 
     static member eval<'a> ((Co p):Coroutine<'a, 's, 'c, 'e>) (ctx:'s * 'c * Map<Guid, 'e> * DeltaT) : EvaluatedCoroutine<'a, 's, 'c, 'e> = 
+      let co = CoroutineBuilder()
       let (s,c,es,dt) = ctx
       let (step, u_s, u_e) = p ctx
       match step with
       | Then(p_p) ->
-        match Eval.eval p_p ctx with
+        match Coroutine.eval p_p ctx with
         | Done(p, u_s, u_e) -> 
-          let res = Eval.eval p ctx
+          let res = Coroutine.eval p ctx
           res.After(u_s, u_e)
         | Spawned(p', u_s, u_e, rest:Option<Coroutine<Coroutine<'a, 's, 'c, 'e>, 's, 'c, 'e>>) -> 
           Spawned(p', u_s, u_e, rest |> Option.map (fun rest_p -> Co(fun _ -> CoroutineResult.Then(rest_p), None, None)))
@@ -182,12 +181,12 @@ type Eval<'s,'c,'e>() = class end
         | WaitingOrListening(w, u_s, u_e) -> 
           Waiting({ P = Co(fun _ -> CoroutineResult.Then(w.P), None, None); Until = w.Until }, u_s, u_e)
       | Combine (p, k) -> 
-        match Eval.eval p ctx with
+        match Coroutine.eval p ctx with
         | Done(p', u_s, u_e) -> 
-          let res = Eval.eval k ctx
+          let res = Coroutine.eval k ctx
           res.After(u_s, u_e)
         | Spawned(p', u_s, u_e, rest) -> 
-          Spawned(p', u_s, u_e, rest |> Option.map (fun p -> bind(p, fun () -> k)) |> Option.orElse (Some k))
+          Spawned(p', u_s, u_e, rest |> Option.map (fun p -> Coroutine.bind(p, fun () -> k)) |> Option.orElse (Some k))
         | Active(p', u_s, u_e) -> 
           Active(co.Combine(p', k), u_s, u_e)
         | Listening(p', u_s, u_e) -> 
@@ -204,7 +203,7 @@ type Eval<'s,'c,'e>() = class end
               match res with
               | Choice2Of2 _ -> res
               | Choice1Of2(ps', spawned', u_s, u_e) ->
-                match Eval.eval p ctx with
+                match Coroutine.eval p ctx with
                 | Done(res, u_s', u_e') -> Choice2Of2(res, u_s >>? u_s', u_e >>? u_e')
                 | Spawned(p', u_s', u_e', rest) -> Choice1Of2(ps' @ Option.toList rest, p' @ spawned', u_s >>? u_s', u_e >>? u_e')
                 | Active(p',u_s',u_e')
@@ -256,38 +255,38 @@ type Eval<'s,'c,'e>() = class end
       //   else 
       //     Active(co.Awaiting(id, a, task), None, None)
       | Repeat(p) ->
-        Eval.eval (co.Bind(p, fun _ -> co.Repeat p)) ctx
+        Coroutine.eval (co.Bind(p, fun _ -> co.Repeat p)) ctx
 
-let rec evalMany (ps:Map<Guid, Coroutine<Unit, 's, 'c, 'e>>) ((s, c, es, dt):'s * 'c * Map<Guid, 'e> * DeltaT) : EvaluatedCoroutines<'s, 'c, 'e> * Option<U<'s>> * Option<U<Map<Guid, 'e>>> =
-    let ctx = (s,c,es,dt)
-    let mutable u_s:Option<U<'s>> = None
-    let mutable u_e:Option<U<Map<Guid, 'e>>> = None
-    let mutable evaluated:EvaluatedCoroutines<'s, 'c, 'e> = {
-      active=Map.empty;
-      stopped=Set.empty;
-      waiting=Map.empty;
-      listening=Map.empty;
-      waitingOrListening=Map.empty;
-    }
-    for p in ps do
-      match Eval.eval p.Value ctx with
-      | Done(_, u_s', u_e') -> 
-        evaluated <- { evaluated with stopped = evaluated.stopped.Add p.Key }; u_s <- u_s >>? u_s'; u_e <- u_e >>? u_e'
-      | Spawned (spawned, u_s', u_e', rest) ->
-        match rest with 
-        | Some p' ->
-          evaluated <- { evaluated with active = evaluated.active.Add(p.Key, p') }; u_s <- u_s >>? u_s'; u_e <- u_e >>? u_e'
-        | _ -> ()
-        for p' in spawned do
-          evaluated <- { evaluated with active = evaluated.active.Add(Guid.CreateVersion7(), p') }; u_s <- u_s >>? u_s'; u_e <- u_e >>? u_e'
-      | Active (p', u_s', u_e') -> 
-        evaluated <- { evaluated with active = evaluated.active.Add(p.Key, p') }; u_s <- u_s >>? u_s'; u_e <- u_e >>? u_e'
-      | Listening (p', u_s', u_e') -> 
-        evaluated <- { evaluated with listening = evaluated.listening.Add(p.Key, p') }; u_s <- u_s >>? u_s'; u_e <- u_e >>? u_e'
-      | Waiting (p', u_s', u_e') -> 
-        evaluated <- { evaluated with waiting = evaluated.waiting.Add(p.Key, p') }; u_s <- u_s >>? u_s'; u_e <- u_e >>? u_e'
-      | WaitingOrListening (p', u_s', u_e') -> 
-        evaluated <- { evaluated with waitingOrListening = evaluated.waitingOrListening.Add(p.Key, p') }; u_s <- u_s >>? u_s'; u_e <- u_e >>? u_e'
-      
-    evaluated, u_s, u_e
+    static member evalMany<'s,'c,'e> (ps:Map<Guid, Coroutine<Unit, 's, 'c, 'e>>) ((s, c, es, dt):'s * 'c * Map<Guid, 'e> * DeltaT) : EvaluatedCoroutines<'s, 'c, 'e> * Option<U<'s>> * Option<U<Map<Guid, 'e>>> =
+        let ctx = (s,c,es,dt)
+        let mutable u_s:Option<U<'s>> = None
+        let mutable u_e:Option<U<Map<Guid, 'e>>> = None
+        let mutable evaluated:EvaluatedCoroutines<'s, 'c, 'e> = {
+          active=Map.empty;
+          stopped=Set.empty;
+          waiting=Map.empty;
+          listening=Map.empty;
+          waitingOrListening=Map.empty;
+        }
+        for p in ps do
+          match Coroutine.eval p.Value ctx with
+          | Done(_, u_s', u_e') -> 
+            evaluated <- { evaluated with stopped = evaluated.stopped.Add p.Key }; u_s <- u_s >>? u_s'; u_e <- u_e >>? u_e'
+          | Spawned (spawned, u_s', u_e', rest) ->
+            match rest with 
+            | Some p' ->
+              evaluated <- { evaluated with active = evaluated.active.Add(p.Key, p') }; u_s <- u_s >>? u_s'; u_e <- u_e >>? u_e'
+            | _ -> ()
+            for p' in spawned do
+              evaluated <- { evaluated with active = evaluated.active.Add(Guid.CreateVersion7(), p') }; u_s <- u_s >>? u_s'; u_e <- u_e >>? u_e'
+          | Active (p', u_s', u_e') -> 
+            evaluated <- { evaluated with active = evaluated.active.Add(p.Key, p') }; u_s <- u_s >>? u_s'; u_e <- u_e >>? u_e'
+          | Listening (p', u_s', u_e') -> 
+            evaluated <- { evaluated with listening = evaluated.listening.Add(p.Key, p') }; u_s <- u_s >>? u_s'; u_e <- u_e >>? u_e'
+          | Waiting (p', u_s', u_e') -> 
+            evaluated <- { evaluated with waiting = evaluated.waiting.Add(p.Key, p') }; u_s <- u_s >>? u_s'; u_e <- u_e >>? u_e'
+          | WaitingOrListening (p', u_s', u_e') -> 
+            evaluated <- { evaluated with waitingOrListening = evaluated.waitingOrListening.Add(p.Key, p') }; u_s <- u_s >>? u_s'; u_e <- u_e >>? u_e'
+          
+        evaluated, u_s, u_e
 

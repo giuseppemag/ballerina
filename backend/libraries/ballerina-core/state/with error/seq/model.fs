@@ -1,6 +1,6 @@
-module Ballerina.SeqStateWithError
+namespace Ballerina.State.WithError.Seq
 open Ballerina.Fun
-open Sum
+open Ballerina.Sum
 
 type SeqState<'a,'c,'s,'e> = State of ('c * 's -> Sum<seq<'a> * Option<'s>, 'e>)
 with 
@@ -110,5 +110,3 @@ type SeqStateBuilder() =
     match s with
     | Left res -> state.Return res
     | Right err -> state.Throw err
-
-let seqState = SeqStateBuilder()

@@ -8,8 +8,9 @@ open Ballerina.Fun
 open Ballerina.Coroutines
 open Ballerina.Option
 open Ballerina.BusinessRules
-open Ballerina.BusinessRuleEvaluation
-open Ballerina.BusinessRuleTypeChecking
+open Ballerina.BusinessRule.Execute
+open Ballerina.Expr.Eval
+open Ballerina.Expr.TypeCheck
 open abcdsample.schema
 
 let init_abcdContext() = 
