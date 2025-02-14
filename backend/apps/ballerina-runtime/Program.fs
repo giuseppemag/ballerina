@@ -90,6 +90,10 @@ type Errors with
       do Console.WriteLine error
     do Console.ResetColor()
 
+type SumBuilder with
+  member sum.WithErrorContext err =
+    sum.MapError(Errors.Map(String.appendNewline err))
+
 type StateBuilder with
   member state.WithErrorContext err =
     state.MapError(Errors.Map(String.appendNewline err))
@@ -190,6 +194,13 @@ and Renderer with
 let inline extractTypes<'k, 'v when 'v : (static member Type : 'v -> TypeId) and 'k : comparison> (m:Map<'k, 'v>) =
   m |> Map.values |> Seq.map(fun e -> e |> 'v.Type |> Set.singleton) |> Seq.fold (+) Set.empty
 
+type FormPredicateValidationHistoryItem = { Form:FormConfigId; GlobalType:TypeId; RootType:TypeId }
+type ValidationState = { PredicateValidationHistory:Set<FormPredicateValidationHistoryItem> } with 
+  static member Updaters = 
+    {|
+      PredicateValidationHistory = fun u s -> { s with PredicateValidationHistory=u(s.PredicateValidationHistory)}
+    |}
+
 type GeneratedLanguageSpecificConfig = { 
   EnumValueFieldName:string
   StreamIdFieldName:string
@@ -218,6 +229,20 @@ type GoCodeGenState = {
       UsedImports=fun u -> fun s -> { s with UsedImports = u(s.UsedImports)};
     |}
 
+type ParsedFormsContext with
+  member ctx.TryFindEnum name =
+    ctx.Apis.Enums |> Map.tryFindWithError name "enum" name
+  member ctx.TryFindStream name =
+    ctx.Apis.Streams |> Map.tryFindWithError name "stream" name
+  member ctx.TryFindEntityApi name =
+    ctx.Apis.Entities |> Map.tryFindWithError name "entity api" name
+  member ctx.TryFindType name =
+    ctx.Types |> Map.tryFindWithError name "type" name
+  member ctx.TryFindForm name =
+    ctx.Forms |> Map.tryFindWithError name "form" name
+  member ctx.TryFindLauncher name =
+    ctx.Launchers |> Map.tryFindWithError name "launcher" name
+
 type NestedRenderer with
   static member Validate (ctx:ParsedFormsContext) (fr:NestedRenderer) : Sum<ExprType, Errors> = 
     Renderer.Validate ctx fr.Renderer
@@ -228,10 +253,10 @@ and Renderer with
     let (!) = Renderer.GetTypesFreeVars ctx 
     match fr with
     | Renderer.EnumRenderer(e,f) -> 
-      (ctx.Apis.Enums |> Map.tryFindWithError e.EnumName "enum" e.EnumName |> Sum.map (EnumApi.Type >> Set.singleton)) + !f
+      (ctx.TryFindEnum e.EnumName |> Sum.map (EnumApi.Type >> Set.singleton)) + !f
     | Renderer.FormRenderer (f,_) ->
       sum{ 
-        let! f = ctx.Forms |> Map.tryFindWithError f.FormName "form" f.FormName
+        let! f = ctx.TryFindForm f.FormName
         return! f |> FormConfig.GetTypesFreeVars ctx
       }
     | Renderer.ListRenderer l ->
@@ -240,19 +265,19 @@ and Renderer with
       !m.Map + !m.Key.Renderer + !m.Value.Renderer
     | Renderer.PrimitiveRenderer p -> sum{ return p.Type |> ExprType.GetTypesFreeVars }
     | Renderer.StreamRenderer (s,f) ->
-      (ctx.Apis.Streams |> Map.tryFindWithError s.StreamName "stream" s.StreamName |> Sum.map (StreamApi.Type >> Set.singleton)) + !f
+      (ctx.TryFindStream s.StreamName |> Sum.map (StreamApi.Type >> Set.singleton)) + !f
   static member Validate (ctx:ParsedFormsContext) (fr:Renderer) : Sum<ExprType, Errors> = 
     let (!) = Renderer.Validate ctx
     sum{
       match fr with
       | Renderer.EnumRenderer(enum, enumRenderer) -> 
-        let! enum = ctx.Apis.Enums |> Map.tryFindWithError enum.EnumName "enum" enum.EnumName
-        let! enumType = ctx.Types |> Map.tryFindWithError enum.TypeId.TypeName "enum type" enum.EnumName
+        let! enum = ctx.TryFindEnum enum.EnumName
+        let! enumType = ctx.TryFindType enum.TypeId.TypeName
         let! enumRendererType = !enumRenderer
         return ExprType.Substitute (Map.empty |> Map.add { VarName="a1" } enumType.Type) enumRendererType
       | Renderer.FormRenderer (f,_) ->
-        let! f = ctx.Forms |> Map.tryFindWithError f.FormName "form" f.FormName
-        let! formType = ctx.Types |> Map.tryFindWithError f.TypeId.TypeName "form type" f.FormName
+        let! f = ctx.TryFindForm f.FormName
+        let! formType = ctx.TryFindType f.TypeId.TypeName
         return formType.Type
       | Renderer.ListRenderer(l) -> 
         let! genericListRenderer = !l.List
@@ -268,35 +293,35 @@ and Renderer with
       | Renderer.PrimitiveRenderer p -> 
         return p.Type
       | Renderer.StreamRenderer (stream, streamRenderer) ->
-        let! stream = ctx.Apis.Streams |> Map.tryFindWithError stream.StreamName "stream" stream.StreamName
+        let! stream = ctx.TryFindStream stream.StreamName
         let streamType = ExprType.LookupType stream.TypeId
         let! streamRendererType = !streamRenderer
         return ExprType.Substitute (Map.empty |> Map.add { VarName="a1" } streamType) streamRendererType
     }
 
 and NestedRenderer with
-  static member ValidatePredicates (ctx:ParsedFormsContext) (globalType:ExprType) (rootType:ExprType) (localType:ExprType) (r:NestedRenderer) : Sum<Unit, Errors> = 
-    sum{
+  static member ValidatePredicates (ctx:ParsedFormsContext) (globalType:TypeBinding) (rootType:TypeBinding) (localType:ExprType) (r:NestedRenderer) : State<Unit,Unit,ValidationState,Errors> = 
+    state{
       let schema = {
         tryFindEntity = fun _ -> None
         tryFindField = fun _ -> None
       }
-      let vars = [ ("global",globalType);("root",rootType);("local",localType); ] |> Seq.map (VarName.Create <*> id) |> Map.ofSeq
-      let! visibleExprType,_ = Expr.typeCheck (ctx.Types |> Seq.map(fun tb -> tb.Value.TypeId,tb.Value.Type) |> Map.ofSeq) schema vars r.Visible
-      do! ExprType.Unify Map.empty (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq) visibleExprType (ExprType.PrimitiveType PrimitiveType.BoolType) |> Sum.map ignore
+      let vars = [ ("global",globalType.Type);("root",rootType.Type);("local",localType); ] |> Seq.map (VarName.Create <*> id) |> Map.ofSeq
+      let! visibleExprType,_ = Expr.typeCheck (ctx.Types |> Seq.map(fun tb -> tb.Value.TypeId,tb.Value.Type) |> Map.ofSeq) schema vars r.Visible |> state.OfSum
+      do! ExprType.Unify Map.empty (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq) visibleExprType (ExprType.PrimitiveType PrimitiveType.BoolType) |> Sum.map ignore |> state.OfSum
       match r.Disabled with
       | Some disabled ->
-        let! disabledExprType,_ = Expr.typeCheck (ctx.Types |> Seq.map(fun tb -> tb.Value.TypeId,tb.Value.Type) |> Map.ofSeq) schema vars disabled
-        do! ExprType.Unify Map.empty (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq) disabledExprType (ExprType.PrimitiveType PrimitiveType.BoolType) |> Sum.map ignore
+        let! disabledExprType,_ = Expr.typeCheck (ctx.Types |> Seq.map(fun tb -> tb.Value.TypeId,tb.Value.Type) |> Map.ofSeq) schema vars disabled |> state.OfSum
+        do! ExprType.Unify Map.empty (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq) disabledExprType (ExprType.PrimitiveType PrimitiveType.BoolType) |> Sum.map ignore |> state.OfSum
       |  _ -> return ()
       do! Renderer.ValidatePredicates ctx globalType rootType localType r.Renderer
     }
 
 and Renderer with
-  static member ValidatePredicates (ctx:ParsedFormsContext) (globalType:ExprType) (rootType:ExprType) (localType:ExprType) (r:Renderer) : Sum<Unit, Errors> = 
+  static member ValidatePredicates (ctx:ParsedFormsContext) (globalType:TypeBinding) (rootType:TypeBinding) (localType:ExprType) (r:Renderer) : State<Unit,Unit,ValidationState,Errors> = 
     let (!) = Renderer.ValidatePredicates ctx globalType rootType localType 
     let (!!) = NestedRenderer.ValidatePredicates ctx globalType rootType localType 
-    sum{
+    state{
       match r with
       | Renderer.PrimitiveRenderer p -> return ()
       | Renderer.EnumRenderer(_,e) -> return! !e
@@ -309,7 +334,8 @@ and Renderer with
         do! !!kv.Value
       | Renderer.StreamRenderer(_,e) -> return! !e
       | Renderer.FormRenderer(f,e) -> 
-        let! f = ctx.Forms |> Map.tryFindWithError f.FormName "form" f.FormName
+        let! f = ctx.TryFindForm f.FormName |> state.OfSum
+        let! s = state.GetState()
         do! FormConfig.ValidatePredicates ctx globalType rootType f
     }
 
@@ -320,30 +346,30 @@ and FieldConfig with
       | RecordType fields ->
         match fields |> Map.tryFind fc.FieldName with
         | Some fieldType -> 
-          let! rendererType = Renderer.Validate ctx fc.Renderer
+          let! rendererType = Renderer.Validate ctx fc.Renderer |> sum.WithErrorContext $"...when validating renderer"
           let result = ExprType.Unify Map.empty (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq) rendererType fieldType |> Sum.map ignore
           return! result
         | None -> 
           return! sum.Throw(Errors.Singleton(sprintf "Error: field name %A is not found in type %A" fc.FieldName formType))
       | _ ->       
         return! sum.Throw(Errors.Singleton(sprintf "Error: form type %A is not a record type" formType))
-    }
-  static member ValidatePredicates (ctx:ParsedFormsContext) (globalType:ExprType) (rootType:ExprType) (localType:ExprType) (fc:FieldConfig) : Sum<Unit, Errors> = 
-    sum{
+    } |> sum.WithErrorContext $"...when validating field {fc.FieldName}"
+  static member ValidatePredicates (ctx:ParsedFormsContext) (globalType:TypeBinding) (rootType:TypeBinding) (localType:ExprType) (fc:FieldConfig) : State<Unit,Unit,ValidationState,Errors> = 
+    state{
       let schema = {
         tryFindEntity = fun _ -> None
         tryFindField = fun _ -> None
       }
-      let vars = [ ("global",globalType);("root",rootType);("local",localType); ] |> Seq.map (VarName.Create <*> id) |> Map.ofSeq
-      let! visibleExprType,_ = Expr.typeCheck (ctx.Types |> Seq.map(fun tb -> tb.Value.TypeId,tb.Value.Type) |> Map.ofSeq) schema vars fc.Visible
-      do! ExprType.Unify Map.empty (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq) visibleExprType (ExprType.PrimitiveType PrimitiveType.BoolType) |> Sum.map ignore
+      let vars = [ ("global",globalType.Type);("root",rootType.Type);("local",localType); ] |> Seq.map (VarName.Create <*> id) |> Map.ofSeq
+      let! visibleExprType,_ = Expr.typeCheck (ctx.Types |> Seq.map(fun tb -> tb.Value.TypeId,tb.Value.Type) |> Map.ofSeq) schema vars fc.Visible |> state.OfSum
+      do! ExprType.Unify Map.empty (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq) visibleExprType (ExprType.PrimitiveType PrimitiveType.BoolType) |> Sum.map ignore |> state.OfSum
       match fc.Disabled with
       | Some disabled ->
-        let! disabledExprType,_ = Expr.typeCheck (ctx.Types |> Seq.map(fun tb -> tb.Value.TypeId,tb.Value.Type) |> Map.ofSeq) schema vars disabled
-        do! ExprType.Unify Map.empty (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq) disabledExprType (ExprType.PrimitiveType PrimitiveType.BoolType) |> Sum.map ignore
+        let! disabledExprType,_ = Expr.typeCheck (ctx.Types |> Seq.map(fun tb -> tb.Value.TypeId,tb.Value.Type) |> Map.ofSeq) schema vars disabled |> state.OfSum
+        do! ExprType.Unify Map.empty (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq) disabledExprType (ExprType.PrimitiveType PrimitiveType.BoolType) |> Sum.map ignore |> state.OfSum
       |  _ -> return ()
       do! Renderer.ValidatePredicates ctx globalType rootType localType fc.Renderer
-    }
+    } |> state.WithErrorContext $"...when validating field predicates for {fc.FieldName}"
 
 and FormConfig with
   static member GetTypesFreeVars (ctx:ParsedFormsContext) (fc:FormConfig) : Sum<Set<TypeId>, Errors> = 
@@ -356,58 +382,68 @@ and FormConfig with
       )
   static member Validate (ctx:ParsedFormsContext) (formConfig:FormConfig) : Sum<Unit, Errors> = 
     sum{
-      let! formType = ctx.Types |> Map.tryFindWithError formConfig.TypeId.TypeName "form type" formConfig.TypeId.TypeName
+      let! formType = ctx.TryFindType formConfig.TypeId.TypeName
       do! sum.All(formConfig.Fields |> Map.values |> Seq.map (FieldConfig.Validate ctx formType.Type) |> Seq.toList) |> Sum.map ignore
-    }
-  static member ValidatePredicates (ctx:ParsedFormsContext) (globalType:ExprType) (rootType:ExprType) (formConfig:FormConfig) : Sum<Unit, Errors> = 
-    sum{
-      let! formType = ctx.Types |> Map.tryFindWithError formConfig.TypeId.TypeName "form type" formConfig.TypeId.TypeName
-      do! sum.All(formConfig.Fields |> Map.values |> Seq.map (FieldConfig.ValidatePredicates ctx globalType rootType formType.Type) |> Seq.toList) |> Sum.map ignore
-    }
+    } |> sum.WithErrorContext $"...when validating form config {formConfig.FormName}"
+  static member ValidatePredicates (ctx:ParsedFormsContext) (globalType:TypeBinding) (rootType:TypeBinding) (formConfig:FormConfig) : State<Unit, Unit, ValidationState, Errors> = 
+    state{
+      let! s = state.GetState()
+      let processedForm = { Form=formConfig |> FormConfig.Id; GlobalType=globalType.TypeId; RootType=rootType.TypeId }
+      if s.PredicateValidationHistory |> Set.contains processedForm |> not then
+        do! state.SetState(ValidationState.Updaters.PredicateValidationHistory(Set.add processedForm))
+        let! formType = ctx.TryFindType formConfig.TypeId.TypeName |> state.OfSum
+        for f in formConfig.Fields do
+          do! FieldConfig.ValidatePredicates ctx globalType rootType formType.Type f.Value |> state.Map ignore
+        return ()
+      else
+        // do Console.WriteLine($$"""Prevented reprocessing of form {{processedForm}}""")
+        // do Console.ReadLine() |> ignore
+        return ()
+    } |> state.WithErrorContext $"...when validating form predicates for {formConfig.FormName}"
     
 and FormLauncher with
   static member GetTypesFreeVars (ctx:ParsedFormsContext) (fl:FormLauncher) : Sum<Set<TypeId>, Errors> = 
     let (+) = sum.Lift2 Set.union
     sum{
-      let! form = ctx.Forms |> Map.tryFindWithError fl.Form.FormName "form" fl.Form.FormName
-      let! entity = ctx.Apis.Entities |> Map.tryFindWithError fl.EntityApi.EntityName "entity api" fl.EntityApi.EntityName
+      let! form = ctx.TryFindForm fl.Form.FormName
+      let! entity = ctx.TryFindEntityApi fl.EntityApi.EntityName
       return! FormConfig.GetTypesFreeVars ctx form
     }
-  static member Validate (ctx:ParsedFormsContext) (formLauncher:FormLauncher) : Sum<Unit, Errors> = 
-    sum{
-      let! formConfig = ctx.Forms |> Map.tryFindWithError formLauncher.Form.FormName "form config" formLauncher.Form.FormName
-      let! formType = ctx.Types |> Map.tryFindWithError formConfig.TypeId.TypeName "form type" formConfig.TypeId.TypeName
-      let! entityApi = ctx.Apis.Entities |> Map.tryFindWithError formLauncher.EntityApi.EntityName "entity API" formLauncher.EntityApi.EntityName
-      let! entityApiType = ctx.Types |> Map.tryFindWithError (entityApi |> fst).TypeId.TypeName "entity API type" (entityApi |> fst).TypeId.TypeName
-      let! configEntityApi = ctx.Apis.Entities |> Map.tryFindWithError formLauncher.ConfigEntityApi.EntityName "entity API" formLauncher.ConfigEntityApi.EntityName
+  static member Validate (ctx:ParsedFormsContext) (formLauncher:FormLauncher) : State<Unit, Unit, ValidationState, Errors> = 
+    state{
+      let! formConfig = ctx.TryFindForm formLauncher.Form.FormName |> state.OfSum
+      let! formType = ctx.TryFindType formConfig.TypeId.TypeName |> state.OfSum
+      let! entityApi = ctx.TryFindEntityApi formLauncher.EntityApi.EntityName |> state.OfSum
+      let! entityApiType = ctx.TryFindType (entityApi |> fst).TypeId.TypeName |> state.OfSum
+      let! configEntityApi = ctx.TryFindEntityApi formLauncher.ConfigEntityApi.EntityName |> state.OfSum
       if Set.ofList [CrudMethod.Get] |> Set.isSuperset (configEntityApi |> snd) then
-        let! configEntityApiType = ctx.Types |> Map.tryFindWithError (configEntityApi |> fst).TypeId.TypeName "config entity API type" (configEntityApi |> fst).TypeId.TypeName
-        do! ExprType.Unify Map.empty (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq) formType.Type entityApiType.Type |> Sum.map ignore
-        do! FormConfig.ValidatePredicates ctx configEntityApiType.Type entityApiType.Type formConfig
+        let! configEntityApiType = ctx.TryFindType (configEntityApi |> fst).TypeId.TypeName |> state.OfSum
+        do! ExprType.Unify Map.empty (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq) formType.Type entityApiType.Type |> Sum.map ignore |> state.OfSum
+        do! FormConfig.ValidatePredicates ctx configEntityApiType entityApiType formConfig |> state.Map ignore
         match formLauncher.Mode with
         | FormLauncherMode.Create ->
           if Set.ofList [CrudMethod.Create; CrudMethod.Default] |> Set.isSuperset (entityApi |> snd) then
             return ()
           else
-            return! sum.Throw(Errors.Singleton(sprintf "Error in launcher %A: entity APIs for 'create' launchers need at least methods CREATE and DEFAULT, found %A" formLauncher.LauncherName (entityApi |> snd)))
+            return! sum.Throw(Errors.Singleton(sprintf "Error in launcher %A: entity APIs for 'create' launchers need at least methods CREATE and DEFAULT, found %A" formLauncher.LauncherName (entityApi |> snd))) |> state.OfSum
         | FormLauncherMode.Edit ->
           if Set.ofList [CrudMethod.Get; CrudMethod.Update] |> Set.isSuperset (entityApi |> snd) then
             return ()
           else
-            return! sum.Throw(Errors.Singleton(sprintf "Error in launcher %A: entity APIs for 'edit' launchers need at least methods GET and UPDATE, found %A" formLauncher.LauncherName (entityApi |> snd)))
+            return! sum.Throw(Errors.Singleton(sprintf "Error in launcher %A: entity APIs for 'edit' launchers need at least methods GET and UPDATE, found %A" formLauncher.LauncherName (entityApi |> snd))) |> state.OfSum
       else 
-        return! sum.Throw(Errors.Singleton(sprintf "Error in launcher %A: entity APIs for 'config' launchers need at least method GET, found %A" formLauncher.LauncherName (configEntityApi |> snd)))
-    }
+        return! sum.Throw(Errors.Singleton(sprintf "Error in launcher %A: entity APIs for 'config' launchers need at least method GET, found %A" formLauncher.LauncherName (configEntityApi |> snd))) |> state.OfSum
+    } |> state.WithErrorContext $"...when validating launcher {formLauncher.LauncherName}"
   static member parse (launcherName:string) (json:JsonValue) : State<_, CodeGenConfig, ParsedFormsContext, Errors> =
     state{
       let! launcherFields = JsonValue.AsRecord json |> state.OfSum
       let! ((kindJson,entityApiNameJson),formNameJson), configApiNameJson = launcherFields |> Utils.tryFindField4 ((("kind", "api"),"form"),"configApi") |> state.OfSum
       let! (kind,entityApiName,formName,configApiName) = state.All4 (JsonValue.AsString kindJson |> state.OfSum) (JsonValue.AsString entityApiNameJson |> state.OfSum) (JsonValue.AsString formNameJson |> state.OfSum) (JsonValue.AsString configApiNameJson |> state.OfSum)
       if kind = "create" || kind = "edit" then
-        let! s = state.GetState()
-        let! form = s.Forms |> Map.tryFindWithError formName "forms" formName |> state.OfSum
-        let! api = s.Apis.Entities |> Map.tryFindWithError entityApiName "entity APIs" entityApiName |> state.OfSum
-        let! configApi = s.Apis.Entities |> Map.tryFindWithError configApiName "entity APIs" configApiName |> state.OfSum
+        let! (s:ParsedFormsContext) = state.GetState()
+        let! form = s.TryFindForm formName |> state.OfSum
+        let! api = s.TryFindEntityApi entityApiName |> state.OfSum
+        let! configApi = s.TryFindEntityApi configApiName |> state.OfSum
         return (if kind = "create" then FormLauncherMode.Create else FormLauncherMode.Edit), form |> FormConfig.Id, api |> fst |> EntityApi.Id, configApi |> fst |> EntityApi.Id
       else
         return! $"Error: invalid launcher mode {kind}: it should be either 'create' or 'edit'." |> Errors.Singleton |> state.Throw
@@ -498,7 +534,7 @@ type Renderer with
   static member parse (parentJsonFields:(string*JsonValue)[]) (json:JsonValue) : State<Renderer,CodeGenConfig,ParsedFormsContext,Errors> =
     state{
       let! config = state.GetContext()
-      let! formsState = state.GetState()
+      let! (formsState:ParsedFormsContext) = state.GetState()
       let! s = json |> JsonValue.AsString |> state.OfSum
       if config.Bool.SupportedRenderers |> Set.contains s then
         return PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.BoolType }
@@ -514,15 +550,15 @@ type Renderer with
         let containerTypeConstructor = if config.Option.SupportedRenderers.Enum |> Set.contains s then ExprType.OptionType else ExprType.SetType
         let! optionJson = parentJsonFields |> Utils.tryFindField "options" |> state.OfSum
         let! enumName = optionJson |> JsonValue.AsString |> state.OfSum
-        let! enum = formsState.Apis.Enums |> Map.tryFindWithError enumName "enums" enumName |> state.OfSum
-        let! enumType = formsState.Types |> Map.tryFindWithError enum.TypeId.TypeName "types" enum.TypeId.TypeName |> state.OfSum
+        let! enum = formsState.TryFindEnum enumName |> state.OfSum
+        let! enumType = formsState.TryFindType enum.TypeId.TypeName |> state.OfSum
         return EnumRenderer (enum |> EnumApi.Id, PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=containerTypeConstructor(enumType.Type)  })
       elif config.Option.SupportedRenderers.Stream |> Set.contains s || config.Set.SupportedRenderers.Stream |> Set.contains s then
         let containerTypeConstructor = if config.Option.SupportedRenderers.Stream |> Set.contains s then ExprType.OptionType else ExprType.SetType
         let! streamNameJson = parentJsonFields |> Utils.tryFindField "stream" |> state.OfSum
         let! streamName = streamNameJson |> JsonValue.AsString |> state.OfSum
-        let! stream = formsState.Apis.Streams |> Map.tryFindWithError streamName "streams" streamName |> state.OfSum
-        let! streamType = formsState.Types |> Map.tryFindWithError stream.TypeId.TypeName "types" stream.TypeId.TypeName |> state.OfSum
+        let! stream = formsState.TryFindStream streamName |> state.OfSum
+        let! streamType = formsState.TryFindType stream.TypeId.TypeName |> state.OfSum
         return StreamRenderer (stream |> StreamApi.Id, PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=containerTypeConstructor(streamType.Type)  })
       elif config.Map.SupportedRenderers |> Set.contains s then
         let! (keyRendererJson, valueRendererJson) = parentJsonFields |> Utils.tryFindField2 ("keyRenderer", "valueRenderer") |> state.OfSum
@@ -537,12 +573,12 @@ type Renderer with
         return! state.Any([
           state{
             let! c = config.Custom |> Seq.tryFind (fun c -> c.Value.SupportedRenderers |> Set.contains s) |> Sum.fromOption (fun () -> $"Error: cannot find custom type {s}" |> Errors.Singleton) |> state.OfSum
-            let! t = formsState.Types |> Map.tryFindWithError c.Key "types" c.Key |> state.OfSum
+            let! t = formsState.TryFindType c.Key |> state.OfSum
             return PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=t.Type }
           }
           state{
-            let! form = formsState.Forms |> Map.tryFindWithError s "forms" s |> state.OfSum
-            let! formType = formsState.Types |> Map.tryFindWithError form.TypeId.TypeName "types" form.TypeId.TypeName |> state.OfSum
+            let! form = formsState.TryFindForm s |> state.OfSum
+            let! formType = formsState.TryFindType form.TypeId.TypeName |> state.OfSum
             return FormRenderer (form |> FormConfig.Id, formType.Type)
           }
         ])
@@ -662,7 +698,7 @@ type FormConfig with
         ) |> state.All
       let fieldConfigs = fieldConfigs |> Map.ofSeq
       let! s = state.GetState()
-      let! typeBinding = s.Types |> Map.tryFindWithError typeName "type" typeName |> state.OfSum
+      let! typeBinding = s.TryFindType typeName |> state.OfSum
       let! tabs = FormConfig.parseTabs fieldConfigs tabsJson
       return {| TypeId=typeBinding.TypeId; Fields=fieldConfigs; Tabs=tabs |}
     } |> state.WithErrorContext $"...when parsing form {formName}"
@@ -706,8 +742,8 @@ type ExprType with
         }
         state{
           let! typeName = json |> JsonValue.AsString |> state.OfSum
-          let! s = state.GetState()
-          let! typeId = s.Types |> Map.tryFind typeName |> withError $$"""Error: cannot find type {{typeName}}""" |> state.OfSum
+          let! (s:ParsedFormsContext) = state.GetState()
+          let! typeId = s.TryFindType typeName |> state.OfSum
           return ExprType.LookupType typeId.TypeId
         }
         state{
@@ -802,7 +838,7 @@ type ExprType with
     }
   static member find (ctx:ParsedFormsContext) (typeId:TypeId) : Sum<ExprType,Errors> = 
     sum{
-      return! ctx.Types |> Map.tryFindWithError typeId.TypeName "types" typeId.TypeName |> Sum.map(fun tb -> tb.Type)
+      return! ctx.TryFindType typeId.TypeName |> Sum.map(fun tb -> tb.Type)
     }
   static member asLookupId (t:ExprType) : Sum<TypeId,Errors> = 
     sum{
@@ -835,7 +871,7 @@ type EnumApi with
           return ()
       | _ -> 
         return! error
-    }
+    } |> sum.WithErrorContext $"...when validating enum {enumApi.EnumName}"
   static member parse valueFieldName (enumName:string) (enumTypeJson:JsonValue) : State<Unit,CodeGenConfig,ParsedFormsContext,Errors> = 
     state{
       let! enumType = ExprType.parse enumTypeJson
@@ -869,7 +905,7 @@ type StreamApi with
           return ()
         | _ -> return! error
       | _ -> return! error
-    }
+    } |> sum.WithErrorContext $"...when validating stream {streamApi.StreamName}"
   static member parse (streamName:string) (streamTypeJson:JsonValue) : State<Unit,CodeGenConfig,ParsedFormsContext,Errors> = 
     state{
       let! streamType = ExprType.parse streamTypeJson
@@ -881,7 +917,7 @@ type StreamApi with
           )
         )
       )
-    }
+    } |> state.WithErrorContext $"...when parsing stream {streamName}"
 
 type StringBuilder = | One of string | Many of seq<StringBuilder> with 
   static member ToString (sb:StringBuilder) : string = 
@@ -907,19 +943,20 @@ type ParsedFormsContext with
     (ctx.Forms |> Map.values |> Seq.map(FormConfig.GetTypesFreeVars ctx) |> Seq.fold (+) zero) +
     (ctx.Apis |> FormApis.GetTypesFreeVars |> sum.Return) + 
     (ctx.Launchers |> Map.values |> Seq.map(FormLauncher.GetTypesFreeVars ctx) |> Seq.fold (+) zero)
-  static member Validate codegenTargetConfig (ctx:ParsedFormsContext) : Sum<Unit, Errors> =
-    sum{
-      let! usedTypes = ParsedFormsContext.GetTypesFreeVars ctx
+  static member Validate codegenTargetConfig (ctx:ParsedFormsContext) : State<Unit, Unit, ValidationState, Errors> =
+    state{
+      let! usedTypes = ParsedFormsContext.GetTypesFreeVars ctx |> state.OfSum
       let availableTypes = ctx.Types |> Map.values |> Seq.map(fun tb -> tb.TypeId) |> Set.ofSeq
       if Set.isSuperset availableTypes usedTypes then 
-        do! sum.All(ctx.Apis.Enums |> Map.values |> Seq.map (EnumApi.validate codegenTargetConfig.EnumValueFieldName ctx) |> Seq.toList) |> Sum.map ignore
-        do! sum.All(ctx.Apis.Streams |> Map.values |> Seq.map (StreamApi.validate codegenTargetConfig ctx) |> Seq.toList) |> Sum.map ignore
-        do! sum.All(ctx.Forms |> Map.values |> Seq.map(FormConfig.Validate ctx) |> Seq.toList) |> Sum.map ignore
-        do! sum.All(ctx.Launchers |> Map.values |> Seq.map(FormLauncher.Validate ctx) |> Seq.toList) |> Sum.map ignore
+        do! sum.All(ctx.Apis.Enums |> Map.values |> Seq.map (EnumApi.validate codegenTargetConfig.EnumValueFieldName ctx) |> Seq.toList) |> Sum.map ignore |> state.OfSum
+        do! sum.All(ctx.Apis.Streams |> Map.values |> Seq.map (StreamApi.validate codegenTargetConfig ctx) |> Seq.toList) |> Sum.map ignore |> state.OfSum
+        do! sum.All(ctx.Forms |> Map.values |> Seq.map(FormConfig.Validate ctx) |> Seq.toList) |> Sum.map ignore |> state.OfSum
+        for launcher in ctx.Launchers |> Map.values do
+          do! FormLauncher.Validate ctx launcher
       else 
         let missingTypeErrors = (usedTypes - availableTypes) |> Set.map (fun t -> Errors.Singleton (sprintf "Error: missing type definition for %s" t.TypeName)) |> Seq.fold (curry Errors.Concat) (Errors.Zero())
-        return! sum.Throw(missingTypeErrors)
-    }
+        return! state.Throw(missingTypeErrors)
+    } |> state.WithErrorContext $"...when validating spec"
   static member ToGolang (codegenConfig:CodeGenConfig) (ctx:ParsedFormsContext) (packageName:string) (formName:string) : Sum<StringBuilder,Errors> = 
     let result = state{
       let identifierAllowedRegex = Regex codegenConfig.IdentifierAllowedRegex
@@ -1036,7 +1073,8 @@ type ParsedFormsContext with
           yield One "\n}\n\n"
         }
 
-      let! generatedTypes = state.All(ctx.Types |> Seq.map(fun t -> 
+      let! generatedTypes = state.All(
+        ctx.Types |> Seq.map(fun t -> 
         state{
           match t.Value.Type with
           | ExprType.UnionType cases ->
@@ -1115,7 +1153,7 @@ type ParsedFormsContext with
               yield consFieldInits
               yield One consBodyEnd
             })
-          }) |> List.ofSeq)
+        } |> state.WithErrorContext $"...when generating type {t.Value.TypeId.TypeName}") |> List.ofSeq)
       return StringBuilder.Many(seq{
         yield! enumCasesGETters
         yield! enumCasesPOSTter
@@ -1131,9 +1169,11 @@ type ParsedFormsContext with
         // yield! entitiesOPEnum "DEFAULT" CrudMethod.Default
         yield! generatedTypes
       })
-    }
+    } 
+    let result = result |> state.WithErrorContext $"...when generating Go code"
+
     match result.run(codegenConfig, { UsedImports=Set.empty }) with
-    | Right e -> Right e
+    | Right (e,_) -> Right e
     | Left (res,s') -> 
       Left(
         let imports = match s' with | Some s' -> s'.UsedImports | _ -> Set.empty
@@ -1155,17 +1195,17 @@ type ParsedFormsContext with
 
 type CrudMethod with
   static member parse (crudMethodJson:JsonValue) : State<CrudMethod,CodeGenConfig,ParsedFormsContext,Errors> = 
-    state{
-      match crudMethodJson with
-      | JsonValue.String "create" -> return CrudMethod.Create
-      | JsonValue.String "get" -> return CrudMethod.Get
-      | JsonValue.String "update" -> return CrudMethod.Update
-      | JsonValue.String "default" -> return CrudMethod.Default
-      | _ -> 
-        return! state.Throw($$"""Error: a crud methods needs to be one of "create", "get", "update", "default".""" |> Errors.Singleton)
-    }
-
-
+    let crudCase name value = 
+      state{
+        do! crudMethodJson |> JsonValue.AsEnum (Set.singleton name) |> state.OfSum |> state.Map ignore
+        return value
+      }
+    state.Any([
+      crudCase "create" CrudMethod.Create
+      crudCase "get" CrudMethod.Get
+      crudCase "update" CrudMethod.Update
+      crudCase "default" CrudMethod.Default
+    ])
 
 type EntityApi with
   static member parse (entityName:string) (entityTypeJson:JsonValue) : State<Unit,CodeGenConfig,ParsedFormsContext,Errors> = 
@@ -1183,7 +1223,8 @@ type EntityApi with
           )
         )
       )
-    }
+    } |> state.WithErrorContext $"...when parsing entity api {entityName}"
+
 type ParsedFormsContext with
   static member parseApis enumValueFieldName (apisJson:seq<string * JsonValue>) : State<Unit,CodeGenConfig,ParsedFormsContext,Errors> = 
     state{
@@ -1381,8 +1422,8 @@ let main args =
         | _ -> { EnumValueFieldName="value"; StreamIdFieldName="id"; StreamDisplayValueFieldName="displayValue" }
       match ((ParsedFormsContext.parse generatedLanguageSpecificConfig jsonValue).run(codegenConfig, initialContext)) with
       | Left(_,Some parsedForms)  -> 
-        match ParsedFormsContext.Validate generatedLanguageSpecificConfig parsedForms with
-        | Left validatedForms ->
+        match (ParsedFormsContext.Validate generatedLanguageSpecificConfig parsedForms).run((),{ PredicateValidationHistory=Set.empty}) with
+        | Left (validatedForms,_) ->
           match language with
           | FormsGenTarget.golang ->
             match ParsedFormsContext.ToGolang codegenConfig parsedForms generatedPackage formName with
@@ -1402,12 +1443,10 @@ let main args =
             | Right err -> 
               do eprintfn "\nCode generation errors for {{inputPath}}: %A" err
           | _ -> 
-            do Console.ForegroundColor <- ConsoleColor.Red
-            do eprintfn "\nUnsupported code generation target for %s: %A" inputPath language
-            do Console.ResetColor()
-        | Right err -> 
+            do Errors.Print inputPath (Errors.Singleton $"Unsupported code generation target {language} when processing {inputPath}")
+        | Right (err,_) -> 
           do Errors.Print inputPath err
-      | Right err -> 
+      | Right (err,_) -> 
         do Errors.Print inputPath err
       | _ -> 
         do Errors.Print inputPath (Errors.Singleton $"Unexpected error: parsing produced no results.")

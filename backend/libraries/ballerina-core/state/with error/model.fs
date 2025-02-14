@@ -2,7 +2,7 @@ module Ballerina.StateWithError
 open Ballerina.Fun
 open Sum
 
-type State<'a,'c,'s,'e> = State of ('c * 's -> Sum<'a * Option<'s>, 'e>)
+type State<'a,'c,'s,'e> = State of ('c * 's -> Sum<'a * Option<'s>, 'e * Option<'s>>)
 with 
   member this.run (c,s) = let (State p) = this in p(c,s)
   static member map<'b> (f:'a -> 'b) ((State p):State<'a,'c,'s,'e>) : State<'b,'c,'s,'e> =
@@ -15,7 +15,7 @@ with
     State(fun s0 ->
       match p s0 with
       | Sum.Left l -> Sum.Left l
-      | Sum.Right e -> Sum.Right (f e)
+      | Sum.Right (e,s1) -> Sum.Right (f e,s1)
     )
   static member fromValue (res:'a) = State(fun _ -> Sum.Left(res, None))
   static member flatten ((State p):State<State<'a,'c,'s,'e>,'c,'s,'e>) : State<'a,'c,'s,'e> = 
@@ -64,13 +64,14 @@ type StateBuilder() =
       let! res = p
       return res
     }
-  member _.Catch (State p) =
+  member _.Catch ((State p):State<'a,'c,'s,'e>) : State<Sum<'a,'e>,'c,'s,'e> =
     State(fun cs -> 
       match p cs with
-      | Left (res,u_s) -> Left (Left res, u_s)
-      | Right err -> Left(Right err, None))
+      | Left (res:'a,u_s:Option<'s>) -> let result:Sum<'a,'e> = Left res in Left(result, u_s)
+      | Right (err:'e,u_s:Option<'s>) -> let result:Sum<'a,'e> = Right err in Left(result, u_s)
+    )
   member _.Throw (e:'e) =
-    State(fun _ -> Sum.Right e)
+    State(fun _ -> Sum.Right(e,None))
   member state.Delay p = 
     state.Bind ((state.Return ()), p)
   member state.For(seq, body:_ -> State<Unit,_,_,_>) =
@@ -81,7 +82,7 @@ type StateBuilder() =
   member state.Any<'a,'c,'s,'e>
     (e:{| zero:Unit -> 'e; concat:'e * 'e -> 'e |}, ps:List<State<'a,'c,'s,'e>>) =
     match ps with
-    | [] -> state.Throw (e.zero())
+    | [] -> state.Throw(e.zero())
     | p::ps ->
       state{
         match! p |> state.Catch with
@@ -89,7 +90,9 @@ type StateBuilder() =
         | Right error ->
           match! state.Any(e,ps) |> state.Catch with
           | Left result -> return result
-          | Right error' -> return! error |> state.Throw 
+          | Right error' -> 
+            let finalError = e.concat(error,error')
+            return! finalError |> state.Throw 
       }
   member inline state.Any<'a,'c,'s,'b 
     when 'b : (static member Zero:Unit -> 'b) and 'b : (static member Concat:'b * 'b -> 'b)>

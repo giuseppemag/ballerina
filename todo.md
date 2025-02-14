@@ -54,40 +54,43 @@ Todo (✅/❌)
         ✅ parser/validator `any => ValueOrError<Expr, string>`
       ✅ delete the sample parsed form
       ✅ `let injectedTypes = []` should come from `codegenConfig.Custom`
-      ❌ add source context to errors for pretty printing
+      ✅ add source context to errors for pretty printing
         ✅ probably needs the state monad with an error decorator accumulated from the parent
-        ❌ post about the error contexts
-        ❌ use `Utils.tryFindField` everywhere applicable, generate proper errors upon failure
+        ✅ use `Utils.tryFindField` everywhere applicable, generate proper errors upon failure
           ✅ let! ((x,y),z) = Utils.tryFindFieldWithNotFoundError ... 
-        ❌ all matches to jsonvalue patterns should be bindings
-          ❌ JsonValue.Record
-          ❌ JsonValue.Array
-          ❌ JsonValue.String
-          ❌ JsonValue.Boolean
-          ❌ JsonValue.Number
-        ❌ when parsing...
-        ❌ when validating...
-        ❌ replace all instances of `let! s = state.GetState(); s.Types |> Map.tryFind` with some `state.TryFindType`
-      ❌ pretty print types in errors
-      ❌ there are unparsed placeholders for the labels and tooltips
-        ❌ add the new field `details` or what's it called to the validator
+        ✅ all matches to jsonvalue patterns should be bindings
+          ✅ JsonValue.Record
+          ✅ JsonValue.Array
+          ✅ JsonValue.String
+          ✅ JsonValue.Boolean
+          ✅ JsonValue.Number
+        ✅ when parsing...
+        ✅ when validating...
+        ✅ when generating code...
+      ✅ pretty print types in errors
+      ✅ pretty print expressions in errors
+      ✅ the predicate validation should not validate the same form multiple times in the same context, add memoization
+      ✅ replace all instances of `let! s = state.GetState(); s.[Types|Enum|...] |> Map.tryFind` with some `state.TryFind[Type|Enum|...]`
+      ✅ there are unparsed placeholders for the labels and tooltips
+        ✅ add the new field `details` or what's it called to the validator
+      ❌ break the form engine in all possible ways and ensure good errors arise
       ❌ define `import` command
       ❌ the functionality of the validator is now mature
       ❌ improve the generated whitespace
       ❌ all utility methods should be capitalized in Program.fs
       ❌ adjust person-config in FE and use that from cmd line, delete the copy
-      ❌ introduce `sum.Both`, `state.Both`
-      ❌ introduce a natural transformation that flips state and option, use it to parse the `disabledJson` elegantly
+      ❌ introduce `sum.Both`
+      ✅ introduce `state.Both`
+      ✅ introduce a natural transformation that flips state and option, use it to parse the `disabledJson` elegantly
       ❌ all the `match` expressions that search fields should become monadic instances of nested `state.Both`, or maybe instances of up to 5; remove those ugly matches in any case
       ❌ move string builder to ballerina-core
+      ❌ `ExprType.Unify` does not belong in _the other_ mega-file: split Expr, ExprType, eval, typeCheck
       ❌ move the new type parsers to ballerina-core
-        ❌ break the form engine in all possible ways
         ❌ launchers
         ❌ tabs
         ❌ types
         ❌ forms
-        ❌ order of types
-        ❌ order of forms
+        ❌ split the mega-file for the business rules
         ❌ move relevant sources to a separate folder in ballerina-core (forms engine)
           ❌ move the new types (`Errors`, `Form`, etc.) to ballerina-core
           ❌ move the new type checkers to ballerina-core
@@ -98,13 +101,14 @@ Todo (✅/❌)
         ❌ ORM, advanced types, advanced type inference, monads
     ❌ fix Ballerina as a namespace for proper nesting
     ❌ check the consistency of the used data structures: `Type` vs `TypeId`
-    ❌ convert all instances of Map.tryFind ... withError ... to `Map.tryFindWithError`
-    ❌ `Map.tryFindWithError streamName "streams" streamName |> state.OfSum` should just be `findStream`
-      ❌ adjust all others
+    ✅ convert all instances of Map.tryFind ... withError ... to `Map.tryFindWithError`
+    ✅ `Map.tryFindWithError streamName "streams" streamName |> state.OfSum` should just be `findStream`
     ❌ adjust all patterns like `|> Seq.tryFind (fst >> (=) "stream") |> Option.map snd` to `JsonValue.tryFindField`
     ❌ accept empty `apis` blocks
     ❌ make ExprType.resolveLookup recursive
-    ❌ the predicate validation should not validate the same form multiple times in the same context, add memoization
+    ❌ add homomorphic forms
+    ❌ add multi-field renderers
+    ❌ add paginated lists
     ❌ the tool is now complete and its code is clean
     ❌ add tests
     ❌ help command

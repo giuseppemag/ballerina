@@ -26,7 +26,7 @@ type Sum<'a,'b> = Left of 'a | Right of 'b with
 let inline (<+>) (f:'a -> 'a1) (g:'b -> 'b1) = Sum.map2<'a,'b,'a1,'b1> f g
 
 type SumBuilder() = 
-  member _.MapError(f, p) = 
+  member _.MapError f p = 
     p |> Sum.mapRight f
   member _.Throw(e) = 
     Sum.Right e

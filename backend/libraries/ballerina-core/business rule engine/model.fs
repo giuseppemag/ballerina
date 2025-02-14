@@ -1,5 +1,7 @@
 module Ballerina.BusinessRules
 
+#nowarn FS0060
+
 open System
 open Ballerina.Fun
 open Ballerina.Option
@@ -139,7 +141,44 @@ type UnificationConstraints with
       result <- result |> Map.merge (fun oldConstraint newConstraint -> newConstraint) modifiedConstraints
     result |> Map.values |> Set.ofSeq |> Set.toList
 
-type Expr with 
+type Value with
+  override v.ToString() =
+    match v with
+    | Value.CaseCons (c,v) -> $"{c}({v})"
+    | Value.ConstBool v -> v.ToString()
+    | Value.ConstGuid v -> v.ToString() 
+    | Value.ConstInt v -> v.ToString() 
+    | Value.ConstFloat v -> v.ToString() 
+    | Value.ConstString v -> v.ToString() 
+    | Value.Lambda(v,b) -> $"fun {v.VarName} -> {b.ToString()}"
+    | Value.Record fs -> let eq = "=" in $"{{ {fs |> Seq.map (fun f -> f.Key.ToString() + eq + f.Value.ToString())} |> String.Join ';' }}"
+    | Value.Tuple vs -> $"( {vs |> Seq.map (fun v -> v.ToString())} |> String.Join ',' )"
+    | Value.Var(_,v) -> v.ToString()
+
+type Expr with
+  override e.ToString() = 
+    match e with
+    | Binary(op,e1,e2) -> $"({e1.ToString()} {op.ToString()} {e2.ToString()})"
+    | Unary(op,e) -> $"({op.ToString()}{e.ToString()}"
+    | VarLookup v -> v.VarName
+    | FieldLookup(e,f) -> $"{e.ToString()}.f.FieldName"
+    | Value v -> v.ToString()
+    | Apply(f,a) -> $"({f.ToString()})({a.ToString()})"
+    | MakeRecord fs -> let eq = "=" in $"{{ {fs |> Seq.map (fun f -> f.Key.ToString() + eq + f.Value.ToString())} |> String.Join ';' }}"
+    | MakeTuple fs -> $"{{ {fs |> Seq.map (fun f -> f.ToString())} |> String.Join ',' }}"
+    | RecordFieldLookup(e,f) -> $"{e.ToString()}.{f}"
+    | MakeCase(c,e) -> $"{c.ToString()}({e.ToString()})"
+    | Project(e,f) -> $"{e.ToString()}.π{f}"
+    | IsCase(c,e) -> $"{e.ToString()}.Is{c}"
+    | Exists(v,t,e) -> $"Exists{v.VarName.ToString()} in {t.EntityName} | {e.ToString()}"
+    | SumBy(v,t,e) -> $"SumBy{v.VarName.ToString()} in {t.EntityName} | {e.ToString()}"
+    | MatchCase(e,cases) ->
+      let eq = "="
+      let bar = "|"
+      let sp = " "
+      let arr = "->"
+      $"match {e.ToString()} with {{ {cases |> Seq.map (fun f -> bar + f.Key.ToString() + arr + f.Value.ToString())} |> String.Join ' ' }}"
+    
   static member op_BooleanOr (e1:Expr, e2:Expr) =
     Binary(Or, e1, e2)
   static member (+) (e1:Expr, e2:Expr) =
@@ -160,6 +199,26 @@ type TypeId with
   static member Create name = { TypeName=name; TypeId=Guid.CreateVersion7() }
 
 type ExprType with
+  override t.ToString () : string = 
+    let (!) (t:ExprType) = t.ToString()
+    match t with
+    | ExprType.LookupType l -> l.TypeName
+    | ExprType.SchemaLookupType l -> l.EntityName
+    | ExprType.PrimitiveType p -> p.ToString()
+    | ExprType.UnitType -> "()"
+    | ExprType.VarType v -> v.VarName
+    | ExprType.ListType t -> $"List<{!t}>"
+    | ExprType.SetType t -> $"Set<{!t}>"
+    | ExprType.OptionType t -> $"Option<{!t}>"
+    | ExprType.MapType(k,v) -> $"Map<{!k},{!v}>"
+    | ExprType.TupleType ts -> $"({ts |> List.map (!) |> fun s -> String.Join(',', s)})"
+    | ExprType.UnionType cs -> 
+      let printCase (c:UnionCase) = $"{c.CaseName} of {!c.Fields}"
+      $"({cs |> List.map printCase |> fun s -> String.Join('|', s)})"
+    | ExprType.RecordType fs ->
+      let printField (fieldName:string,fieldType:ExprType) = $"{fieldName}:{!fieldType}"
+      $"({fs |> Seq.map ((fun kv -> kv.Key,kv.Value) >> printField) |> fun s -> String.Join(';', s)})"
+
   static member Extend t1 t2 =
     match t1, t2 with
     | RecordType fields1, RecordType fields2 
@@ -207,13 +266,13 @@ type ExprType with
         match tvars |> Map.tryFind v1, tvars |> Map.tryFind v2  with 
         | Some v1, Some v2 -> 
           if v1 = v2 then return UnificationConstraints.Zero()
-          else return! sum.Throw(Errors.Singleton(sprintf "Error: types %A and %A cannot be unified" t1 t2))
+          else return! sum.Throw(Errors.Singleton($"Error: types {t1} and {t2} cannot be unified"))
         | _ -> 
           return UnificationConstraints.Singleton(v1,v2)
       | t, ExprType.LookupType tn
       | ExprType.LookupType tn, t -> 
         match typedefs |> Map.tryFind tn with
-        | None -> return! sum.Throw(Errors.Singleton(sprintf "Error: types %A and %A cannot be unified" t1 t2))
+        | None -> return! sum.Throw(Errors.Singleton($"Error: types {t1} and {t2} cannot be unified"))
         | Some t' -> return! t =?= t'
       | ExprType.ListType(t1), ExprType.ListType(t2) 
       | ExprType.SetType(t1), ExprType.SetType(t2) 
@@ -228,28 +287,28 @@ type ExprType with
         let! partialUnifications = sum.All([t1 =?= t2; ExprType.TupleType(ts1) =?= ExprType.TupleType(ts2)])
         return partialUnifications |> Seq.fold (+) (UnificationConstraints.Zero())
       | ExprType.TupleType(_), ExprType.TupleType(_) -> 
-        return! sum.Throw(Errors.Singleton(sprintf "Error: tuples of different length %A and %A cannot be unified" t1 t2))
+        return! sum.Throw(Errors.Singleton($"Error: tuples of different length {t1} and {t2} cannot be unified"))
       | ExprType.UnionType([]), ExprType.UnionType([]) -> 
         return UnificationConstraints.Zero()
       | ExprType.UnionType(t1::ts1), ExprType.UnionType(t2::ts2) -> 
         if t1.CaseName <> t2.CaseName then 
-          return! sum.Throw(Errors.Singleton(sprintf "Error: union cases %A and %A cannot be unified" t1 t2))
+          return! sum.Throw(Errors.Singleton($"Error: cases {t1} and {t2} cannot be unified"))
         else
           let! partialUnifications = sum.All([t1.Fields =?= t2.Fields; ExprType.UnionType(ts1) =?= ExprType.UnionType(ts2)])
           return partialUnifications |> Seq.fold (+) (UnificationConstraints.Zero())
       | ExprType.UnionType(_), ExprType.UnionType(_) -> 
-        return! sum.Throw(Errors.Singleton(sprintf "Error: unions of different length %A and %A cannot be unified" t1 t2))
+        return! sum.Throw(Errors.Singleton($"Error: unions of different length {t1} and {t2} cannot be unified"))
       | ExprType.RecordType(m1), ExprType.RecordType(m2) when m1 |> Map.isEmpty && m2 |> Map.isEmpty -> 
         return UnificationConstraints.Zero()
       | ExprType.RecordType(m1), ExprType.RecordType(m2) -> 
         match m1 |> Seq.tryHead with
         | None -> 
-          return! sum.Throw(Errors.Singleton(sprintf "Error: records of different length %A and %A cannot be unified" t1 t2))
+          return! sum.Throw(Errors.Singleton($"Error: records of different length {t1} and {t2} cannot be unified"))
         | Some first1 -> 
           let m1 = m1 |> Map.remove first1.Key
           match m2 |> Map.tryFind first1.Key with
           | None ->
-            return! sum.Throw(Errors.Singleton(sprintf "Error: records with mismatched field names %A and %A cannot be unified" t1 t2))
+            return! sum.Throw(Errors.Singleton($"Error: record fields {t1} and {t2} cannot be unified"))
           | Some first2 ->
             let m2 = m2 |> Map.remove first1.Key
             let! partialUnifications = sum.All([first1.Value =?= first2; ExprType.RecordType(m1) =?= ExprType.RecordType(m2)])
@@ -259,7 +318,7 @@ type ExprType with
         return UnificationConstraints.Zero()
       | _ -> 
         if t1 = t2 then return UnificationConstraints.Zero()
-        else return! sum.Throw(Errors.Singleton(sprintf "Error: types %A and %A cannot be unified" t1 t2))
+        else return! sum.Throw(Errors.Singleton($"Error: types {t1} and {t2} cannot be unified"))
     }
 
 type FieldDescriptor with
