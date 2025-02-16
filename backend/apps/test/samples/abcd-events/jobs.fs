@@ -10,9 +10,11 @@ open Ballerina.BusinessRules
 open Ballerina.BusinessRule.Execute
 open context
 open Ballerina.BusinessRule.TransitiveExecution
+open Ballerina.Expr
 open Ballerina.Expr.Eval
 open Ballerina.BusinessRule.Preprocessor
 open Ballerina.BusinessRule.Predicate
+open Microsoft.FSharp.Quotations
 
 let abcdEventLoop() = 
   let mutable context:Context = init_abcdContext()

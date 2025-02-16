@@ -48,7 +48,7 @@ module TypeCheck =
               let! _,eType,vars' = eval vars e
               match eType with
               | UnionType cases -> 
-                let! unionCase = cases |> Seq.tryFind (fun case -> case.CaseName = caseName.CaseName) |> Sum.fromOption(fun () -> $$"""Error: invalid case name {{caseName}} on {{eType}}""" |> Errors.Singleton)
+                let! unionCase = cases |> Seq.tryFind (fun case -> case.CaseName = caseName) |> Sum.fromOption(fun () -> $$"""Error: invalid case name {{caseName}} on {{eType}}""" |> Errors.Singleton)
                 return None,ExprType.PrimitiveType PrimitiveType.BoolType, vars'
               | t-> 
                 return! sum.Throw(sprintf "Error: unexpected case check on type %A when typechecking expression %A" t e |> Errors.Singleton)            

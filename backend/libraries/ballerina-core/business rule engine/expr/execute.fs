@@ -6,6 +6,7 @@ module Execute =
   open Ballerina.Fun
   open Ballerina.Coroutines
   open Ballerina.BusinessRules
+  open Ballerina.Expr
   open Ballerina.Expr.Eval
 
   let execute (schema:Schema) (vars:Vars) (assignment:Assignment) : list<Map<FieldDescriptorId, EntitiesIdentifiers>> =

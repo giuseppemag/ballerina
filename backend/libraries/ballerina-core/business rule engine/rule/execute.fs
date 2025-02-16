@@ -12,6 +12,7 @@ module TransitiveExecution =
   open Ballerina.BusinessRule.Execute
   open Ballerina.BusinessRule.Preprocessor
   open Ballerina.Expr.Eval
+  open Ballerina.Expr
 
   type TraceFrame = { ExecutedRules:Map<BusinessRuleId, EntitiesIdentifiers>; ModifiedFields:Map<FieldDescriptorId, EntitiesIdentifiers>; }
   type BusinessRuleExecutionError = Loop of List<TraceFrame>

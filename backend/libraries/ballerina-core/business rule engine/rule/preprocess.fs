@@ -9,6 +9,7 @@ module Preprocessor =
   open Ballerina.Expr.Eval
   open Ballerina.BusinessRule.Execute
   open Ballerina.Collections.Map
+  open Ballerina.Expr
 
   type BusinessRule with
     static member getCandidateRules 

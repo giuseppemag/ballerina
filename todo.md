@@ -86,6 +86,7 @@ Todo (✅/❌)
       ❌ move string builder to ballerina-core
       ❌ `ExprType.Unify` does not belong in _the other_ mega-file: split Expr, ExprType, eval, typeCheck
       ❌ move the new type parsers to ballerina-core
+        ❌ extract `Unify` and `UnificationConstraints` form typeCheck
         ❌ launchers
         ❌ tabs
         ❌ types
@@ -99,14 +100,15 @@ Todo (✅/❌)
       ❌ write a "why not just a package somewhere?"
       ❌ write a language shootout
         ❌ ORM, advanced types, advanced type inference, monads
-    ❌ fix Ballerina as a namespace for proper nesting
+    ✅ fix Ballerina as a namespace for proper nesting
     ❌ check the consistency of the used data structures: `Type` vs `TypeId`
     ✅ convert all instances of Map.tryFind ... withError ... to `Map.tryFindWithError`
     ✅ `Map.tryFindWithError streamName "streams" streamName |> state.OfSum` should just be `findStream`
-    ❌ adjust all patterns like `|> Seq.tryFind (fst >> (=) "stream") |> Option.map snd` to `JsonValue.tryFindField`
+    ✅ adjust all patterns like `|> Seq.tryFind (fst >> (=) "stream") |> Option.map snd` to `JsonValue.tryFindField`
     ❌ accept empty `apis` blocks
     ❌ make ExprType.resolveLookup recursive
     ❌ add homomorphic forms
+      ❌ add homomorphic configuration forms/a plugin system to automatically generate configurations
     ❌ add multi-field renderers
     ❌ add paginated lists
     ❌ the tool is now complete and its code is clean
@@ -243,7 +245,9 @@ Todo (✅/❌)
         ❌ rename `positions` to `abcd`
         ❌ add an enum parameter to pick the edit to test
       ❌ make it production-ready
-        ❌ define the values of AB, CD, etc. as a reflected definition
+        ❌ define the values of AB, CD, etc. as instances of `Value`
+          ❌ to base everything on Value, Fields and lookup types need an ID, not just the name 
+            ❌ then we can deprecate FieldId, EntityId, etc.
         ❌ do not commit the updates to the context immediately, output a set of field value changes
           ❌ the context becomes a cache of operations
           ❌ output the applied rules for the visibility/explainability/logging

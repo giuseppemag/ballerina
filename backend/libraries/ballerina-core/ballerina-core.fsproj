@@ -20,8 +20,10 @@
     <Compile Include="state/with error/seq/model.fs" />
     <Compile Include="coroutine/model.fs" />
     <Compile Include="coroutine/runner.fs" />
+    <Compile Include="business rule engine/expr/model.fs" />
+    <Compile Include="business rule engine/exprtype/model.fs" />
     <Compile Include="business rule engine/model.fs" />
-    <Compile Include="business rule engine/expr/typeCheck.fs" />
+    <Compile Include="business rule engine/exprtype/typeCheck.fs" />
     <Compile Include="business rule engine/expr/eval.fs" />
     <Compile Include="business rule engine/expr/execute.fs" />
     <Compile Include="business rule engine/rule/variableRestrictionPredicate.fs" />

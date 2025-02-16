@@ -16,6 +16,7 @@ open Ballerina.Expr.TypeCheck
 open System.Text.Json
 open System.Text.Json.Serialization
 open System.Text.RegularExpressions
+open Ballerina.Expr
 
 let dup a = (a,a)
 let (<*>) f g = fun (a,b) -> (f a, g b)
@@ -518,7 +519,7 @@ type Expr with
               let! (firstJson, caseNameJson) = JsonValue.AsPair operandsJson |> state.OfSum
               let! caseName = JsonValue.AsString caseNameJson |> state.OfSum
               let! first = Expr.parse firstJson
-              return Expr.IsCase({ CaseName=caseName }, first)
+              return Expr.IsCase(caseName, first)
             }          
             state{
               let! kindJson = fieldsJson |> Utils.tryFindField "kind" |> state.OfSum

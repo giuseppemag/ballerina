@@ -6,6 +6,7 @@ module Eval=
   open Ballerina.Coroutines
   open Ballerina.Sum
   open Ballerina.BusinessRules
+  open Ballerina.Expr
   open Ballerina.Expr.TypeCheck
 
   type Expr with

@@ -8,6 +8,7 @@ open Ballerina.Fun
 open Ballerina.Coroutines
 open Ballerina.Option
 open Ballerina.BusinessRules
+open Ballerina.Expr
 open Ballerina.BusinessRule.Execute
 open Ballerina.Expr.Eval
 open Ballerina.Expr.TypeCheck
