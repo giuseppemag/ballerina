@@ -12,101 +12,55 @@ Todo (✅/❌)
       ✅ form json
     ✅ define a `Sum`  domain with the `<+>` operator
     ✅ read the json with FSharp.Data
-    ❌ parse and validate the json of a form config
+    ✅ parse and validate the json of a form config
       ✅ rename `Multiselection` to `MultiSelection`
       ✅ streams need to validate that the underlying type has id and displayvalue
       ✅ parse the JSON into the representation forms
         ✅ make all nested renderers properly recurrent in structure
-        ✅ fully align visibility predicate syntax to Expr
-        ✅ parse fields
-          ✅ parse nested (ListElement, Key, Value, etc.) renderers as a structure, not a string for consistency
-        ✅ the parsing of enums and streams needs further disambiguation
-        ✅ parse visibility and disabled predicates
-        ✅ parse and validate tabs, columns, groups
-      ✅ parse the JSON into the representation launchers
-      ✅ type-check the form instances' `visible` and `disabled` predicates when validating launchers
-        ✅ inject `root` variable at launcher scope, not form scope 
-        ✅ `local` variable is injected at form definition
-        ✅ `flag` values come from some type in the config (ideally imported)
-          ✅ needs an entity API with GET
-          ✅ needs to be specified in the launcher
-        ✅ also validate recursively
-        ✅ also validate predicates inside renderers
-        ✅ also validate the disabled predicate
-      ✅ type names and enum case names should be valid names (verified at codegen time)
-        ✅ enum case names can be cleaned up, at least wrt patterns like ":" in the variable name (the string value is fine)
-        ✅ `Regex.Replace(original, @"[^a-zA-Z0-9/-]+", "_")`
-      ✅ build a TS prototype of the predicates parser and interpreter
-        ✅ Sum.OfOption
-        ✅ Errors
-        ✅ Expr
-        ✅ Value
-        ✅ Eval
-          ✅ varLookup
-          ✅ IsCase
-        ✅ Map.tryFind
-        ✅ Map.tryFindWithError
-        ✅ move `eval` to `Expr` repo
-        ✅ structural equality
-          ✅ union case
-          ✅ tuple
-          ✅ record
-        ✅ parser/validator `any => ValueOrError<Expr, string>`
-      ✅ delete the sample parsed form
-      ✅ `let injectedTypes = []` should come from `codegenConfig.Custom`
-      ✅ add source context to errors for pretty printing
-        ✅ probably needs the state monad with an error decorator accumulated from the parent
-        ✅ use `Utils.tryFindField` everywhere applicable, generate proper errors upon failure
-          ✅ let! ((x,y),z) = Utils.tryFindFieldWithNotFoundError ... 
-        ✅ all matches to jsonvalue patterns should be bindings
-          ✅ JsonValue.Record
-          ✅ JsonValue.Array
-          ✅ JsonValue.String
-          ✅ JsonValue.Boolean
-          ✅ JsonValue.Number
-        ✅ when parsing...
-        ✅ when validating...
-        ✅ when generating code...
       ✅ pretty print types in errors
       ✅ pretty print expressions in errors
       ✅ the predicate validation should not validate the same form multiple times in the same context, add memoization
       ✅ replace all instances of `let! s = state.GetState(); s.[Types|Enum|...] |> Map.tryFind` with some `state.TryFind[Type|Enum|...]`
       ✅ there are unparsed placeholders for the labels and tooltips
         ✅ add the new field `details` or what's it called to the validator
-      ❌ break the form engine in all possible ways and ensure good errors arise
-      ❌ define `import` command
-      ❌ the functionality of the validator is now mature
-      ❌ improve the generated whitespace
-      ❌ all utility methods should be capitalized in Program.fs
-      ❌ adjust person-config in FE and use that from cmd line, delete the copy
-      ❌ introduce `sum.Both`
-      ✅ introduce `state.Both`
-      ✅ introduce a natural transformation that flips state and option, use it to parse the `disabledJson` elegantly
-      ❌ all the `match` expressions that search fields should become monadic instances of nested `state.Both`, or maybe instances of up to 5; remove those ugly matches in any case
-      ❌ move string builder to ballerina-core
-      ❌ `ExprType.Unify` does not belong in _the other_ mega-file: split Expr, ExprType, eval, typeCheck
-      ❌ move the new type parsers to ballerina-core
-        ❌ extract `Unify` and `UnificationConstraints` form typeCheck
-        ❌ launchers
-        ❌ tabs
-        ❌ types
-        ❌ forms
-        ❌ split the mega-file for the business rules (business rule engine/model)
-        ❌ move relevant sources to a separate folder in ballerina-core (forms engine)
-          ❌ move the new types (`Errors`, `Form`, etc.) to ballerina-core
-          ❌ move the new type checkers to ballerina-core
+    ❌ introduce `sum.Both`
+    ✅ introduce `state.Both`
+    ✅ introduce a natural transformation that flips state and option, use it to parse the `disabledJson` elegantly
+    ✅ move string builder to ballerina-core
+    ✅ `ExprType.Unify` does not belong in _the other_ mega-file: split Expr, ExprType, eval, typeCheck
+    ❌ move the new type parsers to ballerina-core
+      ✅ extract `Unify` and `UnificationConstraints` form typeCheck
+      ❌ models
+      ❌ parsing
+        ❌ expr and expr type parsing must go to their respective meta-modules
+      ❌ validation
+      ❌ codegen
+      ❌ "runner"/entrypoint
+    ✅ split the mega-file for the business rules (business rule engine/model)
     ❌ don't mix `printfn` and `Console.WriteLine`: only the latter, with string interpolation
+    ❌ make `tryFindFieldsN` prettier (as in: take as input a normal tuple, give back a normal tuple)
+      ❌ move it to the core
+      ❌ define a `tuples` conversion library 
+      ❌ with `Pair` for the `<*>` operator?
+    ❌ the code is acceptable now
+    ❌ break the form engine in all possible ways and ensure good errors arise
+    ❌ define `import` command
+    ❌ the functionality of the validator is now mature
+    ❌ improve the generated whitespace
+    ❌ all utility methods should be capitalized in Program.fs
+    ❌ adjust person-config in FE and use that from cmd line, delete the copy
     ❌ the Go type generator is now reasonably mature
       ❌ write a "why not just a package somewhere?"
       ❌ write a language shootout
         ❌ ORM, advanced types, advanced type inference, monads
     ✅ fix Ballerina as a namespace for proper nesting
-    ❌ check the consistency of the used data structures: `Type` vs `TypeId`
     ✅ convert all instances of Map.tryFind ... withError ... to `Map.tryFindWithError`
     ✅ `Map.tryFindWithError streamName "streams" streamName |> state.OfSum` should just be `findStream`
     ✅ adjust all patterns like `|> Seq.tryFind (fst >> (=) "stream") |> Option.map snd` to `JsonValue.tryFindField`
+    ❌ check the consistency of the used data structures: `Type` vs `TypeId`
     ❌ accept empty `apis` blocks
     ❌ make ExprType.resolveLookup recursive
+    ❌ add full support for unions, including generation
     ❌ add homomorphic forms
       ❌ add homomorphic configuration forms/a plugin system to automatically generate configurations
     ❌ add multi-field renderers
@@ -123,16 +77,15 @@ Todo (✅/❌)
       ❌ be careful with out-of-order extensions
     ❌ the tool is now very mature and ready for extensive use - further change should be discouraged unless there's a strong case for it
     ❌ extensibility of primitives as existentially-typed algebras
-    ❌ proper union-cases and matching, especially for the configs (ERP = (SAP=S2+S3+...) + BC)
-    ❌ use topological sorting of forms
+    ❌ use topological sorting of types and forms
+    ❌ allow mutually recursive types and forms
     ❌ entites visitors
       ❌ entites GET - identical to stream GETter: pairs of get + serialize
       ❌ entities GETDefault - identical to stream GETter: pairs of get + serialize
       ❌ entities POST - how do we represent changes?
       ❌ entities PATCH - how do we represent changes?
       ❌ make all these functions partially applied in the actual parameters vs the visitor parameters
-    ❌ define a `Pair` domain with the `<*>` operator
-    ❌ build the forms gui editor in MAUI
+    ❌ build the forms gui editor in Blazor
     ❌ codegen the `import` command with some sort of linking strategy for shared files
     ✅ allow union types (needs adjustment in frontend too)
   ✅ models

@@ -1,10 +1,9 @@
 module absample.coroutines.jobs
 open Ballerina.Coroutines
+open Ballerina.Coroutines.Runner
 open System
 open context
 open absample.models
-
-let co = CoroutineBuilder()
 
 let processAEvents (abId:System.Guid) : Coroutine<Unit, Unit, ABContext, absample.models.ABEvent> =
   co.Repeat(

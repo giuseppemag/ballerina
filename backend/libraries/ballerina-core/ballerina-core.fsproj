@@ -7,6 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="core/string/model.fs" />
+    <Compile Include="core/string-builder/model.fs" />
+    <Compile Include="core/object/model.fs" />
     <Compile Include="range/model.fs" />
     <Compile Include="updater/model.fs" />
     <Compile Include="queries/quotationToLinq.fs" />
@@ -14,14 +17,15 @@
     <Compile Include="collections/sum/model.fs" />
     <Compile Include="collections/option/model.fs" />
     <Compile Include="collections/map/model.fs" />
-    <Compile Include="errors/model.fs" />
     <Compile Include="state/model.fs" />
     <Compile Include="state/with error/model.fs" />
     <Compile Include="state/with error/seq/model.fs" />
     <Compile Include="coroutine/model.fs" />
     <Compile Include="coroutine/runner.fs" />
+    <Compile Include="errors/model.fs" />
     <Compile Include="business rule engine/expr/model.fs" />
     <Compile Include="business rule engine/exprtype/model.fs" />
+    <Compile Include="business rule engine/exprtype/unification.fs" />
     <Compile Include="business rule engine/model.fs" />
     <Compile Include="business rule engine/exprtype/typeCheck.fs" />
     <Compile Include="business rule engine/expr/eval.fs" />

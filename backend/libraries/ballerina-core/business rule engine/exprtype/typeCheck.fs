@@ -1,9 +1,10 @@
-namespace Ballerina.Expr
+namespace Ballerina.Expr.Types
 module TypeCheck =
 
   open System
   open Ballerina.Fun
   open Ballerina.Sum
+  open Ballerina.Expr
   open Ballerina.Errors
   open Ballerina.BusinessRules
 

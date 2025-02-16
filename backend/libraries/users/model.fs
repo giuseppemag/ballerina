@@ -2,9 +2,8 @@
 open System
 open System.Threading.Tasks
 open Ballerina.Coroutines
+open Ballerina.Coroutines.Runner
 open Ballerina.Fun
-
-let co = CoroutineBuilder()
 
 type [<CLIMutable>] Token = { TokenId:Guid; Token:string }
 let Token = {|

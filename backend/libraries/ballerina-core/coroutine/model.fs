@@ -289,4 +289,3 @@ type Coroutine<'a, 's, 'c, 'e>
             evaluated <- { evaluated with waitingOrListening = evaluated.waitingOrListening.Add(p.Key, p') }; u_s <- u_s >>? u_s'; u_e <- u_e >>? u_e'
           
         evaluated, u_s, u_e
-

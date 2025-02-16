@@ -36,7 +36,6 @@ module TransitiveExecution =
       |}
 
   let rec executeRulesTransitively() : State<_,BusinessRuleExecutionContext, BusinessRuleExecutionState, BusinessRuleExecutionError> = 
-    let state = StateBuilder()
     state{
       let! { AllRules=allBusinessRules; Schema=schema } = state.GetContext()
       let! { AllExecutedRules=executedRules; CurrentModifiedFields=modifiedFields } = state.GetState()

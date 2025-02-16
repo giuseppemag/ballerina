@@ -1,6 +1,5 @@
 namespace Ballerina.Coroutines
 module Runner =
-  open Ballerina.Coroutines
   open System
   open System.Threading
 
@@ -37,3 +36,4 @@ module Runner =
       do log dataSource
       // do printfn "%d coroutines = %A" (System.Random().Next() % 10) (initialEvals.active |> Seq.sortBy (fun c -> c.Key) |> Seq.toArray)
       releaseSnapshot dataSource
+  let co = CoroutineBuilder()

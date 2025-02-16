@@ -1,11 +1,10 @@
 module OAuth.Coroutine
 
 open Ballerina.Coroutines
+open Ballerina.Coroutines.Runner
 open OAuth.Models
 open System
 open System.Threading.Tasks
-
-let co = CoroutineBuilder()
 
 let rec private refresh (refreshToken : 'refreshToken) : Coroutine<_, _, OAuthContext<'accessToken, 'refreshToken, 'error>, 'error> = co {
   match! co.Await (fun ctxt -> ctxt.RefreshToken refreshToken) with

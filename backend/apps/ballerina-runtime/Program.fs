@@ -12,40 +12,19 @@ open Ballerina.Errors
 open Ballerina.State.WithError
 open Ballerina.Collections.Map
 open Ballerina.Expr.Eval
-open Ballerina.Expr.TypeCheck
 open System.Text.Json
 open System.Text.Json.Serialization
 open System.Text.RegularExpressions
+open Ballerina.Core.String
+open Ballerina.Core.StringBuilder
+open Ballerina.Core.Object
 open Ballerina.Expr
+open Ballerina.Expr.Types
+open Ballerina.Expr.Types.TypeCheck
+open Ballerina.Expr.Types.Unification
 
 let dup a = (a,a)
 let (<*>) f g = fun (a,b) -> (f a, g b)
-
-let state = StateBuilder()
-
-type Object with
-  member self.ToFSharpString = sprintf "%A" self
-
-type String with
-  member self.ReasonablyClamped = Regex.Replace(self.Substring(0, min self.Length 50).ReplaceLineEndings(" "), " +", " ") + "..."
-  static member append s2 s1 = s1 + s2
-  static member appendNewline s2 s1 = s1 + "\n" + s2
-
-type Utils = class end with
-  static member tryFindField name fields = 
-    fields |> Seq.tryFind (fst >> (=) name) |> Option.map snd
-       |> Sum.fromOption(fun () -> Errors.Singleton $"Error: cannot find field '{name}'")
-  static member tryFindFieldSeq prev (n,m) fields = 
-    sum{
-      let! f = fields |> prev n
-      let! g = fields |> Utils.tryFindField m
-      return f,g
-    }
-  static member tryFindField2 names fields = Utils.tryFindFieldSeq Utils.tryFindField names fields
-  static member tryFindField3 names fields = Utils.tryFindFieldSeq Utils.tryFindField2 names fields
-  static member tryFindField4 names fields = Utils.tryFindFieldSeq Utils.tryFindField3 names fields
-  static member tryFindField5 names fields = Utils.tryFindFieldSeq Utils.tryFindField4 names fields
-  static member tryFindField6 names fields = Utils.tryFindFieldSeq Utils.tryFindField5 names fields
 
 type JsonValue with
   static member AsEmptyRecord json =
@@ -85,21 +64,21 @@ type JsonValue with
     | JsonValue.Number fields -> sum.Return fields
     | _ -> sum.Throw(Errors.Singleton $"Error: expected number, found '{json.ToFSharpString.ReasonablyClamped}'")
 
-type Errors with
-  static member Print (inputFile:string) (e:Errors) =
-    do Console.WriteLine $"Errors when processing {inputFile}"
-    do Console.ForegroundColor <- ConsoleColor.Red
-    for error in e.Errors do
-      do Console.WriteLine error
-    do Console.ResetColor()
-
-type SumBuilder with
-  member sum.WithErrorContext err =
-    sum.MapError(Errors.Map(String.appendNewline err))
-
-type StateBuilder with
-  member state.WithErrorContext err =
-    state.MapError(Errors.Map(String.appendNewline err))
+type Utils = class end with
+  static member tryFindField name fields = 
+    fields |> Seq.tryFind (fst >> (=) name) |> Option.map snd
+       |> Sum.fromOption(fun () -> Errors.Singleton $"Error: cannot find field '{name}'")
+  static member tryFindFieldSeq prev (n,m) fields = 
+    sum{
+      let! f = fields |> prev n
+      let! g = fields |> Utils.tryFindField m
+      return f,g
+    }
+  static member tryFindField2 names fields = Utils.tryFindFieldSeq Utils.tryFindField names fields
+  static member tryFindField3 names fields = Utils.tryFindFieldSeq Utils.tryFindField2 names fields
+  static member tryFindField4 names fields = Utils.tryFindFieldSeq Utils.tryFindField3 names fields
+  static member tryFindField5 names fields = Utils.tryFindFieldSeq Utils.tryFindField4 names fields
+  static member tryFindField6 names fields = Utils.tryFindFieldSeq Utils.tryFindField5 names fields
 
 type CodeGenConfig = {
   Int:CodegenConfigTypeDef
@@ -922,22 +901,6 @@ type StreamApi with
       )
     } |> state.WithErrorContext $"...when parsing stream {streamName}"
 
-type StringBuilder = | One of string | Many of seq<StringBuilder> with 
-  static member ToString (sb:StringBuilder) : string = 
-    let acc = new System.Text.StringBuilder()
-    let rec traverse : StringBuilder -> Unit = function | One s -> acc.Append s |> ignore | Many sb -> sb |> Seq.iter traverse
-    traverse sb
-    acc.ToString()
-
-type String with
-  static member ToPascalCase (separators:char array) (self:String) =
-    let elements = self.Split separators
-    let elements = elements |> Seq.map String.ToFirstUpper
-    elements |> Seq.fold (+) String.Empty
-  member self.ToFirstUpper =  
-    if self |> String.IsNullOrEmpty then self
-    else String.Concat(self[0].ToString().ToUpper(), self.AsSpan(1))
-  static member ToFirstUpper (self:String) = self.ToFirstUpper
 
 type ParsedFormsContext with
   static member GetTypesFreeVars (ctx:ParsedFormsContext) : Sum<Set<TypeId>, Errors> = 
@@ -966,114 +929,114 @@ type ParsedFormsContext with
       let (!) (s:string) = identifierAllowedRegex.Replace(s, "_")
       let enumCasesGETters = 
         seq{
-          yield One $"func {formName}EnumAutoGETter(enumName string) "
-          yield One " ([]string,error) {\n"
-          yield One "  switch enumName {\n"
+          yield StringBuilder.One $"func {formName}EnumAutoGETter(enumName string) "
+          yield StringBuilder.One " ([]string,error) {\n"
+          yield StringBuilder.One "  switch enumName {\n"
           yield! ctx.Apis.Enums |> Map.values |> Seq.map(fun e -> 
-            Many(seq{
-              yield One$$"""    case "{{e.EnumName}}": return {{codegenConfig.List.MappingFunction}}(All{{e.UnderlyingEnum.TypeName}}Cases[:], func (c {{e.UnderlyingEnum.TypeName}}) string { return string(c) }), nil"""
-              yield One "\n"
+            StringBuilder.Many(seq{
+              yield StringBuilder.One$$"""    case "{{e.EnumName}}": return {{codegenConfig.List.MappingFunction}}(All{{e.UnderlyingEnum.TypeName}}Cases[:], func (c {{e.UnderlyingEnum.TypeName}}) string { return string(c) }), nil"""
+              yield StringBuilder.One "\n"
             })
           )
-          yield One "  }\n"
-          yield One "  var result []string\n"
-          yield One """  return result, fmt.Errorf("%s is not a valid enum name", enumName )"""
-          yield One "\n}\n\n"
+          yield StringBuilder.One "  }\n"
+          yield StringBuilder.One "  var result []string\n"
+          yield StringBuilder.One """  return result, fmt.Errorf("%s is not a valid enum name", enumName )"""
+          yield StringBuilder.One "\n}\n\n"
 
-          yield One $"func {formName}EnumGETter[result any](enumName string, "
+          yield StringBuilder.One $"func {formName}EnumGETter[result any](enumName string, "
           yield! ctx.Apis.Enums |> Map.values |> Seq.map(fun e -> 
-            One($$"""on{{e.EnumName}} func ([]{{e.UnderlyingEnum.TypeName}}) (result,error), """)
+            StringBuilder.One($$"""on{{e.EnumName}} func ([]{{e.UnderlyingEnum.TypeName}}) (result,error), """)
           )
-          yield One ") (result,error) {\n"
-          yield One "  switch enumName {\n"
+          yield StringBuilder.One ") (result,error) {\n"
+          yield StringBuilder.One "  switch enumName {\n"
           yield! ctx.Apis.Enums |> Map.values |> Seq.map(fun e -> 
-            Many(seq{
-              yield One($$"""    case "{{e.EnumName}}": return on{{e.EnumName}}(All{{e.UnderlyingEnum.TypeName}}Cases[:])""" )
-              yield One "\n"
+            StringBuilder.Many(seq{
+              yield StringBuilder.One($$"""    case "{{e.EnumName}}": return on{{e.EnumName}}(All{{e.UnderlyingEnum.TypeName}}Cases[:])""" )
+              yield StringBuilder.One "\n"
             })
           )
-          yield One "  }\n"
-          yield One "  var res result\n"
-          yield One """  return res, fmt.Errorf("%s is not a valid enum name", enumName )"""
-          yield One "\n}\n\n"
+          yield StringBuilder.One "  }\n"
+          yield StringBuilder.One "  var res result\n"
+          yield StringBuilder.One """  return res, fmt.Errorf("%s is not a valid enum name", enumName )"""
+          yield StringBuilder.One "\n}\n\n"
         }
 
       let enumCasesPOSTter = 
         seq{
-          yield One $"func {formName}EnumPOSTter(enumName string, enumValue string, "
+          yield StringBuilder.One $"func {formName}EnumPOSTter(enumName string, enumValue string, "
           yield! ctx.Apis.Enums |> Map.values |> Seq.map(fun e -> 
-            One($$"""on{{e.EnumName}} func ({{e.UnderlyingEnum.TypeName}}) ({{codegenConfig.Unit.GeneratedTypeName}},error), """)
+            StringBuilder.One($$"""on{{e.EnumName}} func ({{e.UnderlyingEnum.TypeName}}) ({{codegenConfig.Unit.GeneratedTypeName}},error), """)
           )
-          yield One $$""") ({{codegenConfig.Unit.GeneratedTypeName}},error) {"""
-          yield One "\n"
-          yield One "  switch enumName {\n"
+          yield StringBuilder.One $$""") ({{codegenConfig.Unit.GeneratedTypeName}},error) {"""
+          yield StringBuilder.One "\n"
+          yield StringBuilder.One "  switch enumName {\n"
           yield! ctx.Apis.Enums |> Map.values |> Seq.map(fun e -> 
             Many(seq{
-              yield One(sprintf "  case \"%s\":\n" e.EnumName)
-              yield One($$"""    if slices.Contains(All{{e.UnderlyingEnum.TypeName}}Cases[:], {{e.UnderlyingEnum.TypeName}}(enumValue)) {""")
-              yield One("\n")
-              yield One($$"""      return on{{e.EnumName}}({{e.UnderlyingEnum.TypeName}}(enumValue))""")
-              yield One("\n")
-              yield One("    }\n")
+              yield StringBuilder.One(sprintf "  case \"%s\":\n" e.EnumName)
+              yield StringBuilder.One($$"""    if slices.Contains(All{{e.UnderlyingEnum.TypeName}}Cases[:], {{e.UnderlyingEnum.TypeName}}(enumValue)) {""")
+              yield StringBuilder.One("\n")
+              yield StringBuilder.One($$"""      return on{{e.EnumName}}({{e.UnderlyingEnum.TypeName}}(enumValue))""")
+              yield StringBuilder.One("\n")
+              yield StringBuilder.One("    }\n")
             })
           )
-          yield One "  }\n"
-          yield One $$"""  var result {{codegenConfig.Unit.GeneratedTypeName}}"""
-          yield One "\n"
-          yield One """  return result, fmt.Errorf("%s,%s is not a valid enum name/value combination", enumName, enumValue )"""
-          yield One "\n}\n\n"
+          yield StringBuilder.One "  }\n"
+          yield StringBuilder.One $$"""  var result {{codegenConfig.Unit.GeneratedTypeName}}"""
+          yield StringBuilder.One "\n"
+          yield StringBuilder.One """  return result, fmt.Errorf("%s,%s is not a valid enum name/value combination", enumName, enumValue )"""
+          yield StringBuilder.One "\n}\n\n"
         }
 
       let streamGETter = 
         seq{
-          yield One $"func {formName}StreamGETter[searchParams any, serializedResult any](streamName string, searchArgs searchParams, "
+          yield StringBuilder.One $"func {formName}StreamGETter[searchParams any, serializedResult any](streamName string, searchArgs searchParams, "
           yield! ctx.Apis.Streams |> Map.values |> Seq.map(fun e -> 
-            One($$"""get{{e.StreamName}} func(searchParams) ([]{{e.TypeId.TypeName}}, error), serialize{{e.StreamName}} func(searchParams, []{{e.TypeId.TypeName}}) (serializedResult, error), """)
+            StringBuilder.One($$"""get{{e.StreamName}} func(searchParams) ([]{{e.TypeId.TypeName}}, error), serialize{{e.StreamName}} func(searchParams, []{{e.TypeId.TypeName}}) (serializedResult, error), """)
           )
-          yield One ") (serializedResult,error) {\n"
-          yield One "  var result serializedResult\n"
-          yield One "  switch streamName {\n"
+          yield StringBuilder.One ") (serializedResult,error) {\n"
+          yield StringBuilder.One "  var result serializedResult\n"
+          yield StringBuilder.One "  switch streamName {\n"
           yield! ctx.Apis.Streams |> Map.values |> Seq.map(fun e -> 
-            Many(seq{
-              One $$"""  case "{{e.StreamName}}":"""
-              One "\n"
-              One $$"""   var res,err = get{{e.StreamName}}(searchArgs)"""
-              One "\n"
-              One $$"""   if err != nil { return result,err }"""
-              One "\n"
-              One $$"""   return serialize{{e.StreamName}}(searchArgs, res)"""
-              One "\n"
+            StringBuilder.Many(seq{
+              StringBuilder.One $$"""  case "{{e.StreamName}}":"""
+              StringBuilder.One "\n"
+              StringBuilder.One $$"""   var res,err = get{{e.StreamName}}(searchArgs)"""
+              StringBuilder.One "\n"
+              StringBuilder.One $$"""   if err != nil { return result,err }"""
+              StringBuilder.One "\n"
+              StringBuilder.One $$"""   return serialize{{e.StreamName}}(searchArgs, res)"""
+              StringBuilder.One "\n"
             })
           )
-          yield One "  }\n"
-          yield One """return result, fmt.Errorf("%s is not a valid stream name", streamName )"""
-          yield One "\n}\n\n"
+          yield StringBuilder.One "  }\n"
+          yield StringBuilder.One """return result, fmt.Errorf("%s is not a valid stream name", streamName )"""
+          yield StringBuilder.One "\n}\n\n"
         }
 
       let streamPOSTter = 
         seq{
-          yield One $"func {formName}StreamPOSTter[serializedResult any](streamName string, id {codegenConfig.Guid.GeneratedTypeName}, "
+          yield StringBuilder.One $"func {formName}StreamPOSTter[serializedResult any](streamName string, id {codegenConfig.Guid.GeneratedTypeName}, "
           yield! ctx.Apis.Streams |> Map.values |> Seq.map(fun e -> 
-            One($$"""get{{e.StreamName}} func({{codegenConfig.Guid.GeneratedTypeName}}) ({{e.TypeId.TypeName}}, error), serialize{{e.StreamName}} func({{e.TypeId.TypeName}}) (serializedResult, error), """)
+            StringBuilder.One($$"""get{{e.StreamName}} func({{codegenConfig.Guid.GeneratedTypeName}}) ({{e.TypeId.TypeName}}, error), serialize{{e.StreamName}} func({{e.TypeId.TypeName}}) (serializedResult, error), """)
           )
-          yield One ") (serializedResult,error) {\n"
-          yield One "  var result serializedResult\n"
-          yield One "  switch streamName {\n"
+          yield StringBuilder.One ") (serializedResult,error) {\n"
+          yield StringBuilder.One "  var result serializedResult\n"
+          yield StringBuilder.One "  switch streamName {\n"
           yield! ctx.Apis.Streams |> Map.values |> Seq.map(fun e -> 
             Many(seq{
-              One $$"""  case "{{e.StreamName}}":"""
-              One "\n"
-              One $$"""   var res,err = get{{e.StreamName}}(id)"""
-              One "\n"
-              One $$"""   if err != nil { return result,err }"""
-              One "\n"
-              One $$"""   return serialize{{e.StreamName}}(res)"""
-              One "\n"
+              StringBuilder.One $$"""  case "{{e.StreamName}}":"""
+              StringBuilder.One "\n"
+              StringBuilder.One $$"""   var res,err = get{{e.StreamName}}(id)"""
+              StringBuilder.One "\n"
+              StringBuilder.One $$"""   if err != nil { return result,err }"""
+              StringBuilder.One "\n"
+              StringBuilder.One $$"""   return serialize{{e.StreamName}}(res)"""
+              StringBuilder.One "\n"
             })
           )
-          yield One "  }\n"
-          yield One """return result, fmt.Errorf("%s is not a valid stream name", streamName )"""
-          yield One "\n}\n\n"
+          yield StringBuilder.One "  }\n"
+          yield StringBuilder.One """return result, fmt.Errorf("%s is not a valid stream name", streamName )"""
+          yield StringBuilder.One "\n}\n\n"
         }
 
       let! generatedTypes = state.All(
@@ -1111,11 +1074,11 @@ type ParsedFormsContext with
             let! fieldTypes = state.All(fields |> Seq.map (snd >> ExprType.ToGolangTypeAnnotation) |> List.ofSeq)
             let fieldDeclarations = Many (seq{
               for fieldType,fieldName in fields |> Seq.map fst |> Seq.zip fieldTypes do
-                yield One "  "
-                yield One fieldName.ToFirstUpper
-                yield One " "
-                yield One fieldType
-                yield One "\n"
+                yield StringBuilder.One "  "
+                yield StringBuilder.One fieldName.ToFirstUpper
+                yield StringBuilder.One " "
+                yield StringBuilder.One fieldType
+                yield StringBuilder.One "\n"
             })
             let typeEnd = $$"""}
   """
@@ -1123,10 +1086,10 @@ type ParsedFormsContext with
             let consStart = $$"""func New{{t.Value.TypeId.TypeName}}("""
             let consParams = Many (seq{
               for fieldType,fieldName in fields |> Seq.map fst |> Seq.zip fieldTypes do
-                yield One fieldName
-                yield One " "
-                yield One fieldType
-                yield One ", "
+                yield StringBuilder.One fieldName
+                yield StringBuilder.One " "
+                yield StringBuilder.One fieldType
+                yield StringBuilder.One ", "
             })
             let consDeclEnd = $$""") {{t.Value.TypeId.TypeName}} {
     res := new({{t.Value.TypeId.TypeName}})
@@ -1136,25 +1099,25 @@ type ParsedFormsContext with
   }
 
   """
-            let consFieldInits = Many (seq{
+            let consFieldInits = StringBuilder.Many (seq{
               for fieldType,fieldName in fields |> Seq.map fst |> Seq.zip fieldTypes do
-                yield One "  res."
-                yield One fieldName.ToFirstUpper
-                yield One " = "
-                yield One fieldName
-                yield One ";\n"
+                yield StringBuilder.One "  res."
+                yield StringBuilder.One fieldName.ToFirstUpper
+                yield StringBuilder.One " = "
+                yield StringBuilder.One fieldName
+                yield StringBuilder.One ";\n"
             })
             return StringBuilder.Many(seq{
-              yield One "\n"
-              yield One typeStart
+              yield StringBuilder.One "\n"
+              yield StringBuilder.One typeStart
               yield fieldDeclarations
-              yield One typeEnd
-              yield One "\n"
-              yield One consStart
+              yield StringBuilder.One typeEnd
+              yield StringBuilder.One "\n"
+              yield StringBuilder.One consStart
               yield consParams
-              yield One consDeclEnd
+              yield StringBuilder.One consDeclEnd
               yield consFieldInits
-              yield One consBodyEnd
+              yield StringBuilder.One consBodyEnd
             })
         } |> state.WithErrorContext $"...when generating type {t.Value.TypeId.TypeName}") |> List.ofSeq)
       return StringBuilder.Many(seq{

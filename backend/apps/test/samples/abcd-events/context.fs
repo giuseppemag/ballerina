@@ -11,7 +11,7 @@ open Ballerina.BusinessRules
 open Ballerina.Expr
 open Ballerina.BusinessRule.Execute
 open Ballerina.Expr.Eval
-open Ballerina.Expr.TypeCheck
+open Ballerina.Expr.Types.TypeCheck
 open abcdsample.schema
 
 let init_abcdContext() = 

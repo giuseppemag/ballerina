@@ -7,7 +7,7 @@ module Eval=
   open Ballerina.Sum
   open Ballerina.BusinessRules
   open Ballerina.Expr
-  open Ballerina.Expr.TypeCheck
+  open Ballerina.Expr.Types.TypeCheck
 
   type Expr with
     static member eval (variableRestriction:Option<VarName * (obj -> bool)>) (schema:Schema) (vars:Vars) : Expr -> list<Vars * Value> =

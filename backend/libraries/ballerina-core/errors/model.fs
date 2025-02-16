@@ -2,14 +2,32 @@ namespace Ballerina
 module Errors =
 
   open Ballerina.Sum
+  open Ballerina.State.WithError
+  open Ballerina.Core.String
+  open System
 
   type Errors = { Errors:List<string> } with
     static member Singleton e  = { Errors=[e] }
     static member Zero()  = { Errors=[] }
     static member Concat(e1,e2)  = { Errors=e1.Errors @ e2.Errors }
     static member Map f e = { e with Errors=e.Errors |> List.map f  }
+    static member Print (inputFile:string) (e:Errors) =
+      do Console.WriteLine $"Errors when processing {inputFile}"
+      do Console.ForegroundColor <- ConsoleColor.Red
+      for error in e.Errors do
+        do Console.WriteLine error
+      do Console.ResetColor()
 
   type Map<'k,'v when 'k : comparison> with
     static member tryFindWithError k k_category k_error m = 
       let withError (e:string) (o:Option<'res>) : Sum<'res,Errors> = o |> Sum.fromOption<'res,Errors> (fun () -> Errors.Singleton e)
       m |> Map.tryFind k |> withError (sprintf "Cannot find %s '%s'" k_category k_error)
+
+
+  type SumBuilder with
+    member sum.WithErrorContext err =
+      sum.MapError(Errors.Map(String.appendNewline err))
+
+  type StateBuilder with
+    member state.WithErrorContext err =
+      state.MapError(Errors.Map(String.appendNewline err))
