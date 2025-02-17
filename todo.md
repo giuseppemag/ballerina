@@ -23,7 +23,9 @@ Todo (✅/❌)
       ✅ replace all instances of `let! s = state.GetState(); s.[Types|Enum|...] |> Map.tryFind` with some `state.TryFind[Type|Enum|...]`
       ✅ there are unparsed placeholders for the labels and tooltips
         ✅ add the new field `details` or what's it called to the validator
-    ❌ introduce `sum.Both`
+    ✅ fix `Any` and `Error`: semigroups, not monoids
+    ✅ introduce `sum.Both`
+    ❌ deploy published release on GitHub with a bash script
     ✅ introduce `state.Both`
     ✅ introduce a natural transformation that flips state and option, use it to parse the `disabledJson` elegantly
     ✅ move string builder to ballerina-core
@@ -43,8 +45,10 @@ Todo (✅/❌)
       ❌ define a `tuples` conversion library 
       ❌ with `Pair` for the `<*>` operator?
     ❌ the code is acceptable now
+    ❌ remove the visibility predicates from odd renderers like ElementRenderer, KeyRenderer, and so on
     ❌ break the form engine in all possible ways and ensure good errors arise
     ❌ define `import` command
+      ❌ with preprocessor plugins
     ❌ the functionality of the validator is now mature
     ❌ improve the generated whitespace
     ❌ all utility methods should be capitalized in Program.fs

@@ -5,12 +5,12 @@ module Errors =
   open Ballerina.State.WithError
   open Ballerina.Core.String
   open System
+  open Ballerina.Collections.NonEmptyList
 
-  type Errors = { Errors:List<string> } with
-    static member Singleton e  = { Errors=[e] }
-    static member Zero()  = { Errors=[] }
-    static member Concat(e1,e2)  = { Errors=e1.Errors @ e2.Errors }
-    static member Map f e = { e with Errors=e.Errors |> List.map f  }
+  type Errors = { Errors:NonEmptyList<string> } with
+    static member Singleton e  = { Errors=NonEmptyList.One e }
+    static member Concat(e1,e2)  = { Errors=NonEmptyList.OfList(e1.Errors.Head, e1.Errors.Tail @ (e2.Errors |> NonEmptyList.ToList)) }
+    static member Map f e = { e with Errors=e.Errors |> NonEmptyList.map f  }
     static member Print (inputFile:string) (e:Errors) =
       do Console.WriteLine $"Errors when processing {inputFile}"
       do Console.ForegroundColor <- ConsoleColor.Red

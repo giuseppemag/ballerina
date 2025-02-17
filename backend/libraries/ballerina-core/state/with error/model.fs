@@ -2,6 +2,7 @@ namespace Ballerina.State
 module WithError =
   open Ballerina.Fun
   open Ballerina.Sum
+  open Ballerina.Collections.NonEmptyList
 
   type State<'a,'c,'s,'e> = State of ('c * 's -> Sum<'a * Option<'s>, 'e * Option<'s>>)
   with 
@@ -48,10 +49,6 @@ module WithError =
       State.bind p k
     member _.Combine(p:State<'b,'c,'s,'e>, k:State<'a,'c,'s,'e>) = 
       State.bind p (fun _ -> k)
-  //   member _.Any(ps:List<Coroutine<'a, 's, 'c, 'e>>) =
-  //     Co(fun _ -> CoroutineResult.Any(ps), None, None)
-  //   // member _.All(ps:List<Coroutine<'a, 's, 'c, 'e>>) =
-  //   //   Co(fun _ -> CoroutineResult.Any(ps), None, None)
     member state.Repeat(p:State<'a,'c,'s,'e>) : State<'a,'c,'s,'e> =
       state.Bind(p, fun _ -> state.Repeat(p))
     member _.GetContext() =
@@ -81,11 +78,11 @@ module WithError =
         state.Combine(body first, state.For(seq |> Seq.tail, body))
       | None -> state{ return () }
     member state.Any<'a,'c,'s,'e>
-      (e:{| zero:Unit -> 'e; concat:'e * 'e -> 'e |}, ps:List<State<'a,'c,'s,'e>>) =
-      match ps with
-      | [] -> state.Throw(e.zero())
-      | p::ps ->
-        state{
+      (e:{| concat:'e * 'e -> 'e |}, l:NonEmptyList<State<'a,'c,'s,'e>>) =
+      state{
+        match l with
+        | One p -> return! p
+        | Many (p,ps) -> 
           match! p |> state.Catch with
           | Left result -> return result
           | Right error ->
@@ -94,15 +91,11 @@ module WithError =
             | Right error' -> 
               let finalError = e.concat(error,error')
               return! finalError |> state.Throw 
-        }
+      }
     member inline state.Any<'a,'c,'s,'b 
-      when 'b : (static member Zero:Unit -> 'b) and 'b : (static member Concat:'b * 'b -> 'b)>
-      (ps:List<State<'a,'c,'s,'b>>) =
-      state.Any({| zero='b.Zero; concat='b.Concat |}, ps)
-    member inline state.Any<'a,'c,'s,'b 
-      when 'b : (static member Zero:Unit -> 'b) and 'b : (static member Concat:'b * 'b -> 'b)>
-      (ps:seq<State<'a,'c,'s,'b>>) =
-      state.Any(ps |> Seq.toList)
+      when 'b : (static member Concat:'b * 'b -> 'b)>
+      (ps:NonEmptyList<State<'a,'c,'s,'b>>) =
+      state.Any({| concat='b.Concat |}, ps)
     member state.All<'a,'c,'s,'e>
       (e:{| concat:'e * 'e -> 'e |}, ps:List<State<'a,'c,'s,'e>>) =
       match ps with
