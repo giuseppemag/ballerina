@@ -25,11 +25,11 @@ Todo (✅/❌)
         ✅ add the new field `details` or what's it called to the validator
     ✅ fix `Any` and `Error`: semigroups, not monoids
     ✅ introduce `sum.Both`
-    ❌ deploy published release on GitHub with a bash script
     ✅ introduce `state.Both`
     ✅ introduce a natural transformation that flips state and option, use it to parse the `disabledJson` elegantly
     ✅ move string builder to ballerina-core
     ✅ `ExprType.Unify` does not belong in _the other_ mega-file: split Expr, ExprType, eval, typeCheck
+    ✅ deploy published release on GitHub with a bash script
     ❌ move the new type parsers to ballerina-core
       ✅ extract `Unify` and `UnificationConstraints` form typeCheck
       ❌ models
@@ -47,6 +47,8 @@ Todo (✅/❌)
     ❌ the code is acceptable now
     ❌ remove the visibility predicates from odd renderers like ElementRenderer, KeyRenderer, and so on
     ❌ break the form engine in all possible ways and ensure good errors arise
+      ❌ define tests, one minimal spec for anything that can go wrong
+      ❌ run tests when releasing
     ❌ define `import` command
       ❌ with preprocessor plugins
     ❌ the functionality of the validator is now mature
