@@ -24,32 +24,41 @@ Todo (✅/❌)
       ✅ codegen
       ✅ "runner"/entrypoint
     ✅ split the mega-file for the business rules (business rule engine/model)
-      ❌ X.[Model|Feature1|Feature2|...FeatureN]
-      ❌ rename `BusinessRule` -> `BusinessRules`
-      ❌ `Expr`should be in `BusinessRules`
-      ❌ rename `BusinessRules`-> `DSL`
-      ❌ the `Sum` module belongs under the `Collections` namespace
+      ✅ X.[Model|Feature1|Feature2|...FeatureN]
+        ✅ `Expr`, `ExprType` go under `Model`
+      ✅ rename `BusinessRule` -> `BusinessRules`
+      ✅ `Expr`should be in `BusinessRules`
+      ✅ rename `BusinessRules`-> `DSL`
+      ✅ the `Sum` module belongs under the `Collections` namespace
+    ❌ adjust person-config in FE and use that from cmd line, delete the copy
     ❌ the code is acceptable now
     ❌ break the form engine in all possible ways and ensure good errors arise
       ❌ define tests, one minimal spec for anything that can go wrong
+        ❌ create a test project
+        ❌ invalid types
+        ❌ invalid enums
+        ❌ invalid streams
+        ❌ invalid entities
+        ❌ invalid forms
+          ❌ invalid fields
+          ❌ invalid renderers
+          ❌ invalid predicates
+        ❌ invalid launchers
       ❌ run tests when releasing
+    ❌ the validator is now mature
+    ❌ improve the generated whitespace
+    ❌ the Go type generator is now reasonably mature
+      ❌ write a "why not just a package somewhere?"
     ❌ extensions
       ❌ preprocessor plugins
       ❌ add homomorphic forms
       ❌ add multi-field renderers
-        ❌ use tuples
-      ❌ define `import` command
+        ❌ use tuples, meaning it's still just one single field
+      ❌ define `include` command
       ❌ add paginated lists
         ❌ requires changes to the frontend
       ❌ add lazy fields
         ❌ requires changes to the frontend
-    ❌ the functionality of the validator is now mature
-    ❌ improve the generated whitespace
-    ❌ adjust person-config in FE and use that from cmd line, delete the copy
-    ❌ the Go type generator is now reasonably mature
-      ❌ write a "why not just a package somewhere?"
-      ❌ write a language shootout
-        ❌ ORM, advanced types, advanced type inference, monads
     ✅ fix Ballerina as a namespace for proper nesting
     ✅ convert all instances of Map.tryFind ... withError ... to `Map.tryFindWithError`
     ✅ `Map.tryFindWithError streamName "streams" streamName |> state.OfSum` should just be `findStream`
@@ -57,18 +66,13 @@ Todo (✅/❌)
     ❌ check the consistency of the used data structures: `Type` vs `TypeId`
     ❌ accept empty `apis` blocks
     ❌ discard unsupported field names
-    ❌ the core library needs more structural cleanup: Queries, Range, etc. should go into `webapi` or a similar domain
     ❌ add full support for unions, including generation
     ❌ allow mutually recursive types and forms
       ❌ be careful with out-of-order extensions
-      ❌ make ExprType.resolveLookup recursive - this might be at odds with the parent task
+      ❌ make ExprType.resolveLookup recursive - this might be at odds with the parent task because it might cause infinite loops
     ❌ the tool is now complete
-    ❌ add tests
+    ❌ the core library needs more structural cleanup: Queries, Range, etc. should go into `webapi` or a similar domain
     ❌ help command
-    ❌ somewhat painful but
-      ❌ `string -> T` is built up while parsing
-      ❌ `TId -> T` is the parsed context
-    ❌ the tool is now very mature and ready for extensive use - further change should be discouraged unless there's a strong case for it
     ❌ expr and expr type parsing and validation must go to their respective meta-modules
     ❌ generate Typescript and C# code from forms-config
     ❌ extensibility of primitives as existentially-typed algebras

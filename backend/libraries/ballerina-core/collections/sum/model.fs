@@ -1,4 +1,4 @@
-﻿namespace Ballerina
+﻿namespace Ballerina.Collections
 module Sum =
   open Ballerina.Fun
   open System

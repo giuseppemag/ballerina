@@ -1,7 +1,7 @@
 namespace Ballerina.State
 module WithError =
   open Ballerina.Fun
-  open Ballerina.Sum
+  open Ballerina.Collections.Sum
   open Ballerina.Collections
   open Ballerina.Collections.NonEmptyList
 

@@ -1,13 +1,14 @@
-namespace Ballerina.Expr.Types
+namespace Ballerina.DSL.Expr.Types
   #nowarn FS0060
   module Unification =
     open System
     open Ballerina.Fun
-    open Ballerina.Option
+    open Ballerina.Collections.Option
     open Ballerina.Collections.Map
-    open Ballerina.Sum
+    open Ballerina.Collections.Sum
     open Ballerina.Errors
-    open Ballerina.Expr
+    open Ballerina.DSL.Expr.Model
+    open Ballerina.DSL.Expr.Types.Model
 
     type UnificationConstraints = { Equalities:Set<VarName * VarName> }
 

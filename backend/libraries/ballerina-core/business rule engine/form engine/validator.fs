@@ -1,14 +1,15 @@
-namespace Ballerina.BusinessRule.FormEngine
+namespace Ballerina.DSL.FormEngine
 module Validator =
 
-  open Ballerina.BusinessRule.FormEngine.Model
-  open Ballerina.BusinessRule.FormEngine.Parser
-  open Ballerina.BusinessRules
+  open Ballerina.DSL.FormEngine.Model
+  open Ballerina.DSL.FormEngine.Parser
+  open Ballerina.DSL.Model
   open Ballerina.Collections.Tuple
-  open Ballerina.Expr
-  open Ballerina.Expr.Types.TypeCheck
-  open Ballerina.Expr.Types.Unification
-  open Ballerina.Sum
+  open Ballerina.DSL.Expr.Model
+  open Ballerina.DSL.Expr.Types.Model
+  open Ballerina.DSL.Expr.Types.TypeCheck
+  open Ballerina.DSL.Expr.Types.Unification
+  open Ballerina.Collections.Sum
   open Ballerina.State.WithError
   open Ballerina.Errors
   open Ballerina.Collections.NonEmptyList

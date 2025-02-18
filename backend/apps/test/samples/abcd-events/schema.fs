@@ -6,16 +6,16 @@ open System.Linq
 open positions.model
 open Ballerina.Fun
 open Ballerina.Coroutines
-open Ballerina.Option
+open Ballerina.Collections.Option
 open Ballerina.Collections.Map
-open Ballerina.Sum
+open Ballerina.Collections.Sum
 open Ballerina.Coroutines
-open Ballerina.BusinessRules
-open Ballerina.BusinessRule.Execute
-open Ballerina.BusinessRule.TransitiveExecution
-open Ballerina.Expr.Eval
-open Ballerina.BusinessRule.Preprocessor
-open Ballerina.BusinessRule.Predicate
+open Ballerina.DSL.Model
+open Ballerina.DSL.Execute
+open Ballerina.DSL.TransitiveExecution
+open Ballerina.DSL.Expr.Eval
+open Ballerina.DSL.Preprocessor
+open Ballerina.DSL.Predicate
 
 let createABCDSchema (allABs:ref<Map<Guid,AB>>) (allCDs:ref<Map<Guid,CD>>) (allEFs:ref<Map<Guid,EF>>) =
 

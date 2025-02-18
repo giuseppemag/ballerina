@@ -3,7 +3,7 @@ module Json =
   open FSharp.Data
   open Ballerina.Core.Object
   open Ballerina.Core.String
-  open Ballerina.Sum
+  open Ballerina.Collections.Sum
   open Ballerina.Errors
 
   type JsonValue with

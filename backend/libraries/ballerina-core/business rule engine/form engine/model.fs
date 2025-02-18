@@ -1,6 +1,7 @@
-namespace Ballerina.BusinessRule.FormEngine
+namespace Ballerina.DSL.FormEngine
 module Model =
-  open Ballerina.Expr
+  open Ballerina.DSL.Expr.Model
+  open Ballerina.DSL.Expr.Types.Model
   open System
 
   type CodeGenConfig = {

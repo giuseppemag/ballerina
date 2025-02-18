@@ -1,12 +1,13 @@
-namespace Ballerina.Expr.Types
+namespace Ballerina.DSL.Expr.Types
 module TypeCheck =
 
   open System
   open Ballerina.Fun
-  open Ballerina.Sum
-  open Ballerina.Expr
+  open Ballerina.Collections.Sum
+  open Ballerina.DSL.Expr.Model
+  open Ballerina.DSL.Expr.Types.Model
   open Ballerina.Errors
-  open Ballerina.BusinessRules
+  open Ballerina.DSL.Model
 
   type TypeName = string
 

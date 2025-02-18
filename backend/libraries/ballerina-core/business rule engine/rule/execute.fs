@@ -1,4 +1,4 @@
-namespace Ballerina.BusinessRule
+namespace Ballerina.DSL
 module TransitiveExecution =
   open System
   open System.Linq
@@ -6,13 +6,13 @@ module TransitiveExecution =
   open Ballerina.Collections.Map
   open Ballerina.Coroutines
   open Ballerina.State.WithError
-  open Ballerina.BusinessRule
-  open Ballerina.BusinessRules
-  open Ballerina.BusinessRule.Predicate
-  open Ballerina.BusinessRule.Execute
-  open Ballerina.BusinessRule.Preprocessor
-  open Ballerina.Expr.Eval
-  open Ballerina.Expr
+  open Ballerina.DSL.Model
+  open Ballerina.DSL.Model
+  open Ballerina.DSL.Predicate
+  open Ballerina.DSL.Execute
+  open Ballerina.DSL.Preprocessor
+  open Ballerina.DSL.Expr.Eval
+  open Ballerina.DSL.Expr.Model
 
   type TraceFrame = { ExecutedRules:Map<BusinessRuleId, EntitiesIdentifiers>; ModifiedFields:Map<FieldDescriptorId, EntitiesIdentifiers>; }
   type BusinessRuleExecutionError = Loop of List<TraceFrame>

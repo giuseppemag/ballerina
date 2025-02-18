@@ -1,7 +1,7 @@
 namespace Ballerina
 module Errors =
 
-  open Ballerina.Sum
+  open Ballerina.Collections.Sum
   open Ballerina.State.WithError
   open Ballerina.Core.String
   open System

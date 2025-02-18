@@ -1,13 +1,13 @@
-namespace Ballerina.BusinessRule
+namespace Ballerina.DSL
 module Execute =
 
   open System
   open System.Linq
   open Ballerina.Fun
   open Ballerina.Coroutines
-  open Ballerina.BusinessRules
-  open Ballerina.Expr
-  open Ballerina.Expr.Eval
+  open Ballerina.DSL.Model
+  open Ballerina.DSL.Expr.Model
+  open Ballerina.DSL.Expr.Eval
 
   let execute (schema:Schema) (vars:Vars) (assignment:Assignment) : list<Map<FieldDescriptorId, EntitiesIdentifiers>> =
     match assignment.Variable, Expr.eval None schema vars assignment.Value with

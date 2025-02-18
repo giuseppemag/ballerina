@@ -1,10 +1,10 @@
-namespace Ballerina.BusinessRule
+namespace Ballerina.DSL
 module Predicate =
 
   open System
-  open Ballerina.Option
+  open Ballerina.Collections.Option
   open Ballerina.Collections.Map
-  open Ballerina.BusinessRules
+  open Ballerina.DSL.Model
 
   type RuleDependency with
     member dep.Predicate (schema:Schema) (changedEntitiesIds:Set<Guid>) =

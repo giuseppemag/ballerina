@@ -4,16 +4,16 @@ open System.Linq
 open positions.model
 open Ballerina.Fun
 open Ballerina.Collections.Map
-open Ballerina.Sum
+open Ballerina.Collections.Sum
 open Ballerina.Coroutines
-open Ballerina.BusinessRules
-open Ballerina.BusinessRule.Execute
+open Ballerina.DSL.Model
+open Ballerina.DSL.Execute
 open context
-open Ballerina.BusinessRule.TransitiveExecution
-open Ballerina.Expr
-open Ballerina.Expr.Eval
-open Ballerina.BusinessRule.Preprocessor
-open Ballerina.BusinessRule.Predicate
+open Ballerina.DSL.TransitiveExecution
+open Ballerina.DSL.Expr.Model
+open Ballerina.DSL.Expr.Eval
+open Ballerina.DSL.Preprocessor
+open Ballerina.DSL.Predicate
 open Microsoft.FSharp.Quotations
 
 let abcdEventLoop() = 

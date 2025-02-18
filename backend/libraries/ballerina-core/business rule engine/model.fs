@@ -1,14 +1,15 @@
-namespace Ballerina
+namespace Ballerina.DSL
 #nowarn FS0060
-module BusinessRules =
+module Model =
 
   open System
   open Ballerina.Fun
-  open Ballerina.Option
+  open Ballerina.Collections.Option
   open Ballerina.Collections.Map
-  open Ballerina.Sum
+  open Ballerina.Collections.Sum
   open Ballerina.Errors
-  open Ballerina.Expr
+  open Ballerina.DSL.Expr.Model
+  open Ballerina.DSL.Expr.Types.Model
 
   type BusinessRuleId = { BusinessRuleId:Guid }
   and Assignment = { Variable:VarName * List<FieldDescriptorId>; Value:Expr }

@@ -1,7 +1,7 @@
 ﻿module BallerinaRuntime
 
 open System
-open Ballerina.BusinessRule.FormEngine.Runner
+open Ballerina.DSL.FormEngine.Runner
 open System.CommandLine
       
 let formsOptions = {|
@@ -49,6 +49,6 @@ let main args =
   formsCommand.AddOption(formsOptions.codegen_config_path)
 
   // dotnet run -- forms -input person-config.json -validate -codegen ts
-  formsCommand.SetHandler(Action<_,_,_,_,_,_,_>(Ballerina.BusinessRule.FormEngine.Runner.run), formsOptions.mode, formsOptions.language, formsOptions.input, formsOptions.output, formsOptions.package_name, formsOptions.form_name, formsOptions.codegen_config_path)
+  formsCommand.SetHandler(Action<_,_,_,_,_,_,_>(Ballerina.DSL.FormEngine.Runner.run), formsOptions.mode, formsOptions.language, formsOptions.input, formsOptions.output, formsOptions.package_name, formsOptions.form_name, formsOptions.codegen_config_path)
 
   rootCommand.Invoke(args)

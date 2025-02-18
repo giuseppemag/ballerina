@@ -1,12 +1,13 @@
-namespace Ballerina.BusinessRule.FormEngine.Codegen
+namespace Ballerina.DSL.FormEngine.Codegen
 module Golang =
 
-  open Ballerina.Expr
+  open Ballerina.DSL.Expr.Model
+  open Ballerina.DSL.Expr.Types.Model
   open Ballerina.State.WithError
-  open Ballerina.BusinessRule.FormEngine.Model
-  open Ballerina.BusinessRule.FormEngine.Parser
+  open Ballerina.DSL.FormEngine.Model
+  open Ballerina.DSL.FormEngine.Parser
   open Ballerina.Errors
-  open Ballerina.Sum
+  open Ballerina.Collections.Sum
   open Ballerina.Core.String
   open Ballerina.Core.StringBuilder
   open System.Text.RegularExpressions

@@ -1,9 +1,9 @@
-namespace Ballerina.BusinessRule.FormEngine
+namespace Ballerina.DSL.FormEngine
 module Runner =
   open FSharp.Data
   open System
   open System.IO
-  open Ballerina.Sum
+  open Ballerina.Collections.Sum
   open Ballerina.Errors
   open Ballerina.State.WithError
   open System.Text.Json
@@ -11,11 +11,12 @@ module Runner =
   open System.Text.RegularExpressions
   open Ballerina.Core.String
   open Ballerina.Core.StringBuilder
-  open Ballerina.Expr
-  open Ballerina.BusinessRule.FormEngine.Model
-  open Ballerina.BusinessRule.FormEngine.Parser
-  open Ballerina.BusinessRule.FormEngine.Validator
-  open Ballerina.BusinessRule.FormEngine.Codegen.Golang
+  open Ballerina.DSL.Expr.Model
+  open Ballerina.DSL.Expr.Types.Model
+  open Ballerina.DSL.FormEngine.Model
+  open Ballerina.DSL.FormEngine.Parser
+  open Ballerina.DSL.FormEngine.Validator
+  open Ballerina.DSL.FormEngine.Codegen.Golang
   open System.Text.RegularExpressions
 
   type FormsGenTarget = 

@@ -1,15 +1,15 @@
-namespace Ballerina.BusinessRule
+namespace Ballerina.DSL
 module Preprocessor =
 
   open System
   open System.Linq
   open Ballerina.Fun
   open Ballerina.Coroutines
-  open Ballerina.BusinessRules
-  open Ballerina.Expr.Eval
-  open Ballerina.BusinessRule.Execute
+  open Ballerina.DSL.Model
+  open Ballerina.DSL.Expr.Eval
+  open Ballerina.DSL.Execute
   open Ballerina.Collections.Map
-  open Ballerina.Expr
+  open Ballerina.DSL.Expr.Model
 
   type BusinessRule with
     static member getCandidateRules 

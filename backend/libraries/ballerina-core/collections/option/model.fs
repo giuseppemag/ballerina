@@ -1,4 +1,4 @@
-﻿namespace Ballerina
+﻿namespace Ballerina.Collections
 module Option =
   open Ballerina.Fun
   open System

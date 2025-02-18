@@ -2,7 +2,7 @@ namespace Ballerina.State
 module Seq =
 
   open Ballerina.Fun
-  open Ballerina.Sum
+  open Ballerina.Collections.Sum
 
   type SeqState<'a,'c,'s,'e> = State of ('c * 's -> Sum<seq<'a> * Option<'s>, 'e>)
   with 

@@ -1,9 +1,9 @@
 module positions.model
 open System
 open Ballerina.Fun
-open Ballerina.Option
+open Ballerina.Collections.Option
 open Ballerina.Collections.Map
-open Ballerina.BusinessRules
+open Ballerina.DSL.Model
 
 type AB = { 
   ABId:Guid;  

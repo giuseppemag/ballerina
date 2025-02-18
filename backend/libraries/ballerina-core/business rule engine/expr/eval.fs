@@ -1,13 +1,15 @@
-namespace Ballerina.Expr
+namespace Ballerina.DSL.Expr
 module Eval=
   open System
   open System.Linq
   open Ballerina.Fun
   open Ballerina.Coroutines
-  open Ballerina.Sum
-  open Ballerina.BusinessRules
-  open Ballerina.Expr
-  open Ballerina.Expr.Types.TypeCheck
+  open Ballerina.Collections.Sum
+  open Ballerina.DSL.Model
+  open Ballerina.DSL.Expr
+  open Ballerina.DSL.Expr.Model
+  open Ballerina.DSL.Expr.Types.Model
+  open Ballerina.DSL.Expr.Types.TypeCheck
 
   type Expr with
     static member eval (variableRestriction:Option<VarName * (obj -> bool)>) (schema:Schema) (vars:Vars) : Expr -> list<Vars * Value> =

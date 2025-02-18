@@ -1,10 +1,11 @@
-namespace Ballerina.BusinessRule.FormEngine
+namespace Ballerina.DSL.FormEngine
 module Parser =
 
-  open Ballerina.BusinessRule.FormEngine.Model
-  open Ballerina.Expr
+  open Ballerina.DSL.FormEngine.Model
+  open Ballerina.DSL.Expr.Model
+  open Ballerina.DSL.Expr.Types.Model
   open System
-  open Ballerina.Sum
+  open Ballerina.Collections.Sum
   open Ballerina.State.WithError
   open Ballerina.Errors
   open Ballerina.Core.Json
