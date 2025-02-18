@@ -462,14 +462,12 @@
           "keyRenderer": {
             "label": "name",
             "tooltip": "their name",
-            "renderer": "defaultString",
-            "visible": true
+            "renderer": "defaultString"
           },
           "valueRenderer": {
             "label": "category",
             "tooltip": "their category",
-            "renderer": "defaultCategory",
-            "visible": true
+            "renderer": "defaultCategory"
           },
           "visible": true
         },
@@ -478,13 +476,11 @@
           "renderer": "defaultMap",
           "keyRenderer": {
             "label": "category",
-            "renderer": "defaultCategory",
-            "visible": true
+            "renderer": "defaultCategory"
           },
           "valueRenderer": {
             "label": "name",
-            "renderer": "defaultString",
-            "visible": true
+            "renderer": "defaultString"
           },
           "visible": true
         },
@@ -495,8 +491,7 @@
           "elementRenderer": {
             "label": "one relative",
             "tooltip": "relative",
-            "renderer": "defaultCategory",
-            "visible": true
+            "renderer": "defaultCategory"
           },
           "visible": true
         },
@@ -547,8 +542,7 @@
           "renderer": "defaultList",
           "elementRenderer": {
             "label": "address",
-            "renderer": "address",
-            "visible": true
+            "renderer": "address"
           },
           "visible": true
         },
@@ -557,8 +551,7 @@
           "renderer": "defaultList",
           "elementRenderer": {
             "label": "email",
-            "renderer": "defaultString",
-            "visible": true
+            "renderer": "defaultString"
           },
           "visible": true
         },
@@ -567,13 +560,11 @@
           "renderer": "defaultMap",
           "keyRenderer": {
             "label": "address label",
-            "renderer": "defaultString",
-            "visible": true
+            "renderer": "defaultString"
           },
           "valueRenderer": {
             "label": "address",
-            "renderer": "address",
-            "visible": true
+            "renderer": "address"
           },
           "visible": true
         },
@@ -584,13 +575,11 @@
             "label": "city",
             "tooltip": "a nice place to live",
             "renderer": "defaultInfiniteStream",
-            "stream": "cities",
-            "visible": true
+            "stream": "cities"
           },
           "valueRenderer": {
             "label": "address",
-            "renderer": "address",
-            "visible": true
+            "renderer": "address"
           },
           "visible": true
         },
@@ -600,13 +589,11 @@
           "keyRenderer": {
             "label": "color",
             "renderer": "defaultEnum",
-            "options": "colors",
-            "visible": true
+            "options": "colors"
           },
           "valueRenderer": {
             "label": "address",
-            "renderer": "address",
-            "visible": true
+            "renderer": "address"
           },
           "visible": true
         },
@@ -616,13 +603,11 @@
           "keyRenderer": {
             "label": "permission",
             "renderer": "defaultEnum",
-            "options": "permissions",
-            "visible": true
+            "options": "permissions"
           },
           "valueRenderer": {
             "label": "granted",
-            "renderer": "defaultBoolean",
-            "visible": true
+            "renderer": "defaultBoolean"
           },
           "visible": true
         },
@@ -632,14 +617,12 @@
           "keyRenderer": {
             "label": "department",
             "renderer": "defaultInfiniteStream",
-            "stream": "departments",
-            "visible": true
+            "stream": "departments"
           },
           "valueRenderer": {
             "label": "city",
             "renderer": "defaultInfiniteStream",
-            "stream": "cities",
-            "visible": true
+            "stream": "cities"
           },
           "visible": true
         },
@@ -654,13 +637,11 @@
           "label": "friends birthdays",
           "keyRenderer": {
             "label": "name",
-            "renderer": "defaultString",
-            "visible": true
+            "renderer": "defaultString"
           },
           "valueRenderer": {
             "label": "birthday",
-            "renderer": "defaultDate",
-            "visible": true
+            "renderer": "defaultDate"
           },
           "visible": true
         },
@@ -669,8 +650,7 @@
           "renderer": "defaultList",
           "elementRenderer": {
             "label": "holiday",
-            "renderer": "defaultDate",
-            "visible": true
+            "renderer": "defaultDate"
           },
           "visible": true
         }

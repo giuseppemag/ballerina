@@ -3,7 +3,6 @@ open System
 open System.Linq
 open Microsoft.Extensions.DependencyInjection
 open Ballerina.Coroutines
-open Ballerina.Coroutines.Runner
 open Migrations
 open Microsoft.EntityFrameworkCore
 open absample.efmodels
@@ -48,8 +47,6 @@ let abEventLoop (createScope:Unit -> IServiceScope) =
                           |> Seq.map snd
                           |> Seq.map (absample.efmodels.ABEvent.FromUnion)
                           |> Seq.map (absample.efmodels.ABEvent.WithRecord (fun e -> { e with ProcessingStatus=ABEventStatus.Processed }))
-    // if removed |> Seq.isEmpty |> not then
-    //   printfn "events = %A, events' = %A, removed = %A" (events |> Map.values |> Seq.toArray) (events' |> Map.values |> Seq.toArray) (removed |> Seq.toArray)
     db.ABEvents.UpdateRange(removed) |> ignore
     db.ABEvents.AddRange(added) |> ignore
     db.SaveChanges() |> ignore

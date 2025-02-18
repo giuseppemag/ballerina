@@ -1,36 +1,12 @@
 Todo (✅/❌)
   ❌ make validator partial
   ❌ show both data-sync and type-safe forms in FormsApp
-  ✅ docker
-    ✅ PG
-    ✅ PG-admin
+
   ❌ check that we can inspect a local DB (MySQL, Redis, ES, Postgres)
   ❌ form validator and code generator
-    ✅ create a production-ready `ballerina` project that can be run
-      ✅ rename `web` to `test`
-    ✅ receive the command line parameters  
-      ✅ form json
-    ✅ define a `Sum`  domain with the `<+>` operator
-    ✅ read the json with FSharp.Data
-    ✅ parse and validate the json of a form config
-      ✅ rename `Multiselection` to `MultiSelection`
-      ✅ streams need to validate that the underlying type has id and displayvalue
-      ✅ parse the JSON into the representation forms
-        ✅ make all nested renderers properly recurrent in structure
-      ✅ pretty print types in errors
-      ✅ pretty print expressions in errors
-      ✅ the predicate validation should not validate the same form multiple times in the same context, add memoization
-      ✅ replace all instances of `let! s = state.GetState(); s.[Types|Enum|...] |> Map.tryFind` with some `state.TryFind[Type|Enum|...]`
-      ✅ there are unparsed placeholders for the labels and tooltips
-        ✅ add the new field `details` or what's it called to the validator
-    ✅ fix `Any` and `Error`: semigroups, not monoids
-    ✅ introduce `sum.Both`
-    ✅ introduce `state.Both`
-    ✅ introduce a natural transformation that flips state and option, use it to parse the `disabledJson` elegantly
-    ✅ move string builder to ballerina-core
     ✅ `ExprType.Unify` does not belong in _the other_ mega-file: split Expr, ExprType, eval, typeCheck
     ✅ deploy published release on GitHub with a bash script
-    ❌ move to ballerina-core
+    ✅ move to ballerina-core
       ✅ extract `Unify` and `UnificationConstraints` form typeCheck
       ✅ move `JsonValue` extension to core
       ✅ make `tryFindFieldsN` prettier (as in: take as input a normal tuple, give back a normal tuple)
@@ -39,23 +15,34 @@ Todo (✅/❌)
           ✅ define state.All3, state.All4, state.All5
         ✅ Utils.tryFindField -> sum.TryFindField
         ✅ with `Pair` for the `<*>` operator?
-      ❌ all utility methods should be capitalized in Program.fs
-      ❌ don't mix `printfn` and `Console.WriteLine`: only the latter, with string interpolation
-      ❌ remove the visibility predicates from odd renderers like ElementRenderer, KeyRenderer, and so on
-      ❌ models
-      ❌ parsing
-        ❌ expr and expr type parsing must go to their respective meta-modules
-      ❌ validation
-      ❌ codegen
-      ❌ "runner"/entrypoint
+      ✅ all utility methods should be capitalized in Program.fs
+      ✅ don't mix `printfn` and `Console.WriteLine`: only the latter, with string interpolation
+      ✅ remove the visibility predicates from odd renderers like ElementRenderer, KeyRenderer, and so on
+      ✅ models
+      ✅ parsing
+      ✅ validation
+      ✅ codegen
+      ✅ "runner"/entrypoint
     ✅ split the mega-file for the business rules (business rule engine/model)
       ❌ X.[Model|Feature1|Feature2|...FeatureN]
+      ❌ rename `BusinessRule` -> `BusinessRules`
+      ❌ `Expr`should be in `BusinessRules`
+      ❌ rename `BusinessRules`-> `DSL`
+      ❌ the `Sum` module belongs under the `Collections` namespace
     ❌ the code is acceptable now
     ❌ break the form engine in all possible ways and ensure good errors arise
       ❌ define tests, one minimal spec for anything that can go wrong
       ❌ run tests when releasing
-    ❌ define `import` command
-      ❌ with preprocessor plugins
+    ❌ extensions
+      ❌ preprocessor plugins
+      ❌ add homomorphic forms
+      ❌ add multi-field renderers
+        ❌ use tuples
+      ❌ define `import` command
+      ❌ add paginated lists
+        ❌ requires changes to the frontend
+      ❌ add lazy fields
+        ❌ requires changes to the frontend
     ❌ the functionality of the validator is now mature
     ❌ improve the generated whitespace
     ❌ adjust person-config in FE and use that from cmd line, delete the copy
@@ -69,27 +56,22 @@ Todo (✅/❌)
     ✅ adjust all patterns like `|> Seq.tryFind (fst >> (=) "stream") |> Option.map snd` to `JsonValue.tryFindField`
     ❌ check the consistency of the used data structures: `Type` vs `TypeId`
     ❌ accept empty `apis` blocks
+    ❌ discard unsupported field names
     ❌ the core library needs more structural cleanup: Queries, Range, etc. should go into `webapi` or a similar domain
-    ❌ make ExprType.resolveLookup recursive
     ❌ add full support for unions, including generation
-    ❌ add homomorphic forms
-      ❌ add homomorphic configuration forms/a plugin system to automatically generate configurations
-    ❌ add multi-field renderers
-    ❌ add paginated lists
-    ❌ the tool is now complete and its code is clean
+    ❌ allow mutually recursive types and forms
+      ❌ be careful with out-of-order extensions
+      ❌ make ExprType.resolveLookup recursive - this might be at odds with the parent task
+    ❌ the tool is now complete
     ❌ add tests
     ❌ help command
     ❌ somewhat painful but
       ❌ `string -> T` is built up while parsing
       ❌ `TId -> T` is the parsed context
-    ❌ define webservice variant
-    ❌ generate Typescript and C# code from forms-config
-    ❌ allow recursive types (needs adjustment in frontend too)
-      ❌ be careful with out-of-order extensions
     ❌ the tool is now very mature and ready for extensive use - further change should be discouraged unless there's a strong case for it
+    ❌ expr and expr type parsing and validation must go to their respective meta-modules
+    ❌ generate Typescript and C# code from forms-config
     ❌ extensibility of primitives as existentially-typed algebras
-    ❌ use topological sorting of types and forms
-    ❌ allow mutually recursive types and forms
     ❌ entites visitors
       ❌ entites GET - identical to stream GETter: pairs of get + serialize
       ❌ entities GETDefault - identical to stream GETter: pairs of get + serialize
@@ -98,6 +80,7 @@ Todo (✅/❌)
       ❌ make all these functions partially applied in the actual parameters vs the visitor parameters
     ❌ build the forms gui editor in Blazor
     ❌ codegen the `import` command with some sort of linking strategy for shared files
+    ❌ define webservice variant
     ✅ allow union types (needs adjustment in frontend too)
   ✅ models
     ✅ users

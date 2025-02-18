@@ -183,7 +183,7 @@ module Program =
           let message =
             "Invalid parameters supplied\nREQUIRED:\ntenant: Guid, client: Guid, secret: string" +
             "\nSee https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-configure-app-access-web-apis to setup up app permissions in your tenant."
-          printfn "%s" message
+          Console.WriteLine message
         else  
           msGraphEventLoop tenant clientId clientSecret
       ),
@@ -203,7 +203,7 @@ module Program =
             "\nhttps://accounts.spotify.com/authorize?client_id=<api_client_id>&response_type=code&redirect_uri=http://localhost:5000" +
             "\nto redirect to your localhost. After the browser times out, you will see the authorization code appended to the URL." +
             "\nA full smooth implementation requires a front end application that forwards the code to your backend."
-          printfn "%s" message
+          Console.WriteLine message
         else
           spotifyEventLoop clientId clientSecret authorizationCode
       ),
