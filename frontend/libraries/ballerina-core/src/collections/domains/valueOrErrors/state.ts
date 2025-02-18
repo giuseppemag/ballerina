@@ -2,7 +2,7 @@ import { List } from "immutable";
 import { BasicFun, BasicFun2, Fun } from "../../../fun/state";
 import { Value } from "../../../value/state";
 import { Errors } from "../errors/state"
-import { unit, Unit, Updater, Option } from "../../../../main";
+import { unit, Unit, Updater, Option, Sum } from "../../../../main";
 
 export type ValueOrErrors<v, e> = (
   | (Value<v> & { kind: "value" })
@@ -122,25 +122,23 @@ export const ValueOrErrors = {
           ValueOrErrors.Operations.Map<a, ValueOrErrors<b, e>, e>(k)(_)
         )
       ),
+    Catch: <v, e>(_: ValueOrErrors<v, e>): ValueOrErrors<Sum<v, List<e>>, e> =>
+      _.kind == "errors" ?
+        ValueOrErrors.Default.return(Sum.Default.right(_.errors)) : ValueOrErrors.Default.return(Sum.Default.left(_.value)),
     Fold: <v, e, c>(
       l: BasicFun<v, c>,
       r: BasicFun<List<e>, c>
     ): Fun<ValueOrErrors<v, e>, c> =>
       Fun((_) => (_.kind == "value" ? l(_.value) : r(_.errors))),
     All: <v, e>(_: List<ValueOrErrors<v, e>>): ValueOrErrors<List<v>, e> =>
-      _.reduce(
-        (reduction, value) =>
-          ValueOrErrors.Operations.Fold<v, e, ValueOrErrors<List<v>, e>>(
-            (v: v) =>
-              reduction.kind == "errors"
-                ? reduction
-                : reduction.Map((_) => _.concat(v)),
-            (es: List<e>) =>
-              reduction.kind == "errors"
-                ? reduction.MapErrors((_) => _.concat(es))
-                : ValueOrErrors.Default.throw(es)
-          )(value),
-        ValueOrErrors.Default.return(List<v>())
-      ),
+      _.size == 0 ? 
+        ValueOrErrors.Default.return(List())
+      : ValueOrErrors.Operations.Catch(_.first()!).Then(res_p => 
+        res_p.kind == "l" ? 
+          ValueOrErrors.Operations.All(_.slice(1).toList()).Then(values => 
+            ValueOrErrors.Default.return(List<v>().push(res_p.value).concat(values))
+          )
+        : ValueOrErrors.Default.throw(res_p.value)
+      )
   },
 };

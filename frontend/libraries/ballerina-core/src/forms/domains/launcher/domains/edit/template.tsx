@@ -23,7 +23,14 @@ export const EditFormTemplate = <E, FS>() : EditFormTemplate<E,FS> =>
     EditFormForeignMutationsExpected<E, FS>,
     EditFormView<E, FS>
     >(props =>
-      <>
+      {
+      const visibilities = props.context.customFormState.predicateEvaluations.kind == "value" && 
+        props.context.customFormState.predicateEvaluations.value.visiblityPredicateEvaluations.kind == "form" ?
+        props.context.customFormState.predicateEvaluations.value.visiblityPredicateEvaluations : undefined;
+      const disabledFields = props.context.customFormState.predicateEvaluations.kind == "value" 
+        && props.context.customFormState.predicateEvaluations.value.disabledPredicateEvaluations.kind == "form" ?
+        props.context.customFormState.predicateEvaluations.value.disabledPredicateEvaluations : undefined;
+      return <>
       {
         props.view({
           ...props,
@@ -36,23 +43,26 @@ export const EditFormTemplate = <E, FS>() : EditFormTemplate<E,FS> =>
           view: {
             ...props.view,
             actualForm:
-          !AsyncState.Operations.hasValue(props.context.entity.sync) ? undefined :
+            !AsyncState.Operations.hasValue(props.context.entity.sync) || props.context.globalConfiguration.kind == "r" ? undefined :
             props.context.actualForm({
               context: {
                 value: props.context.entity.sync.value,
                 formFieldStates: props.context.formFieldStates,
                 commonFormState: props.context.commonFormState,
+                visibilities,
+                disabledFields
               },
               setState: _ => {
                 props.setState(__ => ({
                   ...__,
                   formFieldStates: _(__).formFieldStates,
-                  commonFormState: _(__).commonFormState
+                  commonFormState: _(__).commonFormState,
                 }))
               },
               foreignMutations: {
                 onChange: (e) => {
-                  props.setState(EditFormState<E, FS>().Updaters.Template.entity(e))
+                  props.setState(EditFormState<E, FS>().Updaters.Template.entity(e));
+                  props.setState(EditFormState<E, FS>().Updaters.Template.recalculatePredicates())
                 },
               },
               view: unit
@@ -61,6 +71,7 @@ export const EditFormTemplate = <E, FS>() : EditFormTemplate<E,FS> =>
         })
       }
       </>
+      }
     ).any([
       editFormRunner<E, FS>().mapContextFromProps(props => ({
         ...props.context,

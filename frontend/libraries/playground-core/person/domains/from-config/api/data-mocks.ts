@@ -1,15 +1,27 @@
 import { faker } from "@faker-js/faker"
-import { CollectionReference, BoolExpr, Unit, InfiniteStreamSources, StreamPosition, PromiseRepo, OrderedMapRepo, EnumOptionsSources, EntityApis, unit, Guid, CollectionSelection } from "ballerina-core"
-import { Range, OrderedMap, List } from "immutable"
+import { CollectionReference, InfiniteStreamSources, PromiseRepo, EnumOptionsSources, EntityApis, unit, Guid, GlobalConfigurationSources } from "ballerina-core"
+import { OrderedMap, List } from "immutable"
 import { City } from "../../address/state"
 import { AddressApi } from "../../address/apis/mocks"
 import { v4 } from "uuid"
 import { PersonApi } from "../../../apis/mocks"
 
-const permissions = ["create", "read", "update", "delete"]
-const colors = [ faker.color.human(), faker.color.human(), faker.color.human(), faker.color.human()]
-const genders = ["M", "F", "X", "Y"]
-const interests = ["finance", "marketing", "management", "development"]
+const permissions = ["Create", "Read", "Update", "Delete"]
+const colors = [ "Red", "Green", "Blue"]
+const genders = ["M", "F", "X"]
+const interests = ["Soccer", "Hockey", "BoardGames", "HegelianPhilosophy"]
+
+const globalApis: GlobalConfigurationSources = (globalConfigName: string) => { 
+  switch (globalConfigName) {
+    case "globalConfiguration":
+      return Promise.resolve({
+        IsAdmin: false,
+        ERP: "ERP:SAP"
+      })
+    default:
+      return Promise.reject()
+  }
+}
 
 const streamApis: InfiniteStreamSources = (streamName: string) =>
   streamName == "departments" ?
@@ -62,11 +74,13 @@ const entityApis: EntityApis = {
             category: ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3],
             name: faker.person.firstName(),
             surname: faker.person.lastName(),
-            birthday: new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45),
+            birthday: new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45).toISOString(),
             subscribeToNewsletter: Math.random() > 0.5,
-            favoriteColor: {Value: {Value: colors[Math.round(Math.random() * 10) % 4]}, IsSome: true},
+            favoriteColor: {Value: {Value: colors[Math.round(Math.random() * 10) % 3]}, IsSome: true},
             gender: {IsSome: false, Value: { Value: ""}},
-            // gender: {Value: "M", IsSome: true},
+            dependants: [{key: "Steve", value: "adult"}, {key: "Alice", value: "senior"}],
+            friendsByCategory: [],
+            relatives: [["child", "adult", "senior"][Math.round(Math.random() * 10) % 3], ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3], ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3]],
             interests: [{Value: interests[1]}, {Value: interests[2]}],
             departments: [],
             mainAddress: {
@@ -77,16 +91,16 @@ const entityApis: EntityApis = {
                 :
                 {Value: {...City.Default(v4(), faker.location.city())}, IsSome: true}
             },
-            addresses: List([{
+            addresses: [{
               street: faker.location.street(),
               number: Math.floor(Math.random() * 500),
               city: Math.random() > 0.5 ?
                 {IsSome: false, Value: {Value: ""}}
                 :
                 {Value: {...City.Default(v4(), faker.location.city())}, IsSome: true}
-            }]),
+            }],
             emails: ["john@doe.it", "johnthedon@doe.com"],
-            "addressesWithLabel": [
+            addressesWithLabel: [
               {
                 key: "home",
                 value: {
@@ -99,7 +113,7 @@ const entityApis: EntityApis = {
                 }
               }
             ],
-            "addressesByCity": [
+            addressesByCity: [
               {
                 key: {IsSome: true, Value: {...City.Default(v4(), faker.location.city())}},
                 value: {
@@ -123,27 +137,29 @@ const entityApis: EntityApis = {
                 }
               }
             ],
-            "addressesWithColorLabel": [],
-            "permissions": [],
-            "dependants":
-             [
+            addressesWithColorLabel: [
               {
-                key: faker.person.firstName(),
-                value: ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3]
+                key: {IsSome: true, Value: {Value: colors[Math.round(Math.random() * 10) % 3]}},
+                value: {
+                  street: faker.location.street(),
+                  number: Math.floor(Math.random() * 500),
+                  city: {IsSome: false, Value: {Value: ""}}
+                }
               },
               {
-                key: faker.person.firstName(),
-                value: ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3]
+                key: {IsSome: true, Value: {Value: colors[Math.round(Math.random() * 10) % 3]}},
+                value: {
+                  street: faker.location.street(),
+                  number: Math.floor(Math.random() * 500),
+                  city: {IsSome: false, Value: {Value: ""}}
+                }
               }
             ],
-            "relatives": [["child", "adult", "senior"][Math.round(Math.random() * 10) % 3], ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3], ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3]],
-            "friendsByCategory":
-             [
-              {
-                key: ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3],
-                value: faker.person.firstName()
-              }
-            ],
+            permissions: [],
+            cityByDepartment: [],
+            shoeColours: [],
+            friendsBirthdays: [],
+            holidays: [],
           })
         }
       default:
@@ -172,33 +188,33 @@ const entityApis: EntityApis = {
     apiName == "person" ?
       _ => PromiseRepo.Default.mock(() => {
         return ({
+          category: "",
           name: "",
           surname: "",
-          birthday: undefined,
+          birthday: "",
           subscribeToNewsletter: false,
-          favoriteColor: undefined,
-          // CollectionSelection<CollectionReference>().Default.right("no selection"),
-          gender: undefined,
-          // CollectionSelection<CollectionReference>().Default.right("no selection"),
+          favoriteColor: {Value: {Value: null}, IsSome: false},
+          gender: {IsSome: false, Value: { Value: null}},
+          dependants: [],
+          friendsByCategory: [],
+          relatives: [],
           interests: [],
-          // OrderedMap(),
           departments: [],
-          // OrderedMap(),
           mainAddress: {
             street: "",
             number: 0,
-            city: undefined,
-            // CollectionSelection<CollectionReference>().Default.right("no selection"),
+            city: {IsSome: false, Value: { Value: null}},
           },
           addresses: [],
-          // List(),
           emails: [],
-          // List(),
-
-          "addressesWithLabel": [],
-          "addressesByCity": [],
-          "addressesWithColorLabel": [],
-          "permissions": [],
+          addressesWithLabel: [],
+          addressesByCity: [],
+          addressesWithColorLabel: [],
+          permissions: [],
+          cityByDepartment: [],
+          shoeColours: [],
+          friendsBirthdays: [],
+          holidays: [],
         })
       }
       )
@@ -211,5 +227,6 @@ const entityApis: EntityApis = {
 export const PersonFromConfigApis = {
   streamApis,
   enumApis,
-  entityApis
+  entityApis,
+  globalApis
 }

@@ -1,4 +1,4 @@
-import { ApiConverters, CollectionReference, CollectionSelection, UnionCase } from "ballerina-core";
+import { ApiConverters, CollectionSelection } from "ballerina-core";
 import { List, OrderedMap } from "immutable";
 import { PersonFormInjectedTypes } from "src/domains/person-from-config/injected-forms/category";
 

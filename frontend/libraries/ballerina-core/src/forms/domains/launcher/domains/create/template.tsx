@@ -22,6 +22,12 @@ export const CreateFormTemplate = <E, FS>(): CreateFormTemplate<E, FS> =>
     CreateFormWritableState<E, FS>,
     CreateFormForeignMutationsExpected<E, FS>,
     CreateFormView<E, FS>>(props => {
+      const visibilities = props.context.customFormState.predicateEvaluations.kind == "value" && 
+        props.context.customFormState.predicateEvaluations.value.visiblityPredicateEvaluations.kind == "form" ?
+        props.context.customFormState.predicateEvaluations.value.visiblityPredicateEvaluations : undefined;
+      const disabledFields = props.context.customFormState.predicateEvaluations.kind == "value" 
+        && props.context.customFormState.predicateEvaluations.value.disabledPredicateEvaluations.kind == "form" ?
+        props.context.customFormState.predicateEvaluations.value.disabledPredicateEvaluations : undefined;
       return <>
         {
           props.view({
@@ -40,6 +46,8 @@ export const CreateFormTemplate = <E, FS>(): CreateFormTemplate<E, FS> =>
                       value: props.context.entity.sync.value,
                       formFieldStates: props.context.formFieldStates,
                       commonFormState: props.context.commonFormState,
+                      visibilities,
+                      disabledFields
                     },
                     setState: _ => {
                       props.setState(__ => ({
@@ -50,7 +58,8 @@ export const CreateFormTemplate = <E, FS>(): CreateFormTemplate<E, FS> =>
                     },
                     foreignMutations: {
                       onChange: (e) => {
-                        props.setState(CreateFormState<E, FS>().Updaters.Template.entity(e))
+                        props.setState(CreateFormState<E, FS>().Updaters.Template.entity(e));
+                        props.setState(CreateFormState<E, FS>().Updaters.Template.recalculatePredicates())
                       }
                     },
                     view: unit

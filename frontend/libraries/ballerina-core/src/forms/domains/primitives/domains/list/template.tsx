@@ -1,12 +1,12 @@
 import { List } from "immutable";
-import { SimpleCallback, BasicFun, Unit, ValidateRunner, Updater, BasicUpdater, MapRepo, ListRepo, CoTypedFactory, Debounce, Synchronize} from "../../../../../../main";
+import { SimpleCallback, BasicFun, Unit, ValidateRunner, Updater, BasicUpdater, MapRepo, ListRepo, CoTypedFactory, Debounce, Synchronize, FormFieldPredicateEvaluation} from "../../../../../../main";
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import { FieldValidation, FieldValidationWithPath, FormValidatorSynchronized, OnChange, CommonFormState } from "../../../singleton/state";
 import { ListFieldState, ListFieldView } from "./state";
 
-export const ListForm = <Element, ElementFormState, Context extends FormLabel, ForeignMutationsExpected>(
+export const ListForm = <Element, ElementFormState, Context extends FormLabel & {elementVisibilities: FormFieldPredicateEvaluation[], elementDisabled: FormFieldPredicateEvaluation[]}, ForeignMutationsExpected>(
   ElementFormState: { Default: () => ElementFormState },
   Element: { Default: () => Element  | undefined},
   elementTemplate: Template<
@@ -37,7 +37,9 @@ export const ListForm = <Element, ElementFormState, Context extends FormLabel, F
           if(!_.value.has(elementIndex)) return undefined
           const element = _.value.get(elementIndex)
           const elementFormState = _.elementFormStates.get(elementIndex) || ElementFormState.Default()
-          const elementContext : Context & Value<Element | undefined> & ElementFormState = ({ ..._, ...elementFormState, value: element })
+          const elementVisibility = _.elementVisibilities[elementIndex]
+          const elementDisabled = _.elementDisabled[elementIndex]
+          const elementContext : Context & Value<Element | undefined> & ElementFormState = ({ ..._, ...elementFormState, value: element, visibilities: elementVisibility, disabledFields: elementDisabled })
           return elementContext
         })
         .mapState((_:BasicUpdater<ElementFormState>) : Updater<ListFieldState<Element | undefined, ElementFormState>> => 
@@ -45,7 +47,8 @@ export const ListForm = <Element, ElementFormState, Context extends FormLabel, F
             MapRepo.Updaters.upsert(elementIndex, () => ElementFormState.Default(),  _)
           ))
   return Template.Default<Context & Value<List<Element | undefined>> & { disabled: boolean }, ListFieldState<Element | undefined, ElementFormState>, ForeignMutationsExpected & { onChange: OnChange<List<Element | undefined>>; },
-    ListFieldView<Element | undefined, ElementFormState, Context, ForeignMutationsExpected>>(props => <>
+    ListFieldView<Element | undefined, ElementFormState, Context, ForeignMutationsExpected>>(props => {
+    return <>
       <props.view {...props}
         context={{
           ...props.context,
@@ -65,7 +68,7 @@ export const ListForm = <Element, ElementFormState, Context extends FormLabel, F
         }}
         embeddedElementTemplate={embeddedElementTemplate}
       />
-    </>
+    </>}
     ).any([
       ValidateRunner<Context & { disabled: boolean }, ListFieldState<Element | undefined, ElementFormState>, ForeignMutationsExpected, List<Element | undefined>>(
         validation ? _ => validation(_).then(FieldValidationWithPath.Default.fromFieldValidation) : undefined

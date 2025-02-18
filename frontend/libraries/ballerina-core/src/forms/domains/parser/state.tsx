@@ -1,5 +1,5 @@
-import { List, Map, OrderedMap, OrderedSet, Set } from "immutable";
-import { BoolExpr, Unit, Guid, LeafPredicatesEvaluators, Predicate, ParsedFormJSON, BuiltIns, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, CommonFormState, CreateFormState, EditFormContext, CreateFormContext, Synchronized, simpleUpdater, TypeName, ListFieldState, ListForm, BuiltInApiConverters, defaultValue, fromAPIRawValue, toAPIRawValue, EditFormForeignMutationsExpected, MapFieldState, MapForm, ParsedType, Base64FileForm, SecretForm, InjectedPrimitives, Injectables, ApiConverters, Maybe, ApiResponseChecker, Debounced, ParsedFormConfig } from "../../../../main";
+import { List, Map, OrderedSet, Set } from "immutable";
+import { Unit, Guid, ParsedFormJSON, BuiltIns, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, CommonFormState, CreateFormState, EditFormContext, CreateFormContext, Synchronized, simpleUpdater, defaultValue, fromAPIRawValue, toAPIRawValue, EditFormForeignMutationsExpected, ParsedType, InjectedPrimitives, Injectables, ApiConverters, ApiResponseChecker, Debounced, ParsedFormConfig, PredicateValue, FieldPredicateExpressions, FormFieldPredicateEvaluation, ValueOrErrors } from "../../../../main";
 import { CollectionReference, EnumReference } from "../collection/domains/reference/state";
 import { SearchableInfiniteStreamState } from "../primitives/domains/searchable-infinite-stream/state";
 import { Form } from "../singleton/template";
@@ -10,8 +10,8 @@ export type ParsedForm<T,> = {
   formConfig: any,
   formName: string,
   formDef: ParsedFormConfig<T>,
-  visibleFields: any,
-  disabledFields: any,
+  visibilityPredicateExpressions: FieldPredicateExpressions,
+  disabledPredicatedExpressions: FieldPredicateExpressions
 }
 export const ParseForm = <T,>(
   formName: string,
@@ -23,13 +23,13 @@ export const ParseForm = <T,>(
   infiniteStreamSources: any,
   enumOptionsSources: EnumOptionsSources,
   leafPredicates: any,
-  visibleFieldsBoolExprs: any,
-  disabledFieldsBoolExprs: any,
   defaultValue: BasicFun<ParsedType<T>, any>,
   injectedPrimitives?: InjectedPrimitives<T>
 ): ParsedForm<T> => {
 
   const formConfig: any = {};
+  let visibilityPredicateExpressions: FieldPredicateExpressions = Map()
+  let disabledPredicatedExpressions: FieldPredicateExpressions = Map()
   const initialFormState: any = {
     commonFormState: CommonFormState.Default(),
     formFieldStates: {},
@@ -39,39 +39,29 @@ export const ParseForm = <T,>(
 
   fieldNames.forEach(fieldName => {
     const parsedFormConfig  = ParsedRenderer.Operations.RendererToForm(
+      fieldName,
       {formViews, forms, nestedContainerFormView, defaultValue, enumOptionsSources, leafPredicates, infiniteStreamSources, injectedPrimitives },
-      formDef.fields.get(fieldName)! 
+      formDef.fields.get(fieldName)!,
     )
     if(parsedFormConfig.kind == "errors") throw Error(`Error parsing form ${fieldsViewsConfig[fieldName]}`) // TODO - better error handling
 
-    formConfig[fieldName] = parsedFormConfig.value.renderer
-    initialFormState["formFieldStates"][fieldName] = parsedFormConfig.value.initialState
+    formConfig[fieldName] =  parsedFormConfig.value.form.renderer
+    visibilityPredicateExpressions = visibilityPredicateExpressions.set(fieldName, parsedFormConfig.value.visibilityPredicateExpression)
+    disabledPredicatedExpressions = disabledPredicatedExpressions.set(fieldName, parsedFormConfig.value.disabledPredicatedExpression)
+    initialFormState["formFieldStates"][fieldName] = parsedFormConfig.value.form.initialState
 
   });
-  const visibleFields = parseVisibleFields(
-    Object.entries(visibleFieldsBoolExprs), leafPredicates
-  );
-  const disabledFields = parseVisibleFields(
-    Object.entries(disabledFieldsBoolExprs), leafPredicates
-  );
+
 
   return ({
     initialFormState,
     formName,
     formDef,
     formConfig,
-    visibleFields,
-    disabledFields,
+    visibilityPredicateExpressions,
+    disabledPredicatedExpressions
   });
 };
-
-export const parseVisibleFields = (
-  visibleFields: Array<[string, BoolExpr<any>]>,
-  leafPredicates: LeafPredicatesEvaluators<any, any>): OrderedMap<string, Predicate<any>> => 
-    OrderedMap(
-      visibleFields.map(([fieldName, boolExpr]) => ([fieldName, boolExpr.eval<any>(leafPredicates)]) as any)
-    )
-
 export type EditLauncherContext<Entity, FormState, ExtraContext> =
   Omit<
     EditFormContext<Entity, FormState> &
@@ -106,11 +96,15 @@ export type ParsedLaunchers = {
       initialState: EditFormState<Entity, FormState>
     }>,
 }
-export type ParsedForms<T> = Map<string, ParsedForm<T> & { form: EntityFormTemplate<any, any, any, any, any> }>
+export type ParsedForms<T> = Map<string, ParsedForm<T> & { form: EntityFormTemplate<any, any, any, any, any>, visibilityPredicateExpressions: FieldPredicateExpressions, disabledPredicatedExpressions: FieldPredicateExpressions }>
 export type FormParsingErrors = List<string>
 export type FormParsingResult = Sum<ParsedLaunchers, FormParsingErrors>
+export type EnumName = string
+export type EnumOptionsSources = BasicFun<EnumName, BasicFun<Unit, Promise<Array<EnumReference>>>>
 export type StreamName = string
 export type InfiniteStreamSources = BasicFun<StreamName, SearchableInfiniteStreamState<CollectionReference>["customFormState"]["getChunk"]>
+export type ConfigName = string
+export type GlobalConfigurationSources = BasicFun<ConfigName, Promise<any>>
 export type EntityName = string
 export type EntityApis = {
   create: BasicFun<EntityName, BasicFun<any, Promise<Unit>>>
@@ -118,10 +112,7 @@ export type EntityApis = {
   update: BasicFun<EntityName, (id: Guid, entity: any) => Promise<ApiErrors>>
   get: BasicFun<EntityName, BasicFun<Guid, Promise<any>>>
 }
-export type EnumName = string
 
-
-export type EnumOptionsSources = BasicFun<EnumName, BasicFun<Unit, Promise<Array<EnumReference>>>>
 export const parseForms =
   <LeafPredicates, T extends { [key in keyof T]: { type: any; state: any; }; },>(
     builtIns: BuiltIns,
@@ -132,6 +123,7 @@ export const parseForms =
     fieldViews: any,
     infiniteStreamSources: InfiniteStreamSources,
     enumOptionsSources: EnumOptionsSources,
+    globalConfigurationSources: GlobalConfigurationSources,
     entityApis: EntityApis,
     leafPredicates: LeafPredicates) =>
     (formsConfig: ParsedFormJSON<T>):
@@ -155,7 +147,6 @@ export const parseForms =
         }
         seen = seen.add(formDef.name)
         formDef.fields.forEach((field, fieldName) => {
-          // TODO add a union case
           if (field.type.kind == "lookup" || field.type.kind == "form") {
             traverse(formsConfig.forms.get(field.renderer)!)
           }
@@ -192,8 +183,6 @@ export const parseForms =
       formProcessingOrder.forEach(formName => {
         const formConfig = formsConfig.forms.get(formName)!
         const formFieldRenderers = formConfig.fields.map(field => field.renderer).toObject()
-        const formFieldVisibilities = formConfig.fields.map(field => field.visible).toObject()
-        const formFieldDisabled = formConfig.fields.map(field => field.disabled).toObject()
         try {
           const parsedForm = ParseForm(
             formName,
@@ -205,8 +194,6 @@ export const parseForms =
             infiniteStreamSources,
             enumOptionsSources,
             leafPredicates,
-            formFieldVisibilities,
-            formFieldDisabled,
             defaultValue(formsConfig.types, builtIns, injectedPrimitives),
             injectedPrimitives
           )
@@ -216,16 +203,19 @@ export const parseForms =
           })
           .mapContext<Unit>(_ => {
             return ({ 
+                      label: (_ as any).label,
                       value: (_ as any).value,
                       commonFormState: (_ as any).commonFormState,
                       formFieldStates: (_ as any).formFieldStates,
                       rootValue: (_ as any).rootValue,
                       extraContext: (_ as any).extraContext,
-                      disabledFields: parsedForm.disabledFields,
-                      visibleFields: parsedForm.visibleFields,
+                      visibilities: (_ as any).visibilities,
+                      disabledFields: (_ as any).disabledFields,
+                      visibilityPredicateExpressions: parsedForm.visibilityPredicateExpressions,
+                      disabledPredicateExpressions: parsedForm.disabledPredicatedExpressions,
                       layout: formConfig.tabs })})
 
-          parsedForms = parsedForms.set(formName, { ...parsedForm, form })
+          parsedForms = parsedForms.set(formName, { ...parsedForm, form, visibilityPredicateExpressions: parsedForm.visibilityPredicateExpressions, disabledPredicatedExpressions: parsedForm.disabledPredicatedExpressions })
         } catch (error: any) {
           console.error(error)
           errors.push(error.message ?? error)
@@ -241,10 +231,14 @@ export const parseForms =
         const parsedForm = parsedForms.get(launcher.form)!
         const form = parsedForm.form
         const initialState = parsedForm.initialFormState
+        const formType = parsedForm.formDef.type;
+        const globalConfigEntity = formsConfig.apis.entities.get(launcher.configApi)!
+        const globalConfigurationType = formsConfig.types.get(globalConfigEntity.type)!
+        const visibilityPredicateExpressions = parsedForm.visibilityPredicateExpressions
+        const disabledPredicatedExpressions = parsedForm.disabledPredicatedExpressions
         const api = {
-          get: (id: string) => entityApis.get(launcher.api)(id).then((raw: any) => {
-            return fromAPIRawValue(parsedForm.formDef.type , formsConfig.types, builtIns, apiConverters, injectedPrimitives)(raw)
-          }),
+          getGlobalConfiguration: () => globalConfigurationSources(launcher.configApi),
+          get: (id: string) => entityApis.get(launcher.api)(id),
           update: (id: any, parsed: any) => {
             return parsed.kind =="errors" ? Promise.reject(parsed.errors) : entityApis.update(launcher.api)(id, parsed.value)  
           }
@@ -255,20 +249,35 @@ export const parseForms =
             form: EditFormTemplate<Entity, FormState>().mapContext((parentContext: Context) =>
               ({
                 value: parentContext.entity.sync.kind == "loaded" ? parentContext.entity.sync.value : undefined,
+                rawEntity: parentContext.rawEntity,
                 entity: parentContext.entity,
+                rawGlobalConfiguration: parentContext.rawGlobalConfiguration,
+                globalConfiguration: parentContext.globalConfiguration,
                 entityId: parentContext.entityId,
                 commonFormState: parentContext.commonFormState,
                 customFormState: parentContext.customFormState,
                 formFieldStates: parentContext.formFieldStates,
                 extraContext: parentContext.extraContext,
+                visibilityPredicateExpressions,
+                disabledPredicatedExpressions,
+                types: formsConfig.types,
+                formType: formType,
                 api: api,
-                parser: (value: any, formState: any) => toAPIRawValue(parsedForm.formDef.type , formsConfig.types, builtIns, apiConverters, injectedPrimitives)(value, formState),
+                parseGlobalConfiguration: (raw: any) => PredicateValue.Operations.parse(raw, globalConfigurationType, formsConfig.types),
+                fromApiParser: (value: any) => fromAPIRawValue(formType , formsConfig.types, builtIns, apiConverters, injectedPrimitives)(value),
+                toApiParser: (value: any, formState: any, checkKeys: boolean) => toAPIRawValue(formType , formsConfig.types, builtIns, apiConverters, injectedPrimitives)(value, formState, checkKeys),
                 actualForm: form.withView(containerFormView).mapContext((_: any) => ({
                   value: _.value,
+                  toApiParser: parentContext.toApiParser,
+                  fromApiParser: parentContext.fromApiParser,
+                  parseGlobalConfiguration: parentContext.parseGlobalConfiguration,
                   formFieldStates: parentContext.formFieldStates, 
                   rootValue: _.value,
                   extraContext: parentContext.extraContext,
-                  commonFormState: parentContext.commonFormState
+                  commonFormState: parentContext.commonFormState,
+                  predicateEvaluations: parentContext.customFormState.predicateEvaluations,
+                  visibilities: _.visibilities,
+                  disabledFields: _.disabledFields,
                    }))
               }) as any)
               .withViewFromProps(props => props.context.submitButtonWrapper)
@@ -276,7 +285,12 @@ export const parseForms =
             initialState: EditFormState<Entity, FormState>().Default(initialState.formFieldStates, initialState.commonFormState, {
               initApiChecker: ApiResponseChecker.Default(true),
               updateApiChecker: ApiResponseChecker.Default(true),
-              apiRunner: Debounced.Default(Synchronized.Default(unit))
+              configApiChecker: ApiResponseChecker.Default(true),
+              apiRunner: Debounced.Default(Synchronized.Default(unit)),
+              predicateEvaluations: Debounced.Default(ValueOrErrors.Default.return({
+                visiblityPredicateEvaluations: FormFieldPredicateEvaluation.Default.form(false, Map()),
+                disabledPredicateEvaluations: FormFieldPredicateEvaluation.Default.form(false, Map())
+              }))
             }),
           })
         )
@@ -284,14 +298,17 @@ export const parseForms =
 
       formsConfig.launchers.create.forEach((launcher, launcherName) => {
         const parsedForm = parsedForms.get(launcher.form)!
-        const form = parsedForm.form
-        const initialState = parsedForm.initialFormState
+        const form = parsedForm.form;
+        const initialState = parsedForm.initialFormState;
+        const formType = parsedForm.formDef.type;
+        const globalConfigEntity = formsConfig.apis.entities.get(launcher.configApi)!
+        const globalConfigurationType = formsConfig.types.get(globalConfigEntity.type)!
+        const visibilityPredicateExpressions = parsedForm.visibilityPredicateExpressions
+        const disabledPredicatedExpressions = parsedForm.disabledPredicatedExpressions
         const api = {
-          default: (_: Unit) => 
-            entityApis.default(launcher.api)(unit).then((raw: any) => 
-              fromAPIRawValue(parsedForm.formDef.type , formsConfig.types, builtIns, apiConverters, injectedPrimitives)(raw)),
-          create: (parsed: any) => 
-            parsed.kind == "errors" ? Promise.reject(parsed.errors) : entityApis.create(launcher.api)(parsed.value)
+          getGlobalConfiguration: () => globalConfigurationSources(launcher.configApi),
+          default: (_: Unit) =>  entityApis.default(launcher.api)(unit),
+          create: (parsed: any) => parsed.kind == "errors" ? Promise.reject(parsed.errors) : entityApis.create(launcher.api)(parsed.value)
           ,
         }
         parsedLaunchers.create = parsedLaunchers.create.set(
@@ -300,22 +317,39 @@ export const parseForms =
             form: CreateFormTemplate<Entity, FormState>().mapContext((parentContext: Context) =>
               { 
                 return ({
-                  apiRunner: parentContext.customFormState.apiRunner,
-                  parser: (value: any, formState: any) => toAPIRawValue(parsedForm.formDef.type , formsConfig.types, builtIns, apiConverters, injectedPrimitives)(value, formState),
                   value: parentContext.entity.sync.kind == "loaded" ? parentContext.entity.sync.value : undefined,
+                  rawEntity: parentContext.rawEntity,
                   entity: parentContext.entity,
+                  rawGlobalConfiguration: parentContext.rawGlobalConfiguration,
+                  globalConfiguration: parentContext.globalConfiguration,
+                  entityId: parentContext.entityId,
                   commonFormState: parentContext.commonFormState,
                   customFormState: parentContext.customFormState,
                   formFieldStates: parentContext.formFieldStates,
+                  extraContext: parentContext.extraContext,
+                  visibilityPredicateExpressions,
+                  disabledPredicatedExpressions,
+                  types: formsConfig.types,
+                  formType: formType,
                   api: api,
+                  parseGlobalConfiguration: (raw: any) => PredicateValue.Operations.parse(raw, globalConfigurationType, formsConfig.types),
+                  fromApiParser: (value: any) => fromAPIRawValue(formType , formsConfig.types, builtIns, apiConverters, injectedPrimitives)(value),
+                  toApiParser: (value: any, formState: any, checkKeys: boolean) => toAPIRawValue(formType , formsConfig.types, builtIns, apiConverters, injectedPrimitives)(value, formState, checkKeys),
                   actualForm: form.withView(containerFormView)
                   .mapContext((_: any) => {
                     return ({ 
                       value: _.value,
+                      toApiParser: parentContext.toApiParser,
+                      fromApiParser: parentContext.fromApiParser,
+                      parseGlobalConfiguration: parentContext.parseGlobalConfiguration,
                       formFieldStates: parentContext.formFieldStates, 
                       rootValue: _.value,
                       extraContext: parentContext.extraContext,
-                      commonFormState: parentContext.commonFormState })
+                      commonFormState: parentContext.commonFormState,
+                      predicateEvaluations: parentContext.customFormState.predicateEvaluations,
+                      visibilities: _.visibilities,
+                      disabledFields: _.disabledFields,
+                    })
                   })
               }) as any})
               .withViewFromProps(props => props.context.submitButtonWrapper)
@@ -324,12 +358,18 @@ export const parseForms =
              {
               initApiChecker:ApiResponseChecker.Default(true),
               createApiChecker:ApiResponseChecker.Default(true),
-              apiRunner: Debounced.Default(Synchronized.Default(unit))
+              configApiChecker:ApiResponseChecker.Default(true),
+              apiRunner: Debounced.Default(Synchronized.Default(unit)),
+              shouldCalculatePredicates: false,
+              predicateEvaluations: Debounced.Default(ValueOrErrors.Default.return({
+                visiblityPredicateEvaluations: FormFieldPredicateEvaluation.Default.form(false, Map()),
+                disabledPredicateEvaluations: FormFieldPredicateEvaluation.Default.form(false, Map())
+              })),
             }),
           })
         )
       })
-
+      
       if (errors.size > 0) {
         return Sum.Default.right(errors)
       }
@@ -343,6 +383,7 @@ export type FormsParserContext<T extends {[key in keyof T] : {type: any, state: 
   fieldTypeConverters: ApiConverters<T>,
   infiniteStreamSources: InfiniteStreamSources,
   enumOptionsSources: EnumOptionsSources,
+  globalConfigurationSources: GlobalConfigurationSources,
   entityApis: EntityApis,
   leafPredicates: any,
   getFormsConfig: BasicFun<void, Promise<any>>

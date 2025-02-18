@@ -18,7 +18,6 @@ export * from "./person/domains/address/state"
 export * from "./person/domains/address/apis/mocks"
 export * from "./person/domains/from-config/state"
 export * from "./person/domains/from-config/api/data-mocks"
-export * from "./person/domains/from-config/api/config-mocks"
 export * from "./person/domains/person-container-config/state"
 
 export * from './debit-note/config'
