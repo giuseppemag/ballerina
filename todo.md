@@ -30,21 +30,52 @@ Todo (✅/❌)
       ✅ `Expr`should be in `BusinessRules`
       ✅ rename `BusinessRules`-> `DSL`
       ✅ the `Sum` module belongs under the `Collections` namespace
-    ❌ adjust person-config in FE and use that from cmd line, delete the copy
-    ❌ the code is acceptable now
+    ✅ the code is acceptable now
     ❌ break the form engine in all possible ways and ensure good errors arise
       ❌ define tests, one minimal spec for anything that can go wrong
-        ❌ create a test project
+        ✅ create a test project
+        ❌ instantiate and cleanup files from test itself
         ❌ invalid types
-        ❌ invalid enums
-        ❌ invalid streams
-        ❌ invalid entities
-        ❌ invalid forms
           ❌ invalid fields
+            ❌ bad structure (array, number, etc. instead of record)
+            ❌ bad names
+            ✅ non-existing types
+            ❌ generics without (the right) arguments
+        ❌ invalid enums
+          ❌ bad structure (array, number, etc. instead of record)
+          ❌ non-existing types
+          ❌ types with the wrong structure
+        ❌ invalid streams
+          ❌ bad structure (array, number, etc. instead of record)
+          ❌ non-existing types
+          ❌ types with the wrong structure
+        ❌ invalid entities
+          ❌ bad structure (array, number, etc. instead of record)
+          ❌ non-existing types
+        ❌ invalid forms
+          ❌ bad structure (array, number, etc. instead of record)
+          ❌ non-existing backing `type`
+          ❌ invalid fields
+            ❌ non-existing fields
+            ❌ invalid properties - label/description/details as numbers or objects
           ❌ invalid renderers
+            ❌ non-existing renderers
+            ❌ mismatch with types
           ❌ invalid predicates
+            ❌ non-existing variables
+            ❌ non-existing fields
+            ❌ mismatched types (`10 == true`)
+            ❌ mismatched enum case checks
         ❌ invalid launchers
+          ❌ non-existing form
+          ❌ missing entity API
+          ❌ missing config API
+          ❌ mismatch form.type vs api.type
+          ❌ mismatch configApi.type vs predicate api implicit type
       ❌ run tests when releasing
+        ❌ run tests when releasing
+    ❌ paths inside `Any` have a priority after a partial match is found - `Any` filters errors lower than the highest priority
+      ❌ add to each `Any`, streamline operators
     ❌ the validator is now mature
     ❌ improve the generated whitespace
     ❌ the Go type generator is now reasonably mature

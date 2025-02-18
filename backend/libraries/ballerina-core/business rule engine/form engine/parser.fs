@@ -10,6 +10,7 @@ module Parser =
   open Ballerina.Errors
   open Ballerina.Core.Json
   open Ballerina.Core.String
+  open Ballerina.Core.Object
   open FSharp.Data
   open Ballerina.Collections.NonEmptyList
 
@@ -378,9 +379,11 @@ module Parser =
           }
           state{
             let! typeName = json |> JsonValue.AsString |> state.OfSum
-            let! (s:ParsedFormsContext) = state.GetState()
-            let! typeId = s.TryFindType typeName |> state.OfSum
-            return ExprType.LookupType typeId.TypeId
+            return! state{
+              let! (s:ParsedFormsContext) = state.GetState()
+              let! typeId = s.TryFindType typeName |> state.OfSum
+              return ExprType.LookupType typeId.TypeId
+            } |> state.MapError (Errors.WithPriority ErrorPriority.High)
           }
           state{
             let! fields = json |> JsonValue.AsRecord |> state.OfSum
@@ -393,8 +396,10 @@ module Parser =
               state{            
                 do! funJson |> JsonValue.AsEnum (Set.singleton "SingleSelection") |> state.OfSum |> state.Map (ignore)
                 let! arg = JsonValue.AsSingleton argsJson |> state.OfSum
-                let! arg = !arg
-                return ExprType.OptionType arg
+                return! state{
+                  let! arg = !arg
+                  return ExprType.OptionType arg
+                } |> state.MapError(Errors.WithPriority ErrorPriority.High)
               },
               [
               state{
@@ -421,10 +426,10 @@ module Parser =
                 let! cases = state.All(cases |> Seq.map (ExprType.ParseUnionCase))
                 return ExprType.UnionType cases
               }
-            ]))
+            ])) |> state.MapError(Errors.HighestPriority)
           }
         ]))
-      }
+      } |> state.MapError(Errors.HighestPriority)
 
   type ExprType with
     static member GetFields (t:ExprType) : Sum<List<string * ExprType>, Errors> =
@@ -574,7 +579,8 @@ module Parser =
                       state{
                         let! fieldType = ExprType.Parse fieldType
                         return fieldName, fieldType
-                      }) |> Seq.toList |> state.All
+                      } |> state.MapError(Errors.Map(String.append $"\n...when parsing field {fieldName}"))
+                    ) |> Seq.toList |> state.All
                 let fields = fields |> Map.ofList
                 let! exprType = 
                   extendedTypes |> Seq.fold (fun (t1:Sum<ExprType, Errors>) t2 -> 
