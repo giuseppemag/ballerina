@@ -30,8 +30,18 @@ Todo (✅/❌)
     ✅ move string builder to ballerina-core
     ✅ `ExprType.Unify` does not belong in _the other_ mega-file: split Expr, ExprType, eval, typeCheck
     ✅ deploy published release on GitHub with a bash script
-    ❌ move the new type parsers to ballerina-core
+    ❌ move to ballerina-core
       ✅ extract `Unify` and `UnificationConstraints` form typeCheck
+      ✅ move `JsonValue` extension to core
+      ✅ make `tryFindFieldsN` prettier (as in: take as input a normal tuple, give back a normal tuple)
+        ✅ define a `tuples` conversion library 
+        ✅ base it off of state
+          ✅ define state.All3, state.All4, state.All5
+        ✅ Utils.tryFindField -> sum.TryFindField
+        ✅ with `Pair` for the `<*>` operator?
+      ❌ all utility methods should be capitalized in Program.fs
+      ❌ don't mix `printfn` and `Console.WriteLine`: only the latter, with string interpolation
+      ❌ remove the visibility predicates from odd renderers like ElementRenderer, KeyRenderer, and so on
       ❌ models
       ❌ parsing
         ❌ expr and expr type parsing must go to their respective meta-modules
@@ -39,13 +49,8 @@ Todo (✅/❌)
       ❌ codegen
       ❌ "runner"/entrypoint
     ✅ split the mega-file for the business rules (business rule engine/model)
-    ❌ don't mix `printfn` and `Console.WriteLine`: only the latter, with string interpolation
-    ❌ make `tryFindFieldsN` prettier (as in: take as input a normal tuple, give back a normal tuple)
-      ❌ move it to the core
-      ❌ define a `tuples` conversion library 
-      ❌ with `Pair` for the `<*>` operator?
+      ❌ X.[Model|Feature1|Feature2|...FeatureN]
     ❌ the code is acceptable now
-    ❌ remove the visibility predicates from odd renderers like ElementRenderer, KeyRenderer, and so on
     ❌ break the form engine in all possible ways and ensure good errors arise
       ❌ define tests, one minimal spec for anything that can go wrong
       ❌ run tests when releasing
@@ -53,7 +58,6 @@ Todo (✅/❌)
       ❌ with preprocessor plugins
     ❌ the functionality of the validator is now mature
     ❌ improve the generated whitespace
-    ❌ all utility methods should be capitalized in Program.fs
     ❌ adjust person-config in FE and use that from cmd line, delete the copy
     ❌ the Go type generator is now reasonably mature
       ❌ write a "why not just a package somewhere?"
@@ -65,6 +69,7 @@ Todo (✅/❌)
     ✅ adjust all patterns like `|> Seq.tryFind (fst >> (=) "stream") |> Option.map snd` to `JsonValue.tryFindField`
     ❌ check the consistency of the used data structures: `Type` vs `TypeId`
     ❌ accept empty `apis` blocks
+    ❌ the core library needs more structural cleanup: Queries, Range, etc. should go into `webapi` or a similar domain
     ❌ make ExprType.resolveLookup recursive
     ❌ add full support for unions, including generation
     ❌ add homomorphic forms

@@ -2,6 +2,7 @@ namespace Ballerina.State
 module WithError =
   open Ballerina.Fun
   open Ballerina.Sum
+  open Ballerina.Collections
   open Ballerina.Collections.NonEmptyList
 
   type State<'a,'c,'s,'e> = State of ('c * 's -> Sum<'a * Option<'s>, 'e * Option<'s>>)
@@ -136,28 +137,12 @@ module WithError =
         | Right e1,Right e2 -> return! state.Throw('e.Concat(e1,e2))
         | Right e,_ | _,Right e -> return! state.Throw e
       }
-    member inline state.All3<'a1,'a2,'a3,'c,'s,'e
-      when 'e : (static member Concat:'e * 'e -> 'e)>
-      (p1:State<'a1,'c,'s,'e>) (p2:State<'a2,'c,'s,'e>) (p3:State<'a3,'c,'s,'e>) =
-      state{
-        let! v1 = state.All2 p1 p2 |> state.Catch
-        let! v2 = p3 |> state.Catch
-        match v1,v2 with
-        | Left (v1,v2),Left v3 -> return v1,v2,v3
-        | Right e1,Right e2 -> return! state.Throw('e.Concat(e1,e2))
-        | Right e,_ | _,Right e -> return! state.Throw e
-      }
-    member inline state.All4<'a1,'a2,'a3,'a4,'c,'s,'e
-      when 'e : (static member Concat:'e * 'e -> 'e)>
-      (p1:State<'a1,'c,'s,'e>) (p2:State<'a2,'c,'s,'e>) (p3:State<'a3,'c,'s,'e>) (p4:State<'a4,'c,'s,'e>) =
-      state{
-        let! v1 = state.All3 p1 p2 p3 |> state.Catch
-        let! v2 = p4 |> state.Catch
-        match v1,v2 with
-        | Left (v1,v2,v3),Left v4 -> return v1,v2,v3,v4
-        | Right e1,Right e2 -> return! state.Throw('e.Concat(e1,e2))
-        | Right e,_ | _,Right e -> return! state.Throw e
-      }
+    member inline state.All3 p1 p2 p3 =
+      state.All2 p1 (state.All2 p2 p3) |> state.Map Tuple.fromNested3
+    member inline state.All4 p1 p2 p3 p4 =
+      state.All2 p1 (state.All2 p2 (state.All2 p3 p4)) |> state.Map Tuple.fromNested4
+    member inline state.All5 p1 p2 p3 p4 p5 =
+      state.All2 p1 (state.All2 p2 (state.All2 p3 (state.All2 p4 p5))) |> state.Map Tuple.fromNested4
     member inline state.Either<'a,'c,'s,'e
       when 'e : (static member Concat:'e * 'e -> 'e)>
       (p1:State<'a,'c,'s,'e>) (p2:State<'a,'c,'s,'e>) =
@@ -168,6 +153,12 @@ module WithError =
         | Left v,_ | _,Left v -> return v
         | Right e1,Right e2 -> return! state.Throw('e.Concat(e1,e2))
       }
+    member inline state.Either3 p1 p2 p3 =
+      state.Either p1 (state.Either p2 p3) |> state.Map Tuple.fromNested3
+    member inline state.Either4 p1 p2 p3 p4 =
+      state.Either p1 (state.Either p2 (state.Either p3 p4)) |> state.Map Tuple.fromNested4
+    member inline state.Either5 p1 p2 p3 p4 p5 =
+      state.Either p1 (state.Either p2 (state.Either p3 (state.Either p4 p5))) |> state.Map Tuple.fromNested4
 
     member state.InsideOption(p:Option<State<'a,'c,'s,'e>>) = 
       state{

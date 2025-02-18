@@ -7,13 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="core/object/model.fs" />
     <Compile Include="core/string/model.fs" />
     <Compile Include="core/string-builder/model.fs" />
-    <Compile Include="core/object/model.fs" />
     <Compile Include="range/model.fs" />
     <Compile Include="updater/model.fs" />
     <Compile Include="queries/quotationToLinq.fs" />
     <Compile Include="crud/model.fs" />
+    <Compile Include="collections/tuple/model.fs" />
     <Compile Include="collections/non-empty list/model.fs" />
     <Compile Include="collections/sum/model.fs" />
     <Compile Include="collections/option/model.fs" />
@@ -24,6 +25,7 @@
     <Compile Include="coroutine/model.fs" />
     <Compile Include="coroutine/runner.fs" />
     <Compile Include="errors/model.fs" />
+    <Compile Include="core/json/model.fs" />
     <Compile Include="business rule engine/expr/model.fs" />
     <Compile Include="business rule engine/exprtype/model.fs" />
     <Compile Include="business rule engine/exprtype/unification.fs" />
@@ -38,6 +40,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
+    <PackageReference Include="FSharp.Data" Version="6.4.1" />
   </ItemGroup>
 
 </Project>
