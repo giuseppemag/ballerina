@@ -2,10 +2,10 @@ import { Set, List, Map, OrderedMap } from "immutable";
 import { GenericType, GenericTypes, PrimitiveTypes } from "../built-ins/state";
 import { InjectedPrimitives } from "../injectables/state";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
-import { Value } from "../../../../../value/state";
+import { Unit, unit } from "../../../../../../main";
 
 export const isString = (_: any): _ is string => typeof _ == "string"
-export const isObject = (_: any): _ is Object => typeof _ == "object"
+export const isObject = (_: any): _ is object => typeof _ == "object"
 export const isGenericType = (_: any): _ is GenericType => _  && GenericTypes.includes(_)
 export const hasFun = (_: any): _ is { fun: string } => isObject(_) && "fun" in _ && isString(_.fun) 
 export const hasArgs = (_: any): _ is { args: Array<any> } => isObject(_) && "args" in _ && Array.isArray(_.args)
@@ -17,7 +17,7 @@ export type RawType<T> = {
   fields?: OrderedMap<FieldName, RawFieldType<T>>
 }
 export const RawType = {
-    isMaybeExtendedType: <T>(type: RawType<T>): type is RawType<T> & {extends: unknown} => "extends" in type,
+    isMaybeExtendedType: <T>(type: RawType<T>): type is RawType<T> & {extends: unknown} => "extends" in type && Array.isArray(type.extends) && type.extends.length == 1,
     isExtendedType: <T>(type: RawType<T>): type is RawType<T> & {extends: Array<TypeName>} => "extends" in type && Array.isArray(type.extends) && type.extends.length == 1 && (isString(type.extends[0])) ,
     hasFields: <T>(type: RawType<T>): type is {fields: any} => "fields" in type,
     isMaybeUnion: (_: any): _ is RawUnionType => isObject(_) && "fun" in _ && "args" in _ && _.fun == "Union" && Array.isArray(_["args"]) && _["args"].every(__ => typeof __ == "object" && "case" in __ && "fields" in __),
@@ -37,7 +37,7 @@ export type RawUnionType = {
   args?: Array<RawUnionCase>;
 }
 
-export type RawFormType = {fields?: Object}
+export type RawFormType = {fields?: object}
 
 export type RawFieldType<T> = RawApplicationType<T> | string | PrimitiveTypeName<T> | RawUnionType | RawFormType | RawUnionCase;
 export const RawFieldType = { 
@@ -58,21 +58,22 @@ export const RawFieldType = {
 
 export type PrimitiveTypeName<T> = "string" | "number" | "maybeBoolean" | "boolean" | "Date" | "base64File" | "secret" | keyof T | "guid";
 export type FormFields<T> =  Map<FieldName, ParsedType<T>>
+export type ParsedUnionCase<T> = { kind: "unionCase", name: CaseName, fields: ParsedType<T> | Unit }
 export type ParsedType<T> = 
-  | { kind: "unionCase", name: CaseName, fields: ParsedType<T> }
+  | ParsedUnionCase<T>
   | { kind: "form"; value: TypeName; fields: FormFields<T> }
   | { kind: "lookup"; name: TypeName; } 
   | { kind: "primitive"; value: PrimitiveTypeName<T> ;}
   | { kind: "application"; value: GenericType; args: Array<ParsedType<T>>; }
-  | { kind: "union";  args: Map<CaseName, ParsedType<T>> }
+  | { kind: "union";  args: Map<CaseName, ParsedUnionCase<T>> }
 
 export const ParsedType = {
   Default: {
-    unionCase: <T>(name: CaseName, fields: ParsedType<T>): ParsedType<T> => ({ kind: "unionCase", name, fields }),
+    unionCase: <T>(name: CaseName, fields: ParsedType<T> | Unit): ParsedUnionCase<T> => ({ kind: "unionCase", name, fields }),
     form: <T>(value: TypeName, fields: FormFields<T>): ParsedType<T> => ({ kind: "form", value, fields }),
     primitive: <T>(name: PrimitiveTypeName<T> | keyof T): ParsedType<T> => ({ kind: "primitive", value: name }),
     application: <T>(value: GenericType, args: Array<ParsedType<T>>): ParsedType<T> => ({ kind: "application", value, args }),
-    union: <T>(args: Map<CaseName, ParsedType<T>>): ParsedType<T> => ({ kind: "union", args }),
+    union: <T>(args: Map<CaseName, ParsedUnionCase<T>>): ParsedType<T> => ({ kind: "union", args }),
     lookup: <T>(name: string): ParsedType<T> => ({ kind: "lookup", name }),
   },
   Operations: {
@@ -108,24 +109,38 @@ export const ParsedType = {
             ValueOrErrors.Default.return(ParsedType.Default.application("Map", [parsedArgs0, parsedArgs1]))
           )
         )
-      if(RawFieldType.isForm(rawFieldType))
+      if(RawFieldType.isForm(rawFieldType)){
         return ValueOrErrors.Operations
               .All(List(Object.entries(rawFieldType.fields).map(([fieldName, fieldType]) => ParsedType.Operations.ParseRawFieldType(fieldName, fieldType as RawFieldType<T>, types, injectedPrimitives)
               .Then(parsedField => ValueOrErrors.Default.return([fieldName, parsedField] as const))
               )))
               .Then(parsedFields =>  ValueOrErrors.Default.return(Map(parsedFields.map(([fieldName, parsedField]) => [fieldName, parsedField]))))
               .Then(parsedField => ValueOrErrors.Default.return<ParsedType<T>, string>(ParsedType.Default.form(fieldName, parsedField)))
-      if(RawFieldType.isUnionCase(rawFieldType))
+      }
+      if(RawFieldType.isUnionCase(rawFieldType)){
+        if(Object.keys(rawFieldType.fields).length > 0) {
+          return ValueOrErrors.Default.throwOne(`Error: arg ${JSON.stringify(rawFieldType)} has unsupported fields, not an enum case`)
+        }
         return ParsedType.Operations.ParseRawFieldType(rawFieldType.case, rawFieldType.fields, types, injectedPrimitives).Then(parsedFields =>
-          ValueOrErrors.Default.return(ParsedType.Default.unionCase(rawFieldType.case, parsedFields))
+          ValueOrErrors.Default.return(ParsedType.Default.unionCase(rawFieldType.case, unit))
         )
-      if(RawFieldType.isUnion(rawFieldType))
-        return ValueOrErrors.Operations.All(List(
-          rawFieldType.args.map(_ => ParsedType.Operations.ParseRawFieldType(_.case, _, types, injectedPrimitives).Map(parsedFields => ({name: _.case, fields: parsedFields})))))
-          .Then(parsedFields =>  ValueOrErrors.Default.return(ParsedType.Default.union(Map(parsedFields.toArray().map(_ => [_.name, _.fields] as const)))))
-           
+      }
+      if(RawFieldType.isUnion(rawFieldType)){
+        return ValueOrErrors.Operations.All(List<ValueOrErrors<ParsedUnionCase<T>, string>>(
+         rawFieldType.args.map(unionCase => {
+          if(!RawFieldType.isUnionCase(unionCase)) {
+            return ValueOrErrors.Default.throwOne(`Error: arg ${JSON.stringify(unionCase)} is not a valid union case`)
+          }
+          if(Object.keys(unionCase.fields).length > 0) {
+            return ValueOrErrors.Default.throwOne(`Error: arg ${JSON.stringify(unionCase)} has unsupported fields, not an enum case`)
+          }
+          return ValueOrErrors.Default.return(ParsedType.Default.unionCase(unionCase.case, unit))
+          }))
+        ).Then(parsedUnionCases => ValueOrErrors.Default.return(ParsedType.Default.union(Map(parsedUnionCases.toArray().map(_ => [_.name, _] as const)))))
+      }
       if(RawFieldType.isLookup(rawFieldType, types))
          return ValueOrErrors.Default.return(ParsedType.Default.lookup(rawFieldType))
+
       return ValueOrErrors.Default.throw(List([`Invalid type ${JSON.stringify(rawFieldType)} for field ${JSON.stringify(fieldName)}`]))
     }
   }

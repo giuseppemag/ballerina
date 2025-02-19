@@ -40,8 +40,11 @@ export const FormRunnerLoader = () => {
                     form: instantiatedForm.form,
                     formFieldStates: instantiatedForm.initialState.formFieldStates,
                     entity: instantiatedForm.initialState.entity,
+                    rawEntity: instantiatedForm.initialState.rawEntity,
                     commonFormState: instantiatedForm.initialState.commonFormState,
                     customFormState: instantiatedForm.initialState.customFormState,
+                    rawGlobalConfiguration: instantiatedForm.initialState.rawGlobalConfiguration,
+                    globalConfiguration: instantiatedForm.initialState.globalConfiguration
                   })
                 )
               )  
@@ -62,8 +65,11 @@ export const FormRunnerLoader = () => {
                     form: instantiatedForm.form,
                     formFieldStates: instantiatedForm.initialState.formFieldStates,
                     entity: instantiatedForm.initialState.entity,
+                    rawEntity: instantiatedForm.initialState.rawEntity,
                     commonFormState: instantiatedForm.initialState.commonFormState,
-                    customFormState: instantiatedForm.initialState.customFormState
+                    customFormState: instantiatedForm.initialState.customFormState,
+                    rawGlobalConfiguration: instantiatedForm.initialState.rawGlobalConfiguration,
+                    globalConfiguration: instantiatedForm.initialState.globalConfiguration
                   })
                 )
               )

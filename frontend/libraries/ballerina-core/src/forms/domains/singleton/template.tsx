@@ -1,5 +1,5 @@
 import { OrderedSet } from "immutable"
-import { BasicUpdater, id, Unit, Debounced, Synchronized, unit, replaceWith, CoTypedFactory, Debounce, Synchronize, BasicFun, EntityFormState, EntityFormContext, EntityFormForeignMutationsExpected, EntityFormTemplate, EntityFormView, FieldTemplates, FieldValidationWithPath, FormValidatorSynchronized, OnChange, CommonFormState, DirtyStatus } from "../../../../main"
+import { BasicUpdater, id, Unit, Debounced, Synchronized, unit, replaceWith, CoTypedFactory, Debounce, Synchronize, BasicFun, EntityFormState, EntityFormContext, EntityFormForeignMutationsExpected, EntityFormTemplate, EntityFormView, FieldTemplates, FieldValidationWithPath, FormValidatorSynchronized, OnChange, CommonFormState, DirtyStatus, FieldName } from "../../../../main"
 import { Template } from "../../../template/state"
 import { Value } from "../../../value/state"
 
@@ -16,10 +16,17 @@ export const Form = <Entity, FieldStates extends { formFieldStates: any}, Contex
         const setFieldTemplate = <field extends Fields>(field: field) => {
           fieldTemplates[field] =
             config[field]
-              .mapContext<EntityFormContext<Entity, Fields, FieldStates, Context, ForeignMutationsExpected> & { disabled:boolean }>(_ => 
+              .mapContext<EntityFormContext<Entity, Fields, FieldStates, Context, ForeignMutationsExpected> & { disabled:boolean } >(_ => 
                 {
-                  // disabled flag is passed in from the container form when mapping over fields
+                  // disabled flag is passed in from the wrapping container when mapping over fields
+                  const visibilitiesFromParent = _.visibilities?.kind == "form" ? _.visibilities?.fields.get(field as string)! : undefined
+                  const elementVisibilities = visibilitiesFromParent?.kind == "list" || visibilitiesFromParent?.kind == "map" ? visibilitiesFromParent.elementValues : undefined
+
+                  const disabledFieldsFromParent = _.disabledFields?.kind == "form" ? _.disabledFields?.fields.get(field as string)! : undefined
+                  const elementDisabled = disabledFieldsFromParent?.kind == "list" || disabledFieldsFromParent?.kind == "map" ? disabledFieldsFromParent.elementValues : undefined
+
                   return ({ 
+                    rootValue: _.rootValue,
                     value: _.value[field],
                     extraContext: _.extraContext,
                     disabled: _.disabled,
@@ -27,6 +34,10 @@ export const Form = <Entity, FieldStates extends { formFieldStates: any}, Contex
                     customFormState: _.formFieldStates[field].customFormState,
                     formFieldStates: _.formFieldStates[field].formFieldStates,
                     elementFormStates: _.formFieldStates[field].elementFormStates,
+                    elementVisibilities,
+                    visibilities: visibilitiesFromParent,
+                    disabledFields: disabledFieldsFromParent,
+                    elementDisabled
                   }) as any
               })
               .mapState<State>(_ => current => { 
@@ -88,16 +99,20 @@ export const Form = <Entity, FieldStates extends { formFieldStates: any}, Contex
         return Template.Default<EntityFormContext<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>, State,
           EntityFormForeignMutationsExpected<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>,
           EntityFormView<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>>(props => {
-            let visibleFieldKeys: OrderedSet<Fields> = OrderedSet()
-            props.context.visibleFields.forEach((showField, field) => {
-              if (!showField({...props.context.extraContext, value: props.context.value})) return
-              visibleFieldKeys = visibleFieldKeys.add(field)
-            })
-            let disabledFieldKeys: OrderedSet<Fields> = OrderedSet()
-            props.context.disabledFields.forEach((showField, field) => {
-              if (!showField({...props.context.extraContext, value: props.context.value})) return
-              disabledFieldKeys = disabledFieldKeys.add(field)
-            })
+            const visibleFieldKeys: OrderedSet<FieldName> = (() => {
+              if(props.context.visibilities == undefined || props.context.visibilities.kind != "form") 
+                return OrderedSet()
+
+              return props.context.visibilities.fields.filter(_ => _.value == true).keySeq().toOrderedSet()
+            })()
+
+            const disabledFieldKeys: OrderedSet<FieldName> = (() => {
+              if(props.context.disabledFields == undefined || props.context.disabledFields.kind != "form") 
+                return OrderedSet(Object.keys(props.context.value as object))
+
+              return props.context.disabledFields.fields.filter(_ => _.value == true).keySeq().toOrderedSet()
+            })()
+
             return <>
               <props.view {...props}
                 VisibleFieldKeys={visibleFieldKeys}

@@ -32,9 +32,7 @@
       }
     },
     "CityRef": {
-      "extends": [
-        "CollectionReference"
-      ],
+      "extends": ["CollectionReference"],
       "fields": {}
     },
     "Address": {
@@ -43,9 +41,7 @@
         "number": "number",
         "city": {
           "fun": "SingleSelection",
-          "args": [
-            "CityRef"
-          ]
+          "args": ["CityRef"]
         }
       }
     },
@@ -146,9 +142,7 @@
       }
     },
     "DepartmentRef": {
-      "extends": [
-        "CollectionReference"
-      ],
+      "extends": ["CollectionReference"],
       "fields": {}
     },
     "Person": {
@@ -160,76 +154,51 @@
         "subscribeToNewsletter": "boolean",
         "favoriteColor": {
           "fun": "SingleSelection",
-          "args": [
-            "ColorRef"
-          ]
+          "args": ["ColorRef"]
         },
         "gender": {
           "fun": "SingleSelection",
-          "args": [
-            "GenderRef"
-          ]
+          "args": ["GenderRef"]
         },
         "dependants": {
           "fun": "Map",
-          "args": [
-            "string",
-            "injectedCategory"
-          ]
+          "args": ["string", "injectedCategory"]
         },
         "friendsByCategory": {
           "fun": "Map",
-          "args": [
-            "injectedCategory",
-            "string"
-          ]
+          "args": ["injectedCategory", "string"]
         },
         "relatives": {
           "fun": "List",
-          "args": [
-            "injectedCategory"
-          ]
+          "args": ["injectedCategory"]
         },
         "interests": {
           "fun": "MultiSelection",
-          "args": [
-            "InterestRef"
-          ]
+          "args": ["InterestRef"]
         },
         "departments": {
           "fun": "MultiSelection",
-          "args": [
-            "DepartmentRef"
-          ]
+          "args": ["DepartmentRef"]
         },
         "mainAddress": "Address",
         "addresses": {
           "fun": "List",
-          "args": [
-            "Address"
-          ]
+          "args": ["Address"]
         },
         "emails": {
           "fun": "List",
-          "args": [
-            "string"
-          ]
+          "args": ["string"]
         },
         "addressesWithLabel": {
           "fun": "Map",
-          "args": [
-            "string",
-            "Address"
-          ]
+          "args": ["string", "Address"]
         },
         "addressesByCity": {
           "fun": "Map",
           "args": [
             {
               "fun": "SingleSelection",
-              "args": [
-                "CityRef"
-              ]
+              "args": ["CityRef"]
             },
             "Address"
           ]
@@ -239,9 +208,7 @@
           "args": [
             {
               "fun": "SingleSelection",
-              "args": [
-                "ColorRef"
-              ]
+              "args": ["ColorRef"]
             },
             "Address"
           ]
@@ -251,9 +218,7 @@
           "args": [
             {
               "fun": "SingleSelection",
-              "args": [
-                "PermissionRef"
-              ]
+              "args": ["PermissionRef"]
             },
             "boolean"
           ]
@@ -263,36 +228,25 @@
           "args": [
             {
               "fun": "SingleSelection",
-              "args": [
-                "DepartmentRef"
-              ]
+              "args": ["DepartmentRef"]
             },
             {
               "fun": "SingleSelection",
-              "args": [
-                "CityRef"
-              ]
+              "args": ["CityRef"]
             }
           ]
         },
         "shoeColours": {
           "fun": "MultiSelection",
-          "args": [
-            "ColorRef"
-          ]
+          "args": ["ColorRef"]
         },
         "friendsBirthdays": {
           "fun": "Map",
-          "args": [
-            "string",
-            "Date"
-          ]
+          "args": ["string", "Date"]
         },
         "holidays": {
           "fun": "List",
-          "args": [
-            "Date"
-          ]
+          "args": ["Date"]
         }
       }
     }
@@ -311,18 +265,11 @@
     "entities": {
       "person": {
         "type": "Person",
-        "methods": [
-          "create",
-          "get",
-          "update",
-          "default"
-        ]
+        "methods": ["create", "get", "update", "default"]
       },
       "globalConfiguration": {
         "type": "GlobalConfiguration",
-        "methods": [
-          "get"
-        ]
+        "methods": ["get"]
       }
     }
   },
@@ -366,7 +313,17 @@
         },
         "number": {
           "renderer": "defaultNumber",
-          "visible": true
+          "visible": true,
+          "disabled": {
+            "kind": "fieldLookup",
+            "operands": [
+              {
+                "kind": "varLookup",
+                "varName": "root"
+              },
+              "subscribeToNewsletter"
+            ]
+          }
         },
         "city": {
           "renderer": "defaultInfiniteStream",
@@ -379,11 +336,7 @@
           "columns": {
             "main": {
               "groups": {
-                "main": [
-                  "street",
-                  "number",
-                  "city"
-                ]
+                "main": ["street", "number", "city"]
               }
             }
           }
@@ -396,7 +349,22 @@
         "category": {
           "label": "category",
           "renderer": "defaultCategory",
-          "visible": true
+          "visible": {
+            "kind": "isCase",
+            "operands": [
+              {
+                "kind": "fieldLookup",
+                "operands": [
+                  {
+                    "kind": "varLookup",
+                    "varName": "root"
+                  },
+                  "favoriteColor"
+                ]
+              },
+              "true"
+            ]
+          }
         },
         "name": {
           "label": "first name",
@@ -487,7 +455,7 @@
         "relatives": {
           "label": "relatives",
           "tooltip": "someone who you are related to",
-          "renderer":"defaultList",
+          "renderer": "defaultList",
           "elementRenderer": {
             "label": "one relative",
             "tooltip": "relative",
@@ -519,8 +487,7 @@
           "label": "departments",
           "renderer": "defaultInfiniteStreamMultiselect",
           "stream": "departments",
-          "visible": true
-          ,
+          "visible": true,
           "disabled": {
             "kind": "fieldLookup",
             "operands": [
@@ -553,7 +520,23 @@
             "label": "email",
             "renderer": "defaultString"
           },
-          "visible": true
+          "visible": true,
+          "disabled": {
+            "kind": "equals",
+            "operands": [
+              {
+                "kind": "fieldLookup",
+                "operands": [
+                  {
+                    "kind": "varLookup",
+                    "varName": "root"
+                  },
+                  "name"
+                ]
+              },
+              "nospam"
+            ]
+          }
         },
         "addressesWithLabel": {
           "label": "addresses with label",
@@ -677,11 +660,7 @@
             },
             "mailing": {
               "groups": {
-                "main": [
-                  "subscribeToNewsletter",
-                  "interests",
-                  "favoriteColor"
-                ]
+                "main": ["subscribeToNewsletter", "interests", "favoriteColor"]
               }
             },
             "addresses": {

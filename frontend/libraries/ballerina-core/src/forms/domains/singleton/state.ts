@@ -1,5 +1,5 @@
 import { List, OrderedMap, OrderedSet } from "immutable"
-import { BasicUpdater, id, BasicPredicate, SimpleCallback, Unit, Debounced, Synchronized, unit, replaceWith, CoTypedFactory, Debounce, Synchronize, BasicFun } from "../../../../main"
+import { BasicUpdater, id, BasicPredicate, SimpleCallback, Unit, Debounced, Synchronized, unit, replaceWith, CoTypedFactory, Debounce, Synchronize, BasicFun, FormFieldPredicateEvaluation, FormFieldPredicateEvaluations, FieldName } from "../../../../main"
 import { Template, View } from "../../../template/state"
 import { Value } from "../../../value/state"
 
@@ -36,7 +36,7 @@ export type EntityFormState<Entity, Fields extends (keyof Entity) & (keyof Field
     commonFormState: CommonFormState }
 
 export type EntityFormContext<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> =
-  Context & EntityFormState<Entity, Fields, FieldStates, Context, ForeignMutationsExpected> & { extraContext: any, visibleFields: OrderedMap<Fields, BasicPredicate<Context>>, disabledFields: OrderedMap<Fields, BasicPredicate<Context>>, header?: string } & Value<Entity>
+  Context & EntityFormState<Entity, Fields, FieldStates, Context, ForeignMutationsExpected> & { elementVisibilities: FormFieldPredicateEvaluation[] | undefined, elementDisabledFields: FormFieldPredicateEvaluation | undefined, extraContext: any, visibilities: FormFieldPredicateEvaluation | undefined, disabledFields: FormFieldPredicateEvaluation | undefined, label?: string } & Value<Entity> & { rootValue: Entity }
 export type OnChange<Entity> = (updater: BasicUpdater<Entity>, path: List<string>) => void
 export type EntityFormForeignMutationsExpected<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> =
   ForeignMutationsExpected & { onChange: OnChange<Entity> }
@@ -48,8 +48,8 @@ export type FieldTemplates<Entity, Fields extends (keyof Entity) & (keyof FieldS
 export type EntityFormView<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> =
   View<EntityFormContext<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>, EntityFormState<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>, EntityFormForeignMutationsExpected<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>, {
     EmbeddedFields: FieldTemplates<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>,
-    VisibleFieldKeys: OrderedSet<Fields>
-    DisabledFieldKeys: OrderedSet<Fields>
+    VisibleFieldKeys: OrderedSet<FieldName>
+    DisabledFieldKeys: OrderedSet<FieldName>
   }>
 export type EntityFormTemplate<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> =
   Template<

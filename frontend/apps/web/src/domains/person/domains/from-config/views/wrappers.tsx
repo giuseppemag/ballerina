@@ -2,7 +2,7 @@ import { EntityFormView, FormLayout, Unit, unit, CreateFormView, Template, Creat
 
 export const PersonContainerFormView: EntityFormView<any, any, any, { layout: FormLayout }, Unit> = props => {
   return <>
-  {props.context.header && <h1>{props.context.header}</h1>}
+  {props.context.label && <h1>{props.context.label}</h1>}
     <table>
       <tbody>
         {/* {JSON.stringify(props.VisibleFieldKeys.toArray())} */}
@@ -30,9 +30,9 @@ export const PersonContainerFormView: EntityFormView<any, any, any, { layout: Fo
   </>
 }
 
-export const PersonNestedContainerFormView: EntityFormView<any, any, any, { layout: FormLayout }, Unit> = props => {
+export const PersonNestedContainerFormView: EntityFormView<any, any, any, { layout: FormLayout}, Unit> = props => {
   return <>
-  {props.context.header && <h3>{props.context.header}</h3>}
+  {props.context.label && <h3>{props.context.label}</h3>}
     <table>
       <tbody>
         {/* {JSON.stringify(props.VisibleFieldKeys.toArray())} */}

@@ -19,6 +19,7 @@ export type ParsedFormConfig<T> = {
   name: string;
   type: ParsedType<T>;
   fields: Map<FieldName, ParsedRenderer<T>>;
+  configType: ParsedType<T>;
   tabs: FormLayout;
   header?: string;
 };
@@ -35,7 +36,8 @@ export type Launcher = {
   name: string,
   kind: "create" | "edit",
   form: string,
-  api: string
+  api: string,
+  configApi: string
 }
 
 export type RawEntityApi = {
@@ -46,6 +48,10 @@ export type EntityApi = {
   type: TypeName,
   methods: { create: boolean, get: boolean, update: boolean, default: boolean }
 }
+export type GlobalConfigurationApi = {
+  type: TypeName,
+  methods: { get: boolean }
+}
 
 export type RawFormJSON = {
   types?: any;
@@ -54,9 +60,10 @@ export type RawFormJSON = {
   launchers?: any;
 }
 export const RawFormJSON = {
-  hasTypes: (_: any): _ is { types: Object } => isObject(_) && "types" in _ && isObject(_.types),
-  hasForms: (_: any): _ is { forms: Object } => isObject(_) && "forms" in _ && isObject(_.forms),
-  hasApis: (_: any): _ is { apis: { enumOptions: Object; searchableStreams: Object; entities: Object; }} => isObject(_) && "apis" in _ && isObject(_.apis) && "enumOptions" in _.apis && isObject(_.apis.enumOptions) && "searchableStreams" in _.apis && isObject(_.apis.searchableStreams) && "entities" in _.apis && isObject(_.apis.entities), 
+  hasTypes: (_: any): _ is { types: object } => isObject(_) && "types" in _ && isObject(_.types),
+  hasForms: (_: any): _ is { forms: object } => isObject(_) && "forms" in _ && isObject(_.forms),
+  hasApis: (_: any): _ is { apis: { enumOptions: object; searchableStreams: object; entities: {globalConfiguration: object}; globalConfiguration: object }} => isObject(_) && "apis" in _ && isObject(_.apis) && "enumOptions" in _.apis && isObject(_.apis.enumOptions) && "searchableStreams" in _.apis && isObject(_.apis.searchableStreams) && "entities" in _.apis && isObject(_.apis.entities) && "globalConfiguration" in _.apis.entities && isObject(_.apis.entities.globalConfiguration), 
+  isGlobalConfigurationApi: (_: any): _ is { type: string, methods: string[]}  => isObject(_) && "type" in _  && typeof _.type == "string" && "methods" in _ && Array.isArray(_.methods) && _.methods.every((method: any) => typeof method == "string"),
   hasLaunchers: (_: any): _ is { launchers: any } => isObject(_) && "launchers" in _,
 }
 export type ParsedFormJSON<T> = {
@@ -65,6 +72,7 @@ export type ParsedFormJSON<T> = {
     enums: Map<string, TypeName>;
     streams: Map<string, TypeName>;
     entities: Map<string, EntityApi>;
+    globalConfiguration: GlobalConfigurationApi;
   };
   forms: Map<string, ParsedFormConfig<T>>;
   launchers: {
@@ -140,11 +148,23 @@ export const FormsConfig = {
           enums = enums.set(enumOptionName, enumOption)
       )
 
-
       let streams: Map<string, TypeName> = Map();
       Object.entries(formsConfig.apis.searchableStreams).forEach(([searchableStreamName, searchableStream]) => 
           streams = streams.set(searchableStreamName, searchableStream)
       )
+
+      const globalConfigFromForm = formsConfig.apis.entities.globalConfiguration;
+      if(!RawFormJSON.isGlobalConfigurationApi(globalConfigFromForm)) {
+        errors = errors.push(`globalConfiguration is missing the required type and methods attributes`);
+        return ValueOrErrors.Default.throw(errors);
+      }
+
+      const globalConfiguration: GlobalConfigurationApi = {
+        type: globalConfigFromForm.type,
+        methods: {
+          get: globalConfigFromForm.methods.includes("get"),
+        }
+      }
 
       let entities: Map<string, EntityApi> = Map();
       Object.entries(formsConfig.apis.entities).forEach(([entityApiName, entityApi]: [entiyApiName: string, entityApi: RawEntityApi ]) => {
@@ -157,7 +177,6 @@ export const FormsConfig = {
             default: entityApi.methods.includes("default"),
           }
         })
-        
       })
 
       let forms: Map<string, ParsedFormConfig<T>> = Map();
@@ -171,7 +190,8 @@ export const FormsConfig = {
           errors = errors.push(`form ${formName} references non-form type ${form.type}`);
           return
         }
-        const parsedForm: ParsedFormConfig<T> = { name: formName, fields: Map(), tabs: Map(), type: parsedTypes.get(form.type)!, header: RawForm.hasHeader(form) ? form.header : undefined };
+
+        const parsedForm: ParsedFormConfig<T> = { name: formName, fields: Map(), tabs: Map(), type: parsedTypes.get(form.type)!, configType: parsedTypes.get(globalConfigFromForm.type)!, header: RawForm.hasHeader(form) ? form.header : undefined };
 
         Object.entries(form.fields).forEach(([fieldName, field]: [fieldName: string, field: any]) =>
           {  
@@ -227,6 +247,7 @@ export const FormsConfig = {
           kind: formsConfig.launchers[launcherName]["kind"],
           form: formsConfig.launchers[launcherName]["form"],
           api: formsConfig.launchers[launcherName]["api"],
+          configApi: formsConfig.launchers[launcherName]["configApi"],
         };
         if (launcher.kind == "create")
           launchers.create = launchers.create.set(launcherName, launcher)
@@ -244,9 +265,10 @@ export const FormsConfig = {
         types: parsedTypes,
         forms,
         apis: {
-          enums: enums,
-          streams: streams,
-          entities: entities,
+          enums,
+          streams,
+          entities,
+          globalConfiguration
         },
         launchers
       });

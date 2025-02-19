@@ -2,7 +2,7 @@
   "name": "ballerina-core",
   "author": "Dr. Giuseppe Maggiore",
   "private": false,
-  "version": "1.0.72",
+  "version": "1.0.73",
   "main": "main.ts",
   "dependencies": {
     "immutable": "^5.0.0-beta.5",

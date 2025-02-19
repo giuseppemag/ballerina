@@ -156,7 +156,7 @@ export const defaultValue = <T>(types: Map<TypeName, ParsedType<T>>, builtIns: B
   throw Error(`cannot find type ${JSON.stringify(t)} when resolving defaultValue`)
 }
 
-export const fromAPIRawValue = <T extends { [key in keyof T]: { type: any; state: any; } }>(t: ParsedType<T>, types: Map<TypeName, ParsedType<T>>, builtIns: BuiltIns, converters: ApiConverters<T>, injectedPrimitives?: InjectedPrimitives<T>) => (raw: any): any => {  
+export const fromAPIRawValue = <T extends { [key in keyof T]: { type: any; state: any; } }>(t: ParsedType<T>, types: Map<TypeName, ParsedType<T>>, builtIns: BuiltIns, converters: ApiConverters<T>, injectedPrimitives?: InjectedPrimitives<T>) => (raw: any): any => {
   if (raw == undefined) {
     return defaultValue(types, builtIns, injectedPrimitives)(t)
   }
@@ -211,12 +211,12 @@ export const fromAPIRawValue = <T extends { [key in keyof T]: { type: any; state
   return raw
 }
 
-export const toAPIRawValue = <T extends { [key in keyof T]: { type: any; state: any; }}>(t: ParsedType<T>, types: Map<TypeName, ParsedType<T>>, builtIns: BuiltIns, converters: ApiConverters<T>, injectedPrimitives?: InjectedPrimitives<T>) => (raw: any, formState: any) : ValueOrErrors<any, string> => {
+export const toAPIRawValue = <T extends { [key in keyof T]: { type: any; state: any; }}>(t: ParsedType<T>, types: Map<TypeName, ParsedType<T>>, builtIns: BuiltIns, converters: ApiConverters<T>, injectedPrimitives?: InjectedPrimitives<T>) => (raw: any, formState: any, checkKeys: boolean) : ValueOrErrors<any, string> => {
   if (t.kind == "primitive")
     return ValueOrErrors.Operations.Return(converters[t.value as string | keyof T].toAPIRawValue([raw, formState.modifiedByUser]))
 
   if(t.kind == "union"){
-    return toAPIRawValue({kind: "unionCase", name: "", fields: {} as ParsedType<T>}, types, builtIns, converters, injectedPrimitives)(raw, formState)
+    return toAPIRawValue({kind: "unionCase", name: "", fields: {} as ParsedType<T>}, types, builtIns, converters, injectedPrimitives)(raw, formState, checkKeys)
   }
 
   if(t.kind == "unionCase") {
@@ -226,7 +226,7 @@ export const toAPIRawValue = <T extends { [key in keyof T]: { type: any; state: 
     if (t.value == "SingleSelection") {
       const result = converters[t.value].toAPIRawValue([raw, formState.modifiedByUser])
       return result.IsSome == false ? ValueOrErrors.Operations.Return(result) :
-      toAPIRawValue(t.args[0], types, builtIns, converters, injectedPrimitives)(result.Value, formState).Then(value => {
+      toAPIRawValue(t.args[0], types, builtIns, converters, injectedPrimitives)(result.Value, formState, checkKeys).Then(value => {
         return ValueOrErrors.Default.return({Value: value, IsSome: result.IsSome})
       })
     }
@@ -234,7 +234,8 @@ export const toAPIRawValue = <T extends { [key in keyof T]: { type: any; state: 
       const result = converters["MultiSelection"].toAPIRawValue([raw, formState.modifiedByUser])
 
       return ValueOrErrors.Operations.All(List<ValueOrErrors<any, string>>(result.map((_:any) =>
-        typeof _ == "object" ? toAPIRawValue(t.args[0], types, builtIns, converters, injectedPrimitives)(_, formState) : ValueOrErrors.Operations.Return(_))))
+        typeof _ == "object" ? toAPIRawValue(t.args[0], types, builtIns, converters, injectedPrimitives)(_, formState, checkKeys) : ValueOrErrors.Operations.Return(_))))
+          .Then(values => ValueOrErrors.Default.return(values.toArray()))
     }
     if (t.value == "List") {
       const converterResult = converters[t.value].toAPIRawValue([raw, formState.modifiedByUser])
@@ -242,22 +243,25 @@ export const toAPIRawValue = <T extends { [key in keyof T]: { type: any; state: 
         toAPIRawValue(
           t.args[0],
           types, builtIns, converters, injectedPrimitives)(item,
-            formState.elementFormStates.get(index)
-        ))))
+            formState.elementFormStates.get(index),
+            checkKeys
+        )))).Then(values => ValueOrErrors.Default.return(values.toArray()))
     }
     if (t.value == "Map") {
       const converterResult = List(converters[t.value].toAPIRawValue([raw, formState.modifiedByUser]))
       const parsedMap: List<ValueOrErrors<{key: ValueOrErrors<any, any>, value: ValueOrErrors<any, any>}, any>> = converterResult.map((keyValue: any, index: number) => {
         return toAPIRawValue(
             t.args[0],
-            types, builtIns, converters, injectedPrimitives)(keyValue[0], formState.elementFormStates.get(index).KeyFormState
+            types, builtIns, converters, injectedPrimitives)(keyValue[0], formState.elementFormStates.get(index).KeyFormState,
+            checkKeys
           ).Then(possiblyUndefinedKey => {
-              if((possiblyUndefinedKey == undefined || possiblyUndefinedKey == null || possiblyUndefinedKey == "" || (typeof possiblyUndefinedKey == "object" && Object.keys(possiblyUndefinedKey).length == 0))) {
+              if((checkKeys && (possiblyUndefinedKey == undefined || possiblyUndefinedKey == null || possiblyUndefinedKey == "" || (typeof possiblyUndefinedKey == "object" && Object.keys(possiblyUndefinedKey).length == 0)))) {
                 return ValueOrErrors.Operations.Throw(List([`A mapped key is undefined for type ${JSON.stringify(t.args[0])}`]))
               }
               else return toAPIRawValue(
                   t.args[1],
-                  types, builtIns, converters, injectedPrimitives)(keyValue[1], formState.elementFormStates.get(index).ValueFormState
+                  types, builtIns, converters, injectedPrimitives)(keyValue[1], formState.elementFormStates.get(index).ValueFormState,
+                  checkKeys
                 ).Then(value => {
                   return ValueOrErrors.Default.return({key: possiblyUndefinedKey, value: value})
                 }
@@ -272,22 +276,22 @@ export const toAPIRawValue = <T extends { [key in keyof T]: { type: any; state: 
         return acc
       }, {ids: List<string>(), errors: List<ValueOrErrors<any, string>>()}).errors
 
-      return ValueOrErrors.Operations.All(parsedMap.concat(nonUniqueKeyErrors)).Then(parsedMap => 
+      return ValueOrErrors.Operations.All(parsedMap.concat(checkKeys ? nonUniqueKeyErrors : [])).Then(parsedMap => 
         ValueOrErrors.Default.return(parsedMap.toArray())
       )
     }
   }
   
   if (t.kind == "lookup") 
-    return toAPIRawValue(types.get(t.name)!, types, builtIns, converters, injectedPrimitives)(raw, formState)
+    return toAPIRawValue(types.get(t.name)!, types, builtIns, converters, injectedPrimitives)(raw, formState, checkKeys)
     
   if(t.kind == "form") {
     const res = [] as any
     t.fields.forEach((fieldType, fieldName) => 
       // nullish coalescing operator on state used for extended type state, but this maybe should have its own kind
-      res.push([fieldName, toAPIRawValue(fieldType, types, builtIns, converters, injectedPrimitives)(raw[fieldName], formState['formFieldStates']?.[fieldName] ?? formState)])
+      res.push([fieldName, toAPIRawValue(fieldType, types, builtIns, converters, injectedPrimitives)(raw[fieldName], formState['formFieldStates']?.[fieldName] ?? formState, checkKeys)])
     )
-    const errors: ValueOrErrors<List<any>, string> = ValueOrErrors.Operations.All(res.map(([_, value]:[_: string, value: ValueOrErrors<any, string>]) => value))
+    const errors: ValueOrErrors<List<any>, string> = ValueOrErrors.Operations.All(List(res.map(([_, value]:[_: string, value: ValueOrErrors<any, string>]) => value)))
     if(errors.kind == "errors")
       return errors
     
