@@ -35,6 +35,17 @@
       "extends": ["CollectionReference"],
       "fields": {}
     },
+    "LandArea": {
+      "fields": {
+        "x": "number",
+        "y": "number"
+      }
+    },
+    "PlotInfo": {
+      "fields": {
+        "landArea": "LandArea"
+      }
+    },
     "Address": {
       "fields": {
         "street": "string",
@@ -147,6 +158,7 @@
     },
     "Person": {
       "fields": {
+        "plotInfo": "PlotInfo",
         "category": "injectedCategory",
         "name": "string",
         "surname": "string",
@@ -274,6 +286,50 @@
     }
   },
   "forms": {
+    "landArea": {
+      "type": "LandArea",
+      "fields": {
+        "x": {
+          "renderer": "defaultNumber",
+          "visible": true
+        },
+        "y": {
+          "renderer": "defaultNumber",
+          "visible": true
+        }
+      },
+      "tabs": {
+        "main": {
+          "columns": {
+            "main": {
+              "groups": {
+                "main": ["x", "y"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "plotInfo":{
+      "type": "PlotInfo",
+      "fields": {
+        "landArea": {
+          "renderer": "landArea",
+          "visible": true
+        }
+      },
+      "tabs": {
+        "main": {
+          "columns": {
+            "main": {
+              "groups": {
+                "main": ["landArea"]
+              }
+            }
+          }
+        }
+      }
+    },
     "address": {
       "type": "Address",
       "fields": {
@@ -346,6 +402,10 @@
     "person": {
       "type": "Person",
       "fields": {
+        "plotInfo": {
+          "renderer": "plotInfo",
+          "visible": true
+        },
         "category": {
           "label": "category",
           "renderer": "defaultCategory",
@@ -644,6 +704,7 @@
             "demographics": {
               "groups": {
                 "main": [
+                  "plotInfo",
                   "category",
                   "name",
                   "surname",

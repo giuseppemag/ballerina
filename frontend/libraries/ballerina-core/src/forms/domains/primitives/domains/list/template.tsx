@@ -26,7 +26,7 @@ export const ListForm = <Element, ElementFormState, Context extends FormLabel & 
         ...props.foreignMutations,
         onChange: (elementUpdater, path) => {
           props.foreignMutations.onChange(Updater((elements:List<Element | undefined>) =>
-            elements.has(elementIndex) ? elements.update(elementIndex, undefined, elementUpdater) : elements), path)
+            elements.has(elementIndex) ? elements.update(elementIndex, undefined, elementUpdater) : elements), List([elementIndex.toString()]).concat(path))
           props.setState(_ => ({..._,
              modifiedByUser:true,
             })) },

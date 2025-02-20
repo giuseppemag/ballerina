@@ -36,7 +36,7 @@ export const MapForm = <K, V, KeyFormState, ValueFormState, Context extends Form
       ({
         ...props.foreignMutations,
         onChange: (elementUpdater, path) => {
-          props.foreignMutations.onChange(Updater((elements: List<[K, V]>) => elements.update(elementIndex, (_: [K, V] | undefined) => _ == undefined ? _ : [elementUpdater(_[0]), _[1]])), path)
+          props.foreignMutations.onChange(Updater((elements: List<[K, V]>) => elements.update(elementIndex, (_: [K, V] | undefined) => _ == undefined ? _ : [elementUpdater(_[0]), _[1]])), List([elementIndex.toString(), "key"]).concat(path))
           props.setState(_ => ({ ..._, modifiedByUser: true }))
         },
         add: (newElement: [K, V]) => { },
@@ -68,7 +68,7 @@ export const MapForm = <K, V, KeyFormState, ValueFormState, Context extends Form
       ({
         ...props.foreignMutations,
         onChange: (elementUpdater, path) => {
-          props.foreignMutations.onChange(Updater((elements: List<[K, V]>) => elements.update(elementIndex, (_: [K, V] | undefined) => _ == undefined ? _ : [_[0], elementUpdater(_[1])])), path)
+          props.foreignMutations.onChange(Updater((elements: List<[K, V]>) => elements.update(elementIndex, (_: [K, V] | undefined) => _ == undefined ? _ : [_[0], elementUpdater(_[1])])), List([elementIndex.toString(), "value"]).concat(path))
           props.setState(_ => ({ ..._, modifiedByUser: true }))
         },
         add: (newElement: [K, V]) => { },

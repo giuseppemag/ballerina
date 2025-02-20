@@ -41,7 +41,7 @@ export const ParseForm = <T,>(
     const parsedFormConfig  = ParsedRenderer.Operations.RendererToForm(
       fieldName,
       {formViews, forms, nestedContainerFormView, defaultValue, enumOptionsSources, leafPredicates, infiniteStreamSources, injectedPrimitives },
-      formDef.fields.get(fieldName)!,
+      formDef.fields.get(fieldName)!
     )
     if(parsedFormConfig.kind == "errors") throw Error(`Error parsing form ${fieldsViewsConfig[fieldName]}`) // TODO - better error handling
 
@@ -203,6 +203,7 @@ export const parseForms =
           })
           .mapContext<Unit>(_ => {
             return ({ 
+                      isRoot: (_ as any).isRoot ?? true,
                       label: (_ as any).label,
                       value: (_ as any).value,
                       commonFormState: (_ as any).commonFormState,
@@ -271,7 +272,7 @@ export const parseForms =
                   toApiParser: parentContext.toApiParser,
                   fromApiParser: parentContext.fromApiParser,
                   parseGlobalConfiguration: parentContext.parseGlobalConfiguration,
-                  formFieldStates: parentContext.formFieldStates, 
+                  formFieldStates: parentContext.formFieldStates,
                   rootValue: _.value,
                   extraContext: parentContext.extraContext,
                   commonFormState: parentContext.commonFormState,

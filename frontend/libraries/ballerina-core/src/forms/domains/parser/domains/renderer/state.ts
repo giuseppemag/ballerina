@@ -165,7 +165,7 @@ export const ParsedRenderer = {
                   Expr.Operations.parse(parsedRenderer.disabled ?? false).Then(disabledExpr =>
                     ValueOrErrors.Default.return({
                       form: { 
-                        renderer: parsingContext.forms.get(parsedRenderer.renderer)!.form.withView(parsingContext.nestedContainerFormView).mapContext<any>(_ => ({ ..._, label: parsedRenderer.label, tooltip: parsedRenderer.tooltip, details: parsedRenderer.details, })),
+                        renderer: parsingContext.forms.get(parsedRenderer.renderer)!.form.withView(parsingContext.nestedContainerFormView).mapContext<any>(_ => ({ ..._, label: parsedRenderer.label, tooltip: parsedRenderer.tooltip, details: parsedRenderer.details, isRoot: false })),
                         initialValue: parsingContext.defaultValue(parsedRenderer.type),
                         initialState: parsingContext.forms.get(parsedRenderer.renderer)!.initialFormState
                         },
@@ -180,18 +180,19 @@ export const ParsedRenderer = {
                         ParsedRenderer.Operations.RendererToForm(fieldName, parsingContext, parsedRenderer.elementRenderer).Then(parsedElementRenderer => 
                             ValueOrErrors.Default.return(
                               {form: {
-                                renderer: ListForm<any, any, any & FormLabel, Unit>(
-                                { Default: () => parsedElementRenderer.form.initialState },
-                                { Default: () => parsedElementRenderer.form.initialValue },
-                                parsedElementRenderer.form.renderer,
-                            ).withView(((parsingContext.formViews)[viewKind])[parsedRenderer.renderer]() as any)
-                              .mapContext<any>(_ => ({ ..._, label: parsedRenderer.label, tooltip: parsedRenderer.tooltip, details: parsedRenderer.details })),
-                                initialValue: parsingContext.defaultValue(parsedRenderer.type),
-                                initialState: ListFieldState<any, any>().Default(Map())
-                              },
-                              visibilityPredicateExpression: FieldPredicateExpression.Default.list(visibilityExpr, parsedElementRenderer.visibilityPredicateExpression),
-                              disabledPredicatedExpression: FieldPredicateExpression.Default.list(disabledExpr, parsedElementRenderer.disabledPredicatedExpression),
-                              })
+                                renderer: 
+                                  ListForm<any, any, any & FormLabel, Unit>(
+                                    { Default: () => parsedElementRenderer.form.initialState },
+                                    { Default: () => parsedElementRenderer.form.initialValue },
+                                    parsedElementRenderer.form.renderer,
+                                  ).withView(((parsingContext.formViews)[viewKind])[parsedRenderer.renderer]() as any)
+                                  .mapContext<any>(_ => ({ ..._, label: parsedRenderer.label, tooltip: parsedRenderer.tooltip, details: parsedRenderer.details })),
+                                    initialValue: parsingContext.defaultValue(parsedRenderer.type),
+                                    initialState: ListFieldState<any, any>().Default(Map())
+                                  },
+                                visibilityPredicateExpression: FieldPredicateExpression.Default.list(visibilityExpr, parsedElementRenderer.visibilityPredicateExpression),
+                                disabledPredicatedExpression: FieldPredicateExpression.Default.list(disabledExpr, parsedElementRenderer.disabledPredicatedExpression),
+                                })
             )
           )
         )
