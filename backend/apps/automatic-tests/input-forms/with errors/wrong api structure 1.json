@@ -1,0 +1,17 @@
+{
+  "types": {
+    "Person": {
+      "extends": [],
+      "fields": {
+        "Id": "guid",
+        "Name": "string",
+        "Surname": "string"
+      }
+    }
+  },
+  "apis":{
+    "enumOptions":{
+      "person":"Person"
+    }
+  }
+}

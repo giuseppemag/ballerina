@@ -34,24 +34,24 @@ Todo (✅/❌)
     ❌ break the form engine in all possible ways and ensure good errors arise
       ❌ define tests, one minimal spec for anything that can go wrong
         ✅ create a test project
-        ❌ instantiate and cleanup files from test itself
-        ❌ invalid types
-          ❌ invalid fields
-            ❌ bad structure (array, number, etc. instead of record)
-            ❌ bad names
+        ✅ make every field optional - visibility, apis, forms, launchers, but not types
+        ✅ put error files inside test project, do not fish from ballerina-runtime
+        ✅ invalid types
+          ✅ invalid fields
+            ✅ bad structure (array, number, etc. instead of record)
             ✅ non-existing types
-            ❌ generics without (the right) arguments
-        ❌ invalid enums
-          ❌ bad structure (array, number, etc. instead of record)
-          ❌ non-existing types
-          ❌ types with the wrong structure
-        ❌ invalid streams
-          ❌ bad structure (array, number, etc. instead of record)
-          ❌ non-existing types
-          ❌ types with the wrong structure
-        ❌ invalid entities
-          ❌ bad structure (array, number, etc. instead of record)
-          ❌ non-existing types
+            ✅ generics without (the right) arguments
+              ✅ mark path as _high prio_ earlier
+        ✅ invalid enums
+          ✅ bad structure (array, number, etc. instead of record)
+          ✅ non-existing types in API
+          ✅ types with the wrong structure
+        ✅ invalid streams
+          ✅ non-existing types
+          ✅ types with the wrong structure
+        ✅ invalid entities
+          ✅ bad structure (array, number, etc. instead of record)
+          ✅ non-existing types
         ❌ invalid forms
           ❌ bad structure (array, number, etc. instead of record)
           ❌ non-existing backing `type`
@@ -72,14 +72,17 @@ Todo (✅/❌)
           ❌ missing config API
           ❌ mismatch form.type vs api.type
           ❌ mismatch configApi.type vs predicate api implicit type
-      ❌ run tests when releasing
-        ❌ run tests when releasing
+        ✅ actual person-config as a reference of something that should work
+          ✅ compile generated go file (conditionally)
+        ❌ bad identifier names
+      ✅ run tests before releasing
     ❌ paths inside `Any` have a priority after a partial match is found - `Any` filters errors lower than the highest priority
       ❌ add to each `Any`, streamline operators
+        ❌ parser
+        ❌ validator
     ❌ the validator is now mature
     ❌ improve the generated whitespace
     ❌ the Go type generator is now reasonably mature
-      ❌ write a "why not just a package somewhere?"
     ❌ extensions
       ❌ preprocessor plugins
       ❌ add homomorphic forms
@@ -94,10 +97,23 @@ Todo (✅/❌)
     ✅ convert all instances of Map.tryFind ... withError ... to `Map.tryFindWithError`
     ✅ `Map.tryFindWithError streamName "streams" streamName |> state.OfSum` should just be `findStream`
     ✅ adjust all patterns like `|> Seq.tryFind (fst >> (=) "stream") |> Option.map snd` to `JsonValue.tryFindField`
+    ❌ release ballerina to nuget
     ❌ check the consistency of the used data structures: `Type` vs `TypeId`
-    ❌ accept empty `apis` blocks
+    ✅ accept empty `apis` blocks
     ❌ discard unsupported field names
     ❌ add full support for unions, including generation
+      ✅ parser
+      ✅ validator
+      ❌ match-case 
+        ❌ expr
+        ❌ type checker
+        ❌ add tests of correct validations using pattern matching
+        ❌ add tests of mistaken validations using pattern matching
+      ❌ generated type structure
+      ❌ generated constructors    
+        ✅ constructors for the case values
+        ❌ constructors for the whole thing - assume discriminator, accept specific value
+    ❌ create blazor/razor gui editor
     ❌ allow mutually recursive types and forms
       ❌ be careful with out-of-order extensions
       ❌ make ExprType.resolveLookup recursive - this might be at odds with the parent task because it might cause infinite loops
@@ -113,7 +129,6 @@ Todo (✅/❌)
       ❌ entities POST - how do we represent changes?
       ❌ entities PATCH - how do we represent changes?
       ❌ make all these functions partially applied in the actual parameters vs the visitor parameters
-    ❌ build the forms gui editor in Blazor
     ❌ codegen the `import` command with some sort of linking strategy for shared files
     ❌ define webservice variant
     ✅ allow union types (needs adjustment in frontend too)

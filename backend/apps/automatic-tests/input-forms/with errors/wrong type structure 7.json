@@ -1,0 +1,7 @@
+{
+  "types": {
+    "Person": {
+      "extends": []
+    }
+  }
+}

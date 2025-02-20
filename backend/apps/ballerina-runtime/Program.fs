@@ -2,8 +2,8 @@
 
 open System
 open Ballerina.DSL.FormEngine.Runner
-open System.CommandLine
-      
+open System.CommandLine      
+
 let formsOptions = {|
   mode = new Option<bool>(name= "-validate", description= "Type check the given forms config.");
   language = 

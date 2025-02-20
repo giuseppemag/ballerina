@@ -160,7 +160,7 @@ module WithError =
     member inline state.Either5 p1 p2 p3 p4 p5 =
       state.Either p1 (state.Either p2 (state.Either p3 (state.Either p4 p5))) |> state.Map Tuple.fromNested4
 
-    member state.InsideOption(p:Option<State<'a,'c,'s,'e>>) = 
+    member state.RunOption(p:Option<State<'a,'c,'s,'e>>) = 
       state{
         match p with
         | Some p -> 

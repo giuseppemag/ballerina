@@ -1,0 +1,16 @@
+{
+  "types": {
+    "Person": {
+      "extends": [],
+      "fields": {
+        "Id": "guid",
+        "DisplayValue": "string"
+      }
+    }
+  },
+  "apis":{
+    "searchableStreams":{
+      "person":"TypeThatDoesNotExist"
+    }
+  }
+}

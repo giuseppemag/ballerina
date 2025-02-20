@@ -8,9 +8,12 @@ module Golang =
   open Ballerina.DSL.FormEngine.Parser
   open Ballerina.Errors
   open Ballerina.Collections.Sum
+  open Ballerina.Core.Object
   open Ballerina.Core.String
   open Ballerina.Core.StringBuilder
+  open Ballerina.Core.Json
   open System.Text.RegularExpressions
+  open Ballerina.Fun
 
   type GoCodeGenState = {
     UsedImports:Set<string>
@@ -184,14 +187,8 @@ module Golang =
           ctx.Types |> Seq.map(fun t -> 
           state{
             match t.Value.Type with
-            | ExprType.UnionType cases ->
-              let! enumCases = 
-                cases |> Seq.map (fun case -> 
-                  sum{
-                    if case.Fields.IsUnitType then
-                      return case.CaseName
-                    else return! sum.Throw($$"""Error: Go only supports enums, meaning unions where the cases have no fields.""" |> Errors.Singleton)
-                  }) |> sum.All |> state.OfSum
+            | ExprType.UnionType cases when cases |> Seq.forall (fun case -> case.Fields.IsUnitType) ->
+              let enumCases = cases |> Seq.map (fun case -> case.CaseName)
               return StringBuilder.Many(seq{
                 yield StringBuilder.One "\n"
                 yield StringBuilder.One $$"""type {{t.Key}} string"""
@@ -207,6 +204,51 @@ module Golang =
                 for enumCase in enumCases do
                   yield StringBuilder.One $$"""{{t.Key}}{{!enumCase}}, """
                 yield StringBuilder.One "}\n"
+              })
+            | ExprType.UnionType cases  ->
+              let! caseValues = state.All(cases |> Seq.map (fun case -> 
+                state{
+                  let! fields = 
+                    case.Fields |> ExprType.AsRecord |> state.OfSum 
+                    |> state.Either (case.Fields |> ExprType.AsUnit |> state.OfSum |> state.Map(fun _ -> Map.empty))
+                  let! fields = 
+                    fields |> Seq.map (fun f -> 
+                      state{
+                        let! field = f.Value |> ExprType.ToGolangTypeAnnotation
+                        return f.Key,field
+                      }) |> state.All
+                  return case.CaseName,fields
+                }) |> List.ofSeq)
+              let caseValues = caseValues |> Map.ofList
+              return StringBuilder.Many(seq{
+                yield StringBuilder.One "\n"
+                for case in cases do
+                  yield StringBuilder.One $"type {t.Key}{!case.CaseName}Value struct {{\n"
+                  match caseValues |> Map.tryFind case.CaseName with
+                  | Some caseValue ->
+                    for fieldName,fieldType in caseValue do
+                      yield StringBuilder.One $"  {fieldName} {fieldType}; \n"
+                  | None -> ()
+                  yield StringBuilder.One $"}}\n"
+                yield StringBuilder.One "\n"
+                yield StringBuilder.One $$"""type {{t.Key}}Cases string"""
+                yield StringBuilder.One "\n"
+                yield StringBuilder.One "const ("
+                yield StringBuilder.One "\n"
+                for case in cases do
+                  yield StringBuilder.One $$"""  {{t.Key}}{{!case.CaseName}} {{t.Key}}Cases = "{{case.CaseName}}"; """
+                  yield StringBuilder.One "\n"
+                yield StringBuilder.One ")"
+                yield StringBuilder.One "\n"
+                yield StringBuilder.One "\n"
+                yield StringBuilder.One $$"""type {{t.Key}} struct {"""
+                yield StringBuilder.One "\n"
+                yield StringBuilder.One $"  Discriminator {t.Key}Cases\n"
+                for case in cases do
+                  yield StringBuilder.One $"  {t.Key}{!case.CaseName} {t.Key}{!case.CaseName}Value; "
+                  yield StringBuilder.One "\n"
+                yield StringBuilder.One "}"
+                yield StringBuilder.One "\n"
               })
             | _ ->
               let! fields = ExprType.GetFields t.Value.Type |> state.OfSum

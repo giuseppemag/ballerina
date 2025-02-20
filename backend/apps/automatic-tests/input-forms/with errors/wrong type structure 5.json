@@ -1,0 +1,11 @@
+{
+  "types": {
+    "Person": {
+      "extends": [],
+      "fields": {
+        "Id": "guid",
+        "DisplayValue": "TypeThatDoesNotExist"
+      }
+    }
+  }
+}

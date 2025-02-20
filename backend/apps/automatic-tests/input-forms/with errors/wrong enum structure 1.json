@@ -1,0 +1,20 @@
+{
+  "types": {
+    "ERPEnum": {
+      "fun": "Union",
+      "args": [
+        {
+          "case": "ERP:SAP",
+          "fields": {}
+        },
+        {
+          "case": "ERP:BC",
+          "fields": {}
+        },
+        {
+          "fields": {}
+        }
+      ]
+    }
+  }
+}

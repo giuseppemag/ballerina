@@ -1,0 +1,23 @@
+{
+  "types": {
+    "A": {
+      "extends": [],
+      "fields": {
+        "X": "boolean"
+      }
+    },
+    "B": "A"
+  },
+  "apis": {
+    "enumOptions": {
+    },
+    "searchableStreams": {
+    },
+    "entities": {
+    }
+  },
+  "forms": {
+  },
+  "launchers": {
+  }
+}

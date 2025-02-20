@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="UnitTest1.fs" />
+    <Compile Include="FormsValidator.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
@@ -23,6 +23,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\libraries\ballerina-core\ballerina-core.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include=".\input-forms\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>
