@@ -101,23 +101,37 @@ Todo (✅/❌)
     ❌ check the consistency of the used data structures: `Type` vs `TypeId`
     ✅ accept empty `apis` blocks
     ❌ discard unsupported field names
+    ❌ generate improved error types
     ❌ add full support for unions, including generation
       ✅ parser
       ✅ validator
       ❌ match-case 
-        ❌ expr
+        ✅ expr
+        ✅ parser
         ❌ type checker
+```
+typecheck the argument (first operand) to Union(cases)
+typecheck all `case.Expr` in the map with `var := typeof(case.Fields)` foreach case in cases
+all cases must be matched
+the types need to be the same/need to unify in a fold to a common pattern type T_P
+the whole match expression then has type T_P
+```        
+        ❌ FE prototype of evaluator
         ❌ add tests of correct validations using pattern matching
         ❌ add tests of mistaken validations using pattern matching
       ❌ generated type structure
       ❌ generated constructors    
         ✅ constructors for the case values
         ❌ constructors for the whole thing - assume discriminator, accept specific value
+      ❌ add renderer syntax for the selector of a different form depending on the case
+    ❌ add `extends` keyword for forms
+    ❌ add lots of operators to lists, sets, maps, etc.
     ❌ create blazor/razor gui editor
     ❌ allow mutually recursive types and forms
       ❌ be careful with out-of-order extensions
       ❌ make ExprType.resolveLookup recursive - this might be at odds with the parent task because it might cause infinite loops
     ❌ the tool is now complete
+    ❌ the Golang codegen needs to be improved with some refactoring as well as the `SeqState` monad
     ❌ the core library needs more structural cleanup: Queries, Range, etc. should go into `webapi` or a similar domain
     ❌ help command
     ❌ expr and expr type parsing and validation must go to their respective meta-modules

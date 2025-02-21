@@ -73,7 +73,7 @@ module TypeCheck =
               | Value.ConstBool _ -> 
                 return None,PrimitiveType PrimitiveType.BoolType, vars
               | _ -> 
-                return! sum.Throw(sprintf "not implemented type checker for value expression %A" e |> Errors.Singleton)
+                return! sum.Throw($"not implemented type checker for value expression {e.ToString()}" |> Errors.Singleton)
             }
           | Expr.Binary(Or, e1, e2) -> 
             sum{
@@ -100,10 +100,10 @@ module TypeCheck =
               match t1,t2 with
               | PrimitiveType IntType, PrimitiveType IntType -> return None,PrimitiveType IntType,vars''
               | _ -> 
-                return! sum.Throw(sprintf "not implemented type checker for binary expression %A" e |> Errors.Singleton)
+                return! sum.Throw($"not implemented type checker for binary expression {e.ToString()}" |> Errors.Singleton)
             }
           | e -> 
-            sum.Throw(sprintf "not implemented Expr type checker for %A" e |> Errors.Singleton)
+            sum.Throw($"Error: not implemented Expr type checker for {e.ToString()}" |> Errors.Singleton)
         sum{
           let! _,t,vars = result
           let! n,t = lookup t

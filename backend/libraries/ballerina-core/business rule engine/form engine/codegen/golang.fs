@@ -83,8 +83,8 @@ module Golang =
               })
             )
             yield StringBuilder.One "  }\n"
-            yield StringBuilder.One "  var result []string\n"
-            yield StringBuilder.One """  return result, fmt.Errorf("%s is not a valid enum name", enumName )"""
+            yield StringBuilder.One "  var res []string\n"
+            yield StringBuilder.One """  return res, fmt.Errorf("%s is not a valid enum name", enumName )"""
             yield StringBuilder.One "\n}\n\n"
 
             yield StringBuilder.One $"func {formName}EnumGETter[result any](enumName string, "
@@ -230,6 +230,21 @@ module Golang =
                       yield StringBuilder.One $"  {fieldName} {fieldType}; \n"
                   | None -> ()
                   yield StringBuilder.One $"}}\n"
+                  yield StringBuilder.One $"func New{t.Key}{!case.CaseName}Value("
+                  match caseValues |> Map.tryFind case.CaseName with
+                  | Some caseValue ->
+                    for fieldName,fieldType in caseValue do
+                      yield StringBuilder.One $"{fieldName} {fieldType}, "
+                  | None -> ()
+                  yield StringBuilder.One $") {t.Key}{!case.CaseName}Value {{\n"
+                  yield StringBuilder.One $"  var res {t.Key}{!case.CaseName}Value;\n"
+                  match caseValues |> Map.tryFind case.CaseName with
+                  | Some caseValue ->
+                    for fieldName,fieldType in caseValue do
+                      yield StringBuilder.One $"  res.{fieldName} = {fieldName}; \n"
+                  | None -> ()
+                  yield StringBuilder.One $"  return res;\n"
+                  yield StringBuilder.One $"}}\n"
                 yield StringBuilder.One "\n"
                 yield StringBuilder.One $$"""type {{t.Key}}Cases string"""
                 yield StringBuilder.One "\n"
@@ -249,6 +264,31 @@ module Golang =
                   yield StringBuilder.One "\n"
                 yield StringBuilder.One "}"
                 yield StringBuilder.One "\n"
+                for case in cases do
+                  yield StringBuilder.One $$"""func New{{t.Key}}{{!case.CaseName}}( """
+                  yield StringBuilder.One $"value {t.Key}{!case.CaseName}Value, "
+                  yield StringBuilder.One $") {t.Key} {{\n"
+                  yield StringBuilder.One $"  var res {t.Key};\n"
+                  yield StringBuilder.One $$"""  res.Discriminator = {{t.Key}}{{!case.CaseName}};"""
+                  yield StringBuilder.One $"\n"
+                  yield StringBuilder.One $$"""  res.{{t.Key}}{{!case.CaseName}} = value;"""
+                  yield StringBuilder.One $"\n"
+                  yield StringBuilder.One $"  return res;\n"
+                  yield StringBuilder.One $"}}\n"
+                yield StringBuilder.One "\n"
+                yield StringBuilder.One $"func Match{t.Key}[result any](value {t.Key}, "
+                for case in cases do
+                  yield StringBuilder.One $"on{t.Key}{!case.CaseName} func({t.Key}{!case.CaseName}Value) (result,error), "
+                yield StringBuilder.One $") (result,error) {{\n"
+                yield StringBuilder.One $"  switch value.Discriminator {{\n"
+                for case in cases do
+                  yield StringBuilder.One $"    case {t.Key}{!case.CaseName}: \n"
+                  yield StringBuilder.One $"      return on{t.Key}{!case.CaseName}(value.{t.Key}{!case.CaseName}) \n"
+                yield StringBuilder.One $"  }}\n"
+                yield StringBuilder.One "  var res result\n"
+                yield StringBuilder.One """  return res, fmt.Errorf("%s is not a valid discriminator value", value.Discriminator );"""
+                yield StringBuilder.One $"\n"
+                yield StringBuilder.One $"}}\n"
               })
             | _ ->
               let! fields = ExprType.GetFields t.Value.Type |> state.OfSum

@@ -82,7 +82,9 @@ namespace Ballerina.DSL.Expr
           let bar = "|"
           let sp = " "
           let arr = "->"
-          $"match {e.ToString()} with {{ {cases |> Seq.map (fun f -> bar + f.Key.ToString() + arr + f.Value.ToString())} |> String.Join ' ' }}"
+          let cases = cases |> Seq.map (fun f -> bar + f.Key.ToString() + arr + f.Value.ToString())
+          let casesJoined = String.Join(' ', cases)
+          $"match {e.ToString()} with {casesJoined}"
         
       static member op_BooleanOr (e1:Expr, e2:Expr) =
         Binary(Or, e1, e2)
