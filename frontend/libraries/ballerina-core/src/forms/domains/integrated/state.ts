@@ -1,5 +1,5 @@
 import { BasicFun, Guid, simpleUpdater, Sum, Unit } from "../../../../main"
-import { FormParsingToLaunchersResult, FormsToLaunchersParserState } from "../parser/state"
+import { FormParsingToLaunchersResult, FormsParserState } from "../parser/state"
 import { OnChange } from "../singleton/state"
 
 export type FormRefCreateApiHandlers<Arg> = {
@@ -37,7 +37,7 @@ export type FormRunnerContext = {
   extraContext:any
   formRef:FormRef
   showFormParsingErrors: BasicFun<FormParsingToLaunchersResult, JSX.Element>
-} & FormsToLaunchersParserState
+} & FormsParserState
 export type FormRunnerState = {
   form:Sum<{ form:any, formFieldStates:any, entity:any, rawEntity:any, rawGlobalConfiguration: any, commonFormState:any, customFormState:any, globalConfiguration:any }, "not initialized">
 }

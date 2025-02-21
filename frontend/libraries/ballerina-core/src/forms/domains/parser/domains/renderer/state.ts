@@ -139,7 +139,7 @@ export const ParsedRenderer = {
       }
       throw Error(`cannot resolve view ${viewName}`) // TODO -- better error handling
     },
-    RendererToForm: <T,>(fieldName: string, parsingContext: { formViews: Record<string, Record<string, any>>, forms: ParsedForms<T>, nestedContainerFormView: any, defaultValue: BasicFun<ParsedType<T>, any>, enumOptionsSources: EnumOptionsSources, infiniteStreamSources: any, leafPredicates: any, injectedPrimitives?: InjectedPrimitives<T> },
+    RendererToForm: <T,>(fieldName: string, parsingContext: { formViews: Record<string, Record<string, any>>, forms: ParsedForms<T>, nestedContainerFormView: any, defaultValue: BasicFun<ParsedType<T>, any>, enumOptionsSources: EnumOptionsSources, infiniteStreamSources: any, injectedPrimitives?: InjectedPrimitives<T> },
       parsedRenderer: ParsedRenderer<T>): ValueOrErrors<{form: Form, visibilityPredicateExpression: FieldPredicateExpression, disabledPredicatedExpression: FieldPredicateExpression}, string> => {
         
       const viewKind = ParsedRenderer.Operations.FormViewToViewKind(parsedRenderer.renderer, parsingContext.formViews, parsingContext.forms.keySeq().toSet())
@@ -148,18 +148,18 @@ export const ParsedRenderer = {
         case "enum":
         case "stream":
           return Expr.Operations.parse(parsedRenderer.visible ?? true).Then(visibilityExpr =>
-            Expr.Operations.parse(parsedRenderer.disabled ?? false).Then(disabledExpr =>
-              ValueOrErrors.Default.return(
-                {form: {
-                  renderer: ParsedRenderer.Operations.FormRenderers(parsedRenderer, parsingContext.formViews, viewKind, parsedRenderer.renderer, parsedRenderer.label, parsedRenderer.tooltip, parsedRenderer.details, parsingContext.enumOptionsSources, parsingContext.leafPredicates, parsingContext.injectedPrimitives),
-                  initialValue: parsingContext.defaultValue(parsedRenderer.type),
-                  initialState: ParsedRenderer.Operations.FormStates(parsedRenderer, viewKind, parsedRenderer.renderer, parsingContext.infiniteStreamSources, parsingContext.injectedPrimitives)
-                },
-                visibilityPredicateExpression: FieldPredicateExpression.Default.primitive(visibilityExpr),
-                disabledPredicatedExpression: FieldPredicateExpression.Default.primitive(disabledExpr)
-              })
-        )
-      )
+                  Expr.Operations.parse(parsedRenderer.disabled ?? false).Then(disabledExpr =>
+                    ValueOrErrors.Default.return(
+                      {form: {
+                        renderer: ParsedRenderer.Operations.FormRenderers(parsedRenderer, parsingContext.formViews, viewKind, parsedRenderer.renderer, parsedRenderer.label, parsedRenderer.tooltip, parsedRenderer.details, parsingContext.enumOptionsSources, parsingContext.injectedPrimitives),
+                        initialValue: parsingContext.defaultValue(parsedRenderer.type),
+                        initialState: ParsedRenderer.Operations.FormStates(parsedRenderer, viewKind, parsedRenderer.renderer, parsingContext.infiniteStreamSources, parsingContext.injectedPrimitives)
+                      },
+                      visibilityPredicateExpression: FieldPredicateExpression.Default.primitive(visibilityExpr),
+                      disabledPredicatedExpression: FieldPredicateExpression.Default.primitive(disabledExpr)
+                    })
+                    )
+                  )
         case "form":
           return Expr.Operations.parse(parsedRenderer.visible ?? true).Then(visibilityExpr =>
                   Expr.Operations.parse(parsedRenderer.disabled ?? false).Then(disabledExpr =>
@@ -172,8 +172,8 @@ export const ParsedRenderer = {
                         visibilityPredicateExpression: FieldPredicateExpression.Default.form(visibilityExpr, parsingContext.forms.get(parsedRenderer.renderer)!.visibilityPredicateExpressions),
                         disabledPredicatedExpression: FieldPredicateExpression.Default.form(disabledExpr, parsingContext.forms.get(parsedRenderer.renderer)!.disabledPredicatedExpressions)
                       })
-            )
-          )
+                    )
+                  )
         case "list":
             return Expr.Operations.parse(parsedRenderer.visible ?? true).Then(visibilityExpr =>
                       Expr.Operations.parse(parsedRenderer.disabled ?? false).Then(disabledExpr =>
