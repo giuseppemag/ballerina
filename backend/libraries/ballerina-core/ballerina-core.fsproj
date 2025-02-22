@@ -4,6 +4,10 @@
     <TargetFramework>net9.0</TargetFramework>
     <RootNamespace>ballerina_core</RootNamespace>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <!--https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files#locking-dependencies-->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <RestoreLockedMode>true</RestoreLockedMode>
   </PropertyGroup>
 
   <ItemGroup>
