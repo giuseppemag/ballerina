@@ -10,9 +10,9 @@
       },
       "FSharp.Core": {
         "type": "Direct",
-        "requested": "[9.0.100, )",
-        "resolved": "9.0.100",
-        "contentHash": "mxur4yR9M22kznD8JLl/IfPTiX9YMCnS7d9kh2vecgfW92OGhkeBxZ53U5nlECilD+4fF8Wb3eTunORARbOsTw=="
+        "requested": "[9.0.201, )",
+        "resolved": "9.0.201",
+        "contentHash": "Ozq4T0ISTkqTYJ035XW/JkdDDaXofbykvfyVwkjLSqaDZ/4uNXfpf92cjcMI9lf9CxWqmlWHScViPh/4AvnWcw=="
       },
       "FSharp.Data": {
         "type": "Transitive",
@@ -217,7 +217,7 @@
       "ballerina-core": {
         "type": "Project",
         "dependencies": {
-          "FSharp.Core": "[9.0.100, )",
+          "FSharp.Core": "[9.0.201, )",
           "FSharp.Data": "[6.4.1, )",
           "FSharp.SystemTextJson": "[1.3.13, )",
           "Microsoft.EntityFrameworkCore": "[9.0.0, )"
