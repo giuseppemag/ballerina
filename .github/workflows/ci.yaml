@@ -6,17 +6,11 @@ on:
   pull_request:
 jobs:
   backend:
-    defaults:
-      run:
-        working-directory: backend
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: actions/setup-dotnet@v4.3.0
-        with:
-          global-json-file: backend/global.json
-      - run: |
-          dotnet restore
-      - run: dotnet build
-      - run: dotnet test
-      - run: dotnet publish
+      - run: dotnet restore backend
+      - run: dotnet build backend
+      - run: dotnet test backend
+      - run: dotnet publish backend
