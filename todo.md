@@ -541,7 +541,7 @@ Job = Barista of Barista | Waiter of Waiter
   ❌ CI
     ✅ automate tests on push
     ❌ tag-based release
-    ❌ formatting
+    ✅ formatting
     ❌ commit VSCode settings
     ❌ test docker image build (potentially as part of integration tests)
     ❌ CI in sync with pre-commit hooks
