@@ -1,0 +1,7 @@
+{
+  "recommendations": [
+    "ionide.ionide-fsharp",
+    "esbenp.prettier-vscode",
+    "ms-dotnettools.csharp"
+  ]
+}
