@@ -10,7 +10,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: actions/setup-dotnet@v4.3.0
-      - run: dotnet restore backend
+      - run: |
+          dotnet restore
+          dotnet tool restore
+      - run: dotnet fantomas --check .
       - run: dotnet build backend
       - run: dotnet test backend
       - run: dotnet publish backend
