@@ -90,7 +90,7 @@ Todo (✅/❌)
         ✅ expr
         ✅ parser
         ✅ type checker
-        ❌ FE prototype of evaluator
+        ✅ FE prototype of evaluator
         ❌ add tests of correct validations using pattern matching
         ❌ add tests of mistaken validations using pattern matching
       ✅ generated type structure

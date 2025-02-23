@@ -12,10 +12,12 @@ export type Value =
   | ValueRecord
   | ValueUnionCase
 
+export type MatchCaseHandler = { parameter: string, body: Expr }
 export type Expr =
   Value
   | { kind: "fieldLookup", operands: [Expr, string] }
   | { kind: "isCase", operands: [Expr, string] }
+  | { kind: "match-case", operands: [Expr, Map<string, MatchCaseHandler>] }
   | { kind: BinaryOperator, operands: [Expr, Expr] }
 
 export const BinaryOperators = ["or", "equals"] as const
@@ -58,13 +60,13 @@ export const Value = {
       }
       if (typeof json == "object") {
         return ValueOrErrors.Operations.All(List(
-          Object.entries(json).map(([fieldName, fieldValue]) => 
+          Object.entries(json).map(([fieldName, fieldValue]) =>
             Value.Operations.parse(fieldValue).Then(value =>
-            ValueOrErrors.Default.return([fieldName, value] as [string, Value])))
+              ValueOrErrors.Default.return([fieldName, value] as [string, Value])))
         )).Then(entries =>
           ValueOrErrors.Default.return(
             Value.Default.record(Map(entries)
-          )))
+            )))
       }
       if (Array.isArray(json)) {
         return ValueOrErrors.Operations.All(List(
@@ -166,31 +168,40 @@ export const Expr = {
                 )
               )
             )
-            : e.kind == "isCase" ?
+            : e.kind == "match-case" ?
               Expr.Operations.Evaluate(vars)(e.operands[0]).Then((unionCase: Value) =>
-                Expr.Operations.EvaluateAsUnionCase(vars)(unionCase).Then((unionCase: ValueUnionCase) =>
-                  ValueOrErrors.Default.return(unionCase.caseName == e.operands[1])
+                Expr.Operations.EvaluateAsUnionCase(vars)(unionCase).Then((unionCase: ValueUnionCase) => {
+                  const caseHandler = e.operands[1].get(unionCase.caseName)
+                  if (caseHandler == undefined) return ValueOrErrors.Default.throwOne(`Error: no handler provided for case ${unionCase.caseName} in ${JSON.stringify(e.operands[1])}`)
+                  return Expr.Operations.Evaluate(vars.set(caseHandler.parameter, unionCase.value))(caseHandler.body)
+                }
                 )
               )
-              : e.kind == "equals" ?
-                Expr.Operations.Evaluate(vars)(e.operands[0]).Then(v1 =>
-                  Expr.Operations.Evaluate(vars)(e.operands[1]).Then(v2 =>
-                    Value.Operations.Equals(vars)(v1, v2).Then(eq =>
-                      ValueOrErrors.Default.return(eq)
-                    )
+              : e.kind == "isCase" ?
+                Expr.Operations.Evaluate(vars)(e.operands[0]).Then((unionCase: Value) =>
+                  Expr.Operations.EvaluateAsUnionCase(vars)(unionCase).Then((unionCase: ValueUnionCase) =>
+                    ValueOrErrors.Default.return(unionCase.caseName == e.operands[1])
                   )
                 )
-                : e.kind == "or" ?
+                : e.kind == "equals" ?
                   Expr.Operations.Evaluate(vars)(e.operands[0]).Then(v1 =>
                     Expr.Operations.Evaluate(vars)(e.operands[1]).Then(v2 =>
-                      Expr.Operations.EvaluateAsBoolean(vars)(v1).Then(v1 =>
-                        Expr.Operations.EvaluateAsBoolean(vars)(v2).Then(v2 =>
-                          ValueOrErrors.Default.return(v1 || v2)
-                        )
+                      Value.Operations.Equals(vars)(v1, v2).Then(eq =>
+                        ValueOrErrors.Default.return(eq)
                       )
                     )
                   )
-                  : ValueOrErrors.Default.throwOne(`Error: unsupported expression ${JSON.stringify(e)}`),
+                  : e.kind == "or" ?
+                    Expr.Operations.Evaluate(vars)(e.operands[0]).Then(v1 =>
+                      Expr.Operations.Evaluate(vars)(e.operands[1]).Then(v2 =>
+                        Expr.Operations.EvaluateAsBoolean(vars)(v1).Then(v1 =>
+                          Expr.Operations.EvaluateAsBoolean(vars)(v2).Then(v2 =>
+                            ValueOrErrors.Default.return(v1 || v2)
+                          )
+                        )
+                      )
+                    )
+                    : ValueOrErrors.Default.throwOne(`Error: unsupported expression ${JSON.stringify(e)}`),
   }
 }
 
@@ -226,7 +237,7 @@ const sample1: any = {
   ]
 }
 
-const sample2: any =
+const sample2: Expr =
 {
   "kind": "or",
   "operands": [
@@ -241,35 +252,59 @@ const sample2: any =
       ]
     },
     {
-      "kind": "isCase",
+      "kind": "match-case",
       "operands": [
-        {
-          "kind": "fieldLookup",
-          "operands": [
-            {
-              "kind": "varLookup",
-              "varName": "global"
-            },
-            "ERP"
-          ]
-        },
-        "ERP:SAP"
+        { "kind": "fieldLookup", "operands": [{ "kind": "varLookup", "varName": "global" }, "ERP"] },
+        Map<string, MatchCaseHandler>().set("ERP:SAP",
+          {
+            "parameter": "sapFields", "body": {
+              "kind": "match-case",
+              "operands": [
+                { "kind": "fieldLookup", "operands": [{ "kind": "varLookup", "varName": "sapFields" }, "Value"] },
+                Map<string, MatchCaseHandler>().set("SAP:S2",
+                  {
+                    "parameter": "s2Fields", "body": {
+                      "kind": "fieldLookup", "operands": [{ "kind": "varLookup", "varName": "s2Fields" }, "S2OnlyField"]
+                    }
+                  }).set("SAP:S3",
+                    {
+                      "parameter": "s3Fields", "body": {
+                        "kind": "fieldLookup", "operands": [{ "kind": "varLookup", "varName": "s3Fields" }, "S3OnlyField"]
+                      }
+                    }).set("SAP:S4",
+                      {
+                        "parameter": "s4Fields", "body": {
+                          "kind": "fieldLookup", "operands": [{ "kind": "varLookup", "varName": "s4Fields" }, "S4OnlyField"]
+                        }
+                      })
+              ]
+            }
+          })
+          .set("ERP:BC", { "parameter": "_", "body": false, })
+          .set("ERP:FAndO", { "parameter": "_", "body": false, })
+  
+        // { "case":"ERP:BC", "handler":{ "kind":"lambda", "parameter":"_", "body":false } },
+        // { "case":"ERP:FAndO", "handler":{ "kind":"lambda", "parameter":"_", "body":false } }
       ]
     }
   ]
 }
 
-let global: Value = { kind: "record", fields: Map<string, Value>().set("IsAdmin", true).set("ERP", { kind: "unionCase", caseName: "ERP:SAP", value: { kind: "unit" } }) }
+let global: Value = { kind: "record", fields: Map<string, Value>().set("IsAdmin", false).set("ERP", { kind: "unionCase", caseName: "ERP:SAP", value: { kind: "record", fields: Map<string, Value>().set("Value", { kind: "unionCase", caseName: "SAP:S3", value: { kind: "record", fields: Map<string, Value>().set("S3OnlyField", false) } }) } }) }
 let root: Value = { kind: "record", fields: Map<string, Value>().set("subscribeToNewsletter", true) }
 let local: Value = { kind: "record", fields: Map<string, Value>().set("number", 20) }
 const sample3: Expr = { kind: "equals", operands: [global, global] }
 
-const parsedSample = Expr.Operations.parse(sample1)
-if (parsedSample.kind == "value") {
-  let res = Expr.Operations.Evaluate(Map<string, Value>().set("global", global).set("root", root).set("local", local))(parsedSample.value)
-  console.log(JSON.stringify(res))
-} else {
-  console.log("Error: ", JSON.stringify(parsedSample.errors))
+let res = Expr.Operations.Evaluate(Map<string, Value>().set("global", global).set("root", root).set("local", local))(sample2)
+console.log(JSON.stringify(res))
 
-}
+
+// const parsedSample = Expr.Operations.parse(sample1)
+// if (parsedSample.kind == "value") {
+//   let res = Expr.Operations.Evaluate(Map<string, Value>().set("global", global).set("root", root).set("local", local))(parsedSample.value)
+//   console.log(JSON.stringify(res))
+// } else {
+//   console.log("Error: ", JSON.stringify(parsedSample.errors))
+
+// }
 
