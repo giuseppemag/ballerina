@@ -17,8 +17,16 @@ module Model =
     Map:CodegenConfigTypeDef
     Custom:Map<string, CodegenConfigTypeDef>
     IdentifierAllowedRegex:string
+    EnumNotFoundError:CodegenConfigErrorDef
+    InvalidEnumValueCombinationError:CodegenConfigErrorDef
+    StreamNotFoundError:CodegenConfigErrorDef
   }
   and GenericType = Option | List | Set | Map
+  and CodegenConfigErrorDef = {
+    GeneratedTypeName: string
+    Constructor: string
+    RequiredImport:Option<string>
+  }    
   and CodegenConfigListDef = {
     GeneratedTypeName: string
     RequiredImport:Option<string>

@@ -416,35 +416,24 @@
           "label": "gender",
           "renderer": "defaultEnum",
           "options": "genders",
-          "visible": {
-            "kind": "or",
-            "operands": [
-              {
-                "kind": "fieldLookup",
-                "operands": [
-                  {
-                    "kind": "varLookup",
-                    "varName": "global"
-                  },
-                  "IsAdmin"
+          "visible":{
+            "kind":"match-case",
+            "operands":[
+              { "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"global" }, "ERP"] },
+              { "case":"ERP:SAP", "handler":{ "kind":"lambda", "parameter":"sapFields", "body":{
+                "kind":"match-case",
+                "operands":[
+                  { "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"sapFields" }, "Value"] },
+                  { "case":"SAP:S2", "handler":{ "kind":"lambda", "parameter":"s2Fields", "body":{ 
+                    "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"s2Fields" }, "S2OnlyField"] } } },
+                  { "case":"SAP:S3", "handler":{ "kind":"lambda", "parameter":"s3Fields", "body":{ 
+                    "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"s3Fields" }, "S3OnlyField"] } } },
+                  { "case":"SAP:S4", "handler":{ "kind":"lambda", "parameter":"s4Fields", "body":{ 
+                    "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"s4Fields" }, "S3OnlyField"] } } }
                 ]
-              },
-              {
-                "kind": "isCase",
-                "operands": [
-                  {
-                    "kind": "fieldLookup",
-                    "operands": [
-                      {
-                        "kind": "varLookup",
-                        "varName": "global"
-                      },
-                      "ERP"
-                    ]
-                  },
-                  "ERP:SAP"
-                ]
-              }
+              } } },
+              { "case":"ERP:BC", "handler":{ "kind":"lambda", "parameter":"_", "body":false } },
+              { "case":"ERP:FAndO", "handler":{ "kind":"lambda", "parameter":"_", "body":false } }
             ]
           }
         },

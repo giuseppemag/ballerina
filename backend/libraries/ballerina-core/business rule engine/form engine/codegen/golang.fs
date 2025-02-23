@@ -84,7 +84,7 @@ module Golang =
             )
             yield StringBuilder.One "  }\n"
             yield StringBuilder.One "  var res []string\n"
-            yield StringBuilder.One """  return res, fmt.Errorf("%s is not a valid enum name", enumName )"""
+            yield StringBuilder.One $$"""  return res, {{codegenConfig.EnumNotFoundError.Constructor}}(enumName)"""
             yield StringBuilder.One "\n}\n\n"
 
             yield StringBuilder.One $"func {formName}EnumGETter[result any](enumName string, "
@@ -101,7 +101,7 @@ module Golang =
             )
             yield StringBuilder.One "  }\n"
             yield StringBuilder.One "  var res result\n"
-            yield StringBuilder.One """  return res, fmt.Errorf("%s is not a valid enum name", enumName )"""
+            yield StringBuilder.One $$"""  return res, {{codegenConfig.EnumNotFoundError.Constructor}}(enumName)"""
             yield StringBuilder.One "\n}\n\n"
           }
 
@@ -127,7 +127,7 @@ module Golang =
             yield StringBuilder.One "  }\n"
             yield StringBuilder.One $$"""  var result {{codegenConfig.Unit.GeneratedTypeName}}"""
             yield StringBuilder.One "\n"
-            yield StringBuilder.One """  return result, fmt.Errorf("%s,%s is not a valid enum name/value combination", enumName, enumValue )"""
+            yield StringBuilder.One $$"""  return result, {{codegenConfig.InvalidEnumValueCombinationError.Constructor}}(enumName, enumValue )"""
             yield StringBuilder.One "\n}\n\n"
           }
 
@@ -153,7 +153,7 @@ module Golang =
               })
             )
             yield StringBuilder.One "  }\n"
-            yield StringBuilder.One """return result, fmt.Errorf("%s is not a valid stream name", streamName )"""
+            yield StringBuilder.One $$"""return result, {{codegenConfig.StreamNotFoundError.Constructor}}(streamName)"""
             yield StringBuilder.One "\n}\n\n"
           }
 
@@ -179,7 +179,7 @@ module Golang =
               })
             )
             yield StringBuilder.One "  }\n"
-            yield StringBuilder.One """return result, fmt.Errorf("%s is not a valid stream name", streamName )"""
+            yield StringBuilder.One $$"""return result, {{codegenConfig.StreamNotFoundError.Constructor}}(streamName)"""
             yield StringBuilder.One "\n}\n\n"
           }
 
@@ -367,6 +367,8 @@ module Golang =
         Left(
           let imports = match s' with | Some s' -> s'.UsedImports | _ -> Set.empty
           let imports = if ctx.Apis.Enums |> Map.isEmpty |> not then imports + (codegenConfig.List.RequiredImport |> Option.toList |> Set.ofList) + (["golang.org/x/exp/slices"] |> Set.ofList) else imports
+          let imports = if ctx.Apis.Enums |> Map.isEmpty |> not then imports + (codegenConfig.EnumNotFoundError.RequiredImport |> Option.toList |> Set.ofList) + (codegenConfig.InvalidEnumValueCombinationError.RequiredImport |> Option.toList |> Set.ofList) else imports
+          let imports = if ctx.Apis.Streams |> Map.isEmpty |> not then imports + (codegenConfig.StreamNotFoundError.RequiredImport |> Option.toList |> Set.ofList) else imports
           let imports = imports + (codegenConfig.Guid.RequiredImport |> Option.toList |> Set.ofList)
           let imports = imports + (codegenConfig.Unit.RequiredImport |> Option.toList |> Set.ofList)
           let heading = StringBuilder.One $$"""package {{packageName}}

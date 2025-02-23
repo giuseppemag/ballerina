@@ -81,6 +81,7 @@ Todo (✅/❌)
         ❌ parser
         ❌ validator
     ❌ the validator is now mature
+    ✅ specialize the errors (steram not found, enum not found)
     ❌ improve the generated whitespace
     ❌ the Go type generator is now reasonably mature
     ❌ extensions
