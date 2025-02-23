@@ -1,11 +1,36 @@
 {
   "types": {
-    "ERPEnum": {
+    "SAPConfig": {
+      "fun": "Union",
+      "args": [
+        {
+          "case": "SAP:S2",
+          "fields": {
+            "S2OnlyField":"boolean"
+          }
+        },
+        {
+          "case": "SAP:S3",
+          "fields": {
+            "S3OnlyField":"boolean"
+          }
+        },
+        {
+          "case": "SAP:S4",
+          "fields": {
+            "S4OnlyField":"boolean"
+          }
+        }
+      ]
+    },
+    "ERPConfig": {
       "fun": "Union",
       "args": [
         {
           "case": "ERP:SAP",
-          "fields": {}
+          "fields": {
+            "Value":"SAPConfig"
+          }
         },
         {
           "case": "ERP:BC",
@@ -21,7 +46,7 @@
       "extends": [],
       "fields": {
         "IsAdmin": "boolean",
-        "ERP": "ERPEnum"
+        "ERP": "ERPConfig"
       }
     },
     "CollectionReference": {
@@ -429,7 +454,7 @@
                   { "case":"SAP:S3", "handler":{ "kind":"lambda", "parameter":"s3Fields", "body":{ 
                     "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"s3Fields" }, "S3OnlyField"] } } },
                   { "case":"SAP:S4", "handler":{ "kind":"lambda", "parameter":"s4Fields", "body":{ 
-                    "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"s4Fields" }, "S3OnlyField"] } } }
+                    "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"s4Fields" }, "S4OnlyField"] } } }
                 ]
               } } },
               { "case":"ERP:BC", "handler":{ "kind":"lambda", "parameter":"_", "body":false } },

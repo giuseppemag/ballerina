@@ -28,8 +28,8 @@
     <Compile Include="core/json/model.fs" />
     <Compile Include="business rule engine/expr/model.fs" />
     <Compile Include="business rule engine/exprtype/model.fs" />
-    <Compile Include="business rule engine/exprtype/unification.fs" />
     <Compile Include="business rule engine/model.fs" />
+    <Compile Include="business rule engine/exprtype/unification.fs" />
     <Compile Include="business rule engine/exprtype/typeCheck.fs" />
     <Compile Include="business rule engine/expr/eval.fs" />
     <Compile Include="business rule engine/expr/execute.fs" />

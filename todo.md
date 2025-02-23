@@ -81,8 +81,23 @@ Todo (✅/❌)
         ❌ parser
         ❌ validator
     ❌ the validator is now mature
-    ✅ specialize the errors (steram not found, enum not found)
+    ✅ specialize the errors (stream not found, enum not found, etc.)
     ❌ improve the generated whitespace
+    ❌ add full support for unions, including generation
+      ✅ parser
+      ✅ validator
+      ❌ match-case 
+        ✅ expr
+        ✅ parser
+        ✅ type checker
+        ❌ FE prototype of evaluator
+        ❌ add tests of correct validations using pattern matching
+        ❌ add tests of mistaken validations using pattern matching
+      ✅ generated type structure
+      ✅ generated constructors    
+        ✅ constructors for the case values
+        ✅ constructors for the whole thing - assume discriminator, accept specific value
+      ❌ add renderer syntax for the selector of a different form depending on the case
     ❌ the Go type generator is now reasonably mature
     ❌ extensions
       ❌ preprocessor plugins
@@ -98,33 +113,11 @@ Todo (✅/❌)
     ✅ convert all instances of Map.tryFind ... withError ... to `Map.tryFindWithError`
     ✅ `Map.tryFindWithError streamName "streams" streamName |> state.OfSum` should just be `findStream`
     ✅ adjust all patterns like `|> Seq.tryFind (fst >> (=) "stream") |> Option.map snd` to `JsonValue.tryFindField`
+    ❌ refactor `sprintf` instances in `typeCheck.fs`
     ❌ release ballerina to nuget
     ❌ check the consistency of the used data structures: `Type` vs `TypeId`
     ✅ accept empty `apis` blocks
     ❌ discard unsupported field names
-    ❌ generate improved error types
-    ❌ add full support for unions, including generation
-      ✅ parser
-      ✅ validator
-      ❌ match-case 
-        ✅ expr
-        ✅ parser
-        ❌ type checker
-```
-typecheck the argument (first operand) to Union(cases)
-typecheck all `case.Expr` in the map with `var := typeof(case.Fields)` foreach case in cases
-all cases must be matched
-the types need to be the same/need to unify in a fold to a common pattern type T_P
-the whole match expression then has type T_P
-```        
-        ❌ FE prototype of evaluator
-        ❌ add tests of correct validations using pattern matching
-        ❌ add tests of mistaken validations using pattern matching
-      ❌ generated type structure
-      ❌ generated constructors    
-        ✅ constructors for the case values
-        ❌ constructors for the whole thing - assume discriminator, accept specific value
-      ❌ add renderer syntax for the selector of a different form depending on the case
     ❌ add `extends` keyword for forms
     ❌ add lots of operators to lists, sets, maps, etc.
     ❌ create blazor/razor gui editor

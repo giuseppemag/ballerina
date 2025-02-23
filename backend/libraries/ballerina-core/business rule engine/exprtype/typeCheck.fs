@@ -6,8 +6,10 @@ module TypeCheck =
   open Ballerina.Collections.Sum
   open Ballerina.DSL.Expr.Model
   open Ballerina.DSL.Expr.Types.Model
+  open Ballerina.DSL.Expr.Types.Unification
   open Ballerina.Errors
   open Ballerina.DSL.Model
+  open Ballerina.Core.Object
 
   type TypeName = string
 
@@ -54,6 +56,41 @@ module TypeCheck =
                 return None,ExprType.PrimitiveType PrimitiveType.BoolType, vars'
               | t-> 
                 return! sum.Throw(sprintf "Error: unexpected case check on type %A when typechecking expression %A" t e |> Errors.Singleton)            
+            }
+          | Expr.MatchCase(e, caseHandlers) -> 
+            sum{
+              let! _,eType,vars' = eval vars e
+              match eType with
+              | UnionType cases -> 
+                let! casesWithHandler = 
+                  cases |> List.map (fun case -> 
+                    caseHandlers 
+                      |> Map.tryFind case.CaseName 
+                      |> Option.map (fun (varName, body) -> case, varName, body) 
+                      |> Sum.fromOption (fun () -> Errors.Singleton $"Error: missing case handler for case {case.CaseName}" |> Errors.WithPriority ErrorPriority.High)
+                    )  |> sum.All
+                let! handlerTypes =  
+                  casesWithHandler |> List.map(fun (case, varName, body) -> 
+                    sum{
+                      let vars'' = vars' |> Map.add varName case.Fields
+                      let! _,bodyType,_ = eval vars'' body
+                      return bodyType
+                    }
+                  ) |> sum.All
+                match handlerTypes with
+                | [] -> return ()
+                | x::xs ->
+                  do! 
+                    xs |> List.fold (fun unifications expr -> 
+                      sum{
+                        let! prevExpr,prevUnifications = unifications
+                        let! newUnifications = ExprType.Unify Map.empty typeBindings prevExpr expr
+                        return expr,newUnifications
+                      }) (sum{ return x,UnificationConstraints.Zero() })
+                      |> Sum.map ignore
+                return None,ExprType.PrimitiveType PrimitiveType.BoolType, vars'
+              | t-> 
+                return! sum.Throw(sprintf "Error: unexpected match-case on type %A when typechecking expression %A" t e |> Errors.Singleton)            
             }
           | Expr.FieldLookup(e, field) -> 
             sum{
