@@ -1,20 +1,11 @@
-import {
-  ApiResultStatus,
-  AsyncState,
-  Debounce,
-  Debounced,
-  EditFormForeignMutationsExpected,
-  evaluatePredicates,
-  FormFieldPredicateEvaluation,
-  PredicateValue,
-  replaceWith,
-  Sum,
-  Synchronize,
-  Unit,
-  ValueOrErrors,
-} from "../../../../../../main";
-import { CoTypedFactory } from "../../../../../coroutines/builder";
-import { IntegratedFormContext, IntegratedFormForeignMutationsExpected, IntegratedFormState, IntegratedFormWritableState } from "../state";
+import { Synchronize, Unit, replaceWith, Sum, ValueOrErrors, Debounce } from "../../../../../../../../../main";
+import { ApiResultStatus } from "../../../../../../../../apiResultStatus/state";
+import { AsyncState } from "../../../../../../../../async/state";
+import { CoTypedFactory } from "../../../../../../../../coroutines/builder";
+import { Debounced } from "../../../../../../../../debounced/state";
+import { PredicateValue, evaluatePredicates, FormFieldPredicateEvaluation } from "../../../../../../parser/domains/predicates/state";
+import { IntegratedFormContext, IntegratedFormForeignMutationsExpected, IntegratedFormWritableState, IntegratedFormState } from "../state";
+
 
 export const integratedFormRunner = <E, FS>() => {
   const Co = CoTypedFactory<
@@ -114,13 +105,13 @@ export const integratedFormRunner = <E, FS>() => {
         props.context.rawGlobalConfiguration.sync.kind == "loaded" &&
         props.context.globalConfiguration.kind == "r"
     }),
-    Co.Template<EditFormForeignMutationsExpected<E, FS>>(calculateInitialVisibilities, {
+    Co.Template<IntegratedFormForeignMutationsExpected<E, FS>>(calculateInitialVisibilities, {
       interval: 15,
       runFilter: (props) =>
         props.context.rawEntity.sync.kind == "loaded" &&
         props.context.globalConfiguration.kind == "l"
     }),
-    Co.Template<EditFormForeignMutationsExpected<E, FS>>(calculateVisibilities, {
+    Co.Template<IntegratedFormForeignMutationsExpected<E, FS>>(calculateVisibilities, {
       interval: 15,
       runFilter: (props) =>
         props.context.entity.sync.kind == "loaded" &&

@@ -4,7 +4,7 @@ import { CollectionReference, EnumReference } from "../collection/domains/refere
 import { SearchableInfiniteStreamState } from "../primitives/domains/searchable-infinite-stream/state";
 import { Form } from "../singleton/template";
 import { ParsedRenderer } from "./domains/renderer/state";
-
+import { ParsedIntegratedFormJSON } from "../integrated-forms/domains/validator/state";
 export type ParsedForm<T,> = {
   initialFormState: any,
   formConfig: any,
@@ -67,10 +67,9 @@ export const ParseForms = <T,>(
   injectedPrimitives: InjectedPrimitives<T> | undefined,
   nestedContainerFormView: any,
   fieldViews: any,
-  formsConfig: ParsedFormJSON<T>,
   infiniteStreamSources: any,
   enumOptionsSources: EnumOptionsSources,
-): ValueOrErrors<ParsedForms<T>, string> => {
+) => (formsConfig: ParsedFormJSON<T> | ParsedIntegratedFormJSON<T>): ValueOrErrors<ParsedForms<T>, string> => {
   let errors: FormParsingErrors = List()
   let seen = Set<string>()
   let formProcessingOrder = OrderedSet<string>()
@@ -237,7 +236,7 @@ export const parseFormsToLaunchers =
         edit: Map(),
       }
 
-      const parsedFormsResult = ParseForms(builtIns, injectedPrimitives, nestedContainerFormView, fieldViews, formsConfig, infiniteStreamSources, enumOptionsSources)
+      const parsedFormsResult = ParseForms(builtIns, injectedPrimitives, nestedContainerFormView, fieldViews, infiniteStreamSources, enumOptionsSources)(formsConfig)
 
       if (parsedFormsResult.kind == "errors") {
         console.error(parsedFormsResult.errors)

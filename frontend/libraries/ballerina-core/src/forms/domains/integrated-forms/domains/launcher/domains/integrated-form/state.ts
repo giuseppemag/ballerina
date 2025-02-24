@@ -20,8 +20,9 @@ import {
   id,
   ForeignMutationsInput,
   Unit,
-} from "../../../../../main";
+} from "../../../../../../../../main";
 import { Map } from "immutable";
+
 
 export type IntegratedFormContext<E, FS> = {
   formType: ParsedType<E>;
@@ -112,4 +113,4 @@ export const IntegratedFormState = <E,FS>() => ({
 
   export type IntegratedFormWritableState<E, FS> = IntegratedFormState<E,FS>
   export type IntegratedFormForeignMutationsExposed<E,FS> = ReturnType<ReturnType<typeof IntegratedFormState<E,FS>>["ForeignMutations"]>
-  export type IntegratedFormForeignMutationsExpected<E,FS> = {}
+  export type IntegratedFormForeignMutationsExpected<E, FS> = Unit

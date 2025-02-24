@@ -1,17 +1,15 @@
 import { Map } from "immutable"
 
-import { FormFieldPredicateEvaluation, simpleUpdater, unit, Unit, BasicFun, Synchronized, Template, Injectables, IntegratedFormContext, IntegratedFormTemplate, PredicateValue, fromAPIRawValue, toAPIRawValue, ApiResponseChecker, ValueOrErrors, Debounced } from "../../../../../../main"
-
-import { EnumOptionsSources, FormsParsingResult, InfiniteStreamSources } from "../../../parser/state"
-
-import { IntegratedFormState } from "../../../../../../main"
-import { IntegratedFormForeignMutationsExpected } from "../../../../../../main"
-
+import { FormFieldPredicateEvaluation, simpleUpdater, unit, Unit, BasicFun, Synchronized, Template, Injectables, PredicateValue, fromAPIRawValue, toAPIRawValue, ValueOrErrors, Debounced } from "../../../../../../main"
+import { EnumOptionsSources, InfiniteStreamSources, ParseForms } from "../../../parser/state"
 import { BuiltIns } from "../../../../../../main";
-import { ParseForms } from "../../../parser/state";
-import { EntityApis } from "../../../parser/state";
 import { ApiConverters, InjectedPrimitives } from "../../../../../../main";
 import { ParsedIntegratedFormJSON } from "../validator/state";
+import { IntegratedFormContext, IntegratedFormForeignMutationsExpected, IntegratedFormState } from "../launcher/domains/integrated-form/state";
+import { IntegratedFormTemplate } from "../launcher/domains/integrated-form/template";
+import { LoadValidateAndParseIntegratedFormsConfig } from "./coroutines/runner";
+
+export const IntegratedFormsParserTemplate = <T extends {[key in keyof T] : {type: any, state: any}} = Unit>() => LoadValidateAndParseIntegratedFormsConfig<T>()
 
 
 export type IntegratedForm = <Entity, FormState, ExtraContext>() =>
@@ -67,7 +65,7 @@ export const parseIntegratedFormsToLaunchers =
         formsConfig.launchers.forEach((launcher, launcherName) => {
         const parsedForm = parsedForms.get(launcher.form)!
         const form = parsedForm.form
-        const globalConfigurationType = formsConfig.types.get(launcher.configApiType)!
+        const globalConfigurationType = formsConfig.types.get(launcher.configType)!
         const initialState = parsedForm.initialFormState
         const formType = parsedForm.formDef.type;
         const visibilityPredicateExpressions = parsedForm.visibilityPredicateExpressions

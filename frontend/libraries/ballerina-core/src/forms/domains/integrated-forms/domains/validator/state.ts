@@ -32,10 +32,10 @@ export type ColumnLayout = {
 export type TabLayout = {
   columns: OrderedMap<string, ColumnLayout>;
 };
-export type Launcher = {
+export type IntegratedFormLauncher = {
   name: string,
   form: string,
-  configApiType: string
+  configType: string
 }
 
 export type RawFormJSON = {
@@ -58,14 +58,14 @@ export type ParsedIntegratedFormJSON<T> = {
     streams: Map<string, TypeName>;
   };
   forms: Map<string, ParsedFormConfig<T>>;
-  launchers: Map<string, Launcher>;
+  launchers: Map<string, IntegratedFormLauncher>;
 };
 
 export type FormValidationError = string;
 
 export type IntegratedFormConfigValidationAndParseResult<T> = ValueOrErrors<ParsedIntegratedFormJSON<T>, FormValidationError>
 
-export const FormsConfig = {
+export const IntegratedFormsConfig = {
   Default: {
     validateAndParseIntegratedFormConfig: <T extends {[key in keyof T]: {type: any, state: any}}>(builtIns: BuiltIns, apiConverters: ApiConverters<T>, injectedPrimitives?: InjectedPrimitives<T>) => (fc: any): IntegratedFormConfigValidationAndParseResult<T> => {
       let errors: List<FormValidationError> = List();
@@ -198,12 +198,12 @@ export const FormsConfig = {
       })
 
 
-      let launchers: ParsedIntegratedFormJSON<T>["launchers"] = Map<string, Launcher>();
+      let launchers: ParsedIntegratedFormJSON<T>["launchers"] = Map<string, IntegratedFormLauncher>();
       Object.keys(formsConfig["launchers"]).forEach((launcherName: any) => {
-        let launcher: Launcher = {
+        let launcher: IntegratedFormLauncher = {
           name: launcherName,
           form: formsConfig.launchers[launcherName]["form"],
-          configApiType: formsConfig.launchers[launcherName]["configApiType"],
+          configType: formsConfig.launchers[launcherName]["configType"],
         };
         launchers = launchers.set(launcherName, launcher)
       })

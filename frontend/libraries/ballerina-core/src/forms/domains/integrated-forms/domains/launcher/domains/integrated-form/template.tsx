@@ -1,7 +1,7 @@
-import React from "react";
-import { AsyncState, createFormRunner, IntegratedFormContext, IntegratedFormForeignMutationsExpected, IntegratedFormState, IntegratedFormWritableState, replaceWith, SimpleCallback, unit } from "../../../../../main";
-import { Template, View } from "../../../../template/state";
-
+import { AsyncState, unit } from "../../../../../../../../main";
+import { Template } from "../../../../../../../template/state";
+import { IntegratedFormContext, IntegratedFormForeignMutationsExpected, IntegratedFormState, IntegratedFormWritableState } from "./state";
+import { integratedFormRunner } from "./coroutines/runner";
 export type IntegratedFormView<E, FS> =
   Template<
     IntegratedFormContext<E, FS> & IntegratedFormWritableState<E, FS>,
@@ -65,19 +65,10 @@ export const IntegratedFormTemplate = <E, FS>(): IntegratedFormTemplate<E, FS> =
                     },
                     view: unit
                   })
-
             }
           })
         }
       </>
     }).any([
-    //   createFormRunner<E, FS>().mapContextFromProps(props => ({
-    //     ...props.context,
-    //     apiHandlers: {
-    //       onDefaultSuccess: props.foreignMutations.apiHandlers?.onDefaultSuccess,
-    //       onDefaultError: props.foreignMutations.apiHandlers?.onDefaultError,
-    //       onCreateSuccess: props.foreignMutations.apiHandlers?.onCreateSuccess,
-    //       onCreateError: props.foreignMutations.apiHandlers?.onCreateError
-    //     }
-    //   }))
+      integratedFormRunner<E, FS>()
     ])
