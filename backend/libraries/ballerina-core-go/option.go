@@ -1,6 +1,8 @@
 package ballerina
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 type Option[a any] struct {
 	value  a
