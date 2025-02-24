@@ -13,11 +13,8 @@ export const IntegratedFormRunnerErrorsTemplate = (parsedFormsConfig: Integrated
       {JSON.stringify(props)}
     </>),
   formFieldStates: unit,
-  rawEntity: unit,
-  entity: unit,
   commonFormState: unit,
   customFormState: unit,
-  globalConfiguration: unit,
 })
 
 export const IntegratedFormRunnerTemplate =
@@ -26,16 +23,14 @@ export const IntegratedFormRunnerTemplate =
     return <>
         <props.context.form.value.form
           context={{
-            entity: props.context.form.value.entity,
-            rawEntity: props.context.form.value.rawEntity,
-            globalConfiguration: props.context.form.value.globalConfiguration,
+            rawEntity: props.context.rawEntity,
+            rawGlobalConfiguration: props.context.rawGlobalConfiguration,
             formFieldStates: props.context.form.value.formFieldStates,
             commonFormState: props.context.form.value.commonFormState,
             customFormState: props.context.form.value.customFormState,
+            containerWrapper: props.context.containerWrapper,
             extraContext: {
               ...props.context.extraContext,
-              rootValue:
-                  props.context.form.value?.entity.sync?.value,
             },
           }}
           setState={(_: BasicUpdater<any>) => props.setState(

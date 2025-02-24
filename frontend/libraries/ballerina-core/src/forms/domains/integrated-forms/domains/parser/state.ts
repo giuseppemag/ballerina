@@ -34,7 +34,7 @@ export type IntegratedLauncherContext<Entity, FormState, ExtraContext> =
         IntegratedFormState<Entity, FormState> & {
         extraContext: ExtraContext,
         containerFormView: any,
-        submitButtonWrapper: any
+        containerWrapper: any
         }, "api" | "actualForm">
 
 export type IntegratedFormParsingResult = ValueOrErrors<ParsedIntegratedLaunchers, string>
@@ -65,7 +65,7 @@ export const parseIntegratedFormsToLaunchers =
         formsConfig.launchers.forEach((launcher, launcherName) => {
         const parsedForm = parsedForms.get(launcher.form)!
         const form = parsedForm.form
-        const globalConfigurationType = formsConfig.types.get(launcher.configType)!
+        const globalConfigurationType = formsConfig.types.get(formsConfig.apis.globalConfigType)!
         const initialState = parsedForm.initialFormState
         const formType = parsedForm.formDef.type;
         const visibilityPredicateExpressions = parsedForm.visibilityPredicateExpressions
@@ -75,11 +75,8 @@ export const parseIntegratedFormsToLaunchers =
             <Entity, FormState, ExtraContext, Context extends IntegratedLauncherContext<Entity, FormState, ExtraContext>>() => ({
             form: IntegratedFormTemplate<Entity, FormState>().mapContext((parentContext: Context) =>
                 ({
-                value: parentContext.entity.sync.kind == "loaded" ? parentContext.entity.sync.value : undefined,
                 rawEntity: parentContext.rawEntity,
-                entity: parentContext.entity,
                 rawGlobalConfiguration: parentContext.rawGlobalConfiguration,
-                globalConfiguration: parentContext.globalConfiguration,
                 commonFormState: parentContext.commonFormState,
                 customFormState: parentContext.customFormState,
                 formFieldStates: parentContext.formFieldStates,
@@ -88,8 +85,9 @@ export const parseIntegratedFormsToLaunchers =
                 disabledPredicatedExpressions,
                 types: formsConfig.types,
                 formType: formType,
+                isInitialized: parentContext.customFormState.isInitialized,
                 parseGlobalConfiguration: (raw: any) => PredicateValue.Operations.parse(raw, globalConfigurationType, formsConfig.types),
-                fromApiParser: (value: any) => fromAPIRawValue(formType , formsConfig.types, builtIns, apiConverters, injectedPrimitives)(value),
+                fromApiParser: (value: any) => fromAPIRawValue(formType, formsConfig.types, builtIns, apiConverters, injectedPrimitives)(value),
                 toApiParser: (value: any, formState: any, checkKeys: boolean) => toAPIRawValue(formType , formsConfig.types, builtIns, apiConverters, injectedPrimitives)(value, formState, checkKeys),
                 actualForm: form.withView(containerFormView).mapContext((_: any) => ({
                     value: _.value,
@@ -105,14 +103,9 @@ export const parseIntegratedFormsToLaunchers =
                     disabledFields: _.disabledFields,
                     }))
                 }) as any)
-                .withViewFromProps(props => props.context.submitButtonWrapper)
+                .withViewFromProps(props => props.context.containerWrapper)
                 .mapForeignMutationsFromProps(props => props.foreignMutations as any),
-            initialState: IntegratedFormState<Entity, FormState>().Default(initialState.formFieldStates, initialState.commonFormState, {
-                predicateEvaluations: Debounced.Default(ValueOrErrors.Default.return({
-                visiblityPredicateEvaluations: FormFieldPredicateEvaluation.Default.form(false, Map()),
-                disabledPredicateEvaluations: FormFieldPredicateEvaluation.Default.form(false, Map())
-                }))
-            }),
+            initialState: IntegratedFormState<Entity, FormState>().Default(initialState.formFieldStates, initialState.commonFormState)
             })
         )
         })

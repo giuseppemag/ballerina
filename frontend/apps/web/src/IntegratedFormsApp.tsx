@@ -4,12 +4,13 @@ import { unit, FormParsingResult, FormsParserState, FormRunnerState, FormsParser
 import { List, Set, Map } from "immutable";
 // import { PersonView } from "./domains/person/views/main-view";
 import { PersonContainerFormView, PersonNestedContainerFormView, CreatePersonSubmitButtonWrapper, EditPersonSubmitButtonWrapper } from "./domains/person/domains/from-config/views/wrappers";
-import { PersonFromConfigApis, PersonConfigFormsLeafPredicates, Person } from "playground-core";
+import { PersonFromConfigApis, PersonConfigFormsLeafPredicates, Person, initialIntegratedFormData } from "playground-core";
 import { PersonFieldViews } from "./domains/person-from-config/views/field-views";
 // import { PersonForm } from "./domains/person/template";
 import { fieldTypeConverters } from "./domains/person/apis/field-converters";
 import { categoryForm, CategoryState, PersonFormInjectedTypes } from "./domains/person-from-config/injected-forms/category";
 import IntegratedFormConfig from "../../../../backend/apps/ballerina-runtime/input-forms/integrated/integrated-form.json"
+import { IntegratedFormContainerWrapper } from "./domains/person/domains/integrated-form/views/wrappers";
 
 const ShowIntegratedFormParsingErrors = (parsedFormsConfig: IntegratedFormParsingResult) =>
 	<div style={{ border: "red" }}>
@@ -20,6 +21,7 @@ const InstantiedIntegratedFormParserTemplate = IntegratedFormsParserTemplate<Per
 export const IntegratedFormsApp = (props: {}) => {
 	const [configFormsParser, setConfigFormsParser] = useState(IntegratedFormsParserState.Default())
 	const [integratedFormState, setIntegratedFormState] = useState(IntegratedFormRunnerState.Default())
+    const [entity, setEntity] = useState(initialIntegratedFormData)
 	// const [personFormState, setPersonFormState] = useState(PersonFormState.Default(""))
 	// const [personConfigState, setPersonConfigState] = useState(PersonConfig.Default())
 
@@ -30,8 +32,6 @@ export const IntegratedFormsApp = (props: {}) => {
 		parser: configFormsParser,
 		runner: integratedFormState
 	})
-
-
 
 	return (
 		<div className="App">
@@ -65,8 +65,14 @@ export const IntegratedFormsApp = (props: {}) => {
 												context={{
 													...configFormsParser,
 													...integratedFormState,
+                                                    containerWrapper: IntegratedFormContainerWrapper,
+													rawEntity: entity,
+													rawGlobalConfiguration: {
+                                                        ERP: "ERP:SAP",
+                                                        IsAdmin: true
+                                                    },
 													formRef: {
-														formName: "create-person",
+														formName: "integrated-form",
 													},
 													showFormParsingErrors: ShowIntegratedFormParsingErrors,
 													extraContext: {

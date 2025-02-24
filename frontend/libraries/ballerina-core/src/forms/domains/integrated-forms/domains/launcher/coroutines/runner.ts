@@ -40,11 +40,8 @@ export const IntegratedFormRunnerLoader = () => {
                 Sum.Default.left({
                 form: instantiatedForm.form,
                 formFieldStates: instantiatedForm.initialState.formFieldStates,
-                entity: instantiatedForm.initialState.entity,
-                rawEntity: instantiatedForm.initialState.rawEntity,
                 commonFormState: instantiatedForm.initialState.commonFormState,
                 customFormState: instantiatedForm.initialState.customFormState,
-                globalConfiguration: instantiatedForm.initialState.globalConfiguration
                 })
             )
             )  

@@ -9,12 +9,8 @@ import {
   FormFieldPredicateEvaluation,
   SimpleCallback,
   BasicUpdater,
-  AsyncState,
   simpleUpdater,
   Debounced,
-  Synchronized,
-  unit,
-  Sum,
   simpleUpdaterWithChildren,
   Updater,
   id,
@@ -28,6 +24,7 @@ export type IntegratedFormContext<E, FS> = {
   formType: ParsedType<E>;
   types: Map<string, ParsedType<E>>;
   rawGlobalConfiguration: any;
+  rawEntity: any;
   toApiParser: (
     entity: E,
     formstate: IntegratedFormState<E,FS>,
@@ -49,12 +46,10 @@ export type IntegratedFormContext<E, FS> = {
 };
 
 export type IntegratedFormState<E,FS> = {
-  rawEntity: Synchronized<Unit, any>,
-  entity: Synchronized<Unit, E>,
-  globalConfiguration: Sum<any, "not parsed">,
-  formFieldStates: FS,
+  formFieldStates: FS,  
   commonFormState: CommonFormState,
   customFormState: {
+    isInitialized: boolean,
     predicateEvaluations: Debounced<ValueOrErrors<{
       visiblityPredicateEvaluations: FormFieldPredicateEvaluation;
       disabledPredicateEvaluations: FormFieldPredicateEvaluation;
@@ -63,41 +58,27 @@ export type IntegratedFormState<E,FS> = {
 }
 
 export const IntegratedFormState = <E,FS>() => ({
-    Default:(formFieldStates:FS,
-      commonFormState: CommonFormState,
-      customFormState: {
-        predicateEvaluations: Debounced<ValueOrErrors<{
-          visiblityPredicateEvaluations: FormFieldPredicateEvaluation;
-          disabledPredicateEvaluations: FormFieldPredicateEvaluation;
-        }, string>>,
-    }) : IntegratedFormState<E,FS> => ({
-      rawEntity: Synchronized.Default(unit),
-      entity:Synchronized.Default(unit),
-      globalConfiguration: Sum.Default.right("not parsed"),
+    Default:(formFieldStates:FS, commonFormState: CommonFormState) : IntegratedFormState<E,FS> => ({
       formFieldStates,
       commonFormState,
-      customFormState,
+      customFormState: {
+        isInitialized: false,
+        predicateEvaluations: Debounced.Default(ValueOrErrors.Default.return({
+        visiblityPredicateEvaluations: FormFieldPredicateEvaluation.Default.form(false, Map()),
+        disabledPredicateEvaluations: FormFieldPredicateEvaluation.Default.form(false, Map())
+        }))
+      }
     }),
     Updaters:{
       Core:{
-        ...simpleUpdater<IntegratedFormState<E,FS>>()("rawEntity"),
-        ...simpleUpdater<IntegratedFormState<E,FS>>()("entity"),
-        ...simpleUpdater<IntegratedFormState<E,FS>>()("globalConfiguration"),
         ...simpleUpdater<IntegratedFormState<E,FS>>()("formFieldStates"),
         ...simpleUpdaterWithChildren<IntegratedFormState<E,FS>>()({
             ...simpleUpdater<IntegratedFormState<E,FS>["customFormState"]>()("predicateEvaluations"),
+            ...simpleUpdater<IntegratedFormState<E,FS>["customFormState"]>()("isInitialized"),
         })("customFormState"),
         ...simpleUpdater<IntegratedFormState<E,FS>>()("commonFormState"),
       },
       Template:{
-        entity:(_:BasicUpdater<E>) : Updater<IntegratedFormState<E,FS>> => 
-          IntegratedFormState<E,FS>().Updaters.Core.entity(
-              Synchronized.Updaters.sync(
-                AsyncState.Operations.map(
-                    _
-                )
-              )
-          ),
         recalculatePredicates: () : Updater<IntegratedFormState<E,FS>> => 
           IntegratedFormState<E,FS>().Updaters.Core.customFormState.children.predicateEvaluations(
             Debounced.Updaters.Template.value(

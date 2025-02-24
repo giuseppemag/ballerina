@@ -7,12 +7,15 @@ export type IntegratedFormRef = {
   } 
 
 export type IntegratedFormRunnerContext = {
-    extraContext:any
+    extraContext:any,
+    rawEntity: any,
+    rawGlobalConfiguration: any,
+    containerWrapper: any,
     formRef:IntegratedFormRef
     showFormParsingErrors: BasicFun<IntegratedFormParsingResult, JSX.Element>
 } & IntegratedFormsParserState
 export type IntegratedFormRunnerState = {
-    form:Sum<{ form:any, formFieldStates:any, entity:any, rawEntity:any, commonFormState:any, customFormState:any, globalConfiguration:any }, "not initialized">
+    form:Sum<{ form:any, formFieldStates:any, commonFormState:any, customFormState:any }, "not initialized">
 }
 export type IntegratedFormRunnerForeignMutationsExpected = Unit
 export const IntegratedFormRunnerState = {

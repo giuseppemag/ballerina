@@ -106,6 +106,8 @@ export const Form = <Entity, FieldStates extends { formFieldStates: any}, Contex
               return props.context.visibilities.fields.filter(_ => _.value == true).keySeq().toOrderedSet()
             })()
 
+            // const visibleFieldKeys = OrderedSet(Object.keys(props.context.value as object))
+
             const disabledFieldKeys: OrderedSet<FieldName> = (() => {
               if(props.context.disabledFields == undefined || props.context.disabledFields.kind != "form") 
                 return OrderedSet(Object.keys(props.context.value as object))

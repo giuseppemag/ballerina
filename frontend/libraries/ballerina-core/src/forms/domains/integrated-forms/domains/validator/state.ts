@@ -1,44 +1,14 @@
 import { Set, Map, OrderedMap, List } from "immutable";
-import { ApiConverters, BuiltIns, FieldName, FormsConfigMerger, InjectedPrimitives, isObject, ParsedType, RawFieldType, RawType, TypeName } from "../../../../../../main";
+import { ApiConverters, BuiltIns, ColumnLayout, FormLayout, FormsConfigMerger, GroupLayout, InjectedPrimitives, isObject, ParsedFormConfig, RawFieldType, RawForm, RawType, TypeName, TabLayout, ParsedType, isString } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 import { ParsedRenderer } from "../../../parser/domains/renderer/state";
 
-export type RawForm = {
-  type?: any;
-  fields?: any;
-  tabs?: any;
-  header?: any;
-}
-export const RawForm = {
-  hasType: (_: any): _ is { type: any } => isObject(_) && "type" in _,
-  hasFields: (_: any): _ is { fields: any } => isObject(_) && "fields" in _,
-  hasTabs: (_: any): _ is { tabs: any } => isObject(_) && "tabs" in _,
-  hasHeader: (_: any): _ is { header: any } => isObject(_) && "header" in _,
-}
-export type ParsedFormConfig<T> = {
-  name: string;
-  type: ParsedType<T>;
-  fields: Map<FieldName, ParsedRenderer<T>>;
-  configType: ParsedType<T>;
-  tabs: FormLayout;
-  header?: string;
-};
-
-export type FormLayout = OrderedMap<string, TabLayout>
-export type GroupLayout = Array<FieldName>;
-export type ColumnLayout = {
-  groups: OrderedMap<string, GroupLayout>;
-};
-export type TabLayout = {
-  columns: OrderedMap<string, ColumnLayout>;
-};
 export type IntegratedFormLauncher = {
   name: string,
   form: string,
-  configType: string
 }
 
-export type RawFormJSON = {
+export type RawIntegratedFormJSON = {
   types?: any;
   apis?: any;
   forms?: any;
@@ -47,8 +17,7 @@ export type RawFormJSON = {
 export const RawIntegratedFormJSON = {
   hasTypes: (_: any): _ is { types: object } => isObject(_) && "types" in _ && isObject(_.types),
   hasForms: (_: any): _ is { forms: object } => isObject(_) && "forms" in _ && isObject(_.forms),
-  hasApis: (_: any): _ is { apis: { enumOptions: object; searchableStreams: object; entities: {globalConfiguration: object}; globalConfiguration: object }} => isObject(_) && "apis" in _ && isObject(_.apis) && "enumOptions" in _.apis && isObject(_.apis.enumOptions) && "searchableStreams" in _.apis && isObject(_.apis.searchableStreams) && "entities" in _.apis && isObject(_.apis.entities) && "globalConfiguration" in _.apis.entities && isObject(_.apis.entities.globalConfiguration), 
-  isGlobalConfigurationApi: (_: any): _ is { type: string, methods: string[]}  => isObject(_) && "type" in _  && typeof _.type == "string" && "methods" in _ && Array.isArray(_.methods) && _.methods.every((method: any) => typeof method == "string"),
+  hasApis: (_: any): _ is { apis: { enumOptions: object; searchableStreams: object; globalConfigType: string }} => isObject(_) && "apis" in _ && isObject(_.apis) && "enumOptions" in _.apis && isObject(_.apis.enumOptions) && "searchableStreams" in _.apis && isObject(_.apis.searchableStreams) && "globalConfigType" in _.apis && isString(_.apis.globalConfigType), 
   hasLaunchers: (_: any): _ is { launchers: any } => isObject(_) && "launchers" in _,
 }
 export type ParsedIntegratedFormJSON<T> = {
@@ -56,6 +25,7 @@ export type ParsedIntegratedFormJSON<T> = {
   apis: {
     enums: Map<string, TypeName>;
     streams: Map<string, TypeName>;
+    globalConfigType: TypeName;
   };
   forms: Map<string, ParsedFormConfig<T>>;
   launchers: Map<string, IntegratedFormLauncher>;
@@ -133,13 +103,6 @@ export const IntegratedFormsConfig = {
           streams = streams.set(searchableStreamName, searchableStream)
       )
 
-      const globalConfigFromForm = formsConfig.apis.entities.globalConfiguration;
-      if(!RawIntegratedFormJSON.isGlobalConfigurationApi(globalConfigFromForm)) {
-        errors = errors.push(`globalConfiguration is missing the required type and methods attributes`);
-        return ValueOrErrors.Default.throw(errors);
-      }
-
-
       let forms: Map<string, ParsedFormConfig<T>> = Map();
       Object.entries(formsConfig.forms).forEach(([formName, form]: [formName: string, form: RawForm]) => {
         if(!RawForm.hasType(form) || !RawForm.hasFields(form) || !RawForm.hasTabs(form)){
@@ -152,7 +115,7 @@ export const IntegratedFormsConfig = {
           return
         }
 
-        const parsedForm: ParsedFormConfig<T> = { name: formName, fields: Map(), tabs: Map(), type: parsedTypes.get(form.type)!, configType: parsedTypes.get(globalConfigFromForm.type)!, header: RawForm.hasHeader(form) ? form.header : undefined };
+        const parsedForm: ParsedFormConfig<T> = { name: formName, fields: Map(), tabs: Map(), type: parsedTypes.get(form.type)!, configType: parsedTypes.get(formsConfig.apis.globalConfigType)!, header: RawForm.hasHeader(form) ? form.header : undefined };
 
         Object.entries(form.fields).forEach(([fieldName, field]: [fieldName: string, field: any]) =>
           {  
@@ -203,7 +166,6 @@ export const IntegratedFormsConfig = {
         let launcher: IntegratedFormLauncher = {
           name: launcherName,
           form: formsConfig.launchers[launcherName]["form"],
-          configType: formsConfig.launchers[launcherName]["configType"],
         };
         launchers = launchers.set(launcherName, launcher)
       })
@@ -220,6 +182,7 @@ export const IntegratedFormsConfig = {
         apis: {
           enums,
           streams,
+          globalConfigType: formsConfig.apis.globalConfigType
         },
         launchers
       });
