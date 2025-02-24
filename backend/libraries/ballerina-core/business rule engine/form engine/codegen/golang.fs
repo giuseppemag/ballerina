@@ -153,7 +153,7 @@ module Golang =
               })
             )
             yield StringBuilder.One "  }\n"
-            yield StringBuilder.One $$"""return result, {{codegenConfig.StreamNotFoundError.Constructor}}(streamName)"""
+            yield StringBuilder.One $$"""  return result, {{codegenConfig.StreamNotFoundError.Constructor}}(streamName)"""
             yield StringBuilder.One "\n}\n\n"
           }
 
@@ -179,12 +179,21 @@ module Golang =
               })
             )
             yield StringBuilder.One "  }\n"
-            yield StringBuilder.One $$"""return result, {{codegenConfig.StreamNotFoundError.Constructor}}(streamName)"""
+            yield StringBuilder.One $$"""  return result, {{codegenConfig.StreamNotFoundError.Constructor}}(streamName)"""
             yield StringBuilder.One "\n}\n\n"
           }
 
+        let customTypes = codegenConfig.Custom.Keys |> Set.ofSeq
+        let typesToGenerate = ctx.Types |> Map.filter (fun k v -> customTypes |> Set.contains k |> not)
+        let customTypes = 
+          codegenConfig.Custom |> Seq.map (fun t -> 
+            StringBuilder.Many(seq{
+              yield StringBuilder.One "\n"
+              yield StringBuilder.One $"type {t.Key} = {t.Value.GeneratedTypeName}"
+            })
+          )
         let! generatedTypes = state.All(
-          ctx.Types |> Seq.map(fun t -> 
+          typesToGenerate |> Seq.map(fun t -> 
           state{
             match t.Value.Type with
             | ExprType.UnionType cases when cases |> Seq.forall (fun case -> case.Fields.IsUnitType) ->
@@ -293,7 +302,7 @@ module Golang =
             | _ ->
               let! fields = ExprType.GetFields t.Value.Type |> state.OfSum
               let typeStart = $$"""type {{t.Value.TypeId.TypeName}} struct {
-    """
+"""
               let! fieldTypes = state.All(fields |> Seq.map (snd >> ExprType.ToGolangTypeAnnotation) |> List.ofSeq)
               let fieldDeclarations = Many (seq{
                 for fieldType,fieldName in fields |> Seq.map fst |> Seq.zip fieldTypes do
@@ -304,7 +313,7 @@ module Golang =
                   yield StringBuilder.One "\n"
               })
               let typeEnd = $$"""}
-    """
+"""
 
               let consStart = $$"""func New{{t.Value.TypeId.TypeName}}("""
               let consParams = Many (seq{
@@ -315,13 +324,13 @@ module Golang =
                   yield StringBuilder.One ", "
               })
               let consDeclEnd = $$""") {{t.Value.TypeId.TypeName}} {
-      res := new({{t.Value.TypeId.TypeName}})
-    """
+  var res {{t.Value.TypeId.TypeName}}
+"""
 
-              let consBodyEnd = $$"""  return *res
-    }
+              let consBodyEnd = $$"""  return res
+}
 
-    """
+"""
               let consFieldInits = StringBuilder.Many (seq{
                 for fieldType,fieldName in fields |> Seq.map fst |> Seq.zip fieldTypes do
                   yield StringBuilder.One "  res."
@@ -357,6 +366,7 @@ module Golang =
           // yield! entitiesOPSelector "DEFAULT" CrudMethod.Default
           // yield! entitiesOPEnum "DEFAULT" CrudMethod.Default
           yield! generatedTypes
+          yield! customTypes
         })
       } 
       let result = result |> state.WithErrorContext $"...when generating Go code"
@@ -371,6 +381,7 @@ module Golang =
           let imports = if ctx.Apis.Streams |> Map.isEmpty |> not then imports + (codegenConfig.StreamNotFoundError.RequiredImport |> Option.toList |> Set.ofList) else imports
           let imports = imports + (codegenConfig.Guid.RequiredImport |> Option.toList |> Set.ofList)
           let imports = imports + (codegenConfig.Unit.RequiredImport |> Option.toList |> Set.ofList)
+          let imports = imports + (codegenConfig.Custom |> Map.values |> Seq.map (fun v -> v.RequiredImport |> Option.toList) |> List.concat |> Set.ofSeq)
           let heading = StringBuilder.One $$"""package {{packageName}}
 
       import (

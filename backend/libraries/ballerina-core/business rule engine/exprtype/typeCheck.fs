@@ -78,17 +78,16 @@ module TypeCheck =
                     }
                   ) |> sum.All
                 match handlerTypes with
-                | [] -> return ()
+                | [] -> return! sum.Throw(Errors.Singleton $"Error: match-case {e} has no case handlers. One case handler is required for each possible case.")
                 | x::xs ->
-                  do! 
+                  let! ``type`` = 
                     xs |> List.fold (fun unifications expr -> 
                       sum{
                         let! prevExpr,prevUnifications = unifications
                         let! newUnifications = ExprType.Unify Map.empty typeBindings prevExpr expr
                         return expr,newUnifications
                       }) (sum{ return x,UnificationConstraints.Zero() })
-                      |> Sum.map ignore
-                return None,ExprType.PrimitiveType PrimitiveType.BoolType, vars'
+                  return None,``type`` |> fst, vars'
               | t-> 
                 return! sum.Throw(sprintf "Error: unexpected match-case on type %A when typechecking expression %A" t e |> Errors.Singleton)            
             }

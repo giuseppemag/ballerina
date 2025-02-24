@@ -58,7 +58,12 @@ let WrongFormStructure() =
   let actual5 = Ballerina.DSL.FormEngine.Runner.runSingle true FormsGenTarget.golang "./input-forms/with errors/wrong form structure 5.json" "./generated-output/models" null null "./input-forms/go-config.json"
   let actual6 = Ballerina.DSL.FormEngine.Runner.runSingle true FormsGenTarget.golang "./input-forms/with errors/wrong form structure 6.json" "./generated-output/models" null null "./input-forms/go-config.json"
   let actual7 = Ballerina.DSL.FormEngine.Runner.runSingle true FormsGenTarget.golang "./input-forms/with errors/wrong form structure 7.json" "./generated-output/models" null null "./input-forms/go-config.json"
-  match actual7 with
-  | Right err -> Errors.Print "wrong form structure" err
-  | _ -> ()  
   Assert.That(actual1.IsRight && actual2.IsRight && actual3.IsRight && actual4.IsRight && actual5.IsRight && actual6.IsRight && actual7.IsRight, Is.EqualTo(true))
+
+[<Test>]
+let WrongPredicateStructure() =
+  let actual1 = Ballerina.DSL.FormEngine.Runner.runSingle true FormsGenTarget.golang "./input-forms/with errors/wrong predicate structure 1.json" "./generated-output/models" null null "./input-forms/go-config.json"
+  match actual1 with
+  | Right err -> Errors.Print "wrong predicate structure" err
+  | _ -> ()  
+  Assert.That(actual1.IsRight, Is.EqualTo(true))

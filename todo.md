@@ -64,11 +64,17 @@ Todo (✅/❌)
           ✅ invalid tabs
             ✅ non-existing fields
         ❌ invalid predicates
+          ❌ requires global config, APIs, and launcher 
+          ❌ wrong `root` type
           ❌ non-existing variables
           ❌ non-existing fields
           ❌ mismatched types (`10 == true`)
           ❌ mismatched enum case checks
           ❌ wrong pattern matching
+            ❌ missing case handler
+            ❌ non existing case name
+            ❌ different types of the handlers
+            ❌ same handler types but unexpected type of the whole match
         ❌ invalid launchers
           ❌ non-existing form
           ❌ missing entity API
@@ -84,8 +90,8 @@ Todo (✅/❌)
         ❌ validator
     ❌ the validator is now mature
     ✅ specialize the errors (stream not found, enum not found, etc.)
-    ❌ improve the generated whitespace
-    ❌ the Go type generator is now reasonably mature
+    ✅ improve the generated whitespace
+    ✅ the Go type generator is now reasonably mature
     ❌ add full support for unions, including generation
       ✅ parser
       ✅ validator
@@ -100,12 +106,15 @@ Todo (✅/❌)
         ✅ constructors for the whole thing - assume discriminator, accept specific value
       ❌ add renderer syntax for the selector of a different form depending on the case
         ❌ add renderer syntax for the union container
+        ❌ implement renderer in FE
     ❌ extensions
       ❌ preprocessor plugins
+        ❌ injected at specific times
+        ❌ language generation as parameters
+      ❌ define `include` command
       ❌ add homomorphic forms
       ❌ add multi-field renderers
         ❌ use tuples, meaning it's still just one single field
-      ❌ define `include` command
       ❌ add paginated lists
         ❌ requires changes to the frontend
       ❌ add lazy fields
