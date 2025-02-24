@@ -1,6 +1,6 @@
 import { useState } from "react";
 import "./App.css";
-import { unit, FormParsingToLaunchersResult, FormsParserState, FormRunnerState, FormsParserTemplate, PromiseRepo, FormRunnerTemplate } from "ballerina-core";
+import { unit, FormParsingResult, FormsParserState, FormRunnerState, FormsParserTemplate, PromiseRepo, FormRunnerTemplate } from "ballerina-core";
 import { List, Set, Map } from "immutable";
 // import { PersonView } from "./domains/person/views/main-view";
 import { PersonContainerFormView, PersonNestedContainerFormView, CreatePersonSubmitButtonWrapper, EditPersonSubmitButtonWrapper } from "./domains/person/domains/from-config/views/wrappers";
@@ -11,7 +11,7 @@ import { fieldTypeConverters } from "./domains/person/apis/field-converters";
 import { categoryForm, CategoryState, PersonFormInjectedTypes } from "./domains/person-from-config/injected-forms/category";
 import PersonConfig from "../../../../backend/apps/ballerina-runtime/input-forms/person/person-config.json"
 
-const ShowFormsParsingErrors = (parsedFormsConfig: FormParsingToLaunchersResult) =>
+const ShowFormsParsingErrors = (parsedFormsConfig: FormParsingResult) =>
 	<div style={{ border: "red" }}>
 		{parsedFormsConfig.kind == "r" && JSON.stringify(parsedFormsConfig.value)}
 	</div>
@@ -98,7 +98,6 @@ export const FormsApp = (props: {}) => {
 										enumOptionsSources: PersonFromConfigApis.enumApis,
 										globalConfigurationSources: PersonFromConfigApis.globalApis,
 										entityApis: PersonFromConfigApis.entityApis,
-										leafPredicates: PersonConfigFormsLeafPredicates,
 										getFormsConfig: () => PromiseRepo.Default.mock(() => PersonConfig),
 										injectedPrimitives: Map([["injectedCategory", {fieldView: categoryForm, defaultValue: {category: "adult", kind: "category"}, defaultState: CategoryState.Default() }]]),
 									}}

@@ -228,7 +228,7 @@ export const ParsedRenderer = {
           return ValueOrErrors.Default.throw(List([`error: the kind for ${viewKind}::${parsedRenderer} cannot be found`]));
       }
     },
-    FormRenderers: <T,>(rendererConfig: ParsedRenderer<T>, formViews: Record<string, Record<string, any>>, viewKind: string, viewName: any, label: string | undefined, tooltip: string | undefined, details: string | undefined, enumOptionsSources: EnumOptionsSources, leafPredicates: any, injectedPrimitives?: InjectedPrimitives<T>): any => {
+    FormRenderers: <T,>(rendererConfig: ParsedRenderer<T>, formViews: Record<string, Record<string, any>>, viewKind: string, viewName: any, label: string | undefined, tooltip: string | undefined, details: string | undefined, enumOptionsSources: EnumOptionsSources, injectedPrimitives?: InjectedPrimitives<T>): any => {
       if (viewKind == "maybeBoolean")
         return MaybeBooleanForm<any & FormLabel, Unit>()
           .withView(formViews[viewKind][viewName]())

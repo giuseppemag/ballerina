@@ -1,5 +1,5 @@
 import { List, Map, OrderedSet, Set } from "immutable";
-import { Unit, Guid, ParsedFormJSON, BuiltIns, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, CommonFormState, CreateFormState, EditFormContext, CreateFormContext, Synchronized, simpleUpdater, defaultValue, fromAPIRawValue, toAPIRawValue, EditFormForeignMutationsExpected, ParsedType, InjectedPrimitives, Injectables, ApiConverters, ApiResponseChecker, Debounced, ParsedFormConfig, PredicateValue, FieldPredicateExpressions, FormFieldPredicateEvaluation, ValueOrErrors, IntegratedFormState, IntegratedFormContext, IntegratedFormForeignMutationsExpected } from "../../../../main";
+import { Unit, Guid, ParsedFormJSON, BuiltIns, Sum, BasicFun, Template, unit, EditFormState, EditFormTemplate, ApiErrors, CreateFormTemplate, EntityFormTemplate, CommonFormState, CreateFormState, EditFormContext, CreateFormContext, Synchronized, simpleUpdater, defaultValue, fromAPIRawValue, toAPIRawValue, EditFormForeignMutationsExpected, ParsedType, InjectedPrimitives, Injectables, ApiConverters, ApiResponseChecker, Debounced, ParsedFormConfig, PredicateValue, FieldPredicateExpressions, FormFieldPredicateEvaluation, ValueOrErrors } from "../../../../main";
 import { CollectionReference, EnumReference } from "../collection/domains/reference/state";
 import { SearchableInfiniteStreamState } from "../primitives/domains/searchable-infinite-stream/state";
 import { Form } from "../singleton/template";
@@ -40,7 +40,7 @@ export const ParseForm = <T,>(
     const parsedFormConfig  = ParsedRenderer.Operations.RendererToForm(
       fieldName,
       {formViews, forms, nestedContainerFormView, defaultValue, enumOptionsSources, infiniteStreamSources, injectedPrimitives },
-      formDef.fields.get(fieldName)!
+      formDef.fields.get(fieldName)!,
     )
     if(parsedFormConfig.kind == "errors") throw Error(`Error parsing form ${fieldsViewsConfig[fieldName]}`) // TODO - better error handling
 
@@ -61,7 +61,6 @@ export const ParseForm = <T,>(
     disabledPredicatedExpressions
   });
 };
-
 export type EditLauncherContext<Entity, FormState, ExtraContext> =
   Omit<
     EditFormContext<Entity, FormState> &
@@ -96,14 +95,9 @@ export type ParsedLaunchers = {
       initialState: EditFormState<Entity, FormState>
     }>,
 }
-export type ParsedIntegratedForm = {
-  form: <Entity, FormState>() => Template<IntegratedFormContext<Entity, FormState> & IntegratedFormState<Entity, FormState>, IntegratedFormState<Entity, FormState>, IntegratedFormForeignMutationsExpected<Entity, FormState>>,
-  initialState: <Entity, FormState>() => IntegratedFormState<Entity, FormState>
-}
 export type ParsedForms<T> = Map<string, ParsedForm<T> & { form: EntityFormTemplate<any, any, any, any, any>, visibilityPredicateExpressions: FieldPredicateExpressions, disabledPredicatedExpressions: FieldPredicateExpressions }>
 export type FormParsingErrors = List<string>
-export type FormParsingToLaunchersResult = Sum<ParsedLaunchers, FormParsingErrors>
-export type FormParsingToIntegratedResult = Sum<ParsedIntegratedForm, FormParsingErrors>
+export type FormParsingResult = Sum<ParsedLaunchers, FormParsingErrors>
 export type EnumName = string
 export type EnumOptionsSources = BasicFun<EnumName, BasicFun<Unit, Promise<Array<EnumReference>>>>
 export type StreamName = string
@@ -118,140 +112,6 @@ export type EntityApis = {
   get: BasicFun<EntityName, BasicFun<Guid, Promise<any>>>
 }
 
-export const parseFormsToIntegrated = <T extends {[key in keyof T] : {type: any, state: any}}>(
-  builtIns: BuiltIns,
-  injectedPrimitives: InjectedPrimitives<T> | undefined,
-  apiConverters: ApiConverters<T>,
-  containerFormView: any,
-  nestedContainerFormView: any,
-  fieldViews: any,
-  infiniteStreamSources: InfiniteStreamSources,
-  enumOptionsSources: EnumOptionsSources,
-  globalConfigurationSources: GlobalConfigurationSources,
-  updateFns: any,
-) => (formsConfig: ParsedFormJSON<T>): FormParsingToIntegratedResult => {
-
-  let errors: FormParsingErrors = List()
-  let seen = Set<string>()
-  let formProcessingOrder = OrderedSet<string>()
-  let parsedForms: ParsedForms<T> = Map()
-
-  const traverse = (formDef:ParsedFormConfig<T>) => {
-    if (formProcessingOrder.has(formDef.name)) {
-      return
-    }
-    if (seen.has(formDef.name)) {
-      errors.push(`aborting: cycle detected when parsing forms: ${JSON.stringify(formProcessingOrder.reverse().toArray())} -> ${formDef.name}`)
-      return
-    }
-    seen = seen.add(formDef.name)
-    formDef.fields.forEach((field, fieldName) => {
-      if (field.type.kind == "lookup" || field.type.kind == "form") {
-        traverse(formsConfig.forms.get(field.renderer)!)
-      }
-      try {
-        if (field.kind == "list") {
-          if (typeof field.elementRenderer == "string") throw Error("Deprecated element renderer as string, use a render object instead - check parser.")
-          if (formsConfig.forms.has(field.elementRenderer.renderer))
-            traverse(formsConfig.forms.get(field.elementRenderer.renderer)!)
-        }
-        if (field.kind == "map") {
-          const keyRenderer = field.keyRenderer
-          const valueRenderer = field.valueRenderer
-          if (keyRenderer && formsConfig.forms.has(keyRenderer.renderer)) {
-            traverse(formsConfig.forms.get(keyRenderer.renderer)!)
-          }
-          if (valueRenderer && formsConfig.forms.has(valueRenderer.renderer)) {
-            traverse(formsConfig.forms.get(valueRenderer.renderer)!)
-          }
-        }
-      } catch (error: any) {
-        console.error(`error parsing field :${fieldName}:: `,error)
-        errors.push(error.message ?? error)
-      }
-    })
-    formProcessingOrder = formProcessingOrder.add(formDef.name)
-  }
-
-  const allForms = formsConfig.forms.valueSeq().toArray()
-  allForms.forEach(form => {
-    seen = seen.clear()
-    traverse(form)
-  })
-
-  formProcessingOrder.forEach(formName => {
-    const formConfig = formsConfig.forms.get(formName)!
-    const formFieldRenderers = formConfig.fields.map(field => field.renderer).toObject()
-    try {
-      const parsedForm = ParseForm(
-        formName,
-        formConfig,
-        nestedContainerFormView,
-        fieldViews,
-        parsedForms,
-        formFieldRenderers,
-        infiniteStreamSources,
-        enumOptionsSources,
-        defaultValue(formsConfig.types, builtIns, injectedPrimitives),
-        injectedPrimitives
-      )
-      const formBuilder = Form<any, any, any, any>().Default<any>()
-      const form = formBuilder.template({
-        ...(parsedForm.formConfig)
-      })
-      .mapContext<Unit>(_ => {
-        return ({ 
-                  isRoot: (_ as any).isRoot ?? true,
-                  label: (_ as any).label,
-                  value: (_ as any).value,
-                  commonFormState: (_ as any).commonFormState,
-                  formFieldStates: (_ as any).formFieldStates,
-                  rootValue: (_ as any).rootValue,
-                  extraContext: (_ as any).extraContext,
-                  visibilities: (_ as any).visibilities,
-                  disabledFields: (_ as any).disabledFields,
-                  visibilityPredicateExpressions: parsedForm.visibilityPredicateExpressions,
-                  disabledPredicateExpressions: parsedForm.disabledPredicatedExpressions,
-                  layout: formConfig.tabs })})
-
-      parsedForms = parsedForms.set(formName, { ...parsedForm, form, visibilityPredicateExpressions: parsedForm.visibilityPredicateExpressions, disabledPredicatedExpressions: parsedForm.disabledPredicatedExpressions })
-    } catch (error: any) {
-      console.error(error)
-      errors.push(error.message ?? error)
-    }
-  })
-
-  if (errors.size > 0) {
-    console.error(errors)
-    return Sum.Default.right(errors)
-  }
-
-
-}
-
-export type FormsToIntegratedParserContext<T extends {[key in keyof T] : {type: any, state: any}}> = {
-  containerFormView: any,
-  nestedContainerFormView: any,
-  fieldViews: any,
-  infiniteStreamSources: InfiniteStreamSources,
-  enumOptionsSources: EnumOptionsSources,
-  defaultValue: BasicFun<ParsedType<T>, any>,
-  injectedPrimitives?: InjectedPrimitives<T>
-}
-
-export type FormsToIntegratedParserState = {
-  formsConfig: Synchronized<Unit, ParsedIntegratedForm>
-}
-
-export const FormsToIntegratedParserState = {
-  Default: (): FormsToIntegratedParserState => ({
-    formsConfig: Synchronized.Default(unit)
-  }),
-  Updaters: {
-    ...simpleUpdater<FormsToIntegratedParserState>()("formsConfig")
-  }
-}
-
 export const parseFormsToLaunchers =
   <T extends { [key in keyof T]: { type: any; state: any; }; },>(
     builtIns: BuiltIns,
@@ -263,9 +123,10 @@ export const parseFormsToLaunchers =
     infiniteStreamSources: InfiniteStreamSources,
     enumOptionsSources: EnumOptionsSources,
     globalConfigurationSources: GlobalConfigurationSources,
-    entityApis: EntityApis) =>
+    entityApis: EntityApis,
+    ) =>
     (formsConfig: ParsedFormJSON<T>):
-      FormParsingToLaunchersResult => {
+      FormParsingResult => {
       let errors: FormParsingErrors = List()
       let seen = Set<string>()
       let formProcessingOrder = OrderedSet<string>()
@@ -317,6 +178,7 @@ export const parseFormsToLaunchers =
         traverse(form)
       })
 
+
       formProcessingOrder.forEach(formName => {
         const formConfig = formsConfig.forms.get(formName)!
         const formFieldRenderers = formConfig.fields.map(field => field.renderer).toObject()
@@ -339,7 +201,6 @@ export const parseFormsToLaunchers =
           })
           .mapContext<Unit>(_ => {
             return ({ 
-                      isRoot: (_ as any).isRoot ?? true,
                       label: (_ as any).label,
                       value: (_ as any).value,
                       commonFormState: (_ as any).commonFormState,
@@ -408,7 +269,7 @@ export const parseFormsToLaunchers =
                   toApiParser: parentContext.toApiParser,
                   fromApiParser: parentContext.fromApiParser,
                   parseGlobalConfiguration: parentContext.parseGlobalConfiguration,
-                  formFieldStates: parentContext.formFieldStates,
+                  formFieldStates: parentContext.formFieldStates, 
                   rootValue: _.value,
                   extraContext: parentContext.extraContext,
                   commonFormState: parentContext.commonFormState,
@@ -512,7 +373,7 @@ export const parseFormsToLaunchers =
       return Sum.Default.left(parsedLaunchers)
     }
 
-export type FormsToLaunchersParserContext<T extends {[key in keyof T] : {type: any, state: any}}> = {
+export type FormsParserContext<T extends {[key in keyof T] : {type: any, state: any}}> = {
   containerFormView: any,
   nestedContainerFormView: any,
   fieldViews: any,
@@ -524,14 +385,14 @@ export type FormsToLaunchersParserContext<T extends {[key in keyof T] : {type: a
   getFormsConfig: BasicFun<void, Promise<any>>
   injectedPrimitives?: Injectables<T>,
 }
-export type FormsToLaunchersParserState = {
-  formsConfig: Synchronized<Unit, FormParsingToLaunchersResult>
+export type FormsParserState = {
+  formsConfig: Synchronized<Unit, FormParsingResult>
 }
-export const FormsToLaunchersParserState = {
-  Default: (): FormsToLaunchersParserState => ({
+export const FormsParserState = {
+  Default: (): FormsParserState => ({
     formsConfig: Synchronized.Default(unit)
   }),
   Updaters: {
-    ...simpleUpdater<FormsToLaunchersParserState>()("formsConfig")
+    ...simpleUpdater<FormsParserState>()("formsConfig")
   }
 }

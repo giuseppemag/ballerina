@@ -1,13 +1,13 @@
-import { AsyncState, builtInsFromFieldViews, injectablesFromFieldViews, Sum, Synchronize, Unit, FormsConfig } from "../../../../../main"
+import { AsyncState, builtInsFromFieldViews, ParsedFormJSON, injectablesFromFieldViews, Sum, Synchronize, Unit, FormsConfig } from "../../../../../main"
 import { CoTypedFactory } from "../../../../coroutines/builder"
-import { FormParsingToLaunchersResult, FormsToLaunchersParserContext, FormsToLaunchersParserState, parseFormsToLaunchers } from "../state"
+import { FormParsingResult, FormsParserContext, FormsParserState, parseFormsToLaunchers } from "../state"
 
 export const LoadValidateAndParseFormsConfig = <T extends {[key in keyof T] : {type: any, state: any}}>() => {
-  const Co = CoTypedFactory<FormsToLaunchersParserContext<T>, FormsToLaunchersParserState>()
+  const Co = CoTypedFactory<FormsParserContext<T>, FormsParserState>()
 
  return Co.Template<Unit>(
   Co.GetState().then(current => 
-  Synchronize<Unit, FormParsingToLaunchersResult>(async() => {
+  Synchronize<Unit, FormParsingResult>(async() => {
     const rawFormsConfig = await current.getFormsConfig();
     const builtIns = builtInsFromFieldViews(current.fieldViews)
     const injectedPrimitives = current.injectedPrimitives ? injectablesFromFieldViews(current.fieldViews, current.injectedPrimitives) : undefined
@@ -24,12 +24,12 @@ export const LoadValidateAndParseFormsConfig = <T extends {[key in keyof T] : {t
       current.infiniteStreamSources,
       current.enumOptionsSources,
       current.globalConfigurationSources,
-      current.entityApis
-    )(validationResult.value)
+      current.entityApis,
+      )(validationResult.value)
   }, _ => "transient failure", 5, 50)
     .embed(
       _ => _.formsConfig,
-      FormsToLaunchersParserState.Updaters.formsConfig
+      FormsParserState.Updaters.formsConfig
     )
   ),
   {

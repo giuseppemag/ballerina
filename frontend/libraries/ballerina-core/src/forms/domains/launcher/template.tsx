@@ -1,9 +1,8 @@
-import { List } from "immutable"
 import { BasicUpdater, FormRunnerContext, FormRunnerForeignMutationsExpected, FormRunnerLoader, FormRunnerState, Sum, unit } from "../../../../main"
 import { Template } from "../../../template/state"
-import { FormParsingToLaunchersResult } from "../parser/state"
+import { FormParsingResult } from "../parser/state"
 
-export const FormRunnerErrorsTemplate = (parsedFormsConfig: FormParsingToLaunchersResult) => ({
+export const FormRunnerErrorsTemplate = (parsedFormsConfig: FormParsingResult) => ({
   form: Template.Default<FormRunnerContext & FormRunnerState, FormRunnerState, FormRunnerForeignMutationsExpected>(props =>
     <>
       {JSON.stringify(parsedFormsConfig)}

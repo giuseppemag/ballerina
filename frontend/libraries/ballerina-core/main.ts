@@ -118,8 +118,9 @@ export * from "./src/forms/domains/launcher/template"
 export * from "./src/forms/domains/parser/domains/injectables/state"
 export * from "./src/forms/domains/collection/domains/unionCase/state"
 export * from "./src/forms/domains/parser/domains/predicates/state"
-export * from "./src/forms/domains/integrated/domains/form/state"
-
+export * from "./src/forms/domains/integrated-forms/launcher/state"
+export * from "./src/forms/domains/integrated-forms/launcher/template"
+export * from "./src/forms/domains/integrated-forms/domains/parser/state"
 // import { simpleUpdater, simpleUpdaterWithChildren } from "./src/fun/domains/updater/domains/simpleUpdater/state"
 // import { Updater } from "./src/fun/domains/updater/state"
 

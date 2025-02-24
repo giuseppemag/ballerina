@@ -25,8 +25,7 @@ export const Form = <Entity, FieldStates extends { formFieldStates: any}, Contex
                   const disabledFieldsFromParent = _.disabledFields?.kind == "form" ? _.disabledFields?.fields.get(field as string)! : undefined
                   const elementDisabled = disabledFieldsFromParent?.kind == "list" || disabledFieldsFromParent?.kind == "map" ? disabledFieldsFromParent.elementValues : undefined
 
-                  return ({
-                    isRoot: _.isRoot,
+                  return ({ 
                     rootValue: _.rootValue,
                     value: _.value[field],
                     extraContext: _.extraContext,
@@ -82,19 +81,14 @@ export const Form = <Entity, FieldStates extends { formFieldStates: any}, Contex
                         } 
                       }
                   }
-                    ))
-                  }
+                ))
+                }
                   setTimeout(() =>
-                    {
-                      if(props.context.isRoot){
-                        // TODO optionally call foreign mutation (will be for queue)
-                        console.debug('onChange Path', field, path.toJS())
-                      }
                     props.foreignMutations.onChange((current: Entity): Entity => ({
                       ...current,
                       [field]: _(current[field])
                     }), path.unshift(field as string)),
-                    0})
+                    0)
                 }
               }))
         }

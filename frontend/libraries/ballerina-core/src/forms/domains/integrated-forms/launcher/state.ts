@@ -15,21 +15,21 @@ import {
   Synchronized,
   unit,
   Sum,
-  CreateFormState,
   simpleUpdaterWithChildren,
   Updater,
   id,
   ForeignMutationsInput,
   Unit,
-} from "../../../../../../main";
+} from "../../../../../main";
+import { Map } from "immutable";
 
 export type IntegratedFormContext<E, FS> = {
   formType: ParsedType<E>;
   types: Map<string, ParsedType<E>>;
-  // Still needed for the predicates
+  rawGlobalConfiguration: any;
   toApiParser: (
     entity: E,
-    formstate: FS,
+    formstate: IntegratedFormState<E,FS>,
     checkKeys: boolean
   ) => ValueOrErrors<E, string>;
   fromApiParser: (raw: any) => any;
@@ -50,7 +50,6 @@ export type IntegratedFormContext<E, FS> = {
 export type IntegratedFormState<E,FS> = {
   rawEntity: Synchronized<Unit, any>,
   entity: Synchronized<Unit, E>,
-  rawGlobalConfiguration: Synchronized<Unit, any>,
   globalConfiguration: Sum<any, "not parsed">,
   formFieldStates: FS,
   commonFormState: CommonFormState,
@@ -73,7 +72,6 @@ export const IntegratedFormState = <E,FS>() => ({
     }) : IntegratedFormState<E,FS> => ({
       rawEntity: Synchronized.Default(unit),
       entity:Synchronized.Default(unit),
-      rawGlobalConfiguration: Synchronized.Default(unit),
       globalConfiguration: Sum.Default.right("not parsed"),
       formFieldStates,
       commonFormState,
@@ -81,31 +79,26 @@ export const IntegratedFormState = <E,FS>() => ({
     }),
     Updaters:{
       Core:{
-        ...simpleUpdater<CreateFormState<E,FS>>()("rawEntity"),
-        ...simpleUpdater<CreateFormState<E,FS>>()("entity"),
-        ...simpleUpdater<CreateFormState<E,FS>>()("rawGlobalConfiguration"),
-        ...simpleUpdater<CreateFormState<E,FS>>()("globalConfiguration"),
-        ...simpleUpdater<CreateFormState<E,FS>>()("formFieldStates"),
-        ...simpleUpdaterWithChildren<CreateFormState<E,FS>>()({
-            ...simpleUpdater<CreateFormState<E,FS>["customFormState"]>()("initApiChecker"),
-            ...simpleUpdater<CreateFormState<E,FS>["customFormState"]>()("configApiChecker"),
-            ...simpleUpdater<CreateFormState<E,FS>["customFormState"]>()("createApiChecker"),
-            ...simpleUpdater<CreateFormState<E,FS>["customFormState"]>()("apiRunner"),
-            ...simpleUpdater<CreateFormState<E,FS>["customFormState"]>()("predicateEvaluations"),
+        ...simpleUpdater<IntegratedFormState<E,FS>>()("rawEntity"),
+        ...simpleUpdater<IntegratedFormState<E,FS>>()("entity"),
+        ...simpleUpdater<IntegratedFormState<E,FS>>()("globalConfiguration"),
+        ...simpleUpdater<IntegratedFormState<E,FS>>()("formFieldStates"),
+        ...simpleUpdaterWithChildren<IntegratedFormState<E,FS>>()({
+            ...simpleUpdater<IntegratedFormState<E,FS>["customFormState"]>()("predicateEvaluations"),
         })("customFormState"),
-        ...simpleUpdater<CreateFormState<E,FS>>()("commonFormState"),
+        ...simpleUpdater<IntegratedFormState<E,FS>>()("commonFormState"),
       },
       Template:{
-        entity:(_:BasicUpdater<E>) : Updater<CreateFormState<E,FS>> => 
-          CreateFormState<E,FS>().Updaters.Core.entity(
+        entity:(_:BasicUpdater<E>) : Updater<IntegratedFormState<E,FS>> => 
+          IntegratedFormState<E,FS>().Updaters.Core.entity(
               Synchronized.Updaters.sync(
                 AsyncState.Operations.map(
                     _
                 )
               )
           ),
-        recalculatePredicates: () : Updater<CreateFormState<E,FS>> => 
-          CreateFormState<E,FS>().Updaters.Core.customFormState.children.predicateEvaluations(
+        recalculatePredicates: () : Updater<IntegratedFormState<E,FS>> => 
+          IntegratedFormState<E,FS>().Updaters.Core.customFormState.children.predicateEvaluations(
             Debounced.Updaters.Template.value(
               id
             )
