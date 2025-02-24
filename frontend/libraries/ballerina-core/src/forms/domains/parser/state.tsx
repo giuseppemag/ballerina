@@ -61,6 +61,110 @@ export const ParseForm = <T,>(
     disabledPredicatedExpressions
   });
 };
+
+export const ParseForms = <T,>(
+  builtIns: BuiltIns,
+  injectedPrimitives: InjectedPrimitives<T> | undefined,
+  nestedContainerFormView: any,
+  fieldViews: any,
+  formsConfig: ParsedFormJSON<T>,
+  infiniteStreamSources: any,
+  enumOptionsSources: EnumOptionsSources,
+): ValueOrErrors<ParsedForms<T>, string> => {
+  let errors: FormParsingErrors = List()
+  let seen = Set<string>()
+  let formProcessingOrder = OrderedSet<string>()
+
+  let parsedForms: ParsedForms<T> = Map()
+  const traverse = (formDef:ParsedFormConfig<T>) => {
+    if (formProcessingOrder.has(formDef.name)) {
+      return
+    }
+    if (seen.has(formDef.name)) {
+      errors.push(`aborting: cycle detected when parsing forms: ${JSON.stringify(formProcessingOrder.reverse().toArray())} -> ${formDef.name}`)
+      return
+    }
+    seen = seen.add(formDef.name)
+    formDef.fields.forEach((field, fieldName) => {
+      if (field.type.kind == "lookup" || field.type.kind == "form") {
+        traverse(formsConfig.forms.get(field.renderer)!)
+      }
+      try {
+        if (field.kind == "list") {
+          if (typeof field.elementRenderer == "string") throw Error("Deprecated element renderer as string, use a render object instead - check parser.")
+          if (formsConfig.forms.has(field.elementRenderer.renderer))
+            traverse(formsConfig.forms.get(field.elementRenderer.renderer)!)
+        }
+        if (field.kind == "map") {
+          const keyRenderer = field.keyRenderer
+          const valueRenderer = field.valueRenderer
+          if (keyRenderer && formsConfig.forms.has(keyRenderer.renderer)) {
+            traverse(formsConfig.forms.get(keyRenderer.renderer)!)
+          }
+          if (valueRenderer && formsConfig.forms.has(valueRenderer.renderer)) {
+            traverse(formsConfig.forms.get(valueRenderer.renderer)!)
+          }
+        }
+      } catch (error: any) {
+        console.error(`error parsing field :${fieldName}:: `,error)
+        errors.push(error.message ?? error)
+      }
+    })
+    formProcessingOrder = formProcessingOrder.add(formDef.name)
+  }
+  const allForms = formsConfig.forms.valueSeq().toArray()
+  allForms.forEach(form => {
+    seen = seen.clear()
+    traverse(form)
+  })
+
+  formProcessingOrder.forEach(formName => {
+    const formConfig = formsConfig.forms.get(formName)!
+    const formFieldRenderers = formConfig.fields.map(field => field.renderer).toObject()
+    try {
+      const parsedForm = ParseForm(
+        formName,
+        formConfig,
+        nestedContainerFormView,
+        fieldViews,
+        parsedForms,
+        formFieldRenderers,
+        infiniteStreamSources,
+        enumOptionsSources,
+        defaultValue(formsConfig.types, builtIns, injectedPrimitives),
+        injectedPrimitives
+      )
+      const formBuilder = Form<any, any, any, any>().Default<any>()
+      const form = formBuilder.template({
+        ...(parsedForm.formConfig)
+      })
+      .mapContext<Unit>(_ => {
+        return ({ 
+                  label: (_ as any).label,
+                  value: (_ as any).value,
+                  commonFormState: (_ as any).commonFormState,
+                  formFieldStates: (_ as any).formFieldStates,
+                  rootValue: (_ as any).rootValue,
+                  extraContext: (_ as any).extraContext,
+                  visibilities: (_ as any).visibilities,
+                  disabledFields: (_ as any).disabledFields,
+                  visibilityPredicateExpressions: parsedForm.visibilityPredicateExpressions,
+                  disabledPredicateExpressions: parsedForm.disabledPredicatedExpressions,
+                  layout: formConfig.tabs })})
+
+      parsedForms = parsedForms.set(formName, { ...parsedForm, form, visibilityPredicateExpressions: parsedForm.visibilityPredicateExpressions, disabledPredicatedExpressions: parsedForm.disabledPredicatedExpressions })
+    } catch (error: any) {
+      console.error(error)
+      errors.push(error.message ?? error)
+    }
+  })
+
+  if (errors.size > 0) {
+    return ValueOrErrors.Default.throw(errors)
+  }
+
+  return ValueOrErrors.Default.return(parsedForms)
+}
 export type EditLauncherContext<Entity, FormState, ExtraContext> =
   Omit<
     EditFormContext<Entity, FormState> &
@@ -127,103 +231,20 @@ export const parseFormsToLaunchers =
     ) =>
     (formsConfig: ParsedFormJSON<T>):
       FormParsingResult => {
-      let errors: FormParsingErrors = List()
-      let seen = Set<string>()
-      let formProcessingOrder = OrderedSet<string>()
 
       let parsedLaunchers: ParsedLaunchers = {
         create: Map(),
         edit: Map(),
       }
-      let parsedForms: ParsedForms<T> = Map()
-      const traverse = (formDef:ParsedFormConfig<T>) => {
-        if (formProcessingOrder.has(formDef.name)) {
-          return
-        }
-        if (seen.has(formDef.name)) {
-          errors.push(`aborting: cycle detected when parsing forms: ${JSON.stringify(formProcessingOrder.reverse().toArray())} -> ${formDef.name}`)
-          return
-        }
-        seen = seen.add(formDef.name)
-        formDef.fields.forEach((field, fieldName) => {
-          if (field.type.kind == "lookup" || field.type.kind == "form") {
-            traverse(formsConfig.forms.get(field.renderer)!)
-          }
-          try {
-            if (field.kind == "list") {
-              if (typeof field.elementRenderer == "string") throw Error("Deprecated element renderer as string, use a render object instead - check parser.")
-              if (formsConfig.forms.has(field.elementRenderer.renderer))
-                traverse(formsConfig.forms.get(field.elementRenderer.renderer)!)
-            }
-            if (field.kind == "map") {
-              const keyRenderer = field.keyRenderer
-              const valueRenderer = field.valueRenderer
-              if (keyRenderer && formsConfig.forms.has(keyRenderer.renderer)) {
-                traverse(formsConfig.forms.get(keyRenderer.renderer)!)
-              }
-              if (valueRenderer && formsConfig.forms.has(valueRenderer.renderer)) {
-                traverse(formsConfig.forms.get(valueRenderer.renderer)!)
-              }
-            }
-          } catch (error: any) {
-            console.error(`error parsing field :${fieldName}:: `,error)
-            errors.push(error.message ?? error)
-          }
-        })
-        formProcessingOrder = formProcessingOrder.add(formDef.name)
+
+      const parsedFormsResult = ParseForms(builtIns, injectedPrimitives, nestedContainerFormView, fieldViews, formsConfig, infiniteStreamSources, enumOptionsSources)
+
+      if (parsedFormsResult.kind == "errors") {
+        console.error(parsedFormsResult.errors)
+        return Sum.Default.right(parsedFormsResult.errors)
       }
-      const allForms = formsConfig.forms.valueSeq().toArray()
-      allForms.forEach(form => {
-        seen = seen.clear()
-        traverse(form)
-      })
 
-
-      formProcessingOrder.forEach(formName => {
-        const formConfig = formsConfig.forms.get(formName)!
-        const formFieldRenderers = formConfig.fields.map(field => field.renderer).toObject()
-        try {
-          const parsedForm = ParseForm(
-            formName,
-            formConfig,
-            nestedContainerFormView,
-            fieldViews,
-            parsedForms,
-            formFieldRenderers,
-            infiniteStreamSources,
-            enumOptionsSources,
-            defaultValue(formsConfig.types, builtIns, injectedPrimitives),
-            injectedPrimitives
-          )
-          const formBuilder = Form<any, any, any, any>().Default<any>()
-          const form = formBuilder.template({
-            ...(parsedForm.formConfig)
-          })
-          .mapContext<Unit>(_ => {
-            return ({ 
-                      label: (_ as any).label,
-                      value: (_ as any).value,
-                      commonFormState: (_ as any).commonFormState,
-                      formFieldStates: (_ as any).formFieldStates,
-                      rootValue: (_ as any).rootValue,
-                      extraContext: (_ as any).extraContext,
-                      visibilities: (_ as any).visibilities,
-                      disabledFields: (_ as any).disabledFields,
-                      visibilityPredicateExpressions: parsedForm.visibilityPredicateExpressions,
-                      disabledPredicateExpressions: parsedForm.disabledPredicatedExpressions,
-                      layout: formConfig.tabs })})
-
-          parsedForms = parsedForms.set(formName, { ...parsedForm, form, visibilityPredicateExpressions: parsedForm.visibilityPredicateExpressions, disabledPredicatedExpressions: parsedForm.disabledPredicatedExpressions })
-        } catch (error: any) {
-          console.error(error)
-          errors.push(error.message ?? error)
-        }
-      })
-
-      if (errors.size > 0) {
-        console.error(errors)
-        return Sum.Default.right(errors)
-      }
+      const parsedForms = parsedFormsResult.value
 
       formsConfig.launchers.edit.forEach((launcher, launcherName) => {
         const parsedForm = parsedForms.get(launcher.form)!
@@ -367,9 +388,6 @@ export const parseFormsToLaunchers =
         )
       })
       
-      if (errors.size > 0) {
-        return Sum.Default.right(errors)
-      }
       return Sum.Default.left(parsedLaunchers)
     }
 
