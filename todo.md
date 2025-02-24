@@ -52,20 +52,23 @@ Todo (✅/❌)
         ✅ invalid entities
           ✅ bad structure (array, number, etc. instead of record)
           ✅ non-existing types
-        ❌ invalid forms
-          ❌ bad structure (array, number, etc. instead of record)
-          ❌ non-existing backing `type`
-          ❌ invalid fields
-            ❌ non-existing fields
-            ❌ invalid properties - label/description/details as numbers or objects
-          ❌ invalid renderers
-            ❌ non-existing renderers
-            ❌ mismatch with types
-          ❌ invalid predicates
-            ❌ non-existing variables
-            ❌ non-existing fields
-            ❌ mismatched types (`10 == true`)
-            ❌ mismatched enum case checks
+        ✅ invalid forms
+          ✅ bad structure (array, number, etc. instead of record)
+          ✅ non-existing backing `type`
+          ✅ invalid fields
+            ✅ non-existing fields
+            ✅ invalid properties - label/description/details as numbers or objects
+          ✅ invalid renderers
+            ✅ non-existing renderers
+            ✅ mismatch with types
+          ✅ invalid tabs
+            ✅ non-existing fields
+        ❌ invalid predicates
+          ❌ non-existing variables
+          ❌ non-existing fields
+          ❌ mismatched types (`10 == true`)
+          ❌ mismatched enum case checks
+          ❌ wrong pattern matching
         ❌ invalid launchers
           ❌ non-existing form
           ❌ missing entity API
@@ -73,8 +76,7 @@ Todo (✅/❌)
           ❌ mismatch form.type vs api.type
           ❌ mismatch configApi.type vs predicate api implicit type
         ✅ actual person-config as a reference of something that should work
-          ✅ compile generated go file (conditionally)
-        ❌ bad identifier names
+          ❌ add tests of correct validations using pattern matching
       ✅ run tests before releasing
     ❌ paths inside `Any` have a priority after a partial match is found - `Any` filters errors lower than the highest priority
       ❌ add to each `Any`, streamline operators
@@ -83,22 +85,21 @@ Todo (✅/❌)
     ❌ the validator is now mature
     ✅ specialize the errors (stream not found, enum not found, etc.)
     ❌ improve the generated whitespace
+    ❌ the Go type generator is now reasonably mature
     ❌ add full support for unions, including generation
       ✅ parser
       ✅ validator
-      ❌ match-case 
+      ✅ match-case 
         ✅ expr
         ✅ parser
         ✅ type checker
         ✅ FE prototype of evaluator
-        ❌ add tests of correct validations using pattern matching
-        ❌ add tests of mistaken validations using pattern matching
       ✅ generated type structure
       ✅ generated constructors    
         ✅ constructors for the case values
         ✅ constructors for the whole thing - assume discriminator, accept specific value
       ❌ add renderer syntax for the selector of a different form depending on the case
-    ❌ the Go type generator is now reasonably mature
+        ❌ add renderer syntax for the union container
     ❌ extensions
       ❌ preprocessor plugins
       ❌ add homomorphic forms
@@ -125,7 +126,9 @@ Todo (✅/❌)
       ❌ be careful with out-of-order extensions
       ❌ make ExprType.resolveLookup recursive - this might be at odds with the parent task because it might cause infinite loops
     ❌ the tool is now complete
-    ❌ the Golang codegen needs to be improved with some refactoring as well as the `SeqState` monad
+    ❌ the codegen to Golang needs to be improved
+      ❌ split up in files
+      ❌ as well as the `SeqState` monad
     ❌ the core library needs more structural cleanup: Queries, Range, etc. should go into `webapi` or a similar domain
     ❌ help command
     ❌ expr and expr type parsing and validation must go to their respective meta-modules

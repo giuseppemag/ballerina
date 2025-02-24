@@ -260,9 +260,10 @@ module Parser =
               let! form = formsState.TryFindForm s |> state.OfSum
               let! formType = formsState.TryFindType form.TypeId.TypeName |> state.OfSum
               return FormRenderer (form |> FormConfig.Id, formType.Type)
-            }]
+            };
+            state.Throw(Errors.Singleton $"Error: cannot resolve field renderer {s}" |> Errors.WithPriority ErrorPriority.High)]
           )
-        )
+          ) |> state.MapError(Errors.HighestPriority)
       } |> state.WithErrorContext $"...when parsing renderer {json.ToString().ReasonablyClamped}"
 
   and NestedRenderer with

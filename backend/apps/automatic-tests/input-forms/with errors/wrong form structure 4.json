@@ -1,0 +1,26 @@
+{
+  "types": {
+    "Person": {
+      "extends": [],
+      "fields": {
+        "Name": "string",
+        "Surname": "string"
+      }
+    }
+  },
+  "forms":{
+    "person": {
+      "type": "Person",
+      "fields": {
+        "Name": {
+          "renderer": "defaultString",
+          "label":1000
+        },
+        "Surname": {
+          "renderer": "defaultString"
+        }
+      },
+      "tabs":{}
+    }
+  }
+}
