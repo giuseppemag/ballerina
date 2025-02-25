@@ -22,3 +22,5 @@ export * from "./person/domains/person-container-config/state"
 
 export * from './debit-note/config'
 export * from './debit-note/data-mocks'
+
+export * from './integrated-form/data-mocks'

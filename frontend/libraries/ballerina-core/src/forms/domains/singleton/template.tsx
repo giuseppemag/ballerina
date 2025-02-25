@@ -1,4 +1,4 @@
-import { OrderedSet } from "immutable"
+import { List, OrderedSet } from "immutable"
 import { BasicUpdater, id, Unit, Debounced, Synchronized, unit, replaceWith, CoTypedFactory, Debounce, Synchronize, BasicFun, EntityFormState, EntityFormContext, EntityFormForeignMutationsExpected, EntityFormTemplate, EntityFormView, FieldTemplates, FieldValidationWithPath, FormValidatorSynchronized, OnChange, CommonFormState, DirtyStatus, FieldName } from "../../../../main"
 import { Template } from "../../../template/state"
 import { Value } from "../../../value/state"
@@ -46,7 +46,8 @@ export const Form = <Entity, FieldStates extends { formFieldStates: any}, Contex
               ({
                 ...props.foreignMutations,
                 onChange: (_: BasicUpdater<Entity[field]>, path) => {
-                  if(validation) {props.setState(_ => ({
+
+                  const stateUpdater: BasicUpdater<EntityFormState<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>> = validation ? (_ => ({
                     ..._,
                     commonFormState: {
                       ..._.commonFormState,
@@ -63,9 +64,9 @@ export const Form = <Entity, FieldStates extends { formFieldStates: any}, Contex
                           validation:Debounced.Updaters.Template.value<FormValidatorSynchronized>(Synchronized.Updaters.value(replaceWith(unit)))(_.commonFormState.validation),
                         },
                       }
-                    } }))
-                  } else {
-                    props.setState(_ => ({
+                    } })) : 
+
+                    (_ => ({
                       ..._,
                       commonFormState: {
                         ..._.commonFormState,
@@ -82,7 +83,8 @@ export const Form = <Entity, FieldStates extends { formFieldStates: any}, Contex
                       }
                   }
                 ))
-                }
+
+                props.setState(stateUpdater)
                   setTimeout(() =>
                     props.foreignMutations.onChange((current: Entity): Entity => ({
                       ...current,
@@ -105,6 +107,8 @@ export const Form = <Entity, FieldStates extends { formFieldStates: any}, Contex
 
               return props.context.visibilities.fields.filter(_ => _.value == true).keySeq().toOrderedSet()
             })()
+
+            // const visibleFieldKeys = OrderedSet(Object.keys(props.context.value as object))
 
             const disabledFieldKeys: OrderedSet<FieldName> = (() => {
               if(props.context.disabledFields == undefined || props.context.disabledFields.kind != "form") 

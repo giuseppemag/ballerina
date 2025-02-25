@@ -71,6 +71,12 @@ const entityApis: EntityApis = {
         return (id: Guid) => {
           console.log(`get person ${id}`)
           return Promise.resolve({
+            plotInfo: {
+              landArea: {
+                x: Math.floor(Math.random() * 100),
+                y: Math.floor(Math.random() * 100)
+              }
+            },
             category: ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3],
             name: faker.person.firstName(),
             surname: faker.person.lastName(),

@@ -1,5 +1,5 @@
 import { List } from "immutable";
-import { SimpleCallback, BasicFun, Unit, ValidateRunner, Updater, BasicUpdater, MapRepo, ListRepo, CoTypedFactory, Debounce, Synchronize, FormFieldPredicateEvaluation} from "../../../../../../main";
+import { SimpleCallback, BasicFun, Unit, ValidateRunner, Updater, BasicUpdater, MapRepo, ListRepo, CoTypedFactory, Debounce, Synchronize, FormFieldPredicateEvaluation, replaceWith} from "../../../../../../main";
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
@@ -26,7 +26,7 @@ export const ListForm = <Element, ElementFormState, Context extends FormLabel & 
         ...props.foreignMutations,
         onChange: (elementUpdater, path) => {
           props.foreignMutations.onChange(Updater((elements:List<Element | undefined>) =>
-            elements.has(elementIndex) ? elements.update(elementIndex, undefined, elementUpdater) : elements), path)
+            elements.has(elementIndex) ? elements.update(elementIndex, undefined, elementUpdater) : elements), List([elementIndex.toString()]).concat(path))
           props.setState(_ => ({..._,
              modifiedByUser:true,
             })) },
@@ -58,12 +58,12 @@ export const ListForm = <Element, ElementFormState, Context extends FormLabel & 
           add: (_) => {
             props.foreignMutations.onChange(
               ListRepo.Updaters.push<Element | undefined>(Element.Default()), List()
-            )            
+            )
           },
           remove: (_) => {
             props.foreignMutations.onChange(
               ListRepo.Updaters.remove(_), List()
-            )            
+            )
           }
         }}
         embeddedElementTemplate={embeddedElementTemplate}

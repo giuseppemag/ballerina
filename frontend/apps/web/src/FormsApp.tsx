@@ -98,7 +98,6 @@ export const FormsApp = (props: {}) => {
 										enumOptionsSources: PersonFromConfigApis.enumApis,
 										globalConfigurationSources: PersonFromConfigApis.globalApis,
 										entityApis: PersonFromConfigApis.entityApis,
-										leafPredicates: PersonConfigFormsLeafPredicates,
 										getFormsConfig: () => PromiseRepo.Default.mock(() => PersonConfig),
 										injectedPrimitives: Map([["injectedCategory", {fieldView: categoryForm, defaultValue: {category: "adult", kind: "category"}, defaultState: CategoryState.Default() }]]),
 									}}

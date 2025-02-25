@@ -1,6 +1,5 @@
 import { BasicFun, Guid, simpleUpdater, Sum, Unit } from "../../../../main"
 import { FormParsingResult, FormsParserState } from "../parser/state"
-import { OnChange } from "../singleton/state"
 
 export type FormRefCreateApiHandlers<Arg> = {
   onDefaultSuccess?: (_: Arg) => void,
@@ -23,10 +22,6 @@ export type FormRef = {
   submitButtonWrapper:any
   entityId:Guid,
   apiHandlers?: FormRefEditApiHandlers<any>
-} | {
-  kind:"map",
-  onChange:OnChange<any>
-  value:any
 } | {
   kind:"create",
   apiHandlers?: FormRefCreateApiHandlers<any>,

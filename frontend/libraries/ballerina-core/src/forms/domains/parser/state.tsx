@@ -4,7 +4,7 @@ import { CollectionReference, EnumReference } from "../collection/domains/refere
 import { SearchableInfiniteStreamState } from "../primitives/domains/searchable-infinite-stream/state";
 import { Form } from "../singleton/template";
 import { ParsedRenderer } from "./domains/renderer/state";
-
+import { ParsedIntegratedFormJSON } from "../integrated-forms/domains/validator/state";
 export type ParsedForm<T,> = {
   initialFormState: any,
   formConfig: any,
@@ -22,7 +22,6 @@ export const ParseForm = <T,>(
   fieldsViewsConfig: any,
   infiniteStreamSources: any,
   enumOptionsSources: EnumOptionsSources,
-  leafPredicates: any,
   defaultValue: BasicFun<ParsedType<T>, any>,
   injectedPrimitives?: InjectedPrimitives<T>
 ): ParsedForm<T> => {
@@ -40,7 +39,7 @@ export const ParseForm = <T,>(
   fieldNames.forEach(fieldName => {
     const parsedFormConfig  = ParsedRenderer.Operations.RendererToForm(
       fieldName,
-      {formViews, forms, nestedContainerFormView, defaultValue, enumOptionsSources, leafPredicates, infiniteStreamSources, injectedPrimitives },
+      {formViews, forms, nestedContainerFormView, defaultValue, enumOptionsSources, infiniteStreamSources, injectedPrimitives },
       formDef.fields.get(fieldName)!,
     )
     if(parsedFormConfig.kind == "errors") throw Error(`Error parsing form ${fieldsViewsConfig[fieldName]}`) // TODO - better error handling
@@ -62,6 +61,109 @@ export const ParseForm = <T,>(
     disabledPredicatedExpressions
   });
 };
+
+export const ParseForms = <T,>(
+  builtIns: BuiltIns,
+  injectedPrimitives: InjectedPrimitives<T> | undefined,
+  nestedContainerFormView: any,
+  fieldViews: any,
+  infiniteStreamSources: any,
+  enumOptionsSources: EnumOptionsSources,
+) => (formsConfig: ParsedFormJSON<T> | ParsedIntegratedFormJSON<T>): ValueOrErrors<ParsedForms<T>, string> => {
+  let errors: FormParsingErrors = List()
+  let seen = Set<string>()
+  let formProcessingOrder = OrderedSet<string>()
+
+  let parsedForms: ParsedForms<T> = Map()
+  const traverse = (formDef:ParsedFormConfig<T>) => {
+    if (formProcessingOrder.has(formDef.name)) {
+      return
+    }
+    if (seen.has(formDef.name)) {
+      errors.push(`aborting: cycle detected when parsing forms: ${JSON.stringify(formProcessingOrder.reverse().toArray())} -> ${formDef.name}`)
+      return
+    }
+    seen = seen.add(formDef.name)
+    formDef.fields.forEach((field, fieldName) => {
+      if (field.type.kind == "lookup" || field.type.kind == "form") {
+        traverse(formsConfig.forms.get(field.renderer)!)
+      }
+      try {
+        if (field.kind == "list") {
+          if (typeof field.elementRenderer == "string") throw Error("Deprecated element renderer as string, use a render object instead - check parser.")
+          if (formsConfig.forms.has(field.elementRenderer.renderer))
+            traverse(formsConfig.forms.get(field.elementRenderer.renderer)!)
+        }
+        if (field.kind == "map") {
+          const keyRenderer = field.keyRenderer
+          const valueRenderer = field.valueRenderer
+          if (keyRenderer && formsConfig.forms.has(keyRenderer.renderer)) {
+            traverse(formsConfig.forms.get(keyRenderer.renderer)!)
+          }
+          if (valueRenderer && formsConfig.forms.has(valueRenderer.renderer)) {
+            traverse(formsConfig.forms.get(valueRenderer.renderer)!)
+          }
+        }
+      } catch (error: any) {
+        console.error(`error parsing field :${fieldName}:: `,error)
+        errors.push(error.message ?? error)
+      }
+    })
+    formProcessingOrder = formProcessingOrder.add(formDef.name)
+  }
+  const allForms = formsConfig.forms.valueSeq().toArray()
+  allForms.forEach(form => {
+    seen = seen.clear()
+    traverse(form)
+  })
+
+  formProcessingOrder.forEach(formName => {
+    const formConfig = formsConfig.forms.get(formName)!
+    const formFieldRenderers = formConfig.fields.map(field => field.renderer).toObject()
+    try {
+      const parsedForm = ParseForm(
+        formName,
+        formConfig,
+        nestedContainerFormView,
+        fieldViews,
+        parsedForms,
+        formFieldRenderers,
+        infiniteStreamSources,
+        enumOptionsSources,
+        defaultValue(formsConfig.types, builtIns, injectedPrimitives),
+        injectedPrimitives
+      )
+      const formBuilder = Form<any, any, any, any>().Default<any>()
+      const form = formBuilder.template({
+        ...(parsedForm.formConfig)
+      })
+      .mapContext<Unit>(_ => {
+        return ({ 
+                  label: (_ as any).label,
+                  value: (_ as any).value,
+                  commonFormState: (_ as any).commonFormState,
+                  formFieldStates: (_ as any).formFieldStates,
+                  rootValue: (_ as any).rootValue,
+                  extraContext: (_ as any).extraContext,
+                  visibilities: (_ as any).visibilities,
+                  disabledFields: (_ as any).disabledFields,
+                  visibilityPredicateExpressions: parsedForm.visibilityPredicateExpressions,
+                  disabledPredicateExpressions: parsedForm.disabledPredicatedExpressions,
+                  layout: formConfig.tabs })})
+
+      parsedForms = parsedForms.set(formName, { ...parsedForm, form, visibilityPredicateExpressions: parsedForm.visibilityPredicateExpressions, disabledPredicatedExpressions: parsedForm.disabledPredicatedExpressions })
+    } catch (error: any) {
+      console.error(error)
+      errors.push(error.message ?? error)
+    }
+  })
+
+  if (errors.size > 0) {
+    return ValueOrErrors.Default.throw(errors)
+  }
+
+  return ValueOrErrors.Default.return(parsedForms)
+}
 export type EditLauncherContext<Entity, FormState, ExtraContext> =
   Omit<
     EditFormContext<Entity, FormState> &
@@ -113,8 +215,8 @@ export type EntityApis = {
   get: BasicFun<EntityName, BasicFun<Guid, Promise<any>>>
 }
 
-export const parseForms =
-  <LeafPredicates, T extends { [key in keyof T]: { type: any; state: any; }; },>(
+export const parseFormsToLaunchers =
+  <T extends { [key in keyof T]: { type: any; state: any; }; },>(
     builtIns: BuiltIns,
     injectedPrimitives: InjectedPrimitives<T> | undefined,
     apiConverters: ApiConverters<T>,
@@ -125,107 +227,23 @@ export const parseForms =
     enumOptionsSources: EnumOptionsSources,
     globalConfigurationSources: GlobalConfigurationSources,
     entityApis: EntityApis,
-    leafPredicates: LeafPredicates) =>
+    ) =>
     (formsConfig: ParsedFormJSON<T>):
       FormParsingResult => {
-      let errors: FormParsingErrors = List()
-      let seen = Set<string>()
-      let formProcessingOrder = OrderedSet<string>()
 
       let parsedLaunchers: ParsedLaunchers = {
         create: Map(),
         edit: Map(),
       }
-      let parsedForms: ParsedForms<T> = Map()
-      const traverse = (formDef:ParsedFormConfig<T>) => {
-        if (formProcessingOrder.has(formDef.name)) {
-          return
-        }
-        if (seen.has(formDef.name)) {
-          errors.push(`aborting: cycle detected when parsing forms: ${JSON.stringify(formProcessingOrder.reverse().toArray())} -> ${formDef.name}`)
-          return
-        }
-        seen = seen.add(formDef.name)
-        formDef.fields.forEach((field, fieldName) => {
-          if (field.type.kind == "lookup" || field.type.kind == "form") {
-            traverse(formsConfig.forms.get(field.renderer)!)
-          }
-          try {
-            if (field.kind == "list") {
-              if (typeof field.elementRenderer == "string") throw Error("Deprecated element renderer as string, use a render object instead - check parser.")
-              if (formsConfig.forms.has(field.elementRenderer.renderer))
-                traverse(formsConfig.forms.get(field.elementRenderer.renderer)!)
-            }
-            if (field.kind == "map") {
-              const keyRenderer = field.keyRenderer
-              const valueRenderer = field.valueRenderer
-              if (keyRenderer && formsConfig.forms.has(keyRenderer.renderer)) {
-                traverse(formsConfig.forms.get(keyRenderer.renderer)!)
-              }
-              if (valueRenderer && formsConfig.forms.has(valueRenderer.renderer)) {
-                traverse(formsConfig.forms.get(valueRenderer.renderer)!)
-              }
-            }
-          } catch (error: any) {
-            console.error(`error parsing field :${fieldName}:: `,error)
-            errors.push(error.message ?? error)
-          }
-        })
-        formProcessingOrder = formProcessingOrder.add(formDef.name)
+
+      const parsedFormsResult = ParseForms(builtIns, injectedPrimitives, nestedContainerFormView, fieldViews, infiniteStreamSources, enumOptionsSources)(formsConfig)
+
+      if (parsedFormsResult.kind == "errors") {
+        console.error(parsedFormsResult.errors)
+        return Sum.Default.right(parsedFormsResult.errors)
       }
-      const allForms = formsConfig.forms.valueSeq().toArray()
-      allForms.forEach(form => {
-        seen = seen.clear()
-        traverse(form)
-      })
 
-
-      formProcessingOrder.forEach(formName => {
-        const formConfig = formsConfig.forms.get(formName)!
-        const formFieldRenderers = formConfig.fields.map(field => field.renderer).toObject()
-        try {
-          const parsedForm = ParseForm(
-            formName,
-            formConfig,
-            nestedContainerFormView,
-            fieldViews,
-            parsedForms,
-            formFieldRenderers,
-            infiniteStreamSources,
-            enumOptionsSources,
-            leafPredicates,
-            defaultValue(formsConfig.types, builtIns, injectedPrimitives),
-            injectedPrimitives
-          )
-          const formBuilder = Form<any, any, any, any>().Default<any>()
-          const form = formBuilder.template({
-            ...(parsedForm.formConfig)
-          })
-          .mapContext<Unit>(_ => {
-            return ({ 
-                      label: (_ as any).label,
-                      value: (_ as any).value,
-                      commonFormState: (_ as any).commonFormState,
-                      formFieldStates: (_ as any).formFieldStates,
-                      rootValue: (_ as any).rootValue,
-                      extraContext: (_ as any).extraContext,
-                      visibilities: (_ as any).visibilities,
-                      disabledFields: (_ as any).disabledFields,
-                      visibilityPredicateExpressions: parsedForm.visibilityPredicateExpressions,
-                      disabledPredicateExpressions: parsedForm.disabledPredicatedExpressions,
-                      layout: formConfig.tabs })})
-
-          parsedForms = parsedForms.set(formName, { ...parsedForm, form, visibilityPredicateExpressions: parsedForm.visibilityPredicateExpressions, disabledPredicatedExpressions: parsedForm.disabledPredicatedExpressions })
-        } catch (error: any) {
-          console.error(error)
-          errors.push(error.message ?? error)
-        }
-      })
-
-      if (errors.size > 0) {
-        console.error(errors)
-        return Sum.Default.right(errors)
-      }
+      const parsedForms = parsedFormsResult.value
 
       formsConfig.launchers.edit.forEach((launcher, launcherName) => {
         const parsedForm = parsedForms.get(launcher.form)!
@@ -360,7 +378,6 @@ export const parseForms =
               createApiChecker:ApiResponseChecker.Default(true),
               configApiChecker:ApiResponseChecker.Default(true),
               apiRunner: Debounced.Default(Synchronized.Default(unit)),
-              shouldCalculatePredicates: false,
               predicateEvaluations: Debounced.Default(ValueOrErrors.Default.return({
                 visiblityPredicateEvaluations: FormFieldPredicateEvaluation.Default.form(false, Map()),
                 disabledPredicateEvaluations: FormFieldPredicateEvaluation.Default.form(false, Map())
@@ -370,9 +387,6 @@ export const parseForms =
         )
       })
       
-      if (errors.size > 0) {
-        return Sum.Default.right(errors)
-      }
       return Sum.Default.left(parsedLaunchers)
     }
 
@@ -385,7 +399,6 @@ export type FormsParserContext<T extends {[key in keyof T] : {type: any, state: 
   enumOptionsSources: EnumOptionsSources,
   globalConfigurationSources: GlobalConfigurationSources,
   entityApis: EntityApis,
-  leafPredicates: any,
   getFormsConfig: BasicFun<void, Promise<any>>
   injectedPrimitives?: Injectables<T>,
 }
