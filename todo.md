@@ -82,7 +82,8 @@ Todo (✅/❌)
           ❌ mismatch form.type vs api.type
           ❌ mismatch configApi.type vs predicate api implicit type
         ✅ actual person-config as a reference of something that should work
-          ❌ add tests of correct validations using pattern matching
+          ❌ add a few correct instances of visiblity predicates using `match-case`
+        ❌ improve the code of the generated tests by removing repetition
       ✅ run tests before releasing
     ❌ paths inside `Any` have a priority after a partial match is found - `Any` filters errors lower than the highest priority
       ❌ add to each `Any`, streamline operators
