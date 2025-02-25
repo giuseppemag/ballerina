@@ -108,6 +108,8 @@ module TypeCheck =
                 return None,PrimitiveType PrimitiveType.IntType, vars
               | Value.ConstBool _ -> 
                 return None,PrimitiveType PrimitiveType.BoolType, vars
+              | Value.ConstString _ -> 
+                return None,PrimitiveType PrimitiveType.StringType, vars
               | _ -> 
                 return! sum.Throw($"not implemented type checker for value expression {e.ToString()}" |> Errors.Singleton)
             }

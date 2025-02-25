@@ -64,14 +64,14 @@
         },
         "Surname": {
           "renderer": "defaultString",
-          "visible":{
+          "visibile":{
             "kind":"match-case",
             "operands":[
               { "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"global" }, "Role"] },
               { "case":"Admin", "handler":{ "kind":"lambda", "parameter":"adminFields", "body":
                 { "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"adminFields" }, "IsSuperAdmin"] }
               } },
-              { "case":"SuperUser", "handler":{ "kind":"lambda", "parameter":"_", "body":"not a boolean" } },
+              { "case":"SuperUser", "handler":{ "kind":"lambda", "parameter":"_", "body":true } },
               { "case":"User", "handler":{ "kind":"lambda", "parameter":"_", "body":false } }
             ]
           }

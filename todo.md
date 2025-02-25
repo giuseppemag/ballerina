@@ -73,7 +73,7 @@ Todo (✅/❌)
           ❌ wrong pattern matching
             ❌ missing case handler
             ❌ non existing case name
-            ❌ different types of the handlers
+            ✅ different types of the handlers
             ❌ same handler types but unexpected type of the whole match
         ❌ invalid launchers
           ❌ non-existing form
@@ -83,6 +83,7 @@ Todo (✅/❌)
           ❌ mismatch configApi.type vs predicate api implicit type
         ✅ actual person-config as a reference of something that should work
           ❌ add a few correct instances of visiblity predicates using `match-case`
+          ❌ add one that matches `Some`, `None` over a `SingleSelection`
         ❌ improve the code of the generated tests by removing repetition
       ✅ run tests before releasing
     ❌ paths inside `Any` have a priority after a partial match is found - `Any` filters errors lower than the highest priority
