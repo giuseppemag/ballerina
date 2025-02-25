@@ -63,18 +63,16 @@ Todo (✅/❌)
             ✅ mismatch with types
           ✅ invalid tabs
             ✅ non-existing fields
-        ❌ invalid predicates
-          ❌ requires global config, APIs, and launcher 
-          ❌ wrong `root` type
-          ❌ non-existing variables
-          ❌ non-existing fields
-          ❌ mismatched types (`10 == true`)
-          ❌ mismatched enum case checks
-          ❌ wrong pattern matching
-            ❌ missing case handler
-            ❌ non existing case name
+        ✅ invalid predicates
+          ✅ requires global config, APIs, and launcher 
+          ✅ non-existing variables
+          ✅ non-existing fields
+          ✅ mismatched types (`10 == true`)
+          ✅ wrong pattern matching
+            ✅ missing case handler
+            ✅ non existing case name
             ✅ different types of the handlers
-            ❌ same handler types but unexpected type of the whole match
+            ✅ same handler types but unexpected type of the whole match
         ❌ invalid launchers
           ❌ non-existing form
           ❌ missing entity API
@@ -90,6 +88,7 @@ Todo (✅/❌)
       ❌ add to each `Any`, streamline operators
         ❌ parser
         ❌ validator
+    ❌ disallow unsupported keywords (`visibIle` wasted me a good chunk of time)
     ❌ the validator is now mature
     ✅ specialize the errors (stream not found, enum not found, etc.)
     ✅ improve the generated whitespace
@@ -109,6 +108,7 @@ Todo (✅/❌)
       ❌ add renderer syntax for the selector of a different form depending on the case
         ❌ add renderer syntax for the union container
         ❌ implement renderer in FE
+    ❌ verify the generated code when a stream type has more than the basic fields
     ❌ extensions
       ❌ preprocessor plugins
         ❌ injected at specific times

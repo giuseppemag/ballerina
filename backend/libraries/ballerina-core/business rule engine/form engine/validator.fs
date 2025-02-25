@@ -1,6 +1,7 @@
 namespace Ballerina.DSL.FormEngine
 module Validator =
 
+  open Ballerina.Core.Object
   open Ballerina.DSL.FormEngine.Model
   open Ballerina.DSL.FormEngine.Parser
   open Ballerina.DSL.Model
@@ -127,6 +128,8 @@ module Validator =
         }
         let vars = [ ("global",globalType.Type);("root",rootType.Type);("local",localType); ] |> Seq.map (VarName.Create <*> id) |> Map.ofSeq
         let! visibleExprType,_ = Expr.typeCheck (ctx.Types |> Seq.map(fun tb -> tb.Value.TypeId,tb.Value.Type) |> Map.ofSeq) schema vars fc.Visible |> state.OfSum
+        // do System.Console.WriteLine $"{fc.Visible.ToFSharpString}"
+        // do System.Console.WriteLine $"{visibleExprType}"
         do! ExprType.Unify Map.empty (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq) visibleExprType (ExprType.PrimitiveType PrimitiveType.BoolType) |> Sum.map ignore |> state.OfSum
         match fc.Disabled with
         | Some disabled ->

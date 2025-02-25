@@ -9,6 +9,18 @@ open Ballerina.Errors
 let Setup () =
   ()
 
+let rec iterateTestsOverFiles baseName start count = 
+  if count <= 0 then ()
+  else
+    let fileName = $"{baseName}{start}.json"
+    do System.Console.WriteLine $"Filename = {fileName}"
+    let actual = Ballerina.DSL.FormEngine.Runner.runSingle true FormsGenTarget.golang fileName "./generated-output/models" null null "./input-forms/go-config.json"
+    match actual, count with
+    | Right err,1 -> Errors.Print "wrong predicate structure" err
+    | _ -> ()  
+    Assert.That(actual.IsRight, Is.EqualTo(true))
+    iterateTestsOverFiles baseName (start+1) (count-1)
+
 // [<Test>]
 // let CorrectSpec() =
 //   let actual = Ballerina.DSL.FormEngine.Runner.runSingle true FormsGenTarget.golang "./input-forms/person-config.json" "./generated-output/models" null null "./input-forms/go-config.json"
@@ -62,8 +74,4 @@ let Setup () =
 
 [<Test>]
 let WrongPredicateStructure() =
-  let actual1 = Ballerina.DSL.FormEngine.Runner.runSingle true FormsGenTarget.golang "./input-forms/with errors/wrong predicate structure 1.json" "./generated-output/models" null null "./input-forms/go-config.json"
-  match actual1 with
-  | Right err -> Errors.Print "wrong predicate structure" err
-  | _ -> ()  
-  Assert.That(actual1.IsRight, Is.EqualTo(true))
+  iterateTestsOverFiles "./input-forms/with errors/wrong predicate structure " 1 9

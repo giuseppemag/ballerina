@@ -62,32 +62,39 @@ module TypeCheck =
               let! _,eType,vars' = eval vars e
               match eType with
               | UnionType cases -> 
-                let! casesWithHandler = 
-                  cases |> List.map (fun case -> 
-                    caseHandlers 
-                      |> Map.tryFind case.CaseName 
-                      |> Option.map (fun (varName, body) -> case, varName, body) 
-                      |> Sum.fromOption (fun () -> Errors.Singleton $"Error: missing case handler for case {case.CaseName}" |> Errors.WithPriority ErrorPriority.High)
-                    )  |> sum.All
-                let! handlerTypes =  
-                  casesWithHandler |> List.map(fun (case, varName, body) -> 
-                    sum{
-                      let vars'' = vars' |> Map.add varName case.Fields
-                      let! _,bodyType,_ = eval vars'' body
-                      return bodyType
-                    }
-                  ) |> sum.All
-                match handlerTypes with
-                | [] -> return! sum.Throw(Errors.Singleton $"Error: match-case {e} has no case handlers. One case handler is required for each possible case.")
-                | x::xs ->
-                  let! ``type`` = 
-                    xs |> List.fold (fun unifications expr -> 
+                let handledCases = caseHandlers |> Seq.map (fun h -> h.Key) |> Set.ofSeq
+                let expectedCases = cases |> Seq.map (fun h -> h.CaseName) |> Set.ofSeq
+                if Set.isProperSuperset handledCases expectedCases then
+                  return! sum.Throw(Errors.Singleton $"Error: too many handlers {handledCases - expectedCases}")
+                elif Set.isProperSuperset expectedCases handledCases  then
+                  return! sum.Throw(Errors.Singleton $"Error: not enough handlers, missing {expectedCases - handledCases}")
+                else
+                  let! casesWithHandler = 
+                    cases |> List.map (fun case -> 
+                      caseHandlers 
+                        |> Map.tryFind case.CaseName 
+                        |> Option.map (fun (varName, body) -> case, varName, body) 
+                        |> Sum.fromOption (fun () -> Errors.Singleton $"Error: missing case handler for case {case.CaseName}" |> Errors.WithPriority ErrorPriority.High)
+                      )  |> sum.All
+                  let! handlerTypes =  
+                    casesWithHandler |> List.map(fun (case, varName, body) -> 
                       sum{
-                        let! prevExpr,prevUnifications = unifications
-                        let! newUnifications = ExprType.Unify Map.empty typeBindings prevExpr expr
-                        return expr,newUnifications
-                      }) (sum{ return x,UnificationConstraints.Zero() })
-                  return None,``type`` |> fst, vars'
+                        let vars'' = vars' |> Map.add varName case.Fields
+                        let! _,bodyType,_ = eval vars'' body
+                        return bodyType
+                      }
+                    ) |> sum.All
+                  match handlerTypes with
+                  | [] -> return! sum.Throw(Errors.Singleton $"Error: match-case {e} has no case handlers. One case handler is required for each possible case.")
+                  | x::xs ->
+                    let! ``type`` = 
+                      xs |> List.fold (fun unifications expr -> 
+                        sum{
+                          let! prevExpr,prevUnifications = unifications
+                          let! newUnifications = ExprType.Unify Map.empty typeBindings prevExpr expr
+                          return expr,newUnifications
+                        }) (sum{ return x,UnificationConstraints.Zero() })
+                    return None,``type`` |> fst, vars'
               | t-> 
                 return! sum.Throw(sprintf "Error: unexpected match-case on type %A when typechecking expression %A" t e |> Errors.Singleton)            
             }
@@ -129,7 +136,7 @@ module TypeCheck =
               if t1 = t2 then
                 return None,PrimitiveType BoolType,vars''
               else
-                return! sum.Throw($$"""Error: invalid type of expression {{e}}""" |> Errors.Singleton)
+                return! sum.Throw($$"""Error: cannot compare different types {{t1}} and {{t2}}""" |> Errors.Singleton)
             }
           | Expr.Binary(Plus, e1, e2) -> 
             sum{
