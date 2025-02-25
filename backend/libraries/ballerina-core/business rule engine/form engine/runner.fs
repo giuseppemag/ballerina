@@ -100,5 +100,5 @@ module Runner =
 
 
 (* Example invocation:
-dotnet run -- forms -input ./input-forms/project-room -output ./generated-output/models -validate -codegen golang -codegen_config ./input-forms/go-config.json
+dotnet run -- forms -input ./input-forms -output ./generated-output/models -validate -codegen golang -codegen_config ./input-forms/go-config.json
 *)
