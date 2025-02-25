@@ -1,7 +1,7 @@
 package ballerina
 
 import (
-	// "github.com/google/uuid"
+	"fmt"
 )
 
 type KeyValue[k comparable, v any] struct {
@@ -24,23 +24,25 @@ func Right[a any, b any](value b) Sum[a,b] {
 	p.value = value
 	return p
 }
-func MatchSum[a any, b any, c any](self Sum[a,b], onLeft func(a) c, onRight func (b) c, fallback func () c) c {
+func MatchSum[a any, b any, c any](self Sum[a,b], onLeft func(a) c, onRight func (b) c) (c,error) {
 	switch v := self.(type) {
 	case left[a,b]:
-		return onLeft(v.value)
+		return onLeft(v.value), nil
 	case right[a,b]:
-		return onRight(v.value)
+		return onRight(v.value), nil
 	default:
-		return fallback()
+		var res c
+		return res, fmt.Errorf("%s is not a valid sum instance", self );
 	}
 }
-func MapLeft[a any, b any, a1 any](self Sum[a,b], f func(a) a1) Sum[a1,b] {
+func MapLeft[a any, b any, a1 any](self Sum[a,b], f func(a) a1) (Sum[a1,b], error){
 	switch v := self.(type) {
 	case left[a,b]:
-		return Left[a1,b](f(v.value))
+		return Left[a1,b](f(v.value)), nil
 	case right[a,b]:
-		return Right[a1,b](v.value)
+		return Right[a1,b](v.value), nil
 	default:
-		return v
+		var res Sum[a1,b]
+		return res, fmt.Errorf("%s is not a valid sum instance", self );
 	}
 }

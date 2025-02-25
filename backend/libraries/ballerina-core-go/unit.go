@@ -5,8 +5,8 @@ import (
 
 type Unit struct {
 }
-func NewUnit() *Unit {
-	p := new(Unit)
+func NewUnit() Unit {
+	var p Unit
 	return p
 }
-var DefaultUnit Unit = *NewUnit()
+var DefaultUnit Unit = NewUnit()
