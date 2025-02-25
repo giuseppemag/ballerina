@@ -7,24 +7,23 @@ import {
   FieldPredicateExpressions,
   CommonFormState,
   FormFieldPredicateEvaluation,
-  SimpleCallback,
-  BasicUpdater,
   simpleUpdater,
   Debounced,
   simpleUpdaterWithChildren,
   Updater,
   id,
   ForeignMutationsInput,
-  Unit,
+  Sum
 } from "../../../../../../../../main";
-import { Map } from "immutable";
-
+import { List, Map } from "immutable";
 
 export type IntegratedFormContext<E, FS> = {
   formType: ParsedType<E>;
   types: Map<string, ParsedType<E>>;
-  rawGlobalConfiguration: any;
-  rawEntity: any;
+  globalConfiguration: Sum<PredicateValue, "not initialized">;
+  initialRawEntity: Sum<any, "not initialized">;
+  entity: Sum<E, "not initialized">;
+  onRawEntityChange: (updater: Updater<E>, path: List<string>) => void;
   toApiParser: (
     entity: E,
     formstate: IntegratedFormState<E,FS>,
@@ -41,7 +40,7 @@ export type IntegratedFormContext<E, FS> = {
       disabledFields: FormFieldPredicateEvaluation | undefined;
     },
     { formFieldStates: FS } & { commonFormState: CommonFormState },
-    { onChange: SimpleCallback<BasicUpdater<E>> }
+    { onChange: (e: Updater<E>, path: List<string>) => void }
   >;
 };
 
@@ -94,4 +93,6 @@ export const IntegratedFormState = <E,FS>() => ({
 
   export type IntegratedFormWritableState<E, FS> = IntegratedFormState<E,FS>
   export type IntegratedFormForeignMutationsExposed<E,FS> = ReturnType<ReturnType<typeof IntegratedFormState<E,FS>>["ForeignMutations"]>
-  export type IntegratedFormForeignMutationsExpected<E, FS> = Unit
+  export type IntegratedFormForeignMutationsExpected<E, FS> = {
+
+  }

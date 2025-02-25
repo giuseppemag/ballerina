@@ -1,4 +1,4 @@
-import { AsyncState, unit } from "../../../../../../../../main";
+import { unit } from "../../../../../../../../main";
 import { Template } from "../../../../../../../template/state";
 import { IntegratedFormContext, IntegratedFormForeignMutationsExpected, IntegratedFormState, IntegratedFormWritableState } from "./state";
 import { integratedFormRunner } from "./coroutines/runner";
@@ -22,33 +22,27 @@ export const IntegratedFormTemplate = <E, FS>(): IntegratedFormTemplate<E, FS> =
     IntegratedFormWritableState<E, FS>,
     IntegratedFormForeignMutationsExpected<E, FS>,
     IntegratedFormView<E, FS>>(props => {
+      if(props.context.entity.kind == "r" || props.context.globalConfiguration.kind == "r") {
+        return <>
+        </>
+      }
       const visibilities = props.context.customFormState.predicateEvaluations.kind == "value" && 
         props.context.customFormState.predicateEvaluations.value.visiblityPredicateEvaluations.kind == "form" ?
         props.context.customFormState.predicateEvaluations.value.visiblityPredicateEvaluations : undefined;
       const disabledFields = props.context.customFormState.predicateEvaluations.kind == "value" 
         && props.context.customFormState.predicateEvaluations.value.disabledPredicateEvaluations.kind == "form" ?
         props.context.customFormState.predicateEvaluations.value.disabledPredicateEvaluations : undefined;
-      const parsedEntity = props.context.fromApiParser(props.context.rawEntity)
-      console.debug('parsed entity', parsedEntity)
-      console.debug('visibilities', visibilities?.fields.toJS())
-      console.debug('disabledFields', disabledFields)
-      console.debug(props)
       return <>
         {
           props.view({
             ...props, 
-            foreignMutations: {
-            //   ...props.foreignMutations,
-            //    onSubmit: () => {
-            //     props.setState(IntegratedFormState<E, FS>().Updaters.Template.submit())
-            //   }
-            },
+            ...props.foreignMutations,
             view: {
               ...props.view,
               actualForm:
                   props.context.actualForm({
                     context: {
-                      value: parsedEntity,
+                      value: props.context.entity.value,
                       formFieldStates: props.context.formFieldStates,
                       commonFormState: props.context.commonFormState,
                       visibilities,
@@ -62,7 +56,10 @@ export const IntegratedFormTemplate = <E, FS>(): IntegratedFormTemplate<E, FS> =
                       }))
                     },
                     foreignMutations: {
-                      onChange: (e) => {
+                      onChange: (updater, path) => {
+                        if(props.context.entity.kind == "r") 
+                          return
+                        props.context.onRawEntityChange(updater, path)
                         props.setState(IntegratedFormState<E, FS>().Updaters.Template.recalculatePredicates())
                       }
                     },
