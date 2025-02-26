@@ -15,6 +15,7 @@ module Model =
     Set:EnumStreamCodegenConfigTypeDef
     List:CodegenConfigListDef
     Map:CodegenConfigTypeDef
+    Sum:CodegenConfigTypeDef
     Custom:Map<string, CodegenConfigTypeDef>
     IdentifierAllowedRegex:string
     EnumNotFoundError:CodegenConfigErrorDef
@@ -85,6 +86,7 @@ module Model =
   and Renderer = 
     | PrimitiveRenderer of PrimitiveRenderer
     | MapRenderer of {| Map:Renderer; Key:NestedRenderer; Value:NestedRenderer |}
+    | SumRenderer of {| Sum:Renderer; Left:NestedRenderer; Right:NestedRenderer |}
     | ListRenderer of {| List:Renderer; Element:NestedRenderer |}
     | EnumRenderer of EnumApiId * Renderer
     | StreamRenderer of StreamApiId * Renderer

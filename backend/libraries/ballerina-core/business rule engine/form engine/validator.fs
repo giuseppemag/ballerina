@@ -36,6 +36,7 @@ module Validator =
         !l.Element.Renderer + !l.List
       | Renderer.MapRenderer m ->
         !m.Map + !m.Key.Renderer + !m.Value.Renderer
+      | Renderer.SumRenderer s -> !s.Sum + !s.Left.Renderer + !s.Right.Renderer
       | Renderer.PrimitiveRenderer p -> sum{ return p.Type |> ExprType.GetTypesFreeVars }
       | Renderer.StreamRenderer (s,f) ->
         (ctx.TryFindStream s.StreamName |> Sum.map (StreamApi.Type >> Set.singleton)) + !f
@@ -63,6 +64,12 @@ module Validator =
           let! valueRendererType = !m.Value.Renderer
           let mapRenderer = ExprType.Substitute (Map.empty |> Map.add { VarName="a1" } keyRendererType |> Map.add { VarName="a2" } valueRendererType) genericMapRenderer
           return mapRenderer
+        | Renderer.SumRenderer(s) ->
+          let! genericSumRenderer = !s.Sum
+          let! leftRendererType = !s.Left.Renderer
+          let! rightRendererType = !s.Right.Renderer
+          let sumRenderer = ExprType.Substitute (Map.empty |> Map.add { VarName="a1" } leftRendererType |> Map.add { VarName="a2" } rightRendererType) genericSumRenderer
+          return sumRenderer
         | Renderer.PrimitiveRenderer p -> 
           return p.Type
         | Renderer.StreamRenderer (stream, streamRenderer) ->
@@ -98,6 +105,10 @@ module Validator =
           do! !kv.Map
           do! !!kv.Key
           do! !!kv.Value
+        | Renderer.SumRenderer s ->
+          do! !s.Sum
+          do! !!s.Left
+          do! !!s.Right
         | Renderer.StreamRenderer(_,e) -> return! !e
         | Renderer.FormRenderer(f,e) -> 
           let! f = ctx.TryFindForm f.FormName |> state.OfSum
