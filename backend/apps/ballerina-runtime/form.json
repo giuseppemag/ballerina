@@ -1,0 +1,298 @@
+{
+  "types": {
+    "GlobalConfiguration": {
+      "extends": [],
+      "fields": {}
+    },
+    "CollectionReference": {
+      "fields": {
+        "DisplayValue": "string",
+        "Id": "guid"
+      }
+    },
+    "BusinessProcessEnum": {
+      "fun": "Union",
+      "args": [
+        {
+          "case": "FI_INVOICE",
+          "fields": {}
+        },
+        {
+          "case": "MM_INVOICE",
+          "fields": {}
+        },
+        {
+          "case": "ORDER_CONFIRMATION",
+          "fields": {}
+        },
+        {
+          "case": "DELIVERY_NOTE",
+          "fields": {}
+        },
+        {
+          "case": "SALES_ORDER",
+          "fields": {}
+        },
+        {
+          "case": "PAYMENT_ADVICE",
+          "fields": {}
+        },
+        {
+          "case": "DEBIT_NOTE",
+          "fields": {}
+        }
+      ]
+    },
+    "LanguageEnum": {
+      "fun": "Union",
+      "args": [
+        {
+          "case": "EN",
+          "fields": {}
+        },
+        {
+          "case": "DE",
+          "fields": {}
+        }
+      ]
+    },
+    "BusinessProcessRef": {
+      "fields": {
+        "Value": "BusinessProcessEnum"
+      }
+    },
+    "LanguageRef": {
+      "fields": {
+        "Value": "LanguageEnum"
+      }
+    },
+    "UserIDRef": {
+      "fields": {},
+      "extends": [
+        "CollectionReference"
+      ]
+    },
+    "OrganizationIDRef": {
+      "fields": {},
+      "extends": [
+        "CollectionReference"
+      ]
+    },
+    "SetupGuideInitializationRequestBody": {
+      "fields": {
+        "businessProcesses": {
+          "fun": "MultiSelection",
+          "args": [
+            "BusinessProcessRef"
+          ]
+        },
+        "language": {
+          "fun": "SingleSelection",
+          "args": [
+            "LanguageRef"
+          ]
+        },
+        "testOrganizationID": {
+          "fun": "SingleSelection",
+          "args": [
+            "OrganizationIDRef"
+          ]
+        },
+        "productionOrganizationID": {
+          "fun": "SingleSelection",
+          "args": [
+            "OrganizationIDRef"
+          ]
+        },
+        "jiraGoLiveTicket": "string"
+      }
+    },
+    "SetupGuideModifyBody": {
+      "fields": {
+        "goLiveDatePerBusinessProcess": {
+          "fun": "Sum",
+          "args": [
+            {
+              "fun": "SingleSelection",
+              "args": [
+                "BusinessProcessRef"
+              ]
+            },
+            "Date"
+          ]
+        },
+        "jiraGoLiveTicket": "string"
+      }
+    }
+  },
+  "apis": {
+    "enumOptions": {
+      "businessProcesses": "BusinessProcessRef",
+      "languages": "LanguageRef"
+    },
+    "searchableStreams": {
+      "userID": "UserIDRef",
+      "organizationID": "OrganizationIDRef"
+    },
+    "entities": {
+      "globalConfiguration": {
+        "type": "GlobalConfiguration",
+        "methods": [
+          "get"
+        ]
+      },
+      "SetupGuideInitializationRequestBodyApi": {
+        "type": "SetupGuideInitializationRequestBody",
+        "methods": [
+          "create",
+          "default"
+        ]
+      },
+      "SetupGuideModifyBodyApi": {
+        "type": "SetupGuideModifyBody",
+        "methods": [
+          "get",
+          "update"
+        ]
+      }
+    }
+  },
+  "mappings": {},
+  "forms": {
+    "setupGuideInitializationRequestBodyForm": {
+      "type": "SetupGuideInitializationRequestBody",
+      "fields": {
+        "businessProcesses": {
+          "renderer": "defaultEnumMultiselect",
+          "options": "businessProcesses",
+          "visible": true,
+          "disabled": false
+        },
+        "language": {
+          "renderer": "defaultEnum",
+          "options": "languages",
+          "visible": true,
+          "disabled": false
+        },
+        "testOrganizationID": {
+          "renderer": "defaultInfiniteStream",
+          "stream": "organizationID",
+          "visible": true,
+          "disabled": false
+        },
+        "productionOrganizationID": {
+          "renderer": "defaultInfiniteStream",
+          "stream": "organizationID",
+          "visible": true,
+          "disabled": false
+        },
+        "jiraGoLiveTicket": {
+          "renderer": "defaultString",
+          "visible": true,
+          "disabled": false
+        }
+      },
+      "tabs": {
+        "SetupGuideInitializationRequestBody": {
+          "columns": {
+            "businessProcesses": {
+              "groups": {
+                "main": [
+                  "businessProcesses"
+                ]
+              }
+            },
+            "testOrganizationID": {
+              "groups": {
+                "main": [
+                  "testOrganizationID"
+                ]
+              }
+            },
+            "productionOrganizationID": {
+              "groups": {
+                "main": [
+                  "productionOrganizationID"
+                ]
+              }
+            },
+            "jiraGoLiveTicket": {
+              "groups": {
+                "main": [
+                  "jiraGoLiveTicket"
+                ]
+              }
+            },
+            "language": {
+              "groups": {
+                "main": [
+                  "language"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "setupGuideModifyBodyForm": {
+      "type": "SetupGuideModifyBody",
+      "fields": {
+        "goLiveDatePerBusinessProcess": {
+          "renderer": "defaultSum",
+          "leftRenderer": {
+            "label": "businessProcess",
+            "renderer": "defaultEnum",
+            "options": "businessProcesses",
+            "visible": true,
+            "disabled": false
+          },
+          "rightRenderer": {
+            "label": "goLiveDate",
+            "renderer": "defaultDate",
+            "visible": true
+          },
+          "visible": true
+        },
+        "jiraGoLiveTicket": {
+          "renderer": "defaultString",
+          "visible": true,
+          "disabled": false
+        }
+      },
+      "tabs": {
+        "SetupGuideModifyBody": {
+          "columns": {
+            "goLiveDatePerBusinessProcess": {
+              "groups": {
+                "main": [
+                  "goLiveDatePerBusinessProcess"
+                ]
+              }
+            },
+            "jiraGoLiveTicket": {
+              "groups": {
+                "main": [
+                  "jiraGoLiveTicket"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "launchers": {
+    "create-init-setup-guide": {
+      "kind": "create",
+      "form": "setupGuideInitializationRequestBodyForm",
+      "api": "SetupGuideInitializationRequestBodyApi",
+      "configApi": "globalConfiguration"
+    },
+    "edit-init-setup-guide": {
+      "kind": "edit",
+      "form": "setupGuideModifyBodyForm",
+      "api": "SetupGuideModifyBodyApi",
+      "configApi": "globalConfiguration"
+    }
+  }
+}

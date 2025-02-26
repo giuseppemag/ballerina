@@ -16,6 +16,7 @@ module Model =
       Set: CodegenConfigSetDef
       List: CodegenConfigListDef
       Map: CodegenConfigMapDef
+      Sum: CodegenConfigTypeDef
       Tuple: List<TupleCodegenConfigTypeDef>
       Union: CodegenConfigUnionDef
       Custom: Map<string, CodegenConfigCustomDef>
@@ -263,6 +264,7 @@ module Model =
       {| List: Renderer
          Element: NestedRenderer
          Children: RendererChildren |}
+    | SumRenderer of {| Sum:Renderer; Left:NestedRenderer; Right:NestedRenderer |}
     | EnumRenderer of EnumApiId * Renderer
     | StreamRenderer of StreamApiId * Renderer
     | FormRenderer of FormConfigId * ExprType * RendererChildren
