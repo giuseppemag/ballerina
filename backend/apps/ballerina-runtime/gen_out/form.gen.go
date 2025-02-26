@@ -168,11 +168,11 @@ func NewSetupGuideInitializationRequestBody(businessProcesses ballerina.Set[Busi
 
 
 type SetupGuideModifyBody struct {
-  GoLiveDatePerBusinessProcess ballerina.Map[ballerina.Option[BusinessProcessRef],time.Time]
+  GoLiveDatePerBusinessProcess ballerina.Sum[ballerina.Option[BusinessProcessRef],time.Time]
   JiraGoLiveTicket string
 }
 
-func NewSetupGuideModifyBody(goLiveDatePerBusinessProcess ballerina.Map[ballerina.Option[BusinessProcessRef],time.Time], jiraGoLiveTicket string, ) SetupGuideModifyBody {
+func NewSetupGuideModifyBody(goLiveDatePerBusinessProcess ballerina.Sum[ballerina.Option[BusinessProcessRef],time.Time], jiraGoLiveTicket string, ) SetupGuideModifyBody {
   var res SetupGuideModifyBody
   res.GoLiveDatePerBusinessProcess = goLiveDatePerBusinessProcess;
   res.JiraGoLiveTicket = jiraGoLiveTicket;
