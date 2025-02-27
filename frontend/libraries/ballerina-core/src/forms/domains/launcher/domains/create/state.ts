@@ -49,7 +49,6 @@ export const CreateFormState = <E,FS>() => ({
         visiblityPredicateEvaluations: FormFieldPredicateEvaluation;
         disabledPredicateEvaluations: FormFieldPredicateEvaluation;
       }, string>>,
-      shouldCalculatePredicates: boolean,
       apiRunner: Debounced<Synchronized<Unit, ApiErrors>>
   }) : CreateFormState<E,FS> => ({
     rawEntity: Synchronized.Default(unit),
