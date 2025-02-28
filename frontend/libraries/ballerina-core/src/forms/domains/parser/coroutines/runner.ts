@@ -1,6 +1,6 @@
 import { AsyncState, builtInsFromFieldViews, ParsedFormJSON, injectablesFromFieldViews, Sum, Synchronize, Unit, FormsConfig } from "../../../../../main"
 import { CoTypedFactory } from "../../../../coroutines/builder"
-import { FormParsingResult, FormsParserContext, FormsParserState, parseForms } from "../state"
+import { FormParsingResult, FormsParserContext, FormsParserState, parseFormsToLaunchers } from "../state"
 
 export const LoadValidateAndParseFormsConfig = <T extends {[key in keyof T] : {type: any, state: any}}>() => {
   const Co = CoTypedFactory<FormsParserContext<T>, FormsParserState>()
@@ -14,7 +14,7 @@ export const LoadValidateAndParseFormsConfig = <T extends {[key in keyof T] : {t
     const validationResult = FormsConfig.Default.validateAndParseFormConfig(builtIns, current.fieldTypeConverters, injectedPrimitives)(rawFormsConfig)
     if (validationResult.kind == "errors")
       return Sum.Default.right(validationResult.errors)
-    return parseForms(
+    return parseFormsToLaunchers(
       builtIns,
       injectedPrimitives,
       current.fieldTypeConverters,
@@ -25,7 +25,7 @@ export const LoadValidateAndParseFormsConfig = <T extends {[key in keyof T] : {t
       current.enumOptionsSources,
       current.globalConfigurationSources,
       current.entityApis,
-      current.leafPredicates,)(validationResult.value)
+      )(validationResult.value)
   }, _ => "transient failure", 5, 50)
     .embed(
       _ => _.formsConfig,

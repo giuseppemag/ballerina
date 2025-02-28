@@ -1,4 +1,3 @@
-import { List } from "immutable"
 import { BasicUpdater, FormRunnerContext, FormRunnerForeignMutationsExpected, FormRunnerLoader, FormRunnerState, Sum, unit } from "../../../../main"
 import { Template } from "../../../template/state"
 import { FormParsingResult } from "../parser/state"

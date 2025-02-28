@@ -35,6 +35,9 @@ export type ListFieldView<Element, ElementFormState, Context extends FormLabel, 
       onChange: OnChange<List<Element>>;
       add: SimpleCallback<Unit>;
       remove: SimpleCallback<number>;
+      move: (elementIndex: number, to: number) => void;
+      duplicate: SimpleCallback<number>;
+      insert: SimpleCallback<number>;
     }, {
       embeddedElementTemplate: BasicFun<number, Template<
         Context & Value<List<Element>> & ListFieldState<Element, ElementFormState>,
@@ -43,5 +46,8 @@ export type ListFieldView<Element, ElementFormState, Context extends FormLabel, 
           onChange: OnChange<List<Element>>;
           add: SimpleCallback<Unit>;
           remove: SimpleCallback<number>;
+          move: (elementIndex: number, to: number) => void;
+          duplicate: SimpleCallback<number>;
+          insert: SimpleCallback<number>;
         }>>
     }>;

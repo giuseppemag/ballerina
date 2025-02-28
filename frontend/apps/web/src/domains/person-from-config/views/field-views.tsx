@@ -242,12 +242,18 @@ export const PersonFieldViews = {
             <ul>
               {props.context.value.map((element, elementIndex) => {
                 return (
-                <li>
-                  <button onClick={() => props.foreignMutations.remove(elementIndex)}>❌</button>
+                <li style={{display: "flex",flexDirection: "column", gap: "10px"}}>
                   {props.embeddedElementTemplate(elementIndex)({
                     ...props,
                     view: unit,
                   })}
+                  <div style={{display: "flex"}}>
+                    <button onClick={() => props.foreignMutations.remove(elementIndex)}>❌</button>
+                    <button onClick={() => props.foreignMutations.move(elementIndex, elementIndex - 1)}>⬆️</button>
+                    <button onClick={() => props.foreignMutations.move(elementIndex, elementIndex + 1)}>⬇️</button>
+                    <button onClick={() => props.foreignMutations.duplicate(elementIndex)}>📑</button>
+                    <button onClick={() => props.foreignMutations.insert(elementIndex + 1)}>➕</button>
+                  </div>
                 </li>
               )})}
             </ul>

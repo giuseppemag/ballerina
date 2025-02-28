@@ -139,7 +139,7 @@ export const ParsedRenderer = {
       }
       throw Error(`cannot resolve view ${viewName}`) // TODO -- better error handling
     },
-    RendererToForm: <T,>(fieldName: string, parsingContext: { formViews: Record<string, Record<string, any>>, forms: ParsedForms<T>, nestedContainerFormView: any, defaultValue: BasicFun<ParsedType<T>, any>, enumOptionsSources: EnumOptionsSources, infiniteStreamSources: any, leafPredicates: any, injectedPrimitives?: InjectedPrimitives<T> },
+    RendererToForm: <T,>(fieldName: string, parsingContext: { formViews: Record<string, Record<string, any>>, forms: ParsedForms<T>, nestedContainerFormView: any, defaultValue: BasicFun<ParsedType<T>, any>, enumOptionsSources: EnumOptionsSources, infiniteStreamSources: any, injectedPrimitives?: InjectedPrimitives<T> },
       parsedRenderer: ParsedRenderer<T>): ValueOrErrors<{form: Form, visibilityPredicateExpression: FieldPredicateExpression, disabledPredicatedExpression: FieldPredicateExpression}, string> => {
         
       const viewKind = ParsedRenderer.Operations.FormViewToViewKind(parsedRenderer.renderer, parsingContext.formViews, parsingContext.forms.keySeq().toSet())
@@ -148,50 +148,51 @@ export const ParsedRenderer = {
         case "enum":
         case "stream":
           return Expr.Operations.parse(parsedRenderer.visible ?? true).Then(visibilityExpr =>
-            Expr.Operations.parse(parsedRenderer.disabled ?? false).Then(disabledExpr =>
-              ValueOrErrors.Default.return(
-                {form: {
-                  renderer: ParsedRenderer.Operations.FormRenderers(parsedRenderer, parsingContext.formViews, viewKind, parsedRenderer.renderer, parsedRenderer.label, parsedRenderer.tooltip, parsedRenderer.details, parsingContext.enumOptionsSources, parsingContext.leafPredicates, parsingContext.injectedPrimitives),
-                  initialValue: parsingContext.defaultValue(parsedRenderer.type),
-                  initialState: ParsedRenderer.Operations.FormStates(parsedRenderer, viewKind, parsedRenderer.renderer, parsingContext.infiniteStreamSources, parsingContext.injectedPrimitives)
-                },
-                visibilityPredicateExpression: FieldPredicateExpression.Default.primitive(visibilityExpr),
-                disabledPredicatedExpression: FieldPredicateExpression.Default.primitive(disabledExpr)
-              })
-        )
-      )
+                  Expr.Operations.parse(parsedRenderer.disabled ?? false).Then(disabledExpr =>
+                    ValueOrErrors.Default.return(
+                      {form: {
+                        renderer: ParsedRenderer.Operations.FormRenderers(parsedRenderer, parsingContext.formViews, viewKind, parsedRenderer.renderer, parsedRenderer.label, parsedRenderer.tooltip, parsedRenderer.details, parsingContext.enumOptionsSources, parsingContext.injectedPrimitives),
+                        initialValue: parsingContext.defaultValue(parsedRenderer.type),
+                        initialState: ParsedRenderer.Operations.FormStates(parsedRenderer, viewKind, parsedRenderer.renderer, parsingContext.infiniteStreamSources, parsingContext.injectedPrimitives)
+                      },
+                      visibilityPredicateExpression: FieldPredicateExpression.Default.primitive(visibilityExpr),
+                      disabledPredicatedExpression: FieldPredicateExpression.Default.primitive(disabledExpr)
+                    })
+                    )
+                  )
         case "form":
           return Expr.Operations.parse(parsedRenderer.visible ?? true).Then(visibilityExpr =>
                   Expr.Operations.parse(parsedRenderer.disabled ?? false).Then(disabledExpr =>
                     ValueOrErrors.Default.return({
                       form: { 
-                        renderer: parsingContext.forms.get(parsedRenderer.renderer)!.form.withView(parsingContext.nestedContainerFormView).mapContext<any>(_ => ({ ..._, label: parsedRenderer.label, tooltip: parsedRenderer.tooltip, details: parsedRenderer.details, })),
+                        renderer: parsingContext.forms.get(parsedRenderer.renderer)!.form.withView(parsingContext.nestedContainerFormView).mapContext<any>(_ => ({ ..._, label: parsedRenderer.label, tooltip: parsedRenderer.tooltip, details: parsedRenderer.details })),
                         initialValue: parsingContext.defaultValue(parsedRenderer.type),
                         initialState: parsingContext.forms.get(parsedRenderer.renderer)!.initialFormState
                         },
                         visibilityPredicateExpression: FieldPredicateExpression.Default.form(visibilityExpr, parsingContext.forms.get(parsedRenderer.renderer)!.visibilityPredicateExpressions),
                         disabledPredicatedExpression: FieldPredicateExpression.Default.form(disabledExpr, parsingContext.forms.get(parsedRenderer.renderer)!.disabledPredicatedExpressions)
                       })
-            )
-          )
+                    )
+                  )
         case "list":
             return Expr.Operations.parse(parsedRenderer.visible ?? true).Then(visibilityExpr =>
                       Expr.Operations.parse(parsedRenderer.disabled ?? false).Then(disabledExpr =>
                         ParsedRenderer.Operations.RendererToForm(fieldName, parsingContext, parsedRenderer.elementRenderer).Then(parsedElementRenderer => 
                             ValueOrErrors.Default.return(
                               {form: {
-                                renderer: ListForm<any, any, any & FormLabel, Unit>(
-                                { Default: () => parsedElementRenderer.form.initialState },
-                                { Default: () => parsedElementRenderer.form.initialValue },
-                                parsedElementRenderer.form.renderer,
-                            ).withView(((parsingContext.formViews)[viewKind])[parsedRenderer.renderer]() as any)
-                              .mapContext<any>(_ => ({ ..._, label: parsedRenderer.label, tooltip: parsedRenderer.tooltip, details: parsedRenderer.details })),
-                                initialValue: parsingContext.defaultValue(parsedRenderer.type),
-                                initialState: ListFieldState<any, any>().Default(Map())
-                              },
-                              visibilityPredicateExpression: FieldPredicateExpression.Default.list(visibilityExpr, parsedElementRenderer.visibilityPredicateExpression),
-                              disabledPredicatedExpression: FieldPredicateExpression.Default.list(disabledExpr, parsedElementRenderer.disabledPredicatedExpression),
-                              })
+                                renderer: 
+                                  ListForm<any, any, any & FormLabel, Unit>(
+                                    { Default: () => parsedElementRenderer.form.initialState },
+                                    { Default: () => parsedElementRenderer.form.initialValue },
+                                    parsedElementRenderer.form.renderer,
+                                  ).withView(((parsingContext.formViews)[viewKind])[parsedRenderer.renderer]() as any)
+                                  .mapContext<any>(_ => ({ ..._, label: parsedRenderer.label, tooltip: parsedRenderer.tooltip, details: parsedRenderer.details })),
+                                    initialValue: parsingContext.defaultValue(parsedRenderer.type),
+                                    initialState: ListFieldState<any, any>().Default(Map())
+                                  },
+                                visibilityPredicateExpression: FieldPredicateExpression.Default.list(visibilityExpr, parsedElementRenderer.visibilityPredicateExpression),
+                                disabledPredicatedExpression: FieldPredicateExpression.Default.list(disabledExpr, parsedElementRenderer.disabledPredicatedExpression),
+                                })
             )
           )
         )
@@ -227,7 +228,7 @@ export const ParsedRenderer = {
           return ValueOrErrors.Default.throw(List([`error: the kind for ${viewKind}::${parsedRenderer} cannot be found`]));
       }
     },
-    FormRenderers: <T,>(rendererConfig: ParsedRenderer<T>, formViews: Record<string, Record<string, any>>, viewKind: string, viewName: any, label: string | undefined, tooltip: string | undefined, details: string | undefined, enumOptionsSources: EnumOptionsSources, leafPredicates: any, injectedPrimitives?: InjectedPrimitives<T>): any => {
+    FormRenderers: <T,>(rendererConfig: ParsedRenderer<T>, formViews: Record<string, Record<string, any>>, viewKind: string, viewName: any, label: string | undefined, tooltip: string | undefined, details: string | undefined, enumOptionsSources: EnumOptionsSources, injectedPrimitives?: InjectedPrimitives<T>): any => {
       if (viewKind == "maybeBoolean")
         return MaybeBooleanForm<any & FormLabel, Unit>()
           .withView(formViews[viewKind][viewName]())

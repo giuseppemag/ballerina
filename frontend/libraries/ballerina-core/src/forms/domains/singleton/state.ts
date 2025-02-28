@@ -35,9 +35,10 @@ export type EntityFormState<Entity, Fields extends (keyof Entity) & (keyof Field
   { formFieldStates: { [f in Fields]: { customFormState: FieldStates[f], commonFormState: CommonFormState, formFieldStates: FieldStates[f], elementFormStates: FieldStates[f] }}, 
     commonFormState: CommonFormState }
 
+export type EntityAction = {kind: "add"} | {kind: "remove"} | {kind: "move", to: number} | {kind: "duplicate"} | {kind: "insert"}
 export type EntityFormContext<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> =
   Context & EntityFormState<Entity, Fields, FieldStates, Context, ForeignMutationsExpected> & { elementVisibilities: FormFieldPredicateEvaluation[] | undefined, elementDisabledFields: FormFieldPredicateEvaluation | undefined, extraContext: any, visibilities: FormFieldPredicateEvaluation | undefined, disabledFields: FormFieldPredicateEvaluation | undefined, label?: string } & Value<Entity> & { rootValue: Entity }
-export type OnChange<Entity> = (updater: BasicUpdater<Entity>, path: List<string>) => void
+export type OnChange<Entity> = (updater: BasicUpdater<Entity>, path: List<string | number | EntityAction>) => void
 export type EntityFormForeignMutationsExpected<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> =
   ForeignMutationsExpected & { onChange: OnChange<Entity> }
 
