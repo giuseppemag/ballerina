@@ -108,6 +108,12 @@ Todo (✅/❌)
       ❌ add renderer syntax for the selector of a different form depending on the case
         ❌ add renderer syntax for the union container
         ❌ implement renderer in FE
+    ❌ extensions to the syntax
+      ❌ distinguish Option (with renderer like List) from SingleSelection (only renderer for streams)
+        ❌ allow Some and None matching on Option
+        ❌ distinguish outer from inner renderers
+      ❌ support `children` property on any renderer
+        ❌ a record of fields parsed and validated exacted like fields
     ❌ verify the generated code when a stream type has more than the basic fields
     ❌ extensions
       ❌ preprocessor plugins
