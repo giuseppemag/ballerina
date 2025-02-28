@@ -6,6 +6,7 @@ import { ParsedRenderer } from "../../../parser/domains/renderer/state";
 export type IntegratedFormLauncher = {
   name: string,
   form: string,
+  globalConfigurationType: string
 }
 
 export type RawIntegratedFormJSON = {
@@ -17,7 +18,7 @@ export type RawIntegratedFormJSON = {
 export const RawIntegratedFormJSON = {
   hasTypes: (_: any): _ is { types: object } => isObject(_) && "types" in _ && isObject(_.types),
   hasForms: (_: any): _ is { forms: object } => isObject(_) && "forms" in _ && isObject(_.forms),
-  hasApis: (_: any): _ is { apis: { enumOptions: object; searchableStreams: object; globalConfigType: string }} => isObject(_) && "apis" in _ && isObject(_.apis) && "enumOptions" in _.apis && isObject(_.apis.enumOptions) && "searchableStreams" in _.apis && isObject(_.apis.searchableStreams) && "globalConfigType" in _.apis && isString(_.apis.globalConfigType), 
+  hasApis: (_: any): _ is { apis: { enumOptions: object; searchableStreams: object; globalConfigType: string }} => isObject(_) && "apis" in _ && isObject(_.apis) && "enumOptions" in _.apis && isObject(_.apis.enumOptions) && "searchableStreams" in _.apis && isObject(_.apis.searchableStreams), 
   hasLaunchers: (_: any): _ is { launchers: any } => isObject(_) && "launchers" in _,
 }
 export type ParsedIntegratedFormJSON<T> = {
@@ -25,7 +26,6 @@ export type ParsedIntegratedFormJSON<T> = {
   apis: {
     enums: Map<string, TypeName>;
     streams: Map<string, TypeName>;
-    globalConfigType: TypeName;
   };
   forms: Map<string, ParsedFormConfig<T>>;
   launchers: Map<string, IntegratedFormLauncher>;
@@ -166,6 +166,7 @@ export const IntegratedFormsConfig = {
         let launcher: IntegratedFormLauncher = {
           name: launcherName,
           form: formsConfig.launchers[launcherName]["form"],
+          globalConfigurationType: formsConfig.launchers[launcherName]["globalConfigurationType"]
         };
         launchers = launchers.set(launcherName, launcher)
       })

@@ -11,7 +11,7 @@ export type IntegratedPersonConfig = {
 
 export const integratedPersonConfig: IntegratedPersonConfig = {
     ERP: "ERP:SAP",
-    IsAdmin: true
+    IsAdmin: false
 }
 
 export const initialIntegratedFormData: IntegratedPerson = {

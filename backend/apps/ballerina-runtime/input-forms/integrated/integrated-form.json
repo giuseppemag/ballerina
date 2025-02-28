@@ -144,8 +144,7 @@
     "searchableStreams": {
       "cities": "CityRef",
       "departments": "DepartmentRef"
-    },
-    "globalConfigType": "GlobalConfiguration"
+    }
   },
   "forms": {
     "landArea": {
@@ -319,7 +318,16 @@
         "mainAddress": {
           "label": "main address",
           "renderer": "address",
-          "visible": true
+          "visible": {
+            "kind": "fieldLookup",
+            "operands": [
+              {
+                "kind": "varLookup",
+                "varName": "global"
+              },
+              "IsAdmin"
+            ]
+          }
         },
         "addresses": {
           "label": "other addresses",
@@ -401,8 +409,9 @@
   },
   "launchers": {
     "integrated-form": {
-      "kind": "create",
-      "form": "person"
+      "kind": "integrated",
+      "form": "person",
+      "globalConfigurationType": "GlobalConfiguration"
     }
   }
 }
