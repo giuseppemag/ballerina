@@ -79,6 +79,10 @@ Todo (✅/❌)
           ❌ missing config API
           ❌ mismatch form.type vs api.type
           ❌ mismatch configApi.type vs predicate api implicit type
+          ❌ missing config type
+        ❌ invalid nested renderers
+          ❌ non-existing field
+          ❌ wrong predicate `root` type inside the nested renderer
         ✅ actual person-config as a reference of something that should work
           ❌ add a few correct instances of visiblity predicates using `match-case`
           ❌ add one that matches `Some`, `None` over a `SingleSelection`
@@ -88,8 +92,6 @@ Todo (✅/❌)
       ❌ add to each `Any`, streamline operators
         ❌ parser
         ❌ validator
-    ❌ disallow unsupported keywords (`visibIle` wasted me a good chunk of time)
-    ❌ the validator is now mature
     ✅ specialize the errors (stream not found, enum not found, etc.)
     ✅ improve the generated whitespace
     ✅ the Go type generator is now reasonably mature
@@ -106,16 +108,37 @@ Todo (✅/❌)
         ✅ constructors for the case values
         ✅ constructors for the whole thing - assume discriminator, accept specific value
       ❌ add renderer syntax for the selector of a different form depending on the case
-        ❌ add renderer syntax for the union container
         ❌ implement renderer in FE
-    ❌ extensions to the syntax
+        ❌ add renderer syntax for the union container
+```
+Job = Barista of Barista | Waiter of Waiter
+"forms":{
+  "barista":...
+  "waiter":...
+  "person":{
+    ...
+    "job":{
+      "renderer":"defaultUnionRenderer",
+      "cases":{
+        "Barista":{
+          "renderer":"barista"
+        },
+        "Waiter":{
+          "renderer":"waiter"
+        }
+      }
+    ...
+  }
+}
+```
+
+    ❌ extensions
       ❌ distinguish Option (with renderer like List) from SingleSelection (only renderer for streams)
         ❌ allow Some and None matching on Option
         ❌ distinguish outer from inner renderers
-      ❌ support `children` property on any renderer
-        ❌ a record of fields parsed and validated exacted like fields
+      ✅ support `children` property on any renderer
+        ✅ a record of fields parsed and validated exacted like fields
       ✅ parse and validate new type of launchers
-    ❌ extensions
       ❌ preprocessor plugins
         ❌ injected at specific times
         ❌ language generation as parameters
@@ -127,11 +150,14 @@ Todo (✅/❌)
         ❌ requires changes to the frontend
       ❌ add lazy fields
         ❌ requires changes to the frontend
+    ❌ disallow unsupported keywords (`visibIle` wasted me a good chunk of time)
+    ❌ the validator is now mature
     ✅ fix Ballerina as a namespace for proper nesting
     ✅ convert all instances of Map.tryFind ... withError ... to `Map.tryFindWithError`
     ✅ `Map.tryFindWithError streamName "streams" streamName |> state.OfSum` should just be `findStream`
     ✅ adjust all patterns like `|> Seq.tryFind (fst >> (=) "stream") |> Option.map snd` to `JsonValue.tryFindField`
     ❌ refactor `sprintf` instances in `typeCheck.fs`
+    ❌ add `sum.Map`, remove `Sum.Map` references (ugly and inconsistent wrt `state.Map`)
     ❌ add state.TryFindX for enum, form, stream, and so on like for `state.TryFindType`
       ❌ why can't we use state.TryFindType in the validators?
       ❌ Validate passes the context as a parameter instead of using GetContext - ugly

@@ -116,7 +116,7 @@ module Parser =
       | MapRenderer r -> ExprType.MapType(r.Key.Type, r.Value.Type)
       | ListRenderer r -> ExprType.ListType r.Element.Type
       | EnumRenderer (_,r) | StreamRenderer (_,r) -> r.Type
-      | FormRenderer (_,t) -> t
+      | FormRenderer (_,t,_) -> t
 
 
   type Expr with
@@ -233,35 +233,49 @@ module Parser =
 
 
   type Renderer with
+    static member ParseChildren (json:JsonValue) : State<RendererChildren,CodeGenConfig,ParsedFormsContext,Errors> =
+      state{
+        let! fieldsJson = json |> JsonValue.AsRecord |> state.OfSum
+        let! parsedFields = 
+          fieldsJson |> Seq.map (fun (name,body) -> 
+            state{
+              let! res = FieldConfig.Parse name body
+              return name,res
+            }
+          ) |> state.All
+        return { Fields=parsedFields |> Map.ofSeq }
+      }
     static member Parse (parentJsonFields:(string*JsonValue)[]) (json:JsonValue) : State<Renderer,CodeGenConfig,ParsedFormsContext,Errors> =
       state{
         let! config = state.GetContext()
         let! (formsState:ParsedFormsContext) = state.GetState()
+        let! childrenJson = parentJsonFields |> sum.TryFindField "children" |> sum.Catch (fun () -> JsonValue.Record([||])) |> state.OfSum
+        let! children = Renderer.ParseChildren childrenJson
         let! s = json |> JsonValue.AsString |> state.OfSum
         if config.Bool.SupportedRenderers |> Set.contains s then
-          return PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.BoolType }
+          return PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.BoolType; Children=children }
         elif config.Date.SupportedRenderers |> Set.contains s then
-          return PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.DateOnlyType }
+          return PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.DateOnlyType; Children=children }
         elif config.Guid.SupportedRenderers |> Set.contains s then
-          return PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.GuidType }
+          return PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.GuidType; Children=children }
         elif config.Int.SupportedRenderers |> Set.contains s then
-          return PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.IntType }
+          return PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.IntType; Children=children }
         elif config.String.SupportedRenderers |> Set.contains s then
-          return PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.StringType }
+          return PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.PrimitiveType PrimitiveType.StringType; Children=children }
         elif config.Option.SupportedRenderers.Enum |> Set.contains s || config.Set.SupportedRenderers.Enum |> Set.contains s then
           let containerTypeConstructor = if config.Option.SupportedRenderers.Enum |> Set.contains s then ExprType.OptionType else ExprType.SetType
           let! optionJson = parentJsonFields |> sum.TryFindField "options" |> state.OfSum
           let! enumName = optionJson |> JsonValue.AsString |> state.OfSum
           let! enum = formsState.TryFindEnum enumName |> state.OfSum
           let! enumType = formsState.TryFindType enum.TypeId.TypeName |> state.OfSum
-          return EnumRenderer (enum |> EnumApi.Id, PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=containerTypeConstructor(enumType.Type)  })
+          return EnumRenderer (enum |> EnumApi.Id, PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=containerTypeConstructor(enumType.Type); Children=children })
         elif config.Option.SupportedRenderers.Stream |> Set.contains s || config.Set.SupportedRenderers.Stream |> Set.contains s then
           let containerTypeConstructor = if config.Option.SupportedRenderers.Stream |> Set.contains s then ExprType.OptionType else ExprType.SetType
           let! streamNameJson = parentJsonFields |> sum.TryFindField "stream" |> state.OfSum
           let! streamName = streamNameJson |> JsonValue.AsString |> state.OfSum
           let! stream = formsState.TryFindStream streamName |> state.OfSum
           let! streamType = formsState.TryFindType stream.TypeId.TypeName |> state.OfSum
-          return StreamRenderer (stream |> StreamApi.Id, PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=containerTypeConstructor(streamType.Type)  })
+          return StreamRenderer (stream |> StreamApi.Id, PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=containerTypeConstructor(streamType.Type); Children=children })
         elif config.Map.SupportedRenderers |> Set.contains s then
           let! (keyRendererJson, valueRendererJson) = 
             state.All2
@@ -269,23 +283,23 @@ module Parser =
               (parentJsonFields  |> state.TryFindField "valueRenderer")
           let! keyRenderer = NestedRenderer.Parse keyRendererJson
           let! valueRenderer = NestedRenderer.Parse valueRendererJson
-          return MapRenderer {| Map=PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.MapType(keyRenderer.Renderer.Type, valueRenderer.Renderer.Type)  }; Key=keyRenderer; Value=valueRenderer |}
+          return MapRenderer {| Map=PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.MapType(keyRenderer.Renderer.Type, valueRenderer.Renderer.Type); Children={ Fields=Map.empty } }; Key=keyRenderer; Value=valueRenderer; Children=children |}
         elif config.List.SupportedRenderers |> Set.contains s then
           let! elementRendererJson = parentJsonFields |> sum.TryFindField "elementRenderer" |> state.OfSum
           let! elementRenderer = NestedRenderer.Parse elementRendererJson
-          return ListRenderer {| List=PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.ListType elementRenderer.Renderer.Type  }; Element=elementRenderer |}
+          return ListRenderer {| List=PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=ExprType.ListType elementRenderer.Renderer.Type; Children={ Fields=Map.empty } }; Element=elementRenderer; Children=children |}
         else
           return! state.Any(
             NonEmptyList.OfList(
             state{
               let! c = config.Custom |> Seq.tryFind (fun c -> c.Value.SupportedRenderers |> Set.contains s) |> Sum.fromOption (fun () -> $"Error: cannot find custom type {s}" |> Errors.Singleton) |> state.OfSum
               let! t = formsState.TryFindType c.Key |> state.OfSum
-              return PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=t.Type }
+              return PrimitiveRenderer { PrimitiveRendererName=s; PrimitiveRendererId=Guid.CreateVersion7(); Type=t.Type; Children=children }
             },
             [state{
               let! form = formsState.TryFindForm s |> state.OfSum
               let! formType = formsState.TryFindType form.TypeId.TypeName |> state.OfSum
-              return FormRenderer (form |> FormConfig.Id, formType.Type)
+              return FormRenderer (form |> FormConfig.Id, formType.Type, children)
             };
             state.Throw(Errors.Singleton $"Error: cannot resolve field renderer {s}" |> Errors.WithPriority ErrorPriority.High)]
           )
@@ -304,7 +318,7 @@ module Parser =
         return { Label=label; Tooltip=tooltip; Details=details; Renderer=renderer }
       } |> state.WithErrorContext $"...when parsing renderer {json.ToString().ReasonablyClamped}"
 
-  type FieldConfig with
+  and FieldConfig with
     static member Parse (fieldName:string) (json:JsonValue) : State<FieldConfig,CodeGenConfig,ParsedFormsContext,Errors> =
       state{
         let! fields = json |> JsonValue.AsRecord |> state.OfSum

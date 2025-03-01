@@ -30,6 +30,10 @@ module Sum =
   type SumBuilder() = 
     member _.MapError f p = 
       p |> Sum.mapRight f
+    member _.Catch h p = 
+      match p with
+      | Left _ -> p
+      | Right _ -> Left(h())
     member _.Throw(e) = 
       Sum.Right e
     member _.Return(result:'a) = 

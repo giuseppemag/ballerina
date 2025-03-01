@@ -88,14 +88,15 @@ module Model =
     static member Name (f:FieldConfig) = f.FieldName
   and Renderer = 
     | PrimitiveRenderer of PrimitiveRenderer
-    | MapRenderer of {| Map:Renderer; Key:NestedRenderer; Value:NestedRenderer |}
-    | ListRenderer of {| List:Renderer; Element:NestedRenderer |}
+    | MapRenderer of {| Map:Renderer; Key:NestedRenderer; Value:NestedRenderer; Children:RendererChildren |}
+    | ListRenderer of {| List:Renderer; Element:NestedRenderer; Children:RendererChildren |}
     | EnumRenderer of EnumApiId * Renderer
     | StreamRenderer of StreamApiId * Renderer
-    | FormRenderer of FormConfigId * ExprType
+    | FormRenderer of FormConfigId * ExprType * RendererChildren
   and NestedRenderer = { Label:Option<string>; Tooltip:Option<string>; Details:Option<string>; Renderer:Renderer }
   and PrimitiveRendererId = { PrimitiveRendererName:string; PrimitiveRendererId:Guid }
-  and PrimitiveRenderer = { PrimitiveRendererName:string; PrimitiveRendererId:Guid; Type:ExprType } with static member ToPrimitiveRendererId (r:PrimitiveRenderer) = { PrimitiveRendererName=r.PrimitiveRendererName; PrimitiveRendererId=r.PrimitiveRendererId }
+  and PrimitiveRenderer = { PrimitiveRendererName:string; PrimitiveRendererId:Guid; Type:ExprType; Children:RendererChildren } with static member ToPrimitiveRendererId (r:PrimitiveRenderer) = { PrimitiveRendererName=r.PrimitiveRendererName; PrimitiveRendererId=r.PrimitiveRendererId }
+  and RendererChildren = { Fields:Map<string, FieldConfig> }
 
   type FormPredicateValidationHistoryItem = { Form:FormConfigId; GlobalType:TypeId; RootType:TypeId }
   type ValidationState = { PredicateValidationHistory:Set<FormPredicateValidationHistoryItem> } with 

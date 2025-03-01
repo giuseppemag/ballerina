@@ -469,10 +469,6 @@
     "person": {
       "type": "Person",
       "fields": {
-        "plotInfo": {
-          "renderer": "plotInfo",
-          "visible": true
-        },
         "category": {
           "label": "category",
           "renderer": "defaultCategory"
@@ -593,7 +589,12 @@
         },
         "mainAddress": {
           "label": "main address",
-          "renderer": "address"
+          "renderer": "address",
+          "children":{
+            "plotInfo": {
+              "renderer": "plotInfo"
+            }
+          }
         },
         "addresses": {
           "label": "other addresses",
@@ -709,7 +710,6 @@
             "demographics": {
               "groups": {
                 "main": [
-                  "plotInfo",
                   "category",
                   "name",
                   "surname",

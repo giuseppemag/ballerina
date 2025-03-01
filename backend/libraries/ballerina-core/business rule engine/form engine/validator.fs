@@ -17,8 +17,8 @@ module Validator =
   open Ballerina.Fun
 
   type NestedRenderer with
-    static member Validate (ctx:ParsedFormsContext) (fr:NestedRenderer) : Sum<ExprType, Errors> = 
-      Renderer.Validate ctx fr.Renderer
+    static member Validate (ctx:ParsedFormsContext) (formType:ExprType) (fr:NestedRenderer) : Sum<ExprType, Errors> = 
+      Renderer.Validate ctx formType fr.Renderer
 
   and Renderer with
     static member GetTypesFreeVars (ctx:ParsedFormsContext) (fr:Renderer) : Sum<Set<TypeId>, Errors> = 
@@ -27,10 +27,12 @@ module Validator =
       match fr with
       | Renderer.EnumRenderer(e,f) -> 
         (ctx.TryFindEnum e.EnumName |> Sum.map (EnumApi.Type >> Set.singleton)) + !f
-      | Renderer.FormRenderer (f,_) ->
+      | Renderer.FormRenderer (f,_,children) ->
         sum{ 
           let! f = ctx.TryFindForm f.FormName
-          return! f |> FormConfig.GetTypesFreeVars ctx
+          let! (fvars:Set<TypeId>) = f |> FormConfig.GetTypesFreeVars ctx
+          let! (cvars:List<Set<TypeId>>) = children.Fields |> Seq.map (fun e -> e.Value.Renderer) |> Seq.map (Renderer.GetTypesFreeVars ctx) |> sum.All
+          return cvars |> List.fold (Set.union) fvars
         }
       | Renderer.ListRenderer l ->
         !l.Element.Renderer + !l.List
@@ -39,8 +41,8 @@ module Validator =
       | Renderer.PrimitiveRenderer p -> sum{ return p.Type |> ExprType.GetTypesFreeVars }
       | Renderer.StreamRenderer (s,f) ->
         (ctx.TryFindStream s.StreamName |> Sum.map (StreamApi.Type >> Set.singleton)) + !f
-    static member Validate (ctx:ParsedFormsContext) (fr:Renderer) : Sum<ExprType, Errors> = 
-      let (!) = Renderer.Validate ctx
+    static member Validate (ctx:ParsedFormsContext) (formType:ExprType) (fr:Renderer) : Sum<ExprType, Errors> = 
+      let (!) = Renderer.Validate ctx formType
       sum{
         match fr with
         | Renderer.EnumRenderer(enum, enumRenderer) -> 
@@ -48,22 +50,26 @@ module Validator =
           let! enumType = ctx.TryFindType enum.TypeId.TypeName
           let! enumRendererType = !enumRenderer
           return ExprType.Substitute (Map.empty |> Map.add { VarName="a1" } enumType.Type) enumRendererType
-        | Renderer.FormRenderer (f,_) ->
+        | Renderer.FormRenderer (f,_,children) ->
           let! f = ctx.TryFindForm f.FormName
-          let! formType = ctx.TryFindType f.TypeId.TypeName
-          return formType.Type
+          let! localFormType = ctx.TryFindType f.TypeId.TypeName
+          do! children.Fields |> Seq.map (fun e -> e.Value) |> Seq.map (FieldConfig.Validate ctx formType) |> sum.All |> Sum.map ignore
+          return localFormType.Type
         | Renderer.ListRenderer(l) -> 
           let! genericListRenderer = !l.List
           let! elementRendererType = !l.Element.Renderer
           let listRenderer = ExprType.Substitute (Map.empty |> Map.add { VarName="a1" } elementRendererType) genericListRenderer
+          do! l.Children.Fields |> Seq.map (fun e -> e.Value) |> Seq.map (FieldConfig.Validate ctx formType) |> sum.All |> Sum.map ignore
           return listRenderer
         | Renderer.MapRenderer(m) -> 
           let! genericMapRenderer = !m.Map
           let! keyRendererType = !m.Key.Renderer
           let! valueRendererType = !m.Value.Renderer
           let mapRenderer = ExprType.Substitute (Map.empty |> Map.add { VarName="a1" } keyRendererType |> Map.add { VarName="a2" } valueRendererType) genericMapRenderer
+          do! m.Children.Fields |> Seq.map (fun e -> e.Value) |> Seq.map (FieldConfig.Validate ctx formType) |> sum.All |> Sum.map ignore          
           return mapRenderer
         | Renderer.PrimitiveRenderer p -> 
+          do! p.Children.Fields |> Seq.map (fun e -> e.Value) |> Seq.map (FieldConfig.Validate ctx formType) |> sum.All |> Sum.map ignore        
           return p.Type
         | Renderer.StreamRenderer (stream, streamRenderer) ->
           let! stream = ctx.TryFindStream stream.StreamName
@@ -89,19 +95,23 @@ module Validator =
       let (!!) = NestedRenderer.ValidatePredicates ctx globalType rootType localType 
       state{
         match r with
-        | Renderer.PrimitiveRenderer p -> return ()
+        | Renderer.PrimitiveRenderer p -> 
+          do! p.Children.Fields |> Seq.map (fun e -> e.Value) |> Seq.map (FieldConfig.ValidatePredicates ctx globalType rootType localType) |> state.All |> state.Map ignore        
         | Renderer.EnumRenderer(_,e) -> return! !e
         | Renderer.ListRenderer e -> 
           do! !e.List
           do! !!e.Element
+          do! e.Children.Fields |> Seq.map (fun e -> e.Value) |> Seq.map (FieldConfig.ValidatePredicates ctx globalType rootType localType) |> state.All |> state.Map ignore
         | Renderer.MapRenderer kv -> 
           do! !kv.Map
           do! !!kv.Key
           do! !!kv.Value
+          do! kv.Children.Fields |> Seq.map (fun e -> e.Value) |> Seq.map (FieldConfig.ValidatePredicates ctx globalType rootType localType) |> state.All |> state.Map ignore
         | Renderer.StreamRenderer(_,e) -> return! !e
-        | Renderer.FormRenderer(f,e) -> 
+        | Renderer.FormRenderer(f,e,children) -> 
           let! f = ctx.TryFindForm f.FormName |> state.OfSum
           let! s = state.GetState()
+          do! children.Fields |> Seq.map (fun e -> e.Value) |> Seq.map (FieldConfig.ValidatePredicates ctx globalType rootType localType) |> state.All |> state.Map ignore
           do! FormConfig.ValidatePredicates ctx globalType rootType f
       }
 
@@ -112,7 +122,7 @@ module Validator =
         | RecordType fields ->
           match fields |> Map.tryFind fc.FieldName with
           | Some fieldType -> 
-            let! rendererType = Renderer.Validate ctx fc.Renderer |> sum.WithErrorContext $"...when validating renderer"
+            let! rendererType = Renderer.Validate ctx formType fc.Renderer |> sum.WithErrorContext $"...when validating renderer"
             let result = ExprType.Unify Map.empty (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq) rendererType fieldType |> Sum.map ignore
             return! result
           | None -> 
