@@ -46,8 +46,12 @@ module Model =
 
   type CrudMethod = Create | Get | Update | Default
   type FormLauncherId = { LauncherName:string; LauncherId:Guid }
-  and FormLauncher = { LauncherName:string; LauncherId:Guid; Form:FormConfigId; EntityApi:EntityApiId; ConfigEntityApi:EntityApiId; Mode:FormLauncherMode } with static member Name (l:FormLauncher) : string = l.LauncherName; static member Id (l:FormLauncher) : FormLauncherId = { LauncherName=l.LauncherName; LauncherId=l.LauncherId }
-  and FormLauncherMode = | Create | Edit
+  and FormLauncher = { LauncherName:string; LauncherId:Guid; Form:FormConfigId; Mode:FormLauncherMode } with static member Name (l:FormLauncher) : string = l.LauncherName; static member Id (l:FormLauncher) : FormLauncherId = { LauncherName=l.LauncherName; LauncherId=l.LauncherId }
+  and FormLauncherApis = { EntityApi:EntityApiId; ConfigEntityApi:EntityApiId; }
+  and FormLauncherMode = 
+    | Create of FormLauncherApis
+    | Edit of FormLauncherApis
+    | Passthrough of {| ConfigType:TypeId |}
   and EnumApiId = { EnumName:string; EnumId:Guid }
   and EnumApi = { EnumName:string; EnumId:Guid; TypeId:TypeId; UnderlyingEnum:TypeId } with static member Id (e:EnumApi) = { EnumName=e.EnumName; EnumId=e.EnumId }; static member Create (n,t,c) : EnumApi = { EnumName=n; TypeId=t; EnumId=Guid.CreateVersion7(); UnderlyingEnum=c }; static member Type (a:EnumApi) : TypeId = a.TypeId
   and StreamApiId = { StreamName:string; StreamId:Guid }

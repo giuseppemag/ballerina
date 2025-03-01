@@ -37,23 +37,49 @@ module Parser =
     member ctx.TryFindLauncher name =
       ctx.Launchers |> Map.tryFindWithError name "launcher" name
 
+  type StateBuilder with
+    member state.TryFindType name =  
+      state{
+        let! (s:ParsedFormsContext) = state.GetState()
+        return! s.TryFindType name |> state.OfSum
+      }
+
   type FormLauncher with
     static member Parse (launcherName:string) (json:JsonValue) : State<_, CodeGenConfig, ParsedFormsContext, Errors> =
       state{
         let! launcherFields = JsonValue.AsRecord json |> state.OfSum
-        let! kindJson,entityApiNameJson,formNameJson,configApiNameJson = 
-          state.All4
+        let! kindJson,formNameJson = 
+          state.All2
             (launcherFields |> state.TryFindField "kind")
-            (launcherFields |> state.TryFindField "api")
             (launcherFields |> state.TryFindField "form")
-            (launcherFields |> state.TryFindField "configApi")
-        let! (kind,entityApiName,formName,configApiName) = state.All4 (JsonValue.AsString kindJson |> state.OfSum) (JsonValue.AsString entityApiNameJson |> state.OfSum) (JsonValue.AsString formNameJson |> state.OfSum) (JsonValue.AsString configApiNameJson |> state.OfSum)
+            // (launcherFields |> state.TryFindField "api")
+            // (launcherFields |> state.TryFindField "configApi")
+        let! (kind,formName) = state.All2 (JsonValue.AsString kindJson |> state.OfSum) (JsonValue.AsString formNameJson |> state.OfSum)
+        let! (s:ParsedFormsContext) = state.GetState()
+        let! form = s.TryFindForm formName |> state.OfSum
         if kind = "create" || kind = "edit" then
-          let! (s:ParsedFormsContext) = state.GetState()
-          let! form = s.TryFindForm formName |> state.OfSum
+          let! entityApiJson,configApiJson = 
+            state.All2
+              (launcherFields |> state.TryFindField "api")
+              (launcherFields |> state.TryFindField "configApi")
+          let! entityApiName,configApiName = 
+            state.All2
+              (entityApiJson |> JsonValue.AsString |> state.OfSum)
+              (configApiJson |> JsonValue.AsString |> state.OfSum)          
           let! api = s.TryFindEntityApi entityApiName |> state.OfSum
           let! configApi = s.TryFindEntityApi configApiName |> state.OfSum
-          return (if kind = "create" then FormLauncherMode.Create else FormLauncherMode.Edit), form |> FormConfig.Id, api |> fst |> EntityApi.Id, configApi |> fst |> EntityApi.Id
+          let api,configApi = api |> fst |> EntityApi.Id, configApi |> fst |> EntityApi.Id
+          return (
+            if kind = "create" then 
+              FormLauncherMode.Create { EntityApi=api; ConfigEntityApi=configApi }
+            else 
+              FormLauncherMode.Edit { EntityApi=api; ConfigEntityApi=configApi }
+          ), form |> FormConfig.Id
+        elif kind = "passthrough" then
+          let! configTypeJson = launcherFields |> state.TryFindField "configType"
+          let! configTypeName = configTypeJson |> JsonValue.AsString |> state.OfSum
+          let! configType = state.TryFindType configTypeName
+          return FormLauncherMode.Passthrough {| ConfigType=configType.TypeId |}, form |> FormConfig.Id
         else
           return! $"Error: invalid launcher mode {kind}: it should be either 'create' or 'edit'." |> Errors.Singleton |> state.Throw
       } |> state.WithErrorContext $"...when parsing launcher {launcherName}"
@@ -708,8 +734,8 @@ module Parser =
     static member ParseLaunchers (launchersJson:(string*JsonValue)[]) : State<Unit,CodeGenConfig,ParsedFormsContext,Errors> = 
       state{
         for launcherName, launcherJson in launchersJson do
-          let! (mode, formId, apiId, configApiId) = FormLauncher.Parse launcherName launcherJson
-          do! state.SetState(ParsedFormsContext.Updaters.Launchers (Map.add launcherName { LauncherName=launcherName; LauncherId=Guid.CreateVersion7(); Mode=mode; Form=formId; EntityApi=apiId; ConfigEntityApi=configApiId }))
+          let! (mode, formId) = FormLauncher.Parse launcherName launcherJson
+          do! state.SetState(ParsedFormsContext.Updaters.Launchers (Map.add launcherName { LauncherName=launcherName; LauncherId=Guid.CreateVersion7(); Mode=mode; Form=formId }))
       } |> state.WithErrorContext $"...when parsing launchers"
 
     static member Parse generatedLanguageSpecificConfig (json:JsonValue) : State<Unit,CodeGenConfig,ParsedFormsContext,Errors> = 

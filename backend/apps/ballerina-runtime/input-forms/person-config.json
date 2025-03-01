@@ -779,6 +779,11 @@
       "form": "person",
       "api": "person",
       "configApi": "globalConfiguration"
+    },
+    "person-transparent": {
+      "kind": "passthrough",
+      "form": "person",
+      "configType": "GlobalConfiguration"
     }
   }
 }

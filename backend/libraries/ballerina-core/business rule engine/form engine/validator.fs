@@ -174,33 +174,39 @@ module Validator =
       let (+) = sum.Lift2 Set.union
       sum{
         let! form = ctx.TryFindForm fl.Form.FormName
-        let! entity = ctx.TryFindEntityApi fl.EntityApi.EntityName
         return! FormConfig.GetTypesFreeVars ctx form
       }
     static member Validate (ctx:ParsedFormsContext) (formLauncher:FormLauncher) : State<Unit, Unit, ValidationState, Errors> = 
       state{
         let! formConfig = ctx.TryFindForm formLauncher.Form.FormName |> state.OfSum
         let! formType = ctx.TryFindType formConfig.TypeId.TypeName |> state.OfSum
-        let! entityApi = ctx.TryFindEntityApi formLauncher.EntityApi.EntityName |> state.OfSum
-        let! entityApiType = ctx.TryFindType (entityApi |> fst).TypeId.TypeName |> state.OfSum
-        let! configEntityApi = ctx.TryFindEntityApi formLauncher.ConfigEntityApi.EntityName |> state.OfSum
-        if Set.ofList [CrudMethod.Get] |> Set.isSuperset (configEntityApi |> snd) then
-          let! configEntityApiType = ctx.TryFindType (configEntityApi |> fst).TypeId.TypeName |> state.OfSum
-          do! ExprType.Unify Map.empty (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq) formType.Type entityApiType.Type |> Sum.map ignore |> state.OfSum
-          do! FormConfig.ValidatePredicates ctx configEntityApiType entityApiType formConfig |> state.Map ignore
-          match formLauncher.Mode with
-          | FormLauncherMode.Create ->
-            if Set.ofList [CrudMethod.Create; CrudMethod.Default] |> Set.isSuperset (entityApi |> snd) then
-              return ()
-            else
-              return! sum.Throw(Errors.Singleton(sprintf "Error in launcher %A: entity APIs for 'create' launchers need at least methods CREATE and DEFAULT, found %A" formLauncher.LauncherName (entityApi |> snd))) |> state.OfSum
-          | FormLauncherMode.Edit ->
-            if Set.ofList [CrudMethod.Get; CrudMethod.Update] |> Set.isSuperset (entityApi |> snd) then
-              return ()
-            else
-              return! sum.Throw(Errors.Singleton(sprintf "Error in launcher %A: entity APIs for 'edit' launchers need at least methods GET and UPDATE, found %A" formLauncher.LauncherName (entityApi |> snd))) |> state.OfSum
-        else 
-          return! sum.Throw(Errors.Singleton(sprintf "Error in launcher %A: entity APIs for 'config' launchers need at least method GET, found %A" formLauncher.LauncherName (configEntityApi |> snd))) |> state.OfSum
+        match formLauncher.Mode with
+        | FormLauncherMode.Create({ EntityApi=entityApi; ConfigEntityApi=configEntityApi })
+        | FormLauncherMode.Edit({ EntityApi=entityApi; ConfigEntityApi=configEntityApi }) ->
+          let! entityApi = ctx.TryFindEntityApi entityApi.EntityName |> state.OfSum
+          let! entityApiType = ctx.TryFindType (entityApi |> fst).TypeId.TypeName |> state.OfSum
+          let! configEntityApi = ctx.TryFindEntityApi configEntityApi.EntityName |> state.OfSum
+          if Set.ofList [CrudMethod.Get] |> Set.isSuperset (configEntityApi |> snd) then
+            let! configEntityApiType = ctx.TryFindType (configEntityApi |> fst).TypeId.TypeName |> state.OfSum
+            do! ExprType.Unify Map.empty (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq) formType.Type entityApiType.Type |> Sum.map ignore |> state.OfSum
+            do! FormConfig.ValidatePredicates ctx configEntityApiType entityApiType formConfig |> state.Map ignore
+            match formLauncher.Mode with
+            | FormLauncherMode.Create _ ->
+              if Set.ofList [CrudMethod.Create; CrudMethod.Default] |> Set.isSuperset (entityApi |> snd) then
+                return ()
+              else
+                return! sum.Throw(Errors.Singleton(sprintf "Error in launcher %A: entity APIs for 'create' launchers need at least methods CREATE and DEFAULT, found %A" formLauncher.LauncherName (entityApi |> snd))) |> state.OfSum
+            | _ ->
+              if Set.ofList [CrudMethod.Get; CrudMethod.Update] |> Set.isSuperset (entityApi |> snd) then
+                return ()
+              else
+                return! sum.Throw(Errors.Singleton(sprintf "Error in launcher %A: entity APIs for 'edit' launchers need at least methods GET and UPDATE, found %A" formLauncher.LauncherName (entityApi |> snd))) |> state.OfSum
+          else 
+            return! sum.Throw(Errors.Singleton(sprintf "Error in launcher %A: entity APIs for 'config' launchers need at least method GET, found %A" formLauncher.LauncherName (configEntityApi |> snd))) |> state.OfSum
+        | FormLauncherMode.Passthrough m ->
+          let! configEntityType = ctx.TryFindType m.ConfigType.TypeName |> state.OfSum
+          let! entityType = ctx.TryFindType formConfig.TypeId.TypeName |> state.OfSum
+          do! FormConfig.ValidatePredicates ctx configEntityType entityType formConfig |> state.Map ignore
       } |> state.WithErrorContext $"...when validating launcher {formLauncher.LauncherName}"
 
   type FormApis with

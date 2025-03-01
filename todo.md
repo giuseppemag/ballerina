@@ -114,7 +114,7 @@ Todo (✅/❌)
         ❌ distinguish outer from inner renderers
       ❌ support `children` property on any renderer
         ❌ a record of fields parsed and validated exacted like fields
-    ❌ verify the generated code when a stream type has more than the basic fields
+      ✅ parse and validate new type of launchers
     ❌ extensions
       ❌ preprocessor plugins
         ❌ injected at specific times
@@ -132,6 +132,9 @@ Todo (✅/❌)
     ✅ `Map.tryFindWithError streamName "streams" streamName |> state.OfSum` should just be `findStream`
     ✅ adjust all patterns like `|> Seq.tryFind (fst >> (=) "stream") |> Option.map snd` to `JsonValue.tryFindField`
     ❌ refactor `sprintf` instances in `typeCheck.fs`
+    ❌ add state.TryFindX for enum, form, stream, and so on like for `state.TryFindType`
+      ❌ why can't we use state.TryFindType in the validators?
+      ❌ Validate passes the context as a parameter instead of using GetContext - ugly
     ❌ release ballerina to nuget
     ❌ check the consistency of the used data structures: `Type` vs `TypeId`
     ✅ accept empty `apis` blocks
@@ -139,6 +142,7 @@ Todo (✅/❌)
     ❌ add `extends` keyword for forms
     ❌ add lots of operators to lists, sets, maps, etc.
     ❌ create blazor/razor gui editor
+    ❌ move extensions to separate (private) repo
     ❌ allow mutually recursive types and forms
       ❌ be careful with out-of-order extensions
       ❌ make ExprType.resolveLookup recursive - this might be at odds with the parent task because it might cause infinite loops
