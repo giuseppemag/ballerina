@@ -6,8 +6,6 @@
     <LangVersion>latest</LangVersion>
     <IsPackable>false</IsPackable>
     <GenerateProgramFile>false</GenerateProgramFile>
-
-    <!--https://learn.microsoft.com/en-us/nuget/consume-packages/package-references-in-project-files#locking-dependencies-->
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <RestoreLockedMode>true</RestoreLockedMode>
   </PropertyGroup>
