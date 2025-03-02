@@ -42,6 +42,46 @@
         }
       ]
     },
+    "JobBase": {
+      "fields": {
+        "Name":"string",
+        "Salary":"number"
+      }
+    },
+    "BaristaJob": {
+      "extends": ["JobBase"],
+      "fields": {
+        "Drinks":{
+          "fun": "List",
+          "args": [
+            "string"
+          ]
+        }
+      }
+    },
+    "WaiterJob": {
+      "extends": ["JobBase"],
+      "fields": {
+        "Patience":"number"
+      }
+    },
+    "Job": {
+      "fun": "Union",
+      "args": [
+        {
+          "case": "Barista",
+          "fields": {
+            "Value":"BaristaJob"
+          }
+        },
+        {
+          "case": "Waiter",
+          "fields": {
+            "Value":"WaiterJob"
+          }
+        }
+      ]
+    },
     "GlobalConfiguration": {
       "extends": [],
       "fields": {
@@ -194,6 +234,7 @@
         "name": "string",
         "surname": "string",
         "birthday": "Date",
+        "job": "Job",
         "subscribeToNewsletter": "boolean",
         "favoriteColor": {
           "fun": "SingleSelection",
@@ -364,6 +405,71 @@
     }
   },
   "forms": {
+    "jobBase": {
+      "type": "JobBase",
+      "fields": {
+        "Name":{
+          "renderer": "defaultString"
+        },
+        "Salary":{
+          "renderer": "defaultNumber"
+        }
+      },
+      "tabs":{}
+    },
+    "baristaJob": {
+      "type": "BaristaJob",
+      "fields": {
+        "Name":{
+          "renderer": "defaultString"
+        },
+        "Salary":{
+          "renderer": "defaultNumber"
+        },
+        "Drinks":{
+          "renderer":"defaultList",
+          "elementRenderer": {
+            "renderer": "defaultString"
+          }
+        }
+      },
+      "tabs": {
+        "main": {
+          "columns": {
+            "main": {
+              "groups": {
+                "main": ["Name", "Salary", "Drinks"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "waiterJob": {
+      "type": "BaristaJob",
+      "fields": {
+        "Name":{
+          "renderer": "defaultString"
+        },
+        "Salary":{
+          "renderer": "defaultNumber"
+        },
+        "Patience":{
+          "renderer": "defaultNumber"
+        }
+      },
+      "tabs": {
+        "main": {
+          "columns": {
+            "main": {
+              "groups": {
+                "main": ["Name", "Salary", "Patience"]
+              }
+            }
+          }
+        }
+      }
+    },
     "landArea": {
       "type": "LandArea",
       "fields": {
@@ -482,6 +588,17 @@
           "label": "last name",
           "renderer": "defaultString"
         },
+        "job":{
+          "renderer":"defaultUnionRenderer",
+          "cases":{
+            "Barista":{
+              "renderer":"baristaJob"
+            },
+            "Waiter":{
+              "renderer":"waiterJob"
+            }
+          }
+        },    
         "birthday": {
           "renderer": "defaultDate",
           "tooltip": "happy birthday!"

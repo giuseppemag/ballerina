@@ -83,15 +83,15 @@ Todo (✅/❌)
         ❌ invalid nested renderers
           ❌ non-existing field
           ❌ wrong predicate `root` type inside the nested renderer
+        ❌ invalid discriminated union renderers
+          ❌ missing cases
+          ❌ non-existent case
+          ❌ case arg and chosen renderer type mismatch
         ✅ actual person-config as a reference of something that should work
           ❌ add a few correct instances of visiblity predicates using `match-case`
           ❌ add one that matches `Some`, `None` over a `SingleSelection`
         ❌ improve the code of the generated tests by removing repetition
       ✅ run tests before releasing
-    ❌ paths inside `Any` have a priority after a partial match is found - `Any` filters errors lower than the highest priority
-      ❌ add to each `Any`, streamline operators
-        ❌ parser
-        ❌ validator
     ✅ specialize the errors (stream not found, enum not found, etc.)
     ✅ improve the generated whitespace
     ✅ the Go type generator is now reasonably mature
@@ -108,30 +108,21 @@ Todo (✅/❌)
         ✅ constructors for the case values
         ✅ constructors for the whole thing - assume discriminator, accept specific value
       ❌ add renderer syntax for the selector of a different form depending on the case
-        ❌ implement renderer in FE
-        ❌ add renderer syntax for the union container
-```
-Job = Barista of Barista | Waiter of Waiter
-"forms":{
-  "barista":...
-  "waiter":...
-  "person":{
-    ...
-    "job":{
-      "renderer":"defaultUnionRenderer",
-      "cases":{
-        "Barista":{
-          "renderer":"barista"
-        },
-        "Waiter":{
-          "renderer":"waiter"
-        }
-      }
-    ...
-  }
-}
-```
-
+        ❌ new codegen config entry for unions
+          ❌ new type of renderer
+            ❌ when a renderer for unions is found, the `cases` property is parsed into this new type
+          ❌ validator checks that the cases are covered
+            ❌ forms for each case have the right type (`fields` of the corresponding case)
+            ❌ validate the forms and their predicates with the right `local` type
+        ❌ add `extends` sytnax to forms, refactor jobs forms to extend jobBase
+    ❌ create gui editor as an instance of a form itself
+      ❌ form specification
+      ❌ generated F# files with type definitions
+        ❌ because there will be an entity API with the database schema interpretation later
+      ❌ package in a separate (private) repo 
+        ❌ served by an F# backend
+        ❌ with access to folder IDE-style
+        ❌ with enums and streams (defined in F#) based on the available types ATM
     ❌ extensions
       ❌ distinguish Option (with renderer like List) from SingleSelection (only renderer for streams)
         ❌ allow Some and None matching on Option
@@ -150,8 +141,14 @@ Job = Barista of Barista | Waiter of Waiter
         ❌ requires changes to the frontend
       ❌ add lazy fields
         ❌ requires changes to the frontend
+    ❌ paths inside `Any` have a priority after a partial match is found - `Any` filters errors lower than the highest priority
+      ❌ add to each `Any`, streamline operators
+        ❌ parser
+        ❌ validator
     ❌ disallow unsupported keywords (`visibIle` wasted me a good chunk of time)
     ❌ the validator is now mature
+    ❌ move extensions to separate (private) repo
+    ❌ improve the syntax of types and expressions with fslex and fsyacc
     ✅ fix Ballerina as a namespace for proper nesting
     ✅ convert all instances of Map.tryFind ... withError ... to `Map.tryFindWithError`
     ✅ `Map.tryFindWithError streamName "streams" streamName |> state.OfSum` should just be `findStream`
@@ -167,8 +164,6 @@ Job = Barista of Barista | Waiter of Waiter
     ❌ discard unsupported field names
     ❌ add `extends` keyword for forms
     ❌ add lots of operators to lists, sets, maps, etc.
-    ❌ create blazor/razor gui editor
-    ❌ move extensions to separate (private) repo
     ❌ allow mutually recursive types and forms
       ❌ be careful with out-of-order extensions
       ❌ make ExprType.resolveLookup recursive - this might be at odds with the parent task because it might cause infinite loops
