@@ -34,8 +34,7 @@ module Model =
       Constructor: string
       RequiredImport: Option<string> }
 
-  and CodegenConfigUnionDef =
-    { SupportedRenderers: Set<string> }
+  and CodegenConfigUnionDef = { SupportedRenderers: Set<string> }
 
   and CodegenConfigListDef =
     { GeneratedTypeName: string
