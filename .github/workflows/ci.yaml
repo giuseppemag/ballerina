@@ -18,8 +18,24 @@ jobs:
       - run: dotnet build backend
       - run: dotnet fantomas --check backend
       - run: dotnet test backend
+  ballerina-go:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend/libraries/ballerina-core-go
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-go@v5.3.0
+        with:
+          go-version-file: backend/libraries/ballerina-core-go/go.mod
+      - run: go test ./...
+      - run: go build ./...
+      - name: Check go.mod is up to date
+        run: go mod tidy -diff
   publish-ballerina-runtime:
-    needs: backend
+    needs:
+      - backend
+      - ballerina-go
     runs-on: ubuntu-latest
     permissions:
       contents: write
