@@ -1,12 +1,11 @@
-import { BasicUpdater, Sum, unit } from "../../../../../../main"
+import { BasicUpdater, FormParsingResult, Sum, unit } from "../../../../../../main"
 import { Template } from "../../../../../template/state"
 
-import { IntegratedFormRunnerContext, IntegratedFormRunnerForeignMutationsExpected, IntegratedFormRunnerState } from "./state"
-import { IntegratedFormParsingResult } from "../parser/state"
-import { IntegratedFormRunnerLoader } from "./coroutines/runner"
+import { PassthroughFormRunnerContext, PassthroughFormRunnerForeignMutationsExpected, PassthroughFormRunnerState } from "./state"
+import { PassthroughFormRunnerLoader } from "./coroutines/runner"
 
-export const IntegratedFormRunnerErrorsTemplate = <E,>(parsedFormsConfig: IntegratedFormParsingResult) => ({
-  form: Template.Default<IntegratedFormRunnerContext<E> & IntegratedFormRunnerState<E>, IntegratedFormRunnerState<E>, IntegratedFormRunnerForeignMutationsExpected>(props =>
+export const IntegratedFormRunnerErrorsTemplate = <E,>(parsedFormsConfig: FormParsingResult) => ({
+  form: Template.Default<PassthroughFormRunnerContext<E> & PassthroughFormRunnerState<E>, PassthroughFormRunnerState<E>, PassthroughFormRunnerForeignMutationsExpected>(props =>
     <>
       {JSON.stringify(parsedFormsConfig)}
       <br />
@@ -20,8 +19,8 @@ export const IntegratedFormRunnerErrorsTemplate = <E,>(parsedFormsConfig: Integr
   parseGlobalConfiguration: (raw: any) => raw,
 })
 
-export const IntegratedFormRunnerTemplate = <E,>() => {
-  return Template.Default<IntegratedFormRunnerContext<E> & IntegratedFormRunnerState<E>, IntegratedFormRunnerState<E>, IntegratedFormRunnerForeignMutationsExpected>(props => {
+export const PassthroughFormRunnerTemplate = <E,>() => {
+  return Template.Default<PassthroughFormRunnerContext<E> & PassthroughFormRunnerState<E>, PassthroughFormRunnerState<E>, PassthroughFormRunnerForeignMutationsExpected>(props => {
     if (props.context.form.kind == "r") return <></>
     return <>
         <props.context.form.value.form
@@ -39,7 +38,7 @@ export const IntegratedFormRunnerTemplate = <E,>() => {
             },
           }}
           setState={(_: BasicUpdater<any>) => props.setState(
-            IntegratedFormRunnerState<E>().Updaters.form(Sum.Updaters.left(_))
+            PassthroughFormRunnerState<E>().Updaters.form(Sum.Updaters.left(_))
           )}
           view={unit}
           foreignMutations={{
@@ -48,6 +47,6 @@ export const IntegratedFormRunnerTemplate = <E,>() => {
 
       </>
       }).any([
-        IntegratedFormRunnerLoader()
+        PassthroughFormRunnerLoader()
     ])
 }

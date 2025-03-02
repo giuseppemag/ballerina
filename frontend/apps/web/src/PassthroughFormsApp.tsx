@@ -1,29 +1,30 @@
 import { useEffect, useState } from "react";
 import "./App.css";
-import { unit, PromiseRepo, IntegratedFormsParserState, IntegratedFormsParserTemplate, IntegratedFormRunnerState, IntegratedFormRunnerTemplate, IntegratedFormParsingResult, PredicateValue, Sum, Updater, replaceWith, Unit } from "ballerina-core";
+import { unit, PromiseRepo, PassthroughFormRunnerState, PassthroughFormRunnerTemplate, PredicateValue, Sum, Updater, replaceWith, FormParsingResult, FormsParserTemplate, FormsParserState } from "ballerina-core";
 import { List, Set, Map } from "immutable";
 import { PersonContainerFormView, PersonNestedContainerFormView } from "./domains/person/domains/from-config/views/wrappers";
 import { PersonFromConfigApis,} from "playground-core";
 import { PersonFieldViews } from "./domains/person-from-config/views/field-views";
 import { fieldTypeConverters } from "./domains/person/apis/field-converters";
 import { categoryForm, CategoryState, PersonFormInjectedTypes } from "./domains/person-from-config/injected-forms/category";
-import IntegratedFormConfig from "../../../../backend/apps/ballerina-runtime/input-forms/integrated/integrated-form.json"
-import { IntegratedFormContainerWrapper } from "./domains/integrated-form/views/wrappers";
-import { IntegratedFormApi } from "./domains/integrated-form/apis/mocks";
-import { Patcher } from "./domains/integrated-form/coroutines/patcher";
+import PersonConfig from "../../../../backend/apps/ballerina-runtime/input-forms/person-config.json"
+import { IntegratedFormContainerWrapper } from "./domains/passthrough-forms/views/wrappers";
+import { Patcher } from "./domains/passthrough-forms/coroutines/patcher";
 
-const ShowIntegratedFormParsingErrors = (parsedFormsConfig: IntegratedFormParsingResult) =>
+const ShowFormsParsingErrors = (parsedFormsConfig: FormParsingResult) =>
 	<div style={{ border: "red" }}>
-		{parsedFormsConfig.kind == "errors" && JSON.stringify(parsedFormsConfig.errors)}
+		{parsedFormsConfig.kind == "r" && JSON.stringify(parsedFormsConfig.value)}
 	</div>
 
 
+
 const InstantiedPatcher = Patcher<PersonFormInjectedTypes>()
-const InstantiedIntegratedFormParserTemplate = IntegratedFormsParserTemplate<PersonFormInjectedTypes>()
-const InstantiedIntegratedFormRunnerTemplate = IntegratedFormRunnerTemplate<PersonFormInjectedTypes>()
-export const IntegratedFormsApp = (props: {}) => {
-	const [configFormsParser, setConfigFormsParser] = useState(IntegratedFormsParserState.Default())
-	const [integratedFormState, setIntegratedFormState] = useState(IntegratedFormRunnerState<PersonFormInjectedTypes>().Default())
+const InstantiedPersonFormsParserTemplate = FormsParserTemplate<PersonFormInjectedTypes>()
+
+const InstantiedIntegratedFormRunnerTemplate = PassthroughFormRunnerTemplate<PersonFormInjectedTypes>()
+export const PassthroughFormsApp = (props: {}) => {
+	const [configFormsParser, setConfigFormsParser] = useState(FormsParserState.Default())
+	const [integratedFormState, setIntegratedFormState] = useState(PassthroughFormRunnerState<PersonFormInjectedTypes>().Default())
 	const [initialRawEntity, setInitialRawEntity] = useState<Sum<any, "not initialized">>(Sum.Default.right("not initialized"))
     const [entity, setEntity] = useState<Sum<PersonFormInjectedTypes, "not initialized">>(Sum.Default.right("not initialized"))
 	const [globalConfiguration, setGlobalConfiguration] = useState<Sum<PredicateValue, "not initialized">>(Sum.Default.right("not initialized"))
@@ -32,10 +33,10 @@ export const IntegratedFormsApp = (props: {}) => {
 	const [entityPath, setEntityPath] = useState<List<string>>(List())
 
 	useEffect(() => {
-		IntegratedFormApi.getRawData().then(
+		PersonFromConfigApis.entityApis.get("person")("").then(
 			(raw) => {
-				if(configFormsParser.formsConfig.sync.kind == "loaded" && configFormsParser.formsConfig.sync.value.kind == "value"){
-					const parsed: any = configFormsParser.formsConfig.sync.value.value.get("integrated-form")!().fromApiParser(raw)
+				if(configFormsParser.formsConfig.sync.kind == "loaded" && configFormsParser.formsConfig.sync.value.kind == "l"){
+					const parsed: any = configFormsParser.formsConfig.sync.value.value.passthrough.get("person-transparent")!().fromApiParser(raw)
 					setEntity(Sum.Default.left(parsed))
 					if(initialRawEntity.kind == "r") {
 					setInitialRawEntity(Sum.Default.left(raw))
@@ -43,7 +44,7 @@ export const IntegratedFormsApp = (props: {}) => {
 				}
 			}
 		)
-		IntegratedFormApi.getGlobalConfiguration().then(
+		PersonFromConfigApis.entityApis.get("globalConfiguration")("").then(
 			(raw) => {
 				if(integratedFormState.form.kind == "r") {
 					return
@@ -73,7 +74,7 @@ export const IntegratedFormsApp = (props: {}) => {
 		const newEntity = updater(entity.value)
         setEntity(replaceWith(Sum.Default.left(newEntity)))
 		setEntityPath(path)
-		setIntegratedFormState(IntegratedFormRunnerState<PersonFormInjectedTypes>().Updaters.shouldUpdate(replaceWith(true)))
+		setIntegratedFormState(PassthroughFormRunnerState<PersonFormInjectedTypes>().Updaters.shouldUpdate(replaceWith(true)))
     }
 
 	return (
@@ -85,7 +86,7 @@ export const IntegratedFormsApp = (props: {}) => {
 						<tr>
 							<td>
 								{renderParserState && JSON.stringify(configFormsParser)}
-								<InstantiedIntegratedFormParserTemplate
+								<InstantiedPersonFormsParserTemplate
 									context={{
 										...configFormsParser,
 										containerFormView: PersonContainerFormView,
@@ -94,7 +95,8 @@ export const IntegratedFormsApp = (props: {}) => {
 										fieldViews: PersonFieldViews,
 										infiniteStreamSources: PersonFromConfigApis.streamApis,
 										enumOptionsSources: PersonFromConfigApis.enumApis,
-										getFormsConfig: () => PromiseRepo.Default.mock(() => IntegratedFormConfig),
+                                        entityApis: PersonFromConfigApis.entityApis,
+										getFormsConfig: () => PromiseRepo.Default.mock(() => PersonConfig),
 										injectedPrimitives: Map([["injectedCategory", {fieldView: categoryForm, defaultValue: {category: "adult", kind: "category"}, defaultState: CategoryState.Default() }]]),
 									}}
 									setState={setConfigFormsParser}
@@ -112,7 +114,7 @@ export const IntegratedFormsApp = (props: {}) => {
 										formRef: {
 											formName: "integrated-form",
 										},
-										showFormParsingErrors: ShowIntegratedFormParsingErrors,
+										showFormParsingErrors: ShowFormsParsingErrors,
 										extraContext: {
 											flags: Set(["BC", "X"]),
 										},
@@ -133,9 +135,9 @@ export const IntegratedFormsApp = (props: {}) => {
 														initialRawEntity,
 														globalConfiguration,
 														formRef: {
-															formName: "integrated-form",
+															formName: "person-transparent",
 														},
-														showFormParsingErrors: ShowIntegratedFormParsingErrors,
+														showFormParsingErrors: ShowFormsParsingErrors,
 														extraContext: {
 															flags: Set(["BC", "X"]),
 														},

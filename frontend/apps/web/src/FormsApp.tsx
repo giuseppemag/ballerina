@@ -9,7 +9,7 @@ import { PersonFieldViews } from "./domains/person-from-config/views/field-views
 // import { PersonForm } from "./domains/person/template";
 import { fieldTypeConverters } from "./domains/person/apis/field-converters";
 import { categoryForm, CategoryState, PersonFormInjectedTypes } from "./domains/person-from-config/injected-forms/category";
-import PersonConfig from "../../../../backend/apps/ballerina-runtime/input-forms/person/person-config.json"
+import PersonConfig from "../../../../backend/apps/ballerina-runtime/input-forms/person-config.json"
 
 const ShowFormsParsingErrors = (parsedFormsConfig: FormParsingResult) =>
 	<div style={{ border: "red" }}>
@@ -96,7 +96,6 @@ export const FormsApp = (props: {}) => {
 										fieldViews: PersonFieldViews,
 										infiniteStreamSources: PersonFromConfigApis.streamApis,
 										enumOptionsSources: PersonFromConfigApis.enumApis,
-										globalConfigurationSources: PersonFromConfigApis.globalApis,
 										entityApis: PersonFromConfigApis.entityApis,
 										getFormsConfig: () => PromiseRepo.Default.mock(() => PersonConfig),
 										injectedPrimitives: Map([["injectedCategory", {fieldView: categoryForm, defaultValue: {category: "adult", kind: "category"}, defaultState: CategoryState.Default() }]]),

@@ -118,9 +118,6 @@ export const ParsedType = {
               .Then(parsedField => ValueOrErrors.Default.return<ParsedType<T>, string>(ParsedType.Default.form(fieldName, parsedField)))
       }
       if(RawFieldType.isUnionCase(rawFieldType)){
-        if(Object.keys(rawFieldType.fields).length > 0) {
-          return ValueOrErrors.Default.throwOne(`Error: arg ${JSON.stringify(rawFieldType)} has unsupported fields, not an enum case`)
-        }
         return ParsedType.Operations.ParseRawFieldType(rawFieldType.case, rawFieldType.fields, types, injectedPrimitives).Then(parsedFields =>
           ValueOrErrors.Default.return(ParsedType.Default.unionCase(rawFieldType.case, unit))
         )
@@ -130,9 +127,6 @@ export const ParsedType = {
          rawFieldType.args.map(unionCase => {
           if(!RawFieldType.isUnionCase(unionCase)) {
             return ValueOrErrors.Default.throwOne(`Error: arg ${JSON.stringify(unionCase)} is not a valid union case`)
-          }
-          if(Object.keys(unionCase.fields).length > 0) {
-            return ValueOrErrors.Default.throwOne(`Error: arg ${JSON.stringify(unionCase)} has unsupported fields, not an enum case`)
           }
           return ValueOrErrors.Default.return(ParsedType.Default.unionCase(unionCase.case, unit))
           }))

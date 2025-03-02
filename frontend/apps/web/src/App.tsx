@@ -6,12 +6,12 @@ import { UncleLayout } from "./domains/uncle/views/uncleLayout";
 import { FormsApp } from "./FormsApp";
 import { parse } from "ballerina-core";
 import { DataDrivenFieldsApp } from "./DataDrivenFieldsApp";
-import { IntegratedFormsApp } from "./IntegratedFormsApp";
+import { PassthroughFormsApp } from "./PassthroughFormsApp";
 
-function App(props: { app:"regular"|"forms"|"data-driven-fields"|"integrated-forms" }) {
+function App(props: { app:"regular"|"forms"|"data-driven-fields"|"passthrough-forms" }) {
 	if (props.app == "forms") return FormsApp({})
 	if (props.app == "data-driven-fields") return DataDrivenFieldsApp({})
-	if (props.app == "integrated-forms") return IntegratedFormsApp({})
+	if (props.app == "passthrough-forms") return PassthroughFormsApp({})
 	
 	const [uncle, setUncle] = useState(Uncle.Default())
 	const [parent, setParent] = useState(Parent.Default())
