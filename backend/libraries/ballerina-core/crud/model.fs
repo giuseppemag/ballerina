@@ -1,79 +1,79 @@
 namespace Ballerina
 
 module CRUD =
-    open Ballerina.Fun
-    open Microsoft.EntityFrameworkCore
-    open System.Linq
+  open Ballerina.Fun
+  open Microsoft.EntityFrameworkCore
+  open System.Linq
 
-    open System
-    open Ballerina.Queries
+  open System
+  open Ballerina.Queries
 
-    type Crud<'a> =
-        abstract member setId: Guid -> Updater<'a>
-        abstract member getId: Guid -> Quotations.Expr<'a -> bool>
-        abstract member create: 'a -> Guid
-        abstract member delete: Guid -> Unit
-        abstract member get: Guid -> Option<'a>
-        abstract member update: Guid -> Updater<'a> -> Unit
+  type Crud<'a> =
+    abstract member setId: Guid -> Updater<'a>
+    abstract member getId: Guid -> Quotations.Expr<'a -> bool>
+    abstract member create: 'a -> Guid
+    abstract member delete: Guid -> Unit
+    abstract member get: Guid -> Option<'a>
+    abstract member update: Guid -> Updater<'a> -> Unit
 
-    type CrudSeq<'a> =
-        inherit Crud<'a>
+  type CrudSeq<'a> =
+    inherit Crud<'a>
 
-        abstract member getN:
-            Quotations.Expr<'a -> bool> -> Quotations.Expr<'a -> 'key> -> Ballerina.Range -> Linq.IQueryable<'a>
+    abstract member getN:
+      Quotations.Expr<'a -> bool> -> Quotations.Expr<'a -> 'key> -> Ballerina.Range -> Linq.IQueryable<'a>
 
-    type Crud<'a> with
-        static member FromDbSet
-            (dbSet: DbSet<'e>)
-            (entity:
-                {| setId: Guid -> Updater<'e>
-                   getId: Guid -> Quotations.Expr<'e -> bool> |})
-            (db: DbContext)
-            : Crud<'e> =
-            { new Crud<'e> with
-                member this.setId id = entity.setId id
-                member this.getId e = entity.getId e
+  type Crud<'a> with
+    static member FromDbSet
+      (dbSet: DbSet<'e>)
+      (entity:
+        {| setId: Guid -> Updater<'e>
+           getId: Guid -> Quotations.Expr<'e -> bool> |})
+      (db: DbContext)
+      : Crud<'e> =
+      { new Crud<'e> with
+          member this.setId id = entity.setId id
+          member this.getId e = entity.getId e
 
-                member this.create e =
-                    let id = Guid.CreateVersion7()
-                    do dbSet.Add(entity.setId id e) |> ignore
-                    do db.SaveChanges() |> ignore
-                    id
+          member this.create e =
+            let id = Guid.CreateVersion7()
+            do dbSet.Add(entity.setId id e) |> ignore
+            do db.SaveChanges() |> ignore
+            id
 
-                member this.delete id =
-                    dbSet.Where(entity.getId id |> ToLinq).ExecuteDelete() |> ignore
+          member this.delete id =
+            dbSet.Where(entity.getId id |> ToLinq).ExecuteDelete() |> ignore
 
-                member this.update id u =
-                    db.ChangeTracker.Clear()
-                    let es = dbSet.AsNoTracking().Where(entity.getId id |> ToLinq).ToList()
-                    let es = es.Select(u)
-                    dbSet.UpdateRange(es)
-                    do db.SaveChanges() |> ignore
+          member this.update id u =
+            db.ChangeTracker.Clear()
+            let es = dbSet.AsNoTracking().Where(entity.getId id |> ToLinq).ToList()
+            let es = es.Select(u)
+            dbSet.UpdateRange(es)
+            do db.SaveChanges() |> ignore
 
-                member this.get id =
-                    let es = dbSet.Where(entity.getId id |> ToLinq).ToList()
-                    es |> Seq.tryHead }
+          member this.get id =
+            let es = dbSet.Where(entity.getId id |> ToLinq).ToList()
+            es |> Seq.tryHead }
 
-    type CrudSeq<'a> with
-        static member FromDbSetToSeq
-            (dbSet: DbSet<'e>)
-            (entity:
-                {| setId: Guid -> Updater<'e>
-                   getId: Guid -> Quotations.Expr<'e -> bool> |})
-            (db: DbContext)
-            : CrudSeq<'e> =
-            let crud = Crud<'a>.FromDbSet dbSet entity db
+  type CrudSeq<'a> with
+    static member FromDbSetToSeq
+      (dbSet: DbSet<'e>)
+      (entity:
+        {| setId: Guid -> Updater<'e>
+           getId: Guid -> Quotations.Expr<'e -> bool> |})
+      (db: DbContext)
+      : CrudSeq<'e> =
+      let crud = Crud<'a>.FromDbSet dbSet entity db
 
-            { new CrudSeq<'e> with
-                member this.setId id = crud.setId id
-                member this.getId e = crud.getId e
-                member this.create e = crud.create e
-                member this.delete id = crud.delete id
-                member this.update id u = crud.update id u
-                member this.get id = crud.get id
+      { new CrudSeq<'e> with
+          member this.setId id = crud.setId id
+          member this.getId e = crud.getId e
+          member this.create e = crud.create e
+          member this.delete id = crud.delete id
+          member this.update id u = crud.update id u
+          member this.get id = crud.get id
 
-                member this.getN predicate ordering range =
-                    dbSet.Where(ToLinq predicate).OrderBy(ToLinq ordering).Skip(range.skip).Take(range.take) }
+          member this.getN predicate ordering range =
+            dbSet.Where(ToLinq predicate).OrderBy(ToLinq ordering).Skip(range.skip).Take(range.take) }
 
 // type Crud<'a> =
 //   abstract member setId:Guid -> Updater<'a>

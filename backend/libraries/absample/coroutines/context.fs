@@ -4,5 +4,5 @@ open Ballerina.CRUD
 open absample.models
 
 type ABContext =
-    { ABs: Crud<AB>
-      ABEvents: Crud<ABEvent> }
+  { ABs: Crud<AB>
+    ABEvents: Crud<ABEvent> }
