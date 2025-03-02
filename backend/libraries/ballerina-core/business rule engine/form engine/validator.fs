@@ -41,46 +41,49 @@ module Validator =
 
           return cvars |> List.fold (Set.union) fvars
         }
-      | Renderer.ListRenderer l -> 
-        sum{
+      | Renderer.ListRenderer l ->
+        sum {
           let! (cvars: List<Set<TypeId>>) =
             l.Children.Fields
             |> Seq.map (fun e -> e.Value.Renderer)
             |> Seq.map (Renderer.GetTypesFreeVars ctx)
             |> sum.All
+
           let! zero = !l.Element.Renderer + !l.List
           return cvars |> List.fold (Set.union) zero
         }
-      | Renderer.MapRenderer m -> 
-        sum { 
+      | Renderer.MapRenderer m ->
+        sum {
           let! (cvars: List<Set<TypeId>>) =
             m.Children.Fields
             |> Seq.map (fun e -> e.Value.Renderer)
             |> Seq.map (Renderer.GetTypesFreeVars ctx)
             |> sum.All
+
           let! zero = (!m.Map + !m.Key.Renderer + !m.Value.Renderer)
           return cvars |> List.fold (Set.union) zero
         }
-      | Renderer.PrimitiveRenderer p -> 
-        sum { 
+      | Renderer.PrimitiveRenderer p ->
+        sum {
           let! (cvars: List<Set<TypeId>>) =
             p.Children.Fields
             |> Seq.map (fun e -> e.Value.Renderer)
             |> Seq.map (Renderer.GetTypesFreeVars ctx)
             |> sum.All
 
-          return cvars |> List.fold (Set.union) (p.Type |> ExprType.GetTypesFreeVars )
+          return cvars |> List.fold (Set.union) (p.Type |> ExprType.GetTypesFreeVars)
         }
       | Renderer.StreamRenderer(s, f) ->
         (ctx.TryFindStream s.StreamName |> Sum.map (StreamApi.Type >> Set.singleton))
         + !f
       | Renderer.UnionRenderer cs ->
-        sum { 
+        sum {
           let! (cvars: List<Set<TypeId>>) =
             cs.Children.Fields
             |> Seq.map (fun e -> e.Value.Renderer)
             |> Seq.map (Renderer.GetTypesFreeVars ctx)
             |> sum.All
+
           let! (csvars: List<Set<TypeId>>) =
             cs.Cases
             |> Seq.map (fun e -> e.Value.Renderer)
@@ -170,12 +173,17 @@ module Validator =
             |> sum.All
             |> Sum.map ignore
 
-          let! caseTypes = 
-            r.Cases |> Seq.map (fun c -> 
-              sum{
+          let! caseTypes =
+            r.Cases
+            |> Seq.map (fun c ->
+              sum {
                 let! caseType = !c.Value.Renderer
-                return { CaseName=c.Key.CaseName; Fields=caseType }
-              }) |> sum.All
+
+                return
+                  { CaseName = c.Key.CaseName
+                    Fields = caseType }
+              })
+            |> sum.All
 
           let rType = ExprType.UnionType(caseTypes |> List.ofSeq)
           return rType
