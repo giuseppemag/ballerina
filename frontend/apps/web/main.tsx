@@ -5,6 +5,6 @@ import './src/index.css'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <App app="passthrough-forms" />
+    <App app="forms" />
   </React.StrictMode>
 )

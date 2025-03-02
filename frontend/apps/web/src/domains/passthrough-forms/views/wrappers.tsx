@@ -1,10 +1,10 @@
-import { IntegratedFormContext, IntegratedFormForeignMutationsExpected, IntegratedFormView, IntegratedFormWritableState, Template } from "ballerina-core"
+import { PassthroughFormContext, PassthroughFormForeignMutationsExpected, PassthroughFormView, PassthroughFormWritableState, Template } from "ballerina-core"
 
 
-export const IntegratedFormContainerWrapper: IntegratedFormView<any, any> = Template.Default<
-  IntegratedFormContext<any, any> & IntegratedFormWritableState<any, any>,
-  IntegratedFormWritableState<any, any>,
-  IntegratedFormForeignMutationsExpected<any, any>,
+export const PassthroughFormContainerWrapper: PassthroughFormView<any, any> = Template.Default<
+  PassthroughFormContext<any, any> & PassthroughFormWritableState<any, any>,
+  PassthroughFormWritableState<any, any>,
+  PassthroughFormForeignMutationsExpected<any, any>,
   {
     actualForm: JSX.Element | undefined
   }>(props =>

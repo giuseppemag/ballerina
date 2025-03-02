@@ -73,7 +73,32 @@ export const FormRunnerLoader = () => {
                   })
                 )
               )
+          } else if (formRef.kind == "passthrough") {
+            const form = current.formsConfig.sync.value.value.passthrough.get(formRef.formName)
+            if (form == undefined)
+                return FormRunnerState.Updaters.form(
+                  replaceWith(
+                      Sum.Default.left(
+                        FormRunnerErrorsTemplate(Sum.Default.right(List([`Cannot find form '${formRef.formName}'`])))                      )   
+                  )
+                )
+                const instantiatedForm = form()
+            return FormRunnerState.Updaters.form(
+              replaceWith(
+                  Sum.Default.left({
+                    form: instantiatedForm.form,
+                    formFieldStates: instantiatedForm.initialState.formFieldStates,
+                    commonFormState: instantiatedForm.initialState.commonFormState,
+                    customFormState: instantiatedForm.initialState.customFormState,
+                    entity: undefined,
+                    rawEntity: undefined,
+                    rawGlobalConfiguration: undefined,
+                    globalConfiguration: undefined
+                  })
+              )
+            )
           }
+
           return id
         })
     ),
