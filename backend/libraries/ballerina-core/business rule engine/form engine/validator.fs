@@ -41,12 +41,55 @@ module Validator =
 
           return cvars |> List.fold (Set.union) fvars
         }
-      | Renderer.ListRenderer l -> !l.Element.Renderer + !l.List
-      | Renderer.MapRenderer m -> !m.Map + !m.Key.Renderer + !m.Value.Renderer
-      | Renderer.PrimitiveRenderer p -> sum { return p.Type |> ExprType.GetTypesFreeVars }
+      | Renderer.ListRenderer l -> 
+        sum{
+          let! (cvars: List<Set<TypeId>>) =
+            l.Children.Fields
+            |> Seq.map (fun e -> e.Value.Renderer)
+            |> Seq.map (Renderer.GetTypesFreeVars ctx)
+            |> sum.All
+          let! zero = !l.Element.Renderer + !l.List
+          return cvars |> List.fold (Set.union) zero
+        }
+      | Renderer.MapRenderer m -> 
+        sum { 
+          let! (cvars: List<Set<TypeId>>) =
+            m.Children.Fields
+            |> Seq.map (fun e -> e.Value.Renderer)
+            |> Seq.map (Renderer.GetTypesFreeVars ctx)
+            |> sum.All
+          let! zero = (!m.Map + !m.Key.Renderer + !m.Value.Renderer)
+          return cvars |> List.fold (Set.union) zero
+        }
+      | Renderer.PrimitiveRenderer p -> 
+        sum { 
+          let! (cvars: List<Set<TypeId>>) =
+            p.Children.Fields
+            |> Seq.map (fun e -> e.Value.Renderer)
+            |> Seq.map (Renderer.GetTypesFreeVars ctx)
+            |> sum.All
+
+          return cvars |> List.fold (Set.union) (p.Type |> ExprType.GetTypesFreeVars )
+        }
       | Renderer.StreamRenderer(s, f) ->
         (ctx.TryFindStream s.StreamName |> Sum.map (StreamApi.Type >> Set.singleton))
         + !f
+      | Renderer.UnionRenderer cs ->
+        sum { 
+          let! (cvars: List<Set<TypeId>>) =
+            cs.Children.Fields
+            |> Seq.map (fun e -> e.Value.Renderer)
+            |> Seq.map (Renderer.GetTypesFreeVars ctx)
+            |> sum.All
+          let! (csvars: List<Set<TypeId>>) =
+            cs.Cases
+            |> Seq.map (fun e -> e.Value.Renderer)
+            |> Seq.map (Renderer.GetTypesFreeVars ctx)
+            |> sum.All
+
+          return (cvars @ csvars) |> List.fold (Set.union) Set.empty
+        }
+
 
     static member Validate (ctx: ParsedFormsContext) (formType: ExprType) (fr: Renderer) : Sum<ExprType, Errors> =
       let (!) = Renderer.Validate ctx formType
@@ -119,6 +162,23 @@ module Validator =
           let streamType = ExprType.LookupType stream.TypeId
           let! streamRendererType = !streamRenderer
           return ExprType.Substitute (Map.empty |> Map.add { VarName = "a1" } streamType) streamRendererType
+        | Renderer.UnionRenderer r ->
+          do!
+            r.Children.Fields
+            |> Seq.map (fun e -> e.Value)
+            |> Seq.map (FieldConfig.Validate ctx formType)
+            |> sum.All
+            |> Sum.map ignore
+
+          let! caseTypes = 
+            r.Cases |> Seq.map (fun c -> 
+              sum{
+                let! caseType = !c.Value.Renderer
+                return { CaseName=c.Key.CaseName; Fields=caseType }
+              }) |> sum.All
+
+          let rType = ExprType.UnionType(caseTypes |> List.ofSeq)
+          return rType
       }
 
   and NestedRenderer with
@@ -197,6 +257,22 @@ module Validator =
             |> state.Map ignore
 
           do! FormConfig.ValidatePredicates ctx globalType rootType f
+        | Renderer.UnionRenderer cs ->
+          do! !cs.Union
+
+          do!
+            cs.Children.Fields
+            |> Seq.map (fun e -> e.Value)
+            |> Seq.map (FieldConfig.ValidatePredicates ctx globalType rootType localType)
+            |> state.All
+            |> state.Map ignore
+
+          do!
+            cs.Cases
+            |> Seq.map (fun e -> e.Value)
+            |> Seq.map (NestedRenderer.ValidatePredicates ctx globalType rootType localType)
+            |> state.All
+            |> state.Map ignore
       }
 
   and FieldConfig with

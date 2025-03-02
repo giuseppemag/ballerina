@@ -112,9 +112,12 @@ Todo (✅/❌)
           ❌ new type of renderer
             ❌ when a renderer for unions is found, the `cases` property is parsed into this new type
           ❌ validator checks that the cases are covered
-            ❌ forms for each case have the right type (`fields` of the corresponding case)
-            ❌ validate the forms and their predicates with the right `local` type
+            ❌ validate that forms for each case have the right type (`fields` of the corresponding case)
+            ❌ validate predicates with the right `local` type
+              ❌ add predicates to the `Name` in both job forms
         ❌ add `extends` sytnax to forms, refactor jobs forms to extend jobBase
+    ❌ make sure we parse the `children` of each renderer type that supports them
+      ❌ reduce repetition around the processing of `Children` in `validate` and `get...free...vars`
     ❌ create gui editor as an instance of a form itself
       ❌ form specification
       ❌ generated F# files with type definitions

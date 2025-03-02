@@ -214,6 +214,10 @@ module Model =
     | EnumRenderer of EnumApiId * Renderer
     | StreamRenderer of StreamApiId * Renderer
     | FormRenderer of FormConfigId * ExprType * RendererChildren
+    | UnionRenderer of
+      {| Union: Renderer
+         Cases: Map<CaseName, NestedRenderer>
+         Children: RendererChildren |}
 
   and NestedRenderer =
     { Label: Option<string>

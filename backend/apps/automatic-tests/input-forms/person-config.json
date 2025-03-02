@@ -446,7 +446,7 @@
       }
     },
     "waiterJob": {
-      "type": "BaristaJob",
+      "type": "WaiterJob",
       "fields": {
         "Name":{
           "renderer": "defaultString"
@@ -588,17 +588,6 @@
           "label": "last name",
           "renderer": "defaultString"
         },
-        "job":{
-          "renderer":"defaultUnionRenderer",
-          "cases":{
-            "Barista":{
-              "renderer":"baristaJob"
-            },
-            "Waiter":{
-              "renderer":"waiterJob"
-            }
-          }
-        },    
         "birthday": {
           "renderer": "defaultDate",
           "tooltip": "happy birthday!"

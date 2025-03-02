@@ -139,7 +139,7 @@ module Parser =
       | EnumRenderer(_, r)
       | StreamRenderer(_, r) -> r.Type
       | FormRenderer(_, t, _) -> t
-
+      | UnionRenderer r -> ExprType.UnionType(r.Cases |> Seq.map (fun c -> { CaseName=c.Key.CaseName; Fields=c.Value.Type }) |> List.ofSeq)
 
   type Expr with
     static member ParseMatchCase
