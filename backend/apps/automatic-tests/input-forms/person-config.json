@@ -70,15 +70,11 @@
       "args": [
         {
           "case": "Barista",
-          "fields": {
-            "Value":"BaristaJob"
-          }
+          "fields": "BaristaJob"
         },
         {
           "case": "Waiter",
-          "fields": {
-            "Value":"WaiterJob"
-          }
+          "fields": "WaiterJob"
         }
       ]
     },
@@ -588,6 +584,17 @@
           "label": "last name",
           "renderer": "defaultString"
         },
+        "job":{
+          "renderer":"defaultUnionRenderer",
+          "cases":{
+            "Barista":{
+              "renderer":"baristaJob"
+            },
+            "Waiter":{
+              "renderer":"waiterJob"
+            }
+          }
+        },    
         "birthday": {
           "renderer": "defaultDate",
           "tooltip": "happy birthday!"

@@ -184,9 +184,7 @@ module Golang =
 
               yield StringBuilder.One "  }\n"
               yield StringBuilder.One "  var res result\n"
-
               yield StringBuilder.One $$"""  return res, {{codegenConfig.EnumNotFoundError.Constructor}}(enumName)"""
-
               yield StringBuilder.One "\n}\n\n"
             }
 
@@ -362,17 +360,12 @@ module Golang =
                           yield StringBuilder.One "\n"
                           yield StringBuilder.One "const ("
                           yield StringBuilder.One "\n"
-
                           for enumCase in enumCases do
                             yield StringBuilder.One $$"""  {{t.Key}}{{!enumCase}} {{t.Key}} = "{{enumCase}}" """
-
                             yield StringBuilder.One "\n"
-
                           yield StringBuilder.One ")"
                           yield StringBuilder.One "\n"
-
                           yield StringBuilder.One $$"""var All{{t.Key}}Cases = [...]{{t.Key}}{ """
-
                           for enumCase in enumCases do
                             yield StringBuilder.One $$"""{{t.Key}}{{!enumCase}}, """
 
@@ -387,6 +380,10 @@ module Golang =
                           state {
                             let! fields =
                               case.Fields
+                              |> ExprType.ResolveLookup ctx
+                              |> state.OfSum
+                            let! fields =
+                              fields
                               |> ExprType.AsRecord
                               |> state.OfSum
                               |> state.Either(

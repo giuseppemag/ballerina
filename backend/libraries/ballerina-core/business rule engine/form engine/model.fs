@@ -16,6 +16,7 @@ module Model =
       Set: EnumStreamCodegenConfigTypeDef
       List: CodegenConfigListDef
       Map: CodegenConfigTypeDef
+      Union: CodegenConfigUnionDef
       Custom: Map<string, CodegenConfigTypeDef>
       IdentifierAllowedRegex: string
       EnumNotFoundError: CodegenConfigErrorDef
@@ -32,6 +33,9 @@ module Model =
     { GeneratedTypeName: string
       Constructor: string
       RequiredImport: Option<string> }
+
+  and CodegenConfigUnionDef =
+    { SupportedRenderers: Set<string> }
 
   and CodegenConfigListDef =
     { GeneratedTypeName: string

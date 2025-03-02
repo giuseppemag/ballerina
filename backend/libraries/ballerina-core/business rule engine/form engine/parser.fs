@@ -491,6 +491,25 @@ module Parser =
                       Children = { Fields = Map.empty } }
                  Element = elementRenderer
                  Children = children |}
+        elif config.Union.SupportedRenderers |> Set.contains s then
+          let! casesJson = parentJsonFields |> sum.TryFindField "cases" |> state.OfSum
+          let! casesJson = casesJson |> JsonValue.AsRecord |> state.OfSum
+          let! cases = 
+            casesJson |> Seq.map (fun (caseName,caseJson) -> 
+            state{
+              let! caseRenderer = NestedRenderer.Parse caseJson
+              return caseName, caseRenderer
+            }) |> state.All
+          return 
+            UnionRenderer 
+              {|  Union=
+                    PrimitiveRenderer
+                      { PrimitiveRendererName = s
+                        PrimitiveRendererId = Guid.CreateVersion7()
+                        Type = ExprType.UnionType (cases |> Seq.map (fun (n,t) -> { CaseName=n; Fields=t.Type }) |> List.ofSeq)
+                        Children = { Fields = Map.empty } }            
+                  Cases=cases |> Seq.map (fun (n,t) -> { CaseName = n}, t) |> Map.ofSeq
+                  Children=children |}
         else
           return!
             state.Any(
@@ -781,26 +800,30 @@ module Parser =
         let! caseJson, fieldsJson = state.All2 (args |> state.TryFindField "case") (args |> state.TryFindField "fields")
 
         let! caseName = caseJson |> JsonValue.AsString |> state.OfSum
-        let! fieldsJson = fieldsJson |> JsonValue.AsRecord |> state.OfSum
 
-        let! fields =
-          fieldsJson
-          |> Seq.map (fun (fieldName, fieldType) ->
-            state {
-              let! fieldType = ExprType.Parse fieldType
-              return fieldName, fieldType
-            }
-            |> state.MapError(Errors.Map(String.appendNewline $"\n...when parsing field {fieldName}")))
-          |> Seq.toList
-          |> state.All
+        let! fieldsType =
+          state.Either 
+            (state{
+              let! fieldsJson = fieldsJson |> JsonValue.AsRecord |> state.OfSum
 
-        let fields = fields |> Map.ofList
+              let! fields =
+                fieldsJson
+                |> Seq.map (fun (fieldName, fieldType) ->
+                  state {
+                    let! fieldType = ExprType.Parse fieldType
+                    return fieldName, fieldType
+                  }
+                  |> state.MapError(Errors.Map(String.appendNewline $"\n...when parsing field {fieldName}")))
+                |> Seq.toList
+                |> state.All
 
-        let fieldsType =
-          if fields |> Map.isEmpty then
-            ExprType.UnitType
-          else
-            ExprType.RecordType fields
+              let fields = fields |> Map.ofList
+              if fields |> Map.isEmpty then
+                ExprType.UnitType
+              else
+                ExprType.RecordType fields              
+            })
+            (ExprType.Parse fieldsJson)
 
         return
           { CaseName = caseName
@@ -1001,7 +1024,7 @@ module Parser =
       sum {
         match t with
         | ExprType.RecordType l -> return l
-        | _ -> return! sum.Throw(Errors.Singleton $$"""Error: type {{t}} cannot be converted to a lookup.""")
+        | _ -> return! sum.Throw(Errors.Singleton $$"""Error: type {{t}} cannot be converted to a record.""")
       }
 
     static member AsUnit(t: ExprType) : Sum<Unit, Errors> =

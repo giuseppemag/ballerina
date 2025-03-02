@@ -104,7 +104,7 @@ Todo (✅/❌)
         ✅ type checker
         ✅ FE prototype of evaluator
       ✅ generated type structure
-      ✅ generated constructors    
+      ✅ generated constructors
         ✅ constructors for the case values
         ✅ constructors for the whole thing - assume discriminator, accept specific value
       ❌ add renderer syntax for the selector of a different form depending on the case
