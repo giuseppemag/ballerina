@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - "*"
   pull_request:
 jobs:
   backend:
@@ -15,6 +17,29 @@ jobs:
           dotnet tool restore
       - run: dotnet build backend
       - run: dotnet fantomas --check backend
-      - run: dotnet build backend
       - run: dotnet test backend
-      - run: dotnet publish backend
+  publish-ballerina-runtime:
+    needs: backend
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: backend/apps/ballerina-runtime
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-dotnet@v4.3.0
+      - run: dotnet restore
+      - name: Build and package for all runtimes
+        run: |
+          for RUNTIME in osx-x64 osx-arm64 win-x64 linux-x64; do
+            dotnet publish --runtime $RUNTIME
+            zip -r ballerina-runtime.$RUNTIME.zip ./bin/Release/net9.0/$RUNTIME/publish
+          done
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME=${{ github.ref_name }}
+          gh release create "$TAG_NAME" -n "Release $TAG_NAME of the Ballerina 🩰 runtime." ballerina-runtime.*.zip
