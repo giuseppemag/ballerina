@@ -819,7 +819,7 @@ module Parser =
           |> state.All
 
         let fieldConfigs = fieldConfigs |> Map.ofSeq
-        let fieldConfigs = Map.mergeMany (fun x y -> x) (fieldConfigs::extendedFields)
+        let fieldConfigs = Map.mergeMany (fun x y -> x) (fieldConfigs :: extendedFields)
         let! s = state.GetState()
         let! typeBinding = s.TryFindType typeName |> state.OfSum
         let! tabs = FormConfig.ParseTabs fieldConfigs tabsJson
