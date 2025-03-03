@@ -1,0 +1,98 @@
+{
+  "types": {
+    "ValueInt": {
+      "fields": {
+        "Value": "number"
+      }
+    },
+    "ValueString": {
+      "fields": {
+        "Value": "string"
+      }
+    },
+    "ValueBool": {
+      "fields": {
+        "Value": "boolean"
+      }
+    },
+    "PrimitiveValue": {
+      "fun": "Union",
+      "args": [
+        {
+          "case": "int",
+          "fields": "ValueInt"
+        },
+        {
+          "case": "string",
+          "fields": "ValueString"
+        },
+        {
+          "case": "bool",
+          "fields": "ValueBool"
+        }
+      ]
+    },
+    "Value": {
+      "fun": "Union",
+      "args": [
+        {
+          "case": "primitive",
+          "fields": {
+            "Value":"PrimitiveValue"
+          }
+        },
+        {
+          "case": "record",
+          "fields": {
+            "Value":{
+              "fun":"Map",
+              "args":[
+                "string",
+                "Value"
+              ]
+            }
+          }
+        },
+        {
+          "case": "lambda",
+          "fields": {
+            "VarName":"string",
+            "Body":"Expr"
+          }
+        }
+      ]
+    },
+    "Expr": {
+      "fun": "Union",
+      "args": [
+        {
+          "case": "value",
+          "fields": {
+            "Value":"Value"
+          }
+        },
+        {
+          "case": "binary",
+          "fields": {
+            "Operator":"BinaryOperator",
+            "Left": "Expr",
+            "Right": "Expr"
+          }
+        }
+      ]
+    },
+    "BinaryOperator": {
+      "fun": "Union",
+      "args": [
+        {
+          "case": "plus",
+          "fields": {}
+        },
+        {
+          "case": "minus",
+          "fields": {}
+        }
+      ]
+    }
+  }
+}

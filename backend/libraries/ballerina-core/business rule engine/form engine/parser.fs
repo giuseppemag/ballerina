@@ -819,7 +819,7 @@ module Parser =
           |> state.All
 
         let fieldConfigs = fieldConfigs |> Map.ofSeq
-        let fieldConfigs = Map.mergeMany (fun x y -> x) (fieldConfigs::extendedFields)
+        let fieldConfigs = Map.mergeMany (fun x y -> x) (fieldConfigs :: extendedFields)
         let! s = state.GetState()
         let! typeBinding = s.TryFindType typeName |> state.OfSum
         let! tabs = FormConfig.ParseTabs fieldConfigs tabsJson
@@ -1234,7 +1234,30 @@ module Parser =
       (typesJson: seq<string * JsonValue>)
       : State<Unit, CodeGenConfig, ParsedFormsContext, Errors> =
       state {
-        for typeName, typeJson in typesJson do
+
+        let! typesJson =
+          typesJson
+          |> Seq.map (fun (name, json) ->
+            state {
+              let typeId: TypeId =
+                { TypeName = name
+                  TypeId = Guid.CreateVersion7() }
+
+              do!
+                state.SetState(
+                  ParsedFormsContext.Updaters.Types(
+                    Map.add
+                      name
+                      { Type = ExprType.UnitType
+                        TypeId = typeId }
+                  )
+                )
+
+              return name, typeId, json
+            })
+          |> state.All
+
+        for typeName, typeId, typeJson in typesJson do
           return!
             state {
               let! typeJsonArgs = typeJson |> JsonValue.AsRecord |> state.OfSum
@@ -1257,10 +1280,6 @@ module Parser =
                             state.All2
                               (extendsJson |> JsonValue.AsArray |> state.OfSum)
                               (fieldsJson |> JsonValue.AsRecord |> state.OfSum)
-
-                          let typeId: TypeId =
-                            { TypeName = typeName
-                              TypeId = Guid.CreateVersion7() }
 
                           let! s = state.GetState()
 

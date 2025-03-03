@@ -98,30 +98,24 @@ Todo (✅/❌)
       ✅ run tests before releasing
     ✅ make sure we parse the `children` of each renderer type that supports them
       ✅ reduce repetition around the processing of `Children` in `validate` and `get...free...vars`
-    ❌ allow mutually recursive types and forms
-      ❌ be careful with out-of-order extensions
-      ❌ make ExprType.resolveLookup recursive - this might be at odds with the parent task because it might cause infinite loops
+    ❌ allow mutually recursive types
+      ✅ implement `Value` and `Expr`
+      ❌ make sure that ExprType.resolveLookup is lazy to avoid infinite loops
+      ❌ allow mutually recursive forms
     ❌ extensions
-      ❌ distinguish Option (with renderer like List) from SingleSelection (only renderer for streams)
-        ❌ allow Some and None matching on Option
-        ❌ distinguish outer from inner renderers
-      ✅ support `children` property on any renderer
-        ✅ a record of fields parsed and validated exacted like fields
-      ✅ parse and validate new type of launchers
       ❌ add multi-field renderers
         ❌ use tuples, meaning it's still just one single field
       ❌ add paginated lists
         ❌ requires changes to the frontend
       ❌ add lazy fields
         ❌ requires changes to the frontend
-    ❌ create gui editor as an instance of a form itself
-      ❌ form specification
-      ❌ generated F# files with type definitions
-        ❌ because there will be an entity API with the database schema interpretation later
-      ❌ package in a separate (private) repo
-        ❌ served by an F# backend
-        ❌ with access to folder IDE-style
-        ❌ with enums and streams (defined in F#) based on the available types ATM
+      ❌ distinguish Option (with renderer like List) from SingleSelection (only renderer for streams)
+        ❌ allow Some and None matching on Option
+        ❌ distinguish outer from inner renderers
+      ✅ support `children` property on any renderer
+        ✅ a record of fields parsed and validated exacted like fields
+      ✅ parse and validate new type of launchers
+    ❌ the Go-lang generator could support more types for unions than just records: primitives and unions themselves
     ❌ paths inside `Any` have a priority after a partial match is found - `Any` filters errors lower than the highest priority
       ❌ add to each `Any`, streamline operators
         ❌ parser
@@ -134,6 +128,14 @@ Todo (✅/❌)
       ❌ add homomorphic forms
     ❌ disallow unsupported keywords (`visibIle` wasted me a good chunk of time)
     ❌ the validator is now mature
+    ❌ create gui editor as an instance of a form itself
+      ❌ form specification
+      ❌ generated F# files with type definitions
+        ❌ because there will be an entity API with the database schema interpretation later
+      ❌ package in a separate (private) repo
+        ❌ served by an F# backend
+        ❌ with access to folder IDE-style
+        ❌ with enums and streams (defined in F#) based on the available types ATM
     ❌ improve the syntax of types and expressions with fslex and fsyacc
     ✅ fix Ballerina as a namespace for proper nesting
     ✅ convert all instances of Map.tryFind ... withError ... to `Map.tryFindWithError`
@@ -148,11 +150,8 @@ Todo (✅/❌)
     ❌ check the consistency of the used data structures: `Type` vs `TypeId`
     ✅ accept empty `apis` blocks
     ❌ discard unsupported field names
-    ❌ add `extends` keyword for forms
+    ✅ add `extends` keyword for forms
     ❌ add lots of operators to lists, sets, maps, etc.
-    ❌ allow mutually recursive types and forms
-      ❌ be careful with out-of-order extensions
-      ❌ make ExprType.resolveLookup recursive - this might be at odds with the parent task because it might cause infinite loops
     ❌ the tool is now complete
     ❌ the codegen to Golang needs to be improved
       ❌ split up in files

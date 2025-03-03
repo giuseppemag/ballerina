@@ -34,7 +34,7 @@ let rec iterateTestsOverFiles baseName start count printLastErrors =
 
 [<Test>]
 let CorrectSpec () =
-  let actual =
+  let personResult =
     Ballerina.DSL.FormEngine.Runner.runSingle
       true
       FormsGenTarget.golang
@@ -44,11 +44,25 @@ let CorrectSpec () =
       null
       "./input-forms/go-config.json"
 
-  match actual with
+  let formConfigResult =
+    Ballerina.DSL.FormEngine.Runner.runSingle
+      true
+      FormsGenTarget.golang
+      "./input-forms/form-config-config.json"
+      "./generated-output/models"
+      null
+      null
+      "./input-forms/go-config.json"
+
+  match personResult with
   | Right err -> Errors.Print "person-config" err
   | _ -> ()
 
-  Assert.That(actual.IsLeft, Is.EqualTo(true))
+  match formConfigResult with
+  | Right err -> Errors.Print "person-config" err
+  | _ -> ()
+
+  Assert.That(personResult.IsLeft && formConfigResult.IsLeft, Is.EqualTo(true))
 
 [<Test>]
 let MissingReference () =
