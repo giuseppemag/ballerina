@@ -3,4 +3,3 @@ export const curry =
   (a: A) =>
   (b: B): C =>
     f(a, b);
-  

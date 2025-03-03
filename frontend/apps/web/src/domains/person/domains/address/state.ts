@@ -1,9 +1,16 @@
-import { CollectionReference, Sum, FormStateFromEntity, SearchableInfiniteStreamState, CommonFormState, Predicate, CollectionSelection, unit } from "ballerina-core";
+import {
+  CollectionReference,
+  Sum,
+  FormStateFromEntity,
+  SearchableInfiniteStreamState,
+  CommonFormState,
+  Predicate,
+  CollectionSelection,
+  unit,
+} from "ballerina-core";
 import { OrderedMap } from "immutable";
 
 import { AddressApi } from "playground-core";
-
-
 
 export type City = CollectionReference;
 export const City = CollectionReference;
@@ -16,9 +23,11 @@ export const Address = {
   Default: (
     street: string,
     number: number,
-    city: CollectionSelection<City>
+    city: CollectionSelection<City>,
   ): Address => ({
-    street, number, city
+    street,
+    number,
+    city,
   }),
   // Operations: {
   //   VisibleFields: OrderedMap<keyof Address, Predicate<PersonFormPredicateContext>>([
@@ -28,16 +37,31 @@ export const Address = {
   // }
 };
 
-export type AddressFormState = FormStateFromEntity<Address, {
-  city: SearchableInfiniteStreamState<City>;
-}>;
+export type AddressFormState = FormStateFromEntity<
+  Address,
+  {
+    city: SearchableInfiniteStreamState<City>;
+  }
+>;
 export const AddressFormState = {
   Default: (): AddressFormState => ({
     commonFormState: CommonFormState.Default(),
     formFieldStates: {
-      street: { commonFormState: CommonFormState.Default(), customFormState: unit },
-      number: { commonFormState: CommonFormState.Default(), customFormState: unit },
-      city: { customFormState: SearchableInfiniteStreamState<City>().Default("", AddressApi.getCities()), commonFormState: CommonFormState.Default() }
-    }
-  })
+      street: {
+        commonFormState: CommonFormState.Default(),
+        customFormState: unit,
+      },
+      number: {
+        commonFormState: CommonFormState.Default(),
+        customFormState: unit,
+      },
+      city: {
+        customFormState: SearchableInfiniteStreamState<City>().Default(
+          "",
+          AddressApi.getCities(),
+        ),
+        commonFormState: CommonFormState.Default(),
+      },
+    },
+  }),
 };

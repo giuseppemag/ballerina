@@ -2,7 +2,6 @@
 // import { Address, AddressFormState, City, PersonFormPredicateContext as PersonFormPredicatesContext } from "playground-core";
 // import { PersonFieldViews } from "../../views/field-views";
 
-
 // export const AddressFormBuilder = Form<Address, AddressFormState, PersonFormPredicatesContext, Unit>().Default<keyof Address>();
 // export const AddressFormConfig = AddressFormBuilder.config(
 //   {

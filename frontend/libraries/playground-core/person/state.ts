@@ -1,12 +1,26 @@
 import { faker } from "@faker-js/faker";
-import { CollectionReference, CollectionSelection, Guid, FormStateFromEntity, DateFormState, EnumFormState, FormLabel, BaseEnumContext, SearchableInfiniteStreamState, CommonFormState, Predicate, ListFieldState, Maybe, unit } from "ballerina-core";
+import {
+  CollectionReference,
+  CollectionSelection,
+  Guid,
+  FormStateFromEntity,
+  DateFormState,
+  EnumFormState,
+  FormLabel,
+  BaseEnumContext,
+  SearchableInfiniteStreamState,
+  CommonFormState,
+  Predicate,
+  ListFieldState,
+  Maybe,
+  unit,
+} from "ballerina-core";
 import { List, OrderedMap } from "immutable";
 import { Interest, PersonApi } from "./apis/mocks";
 import { Address, AddressFormState, City } from "./domains/address/state";
 // import { PersonFormPredicateContext } from "./domains/predicates";
 import Immutable from "immutable";
 import { v4 } from "uuid";
-
 
 export type Gender = CollectionReference;
 export type Department = CollectionReference;
@@ -23,37 +37,55 @@ export type Person = {
   address: Address;
 };
 export const Person = {
-  Default: Object.assign((name: string,
-    surname: string,
-    birthday: Date,
-    subscribeToNewsletter: boolean,
-    gender: CollectionSelection<Gender>,
-    interests: OrderedMap<Guid, Interest>,
-    departments: OrderedMap<Guid, Department>,
-    address: Address
-  ): Person => ({
-    name, surname, birthday, subscribeToNewsletter, gender, interests, departments,
-     address,
-  }),
+  Default: Object.assign(
+    (
+      name: string,
+      surname: string,
+      birthday: Date,
+      subscribeToNewsletter: boolean,
+      gender: CollectionSelection<Gender>,
+      interests: OrderedMap<Guid, Interest>,
+      departments: OrderedMap<Guid, Department>,
+      address: Address,
+    ): Person => ({
+      name,
+      surname,
+      birthday,
+      subscribeToNewsletter,
+      gender,
+      interests,
+      departments,
+      address,
+    }),
     {
       mocked: (): Person => ({
         name: faker.person.firstName(),
         surname: faker.person.lastName(),
-        birthday: new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45),
+        birthday: new Date(
+          Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45,
+        ),
         subscribeToNewsletter: Math.random() > 0.5,
-        gender: CollectionSelection<CollectionReference>().Default.right("no selection"),
+        gender:
+          CollectionSelection<CollectionReference>().Default.right(
+            "no selection",
+          ),
         interests: OrderedMap(),
         departments: OrderedMap(),
         address: {
           street: faker.location.street(),
           number: Math.floor(Math.random() * 500),
-          city: Math.random() > 0.5 ?
-            CollectionSelection<CollectionReference>().Default.right("no selection")
-            :
-            CollectionSelection<CollectionReference>().Default.left(City.Default(v4(), faker.location.city()))
-        }
-      })
-    }),
+          city:
+            Math.random() > 0.5
+              ? CollectionSelection<CollectionReference>().Default.right(
+                  "no selection",
+                )
+              : CollectionSelection<CollectionReference>().Default.left(
+                  City.Default(v4(), faker.location.city()),
+                ),
+        },
+      }),
+    },
+  ),
   Operations: {
     // VisibleFields: OrderedMap<keyof Person, Predicate<PersonFormPredicateContext>>([
     //   ["name", PersonFormPredicateContext.Predicates.True],
@@ -64,7 +96,7 @@ export const Person = {
     //   ["departments", PersonFormPredicateContext.Predicates.True],
     //   ["address", PersonFormPredicateContext.Predicates.BC.or(PersonFormPredicateContext.Predicates.FO)],
     // ])
-  }
+  },
 };
 // export type PersonFormState = FormStateFromEntity<Person, {
 //   birthday: DateFormState;
@@ -88,4 +120,3 @@ export const Person = {
 //     }
 //   })
 // };
-

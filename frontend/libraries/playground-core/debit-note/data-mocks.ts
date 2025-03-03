@@ -20,60 +20,60 @@ import informationCardField from "./enums/config/InformationCardField";
 
 import keyValueFields from "./enums/config/KeyValueFields";
 
-const filterGroupOpEnum: Array<{Value: string}> = [
-  { Value: "and"},
-  { Value: "or" }
+const filterGroupOpEnum: Array<{ Value: string }> = [
+  { Value: "and" },
+  { Value: "or" },
 ];
 
-const contextEnum: Array<{Value: string}> = [
-  {Value: "invoice"},
-  {Value: "invoicePosition"},
-  {Value: "accountingPosition"},
-  {Value: "additionalCostPosition"},
-  {Value: "purchaseOrder"},
-  {Value: "purchaseOrderPosition"},
-  {Value: "deliveryNote"},
-  {Value: "deliveryNotePosition"},
-  {Value: "orderConfirmation"},
-  {Value: "orderConfirmationPosition"},
-  {Value: "surcharge"},
-  {Value: "header"},
-  {Value: "position"},
-  {Value: "purchaseRequisition"},
-  {Value: "anyPosition"},
-  {Value: "paymentAdvice"},
-  {Value: "paymentAdvicePosition"},
-  {Value: "supplierPurchaseOrder"},
-  {Value: "supplierPurchaseOrderPosition"},
-  {Value: "allPositions"},
-  {Value: "debitNote"},
-  {Value: "debitNotePosition"},
+const contextEnum: Array<{ Value: string }> = [
+  { Value: "invoice" },
+  { Value: "invoicePosition" },
+  { Value: "accountingPosition" },
+  { Value: "additionalCostPosition" },
+  { Value: "purchaseOrder" },
+  { Value: "purchaseOrderPosition" },
+  { Value: "deliveryNote" },
+  { Value: "deliveryNotePosition" },
+  { Value: "orderConfirmation" },
+  { Value: "orderConfirmationPosition" },
+  { Value: "surcharge" },
+  { Value: "header" },
+  { Value: "position" },
+  { Value: "purchaseRequisition" },
+  { Value: "anyPosition" },
+  { Value: "paymentAdvice" },
+  { Value: "paymentAdvicePosition" },
+  { Value: "supplierPurchaseOrder" },
+  { Value: "supplierPurchaseOrderPosition" },
+  { Value: "allPositions" },
+  { Value: "debitNote" },
+  { Value: "debitNotePosition" },
 ];
 
-const filtersOpEnum: Array<{Value: string}> = [
-  {Value: "eq"},
-  {Value: "neq"},
-  {Value: "gt"},
-  {Value: "gte"},
-  {Value: "lt"},
-  {Value: "lte"},
-  {Value: "contains"},
-  {Value: "notContains"},
-  {Value: "match"},
-  {Value: "notMatch"},
-  {Value: "isNull"},
-  {Value: "isNotNull"},
-  {Value: "groupedDataContai"},
-  {Value: "groupedDataNotContai"},
-  {Value: "groupedDataContainsPref"},
-  {Value: "groupedDataNotContainsPref"},
+const filtersOpEnum: Array<{ Value: string }> = [
+  { Value: "eq" },
+  { Value: "neq" },
+  { Value: "gt" },
+  { Value: "gte" },
+  { Value: "lt" },
+  { Value: "lte" },
+  { Value: "contains" },
+  { Value: "notContains" },
+  { Value: "match" },
+  { Value: "notMatch" },
+  { Value: "isNull" },
+  { Value: "isNotNull" },
+  { Value: "groupedDataContai" },
+  { Value: "groupedDataNotContai" },
+  { Value: "groupedDataContainsPref" },
+  { Value: "groupedDataNotContainsPref" },
 ];
 
-const filtersValueAnyOfEnum: Array<{Value: string}> = [
-  {Value: "string"},
-  {Value: "number"},
-  {Value: "date-time"},
-  {Value: "boolean"},
+const filtersValueAnyOfEnum: Array<{ Value: string }> = [
+  { Value: "string" },
+  { Value: "number" },
+  { Value: "date-time" },
+  { Value: "boolean" },
 ];
 
 const streamApis: InfiniteStreamSources = (streamName: string) => {
@@ -85,11 +85,13 @@ const streamApis: InfiniteStreamSources = (streamName: string) => {
             .map(() =>
               CollectionReference.Default(
                 v4(),
-                _searchText + faker.company.buzzNoun() + " required key-value fields",
-                "stream"
-              )
+                _searchText +
+                  faker.company.buzzNoun() +
+                  " required key-value fields",
+                "stream",
+              ),
             )
-            .toArray()
+            .toArray(),
         );
         return PromiseRepo.Default.mock(() => ({
           data: mapped,
@@ -111,52 +113,52 @@ const streamApis: InfiniteStreamSources = (streamName: string) => {
 const enumApis: EnumOptionsSources = (enumName: string) => {
   switch (enumName) {
     case "requiredKeyValueFieldsEnum": {
-      return () => PromiseRepo.Default.mock(() => keyValueFields)
+      return () => PromiseRepo.Default.mock(() => keyValueFields);
     }
     case "highConfidenceKeyValueFieldsEnum": {
-      return () => PromiseRepo.Default.mock(() => keyValueFields)
+      return () => PromiseRepo.Default.mock(() => keyValueFields);
     }
     case "documentNumberDefaultingsFromKeyValueEnum": {
-      return () => PromiseRepo.Default.mock(() => keyValueFields)
+      return () => PromiseRepo.Default.mock(() => keyValueFields);
     }
     case "documentDateDefaultingsFromKeyValueEnum": {
-      return () => PromiseRepo.Default.mock(() => keyValueFields)
+      return () => PromiseRepo.Default.mock(() => keyValueFields);
     }
     case "configurableNumberDefaultingsFromKeyValueEnum": {
-      return () => PromiseRepo.Default.mock(() => keyValueFields)
+      return () => PromiseRepo.Default.mock(() => keyValueFields);
     }
     case "configurableNumber2DefaultingsFromKeyValueEnum": {
-      return () => PromiseRepo.Default.mock(() => keyValueFields)
+      return () => PromiseRepo.Default.mock(() => keyValueFields);
     }
     case "informationKeysEnum": {
-      return () => PromiseRepo.Default.mock(() => keyValueFields)
+      return () => PromiseRepo.Default.mock(() => keyValueFields);
     }
     case "informationKeysDisabledEnum": {
-      return () => PromiseRepo.Default.mock(() => keyValueFields)
+      return () => PromiseRepo.Default.mock(() => keyValueFields);
     }
     case "contextEnum": {
-      return () => PromiseRepo.Default.mock(() => contextEnum)
+      return () => PromiseRepo.Default.mock(() => contextEnum);
     }
     case "filterGroupOpEnum": {
-      return () => PromiseRepo.Default.mock(() => filterGroupOpEnum)
+      return () => PromiseRepo.Default.mock(() => filterGroupOpEnum);
     }
     case "accountingPositionFieldsEnum": {
-      return () => PromiseRepo.Default.mock(() => accountingPositionFields)
+      return () => PromiseRepo.Default.mock(() => accountingPositionFields);
     }
     case "filtersOpEnum": {
-      return () => PromiseRepo.Default.mock(() => filtersOpEnum)
+      return () => PromiseRepo.Default.mock(() => filtersOpEnum);
     }
     case "informationCardFieldsEnum": {
-      return () => PromiseRepo.Default.mock(() => informationCardField)
+      return () => PromiseRepo.Default.mock(() => informationCardField);
     }
     case "informationCardFieldsDisabledEnum": {
-      return () => PromiseRepo.Default.mock(() => informationCardField)
+      return () => PromiseRepo.Default.mock(() => informationCardField);
     }
     case "debitNoteResultFieldsEnum": {
-      return () => PromiseRepo.Default.mock(() => debitNoteResultFields)
+      return () => PromiseRepo.Default.mock(() => debitNoteResultFields);
     }
     case "filtersValueAnyOfEnum": {
-      return () => PromiseRepo.Default.mock(() => filtersValueAnyOfEnum)
+      return () => PromiseRepo.Default.mock(() => filtersValueAnyOfEnum);
     }
     default: {
       alert(`Cannot find enum API ${enumName}`);
@@ -189,7 +191,15 @@ const entityApis: EntityApis = {
                 context: undefined,
                 filterGroup: {
                   filterGroupOp: undefined,
-                  filters: [{ name: "hello", value: { anyOfEnum: {id: 'string', displayName: 'string'} }, filterOp: undefined }],
+                  filters: [
+                    {
+                      name: "hello",
+                      value: {
+                        anyOfEnum: { id: "string", displayName: "string" },
+                      },
+                      filterOp: undefined,
+                    },
+                  ],
                 },
                 fieldContext: {
                   accountingPositionFields: undefined,

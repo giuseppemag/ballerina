@@ -2,9 +2,12 @@
   "name": "ballerina-core",
   "author": "Dr. Giuseppe Maggiore",
   "private": false,
-  "version": "1.0.79",
+  "version": "1.0.80",
   "main": "main.ts",
-  "dependencies": {
+  "scripts": {
+    "prettier": "prettier --write ."
+  },
+  "peerDependencies": {
     "immutable": "^5.0.0-beta.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -15,6 +18,10 @@
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",
     "@types/uuid": "^9.0.8",
-    "typescript": "^5.4.5"
+    "immutable": "^5.0.0-beta.5",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^5.4.5",
+    "uuid": "^9.0.1"
   }
 }

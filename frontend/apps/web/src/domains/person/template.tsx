@@ -28,7 +28,7 @@
 //     .withView(PersonFieldViews.InfiniteStreamMultiselectView())
 //     .mapContext(_ => ({ ..._, label: "department" })),
 //   // address: ListForm<Address, AddressFormState, PersonFormPredicateContext & FormLabel, Unit>(
-//   //   { Default:() => ({ ...AddressFormState.Default(), ...SharedFormState.Default() })}, 
+//   //   { Default:() => ({ ...AddressFormState.Default(), ...SharedFormState.Default() })},
 //   //   { Default:() => Address.Default("", 0, CollectionSelection().Default.right("no selection")) },
 //   //   AddressForm
 //   //   .withView(AddressView)
@@ -41,4 +41,3 @@
 //   //     .withView(PersonFieldViews.ListViews.defaultList())
 //   //     .mapContext(_ => ({..._, label:"address"}))
 // }, PersonApi.validate)
-

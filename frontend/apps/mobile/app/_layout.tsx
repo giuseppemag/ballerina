@@ -26,9 +26,9 @@ export default function RootLayout() {
 
   return (
     <AnimatedSplashScreen image={require("../assets/images/shoes.png")}>
-        <Stack>
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-        </Stack>
+      <Stack>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+      </Stack>
     </AnimatedSplashScreen>
   );
 

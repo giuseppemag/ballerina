@@ -1,3 +1,4 @@
-export type Visibility = "fully-visible" |
-  "fully-invisible" |
-  "partially-visible";
+export type Visibility =
+  | "fully-visible"
+  | "fully-invisible"
+  | "partially-visible";

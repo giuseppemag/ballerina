@@ -1,7 +1,7 @@
 type Props = {
-  a: number,
-  b: string
-}
+  a: number;
+  b: string;
+};
 
 export const Child2Table = (props: Props) => (
   <>

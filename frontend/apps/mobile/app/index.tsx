@@ -1,12 +1,7 @@
 import "react-native-get-random-values"; // polyfill uuid -- must be before other imports
 import { useState } from "react";
 import { Text, View } from "react-native";
-import {
-  UncleTemplate,
-  ParentTemplate1,
-  Uncle,
-  Parent,
-} from "playground-core";
+import { UncleTemplate, ParentTemplate1, Uncle, Parent } from "playground-core";
 import { UncleLayout } from "@/domains/uncle/views/uncleLayout";
 import { Parent1Layout } from "@/domains/parent/views/parent1Layout";
 
@@ -37,7 +32,7 @@ export default function Ballerina() {
         Ballerina 🩰
       </Text>
 
-      <View style={{display: "flex", gap: 40}}>
+      <View style={{ display: "flex", gap: 40 }}>
         <UncleTemplate
           context={uncle}
           setState={setUncle}

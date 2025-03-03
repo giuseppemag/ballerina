@@ -14,7 +14,7 @@ export const Maybe = {
   Operations: {
     map: <a, b>(f: BasicFun<a, b>): Fun<Maybe<a>, Maybe<b>> =>
       Fun<Maybe<a>, Maybe<b>>((_) =>
-        _ != undefined ? Maybe.Default(f(_)) : Maybe.Default(undefined)
+        _ != undefined ? Maybe.Default(f(_)) : Maybe.Default(undefined),
       ),
   },
 };
