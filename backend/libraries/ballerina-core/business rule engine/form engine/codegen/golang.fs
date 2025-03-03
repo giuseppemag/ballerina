@@ -360,12 +360,15 @@ module Golang =
                           yield StringBuilder.One "\n"
                           yield StringBuilder.One "const ("
                           yield StringBuilder.One "\n"
+
                           for enumCase in enumCases do
                             yield StringBuilder.One $$"""  {{t.Key}}{{!enumCase}} {{t.Key}} = "{{enumCase}}" """
                             yield StringBuilder.One "\n"
+
                           yield StringBuilder.One ")"
                           yield StringBuilder.One "\n"
                           yield StringBuilder.One $$"""var All{{t.Key}}Cases = [...]{{t.Key}}{ """
+
                           for enumCase in enumCases do
                             yield StringBuilder.One $$"""{{t.Key}}{{!enumCase}}, """
 
@@ -378,10 +381,8 @@ module Golang =
                         cases
                         |> Seq.map (fun case ->
                           state {
-                            let! fields =
-                              case.Fields
-                              |> ExprType.ResolveLookup ctx
-                              |> state.OfSum
+                            let! fields = case.Fields |> ExprType.ResolveLookup ctx |> state.OfSum
+
                             let! fields =
                               fields
                               |> ExprType.AsRecord
