@@ -26,6 +26,12 @@ module Validator =
       let (+) = sum.Lift2 Set.union
       let (!) = Renderer.GetTypesFreeVars ctx
 
+      let getChildrenTypeFreeVars (children: RendererChildren) =
+        children.Fields
+        |> Seq.map (fun e -> e.Value.Renderer)
+        |> Seq.map (Renderer.GetTypesFreeVars ctx)
+        |> sum.All
+
       match fr with
       | Renderer.EnumRenderer(e, f) -> (ctx.TryFindEnum e.EnumName |> Sum.map (EnumApi.Type >> Set.singleton)) + !f
       | Renderer.FormRenderer(f, _, children) ->
@@ -33,43 +39,27 @@ module Validator =
           let! f = ctx.TryFindForm f.FormName
           let! (fvars: Set<TypeId>) = f |> FormConfig.GetTypesFreeVars ctx
 
-          let! (cvars: List<Set<TypeId>>) =
-            children.Fields
-            |> Seq.map (fun e -> e.Value.Renderer)
-            |> Seq.map (Renderer.GetTypesFreeVars ctx)
-            |> sum.All
+          let! (cvars: List<Set<TypeId>>) = children |> getChildrenTypeFreeVars
 
           return cvars |> List.fold (Set.union) fvars
         }
       | Renderer.ListRenderer l ->
         sum {
-          let! (cvars: List<Set<TypeId>>) =
-            l.Children.Fields
-            |> Seq.map (fun e -> e.Value.Renderer)
-            |> Seq.map (Renderer.GetTypesFreeVars ctx)
-            |> sum.All
+          let! (cvars: List<Set<TypeId>>) = l.Children |> getChildrenTypeFreeVars
 
           let! zero = !l.Element.Renderer + !l.List
           return cvars |> List.fold (Set.union) zero
         }
       | Renderer.MapRenderer m ->
         sum {
-          let! (cvars: List<Set<TypeId>>) =
-            m.Children.Fields
-            |> Seq.map (fun e -> e.Value.Renderer)
-            |> Seq.map (Renderer.GetTypesFreeVars ctx)
-            |> sum.All
+          let! (cvars: List<Set<TypeId>>) = m.Children |> getChildrenTypeFreeVars
 
           let! zero = (!m.Map + !m.Key.Renderer + !m.Value.Renderer)
           return cvars |> List.fold (Set.union) zero
         }
       | Renderer.PrimitiveRenderer p ->
         sum {
-          let! (cvars: List<Set<TypeId>>) =
-            p.Children.Fields
-            |> Seq.map (fun e -> e.Value.Renderer)
-            |> Seq.map (Renderer.GetTypesFreeVars ctx)
-            |> sum.All
+          let! (cvars: List<Set<TypeId>>) = p.Children |> getChildrenTypeFreeVars
 
           return cvars |> List.fold (Set.union) (p.Type |> ExprType.GetTypesFreeVars)
         }
@@ -78,11 +68,7 @@ module Validator =
         + !f
       | Renderer.UnionRenderer cs ->
         sum {
-          let! (cvars: List<Set<TypeId>>) =
-            cs.Children.Fields
-            |> Seq.map (fun e -> e.Value.Renderer)
-            |> Seq.map (Renderer.GetTypesFreeVars ctx)
-            |> sum.All
+          let! (cvars: List<Set<TypeId>>) = cs.Children |> getChildrenTypeFreeVars
 
           let! (csvars: List<Set<TypeId>>) =
             cs.Cases
@@ -97,6 +83,13 @@ module Validator =
     static member Validate (ctx: ParsedFormsContext) (formType: ExprType) (fr: Renderer) : Sum<ExprType, Errors> =
       let (!) = Renderer.Validate ctx formType
 
+      let validateChildren (children: RendererChildren) =
+        children.Fields
+        |> Seq.map (fun e -> e.Value)
+        |> Seq.map (FieldConfig.Validate ctx formType)
+        |> sum.All
+        |> Sum.map ignore
+
       sum {
         match fr with
         | Renderer.EnumRenderer(enum, enumRenderer) ->
@@ -108,12 +101,7 @@ module Validator =
           let! f = ctx.TryFindForm f.FormName
           let! localFormType = ctx.TryFindType f.TypeId.TypeName
 
-          do!
-            children.Fields
-            |> Seq.map (fun e -> e.Value)
-            |> Seq.map (FieldConfig.Validate ctx formType)
-            |> sum.All
-            |> Sum.map ignore
+          do! children |> validateChildren
 
           return localFormType.Type
         | Renderer.ListRenderer(l) ->
@@ -123,12 +111,7 @@ module Validator =
           let listRenderer =
             ExprType.Substitute (Map.empty |> Map.add { VarName = "a1" } elementRendererType) genericListRenderer
 
-          do!
-            l.Children.Fields
-            |> Seq.map (fun e -> e.Value)
-            |> Seq.map (FieldConfig.Validate ctx formType)
-            |> sum.All
-            |> Sum.map ignore
+          do! l.Children |> validateChildren
 
           return listRenderer
         | Renderer.MapRenderer(m) ->
@@ -143,21 +126,11 @@ module Validator =
                |> Map.add { VarName = "a2" } valueRendererType)
               genericMapRenderer
 
-          do!
-            m.Children.Fields
-            |> Seq.map (fun e -> e.Value)
-            |> Seq.map (FieldConfig.Validate ctx formType)
-            |> sum.All
-            |> Sum.map ignore
+          do! m.Children |> validateChildren
 
           return mapRenderer
         | Renderer.PrimitiveRenderer p ->
-          do!
-            p.Children.Fields
-            |> Seq.map (fun e -> e.Value)
-            |> Seq.map (FieldConfig.Validate ctx formType)
-            |> sum.All
-            |> Sum.map ignore
+          do! p.Children |> validateChildren
 
           return p.Type
         | Renderer.StreamRenderer(stream, streamRenderer) ->
@@ -166,12 +139,7 @@ module Validator =
           let! streamRendererType = !streamRenderer
           return ExprType.Substitute (Map.empty |> Map.add { VarName = "a1" } streamType) streamRendererType
         | Renderer.UnionRenderer r ->
-          do!
-            r.Children.Fields
-            |> Seq.map (fun e -> e.Value)
-            |> Seq.map (FieldConfig.Validate ctx formType)
-            |> sum.All
-            |> Sum.map ignore
+          do! r.Children |> validateChildren
 
           let! caseTypes =
             r.Cases
@@ -221,59 +189,40 @@ module Validator =
       let (!) = Renderer.ValidatePredicates ctx globalType rootType localType
       let (!!) = NestedRenderer.ValidatePredicates ctx globalType rootType localType
 
+      let validateChildrenPredicates (children: RendererChildren) =
+        children.Fields
+        |> Seq.map (fun e -> e.Value)
+        |> Seq.map (FieldConfig.ValidatePredicates ctx globalType rootType localType)
+        |> state.All
+        |> state.Map ignore
+
       state {
         match r with
-        | Renderer.PrimitiveRenderer p ->
-          do!
-            p.Children.Fields
-            |> Seq.map (fun e -> e.Value)
-            |> Seq.map (FieldConfig.ValidatePredicates ctx globalType rootType localType)
-            |> state.All
-            |> state.Map ignore
+        | Renderer.PrimitiveRenderer p -> do! p.Children |> validateChildrenPredicates
         | Renderer.EnumRenderer(_, e) -> return! !e
         | Renderer.ListRenderer e ->
           do! !e.List
           do! !!e.Element
 
-          do!
-            e.Children.Fields
-            |> Seq.map (fun e -> e.Value)
-            |> Seq.map (FieldConfig.ValidatePredicates ctx globalType rootType localType)
-            |> state.All
-            |> state.Map ignore
+          do! e.Children |> validateChildrenPredicates
         | Renderer.MapRenderer kv ->
           do! !kv.Map
           do! !!kv.Key
           do! !!kv.Value
 
-          do!
-            kv.Children.Fields
-            |> Seq.map (fun e -> e.Value)
-            |> Seq.map (FieldConfig.ValidatePredicates ctx globalType rootType localType)
-            |> state.All
-            |> state.Map ignore
+          do! kv.Children |> validateChildrenPredicates
         | Renderer.StreamRenderer(_, e) -> return! !e
         | Renderer.FormRenderer(f, e, children) ->
           let! f = ctx.TryFindForm f.FormName |> state.OfSum
           let! s = state.GetState()
 
-          do!
-            children.Fields
-            |> Seq.map (fun e -> e.Value)
-            |> Seq.map (FieldConfig.ValidatePredicates ctx globalType rootType localType)
-            |> state.All
-            |> state.Map ignore
+          do! children |> validateChildrenPredicates
 
           do! FormConfig.ValidatePredicates ctx globalType rootType f
         | Renderer.UnionRenderer cs ->
           do! !cs.Union
 
-          do!
-            cs.Children.Fields
-            |> Seq.map (fun e -> e.Value)
-            |> Seq.map (FieldConfig.ValidatePredicates ctx globalType rootType localType)
-            |> state.All
-            |> state.Map ignore
+          do! cs.Children |> validateChildrenPredicates
 
           do!
             cs.Cases

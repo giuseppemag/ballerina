@@ -96,34 +96,8 @@ Todo (✅/❌)
           ❌ wrong format of the clause itself
         ❌ improve the code of the generated tests by removing repetition
       ✅ run tests before releasing
-    ✅ specialize the errors (stream not found, enum not found, etc.)
-    ✅ improve the generated whitespace
-    ✅ the Go type generator is now reasonably mature
-    ✅ add full support for unions, including generation
-      ✅ parser
-      ✅ validator
-      ✅ match-case
-        ✅ expr
-        ✅ parser
-        ✅ type checker
-        ✅ FE prototype of evaluator
-      ✅ generated type structure
-      ✅ generated constructors
-        ✅ constructors for the case values
-        ✅ constructors for the whole thing - assume discriminator, accept specific value
-      ✅ add renderer syntax for the selector of a different form depending on the case
-        ✅ new codegen config entry for unions
-          ✅ new type of renderer
-            ✅ when a renderer for unions is found, the `cases` property is parsed into this new type
-          ✅ validator checks that the cases are covered
-            ✅ validate that forms for each case have the right type (`fields` of the corresponding case)
-            ✅ validate predicates with the right `local` type
-              ✅ add predicates
-        ✅ add `extends` sytnax to forms, refactor jobs forms to extend jobBase
-          ✅ when `extends` is found, lookup the underlying form*s* and copy their fields in the order in which they are found
-          ✅ extend an array of forms, not just one
-    ❌ make sure we parse the `children` of each renderer type that supports them
-      ❌ reduce repetition around the processing of `Children` in `validate` and `get...free...vars`
+    ✅ make sure we parse the `children` of each renderer type that supports them
+      ✅ reduce repetition around the processing of `Children` in `validate` and `get...free...vars`
     ❌ allow mutually recursive types and forms
       ❌ be careful with out-of-order extensions
       ❌ make ExprType.resolveLookup recursive - this might be at odds with the parent task because it might cause infinite loops
