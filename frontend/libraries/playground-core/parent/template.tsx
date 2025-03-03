@@ -14,14 +14,13 @@ import {
   ParentWritableState,
 } from "./state";
 
-export const Child1TemplateEmbedded = Child1Template
-  .mapContext<ParentReadonlyContext & ParentWritableState>((p) => p.child1)
-  .mapState(Parent.Updaters.Core.child1);
+export const Child1TemplateEmbedded = Child1Template.mapContext<
+  ParentReadonlyContext & ParentWritableState
+>((p) => p.child1).mapState(Parent.Updaters.Core.child1);
 
 export const Child2TemplateEmbedded = Child2Template.mapContext<
   ParentReadonlyContext & ParentWritableState
->((p) => p.child2)
-  .mapState(Parent.Updaters.Core.child2)
+>((p) => p.child2).mapState(Parent.Updaters.Core.child2);
 
 export const ParentTemplate1 = Template.Default<
   ParentReadonlyContext,
@@ -41,7 +40,11 @@ export const ParentTemplate2 = Template.Default<
   ParentView2
 >((props) => (
   <>
-  <props.view {...props} Child1={Child1TemplateEmbedded} Child2={Child2TemplateEmbedded} />
+    <props.view
+      {...props}
+      Child1={Child1TemplateEmbedded}
+      Child2={Child2TemplateEmbedded}
+    />
     {/* <ParentCoroutinesRunner {...props} />
 				<ParentDebouncerRunner {...props} /> */}
   </>

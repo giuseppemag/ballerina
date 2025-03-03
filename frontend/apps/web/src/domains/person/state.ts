@@ -6,7 +6,6 @@
 // import { PersonFormPredicateContext } from "./domains/predicates";
 // import { Interest, PersonApi } from "playground-core";
 
-
 // export type Gender = CollectionReference;
 // export type Department = CollectionReference;
 // export const Department = CollectionReference;

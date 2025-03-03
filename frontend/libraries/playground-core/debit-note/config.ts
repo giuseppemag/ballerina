@@ -242,7 +242,8 @@ export const DebitNoteHeaderConfig = {
       fields: {
         keyValueCommitChecks: "KeyValueCommitChecks",
         dataFilterGroupCommitChecks: "DataFilterGroupCommitChecks",
-        synchronizedDataFilterGroupCommitChecks: "SynchronizedDataFilterGroupCommitChecks",
+        synchronizedDataFilterGroupCommitChecks:
+          "SynchronizedDataFilterGroupCommitChecks",
         documentNumberCommitChecks: "DocumentNumberCommitChecks",
         documentDateCommitChecks: "DocumentDateCommitChecks",
         unequalTableToDocumentRowsCheck: "UnequalTableToDocumentRowsCheck",
@@ -272,9 +273,12 @@ export const DebitNoteHeaderConfig = {
       informationCardFieldsEnum: "InformationCardFieldsRef",
       informationCardFieldsDisabledEnum: "InformationCardFieldsDisabledRef",
       debitNoteResultFieldsEnum: "DebitNoteResultFieldsRef",
-      documentNumberDefaultingsFromKeyValueEnum: "DocumentNumberDefaultingsFromKeyValueRef",
-      documentDateDefaultingsFromKeyValueEnum: "DocumentDateDefaultingsFromKeyValueRef",
-      configurableNumberDefaultingsFromKeyValueEnum: "ConfigurableNumberDefaultingsFromKeyValueRef",
+      documentNumberDefaultingsFromKeyValueEnum:
+        "DocumentNumberDefaultingsFromKeyValueRef",
+      documentDateDefaultingsFromKeyValueEnum:
+        "DocumentDateDefaultingsFromKeyValueRef",
+      configurableNumberDefaultingsFromKeyValueEnum:
+        "ConfigurableNumberDefaultingsFromKeyValueRef",
       configurableNumber2DefaultingsFromKeyValueEnum:
         "ConfigurableNumber2DefaultingsFromKeyValueRef",
       valueEnum: "ValueRef",
@@ -315,7 +319,12 @@ export const DebitNoteHeaderConfig = {
           columns: {
             AnyOfTypes: {
               groups: {
-                main: ["anyOfString", "anyOfNumber", "anyOfDateTime", "anyOfBoolean"],
+                main: [
+                  "anyOfString",
+                  "anyOfNumber",
+                  "anyOfDateTime",
+                  "anyOfBoolean",
+                ],
               },
             },
           },
@@ -474,7 +483,11 @@ export const DebitNoteHeaderConfig = {
           columns: {
             KeyValueFields: {
               groups: {
-                main: ["informationKeys", "informationKeysDisabled", "informationFreeKeys"],
+                main: [
+                  "informationKeys",
+                  "informationKeysDisabled",
+                  "informationFreeKeys",
+                ],
               },
             },
           },
@@ -746,7 +759,10 @@ export const DebitNoteHeaderConfig = {
           columns: {
             KeyValueCommitChecks: {
               groups: {
-                main: ["requiredKeyValueFields", "highConfidenceKeyValueFields"],
+                main: [
+                  "requiredKeyValueFields",
+                  "highConfidenceKeyValueFields",
+                ],
               },
             },
           },
@@ -799,7 +815,11 @@ export const DebitNoteHeaderConfig = {
           columns: {
             Dashboard: {
               groups: {
-                main: ["keyValueFields", "informationCardFields", "informationCardFieldsDisabled"],
+                main: [
+                  "keyValueFields",
+                  "informationCardFields",
+                  "informationCardFieldsDisabled",
+                ],
               },
             },
           },

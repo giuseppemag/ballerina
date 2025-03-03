@@ -2,12 +2,23 @@ import { BasicFun } from "../../../fun/state";
 
 export const PromiseRepo = {
   Default: {
-    mock: <T>(value: BasicFun<void, T>, error: BasicFun<void, any> = () => "error", probabilityOfSuccess: number = 0.9, averageDelay: number = 0.2) => {
+    mock: <T>(
+      value: BasicFun<void, T>,
+      error: BasicFun<void, any> = () => "error",
+      probabilityOfSuccess: number = 0.9,
+      averageDelay: number = 0.2,
+    ) => {
       const λ = 1 / averageDelay;
-      const delay = Math.log(1 - Math.random()) / (-λ); // sample the exponential distribution
-      return new Promise<T>((resolve, reject) => setTimeout(() => Math.random() <= probabilityOfSuccess ?
-        resolve(value())
-        : reject(error()), delay * 1000));
-    }
-  }
+      const delay = Math.log(1 - Math.random()) / -λ; // sample the exponential distribution
+      return new Promise<T>((resolve, reject) =>
+        setTimeout(
+          () =>
+            Math.random() <= probabilityOfSuccess
+              ? resolve(value())
+              : reject(error()),
+          delay * 1000,
+        ),
+      );
+    },
+  },
 };

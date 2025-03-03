@@ -10,42 +10,39 @@ export const InfiniteStreamLoader = <Element extends { Id: string }>() => {
 
   return Co.Seq([
     Co.SetState(
-      updaters.Core.loadingMore(
-        replaceWith(AsyncState.Default.loading())
-      )
+      updaters.Core.loadingMore(replaceWith(AsyncState.Default.loading())),
     ),
     Co.While(
       ([current]) => current.loadingMore.kind != "loaded",
       Co.GetState().then((current) => {
         return Co.Await(
           () => current.getChunk([current.position]),
-          () => "error" as const
+          () => "error" as const,
         ).then((apiResult) => {
           if (apiResult.kind == "l") {
             return Co.SetState(
               updaters.Core.loadingMore(
-                replaceWith(AsyncState.Default.loaded({}))
+                replaceWith(AsyncState.Default.loaded({})),
               ).then(
                 updaters.Coroutine.addLoadedChunk(
                   current.position.chunkIndex,
-                  apiResult.value
+                  apiResult.value,
                 ).then(
                   updaters.Core.position(
                     StreamPosition.Updaters.Core.shouldLoad(
-                      replaceWith<StreamPosition["shouldLoad"]>(false)
-                    )
-                  )
-                )
-              )
+                      replaceWith<StreamPosition["shouldLoad"]>(false),
+                    ),
+                  ),
+                ),
+              ),
             );
           } else {
             return Co.Wait(500);
           }
-        })
-      }
-      )
-    )
-  ])
+        });
+      }),
+    ),
+  ]);
 };
 
-export const Loader = InfiniteStreamLoader
+export const Loader = InfiniteStreamLoader;

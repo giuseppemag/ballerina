@@ -9,7 +9,7 @@ import { Child2Layout } from "../domains/child2/views/child2View";
 export const ParentLayout2: ParentView2 = (props) => {
   return (
     <>
-    	<h1>Parent</h1>
+      <h1>Parent</h1>
       <ParentTable {...props.context} />
       <ParentInputs
         counter={props.context.counter}
@@ -24,10 +24,10 @@ export const ParentLayout2: ParentView2 = (props) => {
       />
       <ChildrenWrapper>
         <ChildWrapper>
-          <props.Child1 {...props} view={Child1Layout}/>
+          <props.Child1 {...props} view={Child1Layout} />
         </ChildWrapper>
         <ChildWrapper>
-          <props.Child2 {...props} view={Child2Layout}/>
+          <props.Child2 {...props} view={Child2Layout} />
         </ChildWrapper>
       </ChildrenWrapper>
     </>

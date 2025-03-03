@@ -1,8 +1,8 @@
 import { Visibility } from "../../../visibility/state";
 
-export type Rect = { top: number; left: number; bottom: number; right: number; };
+export type Rect = { top: number; left: number; bottom: number; right: number };
 export const Rect = {
-  Operations:{
+  Operations: {
     IsElementInViewport(rect: Rect, windowRect: Rect): Visibility {
       return rect.top >= 0 &&
         // rect.left >= 0 &&
@@ -16,7 +16,6 @@ export const Rect = {
             )
           ? "partially-visible"
           : "fully-invisible";
-    }
-    
-  }
-}
+    },
+  },
+};

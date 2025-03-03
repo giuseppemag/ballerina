@@ -1,6 +1,6 @@
 import { Uncle } from "playground-core";
 
-export const UncleTable = (props: Uncle) =>
+export const UncleTable = (props: Uncle) => (
   <>
     <table>
       <tbody>
@@ -11,3 +11,4 @@ export const UncleTable = (props: Uncle) =>
       </tbody>
     </table>
   </>
+);

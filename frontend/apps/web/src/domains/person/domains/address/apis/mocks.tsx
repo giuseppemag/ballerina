@@ -4,7 +4,6 @@
 // import { City } from "../state";
 // import { Range } from "immutable"
 
-
 // export const AddressApi = {
 //   getCities: (): SearchableInfiniteStreamState<City>["getChunk"] => (_searchText) => (_streamPosition) => PromiseRepo.Default.mock(
 //     () => ({
