@@ -1,6 +1,5 @@
 import { simpleUpdater, Singleton, Collection } from "ballerina-core";
 
-
 export type InsideSingletons<Entities> = {
   [e_k in keyof Entities]: Singleton<Entities[e_k]>;
 };
@@ -16,8 +15,12 @@ export type SynchronizedEntities<Singletons, Collections> = {
 export const SynchronizedEntities = <Singletons, Collections>() => ({
   Updaters: {
     Core: {
-      ...simpleUpdater<SynchronizedEntities<Singletons, Collections>>()("singletons"),
-      ...simpleUpdater<SynchronizedEntities<Singletons, Collections>>()("collections"),
-    }
-  }
+      ...simpleUpdater<SynchronizedEntities<Singletons, Collections>>()(
+        "singletons",
+      ),
+      ...simpleUpdater<SynchronizedEntities<Singletons, Collections>>()(
+        "collections",
+      ),
+    },
+  },
 });

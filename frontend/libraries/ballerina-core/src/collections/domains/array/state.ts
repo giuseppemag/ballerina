@@ -1,9 +1,10 @@
 import { BasicFun, Fun } from "../../../fun/state";
 
 export const ArrayRepo = {
-	Operations: {
-		map: <a, b>(f: BasicFun<a, b>): Fun<Array<a>, Array<b>> => Fun(_ => _.map(f))
-	}
+  Operations: {
+    map: <a, b>(f: BasicFun<a, b>): Fun<Array<a>, Array<b>> =>
+      Fun((_) => _.map(f)),
+  },
 };
 
 declare global {
@@ -11,6 +12,6 @@ declare global {
     random(): T;
   }
 }
-Array.prototype.random = function <a>(this:Array<a>) : a {
-  return this[Math.floor((Math.random() * this.length))];
+Array.prototype.random = function <a>(this: Array<a>): a {
+  return this[Math.floor(Math.random() * this.length)];
 };

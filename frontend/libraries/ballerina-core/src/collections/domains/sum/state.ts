@@ -28,25 +28,25 @@ export const Sum = Object.assign(
     Updaters: {
       left: Fun(
         (_: BasicUpdater<a>): Updater<Sum<a, b>> =>
-          Updater(Sum<a, b>().Updaters.map2(_, id))
+          Updater(Sum<a, b>().Updaters.map2(_, id)),
       ),
       right: Fun(
         (_: BasicUpdater<b>): Updater<Sum<a, b>> =>
-          Updater(Sum<a, b>().Updaters.map2(id, _))
+          Updater(Sum<a, b>().Updaters.map2(id, _)),
       ),
       map2: <a, b, a1, b1>(
         l: BasicFun<a, a1>,
-        r: BasicFun<b, b1>
+        r: BasicFun<b, b1>,
       ): Fun<Sum<a, b>, Sum<a1, b1>> =>
         Sum<a, b>().Operations.fold<a, b, Sum<a1, b1>>(
           Fun(l).then(Sum<a1, b1>().Default.left),
-          Fun(r).then(Sum<a1, b1>().Default.right)
+          Fun(r).then(Sum<a1, b1>().Default.right),
         ),
     },
     Operations: {
       fold: <a, b, c>(
         l: BasicFun<a, c>,
-        r: BasicFun<b, c>
+        r: BasicFun<b, c>,
       ): Fun<Sum<a, b>, c> =>
         Fun((_) => (_.kind == "l" ? l(_.value) : r(_.value))),
     },
@@ -63,22 +63,24 @@ export const Sum = Object.assign(
         Updater(Sum.Updaters.map2(id, _)),
       map2: <a, b, a1, b1>(
         l: BasicFun<a, a1>,
-        r: BasicFun<b, b1>
+        r: BasicFun<b, b1>,
       ): Fun<Sum<a, b>, Sum<a1, b1>> =>
         Sum.Operations.fold<a, b, Sum<a1, b1>>(
           Fun(l).then(Sum.Default.left<a1, b1>),
-          Fun(r).then(Sum.Default.right<a1, b1>)
+          Fun(r).then(Sum.Default.right<a1, b1>),
         ),
     },
     Operations: {
       fold: <a, b, c>(
         l: BasicFun<a, c>,
-        r: BasicFun<b, c>
+        r: BasicFun<b, c>,
       ): Fun<Sum<a, b>, c> =>
         Fun((_) => (_.kind == "l" ? l(_.value) : r(_.value))),
-      ofOption: <a,b,>(onNone:BasicFun<Unit, b>) : BasicFun<Option<a>, Sum<b,a>> =>
-        Sum.Updaters.map2<Unit, a, b, a>(onNone, id)
+      ofOption: <a, b>(
+        onNone: BasicFun<Unit, b>,
+      ): BasicFun<Option<a>, Sum<b, a>> =>
+        Sum.Updaters.map2<Unit, a, b, a>(onNone, id),
     },
-  }
+  },
 );
 export const Either = Sum;

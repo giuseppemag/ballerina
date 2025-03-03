@@ -12,14 +12,19 @@ export const Updater = <e>(u: BasicUpdater<e>): Updater<e> => {
   return Object.assign(u, {
     fun: Fun(u),
     then: function (this: Updater<e>, other: BasicUpdater<e>): Updater<e> {
-      return Updater<e>(_ => other(this(_)));
+      return Updater<e>((_) => other(this(_)));
     },
-    thenMany: function (this: Updater<e>, others: Array<BasicUpdater<e>>): Updater<e> {
-      return Updater<e>(others.map(_ => Updater(_)).reduce((f, g) => f.then(g), this));
-    }
+    thenMany: function (
+      this: Updater<e>,
+      others: Array<BasicUpdater<e>>,
+    ): Updater<e> {
+      return Updater<e>(
+        others.map((_) => Updater(_)).reduce((f, g) => f.then(g), this),
+      );
+    },
   });
-}
-				     
+};
+
 /*export const Updater = Object.assign(<e>(_: BasicUpdater<e>): Updater<e> => {
   const u = _ as Updater<e>;
   u.fun = Fun(u);

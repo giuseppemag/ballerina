@@ -20,7 +20,7 @@ export type StreamPosition = {
 export const StreamPosition = {
   Default: (
     initialChunkSize: number,
-    shouldLoad: StreamingStatus = false
+    shouldLoad: StreamingStatus = false,
   ): StreamPosition => ({
     chunkSize: initialChunkSize,
     chunkIndex: 0,
@@ -31,29 +31,29 @@ export const StreamPosition = {
     Template: {
       changeChunkSize: (chunkSize: number): Updater<StreamPosition> =>
         StreamPosition.Updaters.Core.chunkSize(replaceWith(chunkSize)).then(
-          StreamPosition.Updaters.Template.reload()
+          StreamPosition.Updaters.Template.reload(),
         ),
       reload: (): Updater<StreamPosition> =>
         StreamPosition.Updaters.Core.lastModifiedTime(replaceWith(Date.now()))
           .then(
             StreamPosition.Updaters.Core.shouldLoad(
-              replaceWith<StreamPosition["shouldLoad"]>("reload")
-            )
+              replaceWith<StreamPosition["shouldLoad"]>("reload"),
+            ),
           )
           .then(
             StreamPosition.Updaters.Core.chunkIndex(
-              replaceWith<StreamPosition["chunkIndex"]>(0)
-            )
+              replaceWith<StreamPosition["chunkIndex"]>(0),
+            ),
           ),
       loadMore: (): Updater<StreamPosition> =>
         StreamPosition.Updaters.Core.chunkIndex((_) => _ + 1).then(
           StreamPosition.Updaters.Core.lastModifiedTime(
-            replaceWith(Date.now())
+            replaceWith(Date.now()),
           ).then(
             StreamPosition.Updaters.Core.shouldLoad(
-              replaceWith<StreamPosition["shouldLoad"]>("loadMore")
-            )
-          )
+              replaceWith<StreamPosition["shouldLoad"]>("loadMore"),
+            ),
+          ),
         ),
     },
     Core: {
@@ -71,13 +71,14 @@ export type Chunk<Element extends Identifiable> = {
   data: OrderedMap<Element["Id"], Element>;
 };
 export const Chunk = <Element extends Identifiable>() => ({
-  Default:(
+  Default: (
     hasMoreValues: boolean,
     data: OrderedMap<Element["Id"], Element>,
-  ) : Chunk<Element> => ({
-    hasMoreValues, data
-  })
-})
+  ): Chunk<Element> => ({
+    hasMoreValues,
+    data,
+  }),
+});
 
 export type InfiniteStreamState<Element extends Identifiable> = {
   loadingMore: AsyncState<Unit>;
@@ -90,7 +91,7 @@ export const InfiniteStreamState = <Element extends Identifiable>() => ({
   Default: (
     initialChunkSize: number,
     getChunk: InfiniteStreamState<Element>["getChunk"],
-    shouldLoad?: StreamingStatus
+    shouldLoad?: StreamingStatus,
   ): InfiniteStreamState<Element> => ({
     loadingMore: AsyncState.Default.unloaded(),
     loadedElements: OrderedMap(),
@@ -108,10 +109,10 @@ export const InfiniteStreamState = <Element extends Identifiable>() => ({
     Coroutine: {
       addLoadedChunk: (
         chunkIndex: number,
-        newChunk: Chunk<Element>
+        newChunk: Chunk<Element>,
       ): Updater<InfiniteStreamState<Element>> =>
         InfiniteStreamState<Element>().Updaters.Core.loadedElements((_) =>
-          _.set(chunkIndex, newChunk)
+          _.set(chunkIndex, newChunk),
         ),
     },
     Core: {
@@ -119,7 +120,7 @@ export const InfiniteStreamState = <Element extends Identifiable>() => ({
       ...simpleUpdater<InfiniteStreamState<Element>>()("loadingMore"),
       ...simpleUpdater<InfiniteStreamState<Element>>()("loadedElements"),
       whenNotAlreadyLoading: (
-        _: BasicUpdater<InfiniteStreamState<Element>>
+        _: BasicUpdater<InfiniteStreamState<Element>>,
       ): Updater<InfiniteStreamState<Element>> => {
         return Updater((current) => {
           if (InfiniteStreamState<Element>().Operations.loadNextPage(current)) {
@@ -129,7 +130,7 @@ export const InfiniteStreamState = <Element extends Identifiable>() => ({
         });
       },
       position: (
-        positionUpdater: Updater<InfiniteStreamState<Element>["position"]>
+        positionUpdater: Updater<InfiniteStreamState<Element>["position"]>,
       ): Updater<InfiniteStreamState<Element>> =>
         Updater((current) => {
           const newPosition = positionUpdater(current.position);
@@ -137,34 +138,34 @@ export const InfiniteStreamState = <Element extends Identifiable>() => ({
           if (newPosition.chunkSize != current.position.chunkSize)
             newState =
               InfiniteStreamState<Element>().Updaters.Core.clearLoadedElements()(
-                newState
+                newState,
               );
           return { ...newState, position: newPosition };
         }),
       clearLoadedElements: (): Updater<InfiniteStreamState<Element>> =>
         InfiniteStreamState<Element>().Updaters.Core.loadedElements((_) =>
-          OrderedMap()
+          OrderedMap(),
         ),
     },
     Template: {
       reload: (
-        getChunk: InfiniteStreamState<Element>["getChunk"]
+        getChunk: InfiniteStreamState<Element>["getChunk"],
       ): Updater<InfiniteStreamState<Element>> =>
         InfiniteStreamState<Element>()
           .Updaters.Core.position(StreamPosition.Updaters.Template.reload())
           .then(
-            InfiniteStreamState<Element>().Updaters.Core.clearLoadedElements()
+            InfiniteStreamState<Element>().Updaters.Core.clearLoadedElements(),
           )
           .then(
             InfiniteStreamState<Element>().Updaters.Core.getChunk(
-              replaceWith(getChunk)
-            )
+              replaceWith(getChunk),
+            ),
           ),
       loadMore: (): Updater<InfiniteStreamState<Element>> =>
         InfiniteStreamState<Element>().Updaters.Core.whenNotAlreadyLoading(
           InfiniteStreamState<Element>().Updaters.Core.position(
-            StreamPosition.Updaters.Template.loadMore()
-          )
+            StreamPosition.Updaters.Template.loadMore(),
+          ),
         ),
     },
   },

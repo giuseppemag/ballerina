@@ -20,4 +20,3 @@ export const ParentTable = (props: Parent) => (
     <Text>{props.inputString.status.value}</Text>
   </View>
 );
-

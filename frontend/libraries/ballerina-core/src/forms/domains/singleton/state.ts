@@ -1,74 +1,242 @@
-import { List, OrderedMap, OrderedSet } from "immutable"
-import { BasicUpdater, id, BasicPredicate, SimpleCallback, Unit, Debounced, Synchronized, unit, replaceWith, CoTypedFactory, Debounce, Synchronize, BasicFun, FormFieldPredicateEvaluation, FormFieldPredicateEvaluations, FieldName } from "../../../../main"
-import { Template, View } from "../../../template/state"
-import { Value } from "../../../value/state"
+import { List, OrderedMap, OrderedSet } from "immutable";
+import {
+  BasicUpdater,
+  id,
+  BasicPredicate,
+  SimpleCallback,
+  Unit,
+  Debounced,
+  Synchronized,
+  unit,
+  replaceWith,
+  CoTypedFactory,
+  Debounce,
+  Synchronize,
+  BasicFun,
+  FormFieldPredicateEvaluation,
+  FormFieldPredicateEvaluations,
+  FieldName,
+} from "../../../../main";
+import { Template, View } from "../../../template/state";
+import { Value } from "../../../value/state";
 
-export type ToPathUnions<a> = a[keyof a]
+export type ToPathUnions<a> = a[keyof a];
 export type Paths<Entity, NestedPaths = Unit> = {
-  [f in keyof Entity]:
-    f extends keyof NestedPaths ?
-      [f, ToPathUnions<NestedPaths[f]>]
-    : [f]
-}
+  [f in keyof Entity]: f extends keyof NestedPaths
+    ? [f, ToPathUnions<NestedPaths[f]>]
+    : [f];
+};
 
-export type ValidationError = string
-export type FieldValidation = Array<ValidationError>
-export type Path = Array<string>
-export type ValidationErrorWithPath = [Path, ValidationError]
-export type FieldValidationWithPath = Array<ValidationErrorWithPath>
+export type ValidationError = string;
+export type FieldValidation = Array<ValidationError>;
+export type Path = Array<string>;
+export type ValidationErrorWithPath = [Path, ValidationError];
+export type FieldValidationWithPath = Array<ValidationErrorWithPath>;
 export const FieldValidationWithPath = {
-  Default:{
-    fromFieldValidation:(_:FieldValidation) : FieldValidationWithPath => 
-      _.map(_ => ([[], _])),      
-  }
-}
-export type FormValidatorSynchronized = Synchronized<Unit, FieldValidationWithPath>
-export type CommonFormState = { modifiedByUser: boolean, validation: Debounced<FormValidatorSynchronized> }
+  Default: {
+    fromFieldValidation: (_: FieldValidation): FieldValidationWithPath =>
+      _.map((_) => [[], _]),
+  },
+};
+export type FormValidatorSynchronized = Synchronized<
+  Unit,
+  FieldValidationWithPath
+>;
+export type CommonFormState = {
+  modifiedByUser: boolean;
+  validation: Debounced<FormValidatorSynchronized>;
+};
 export const CommonFormState = {
   Default: (): CommonFormState => ({
     modifiedByUser: false,
     // start the validation so that it immediately runs and registers the first errors such as missing values and such
-    validation: Debounced.Updaters.Template.value<FormValidatorSynchronized>(Synchronized.Updaters.value(replaceWith(unit)))(Debounced.Default(Synchronized.Default(unit)))
-  })
-}
-export type EntityFormState<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> =
-  { formFieldStates: { [f in Fields]: { customFormState: FieldStates[f], commonFormState: CommonFormState, formFieldStates: FieldStates[f], elementFormStates: FieldStates[f] }}, 
-    commonFormState: CommonFormState }
+    validation: Debounced.Updaters.Template.value<FormValidatorSynchronized>(
+      Synchronized.Updaters.value(replaceWith(unit)),
+    )(Debounced.Default(Synchronized.Default(unit))),
+  }),
+};
+export type EntityFormState<
+  Entity,
+  Fields extends keyof Entity & keyof FieldStates,
+  FieldStates,
+  Context,
+  ForeignMutationsExpected,
+> = {
+  formFieldStates: {
+    [f in Fields]: {
+      customFormState: FieldStates[f];
+      commonFormState: CommonFormState;
+      formFieldStates: FieldStates[f];
+      elementFormStates: FieldStates[f];
+    };
+  };
+  commonFormState: CommonFormState;
+};
 
-export type EntityAction = {kind: "add"} | {kind: "remove"} | {kind: "move", to: number} | {kind: "duplicate"} | {kind: "insert"}
-export type EntityFormContext<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> =
-  Context & EntityFormState<Entity, Fields, FieldStates, Context, ForeignMutationsExpected> & { elementVisibilities: FormFieldPredicateEvaluation[] | undefined, elementDisabledFields: FormFieldPredicateEvaluation | undefined, extraContext: any, visibilities: FormFieldPredicateEvaluation | undefined, disabledFields: FormFieldPredicateEvaluation | undefined, label?: string } & Value<Entity> & { rootValue: Entity }
-export type OnChange<Entity> = (updater: BasicUpdater<Entity>, path: List<string | number | EntityAction>) => void
-export type EntityFormForeignMutationsExpected<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> =
-  ForeignMutationsExpected & { onChange: OnChange<Entity> }
+export type EntityAction =
+  | { kind: "add" }
+  | { kind: "remove" }
+  | { kind: "move"; to: number }
+  | { kind: "duplicate" }
+  | { kind: "insert" };
+export type EntityFormContext<
+  Entity,
+  Fields extends keyof Entity & keyof FieldStates,
+  FieldStates,
+  Context,
+  ForeignMutationsExpected,
+> = Context &
+  EntityFormState<
+    Entity,
+    Fields,
+    FieldStates,
+    Context,
+    ForeignMutationsExpected
+  > & {
+    elementVisibilities: FormFieldPredicateEvaluation[] | undefined;
+    elementDisabledFields: FormFieldPredicateEvaluation | undefined;
+    extraContext: any;
+    visibilities: FormFieldPredicateEvaluation | undefined;
+    disabledFields: FormFieldPredicateEvaluation | undefined;
+    label?: string;
+  } & Value<Entity> & { rootValue: Entity };
+export type OnChange<Entity> = (
+  updater: BasicUpdater<Entity>,
+  path: List<string | number | EntityAction>,
+) => void;
+export type EntityFormForeignMutationsExpected<
+  Entity,
+  Fields extends keyof Entity & keyof FieldStates,
+  FieldStates,
+  Context,
+  ForeignMutationsExpected,
+> = ForeignMutationsExpected & {
+  onChange: OnChange<Entity>;
+};
 
-export type FieldTemplates<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> = {
-  [f in Fields]: EmbeddedFieldTemplate<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>
-}
+export type FieldTemplates<
+  Entity,
+  Fields extends keyof Entity & keyof FieldStates,
+  FieldStates,
+  Context,
+  ForeignMutationsExpected,
+> = {
+  [f in Fields]: EmbeddedFieldTemplate<
+    Entity,
+    Fields,
+    FieldStates,
+    Context,
+    ForeignMutationsExpected
+  >;
+};
 
-export type EntityFormView<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> =
-  View<EntityFormContext<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>, EntityFormState<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>, EntityFormForeignMutationsExpected<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>, {
-    EmbeddedFields: FieldTemplates<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>,
-    VisibleFieldKeys: OrderedSet<FieldName>
-    DisabledFieldKeys: OrderedSet<FieldName>
-  }>
-export type EntityFormTemplate<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> =
-  Template<
-    EntityFormContext<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>,
-    EntityFormState<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>,
-    EntityFormForeignMutationsExpected<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>,
-    EntityFormView<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>
+export type EntityFormView<
+  Entity,
+  Fields extends keyof Entity & keyof FieldStates,
+  FieldStates,
+  Context,
+  ForeignMutationsExpected,
+> = View<
+  EntityFormContext<
+    Entity,
+    Fields,
+    FieldStates,
+    Context,
+    ForeignMutationsExpected
+  >,
+  EntityFormState<
+    Entity,
+    Fields,
+    FieldStates,
+    Context,
+    ForeignMutationsExpected
+  >,
+  EntityFormForeignMutationsExpected<
+    Entity,
+    Fields,
+    FieldStates,
+    Context,
+    ForeignMutationsExpected
+  >,
+  {
+    EmbeddedFields: FieldTemplates<
+      Entity,
+      Fields,
+      FieldStates,
+      Context,
+      ForeignMutationsExpected
+    >;
+    VisibleFieldKeys: OrderedSet<FieldName>;
+    DisabledFieldKeys: OrderedSet<FieldName>;
+  }
+>;
+export type EntityFormTemplate<
+  Entity,
+  Fields extends keyof Entity & keyof FieldStates,
+  FieldStates,
+  Context,
+  ForeignMutationsExpected,
+> = Template<
+  EntityFormContext<
+    Entity,
+    Fields,
+    FieldStates,
+    Context,
+    ForeignMutationsExpected
+  >,
+  EntityFormState<
+    Entity,
+    Fields,
+    FieldStates,
+    Context,
+    ForeignMutationsExpected
+  >,
+  EntityFormForeignMutationsExpected<
+    Entity,
+    Fields,
+    FieldStates,
+    Context,
+    ForeignMutationsExpected
+  >,
+  EntityFormView<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>
+>;
+export type EmbeddedFieldTemplate<
+  Entity,
+  Fields extends keyof Entity & keyof FieldStates,
+  FieldStates,
+  Context,
+  ForeignMutationsExpected,
+> = Template<
+  EntityFormContext<
+    Entity,
+    Fields,
+    FieldStates,
+    Context,
+    ForeignMutationsExpected
+  > & { disabled: boolean },
+  EntityFormState<
+    Entity,
+    Fields,
+    FieldStates,
+    Context,
+    ForeignMutationsExpected
+  >,
+  EntityFormForeignMutationsExpected<
+    Entity,
+    Fields,
+    FieldStates,
+    Context,
+    ForeignMutationsExpected
   >
-export type EmbeddedFieldTemplate<Entity, Fields extends (keyof Entity) & (keyof FieldStates), FieldStates, Context, ForeignMutationsExpected> =
-  Template<
-    EntityFormContext<Entity, Fields, FieldStates, Context, ForeignMutationsExpected> & { disabled:boolean },
-    EntityFormState<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>,
-    EntityFormForeignMutationsExpected<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>
-  >
+>;
 
 export type FormStateFromEntity<E, S> = {
-  formFieldStates: { [f in keyof E]: f extends keyof S ? {customFormState: S[f], commonFormState: CommonFormState} : {customFormState: Unit, commonFormState: CommonFormState} }
-} & {commonFormState: CommonFormState}
+  formFieldStates: {
+    [f in keyof E]: f extends keyof S
+      ? { customFormState: S[f]; commonFormState: CommonFormState }
+      : { customFormState: Unit; commonFormState: CommonFormState };
+  };
+} & { commonFormState: CommonFormState };
 
 // type OtherNestedThing = { x:boolean, y:string }
 // type Address = { city:string, street:string, number:number, other:OtherNestedThing }

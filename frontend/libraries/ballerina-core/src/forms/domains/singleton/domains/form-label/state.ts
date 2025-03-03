@@ -1,2 +1,1 @@
-
-export type FormLabel = { label?: string; tooltip?: string; details?: string; };
+export type FormLabel = { label?: string; tooltip?: string; details?: string };

@@ -27,9 +27,17 @@ export const PersonConfig = {
     person: {
       name: faker.person.firstName(),
       surname: faker.person.lastName(),
-      birthday: new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45),
-      gender: CollectionSelection<CollectionReference>().Default.right("no selection"),
-      favoriteColor: CollectionSelection<CollectionReference>().Default.right("no selection"),
+      birthday: new Date(
+        Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45,
+      ),
+      gender:
+        CollectionSelection<CollectionReference>().Default.right(
+          "no selection",
+        ),
+      favoriteColor:
+        CollectionSelection<CollectionReference>().Default.right(
+          "no selection",
+        ),
       departments: OrderedMap(),
     },
     mailing: {
@@ -39,11 +47,14 @@ export const PersonConfig = {
     address: {
       street: faker.location.street(),
       number: Math.floor(Math.random() * 500),
-      city: Math.random() > 0.5 ?
-        CollectionSelection<CollectionReference>().Default.right("no selection")
-        :
-        CollectionSelection<CollectionReference>().Default.left(City.Default(v4(), faker.location.city()))
-    }
-  }
-  )
+      city:
+        Math.random() > 0.5
+          ? CollectionSelection<CollectionReference>().Default.right(
+              "no selection",
+            )
+          : CollectionSelection<CollectionReference>().Default.left(
+              City.Default(v4(), faker.location.city()),
+            ),
+    },
+  }),
 };

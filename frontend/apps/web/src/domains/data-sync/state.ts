@@ -37,7 +37,7 @@ export const DataSync = () => ({
   Default: (
     user: UserData | undefined,
     addresses: OrderedMap<Guid, Address>,
-    invoices: OrderedMap<Guid, Invoice>
+    invoices: OrderedMap<Guid, Invoice>,
   ): DataSync => ({
     entities: Entities.Default(user, addresses, invoices),
     queue: OrderedMap(),
@@ -49,7 +49,7 @@ export const DataSync = () => ({
     },
   },
   ForeignMutations: (
-    _: ForeignMutationsInput<DataSyncReadonlyContext, DataSyncWritableState>
+    _: ForeignMutationsInput<DataSyncReadonlyContext, DataSyncWritableState>,
   ) => {
     const [
       SingletonLoaders,
@@ -73,12 +73,12 @@ export const DataSync = () => ({
       updateSingleton:
         <k extends keyof Singletons & keyof SingletonMutations>(
           k: k,
-          entityId: Guid
+          entityId: Guid,
         ) =>
         <mutation extends keyof SingletonMutations[k] & string>(
           mutation: mutation,
           mutationArg: SingletonMutations[k][mutation],
-          updater: BasicUpdater<Singletons[k]>
+          updater: BasicUpdater<Singletons[k]>,
         ) => {
           if (
             _.context.queue.count(
@@ -86,10 +86,10 @@ export const DataSync = () => ({
                 value.entityId == entityId &&
                 value.entity == k &&
                 value.mutation == (mutation as any) &&
-                SingletonMutationArgumentComparators[k][mutation](   
-                  [
+                SingletonMutationArgumentComparators[k][mutation]([
                   value.mutationArg as any as SingletonMutations[k][mutation],
-                  mutationArg ]) == "=="
+                  mutationArg,
+                ]) == "==",
             ) < 2
           ) {
             _.setState(
@@ -103,12 +103,12 @@ export const DataSync = () => ({
                     dirtySetter: (_) => SingletonDirtySetters[k](_),
                     operation: SingletonLoaders[k](
                       mutation as any,
-                      mutationArg
+                      mutationArg,
                     ),
                     mutationArg: mutationArg as any,
                   },
-                ])
-              )
+                ]),
+              ),
             );
           } else {
             _.setState(SingletonUpdaters[k]([unit, updater]));
@@ -118,15 +118,15 @@ export const DataSync = () => ({
         <
           k extends keyof Collections &
             keyof CollectionMutations &
-            keyof WholeCollectionMutations
+            keyof WholeCollectionMutations,
         >(
           k: k,
-          entityId: Guid
+          entityId: Guid,
         ) =>
         <mutation extends keyof CollectionMutations[k] & string>(
           mutation: mutation,
           mutationArg: CollectionMutations[k][mutation],
-          updater: BasicUpdater<Collections[k]>
+          updater: BasicUpdater<Collections[k]>,
         ) => {
           if (
             _.context.queue.count(
@@ -137,7 +137,7 @@ export const DataSync = () => ({
                 CollectionEntitiesMutationArgumentComparators[k][mutation]([
                   value.mutation as any as CollectionMutations[k][mutation],
                   mutationArg,
-                ]) == "=="
+                ]) == "==",
             ) < 2
           ) {
             _.setState(
@@ -152,12 +152,12 @@ export const DataSync = () => ({
                     operation: CollectionLoaders[k](
                       mutation as any,
                       mutationArg,
-                      entityId
+                      entityId,
                     ),
                     mutationArg: mutationArg as any,
                   },
-                ])
-              )
+                ]),
+              ),
             );
           } else {
             _.setState(CollectionUpdaters[k]([entityId, updater]));
@@ -166,9 +166,9 @@ export const DataSync = () => ({
       addElementToCollection:
         <
           k extends (keyof Collections & keyof CollectionMutations) &
-            keyof CollectionMutations
+            keyof CollectionMutations,
         >(
-          k: k
+          k: k,
         ) =>
         (entityId: Guid, newEntity: CollectionEntity<Collections[k]>) => {
           if (
@@ -176,7 +176,7 @@ export const DataSync = () => ({
               (value) =>
                 value.entityId == entityId &&
                 value.entity == k &&
-                value.mutation == "add"
+                value.mutation == "add",
             )
           ) {
             _.setState(
@@ -188,18 +188,18 @@ export const DataSync = () => ({
                   entityId,
                   dirtySetter: (_) => CollectionDirtySetters[k](entityId, _),
                   operation: CollectionLoaders[k].add(entityId, newEntity),
-                  mutationArg: "add"
+                  mutationArg: "add",
                 },
-              ])
+              ]),
             );
           }
         },
       removeElementFromCollection:
         <
           k extends (keyof Collections & keyof CollectionMutations) &
-            keyof CollectionMutations
+            keyof CollectionMutations,
         >(
-          k: k
+          k: k,
         ) =>
         (entityId: Guid) => {
           if (
@@ -207,7 +207,7 @@ export const DataSync = () => ({
               (value) =>
                 value.entityId == entityId &&
                 value.entity == k &&
-                value.mutation == "remove"
+                value.mutation == "remove",
             )
           ) {
             _.setState(
@@ -219,9 +219,9 @@ export const DataSync = () => ({
                   entityId,
                   dirtySetter: (_) => CollectionDirtySetters[k](entityId, _),
                   operation: CollectionLoaders[k].remove(entityId),
-                  mutationArg: "remove"
+                  mutationArg: "remove",
                 },
-              ])
+              ]),
             );
           }
         },

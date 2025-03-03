@@ -1,20 +1,27 @@
 {
-    "name": "frontend-framework",
-    "private": true,
-    "scripts": {
-        "marp-to-pdf": "npx @marp-team/marp-cli main.md -o output.pdf --allow-local-files"
-    },
-    "workspaces": {
-        "packages": [
-            "apps/test",
-            "apps/web",
-            "apps/mobile",
-            "libraries/ballerina-core",
-            "libraries/create-domain",
-            "libraries/playground-core"
-        ],
-        "nohoist": [
-            "**"
-        ]
-    }
+  "name": "frontend-framework",
+  "private": true,
+  "scripts": {
+    "marp-to-pdf": "npx @marp-team/marp-cli main.md -o output.pdf --allow-local-files",
+    "prettier": "npx prettier --write .",
+    "compile-web": "cd apps/web && yarn tsc",
+    "compile-mobile": "cd apps/mobile && yarn tsc",
+    "compile-test": "cd apps/test && yarn tsc",
+    "compile-ballerina-core": "cd libraries/ballerina-core && yarn tsc",
+    "compile-create-domain": "cd libraries/create-domain && yarn tsc",
+    "compile-playground-core": "cd libraries/playground-core && yarn tsc"
+  },
+  "workspaces": {
+    "packages": [
+      "apps/test",
+      "apps/web",
+      "apps/mobile",
+      "libraries/ballerina-core",
+      "libraries/create-domain",
+      "libraries/playground-core"
+    ],
+    "nohoist": [
+      "**"
+    ]
+  }
 }

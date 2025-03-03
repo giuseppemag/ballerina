@@ -1,29 +1,32 @@
-export type RGBAColor = { readonly r: number, readonly g: number, readonly b: number, readonly a: number }
+export type RGBAColor = {
+  readonly r: number;
+  readonly g: number;
+  readonly b: number;
+  readonly a: number;
+};
 export const RGBAColor = {
-  Default:
-    Object.assign((r: number, g: number, b: number, a: number): RGBAColor => ({ r, g, b, a }),
-      {
-        zero: (): RGBAColor => RGBAColor.Default(0, 0, 0, 0),
-        fromHSL: (hue: number, sat: number, light: number): RGBAColor => {
-          let t2;
-          hue = hue / 60;
-          if (light <= 0.5) {
-            t2 = light * (sat + 1);
-          } else {
-            t2 = light + sat - light * sat;
-          }
-          const t1 = light * 2 - t2;
-          const r = RGBAColor.Operations.hueToRgb(t1, t2, hue + 2) * 255;
-          const g = RGBAColor.Operations.hueToRgb(t1, t2, hue) * 255;
-          const b = RGBAColor.Operations.hueToRgb(t1, t2, hue - 2) * 255;
-          return { r: r, g: g, b: b, a: 1.0 };
-        },
-      }),
+  Default: Object.assign(
+    (r: number, g: number, b: number, a: number): RGBAColor => ({ r, g, b, a }),
+    {
+      zero: (): RGBAColor => RGBAColor.Default(0, 0, 0, 0),
+      fromHSL: (hue: number, sat: number, light: number): RGBAColor => {
+        let t2;
+        hue = hue / 60;
+        if (light <= 0.5) {
+          t2 = light * (sat + 1);
+        } else {
+          t2 = light + sat - light * sat;
+        }
+        const t1 = light * 2 - t2;
+        const r = RGBAColor.Operations.hueToRgb(t1, t2, hue + 2) * 255;
+        const g = RGBAColor.Operations.hueToRgb(t1, t2, hue) * 255;
+        const b = RGBAColor.Operations.hueToRgb(t1, t2, hue - 2) * 255;
+        return { r: r, g: g, b: b, a: 1.0 };
+      },
+    },
+  ),
 
-
-  Updaters: {
-
-  },
+  Updaters: {},
   Operations: {
     toHsl: ({ r, g, b }: RGBAColor) => {
       let min,
@@ -82,6 +85,6 @@ export const RGBAColor = {
       else if (hue < 3) return t2;
       else if (hue < 4) return (t2 - t1) * (4 - hue) + t1;
       else return t1;
-    }
-  }
-}
+    },
+  },
+};

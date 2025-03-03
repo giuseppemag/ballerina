@@ -7,9 +7,9 @@ import { Template, TemplateProps } from "../template/state";
 
 export type CoroutineComponentOptions<context, state> = {
   interval?: number;
-  key?: BasicFun<TemplateProps<context & state , state, Unit>, string>;
+  key?: BasicFun<TemplateProps<context & state, state, Unit>, string>;
   restartWhenFinished?: boolean;
-  runFilter?: BasicFun<TemplateProps<context & state , state, Unit>, boolean>
+  runFilter?: BasicFun<TemplateProps<context & state, state, Unit>, boolean>;
 };
 
 const Co = Coroutine;
@@ -17,7 +17,7 @@ const Co = Coroutine;
 type CoroutineReadonlyContext<context, state> = {
   initialCoroutine: Coroutine<context, state, Unit>;
   options?: CoroutineComponentOptions<context, state>;
-}
+};
 
 type CoroutineComponentProps<context, state> = {
   context: context;
@@ -50,7 +50,7 @@ class CoroutineComponent<context, state> extends React.Component<
       const step = Co.Tick(
         this.props.context,
         this.state.currentCoroutine,
-        currTimestamp - lastTimestamp
+        currTimestamp - lastTimestamp,
       );
       lastTimestamp = currTimestamp;
       if (!this.running) return;
@@ -65,7 +65,7 @@ class CoroutineComponent<context, state> extends React.Component<
           () =>
             step.state && this.running
               ? this.props.setState(step.state)
-              : undefined
+              : undefined,
         );
       } else {
         this.setState(
@@ -73,7 +73,7 @@ class CoroutineComponent<context, state> extends React.Component<
           () =>
             step.state && this.running
               ? this.props.setState(Updater(step.state))
-              : undefined
+              : undefined,
         );
       }
       // if (this.running)
@@ -84,8 +84,8 @@ class CoroutineComponent<context, state> extends React.Component<
     };
     this.animationFrameId = setInterval(
       tick,
-      this.props.options?.interval || 250
-    )
+      this.props.options?.interval || 250,
+    );
   }
 
   componentWillUnmount(): void {
@@ -102,18 +102,22 @@ class CoroutineComponent<context, state> extends React.Component<
   }
 }
 
-export const CoroutineTemplate = <context, state, foreignMutations>() => 
-  Template.Default<context & CoroutineReadonlyContext<context, state>, state, foreignMutations>(props => 
+export const CoroutineTemplate = <context, state, foreignMutations>() =>
+  Template.Default<
+    context & CoroutineReadonlyContext<context, state>,
+    state,
+    foreignMutations
+  >((props) => (
     <CoroutineComponent
       key={props.context.options?.key?.({
         context: props.context,
         setState: props.setState,
         foreignMutations: unit,
-        view: unit
+        view: unit,
       })}
       context={props.context}
       initialCoroutine={props.context.initialCoroutine}
       setState={props.setState}
-      options={props.context.options}    
+      options={props.context.options}
     />
-  )
+  ));
