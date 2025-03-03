@@ -547,9 +547,9 @@ Todo (✅/❌)
     ✅ convert dash to camelCase to create-domain
   ❌ CI
     ✅ automate tests on push
-    ❌ tag-based release
+    ✅ tag-based release
     ✅ formatting
-    ❌ commit VSCode settings
+    ✅ commit VSCode settings
     ❌ test docker image build (potentially as part of integration tests)
     ❌ CI in sync with pre-commit hooks
   ❌ publish
