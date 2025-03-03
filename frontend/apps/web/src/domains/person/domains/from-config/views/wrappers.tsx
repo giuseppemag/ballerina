@@ -30,37 +30,30 @@ export const PersonContainerFormView: EntityFormView<
       <table>
         <tbody>
           {/* {JSON.stringify(props.VisibleFieldKeys.toArray())} */}
-          {props.context.layout
-            .valueSeq()
-            .map((tab) =>
-              tab.columns
-                .valueSeq()
-                .map((column) => (
-                  <tr style={{ display: "block", float: "left" }}>
-                    {column.groups
-                      .valueSeq()
-                      .map((group) =>
-                        group
-                          .filter((fieldName) =>
-                            props.VisibleFieldKeys.has(fieldName),
-                          )
-                          .map((fieldName) => (
-                            <td style={{ display: "block" }}>
-                              {props.EmbeddedFields[fieldName]({
-                                ...props,
-                                context: {
-                                  ...props.context,
-                                  disabled:
-                                    props.DisabledFieldKeys.has(fieldName),
-                                },
-                                view: unit,
-                              })}
-                            </td>
-                          )),
-                      )}
-                  </tr>
-                )),
-            )}
+          {props.context.layout.valueSeq().map((tab) =>
+            tab.columns.valueSeq().map((column) => (
+              <tr style={{ display: "block", float: "left" }}>
+                {column.groups.valueSeq().map((group) =>
+                  group
+                    .filter((fieldName) =>
+                      props.VisibleFieldKeys.has(fieldName),
+                    )
+                    .map((fieldName) => (
+                      <td style={{ display: "block" }}>
+                        {props.EmbeddedFields[fieldName]({
+                          ...props,
+                          context: {
+                            ...props.context,
+                            disabled: props.DisabledFieldKeys.has(fieldName),
+                          },
+                          view: unit,
+                        })}
+                      </td>
+                    )),
+                )}
+              </tr>
+            )),
+          )}
         </tbody>
       </table>
     </>
@@ -80,37 +73,30 @@ export const PersonNestedContainerFormView: EntityFormView<
       <table>
         <tbody>
           {/* {JSON.stringify(props.VisibleFieldKeys.toArray())} */}
-          {props.context.layout
-            .valueSeq()
-            .map((tab) =>
-              tab.columns
-                .valueSeq()
-                .map((column) => (
-                  <tr style={{ display: "block", float: "left" }}>
-                    {column.groups
-                      .valueSeq()
-                      .map((group) =>
-                        group
-                          .filter((fieldName) =>
-                            props.VisibleFieldKeys.has(fieldName),
-                          )
-                          .map((fieldName) => (
-                            <td style={{ display: "block" }}>
-                              {props.EmbeddedFields[fieldName]({
-                                ...props,
-                                context: {
-                                  ...props.context,
-                                  disabled:
-                                    props.DisabledFieldKeys.has(fieldName),
-                                },
-                                view: unit,
-                              })}
-                            </td>
-                          )),
-                      )}
-                  </tr>
-                )),
-            )}
+          {props.context.layout.valueSeq().map((tab) =>
+            tab.columns.valueSeq().map((column) => (
+              <tr style={{ display: "block", float: "left" }}>
+                {column.groups.valueSeq().map((group) =>
+                  group
+                    .filter((fieldName) =>
+                      props.VisibleFieldKeys.has(fieldName),
+                    )
+                    .map((fieldName) => (
+                      <td style={{ display: "block" }}>
+                        {props.EmbeddedFields[fieldName]({
+                          ...props,
+                          context: {
+                            ...props.context,
+                            disabled: props.DisabledFieldKeys.has(fieldName),
+                          },
+                          view: unit,
+                        })}
+                      </td>
+                    )),
+                )}
+              </tr>
+            )),
+          )}
         </tbody>
       </table>
     </>
