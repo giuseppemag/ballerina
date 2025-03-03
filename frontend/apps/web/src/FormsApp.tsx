@@ -4,7 +4,7 @@ import { unit, FormParsingResult, FormsParserState, FormRunnerState, FormsParser
 import { List, Set, Map } from "immutable";
 // import { PersonView } from "./domains/person/views/main-view";
 import { PersonContainerFormView, PersonNestedContainerFormView, CreatePersonSubmitButtonWrapper, EditPersonSubmitButtonWrapper } from "./domains/person/domains/from-config/views/wrappers";
-import { PersonFromConfigApis, PersonConfigFormsLeafPredicates, Person } from "playground-core";
+import { PersonFromConfigApis, Person } from "playground-core";
 import { PersonFieldViews } from "./domains/person-from-config/views/field-views";
 // import { PersonForm } from "./domains/person/template";
 import { fieldTypeConverters } from "./domains/person/apis/field-converters";
@@ -43,7 +43,7 @@ export const FormsApp = (props: {}) => {
 	if(configFormsParser.formsConfig.sync.kind == "loaded" && 
 		configFormsParser.formsConfig.sync.value.kind == "r"
 	) {
-		return <ol>{configFormsParser.formsConfig.sync.value.value.map(_ => <li>{_}</li>)}</ol>
+		return <ol>{configFormsParser.formsConfig.sync.value.value.map((_: string) => <li>{_}</li>)}</ol>
 	}
 
 	// Passthrough form only
