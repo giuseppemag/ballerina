@@ -1,27 +1,27 @@
-import { unit } from "../../../../../../../../main";
-import { Template } from "../../../../../../../template/state";
-import { IntegratedFormContext, IntegratedFormForeignMutationsExpected, IntegratedFormState, IntegratedFormWritableState } from "./state";
-import { integratedFormRunner } from "./coroutines/runner";
-export type IntegratedFormView<E, FS> =
+import { unit } from "../../../../../../main";
+import { Template } from "../../../../../template/state";
+import { PassthroughFormContext, PassthroughFormForeignMutationsExpected, PassthroughFormState, PassthroughFormWritableState } from "./state";
+import { passthroughFormRunner } from "./coroutines/runner";
+export type PassthroughFormView<E, FS> =
   Template<
-    IntegratedFormContext<E, FS> & IntegratedFormWritableState<E, FS>,
-    IntegratedFormWritableState<E, FS>,
-    IntegratedFormForeignMutationsExpected<E, FS>,
+    PassthroughFormContext<E, FS> & PassthroughFormWritableState<E, FS>,
+    PassthroughFormWritableState<E, FS>,
+    PassthroughFormForeignMutationsExpected<E, FS>,
     {
       actualForm: JSX.Element | undefined
     }>
-export type IntegratedFormTemplate<E, FS> =
+export type PassthroughFormTemplate<E, FS> =
   Template<
-    IntegratedFormContext<E, FS> & IntegratedFormWritableState<E, FS>,
-    IntegratedFormWritableState<E, FS>,
-    IntegratedFormForeignMutationsExpected<E, FS>,
-    IntegratedFormView<E, FS>>
-export const IntegratedFormTemplate = <E, FS>(): IntegratedFormTemplate<E, FS> =>
+    PassthroughFormContext<E, FS> & PassthroughFormWritableState<E, FS>,
+    PassthroughFormWritableState<E, FS>,
+    PassthroughFormForeignMutationsExpected<E, FS>,
+    PassthroughFormView<E, FS>>
+export const PassthroughFormTemplate = <E, FS>(): PassthroughFormTemplate<E, FS> =>
   Template.Default<
-    IntegratedFormContext<E, FS> & IntegratedFormWritableState<E, FS>,
-    IntegratedFormWritableState<E, FS>,
-    IntegratedFormForeignMutationsExpected<E, FS>,
-    IntegratedFormView<E, FS>>(props => {
+    PassthroughFormContext<E, FS> & PassthroughFormWritableState<E, FS>,
+    PassthroughFormWritableState<E, FS>,
+    PassthroughFormForeignMutationsExpected<E, FS>,
+    PassthroughFormView<E, FS>>(props => {
       if(props.context.entity.kind == "r" || props.context.globalConfiguration.kind == "r") {
         return <>
         </>
@@ -60,7 +60,7 @@ export const IntegratedFormTemplate = <E, FS>(): IntegratedFormTemplate<E, FS> =
                         if(props.context.entity.kind == "r") 
                           return
                         props.context.onRawEntityChange(updater, path)
-                        props.setState(IntegratedFormState<E, FS>().Updaters.Template.recalculatePredicates())
+                        props.setState(PassthroughFormState<E, FS>().Updaters.Template.recalculatePredicates())
                       }
                     },
                     view: unit
@@ -70,5 +70,5 @@ export const IntegratedFormTemplate = <E, FS>(): IntegratedFormTemplate<E, FS> =
         }
       </>
     }).any([
-      integratedFormRunner<E, FS>()
+      passthroughFormRunner<E, FS>()
     ])

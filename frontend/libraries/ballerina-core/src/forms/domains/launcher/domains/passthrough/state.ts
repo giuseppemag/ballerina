@@ -14,10 +14,10 @@ import {
   id,
   ForeignMutationsInput,
   Sum
-} from "../../../../../../../../main";
+} from "../../../../../../main";
 import { List, Map } from "immutable";
 
-export type IntegratedFormContext<E, FS> = {
+export type PassthroughFormContext<E, FS> = {
   formType: ParsedType<E>;
   types: Map<string, ParsedType<E>>;
   globalConfiguration: Sum<PredicateValue, "not initialized">;
@@ -26,7 +26,7 @@ export type IntegratedFormContext<E, FS> = {
   onRawEntityChange: (updater: Updater<E>, path: List<string>) => void;
   toApiParser: (
     entity: E,
-    formstate: IntegratedFormState<E,FS>,
+    formstate: PassthroughFormState<E,FS>,
     checkKeys: boolean
   ) => ValueOrErrors<E, string>;
   fromApiParser: (raw: any) => any;
@@ -44,7 +44,7 @@ export type IntegratedFormContext<E, FS> = {
   >;
 };
 
-export type IntegratedFormState<E,FS> = {
+export type PassthroughFormState<E,FS> = {
   formFieldStates: FS,  
   commonFormState: CommonFormState,
   customFormState: {
@@ -56,8 +56,8 @@ export type IntegratedFormState<E,FS> = {
   }
 }
 
-export const IntegratedFormState = <E,FS>() => ({
-    Default:(formFieldStates:FS, commonFormState: CommonFormState) : IntegratedFormState<E,FS> => ({
+export const PassthroughFormState = <E,FS>() => ({
+    Default:(formFieldStates:FS, commonFormState: CommonFormState) : PassthroughFormState<E,FS> => ({
       formFieldStates,
       commonFormState,
       customFormState: {
@@ -70,29 +70,29 @@ export const IntegratedFormState = <E,FS>() => ({
     }),
     Updaters:{
       Core:{
-        ...simpleUpdater<IntegratedFormState<E,FS>>()("formFieldStates"),
-        ...simpleUpdaterWithChildren<IntegratedFormState<E,FS>>()({
-            ...simpleUpdater<IntegratedFormState<E,FS>["customFormState"]>()("predicateEvaluations"),
-            ...simpleUpdater<IntegratedFormState<E,FS>["customFormState"]>()("isInitialized"),
+        ...simpleUpdater<PassthroughFormState<E,FS>>()("formFieldStates"),
+        ...simpleUpdaterWithChildren<PassthroughFormState<E,FS>>()({
+            ...simpleUpdater<PassthroughFormState<E,FS>["customFormState"]>()("predicateEvaluations"),
+            ...simpleUpdater<PassthroughFormState<E,FS>["customFormState"]>()("isInitialized"),
         })("customFormState"),
-        ...simpleUpdater<IntegratedFormState<E,FS>>()("commonFormState"),
+        ...simpleUpdater<PassthroughFormState<E,FS>>()("commonFormState"),
       },
       Template:{
-        recalculatePredicates: () : Updater<IntegratedFormState<E,FS>> => 
-          IntegratedFormState<E,FS>().Updaters.Core.customFormState.children.predicateEvaluations(
+        recalculatePredicates: () : Updater<PassthroughFormState<E,FS>> => 
+          PassthroughFormState<E,FS>().Updaters.Core.customFormState.children.predicateEvaluations(
             Debounced.Updaters.Template.value(
               id
             )
           )
       }
     },
-    ForeignMutations: (_: ForeignMutationsInput<IntegratedFormContext<E,FS>, IntegratedFormWritableState<E,FS>>) => ({
+    ForeignMutations: (_: ForeignMutationsInput<PassthroughFormContext<E,FS>, PassthroughFormWritableState<E,FS>>) => ({
   
     })
   })
 
-  export type IntegratedFormWritableState<E, FS> = IntegratedFormState<E,FS>
-  export type IntegratedFormForeignMutationsExposed<E,FS> = ReturnType<ReturnType<typeof IntegratedFormState<E,FS>>["ForeignMutations"]>
-  export type IntegratedFormForeignMutationsExpected<E, FS> = {
+  export type PassthroughFormWritableState<E, FS> = PassthroughFormState<E,FS>
+  export type PassthroughFormForeignMutationsExposed<E,FS> = ReturnType<ReturnType<typeof PassthroughFormState<E,FS>>["ForeignMutations"]>
+  export type PassthroughFormForeignMutationsExpected<E, FS> = {
 
   }

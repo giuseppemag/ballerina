@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
-import { unit, FormParsingResult, FormsParserState, FormRunnerState, FormsParserTemplate, PromiseRepo, FormRunnerTemplate } from "ballerina-core";
+import { unit, FormParsingResult, FormsParserState, FormRunnerState, FormsParserTemplate, PromiseRepo, FormRunnerTemplate, Sum, PredicateValue, replaceWith, Updater } from "ballerina-core";
 import { List, Set, Map } from "immutable";
 // import { PersonView } from "./domains/person/views/main-view";
 import { PersonContainerFormView, PersonNestedContainerFormView, CreatePersonSubmitButtonWrapper, EditPersonSubmitButtonWrapper } from "./domains/person/domains/from-config/views/wrappers";
@@ -9,7 +9,8 @@ import { PersonFieldViews } from "./domains/person-from-config/views/field-views
 // import { PersonForm } from "./domains/person/template";
 import { fieldTypeConverters } from "./domains/person/apis/field-converters";
 import { categoryForm, CategoryState, PersonFormInjectedTypes } from "./domains/person-from-config/injected-forms/category";
-import PersonConfig from "../../../../backend/apps/ballerina-runtime/input-forms/person/person-config.json"
+import PersonConfig from "../../../../backend/apps/ballerina-runtime/input-forms/person-config.json"
+import { PassthroughFormContainerWrapper } from "./domains/passthrough-forms/views/wrappers";
 
 const ShowFormsParsingErrors = (parsedFormsConfig: FormParsingResult) =>
 	<div style={{ border: "red" }}>
@@ -20,10 +21,11 @@ const InstantiedPersonFormsParserTemplate = FormsParserTemplate<PersonFormInject
 
 export const FormsApp = (props: {}) => {
 	const [configFormsParser, setConfigFormsParser] = useState(FormsParserState.Default())
-	const [formToShow, setFormToShow] = useState(1)
-	const numForms = 2
+	const [formToShow, setFormToShow] = useState(0)
+	const numForms = 3
 	const [personCreateFormState, setPersonCreateFormState] = useState(FormRunnerState.Default())
 	const [personEditFormState, setPersonEditFormState] = useState(FormRunnerState.Default())
+	const [personPassthroughFormState, setPersonPassthroughFormState] = useState(FormRunnerState.Default())
 	const [personState, setPersonState] = useState(Person.Default.mocked())
 	const [formErrors, setFormErrors] = useState<List<string>>(List())
 	const [formSuccess, setFormSuccess] = useState(false)
@@ -43,6 +45,51 @@ export const FormsApp = (props: {}) => {
 	) {
 		return <ol>{configFormsParser.formsConfig.sync.value.value.map(_ => <li>{_}</li>)}</ol>
 	}
+
+	// Passthrough form only
+	const [initialRawEntity, setInitialRawEntity] = useState<Sum<any, "not initialized">>(Sum.Default.right("not initialized"))
+    const [entity, setEntity] = useState<Sum<any, "not initialized">>(Sum.Default.right("not initialized"))
+	const [globalConfiguration, setGlobalConfiguration] = useState<Sum<PredicateValue, "not initialized">>(Sum.Default.right("not initialized"))
+	const [entityPath, setEntityPath] = useState<List<string>>(List())
+
+	const onRawEntityChange = (updater: Updater<any>, path: List<string>): void => {
+		if(personPassthroughFormState.form.kind == "r")
+			return
+		setTimeout(() => {}, 500);
+		const newEntity = updater(entity.value)
+		console.log("patching entity", newEntity)
+        setEntity(replaceWith(Sum.Default.left(newEntity)))
+		setEntityPath(path)
+    }
+
+
+	useEffect(() => {
+		if(formToShow % numForms == 2) {
+			PersonFromConfigApis.entityApis.get("person")("").then(
+				(raw) => {
+					if(configFormsParser.formsConfig.sync.kind == "loaded" && configFormsParser.formsConfig.sync.value.kind == "l"){
+						const parsed: any = configFormsParser.formsConfig.sync.value.value.passthrough.get("person-transparent")!().fromApiParser(raw)
+						setEntity(Sum.Default.left(parsed))
+						if(initialRawEntity.kind == "r") {
+						setInitialRawEntity(Sum.Default.left(raw))
+						}
+					}
+				}
+			)
+			PersonFromConfigApis.entityApis.get("globalConfiguration")("").then(
+				(raw) => {
+					if(configFormsParser.formsConfig.sync.kind == "loaded" && configFormsParser.formsConfig.sync.value.kind == "l") {
+					const parsed: any = configFormsParser.formsConfig.sync.value.value.passthrough.get("person-transparent")!().parseGlobalConfiguration(raw)
+					if(parsed.kind == "errors") {
+						console.error(parsed.errors)
+					} else {
+						setGlobalConfiguration(Sum.Default.left(parsed.value))
+						}
+					}
+					}
+				)
+		}
+	}, [personPassthroughFormState.form.kind, formToShow])
 
 
 	return (
@@ -96,7 +143,6 @@ export const FormsApp = (props: {}) => {
 										fieldViews: PersonFieldViews,
 										infiniteStreamSources: PersonFromConfigApis.streamApis,
 										enumOptionsSources: PersonFromConfigApis.enumApis,
-										globalConfigurationSources: PersonFromConfigApis.globalApis,
 										entityApis: PersonFromConfigApis.entityApis,
 										getFormsConfig: () => PromiseRepo.Default.mock(() => PersonConfig),
 										injectedPrimitives: Map([["injectedCategory", {fieldView: categoryForm, defaultValue: {category: "adult", kind: "category"}, defaultState: CategoryState.Default() }]]),
@@ -212,7 +258,35 @@ export const FormsApp = (props: {}) => {
 												/>
 
 											</>
-											: undefined
+											: renderForms && formToShow % numForms == 2 ?
+											<>
+											<h3>Passthrough form</h3>	
+											<p>Path: {JSON.stringify(entityPath)}</p>
+											<FormRunnerTemplate 
+												context={{
+													...configFormsParser,
+													...personPassthroughFormState,
+													formRef: {
+														formName: "person-transparent",
+														kind: "passthrough",
+														containerWrapper: PassthroughFormContainerWrapper,
+														entity,
+														initialRawEntity,
+														globalConfiguration,
+														onRawEntityChange
+													},
+													showFormParsingErrors: ShowFormsParsingErrors,
+													extraContext: {
+														flags: Set(["BC", "X"]),
+													},
+												}}
+												setState={setPersonPassthroughFormState}
+												view={unit}
+												foreignMutations={unit}
+											/>						
+										</> :
+											
+											undefined
 								}
 							</td>
 						</tr>

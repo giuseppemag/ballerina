@@ -28,19 +28,21 @@ export const FormRunnerTemplate =
         <props.context.form.value.form
           context={{
             entityId: props.context.formRef.kind == "edit" ? props.context.formRef.entityId : undefined,
-            entity: props.context.form.value.entity,
+            initialRawEntity: props.context.formRef.kind == "passthrough" ? props.context.formRef.initialRawEntity : undefined,
+            entity: props.context.formRef.kind == "passthrough" ? props.context.formRef.entity : props.context.form.value.entity,
+            onRawEntityChange: props.context.formRef.kind == "passthrough" ? props.context.formRef.onRawEntityChange : undefined,
+            globalConfiguration: props.context.formRef.kind == "passthrough" ? props.context.formRef.globalConfiguration : props.context.form.value.globalConfiguration,
             rawEntity: props.context.form.value.rawEntity,
             rawGlobalConfiguration: props.context.form.value.rawGlobalConfiguration,
-            globalConfiguration: props.context.form.value.globalConfiguration,
             formFieldStates: props.context.form.value.formFieldStates,
             commonFormState: props.context.form.value.commonFormState,
             customFormState: props.context.form.value.customFormState,
             extraContext: {
               ...props.context.extraContext,
-              rootValue:
-                  props.context.form.value?.entity.sync?.value,
+              rootValue: props.context.formRef.kind == "passthrough" ? undefined : props.context.form.value?.entity.sync?.value
             },
-            submitButtonWrapper: (props.context.formRef.kind == "create" || props.context.formRef.kind == "edit" )  ? props.context.formRef.submitButtonWrapper : undefined
+            submitButtonWrapper: (props.context.formRef.kind == "create" || props.context.formRef.kind == "edit" )  ? props.context.formRef.submitButtonWrapper : undefined,
+            containerWrapper: props.context.formRef.kind == "passthrough" ? props.context.formRef.containerWrapper : undefined
           }}
           setState={(_: BasicUpdater<any>) => props.setState(
             FormRunnerState.Updaters.form(Sum.Updaters.left(_))

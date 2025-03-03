@@ -11,18 +11,6 @@ const colors = [ "Red", "Green", "Blue"]
 const genders = ["M", "F", "X"]
 const interests = ["Soccer", "Hockey", "BoardGames", "HegelianPhilosophy"]
 
-const globalApis: GlobalConfigurationSources = (globalConfigName: string) => { 
-  switch (globalConfigName) {
-    case "globalConfiguration":
-      return Promise.resolve({
-        IsAdmin: false,
-        ERP: "ERP:SAP"
-      })
-    default:
-      return Promise.reject()
-  }
-}
-
 const streamApis: InfiniteStreamSources = (streamName: string) =>
   streamName == "departments" ?
     PersonApi.getDepartments()
@@ -168,6 +156,13 @@ const entityApis: EntityApis = {
             holidays: [],
           })
         }
+      case "globalConfiguration":
+        return (_: Guid) => {
+          return Promise.resolve({
+            IsAdmin: false,
+            ERP: "ERP:SAP"
+          })
+        }
       default:
         return (id: Guid) => {
           alert(`Cannot find entity API ${apiName} for 'get' ${id}`)
@@ -194,6 +189,12 @@ const entityApis: EntityApis = {
     apiName == "person" ?
       _ => PromiseRepo.Default.mock(() => {
         return ({
+          plotInfo: {
+            landArea: {
+              x: 0,
+              y: 0
+            }
+          },
           category: "",
           name: "",
           surname: "",
@@ -234,5 +235,4 @@ export const PersonFromConfigApis = {
   streamApis,
   enumApis,
   entityApis,
-  globalApis
 }
