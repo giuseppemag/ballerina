@@ -90,15 +90,19 @@ Todo (✅/❌)
         ✅ actual person-config as a reference of something that should work
           ❌ add a few correct instances of visiblity predicates using `match-case`
           ❌ add one that matches `Some`, `None` over a `SingleSelection`
+          ❌ add one that matches `Some`, `None` over an `Option`
+        ❌ add invalid form `extends` clauses
+          ❌ missing forms
+          ❌ wrong format of the clause itself
         ❌ improve the code of the generated tests by removing repetition
       ✅ run tests before releasing
     ✅ specialize the errors (stream not found, enum not found, etc.)
     ✅ improve the generated whitespace
     ✅ the Go type generator is now reasonably mature
-    ❌ add full support for unions, including generation
+    ✅ add full support for unions, including generation
       ✅ parser
       ✅ validator
-      ✅ match-case 
+      ✅ match-case
         ✅ expr
         ✅ parser
         ✅ type checker
@@ -107,25 +111,22 @@ Todo (✅/❌)
       ✅ generated constructors
         ✅ constructors for the case values
         ✅ constructors for the whole thing - assume discriminator, accept specific value
-      ❌ add renderer syntax for the selector of a different form depending on the case
-        ❌ new codegen config entry for unions
-          ❌ new type of renderer
-            ❌ when a renderer for unions is found, the `cases` property is parsed into this new type
-          ❌ validator checks that the cases are covered
-            ❌ validate that forms for each case have the right type (`fields` of the corresponding case)
-            ❌ validate predicates with the right `local` type
-              ❌ add predicates to the `Name` in both job forms
-        ❌ add `extends` sytnax to forms, refactor jobs forms to extend jobBase
+      ✅ add renderer syntax for the selector of a different form depending on the case
+        ✅ new codegen config entry for unions
+          ✅ new type of renderer
+            ✅ when a renderer for unions is found, the `cases` property is parsed into this new type
+          ✅ validator checks that the cases are covered
+            ✅ validate that forms for each case have the right type (`fields` of the corresponding case)
+            ✅ validate predicates with the right `local` type
+              ✅ add predicates
+        ✅ add `extends` sytnax to forms, refactor jobs forms to extend jobBase
+          ✅ when `extends` is found, lookup the underlying form*s* and copy their fields in the order in which they are found
+          ✅ extend an array of forms, not just one
     ❌ make sure we parse the `children` of each renderer type that supports them
       ❌ reduce repetition around the processing of `Children` in `validate` and `get...free...vars`
-    ❌ create gui editor as an instance of a form itself
-      ❌ form specification
-      ❌ generated F# files with type definitions
-        ❌ because there will be an entity API with the database schema interpretation later
-      ❌ package in a separate (private) repo 
-        ❌ served by an F# backend
-        ❌ with access to folder IDE-style
-        ❌ with enums and streams (defined in F#) based on the available types ATM
+    ❌ allow mutually recursive types and forms
+      ❌ be careful with out-of-order extensions
+      ❌ make ExprType.resolveLookup recursive - this might be at odds with the parent task because it might cause infinite loops
     ❌ extensions
       ❌ distinguish Option (with renderer like List) from SingleSelection (only renderer for streams)
         ❌ allow Some and None matching on Option
@@ -133,24 +134,32 @@ Todo (✅/❌)
       ✅ support `children` property on any renderer
         ✅ a record of fields parsed and validated exacted like fields
       ✅ parse and validate new type of launchers
-      ❌ preprocessor plugins
-        ❌ injected at specific times
-        ❌ language generation as parameters
-      ❌ define `include` command
-      ❌ add homomorphic forms
       ❌ add multi-field renderers
         ❌ use tuples, meaning it's still just one single field
       ❌ add paginated lists
         ❌ requires changes to the frontend
       ❌ add lazy fields
         ❌ requires changes to the frontend
+    ❌ create gui editor as an instance of a form itself
+      ❌ form specification
+      ❌ generated F# files with type definitions
+        ❌ because there will be an entity API with the database schema interpretation later
+      ❌ package in a separate (private) repo
+        ❌ served by an F# backend
+        ❌ with access to folder IDE-style
+        ❌ with enums and streams (defined in F#) based on the available types ATM
     ❌ paths inside `Any` have a priority after a partial match is found - `Any` filters errors lower than the highest priority
       ❌ add to each `Any`, streamline operators
         ❌ parser
         ❌ validator
+    ❌ extensions in a separate (private) repo
+      ❌ preprocessor plugins
+        ❌ injected at specific times
+        ❌ language generation as parameters
+      ❌ define `include` command
+      ❌ add homomorphic forms
     ❌ disallow unsupported keywords (`visibIle` wasted me a good chunk of time)
     ❌ the validator is now mature
-    ❌ move extensions to separate (private) repo
     ❌ improve the syntax of types and expressions with fslex and fsyacc
     ✅ fix Ballerina as a namespace for proper nesting
     ✅ convert all instances of Map.tryFind ... withError ... to `Map.tryFindWithError`

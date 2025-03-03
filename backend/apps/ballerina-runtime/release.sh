@@ -1,5 +1,6 @@
 #!/bin/bash
 
+dotnet fantomas ../../
 cd ../automatic-tests
 dotnet test
 retVal=$?

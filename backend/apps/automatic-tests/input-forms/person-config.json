@@ -415,10 +415,8 @@
     },
     "baristaJob": {
       "type": "BaristaJob",
+      "extends":["jobBase"],
       "fields": {
-        "Name":{
-          "renderer": "defaultString"
-        },
         "Salary":{
           "renderer": "defaultNumber"
         },
@@ -443,12 +441,41 @@
     },
     "waiterJob": {
       "type": "WaiterJob",
+      "extends":["jobBase"],
       "fields": {
-        "Name":{
-          "renderer": "defaultString"
-        },
         "Salary":{
-          "renderer": "defaultNumber"
+          "renderer": "defaultNumber",
+          "visible": {
+            "kind": "or",
+            "operands": [
+              {
+                "kind": "fieldLookup",
+                "operands": [
+                  {
+                    "kind": "varLookup",
+                    "varName": "root"
+                  },
+                  "subscribeToNewsletter"
+                ]
+              },
+              {
+                "kind": "equals",
+                "operands": [
+                  {
+                    "kind": "fieldLookup",
+                    "operands": [
+                      {
+                        "kind": "varLookup",
+                        "varName": "local"
+                      },
+                      "Patience"
+                    ]
+                  },
+                  100
+                ]
+              }
+            ]
+          }
         },
         "Patience":{
           "renderer": "defaultNumber"

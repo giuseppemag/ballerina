@@ -7,6 +7,7 @@ module Parser =
   open Ballerina.DSL.Expr.Types.Model
   open System
   open Ballerina.Collections.Sum
+  open Ballerina.Collections.Map
   open Ballerina.State.WithError
   open Ballerina.Errors
   open Ballerina.Core.Json
@@ -50,6 +51,12 @@ module Parser =
       state {
         let! (s: ParsedFormsContext) = state.GetState()
         return! s.TryFindType name |> state.OfSum
+      }
+
+    member state.TryFindForm name =
+      state {
+        let! (s: ParsedFormsContext) = state.GetState()
+        return! s.TryFindForm name |> state.OfSum
       }
 
   type FormLauncher with
@@ -494,22 +501,29 @@ module Parser =
         elif config.Union.SupportedRenderers |> Set.contains s then
           let! casesJson = parentJsonFields |> sum.TryFindField "cases" |> state.OfSum
           let! casesJson = casesJson |> JsonValue.AsRecord |> state.OfSum
-          let! cases = 
-            casesJson |> Seq.map (fun (caseName,caseJson) -> 
-            state{
-              let! caseRenderer = NestedRenderer.Parse caseJson
-              return caseName, caseRenderer
-            }) |> state.All
-          return 
-            UnionRenderer 
-              {|  Union=
-                    PrimitiveRenderer
-                      { PrimitiveRendererName = s
-                        PrimitiveRendererId = Guid.CreateVersion7()
-                        Type = ExprType.UnionType (cases |> Seq.map (fun (n,t) -> { CaseName=n; Fields=t.Type }) |> List.ofSeq)
-                        Children = { Fields = Map.empty } }            
-                  Cases=cases |> Seq.map (fun (n,t) -> { CaseName = n}, t) |> Map.ofSeq
-                  Children=children |}
+
+          let! cases =
+            casesJson
+            |> Seq.map (fun (caseName, caseJson) ->
+              state {
+                let! caseRenderer = NestedRenderer.Parse caseJson
+                return caseName, caseRenderer
+              })
+            |> state.All
+
+          return
+            UnionRenderer
+              {| Union =
+                  PrimitiveRenderer
+                    { PrimitiveRendererName = s
+                      PrimitiveRendererId = Guid.CreateVersion7()
+                      Type =
+                        ExprType.UnionType(
+                          cases |> Seq.map (fun (n, t) -> { CaseName = n; Fields = t.Type }) |> List.ofSeq
+                        )
+                      Children = { Fields = Map.empty } }
+                 Cases = cases |> Seq.map (fun (n, t) -> { CaseName = n }, t) |> Map.ofSeq
+                 Children = children |}
         else
           return!
             state.Any(
@@ -768,6 +782,30 @@ module Parser =
             (fields |> state.TryFindField "fields")
             (fields |> state.TryFindField "tabs")
 
+        let! extendsJson = fields |> state.TryFindField "extends" |> state.Catch |> state.Map Sum.toOption
+
+        let! extendedForms =
+          extendsJson
+          |> Option.map (fun extendsJson ->
+            state {
+              let! extendsJson = extendsJson |> JsonValue.AsArray |> state.OfSum
+
+              return!
+                extendsJson
+                |> Seq.map (fun extendJson ->
+                  state {
+                    let! extendsFormName = extendJson |> JsonValue.AsString |> state.OfSum
+                    return! state.TryFindForm extendsFormName
+                  })
+                |> state.All
+            })
+          |> state.RunOption
+
+        let extendedFields =
+          match extendedForms with
+          | None -> []
+          | Some fs -> fs |> Seq.map (fun f -> f.Fields) |> List.ofSeq
+
         let! typeName, formFields =
           state.All2 (typeJson |> JsonValue.AsString |> state.OfSum) (fieldsJson |> JsonValue.AsRecord |> state.OfSum)
 
@@ -781,6 +819,7 @@ module Parser =
           |> state.All
 
         let fieldConfigs = fieldConfigs |> Map.ofSeq
+        let fieldConfigs = Map.mergeMany (fun x y -> x) (fieldConfigs::extendedFields)
         let! s = state.GetState()
         let! typeBinding = s.TryFindType typeName |> state.OfSum
         let! tabs = FormConfig.ParseTabs fieldConfigs tabsJson
@@ -802,8 +841,8 @@ module Parser =
         let! caseName = caseJson |> JsonValue.AsString |> state.OfSum
 
         let! fieldsType =
-          state.Either 
-            (state{
+          state.Either
+            (state {
               let! fieldsJson = fieldsJson |> JsonValue.AsRecord |> state.OfSum
 
               let! fields =
@@ -818,10 +857,11 @@ module Parser =
                 |> state.All
 
               let fields = fields |> Map.ofList
+
               if fields |> Map.isEmpty then
                 ExprType.UnitType
               else
-                ExprType.RecordType fields              
+                ExprType.RecordType fields
             })
             (ExprType.Parse fieldsJson)
 
