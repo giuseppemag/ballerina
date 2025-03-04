@@ -168,14 +168,21 @@ module Model =
     { FormName: string
       FormId: Guid
       TypeId: TypeId
-      Fields: Map<string, FieldConfig>
-      Tabs: FormTabs }
+      Body: FormBody }
 
     static member Name f = f.FormName
 
     static member Id f =
       { FormName = f.FormName
         FormId = f.FormId }
+
+  and FormBody =
+    | Fields of FormFields
+    | Cases of Map<string, FormFields>
+
+  and FormFields =
+    { Fields: Map<string, FieldConfig>
+      Tabs: FormTabs }
 
   and FormTabs = { FormTabs: Map<string, FormColumns> }
 

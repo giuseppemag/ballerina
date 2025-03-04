@@ -5,15 +5,21 @@
       "args": [
         {
           "case": "Int",
-          "fields": "number"
+          "fields": {
+            "Value": "number"
+          }
         },
         {
           "case": "String",
-          "fields": "string"
+          "fields": {
+            "Value": "string"
+          }
         },
         {
           "case": "Bool",
-          "fields": "boolean"
+          "fields": {
+            "Value": "boolean"
+          }
         }
       ]
     },
@@ -23,15 +29,15 @@
         {
           "case": "Primitive",
           "fields": {
-            "Value":"PrimitiveValue"
+            "Value": "PrimitiveValue"
           }
         },
         {
           "case": "Record",
           "fields": {
-            "Value":{
-              "fun":"Map",
-              "args":[
+            "Value": {
+              "fun": "Map",
+              "args": [
                 "string",
                 "Value"
               ]
@@ -41,8 +47,8 @@
         {
           "case": "Lambda",
           "fields": {
-            "VarName":"string",
-            "Body":"Expr"
+            "VarName": "string",
+            "Body": "Expr"
           }
         }
       ]
@@ -52,12 +58,14 @@
       "args": [
         {
           "case": "Value",
-          "fields": "Value"
+          "fields": {
+            "Value": "Value"
+          }
         },
         {
-          "case": "binary",
+          "case": "Binary",
           "fields": {
-            "Operator":"BinaryOperator",
+            "Operator": "BinaryOperator",
             "Left": "Expr",
             "Right": "Expr"
           }
@@ -76,6 +84,207 @@
           "fields": {}
         }
       ]
+    }
+  },
+  "forms": {
+    "primitiveValue": {
+      "type": "PrimitiveValue",
+      "cases": {
+        "Int": {
+          "fields": {
+            "Value": {
+              "renderer": "defaultNumber",
+              "visible": "hello"
+            }
+          },
+          "tabs": {
+            "main": {
+              "columns": {
+                "main": {
+                  "groups": {
+                    "main": [
+                      "Value"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "String": {
+          "fields": {
+            "Value": {
+              "renderer": "defaultString"
+            }
+          },
+          "tabs": {
+            "main": {
+              "columns": {
+                "main": {
+                  "groups": {
+                    "main": [
+                      "Value"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "Bool": {
+          "fields": {
+            "Value": {
+              "renderer": "defaultBoolean"
+            }
+          },
+          "tabs": {
+            "main": {
+              "columns": {
+                "main": {
+                  "groups": {
+                    "main": [
+                      "Value"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "value": {
+      "type": "Value",
+      "cases": {
+        "Primitive": {
+          "fields": {
+            "Value": {
+              "renderer": "primitiveValue"
+            }
+          },
+          "tabs": {
+            "main": {
+              "columns": {
+                "main": {
+                  "groups": {
+                    "main": [
+                      "Value"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "Record": {
+          "fields": {
+            "Value": {
+              "renderer": "defaultMap",
+              "keyRenderer": {
+                "renderer": "defaultString"
+              },
+              "valueRenderer": {
+                "renderer": "value"
+              }
+            }
+          },
+          "tabs": {
+            "main": {
+              "columns": {
+                "main": {
+                  "groups": {
+                    "main": [
+                      "Value"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "Lambda": {
+          "fields": {
+            "VarName": {
+              "renderer": "defaultString"
+            },
+            "Body": {
+              "renderer": "expr"
+            }
+          },
+          "tabs": {
+            "main": {
+              "columns": {
+                "main": {
+                  "groups": {
+                    "main": [
+                      "VarName",
+                      "Body"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "binaryOperator": {
+      "type": "BinaryOperator",
+      "cases": {
+        "Plus": {
+          "fields": {},
+          "tabs": {}
+        },
+        "Minus": {
+          "fields": {},
+          "tabs": {}
+        }
+      }
+    },
+    "expr": {
+      "type": "Expr",
+      "cases": {
+        "Value": {
+          "fields": {
+            "Value":{"renderer":"value"}
+          },
+          "tabs": {
+            "main": {
+              "columns": {
+                "main": {
+                  "groups": {
+                    "main": [
+                      "Value"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+         },
+        "Binary": {
+          "fields": {
+            "Operator":{"renderer":"binaryOperator"},
+            "Left":{"renderer":"expr"},
+            "Right":{"renderer":"expr"}
+          },
+          "tabs": {
+            "main": {
+              "columns": {
+                "main": {
+                  "groups": {
+                    "main": [
+                      "Operator",
+                      "Left",
+                      "Right"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

@@ -14,7 +14,7 @@ module Model =
   type TypeVarBindings = Map<VarName, ExprType>
   and TypeBinding = { TypeId: TypeId; Type: ExprType }
   and TypeBindings = Map<TypeId, ExprType>
-  and TypeId = { TypeName: string; TypeId: Guid }
+  and TypeId = { TypeName: string }
 
   and ExprType =
     | UnitType
@@ -40,9 +40,7 @@ module Model =
         TypeBinding.Type = exprType }
 
   type TypeId with
-    static member Create name =
-      { TypeName = name
-        TypeId = Guid.CreateVersion7() }
+    static member Create name = { TypeName = name }
 
 
   type ExprType with

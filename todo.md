@@ -91,25 +91,33 @@ Todo (✅/❌)
           ❌ add a few correct instances of visiblity predicates using `match-case`
           ❌ add one that matches `Some`, `None` over a `SingleSelection`
           ❌ add one that matches `Some`, `None` over an `Option`
+          ❌ add validation predicate to a switched form renderer and ensure that the `root` type is the narrowed one
         ❌ add invalid form `extends` clauses
           ❌ missing forms
           ❌ wrong format of the clause itself
+        ❌ add invalid form `cases` clauses
+          ❌ missing cases on either side
+          ❌ mismatched type of cases in renderer vs type
         ❌ improve the code of the generated tests by removing repetition
       ✅ run tests before releasing
     ✅ make sure we parse the `children` of each renderer type that supports them
       ✅ reduce repetition around the processing of `Children` in `validate` and `get...free...vars`
     ❌ allow mutually recursive types
       ✅ implement `Value` and `Expr`
-      ❌ make sure that ExprType.resolveLookup is lazy to avoid infinite loops
-      ❌ allow mutually recursive forms
+      ✅ allow mutually recursive forms by prepopulating the state with empty fields
+      ✅ support `case` statement in form' top-level
+        ✅ `FormConfig = Fields | Match`
+        ✅ parse
+        ✅ type-check
+        ❌ validate predicates knowing that `root` is already switched
+          ❌ add validation predicate to a switched form renderer and ensure that the `root` type is the narrowed one
+            ❌ needs a launcher
     ✅ the Go-lang generator could support more types for unions than just records: primitives and unions themselves
       ✅ just force a field `Value` (if it's not a record or just _always_)
     ❌ add multi-field renderers
       ❌ use tuples, meaning it's still just one single field
     ❌ add paginated lists
-      ❌ requires changes to the frontend
     ❌ add lazy fields
-      ❌ requires changes to the frontend
     ❌ distinguish Option (with renderer like List) from SingleSelection (only renderer for streams)
       ❌ allow Some and None matching on Option
       ❌ distinguish outer from inner renderers
@@ -139,6 +147,7 @@ Todo (✅/❌)
     ✅ adjust all patterns like `|> Seq.tryFind (fst >> (=) "stream") |> Option.map snd` to `JsonValue.tryFindField`
     ❌ refactor `sprintf` instances in `typeCheck.fs`
     ❌ add `sum.Map`, remove `Sum.Map` references (ugly and inconsistent wrt `state.Map`)
+    ❌ add `sum.For`, use it instead of `sum.All >> sum.Map ignore`
     ❌ add state.TryFindX for enum, form, stream, and so on like for `state.TryFindType`
       ❌ why can't we use state.TryFindType in the validators?
       ❌ Validate passes the context as a parameter instead of using GetContext - ugly

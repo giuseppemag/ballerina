@@ -22,26 +22,33 @@ module Validator =
       Renderer.Validate ctx formType fr.Renderer
 
   and Renderer with
-    static member GetTypesFreeVars (ctx: ParsedFormsContext) (fr: Renderer) : Sum<Set<TypeId>, Errors> =
+    static member GetTypesFreeVars
+      (seenFormNames: Set<string>)
+      (ctx: ParsedFormsContext)
+      (fr: Renderer)
+      : Sum<Set<TypeId>, Errors> =
       let (+) = sum.Lift2 Set.union
-      let (!) = Renderer.GetTypesFreeVars ctx
+      let (!) = Renderer.GetTypesFreeVars seenFormNames ctx
 
       let getChildrenTypeFreeVars (children: RendererChildren) =
         children.Fields
         |> Seq.map (fun e -> e.Value.Renderer)
-        |> Seq.map (Renderer.GetTypesFreeVars ctx)
+        |> Seq.map (Renderer.GetTypesFreeVars seenFormNames ctx)
         |> sum.All
 
       match fr with
       | Renderer.EnumRenderer(e, f) -> (ctx.TryFindEnum e.EnumName |> Sum.map (EnumApi.Type >> Set.singleton)) + !f
       | Renderer.FormRenderer(f, _, children) ->
         sum {
-          let! f = ctx.TryFindForm f.FormName
-          let! (fvars: Set<TypeId>) = f |> FormConfig.GetTypesFreeVars ctx
+          if seenFormNames |> Set.contains f.FormName then
+            return Set.empty
+          else
+            let! f = ctx.TryFindForm f.FormName
+            let! (fvars: Set<TypeId>) = f |> FormConfig.GetTypesFreeVars (seenFormNames.Add f.FormName) ctx
 
-          let! (cvars: List<Set<TypeId>>) = children |> getChildrenTypeFreeVars
+            let! (cvars: List<Set<TypeId>>) = children |> getChildrenTypeFreeVars
 
-          return cvars |> List.fold (Set.union) fvars
+            return cvars |> List.fold (Set.union) fvars
         }
       | Renderer.ListRenderer l ->
         sum {
@@ -73,7 +80,7 @@ module Validator =
           let! (csvars: List<Set<TypeId>>) =
             cs.Cases
             |> Seq.map (fun e -> e.Value.Renderer)
-            |> Seq.map (Renderer.GetTypesFreeVars ctx)
+            |> Seq.map (Renderer.GetTypesFreeVars seenFormNames ctx)
             |> sum.All
 
           return (cvars @ csvars) |> List.fold (Set.union) Set.empty
@@ -318,28 +325,104 @@ module Validator =
       }
       |> state.WithErrorContext $"...when validating field predicates for {fc.FieldName}"
 
+
+  and FormFields with
+    static member ValidatePredicates
+      (ctx: ParsedFormsContext)
+      (globalType: TypeBinding)
+      (rootType: TypeBinding)
+      (formType: TypeBinding)
+      (formFields: FormFields)
+      : State<Unit, Unit, ValidationState, Errors> =
+      state {
+        for f in formFields.Fields do
+          do!
+            FieldConfig.ValidatePredicates ctx globalType rootType formType.Type f.Value
+            |> state.Map ignore
+      }
+
+    static member GetTypesFreeVars
+      (seenFormNames: Set<string>)
+      (ctx: ParsedFormsContext)
+      (fields: FormFields)
+      : Sum<Set<TypeId>, Errors> =
+      let (+) = sum.Lift2 Set.union
+
+      (fields.Fields
+       |> Map.values
+       |> Seq.map (fun f -> f.Renderer |> Renderer.GetTypesFreeVars seenFormNames ctx)
+       |> Seq.fold (+) (sum { return Set.empty }))
+
+    static member Validate (ctx: ParsedFormsContext) (rootType: ExprType) (body: FormFields) : Sum<Unit, Errors> =
+      sum.All(
+        body.Fields
+        |> Map.values
+        |> Seq.map (FieldConfig.Validate ctx rootType)
+        |> Seq.toList
+      )
+      |> Sum.map ignore
+
+  and FormBody with
+    static member GetTypesFreeVars
+      (seenFormNames: Set<string>)
+      (ctx: ParsedFormsContext)
+      (body: FormBody)
+      : Sum<Set<TypeId>, Errors> =
+      let (+) = sum.Lift2 Set.union
+
+      match body with
+      | FormBody.Fields fields -> FormFields.GetTypesFreeVars seenFormNames ctx fields
+      | FormBody.Cases cases ->
+        cases
+        |> Map.values
+        |> Seq.map (fun case -> FormFields.GetTypesFreeVars seenFormNames ctx case)
+        |> Seq.fold (+) (sum { return Set.empty })
+
   and FormConfig with
-    static member GetTypesFreeVars (ctx: ParsedFormsContext) (fc: FormConfig) : Sum<Set<TypeId>, Errors> =
+    static member GetTypesFreeVars
+      (seenFormNames: Set<string>)
+      (ctx: ParsedFormsContext)
+      (fc: FormConfig)
+      : Sum<Set<TypeId>, Errors> =
       let (+) = sum.Lift2 Set.union
 
       sum { return Set.singleton fc.TypeId }
-      + (fc.Fields
-         |> Map.values
-         |> Seq.map (fun f -> f.Renderer |> Renderer.GetTypesFreeVars ctx)
-         |> Seq.fold (+) (sum { return Set.empty }))
+      + (fc.Body |> FormBody.GetTypesFreeVars seenFormNames ctx)
 
     static member Validate (ctx: ParsedFormsContext) (formConfig: FormConfig) : Sum<Unit, Errors> =
       sum {
         let! formType = ctx.TryFindType formConfig.TypeId.TypeName
 
-        do!
-          sum.All(
-            formConfig.Fields
-            |> Map.values
-            |> Seq.map (FieldConfig.Validate ctx formType.Type)
-            |> Seq.toList
-          )
-          |> Sum.map ignore
+        match formType.Type, formConfig.Body with
+        | ExprType.UnionType typeCases, FormBody.Cases formCases ->
+          let typeCaseNames = typeCases |> Seq.map (fun c -> c.CaseName) |> Set.ofSeq
+          let formCaseNames = formCases |> Map.keys |> Set.ofSeq
+
+          let missingTypeCases = typeCaseNames - formCaseNames
+          let missingFormCases = formCaseNames - typeCaseNames
+
+          if missingTypeCases |> Set.isEmpty |> not then
+            return! sum.Throw(Errors.Singleton $"Error: missing type cases {missingTypeCases.ToFSharpString}")
+          elif missingFormCases |> Set.isEmpty |> not then
+            return! sum.Throw(Errors.Singleton $"Error: missing form cases {missingFormCases.ToFSharpString}")
+          else
+            do!
+              typeCases
+              |> Seq.map (fun typeCase ->
+                match formCases |> Map.tryFind typeCase.CaseName with
+                | None -> sum.Throw(Errors.Singleton $"Error: cannot find form case for type case {typeCase.CaseName}")
+                | Some formCase -> FormFields.Validate ctx typeCase.Fields formCase)
+              |> sum.All
+              |> Sum.map ignore
+        | ExprType.UnionType typeCases, _ ->
+          return!
+            sum.Throw(
+              Errors.Singleton $"Error: the form type is a union, expected cases in the body but found fields instead."
+            )
+        | _, FormBody.Fields body -> do! FormFields.Validate ctx formType.Type body
+        | _ -> return! sum.Throw(Errors.Singleton $"Error: mismatched form type and form body")
+
+
       }
       |> sum.WithErrorContext $"...when validating form config {formConfig.FormName}"
 
@@ -361,10 +444,11 @@ module Validator =
           do! state.SetState(ValidationState.Updaters.PredicateValidationHistory(Set.add processedForm))
           let! formType = ctx.TryFindType formConfig.TypeId.TypeName |> state.OfSum
 
-          for f in formConfig.Fields do
-            do!
-              FieldConfig.ValidatePredicates ctx globalType rootType formType.Type f.Value
-              |> state.Map ignore
+          match formConfig.Body with
+          | FormBody.Fields body -> do! FormFields.ValidatePredicates ctx globalType rootType formType body
+          | FormBody.Cases cases ->
+            for body in cases |> Map.values do
+              do! FormFields.ValidatePredicates ctx globalType rootType formType body
 
           return ()
         else
@@ -380,7 +464,7 @@ module Validator =
 
       sum {
         let! form = ctx.TryFindForm fl.Form.FormName
-        return! FormConfig.GetTypesFreeVars ctx form
+        return! FormConfig.GetTypesFreeVars Set.empty ctx form
       }
 
     static member Validate
@@ -563,7 +647,7 @@ module Validator =
 
       (ctx.Forms
        |> Map.values
-       |> Seq.map (FormConfig.GetTypesFreeVars ctx)
+       |> Seq.map (FormConfig.GetTypesFreeVars Set.empty ctx)
        |> Seq.fold (+) zero)
       + (ctx.Apis |> FormApis.GetTypesFreeVars |> sum.Return)
       + (ctx.Launchers
@@ -573,48 +657,35 @@ module Validator =
 
     static member Validate codegenTargetConfig (ctx: ParsedFormsContext) : State<Unit, Unit, ValidationState, Errors> =
       state {
-        let! usedTypes = ParsedFormsContext.GetTypesFreeVars ctx |> state.OfSum
+        do!
+          sum.All(
+            ctx.Apis.Enums
+            |> Map.values
+            |> Seq.map (EnumApi.Validate codegenTargetConfig.EnumValueFieldName ctx)
+            |> Seq.toList
+          )
+          |> Sum.map ignore
+          |> state.OfSum
 
-        let availableTypes =
-          ctx.Types |> Map.values |> Seq.map (fun tb -> tb.TypeId) |> Set.ofSeq
+        do!
+          sum.All(
+            ctx.Apis.Streams
+            |> Map.values
+            |> Seq.map (StreamApi.Validate codegenTargetConfig ctx)
+            |> Seq.toList
+          )
+          |> Sum.map ignore
+          |> state.OfSum
 
-        let missingTypes = (usedTypes - availableTypes) |> Set.toList
+        // do System.Console.WriteLine(ctx.Forms.ToFSharpString)
+        // do System.Console.ReadLine() |> ignore
 
-        match missingTypes with
-        | [] ->
-          do!
-            sum.All(
-              ctx.Apis.Enums
-              |> Map.values
-              |> Seq.map (EnumApi.Validate codegenTargetConfig.EnumValueFieldName ctx)
-              |> Seq.toList
-            )
-            |> Sum.map ignore
-            |> state.OfSum
+        do!
+          sum.All(ctx.Forms |> Map.values |> Seq.map (FormConfig.Validate ctx) |> Seq.toList)
+          |> Sum.map ignore
+          |> state.OfSum
 
-          do!
-            sum.All(
-              ctx.Apis.Streams
-              |> Map.values
-              |> Seq.map (StreamApi.Validate codegenTargetConfig ctx)
-              |> Seq.toList
-            )
-            |> Sum.map ignore
-            |> state.OfSum
-
-          do!
-            sum.All(ctx.Forms |> Map.values |> Seq.map (FormConfig.Validate ctx) |> Seq.toList)
-            |> Sum.map ignore
-            |> state.OfSum
-
-          for launcher in ctx.Launchers |> Map.values do
-            do! FormLauncher.Validate ctx launcher
-        | missingType :: missingTypes ->
-          let missingTypeErrors =
-            NonEmptyList.OfList(missingType, missingTypes)
-            |> NonEmptyList.map (fun t -> Errors.Singleton(sprintf "Error: missing type definition for %s" t.TypeName))
-            |> NonEmptyList.reduce (curry Errors.Concat)
-
-          return! state.Throw(missingTypeErrors)
+        for launcher in ctx.Launchers |> Map.values do
+          do! FormLauncher.Validate ctx launcher
       }
       |> state.WithErrorContext $"...when validating spec"

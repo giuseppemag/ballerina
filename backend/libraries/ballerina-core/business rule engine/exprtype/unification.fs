@@ -67,6 +67,7 @@ module Unification =
 
       sum {
         match t1, t2 with
+        | ExprType.LookupType l1, ExprType.LookupType l2 when l1 = l2 -> return UnificationConstraints.Zero()
         | ExprType.VarType v1, ExprType.VarType v2 ->
           match tvars |> Map.tryFind v1, tvars |> Map.tryFind v2 with
           | Some v1, Some v2 ->
@@ -78,7 +79,11 @@ module Unification =
         | t, ExprType.LookupType tn
         | ExprType.LookupType tn, t ->
           match typedefs |> Map.tryFind tn with
-          | None -> return! sum.Throw(Errors.Singleton($"Error: types {t1} and {t2} cannot be unified"))
+          | None ->
+            return!
+              sum.Throw(
+                Errors.Singleton($"Error: types {t1} and {t2}/{t} and {tn} cannot be unified under typedefs {typedefs}")
+              )
           | Some t' -> return! t =?= t'
         | ExprType.ListType(t1), ExprType.ListType(t2)
         | ExprType.SetType(t1), ExprType.SetType(t2)

@@ -59,6 +59,11 @@ module Parser =
         return! s.TryFindForm name |> state.OfSum
       }
 
+    member state.AsFormBodyFields fb =
+      match fb with
+      | FormBody.Fields fs -> state { return fs }
+      | FormBody.Cases _ -> state.Throw(Errors.Singleton $"Error: expected fields in form body, found cases.")
+
   type FormLauncher with
     static member Parse (launcherName: string) (json: JsonValue) : State<_, CodeGenConfig, ParsedFormsContext, Errors> =
       state {
@@ -550,7 +555,12 @@ module Parser =
                     return FormRenderer(form |> FormConfig.Id, formType.Type, children)
                   }
                   state.Throw(
-                    Errors.Singleton $"Error: cannot resolve field renderer {s}"
+                    Errors.Singleton
+                      $"Error: cannot resolve field renderer {s} in {(formsState.Forms
+                                                                      |> Map.values
+                                                                      |> Seq.map (fun v -> v.FormName, v.TypeId.TypeName)
+                                                                      |> List.ofSeq)
+                                                                       .ToFSharpString}"
                     |> Errors.WithPriority ErrorPriority.High
                   ) ]
               )
@@ -649,7 +659,93 @@ module Parser =
       }
       |> state.WithErrorContext $"...when parsing field {fieldName}"
 
-  type FormConfig with
+  type FormFields with
+    static member Parse(fields: (string * JsonValue)[]) =
+      state {
+        let! fieldsJson, tabsJson =
+          state.All2 (fields |> state.TryFindField "fields") (fields |> state.TryFindField "tabs")
+
+        let! extendsJson = fields |> state.TryFindField "extends" |> state.Catch |> state.Map Sum.toOption
+
+        let! extendedForms =
+          extendsJson
+          |> Option.map (fun extendsJson ->
+            state {
+              let! extendsJson = extendsJson |> JsonValue.AsArray |> state.OfSum
+
+              return!
+                extendsJson
+                |> Seq.map (fun extendJson ->
+                  state {
+                    let! extendsFormName = extendJson |> JsonValue.AsString |> state.OfSum
+                    return! state.TryFindForm extendsFormName
+                  })
+                |> state.All
+            })
+          |> state.RunOption
+
+        let! extendedFields =
+          match extendedForms with
+          | None -> state.Return []
+          | Some fs ->
+            fs
+            |> Seq.map (fun f -> state.AsFormBodyFields f.Body)
+            |> state.All
+            |> state.Map(List.map (fun f -> f.Fields))
+
+        let! formFields = fieldsJson |> JsonValue.AsRecord |> state.OfSum
+
+        let! fieldConfigs =
+          formFields
+          |> Seq.map (fun (fieldName, fieldJson) ->
+            state {
+              let! parsedField = FieldConfig.Parse fieldName fieldJson
+              return fieldName, parsedField
+            })
+          |> state.All
+
+        let fieldConfigs = fieldConfigs |> Map.ofSeq
+        let fieldConfigs = Map.mergeMany (fun x y -> x) (fieldConfigs :: extendedFields)
+        let! tabs = FormConfig.ParseTabs fieldConfigs tabsJson
+
+        return
+          { FormFields.Fields = fieldConfigs
+            FormFields.Tabs = tabs }
+      }
+
+  and FormBody with
+    static member Parse(fields: (string * JsonValue)[]) =
+      state.Either
+
+        (state {
+          let! formFields = FormFields.Parse fields
+          return FormBody.Fields formFields
+        })
+        (state {
+          let! casesJson = fields |> state.TryFindField "cases"
+
+          return!
+            state {
+              let! casesJson = casesJson |> JsonValue.AsRecord |> state.OfSum
+
+              let! cases =
+                casesJson
+                |> Seq.map (fun (caseName, caseJson) ->
+                  state {
+                    let! caseJson = caseJson |> JsonValue.AsRecord |> state.OfSum
+                    let! caseBody = FormFields.Parse caseJson
+                    return caseName, caseBody
+                  }
+                  |> state.MapError(Errors.Map(String.appendNewline $"\n...when parsing form case {caseName}")))
+                |> state.All
+                |> state.Map(Map.ofSeq)
+
+              return FormBody.Cases cases
+            }
+            |> state.MapError(Errors.WithPriority ErrorPriority.High)
+        })
+
+  and FormConfig with
     static member ParseGroup
       (groupName: string)
       (fieldConfigs: Map<string, FieldConfig>)
@@ -761,73 +857,37 @@ module Parser =
       }
       |> state.WithErrorContext $"...when parsing tabs"
 
-    static member Parse
+    static member PreParse
       (formName: string)
       (json: JsonValue)
-      : State<
-          {| TypeId: TypeId
-             Fields: Map<string, FieldConfig>
-             Tabs: FormTabs |},
-          CodeGenConfig,
-          ParsedFormsContext,
-          Errors
-         >
-      =
+      : State<TypeBinding, CodeGenConfig, ParsedFormsContext, Errors> =
       state {
         let! fields = json |> JsonValue.AsRecord |> state.OfSum
 
-        let! typeJson, fieldsJson, tabsJson =
-          state.All3
-            (fields |> state.TryFindField "type")
-            (fields |> state.TryFindField "fields")
-            (fields |> state.TryFindField "tabs")
-
-        let! extendsJson = fields |> state.TryFindField "extends" |> state.Catch |> state.Map Sum.toOption
-
-        let! extendedForms =
-          extendsJson
-          |> Option.map (fun extendsJson ->
-            state {
-              let! extendsJson = extendsJson |> JsonValue.AsArray |> state.OfSum
-
-              return!
-                extendsJson
-                |> Seq.map (fun extendJson ->
-                  state {
-                    let! extendsFormName = extendJson |> JsonValue.AsString |> state.OfSum
-                    return! state.TryFindForm extendsFormName
-                  })
-                |> state.All
-            })
-          |> state.RunOption
-
-        let extendedFields =
-          match extendedForms with
-          | None -> []
-          | Some fs -> fs |> Seq.map (fun f -> f.Fields) |> List.ofSeq
-
-        let! typeName, formFields =
-          state.All2 (typeJson |> JsonValue.AsString |> state.OfSum) (fieldsJson |> JsonValue.AsRecord |> state.OfSum)
-
-        let! fieldConfigs =
-          formFields
-          |> Seq.map (fun (fieldName, fieldJson) ->
-            state {
-              let! parsedField = FieldConfig.Parse fieldName fieldJson
-              return fieldName, parsedField
-            })
-          |> state.All
-
-        let fieldConfigs = fieldConfigs |> Map.ofSeq
-        let fieldConfigs = Map.mergeMany (fun x y -> x) (fieldConfigs :: extendedFields)
-        let! s = state.GetState()
+        let! typeJson = (fields |> state.TryFindField "type")
+        let! typeName = typeJson |> JsonValue.AsString |> state.OfSum
+        let! (s: ParsedFormsContext) = state.GetState()
         let! typeBinding = s.TryFindType typeName |> state.OfSum
-        let! tabs = FormConfig.ParseTabs fieldConfigs tabsJson
+
+        return typeBinding
+      }
+
+    static member Parse
+      (formName: string)
+      (json: JsonValue)
+      : State<{| TypeId: TypeId; Body: FormBody |}, CodeGenConfig, ParsedFormsContext, Errors> =
+      state {
+        let! fields = json |> JsonValue.AsRecord |> state.OfSum
+
+        let! typeJson = (fields |> state.TryFindField "type")
+        let! typeName = typeJson |> JsonValue.AsString |> state.OfSum
+        let! (s: ParsedFormsContext) = state.GetState()
+        let! typeBinding = s.TryFindType typeName |> state.OfSum
+        let! body = FormBody.Parse fields
 
         return
           {| TypeId = typeBinding.TypeId
-             Fields = fieldConfigs
-             Tabs = tabs |}
+             Body = body |}
       }
       |> state.WithErrorContext $"...when parsing form {formName}"
 
@@ -1239,9 +1299,7 @@ module Parser =
           typesJson
           |> Seq.map (fun (name, json) ->
             state {
-              let typeId: TypeId =
-                { TypeName = name
-                  TypeId = Guid.CreateVersion7() }
+              let typeId: TypeId = { TypeName = name }
 
               do!
                 state.SetState(
@@ -1328,9 +1386,7 @@ module Parser =
                         |> state.MapError(Errors.WithPriority ErrorPriority.High)
                     },
                     [ state {
-                        let typeId: TypeId =
-                          { TypeName = typeName
-                            TypeId = Guid.CreateVersion7() }
+                        let typeId: TypeId = { TypeName = typeName }
 
                         let! parsedType = ExprType.Parse typeJson
 
@@ -1356,20 +1412,25 @@ module Parser =
       : State<Unit, CodeGenConfig, ParsedFormsContext, Errors> =
       state {
         for formName, formJson in formsJson do
-          let! formBody = FormConfig.Parse formName formJson
+          let! formType = FormConfig.PreParse formName formJson
 
           do!
             state.SetState(
               ParsedFormsContext.Updaters.Forms(
                 Map.add
                   formName
-                  { FormConfig.Fields = formBody.Fields
-                    FormConfig.Tabs = formBody.Tabs
-                    FormConfig.TypeId = formBody.TypeId
+                  { Body = FormBody.Cases Map.empty
+                    FormConfig.TypeId = formType.TypeId
                     FormId = Guid.CreateVersion7()
                     FormName = formName }
               )
             )
+
+        for formName, formJson in formsJson do
+          let! formBody = FormConfig.Parse formName formJson
+          let! form = state.TryFindForm formName
+
+          do! state.SetState(ParsedFormsContext.Updaters.Forms(Map.add formName { form with Body = formBody.Body }))
       }
       |> state.WithErrorContext $"...when parsing forms"
 
@@ -1420,4 +1481,3 @@ module Parser =
         do! ParsedFormsContext.ParseForms formsJson
         do! ParsedFormsContext.ParseLaunchers launchersJson
       }
-      |> state.WithErrorContext $"...when parsing language config"
