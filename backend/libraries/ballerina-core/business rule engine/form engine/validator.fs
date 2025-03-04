@@ -22,71 +22,6 @@ module Validator =
       Renderer.Validate ctx formType fr.Renderer
 
   and Renderer with
-    static member GetTypesFreeVars
-      (seenFormNames: Set<string>)
-      (ctx: ParsedFormsContext)
-      (fr: Renderer)
-      : Sum<Set<TypeId>, Errors> =
-      let (+) = sum.Lift2 Set.union
-      let (!) = Renderer.GetTypesFreeVars seenFormNames ctx
-
-      let getChildrenTypeFreeVars (children: RendererChildren) =
-        children.Fields
-        |> Seq.map (fun e -> e.Value.Renderer)
-        |> Seq.map (Renderer.GetTypesFreeVars seenFormNames ctx)
-        |> sum.All
-
-      match fr with
-      | Renderer.EnumRenderer(e, f) -> (ctx.TryFindEnum e.EnumName |> Sum.map (EnumApi.Type >> Set.singleton)) + !f
-      | Renderer.FormRenderer(f, _, children) ->
-        sum {
-          if seenFormNames |> Set.contains f.FormName then
-            return Set.empty
-          else
-            let! f = ctx.TryFindForm f.FormName
-            let! (fvars: Set<TypeId>) = f |> FormConfig.GetTypesFreeVars (seenFormNames.Add f.FormName) ctx
-
-            let! (cvars: List<Set<TypeId>>) = children |> getChildrenTypeFreeVars
-
-            return cvars |> List.fold (Set.union) fvars
-        }
-      | Renderer.ListRenderer l ->
-        sum {
-          let! (cvars: List<Set<TypeId>>) = l.Children |> getChildrenTypeFreeVars
-
-          let! zero = !l.Element.Renderer + !l.List
-          return cvars |> List.fold (Set.union) zero
-        }
-      | Renderer.MapRenderer m ->
-        sum {
-          let! (cvars: List<Set<TypeId>>) = m.Children |> getChildrenTypeFreeVars
-
-          let! zero = (!m.Map + !m.Key.Renderer + !m.Value.Renderer)
-          return cvars |> List.fold (Set.union) zero
-        }
-      | Renderer.PrimitiveRenderer p ->
-        sum {
-          let! (cvars: List<Set<TypeId>>) = p.Children |> getChildrenTypeFreeVars
-
-          return cvars |> List.fold (Set.union) (p.Type |> ExprType.GetTypesFreeVars)
-        }
-      | Renderer.StreamRenderer(s, f) ->
-        (ctx.TryFindStream s.StreamName |> Sum.map (StreamApi.Type >> Set.singleton))
-        + !f
-      | Renderer.UnionRenderer cs ->
-        sum {
-          let! (cvars: List<Set<TypeId>>) = cs.Children |> getChildrenTypeFreeVars
-
-          let! (csvars: List<Set<TypeId>>) =
-            cs.Cases
-            |> Seq.map (fun e -> e.Value.Renderer)
-            |> Seq.map (Renderer.GetTypesFreeVars seenFormNames ctx)
-            |> sum.All
-
-          return (cvars @ csvars) |> List.fold (Set.union) Set.empty
-        }
-
-
     static member Validate (ctx: ParsedFormsContext) (formType: ExprType) (fr: Renderer) : Sum<ExprType, Errors> =
       let (!) = Renderer.Validate ctx formType
 
@@ -341,18 +276,6 @@ module Validator =
             |> state.Map ignore
       }
 
-    static member GetTypesFreeVars
-      (seenFormNames: Set<string>)
-      (ctx: ParsedFormsContext)
-      (fields: FormFields)
-      : Sum<Set<TypeId>, Errors> =
-      let (+) = sum.Lift2 Set.union
-
-      (fields.Fields
-       |> Map.values
-       |> Seq.map (fun f -> f.Renderer |> Renderer.GetTypesFreeVars seenFormNames ctx)
-       |> Seq.fold (+) (sum { return Set.empty }))
-
     static member Validate (ctx: ParsedFormsContext) (rootType: ExprType) (body: FormFields) : Sum<Unit, Errors> =
       sum.All(
         body.Fields
@@ -362,33 +285,7 @@ module Validator =
       )
       |> Sum.map ignore
 
-  and FormBody with
-    static member GetTypesFreeVars
-      (seenFormNames: Set<string>)
-      (ctx: ParsedFormsContext)
-      (body: FormBody)
-      : Sum<Set<TypeId>, Errors> =
-      let (+) = sum.Lift2 Set.union
-
-      match body with
-      | FormBody.Fields fields -> FormFields.GetTypesFreeVars seenFormNames ctx fields
-      | FormBody.Cases cases ->
-        cases
-        |> Map.values
-        |> Seq.map (fun case -> FormFields.GetTypesFreeVars seenFormNames ctx case)
-        |> Seq.fold (+) (sum { return Set.empty })
-
   and FormConfig with
-    static member GetTypesFreeVars
-      (seenFormNames: Set<string>)
-      (ctx: ParsedFormsContext)
-      (fc: FormConfig)
-      : Sum<Set<TypeId>, Errors> =
-      let (+) = sum.Lift2 Set.union
-
-      sum { return Set.singleton fc.TypeId }
-      + (fc.Body |> FormBody.GetTypesFreeVars seenFormNames ctx)
-
     static member Validate (ctx: ParsedFormsContext) (formConfig: FormConfig) : Sum<Unit, Errors> =
       sum {
         let! formType = ctx.TryFindType formConfig.TypeId.TypeName
@@ -467,14 +364,6 @@ module Validator =
       |> state.WithErrorContext $"...when validating form predicates for {formConfig.FormName}"
 
   and FormLauncher with
-    static member GetTypesFreeVars (ctx: ParsedFormsContext) (fl: FormLauncher) : Sum<Set<TypeId>, Errors> =
-      let (+) = sum.Lift2 Set.union
-
-      sum {
-        let! form = ctx.TryFindForm fl.Form.FormName
-        return! FormConfig.GetTypesFreeVars Set.empty ctx form
-      }
-
     static member Validate
       (ctx: ParsedFormsContext)
       (formLauncher: FormLauncher)
@@ -649,20 +538,6 @@ module Validator =
       |> sum.WithErrorContext $"...when validating stream {streamApi.StreamName}"
 
   type ParsedFormsContext with
-    static member GetTypesFreeVars(ctx: ParsedFormsContext) : Sum<Set<TypeId>, Errors> =
-      let (+) = sum.Lift2 Set.union
-      let zero = sum { return Set.empty }
-
-      (ctx.Forms
-       |> Map.values
-       |> Seq.map (FormConfig.GetTypesFreeVars Set.empty ctx)
-       |> Seq.fold (+) zero)
-      + (ctx.Apis |> FormApis.GetTypesFreeVars |> sum.Return)
-      + (ctx.Launchers
-         |> Map.values
-         |> Seq.map (FormLauncher.GetTypesFreeVars ctx)
-         |> Seq.fold (+) zero)
-
     static member Validate codegenTargetConfig (ctx: ParsedFormsContext) : State<Unit, Unit, ValidationState, Errors> =
       state {
         do!

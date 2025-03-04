@@ -102,7 +102,7 @@ Todo (✅/❌)
       ✅ run tests before releasing
     ✅ make sure we parse the `children` of each renderer type that supports them
       ✅ reduce repetition around the processing of `Children` in `validate` and `get...free...vars`
-    ❌ allow mutually recursive types
+    ✅ allow mutually recursive types
       ✅ implement `Value` and `Expr`
       ✅ allow mutually recursive forms by prepopulating the state with empty fields
       ✅ support `case` statement in form' top-level
@@ -112,7 +112,7 @@ Todo (✅/❌)
         ✅ validate predicates knowing that `root` is already switched
           ✅ add validation predicate to a switched form renderer and ensure that the `root` type is the narrowed one
             ✅ needs a launcher
-        ❌ get rid of the `GetTypesFreeVars`, it is unnecessary
+        ✅ get rid of the `GetTypesFreeVars`, it is unnecessary
     ✅ the Go-lang generator could support more types for unions than just records: primitives and unions themselves
       ✅ just force a field `Value` (if it's not a record or just _always_)
     ❌ add multi-field renderers
