@@ -102,20 +102,17 @@ Todo (✅/❌)
       ✅ implement `Value` and `Expr`
       ❌ make sure that ExprType.resolveLookup is lazy to avoid infinite loops
       ❌ allow mutually recursive forms
-    ❌ extensions
-      ❌ add multi-field renderers
-        ❌ use tuples, meaning it's still just one single field
-      ❌ add paginated lists
-        ❌ requires changes to the frontend
-      ❌ add lazy fields
-        ❌ requires changes to the frontend
-      ❌ distinguish Option (with renderer like List) from SingleSelection (only renderer for streams)
-        ❌ allow Some and None matching on Option
-        ❌ distinguish outer from inner renderers
-      ✅ support `children` property on any renderer
-        ✅ a record of fields parsed and validated exacted like fields
-      ✅ parse and validate new type of launchers
-    ❌ the Go-lang generator could support more types for unions than just records: primitives and unions themselves
+    ✅ the Go-lang generator could support more types for unions than just records: primitives and unions themselves
+      ✅ just force a field `Value` (if it's not a record or just _always_)
+    ❌ add multi-field renderers
+      ❌ use tuples, meaning it's still just one single field
+    ❌ add paginated lists
+      ❌ requires changes to the frontend
+    ❌ add lazy fields
+      ❌ requires changes to the frontend
+    ❌ distinguish Option (with renderer like List) from SingleSelection (only renderer for streams)
+      ❌ allow Some and None matching on Option
+      ❌ distinguish outer from inner renderers
     ❌ paths inside `Any` have a priority after a partial match is found - `Any` filters errors lower than the highest priority
       ❌ add to each `Any`, streamline operators
         ❌ parser
@@ -136,7 +133,6 @@ Todo (✅/❌)
         ❌ served by an F# backend
         ❌ with access to folder IDE-style
         ❌ with enums and streams (defined in F#) based on the available types ATM
-    ❌ improve the syntax of types and expressions with fslex and fsyacc
     ✅ fix Ballerina as a namespace for proper nesting
     ✅ convert all instances of Map.tryFind ... withError ... to `Map.tryFindWithError`
     ✅ `Map.tryFindWithError streamName "streams" streamName |> state.OfSum` should just be `findStream`
@@ -167,8 +163,13 @@ Todo (✅/❌)
       ❌ entities POST - how do we represent changes?
       ❌ entities PATCH - how do we represent changes?
       ❌ make all these functions partially applied in the actual parameters vs the visitor parameters
+    ❌ improve the syntax of types and expressions with fslex and fsyacc
     ❌ codegen the `import` command with some sort of linking strategy for shared files
-    ❌ define webservice variant
+    ❌ define live webservice variant 
+      ❌ database syntax
+        ❌ api extended overridden on top of database
+      ❌ database storage and migration manager
+      ❌ OData (AST-only) API generator
     ✅ allow union types (needs adjustment in frontend too)
   ✅ models
     ✅ users

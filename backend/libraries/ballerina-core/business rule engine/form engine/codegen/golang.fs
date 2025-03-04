@@ -15,6 +15,8 @@ module Golang =
   open Ballerina.Core.Json
   open System.Text.RegularExpressions
   open Ballerina.Fun
+  open Ballerina.Collections
+  open Ballerina.Collections.NonEmptyList
 
   type GoCodeGenState =
     { UsedImports: Set<string> }
@@ -208,7 +210,7 @@ module Golang =
                 ctx.Apis.Enums
                 |> Map.values
                 |> Seq.map (fun e ->
-                  Many(
+                  StringBuilder.Many(
                     seq {
                       yield StringBuilder.One(sprintf "  case \"%s\":\n" e.EnumName)
 
@@ -307,7 +309,7 @@ module Golang =
                 ctx.Apis.Streams
                 |> Map.values
                 |> Seq.map (fun e ->
-                  Many(
+                  StringBuilder.Many(
                     seq {
                       StringBuilder.One $$"""  case "{{e.StreamName}}":"""
                       StringBuilder.One "\n"
@@ -384,17 +386,22 @@ module Golang =
                             let! fields = case.Fields |> ExprType.ResolveLookup ctx |> state.OfSum
 
                             let! fields =
-                              fields
-                              |> ExprType.AsRecord
-                              |> state.OfSum
-                              |> state.Either(
-                                case.Fields |> ExprType.AsUnit |> state.OfSum |> state.Map(fun _ -> Map.empty)
+                              state.Any(
+                                NonEmptyList.OfList(
+                                  fields |> ExprType.AsRecord |> state.OfSum,
+                                  [ case.Fields |> ExprType.AsUnit |> state.OfSum |> state.Map(fun _ -> Map.empty)
+                                    state.Return([ "Value", case.Fields ] |> Map.ofList) ]
+                                )
                               )
+
+
 
                             let! fields =
                               fields
                               |> Seq.map (fun f ->
                                 state {
+                                  // do System.Console.WriteLine(f.Value.ToFSharpString)
+                                  // do System.Console.ReadLine() |> ignore
                                   let! field = f.Value |> ExprType.ToGolangTypeAnnotation
 
                                   return f.Key, field
@@ -531,7 +538,7 @@ module Golang =
                       state.All(fields |> Seq.map (snd >> ExprType.ToGolangTypeAnnotation) |> List.ofSeq)
 
                     let fieldDeclarations =
-                      Many(
+                      StringBuilder.Many(
                         seq {
                           for fieldType, fieldName in fields |> Seq.map fst |> Seq.zip fieldTypes do
                             yield StringBuilder.One "  "
@@ -549,7 +556,7 @@ module Golang =
                     let consStart = $$"""func New{{t.Value.TypeId.TypeName}}("""
 
                     let consParams =
-                      Many(
+                      StringBuilder.Many(
                         seq {
                           for fieldType, fieldName in fields |> Seq.map fst |> Seq.zip fieldTypes do
                             yield StringBuilder.One fieldName
@@ -683,7 +690,7 @@ module Golang =
       )
       """
 
-          Many(
+          StringBuilder.Many(
             seq {
               yield heading
               yield res

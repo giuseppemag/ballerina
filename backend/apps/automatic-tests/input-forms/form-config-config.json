@@ -1,34 +1,19 @@
 {
   "types": {
-    "ValueInt": {
-      "fields": {
-        "Value": "number"
-      }
-    },
-    "ValueString": {
-      "fields": {
-        "Value": "string"
-      }
-    },
-    "ValueBool": {
-      "fields": {
-        "Value": "boolean"
-      }
-    },
     "PrimitiveValue": {
       "fun": "Union",
       "args": [
         {
-          "case": "int",
-          "fields": "ValueInt"
+          "case": "Int",
+          "fields": "number"
         },
         {
-          "case": "string",
-          "fields": "ValueString"
+          "case": "String",
+          "fields": "string"
         },
         {
-          "case": "bool",
-          "fields": "ValueBool"
+          "case": "Bool",
+          "fields": "boolean"
         }
       ]
     },
@@ -36,13 +21,13 @@
       "fun": "Union",
       "args": [
         {
-          "case": "primitive",
+          "case": "Primitive",
           "fields": {
             "Value":"PrimitiveValue"
           }
         },
         {
-          "case": "record",
+          "case": "Record",
           "fields": {
             "Value":{
               "fun":"Map",
@@ -54,7 +39,7 @@
           }
         },
         {
-          "case": "lambda",
+          "case": "Lambda",
           "fields": {
             "VarName":"string",
             "Body":"Expr"
@@ -66,10 +51,8 @@
       "fun": "Union",
       "args": [
         {
-          "case": "value",
-          "fields": {
-            "Value":"Value"
-          }
+          "case": "Value",
+          "fields": "Value"
         },
         {
           "case": "binary",
@@ -85,11 +68,11 @@
       "fun": "Union",
       "args": [
         {
-          "case": "plus",
+          "case": "Plus",
           "fields": {}
         },
         {
-          "case": "minus",
+          "case": "Minus",
           "fields": {}
         }
       ]
