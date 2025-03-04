@@ -1127,6 +1127,13 @@ module Parser =
         | _ -> return! sum.Throw(Errors.Singleton $$"""Error: type {{t}} cannot be converted to a record.""")
       }
 
+    static member AsUnion(t: ExprType) : Sum<_, Errors> =
+      sum {
+        match t with
+        | ExprType.UnionType c -> return c
+        | _ -> return! sum.Throw(Errors.Singleton $$"""Error: type {{t}} cannot be converted to a union.""")
+      }
+
     static member AsUnit(t: ExprType) : Sum<Unit, Errors> =
       sum {
         match t with

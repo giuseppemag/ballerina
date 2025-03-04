@@ -331,13 +331,13 @@ module Validator =
       (ctx: ParsedFormsContext)
       (globalType: TypeBinding)
       (rootType: TypeBinding)
-      (formType: TypeBinding)
+      (localType: ExprType)
       (formFields: FormFields)
       : State<Unit, Unit, ValidationState, Errors> =
       state {
         for f in formFields.Fields do
           do!
-            FieldConfig.ValidatePredicates ctx globalType rootType formType.Type f.Value
+            FieldConfig.ValidatePredicates ctx globalType rootType localType f.Value
             |> state.Map ignore
       }
 
@@ -445,10 +445,18 @@ module Validator =
           let! formType = ctx.TryFindType formConfig.TypeId.TypeName |> state.OfSum
 
           match formConfig.Body with
-          | FormBody.Fields body -> do! FormFields.ValidatePredicates ctx globalType rootType formType body
+          | FormBody.Fields body -> do! FormFields.ValidatePredicates ctx globalType rootType formType.Type body
           | FormBody.Cases cases ->
-            for body in cases |> Map.values do
-              do! FormFields.ValidatePredicates ctx globalType rootType formType body
+            let! typeCases = formType.Type |> ExprType.AsUnion |> state.OfSum
+
+            for case in cases do
+              let! typeCase =
+                typeCases
+                |> List.tryFind (fun tc -> tc.CaseName = case.Key)
+                |> Sum.fromOption (fun () -> Errors.Singleton $"Error: cannot find type case {case.Key}")
+                |> state.OfSum
+
+              do! FormFields.ValidatePredicates ctx globalType rootType typeCase.Fields case.Value
 
           return ()
         else

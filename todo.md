@@ -109,9 +109,10 @@ Todo (✅/❌)
         ✅ `FormConfig = Fields | Match`
         ✅ parse
         ✅ type-check
-        ❌ validate predicates knowing that `root` is already switched
-          ❌ add validation predicate to a switched form renderer and ensure that the `root` type is the narrowed one
-            ❌ needs a launcher
+        ✅ validate predicates knowing that `root` is already switched
+          ✅ add validation predicate to a switched form renderer and ensure that the `root` type is the narrowed one
+            ✅ needs a launcher
+        ❌ get rid of the `GetTypesFreeVars`, it is unnecessary
     ✅ the Go-lang generator could support more types for unions than just records: primitives and unions themselves
       ✅ just force a field `Value` (if it's not a record or just _always_)
     ❌ add multi-field renderers
@@ -121,10 +122,6 @@ Todo (✅/❌)
     ❌ distinguish Option (with renderer like List) from SingleSelection (only renderer for streams)
       ❌ allow Some and None matching on Option
       ❌ distinguish outer from inner renderers
-    ❌ paths inside `Any` have a priority after a partial match is found - `Any` filters errors lower than the highest priority
-      ❌ add to each `Any`, streamline operators
-        ❌ parser
-        ❌ validator
     ❌ extensions in a separate (private) repo
       ❌ preprocessor plugins
         ❌ injected at specific times
@@ -133,6 +130,29 @@ Todo (✅/❌)
       ❌ add homomorphic forms
     ❌ disallow unsupported keywords (`visibIle` wasted me a good chunk of time)
     ❌ the validator is now mature
+    ❌ entites visitors
+      ❌ entites GET - identical to stream GETter: pairs of get + serialize
+      ❌ entities GETDefault - identical to stream GETter: pairs of get + serialize
+      ❌ entities POST - how do we represent changes?
+      ❌ entities PATCH - how do we represent changes?
+      ❌ make all these functions partially applied in the actual parameters vs the visitor parameters
+    ❌ define live webservice variant 
+      ❌ database syntax
+        ❌ api extended overridden on top of database
+      ❌ database storage and migration manager
+      ❌ OData (AST-only) API generator
+    ❌ refactor `sprintf` instances in `typeCheck.fs`
+    ❌ add `sum.Map`, remove `Sum.Map` references (ugly and inconsistent wrt `state.Map`)
+    ❌ add `sum.For`, use it instead of `sum.All >> sum.Map ignore`
+    ❌ paths inside `Any` have a priority after a partial match is found - `Any` filters errors lower than the highest priority
+      ❌ add to each `Any`, streamline operators
+        ❌ parser
+        ❌ validator
+    ❌ add state.TryFindX for enum, form, stream, and so on like for `state.TryFindType`
+      ❌ why can't we use state.TryFindType in the validators?
+      ❌ Validate passes the context as a parameter instead of using GetContext - ugly
+    ❌ remove all the nonsense `Guid`s from id types, the wrapped name is enough
+    ❌ union cases support `fields: "number"` but the renderer cases do not, because they always expect `fields` - extend
     ❌ create gui editor as an instance of a form itself
       ❌ form specification
       ❌ generated F# files with type definitions
@@ -141,18 +161,7 @@ Todo (✅/❌)
         ❌ served by an F# backend
         ❌ with access to folder IDE-style
         ❌ with enums and streams (defined in F#) based on the available types ATM
-    ✅ fix Ballerina as a namespace for proper nesting
-    ✅ convert all instances of Map.tryFind ... withError ... to `Map.tryFindWithError`
-    ✅ `Map.tryFindWithError streamName "streams" streamName |> state.OfSum` should just be `findStream`
-    ✅ adjust all patterns like `|> Seq.tryFind (fst >> (=) "stream") |> Option.map snd` to `JsonValue.tryFindField`
-    ❌ refactor `sprintf` instances in `typeCheck.fs`
-    ❌ add `sum.Map`, remove `Sum.Map` references (ugly and inconsistent wrt `state.Map`)
-    ❌ add `sum.For`, use it instead of `sum.All >> sum.Map ignore`
-    ❌ add state.TryFindX for enum, form, stream, and so on like for `state.TryFindType`
-      ❌ why can't we use state.TryFindType in the validators?
-      ❌ Validate passes the context as a parameter instead of using GetContext - ugly
     ❌ release ballerina to nuget
-    ❌ check the consistency of the used data structures: `Type` vs `TypeId`
     ✅ accept empty `apis` blocks
     ❌ discard unsupported field names
     ✅ add `extends` keyword for forms
@@ -166,19 +175,8 @@ Todo (✅/❌)
     ❌ expr and expr type parsing and validation must go to their respective meta-modules
     ❌ generate Typescript and C# code from forms-config
     ❌ extensibility of primitives as existentially-typed algebras
-    ❌ entites visitors
-      ❌ entites GET - identical to stream GETter: pairs of get + serialize
-      ❌ entities GETDefault - identical to stream GETter: pairs of get + serialize
-      ❌ entities POST - how do we represent changes?
-      ❌ entities PATCH - how do we represent changes?
-      ❌ make all these functions partially applied in the actual parameters vs the visitor parameters
     ❌ improve the syntax of types and expressions with fslex and fsyacc
     ❌ codegen the `import` command with some sort of linking strategy for shared files
-    ❌ define live webservice variant 
-      ❌ database syntax
-        ❌ api extended overridden on top of database
-      ❌ database storage and migration manager
-      ❌ OData (AST-only) API generator
     ✅ allow union types (needs adjustment in frontend too)
   ✅ models
     ✅ users

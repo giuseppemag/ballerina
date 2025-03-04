@@ -1,5 +1,8 @@
 {
   "types": {
+    "GlobalConfiguration": {
+      "fields":{}
+    },
     "PrimitiveValue": {
       "fun": "Union",
       "args": [
@@ -94,7 +97,7 @@
           "fields": {
             "Value": {
               "renderer": "defaultNumber",
-              "visible": "hello"
+              "visible": { "kind":"equals", "operands":[ {"kind":"fieldLookup", "operands":[{"kind":"varLookup", "varName":"local" }, "Value"] }, 100] }
             }
           },
           "tabs": {
@@ -285,6 +288,13 @@
           }
         }
       }
+    }
+  },
+  "launchers": {
+    "expr-transparent": {
+      "kind": "passthrough",
+      "form": "expr",
+      "configType": "GlobalConfiguration"
     }
   }
 }
