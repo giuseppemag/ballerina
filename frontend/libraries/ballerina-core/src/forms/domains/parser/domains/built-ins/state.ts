@@ -137,6 +137,7 @@ export type BuiltIns = {
     streamMultiSelection: Set<string>;
     list: Set<string>;
     map: Set<string>;
+    sum: Set<string>;
   };
 };
 

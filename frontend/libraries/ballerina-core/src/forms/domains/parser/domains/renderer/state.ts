@@ -583,10 +583,10 @@ export const ParsedRenderer = {
                       ).withView(((parsingContext.formViews)[viewKind])[parsedRenderer.renderer]() as any)
                         .mapContext<any>(_ => ({ ..._, label: parsedRenderer.label, tooltip: parsedRenderer.tooltip, details: parsedRenderer.details })),
                         initialValue: parsingContext.defaultValue(parsedRenderer.type),
-                        initialState: MapFieldState<any, any, any, any>().Default(Map())
+                        initialState: SumFieldState<any, any, any, any>().Default(Sum.Default.right(parsedRightRenderer.form.initialState))
                       },
-                    visibilityPredicateExpression: FieldPredicateExpression.Default.map(visibilityExpr, parsedLeftRenderer.visibilityPredicateExpression, parsedLeftRenderer.visibilityPredicateExpression),
-                    disabledPredicatedExpression: FieldPredicateExpression.Default.map(disabledExpr, parsedRightRenderer.disabledPredicatedExpression, parsedRightRenderer.disabledPredicatedExpression),
+                    visibilityPredicateExpression: FieldPredicateExpression.Default.sum(visibilityExpr, parsedLeftRenderer.visibilityPredicateExpression, parsedRightRenderer.visibilityPredicateExpression),
+                    disabledPredicatedExpression: FieldPredicateExpression.Default.sum(disabledExpr, parsedLeftRenderer.disabledPredicatedExpression, parsedRightRenderer.disabledPredicatedExpression),
                   }
                 )
               )

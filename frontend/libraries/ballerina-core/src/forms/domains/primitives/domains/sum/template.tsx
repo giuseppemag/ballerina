@@ -57,7 +57,6 @@ export const SumForm = <
             props.foreignMutations.onChange(Updater((sum: Sum<L, R>) => sum === undefined ? sum : Sum.Updaters.left<L, R>(elementUpdater)(sum)), path)
             props.setState(_ => ({ ..._, modifiedByUser: true }))
           },
-          switch: (_: Sum<L, R>) => { }
         })
       )
       .mapContext((_: Context & Value<Sum<L, R>> & SumFieldState<L, R, LeftFormState, RightFormState>): (Context & Value<L> & LeftFormState) | undefined => {
@@ -92,7 +91,6 @@ export const SumForm = <
             props.foreignMutations.onChange(Updater((sum: Sum<L, R>) => sum === undefined ? sum : Sum.Updaters.right<L, R>(elementUpdater)(sum)), path)
             props.setState(_ => ({ ..._, modifiedByUser: true }))
           },
-          switch: (_: Sum<L, R>) => { }
         })
       )
       .mapContext((_: Context & Value<Sum<L, R>> & SumFieldState<L, R, LeftFormState, RightFormState>): (Context & Value<R> & RightFormState) | undefined => {
