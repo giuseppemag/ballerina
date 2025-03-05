@@ -265,9 +265,6 @@ export const fromAPIRawValue =
     injectedPrimitives?: InjectedPrimitives<T>,
   ) =>
   (raw: any): PredicateValue => {
-    console.debug("fromAPIRawValue raw", raw);
-    console.debug("fromAPIRawValue t", t);
-    console.debug("--------------------------------");
     if (raw == undefined) {
       return defaultValue(types, builtIns, injectedPrimitives)(t);
     }
@@ -294,7 +291,6 @@ export const fromAPIRawValue =
     if (t.kind == "application") {
       if (t.value == "SingleSelection") {
         const result = converters[t.value].fromAPIRawValue(raw);
-        console.debug("fromAPIRawValue result", result);
         return result.kind == "r"
           ? PredicateValue.Default.option(false, PredicateValue.Default.unit())
           : PredicateValue.Default.option(

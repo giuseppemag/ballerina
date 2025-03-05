@@ -163,7 +163,7 @@ export const PredicateValue = {
     string: () => "",
     number: () => 0,
     boolean: () => false,
-    date: (value: Date): PredicateValue => ({ kind: "date", value }),
+    date: (value: Date): ValueDate => ({ kind: "date", value }),
     unit: (): PredicateValue => ({ kind: "unit" }),
     tuple: (values: Array<PredicateValue>): ValueTuple => ({
       kind: "tuple",
@@ -442,7 +442,6 @@ export const PredicateValue = {
           ),
         );
       }
-      // TODO: Use the option type instead of union case
       if (type.kind == "application" && type.value == "SingleSelection") {
         ValueOrErrors.Default.return(
           PredicateValue.Default.option(json["IsSome"], json["Value"]),

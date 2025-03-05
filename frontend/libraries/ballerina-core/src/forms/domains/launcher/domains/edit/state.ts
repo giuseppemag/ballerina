@@ -42,11 +42,11 @@ export type EditFormContext<FS> = {
     entity: PredicateValue,
     formstate: EditFormState<FS>,
     checkKeys: boolean,
-  ) => ValueOrErrors<PredicateValue, ApiErrors>;
-  fromApiParser: (raw: any) => any;
+  ) => ValueOrErrors<PredicateValue, string>;
+  fromApiParser: (raw: any) => PredicateValue;
   parseGlobalConfiguration: (
     raw: any,
-  ) => ValueOrErrors<PredicateValue, ApiErrors>;
+  ) => ValueOrErrors<PredicateValue, string>;
   visibilityPredicateExpressions: FieldPredicateExpressions;
   disabledPredicatedExpressions: FieldPredicateExpressions;
   actualForm: Template<
@@ -62,7 +62,7 @@ export type EditFormContext<FS> = {
 
 export type EditFormState<FS> = {
   entity: Synchronized<Unit, PredicateValue>;
-  globalConfiguration: Sum<PredicateValue, "not parsed">;
+  globalConfiguration: Synchronized<Unit, ValueOrErrors<PredicateValue, string>>;
   formFieldStates: FS;
   commonFormState: CommonFormState;
   customFormState: {
@@ -103,7 +103,7 @@ export const EditFormState = <FS>() => ({
     },
   ): EditFormState<FS> => ({
     entity: Synchronized.Default(unit),
-    globalConfiguration: Sum.Default.right("not parsed"),
+    globalConfiguration: Synchronized.Default(unit),
     formFieldStates,
     commonFormState,
     customFormState,

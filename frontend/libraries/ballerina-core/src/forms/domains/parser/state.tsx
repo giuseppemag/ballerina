@@ -242,9 +242,9 @@ export const ParseForms =
 
     return ValueOrErrors.Default.return(parsedForms);
   };
-export type EditLauncherContext<Entity, FormState, ExtraContext> = Omit<
-  EditFormContext<Entity, FormState> &
-    EditFormState<Entity, FormState> & {
+export type EditLauncherContext<FormState, ExtraContext> = Omit<
+  EditFormContext<FormState> &
+    EditFormState<FormState> & {
       extraContext: ExtraContext;
       containerFormView: any;
       submitButtonWrapper: any;
@@ -289,12 +289,12 @@ export type ParsedLaunchers = {
     string,
     <Entity, FormState, ExtraContext>() => {
       form: Template<
-        EditLauncherContext<Entity, FormState, ExtraContext> &
-          EditFormState<Entity, FormState>,
-        EditFormState<Entity, FormState>,
-        EditFormForeignMutationsExpected<Entity, FormState>
+        EditLauncherContext<FormState, ExtraContext> &
+          EditFormState<FormState>,
+        EditFormState<FormState>,
+        EditFormForeignMutationsExpected<FormState>
       >;
-      initialState: EditFormState<Entity, FormState>;
+      initialState: EditFormState<FormState>;
     }
   >;
   passthrough: Map<
@@ -395,7 +395,6 @@ export const parseFormsToLaunchers =
         parsedForm.visibilityPredicateExpressions;
       const disabledPredicatedExpressions =
         parsedForm.disabledPredicatedExpressions;
-      console.debug("entity apis", entityApis.get(launcher.configApi));
       const api = {
         getGlobalConfiguration: () => entityApis.get(launcher.configApi)(""),
         get: (id: string) => entityApis.get(launcher.api)(id),
@@ -409,7 +408,7 @@ export const parseFormsToLaunchers =
         Entity,
         FormState,
         ExtraContext,
-        Context extends EditLauncherContext<Entity, FormState, ExtraContext>,
+        Context extends EditLauncherContext<FormState, ExtraContext>,
       >() => ({
         form: EditFormTemplate<Entity, FormState>()
           .mapContext(
@@ -419,9 +418,7 @@ export const parseFormsToLaunchers =
                   parentContext.entity.sync.kind == "loaded"
                     ? parentContext.entity.sync.value
                     : undefined,
-                rawEntity: parentContext.rawEntity,
                 entity: parentContext.entity,
-                rawGlobalConfiguration: parentContext.rawGlobalConfiguration,
                 globalConfiguration: parentContext.globalConfiguration,
                 entityId: parentContext.entityId,
                 commonFormState: parentContext.commonFormState,
@@ -478,7 +475,7 @@ export const parseFormsToLaunchers =
           .mapForeignMutationsFromProps(
             (props) => props.foreignMutations as any,
           ),
-        initialState: EditFormState<Entity, FormState>().Default(
+        initialState: EditFormState<FormState>().Default(
           initialState.formFieldStates,
           initialState.commonFormState,
           {
