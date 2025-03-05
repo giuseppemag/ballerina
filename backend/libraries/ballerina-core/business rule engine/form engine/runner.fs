@@ -10,6 +10,7 @@ module Runner =
   open System.Text.Json
   open System.Text.Json.Serialization
   open System.Text.RegularExpressions
+  open Ballerina.Core.Object
   open Ballerina.Core.String
   open Ballerina.Core.StringBuilder
   open Ballerina.DSL.Expr.Model
@@ -159,5 +160,7 @@ module Runner =
 
 
 (* Example invocation:
+dotnet run -- forms -input ../automatic-tests/input-forms/person-config.json -output ./generated-output/models -validate -codegen golang -codegen_config ../automatic-tests/input-forms/go-config.json
+
 dotnet run -- forms -input ../automatic-tests/input-forms/form-config-config.json -output ./generated-output/models -validate -codegen golang -codegen_config ../automatic-tests/input-forms/go-config.json
 *)

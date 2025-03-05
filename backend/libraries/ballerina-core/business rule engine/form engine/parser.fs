@@ -150,6 +150,7 @@ module Parser =
       | ListRenderer r -> ExprType.ListType r.Element.Type
       | EnumRenderer(_, r)
       | StreamRenderer(_, r) -> r.Type
+      | TupleRenderer i -> ExprType.TupleType(i.Elements |> Seq.map (fun e -> e.Type) |> List.ofSeq)
       | FormRenderer(_, t, _) -> t
       | UnionRenderer r ->
         ExprType.UnionType(
@@ -343,13 +344,42 @@ module Parser =
                                 return Expr.VarLookup { VarName = varName }
                               }
                               |> state.MapError(Errors.WithPriority ErrorPriority.High)
-                          } ]
+                          }
+                          state {
+                            let! kindJson = fieldsJson |> sum.TryFindField "kind" |> state.OfSum
+
+                            do!
+                              kindJson
+                              |> JsonValue.AsEnum(Set.singleton "itemLookup")
+                              |> state.OfSum
+                              |> state.Map ignore
+
+
+                            return!
+                              state {
+                                let! operandsJson = fieldsJson |> sum.TryFindField "operands" |> state.OfSum
+
+                                let! (firstJson, itemIndexJson) = JsonValue.AsPair operandsJson |> state.OfSum
+
+                                let! itemIndex = JsonValue.AsNumber itemIndexJson |> state.OfSum
+
+                                let! first = Expr.Parse firstJson
+                                return Expr.Project(first, itemIndex |> int)
+                              }
+                              |> state.MapError(Errors.WithPriority ErrorPriority.High)
+                          }
+                          state.Throw(
+                            Errors.Singleton
+                              $"Error: cannot parse expression {fieldsJson.ToFSharpString.ReasonablyClamped}."
+                          ) ]
                       )
                     )
-                } ]
+                }
+                |> state.MapError(Errors.HighestPriority) ]
             )
           )
       }
+      |> state.MapError(Errors.HighestPriority)
 
 
   type Renderer with
@@ -550,6 +580,40 @@ module Parser =
                         Children = children }
                 },
                 [ state {
+                    let! tupleConfig =
+                      config.Tuple
+                      |> List.tryFind (fun t -> t.SupportedRenderers.Contains s)
+                      |> Sum.fromOption (fun () -> Errors.Singleton $"Error: cannot find tuple config for renderer {s}")
+                      |> state.OfSum
+
+                    return!
+                      state {
+                        let! itemRenderersJson = parentJsonFields |> sum.TryFindField "itemRenderers" |> state.OfSum
+                        let! itemRenderersJson = itemRenderersJson |> JsonValue.AsArray |> state.OfSum
+                        let! itemRenderers = itemRenderersJson |> Seq.map (NestedRenderer.Parse) |> state.All
+
+                        if itemRenderers.Length <> tupleConfig.Ariety then
+                          return!
+                            state.Throw(
+                              Errors.Singleton
+                                $"Error: mismatched tuple size. Expected {tupleConfig.Ariety}, found {itemRenderers.Length}."
+                            )
+                        else
+                          return
+                            TupleRenderer
+                              {| Tuple =
+                                  PrimitiveRenderer
+                                    { PrimitiveRendererName = s
+                                      PrimitiveRendererId = Guid.CreateVersion7()
+                                      Type =
+                                        ExprType.TupleType(itemRenderers |> Seq.map (fun nr -> nr.Type) |> List.ofSeq)
+                                      Children = { Fields = Map.empty } }
+                                 Elements = itemRenderers
+                                 Children = children |}
+                      }
+                      |> state.MapError(Errors.WithPriority ErrorPriority.High)
+                  }
+                  state {
                     let! form = formsState.TryFindForm s |> state.OfSum
                     let! formType = formsState.TryFindType form.TypeId.TypeName |> state.OfSum
                     return FormRenderer(form |> FormConfig.Id, formType.Type, children)
@@ -1039,6 +1103,22 @@ module Parser =
                           state {
                             do!
                               funJson
+                              |> JsonValue.AsEnum(Set.singleton "Tuple")
+                              |> state.OfSum
+                              |> state.Map(ignore)
+
+                            return!
+                              state {
+                                let! argsJson = (fields |> state.TryFindField "args")
+                                let! args = JsonValue.AsArray argsJson |> state.OfSum
+                                let! args = args |> Seq.map (!) |> state.All
+                                return ExprType.TupleType args
+                              }
+                              |> state.MapError(Errors.WithPriority ErrorPriority.High)
+                          }
+                          state {
+                            do!
+                              funJson
                               |> JsonValue.AsEnum(Set.singleton "List")
                               |> state.OfSum
                               |> state.Map(ignore)
@@ -1085,7 +1165,9 @@ module Parser =
                                 return ExprType.UnionType cases
                               }
                               |> state.MapError(Errors.WithPriority ErrorPriority.High)
-                          } ]
+                          }
+                          state.Throw(Errors.Singleton $"Error: cannot parse generic type {funJson}")
+                          |> state.MapError(Errors.WithPriority ErrorPriority.High) ]
                       )
                     )
                     |> state.MapError(Errors.HighestPriority)

@@ -1,78 +1,13 @@
-Todo (✅/❌)
+
+# Todo (✅/❌)
+
   ❌ make validator partial
   ❌ show both data-sync and type-safe forms in FormsApp
 
   ❌ check that we can inspect a local DB (MySQL, Redis, ES, Postgres)
   ❌ form validator and code generator
-    ✅ `ExprType.Unify` does not belong in _the other_ mega-file: split Expr, ExprType, eval, typeCheck
-    ✅ deploy published release on GitHub with a bash script
-    ✅ move to ballerina-core
-      ✅ extract `Unify` and `UnificationConstraints` form typeCheck
-      ✅ move `JsonValue` extension to core
-      ✅ make `tryFindFieldsN` prettier (as in: take as input a normal tuple, give back a normal tuple)
-        ✅ define a `tuples` conversion library 
-        ✅ base it off of state
-          ✅ define state.All3, state.All4, state.All5
-        ✅ Utils.tryFindField -> sum.TryFindField
-        ✅ with `Pair` for the `<*>` operator?
-      ✅ all utility methods should be capitalized in Program.fs
-      ✅ don't mix `printfn` and `Console.WriteLine`: only the latter, with string interpolation
-      ✅ remove the visibility predicates from odd renderers like ElementRenderer, KeyRenderer, and so on
-      ✅ models
-      ✅ parsing
-      ✅ validation
-      ✅ codegen
-      ✅ "runner"/entrypoint
-    ✅ split the mega-file for the business rules (business rule engine/model)
-      ✅ X.[Model|Feature1|Feature2|...FeatureN]
-        ✅ `Expr`, `ExprType` go under `Model`
-      ✅ rename `BusinessRule` -> `BusinessRules`
-      ✅ `Expr`should be in `BusinessRules`
-      ✅ rename `BusinessRules`-> `DSL`
-      ✅ the `Sum` module belongs under the `Collections` namespace
-    ✅ the code is acceptable now
     ❌ break the form engine in all possible ways and ensure good errors arise
       ❌ define tests, one minimal spec for anything that can go wrong
-        ✅ create a test project
-        ✅ make every field optional - visibility, apis, forms, launchers, but not types
-        ✅ put error files inside test project, do not fish from ballerina-runtime
-        ✅ invalid types
-          ✅ invalid fields
-            ✅ bad structure (array, number, etc. instead of record)
-            ✅ non-existing types
-            ✅ generics without (the right) arguments
-              ✅ mark path as _high prio_ earlier
-        ✅ invalid enums
-          ✅ bad structure (array, number, etc. instead of record)
-          ✅ non-existing types in API
-          ✅ types with the wrong structure
-        ✅ invalid streams
-          ✅ non-existing types
-          ✅ types with the wrong structure
-        ✅ invalid entities
-          ✅ bad structure (array, number, etc. instead of record)
-          ✅ non-existing types
-        ✅ invalid forms
-          ✅ bad structure (array, number, etc. instead of record)
-          ✅ non-existing backing `type`
-          ✅ invalid fields
-            ✅ non-existing fields
-            ✅ invalid properties - label/description/details as numbers or objects
-          ✅ invalid renderers
-            ✅ non-existing renderers
-            ✅ mismatch with types
-          ✅ invalid tabs
-            ✅ non-existing fields
-        ✅ invalid predicates
-          ✅ requires global config, APIs, and launcher 
-          ✅ non-existing variables
-          ✅ non-existing fields
-          ✅ mismatched types (`10 == true`)
-          ✅ wrong pattern matching
-            ✅ missing case handler
-            ✅ non existing case name
-            ✅ different types of the handlers
-            ✅ same handler types but unexpected type of the whole match
         ❌ invalid launchers
           ❌ non-existing form
           ❌ missing entity API
@@ -98,29 +33,33 @@ Todo (✅/❌)
         ❌ add invalid form `cases` clauses
           ❌ missing cases on either side
           ❌ mismatched type of cases in renderer vs type
-        ❌ improve the code of the generated tests by removing repetition
-      ✅ run tests before releasing
-    ✅ make sure we parse the `children` of each renderer type that supports them
-      ✅ reduce repetition around the processing of `Children` in `validate` and `get...free...vars`
-    ✅ allow mutually recursive types
-      ✅ implement `Value` and `Expr`
-      ✅ allow mutually recursive forms by prepopulating the state with empty fields
-      ✅ support `case` statement in form' top-level
-        ✅ `FormConfig = Fields | Match`
-        ✅ parse
-        ✅ type-check
-        ✅ validate predicates knowing that `root` is already switched
-          ✅ add validation predicate to a switched form renderer and ensure that the `root` type is the narrowed one
-            ✅ needs a launcher
-        ✅ get rid of the `GetTypesFreeVars`, it is unnecessary
-    ✅ the Go-lang generator could support more types for unions than just records: primitives and unions themselves
-      ✅ just force a field `Value` (if it's not a record or just _always_)
-    ❌ add multi-field renderers
-      ❌ use tuples, meaning it's still just one single field
+    ✅ add tuple[N] renderers
+      ✅ targets
+        ✅ `street, number, city ref`
+          ✅ with visibility predicate on the `number` using `FieldLookup` on `Item2`
+        ✅ mainAddress, addresses
+      ✅ Parser
+      ✅ Validation
+      ✅ PredicateValidation
+      ✅ Value in F#
+      ✅ Value in TypeScript eval
+      ✅ Expr and visibility predicates
+      ✅ Renderer with `Items:Map<int,Renderer>`
+        ✅ validate the right number of items and that there are no holes
+      ✅ Renderer::Validate, the substitutions are completely unnecessary
+      ✅ Go generic types added correctly
+    ❌ add documentation (Confluence)
+    ❌ entites visitors
+      ❌ entites DEFAULT - recursive
+      ❌ entites GET - identical to stream GETter: pairs of get + serialize
+      ❌ entities GETDefault - identical to stream GETter: pairs of get + serialize
+      ❌ entities POST - how do we represent changes?
+      ❌ entities PATCH - how do we represent changes?
+      ❌ make all these functions partially applied in the actual parameters vs the visitor parameters
     ❌ add paginated lists
     ❌ add lazy fields
-    ❌ distinguish Option (with renderer like List) from SingleSelection (only renderer for streams)
-      ❌ allow Some and None matching on Option
+    ❌ distinguish Sum (with renderer like List) from SingleSelection (only renderer for streams)
+      ❌ allow Left and Right matching on Sum
       ❌ distinguish outer from inner renderers
     ❌ extensions in a separate (private) repo
       ❌ preprocessor plugins
@@ -128,22 +67,19 @@ Todo (✅/❌)
         ❌ language generation as parameters
       ❌ define `include` command
       ❌ add homomorphic forms
+      ❌ add homomorphic+config forms
     ❌ disallow unsupported keywords (`visibIle` wasted me a good chunk of time)
     ❌ the validator is now mature
-    ❌ entites visitors
-      ❌ entites GET - identical to stream GETter: pairs of get + serialize
-      ❌ entities GETDefault - identical to stream GETter: pairs of get + serialize
-      ❌ entities POST - how do we represent changes?
-      ❌ entities PATCH - how do we represent changes?
-      ❌ make all these functions partially applied in the actual parameters vs the visitor parameters
-    ❌ define live webservice variant 
+    ❌ define live webservice variant in separate repo
       ❌ database syntax
         ❌ api extended overridden on top of database
       ❌ database storage and migration manager
       ❌ OData (AST-only) API generator
+    ❌ add custom generics with their renderer (for example, `WithEvidenceAndApproval<value>`)
     ❌ refactor `sprintf` instances in `typeCheck.fs`
     ❌ add `sum.Map`, remove `Sum.Map` references (ugly and inconsistent wrt `state.Map`)
     ❌ add `sum.For`, use it instead of `sum.All >> sum.Map ignore`
+    ❌ `sum.fromOption` is inconsistent, should be `Sum.ofOption`
     ❌ paths inside `Any` have a priority after a partial match is found - `Any` filters errors lower than the highest priority
       ❌ add to each `Any`, streamline operators
         ❌ parser
@@ -289,16 +225,16 @@ Todo (✅/❌)
         ❌ add an enum parameter to pick the edit to test
       ❌ make it production-ready
         ❌ define the values of AB, CD, etc. as instances of `Value`
-          ❌ to base everything on Value, Fields and lookup types need an ID, not just the name 
+          ❌ to base everything on Value, Fields and lookup types need an ID, not just the name
             ❌ then we can deprecate FieldId, EntityId, etc.
         ❌ do not commit the updates to the context immediately, output a set of field value changes
           ❌ the context becomes a cache of operations
           ❌ output the applied rules for the visibility/explainability/logging
           ❌ monadically
         ❌ expose OpenAPI
-            ❌ https://www.nuget.org/packages/FSharp.SystemTextJson.Swagger
+            ❌ [Swagger](https://www.nuget.org/packages/FSharp.SystemTextJson.Swagger)
             ❌ use the dynamic schema internally, but a statically typed `Expr` schema externally
-        ❌ test with 
+        ❌ test with
           ❌ a few thousands ABs, CDs, EFs
           ❌ a dozen rules on many field "clusters"
         ❌ the construction of field descriptors in the schema could be streamlined
@@ -324,7 +260,7 @@ Todo (✅/❌)
         ❌ add memcache after write operations
       ❌ -----at this point, the second prototype can be considered reasonably done and could go live as a microservice-----
       ❌ improve DSL for type-safe business rule and expression definition in F#
-        ❌ group field definitions and entity definitions under anonymous records for aesthetics and scoping in case of multiple fields with the same name in a different entity          
+        ❌ group field definitions and entity definitions under anonymous records for aesthetics and scoping in case of multiple fields with the same name in a different entity
       ❌ ideally with F#-style domain objects, not C#-style serializable objects
       ❌ remove every single instance of mutation
       ❌ separate DB serialization as a different EF package
@@ -354,7 +290,7 @@ Todo (✅/❌)
         ❌ define User' vault data and prevent anyone from extending along User -> Vault unless they are the user themselves
       ❌ control creation of extended entities (AB inside ABEvent for example)
     ❌ low-code platform
-      ❌ business rules (of which defaultings are a data-driven instance) should be just data 
+      ❌ business rules (of which defaultings are a data-driven instance) should be just data
       ❌ workflow manager should be just data-driven coroutines
       ❌ statements and expressions evaluator
       ❌ data sync'er and mapper
@@ -461,10 +397,10 @@ Todo (✅/❌)
   ❌ styling and frontend implementation
 
   ❌ auth
-    ❌ registration 
-    ❌ login 
-    ❌ logout 
-    ❌ reset password 
+    ❌ registration
+    ❌ login
+    ❌ logout
+    ❌ reset password
     ❌ magic link
   ❌ personal area
     ❌ avatar
@@ -508,7 +444,7 @@ Todo (✅/❌)
 
   ✅ give back/forward
   ❌ write guidelines
-    ✅ adjust to new way of filtering the running of coroutines 
+    ✅ adjust to new way of filtering the running of coroutines
     ✅ write a quick-start
     ❌ adjust naming of foreign mutations (expected/exposed), update guidelines
     ❌ carefully review guidelines
@@ -520,7 +456,7 @@ Todo (✅/❌)
     ❌ data-driven forms
     ❌ views
     ❌ native vs web
-  ✅ add help to create-domain command line tool (https://github.com/75lb/command-line-usage)
+  ✅ add help to create-domain [command line tool](https://github.com/75lb/command-line-usage)
   ❌ create-domain
     ❌ broken in new setup - fix it
     ❌ add to guidelines
@@ -547,14 +483,14 @@ Todo (✅/❌)
     ❌ test core and create-domain from the npm package
     ❌ add a sponsor button and create a Patreon account
   ❌ coroutine wrapper name is currently anonymous (in React Developer Tools). can that be updated?
-  ✅ coroutine runner extension. we currently have both *.ts and *.tsx you've mentioned that we will only have *.ts
+  ✅ coroutine runner extension. we currently have both `*.ts` and `*.tsx` you've mentioned that we will only have `*.ts`
   ❌ remove JS warnings (component children missing keys)
   ✅ table->tbody
   ✅ rename single-lettered type variables to decent names
   ✅ use pretty printer for AsyncState in all debug views instead of JSON.stringify
-  ❌ card1...card3 use an extensibility pattern that could be embedded in the simpleUpdater<CardState, Extra = Unit> for easier reuse  
+  ❌ card1...card3 use an extensibility pattern that could be embedded in the simpleUpdater<CardState, Extra = Unit> for easier reuse
     ❌ the extensibility pattern of Cards in the dashboad deserves a global sample and a spot in the coroutines
-  ✅ simpleUpdater should return a Fun 
+  ✅ simpleUpdater should return a Fun
     ✅ so that we can write ((cardsRepository.Updaters.Core.card3.then(dashboardRepository.Updaters.Core.cards))) instead of the ugly eta-expansion
 
   ✅ every domain should have both FM types
@@ -581,14 +517,12 @@ Todo (✅/❌)
       ❌ add/remove
       ❌ reorder
   ❌ improvements that just help
-    ✅ Updater constructors
-      ✅ Updater.Default.fromState : S => Updater<S> => Updater<S>
     ✅ parent.child.x Updaters auto-chaining can actually be achieved
       ❌ simpleUpdaterWithChildren in another domain
         ❌ simpleUpdater.WithChildren in another domain
       ✅ the children passed must be mapped and the parent updater applied in order to auto-widen
     ❌ auto-chaining should support Sum, Map, and OrderedMap updaters out of the box
-      ❌ this might be achieved by marking the simpleUpdater with a kind == "simpleUpdater", and the other 
+      ❌ this might be achieved by marking the simpleUpdater with a kind == "simpleUpdater", and the other
         supported updaters (for example, simpleSetter = [x,y,z,...] => Updater(e => e+x,y,z,etc.))
         (for example, curriedSetter = [x,y,z,...] => [a,b,c,...] => Updater(e => e+x,y,z,a,b,c,etc.))
         then the widenChildren operator checks the kind and decides how to perform the mapping

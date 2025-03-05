@@ -22,6 +22,7 @@ export type Value =
 export type MatchCaseHandler = { parameter: string; body: Expr };
 export type Expr =
   | Value
+  | { kind: "itemLookup"; operands: [Expr, number] }
   | { kind: "fieldLookup"; operands: [Expr, string] }
   | { kind: "isCase"; operands: [Expr, string] }
   | { kind: "match-case"; operands: [Expr, Map<string, MatchCaseHandler>] }
@@ -259,6 +260,17 @@ export const Expr = {
         `Error: cannot parse ${JSON.stringify(json)} to Expr.`,
       );
     },
+    EvaluateAsTuple:
+      (vars: Bindings) =>
+      (e: Expr): ValueOrErrors<ValueTuple, string> =>
+        typeof e == "boolean" ||
+        typeof e == "number" ||
+        typeof e == "string" ||
+        e.kind != "tuple"
+          ? ValueOrErrors.Default.throwOne(
+              `Error: expected record, got ${JSON.stringify(e)}`,
+            )
+          : ValueOrErrors.Default.return(e),
     EvaluateAsRecord:
       (vars: Bindings) =>
       (e: Expr): ValueOrErrors<ValueRecord, string> =>
@@ -308,7 +320,7 @@ export const Expr = {
                 () =>
                   `Error: cannot find variable ${JSON.stringify(e.varName)}`,
               )
-            : e.kind == "fieldLookup"
+              : e.kind == "fieldLookup"
               ? Expr.Operations.Evaluate(vars)(e.operands[0]).Then(
                   (record: Value) =>
                     Expr.Operations.EvaluateAsRecord(vars)(record).Then(
@@ -321,6 +333,16 @@ export const Expr = {
                         ),
                     ),
                 )
+            : e.kind == "itemLookup"
+              ? Expr.Operations.Evaluate(vars)(e.operands[0]).Then(
+                  (tuple: Value) =>
+                    Expr.Operations.EvaluateAsTuple(vars)(tuple).Then(
+                      (tuple: ValueTuple) =>
+                        e.operands[1] >= 1 && e.operands[1] <= tuple.values.length ?
+                          ValueOrErrors.Default.return(tuple.values[e.operands[1]-1])
+                        : ValueOrErrors.Default.throwOne(`Error: cannot find field ${e.operands[1]} in tuple ${JSON.stringify(tuple)}`)
+                        )
+                    )
               : e.kind == "match-case"
                 ? Expr.Operations.Evaluate(vars)(e.operands[0]).Then(
                     (unionCase: Value) =>

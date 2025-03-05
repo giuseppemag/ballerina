@@ -16,6 +16,7 @@ module Model =
       Set: EnumStreamCodegenConfigTypeDef
       List: CodegenConfigListDef
       Map: CodegenConfigTypeDef
+      Tuple: List<TupleCodegenConfigTypeDef>
       Union: CodegenConfigUnionDef
       Custom: Map<string, CodegenConfigTypeDef>
       IdentifierAllowedRegex: string
@@ -32,6 +33,12 @@ module Model =
   and CodegenConfigErrorDef =
     { GeneratedTypeName: string
       Constructor: string
+      RequiredImport: Option<string> }
+
+  and TupleCodegenConfigTypeDef =
+    { Ariety: int
+      GeneratedTypeName: string
+      SupportedRenderers: Set<string>
       RequiredImport: Option<string> }
 
   and CodegenConfigUnionDef = { SupportedRenderers: Set<string> }
@@ -216,6 +223,10 @@ module Model =
       {| Map: Renderer
          Key: NestedRenderer
          Value: NestedRenderer
+         Children: RendererChildren |}
+    | TupleRenderer of
+      {| Tuple: Renderer
+         Elements: List<NestedRenderer>
          Children: RendererChildren |}
     | ListRenderer of
       {| List: Renderer

@@ -35,68 +35,49 @@ module Validator =
       sum {
         match fr with
         | Renderer.EnumRenderer(enum, enumRenderer) ->
-          let! enum = ctx.TryFindEnum enum.EnumName
-          let! enumType = ctx.TryFindType enum.TypeId.TypeName
-          let! enumRendererType = !enumRenderer
-          return ExprType.Substitute (Map.empty |> Map.add { VarName = "a1" } enumType.Type) enumRendererType
+          do! !enumRenderer |> Sum.map ignore
+          return fr.Type
         | Renderer.FormRenderer(f, _, children) ->
-          let! f = ctx.TryFindForm f.FormName
-          let! localFormType = ctx.TryFindType f.TypeId.TypeName
-
           do! children |> validateChildren
 
-          return localFormType.Type
+          return fr.Type
         | Renderer.ListRenderer(l) ->
-          let! genericListRenderer = !l.List
-          let! elementRendererType = !l.Element.Renderer
-
-          let listRenderer =
-            ExprType.Substitute (Map.empty |> Map.add { VarName = "a1" } elementRendererType) genericListRenderer
+          do! !l.List |> Sum.map ignore
+          do! !l.Element.Renderer |> Sum.map ignore
 
           do! l.Children |> validateChildren
 
-          return listRenderer
+          return fr.Type
         | Renderer.MapRenderer(m) ->
-          let! genericMapRenderer = !m.Map
-          let! keyRendererType = !m.Key.Renderer
-          let! valueRendererType = !m.Value.Renderer
-
-          let mapRenderer =
-            ExprType.Substitute
-              (Map.empty
-               |> Map.add { VarName = "a1" } keyRendererType
-               |> Map.add { VarName = "a2" } valueRendererType)
-              genericMapRenderer
+          do! !m.Map |> Sum.map ignore
+          do! !m.Key.Renderer |> Sum.map ignore
+          do! !m.Value.Renderer |> Sum.map ignore
 
           do! m.Children |> validateChildren
 
-          return mapRenderer
+          return fr.Type
         | Renderer.PrimitiveRenderer p ->
           do! p.Children |> validateChildren
 
-          return p.Type
+          return fr.Type
         | Renderer.StreamRenderer(stream, streamRenderer) ->
-          let! stream = ctx.TryFindStream stream.StreamName
-          let streamType = ExprType.LookupType stream.TypeId
-          let! streamRendererType = !streamRenderer
-          return ExprType.Substitute (Map.empty |> Map.add { VarName = "a1" } streamType) streamRendererType
+
+          do! !streamRenderer |> Sum.map ignore
+          return fr.Type
+        | Renderer.TupleRenderer t ->
+          do! t.Children |> validateChildren
+          do! t.Elements |> Seq.map (fun e -> !e.Renderer) |> sum.All |> Sum.map ignore
+          return fr.Type
         | Renderer.UnionRenderer r ->
           do! r.Children |> validateChildren
 
-          let! caseTypes =
+          do!
             r.Cases
-            |> Seq.map (fun c ->
-              sum {
-                let! caseType = !c.Value.Renderer
-
-                return
-                  { CaseName = c.Key.CaseName
-                    Fields = caseType }
-              })
+            |> Seq.map (fun c -> !c.Value.Renderer |> Sum.map ignore)
             |> sum.All
+            |> Sum.map ignore
 
-          let rType = ExprType.UnionType(caseTypes |> List.ofSeq)
-          return rType
+          return fr.Type
       }
 
   and NestedRenderer with
@@ -142,6 +123,13 @@ module Validator =
         match r with
         | Renderer.PrimitiveRenderer p -> do! p.Children |> validateChildrenPredicates
         | Renderer.EnumRenderer(_, e) -> return! !e
+        | Renderer.TupleRenderer e ->
+          do! !e.Tuple
+
+          for element in e.Elements do
+            do! !!element
+
+          do! e.Children |> validateChildrenPredicates
         | Renderer.ListRenderer e ->
           do! !e.List
           do! !!e.Element

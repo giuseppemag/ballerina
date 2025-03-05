@@ -226,6 +226,28 @@ module TypeCheck =
                     |> Errors.Singleton
                   )
             }
+          | Expr.Project(e, i) ->
+            sum {
+              let! _, t, vars' = eval vars e
+
+              match t with
+              | ExprType.TupleType itemTypes ->
+                if i > 0 && i <= itemTypes.Length then
+                  return None, itemTypes.[i - 1], vars'
+                else
+                  return!
+                    sum.Throw(
+                      $"Error: invalid lookup index {i} when looking up {e.ToString()}."
+                      |> Errors.Singleton
+                    )
+
+              | _ ->
+                return!
+                  sum.Throw(
+                    $"Error: invalid lookup type {t.ToString()} when looking up {e.ToString()}.Item{i}."
+                    |> Errors.Singleton
+                  )
+            }
           | e ->
             sum.Throw(
               $"Error: not implemented Expr type checker for {e.ToString()}"

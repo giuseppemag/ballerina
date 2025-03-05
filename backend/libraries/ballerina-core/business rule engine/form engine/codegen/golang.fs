@@ -67,6 +67,23 @@ module Golang =
           | PrimitiveType.IntType -> return! config.Int |> registerImportAndReturn
           | PrimitiveType.RefType r -> return r.EntityName
           | PrimitiveType.StringType -> return! config.String |> registerImportAndReturn
+        | ExprType.TupleType items ->
+          let! tupleConfig =
+            config.Tuple
+            |> List.tryFind (fun tc -> tc.Ariety = items.Length)
+            |> Sum.fromOption (fun () -> Errors.Singleton $"Error: cannot find tuple config for ariety {items.Length}")
+            |> state.OfSum
+
+          do!
+            tupleConfig.RequiredImport
+            |> Option.toList
+            |> Set.ofList
+            |> Set.union
+            |> GoCodeGenState.Updaters.UsedImports
+            |> state.SetState
+
+          return tupleConfig.GeneratedTypeName
+
         | ExprType.ListType e ->
           let! e = !e
 

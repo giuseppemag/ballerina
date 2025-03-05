@@ -269,7 +269,17 @@
           "fields": {
             "Operator":{"renderer":"binaryOperator"},
             "Left":{"renderer":"expr"},
-            "Right":{"renderer":"expr"}
+            "Right":{
+              "renderer":"expr",
+              "visible":{
+                "kind":"match-case",
+                "operands":[
+                  { "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"local" }, "Left"] },
+                  { "case":"Binary", "handler":{ "kind":"lambda", "parameter":"_", "body":true } },
+                  { "case":"Value", "handler":{ "kind":"lambda", "parameter":"_", "body":false } }
+                ]
+              }
+            }
           },
           "tabs": {
             "main": {
