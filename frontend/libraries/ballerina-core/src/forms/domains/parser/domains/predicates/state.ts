@@ -123,13 +123,17 @@ export type ValueRecord = {
 export type ValueUnionCase = {
   kind: "unionCase";
   caseName: string;
-  value: PredicateValue;
+  fields: ValueRecord;
 };
 export type ValuePrimitive = number | string | boolean;
-export type ValueDate = { kind: "date"; value: Date }
+export type ValueDate = { kind: "date"; value: Date };
 export type ValueUnit = { kind: "unit" };
 export type ValueTuple = { kind: "tuple"; values: Array<PredicateValue> };
-export type ValueOption = { kind: "option"; isSome: boolean; value: PredicateValue };
+export type ValueOption = {
+  kind: "option";
+  isSome: boolean;
+  value: PredicateValue;
+};
 export type ValueVarLookup = { kind: "varLookup"; varName: string };
 
 export type PredicateValue =
@@ -169,10 +173,10 @@ export const PredicateValue = {
       kind: "record",
       fields,
     }),
-    unionCase: (caseName: string, value: PredicateValue): ValueUnionCase => ({
+    unionCase: (caseName: string, fields: ValueRecord): ValueUnionCase => ({
       kind: "unionCase",
       caseName,
-      value,
+      fields,
     }),
     option: (isSome: boolean, value: PredicateValue): ValueOption => ({
       kind: "option",
@@ -185,6 +189,35 @@ export const PredicateValue = {
     }),
   },
   Operations: {
+    IsDate: (predicateValue: PredicateValue): predicateValue is ValueDate => {
+      return typeof predicateValue == "object" && predicateValue.kind == "date";
+    },
+    IsUnionCase: (
+      predicateValue: PredicateValue,
+    ): predicateValue is ValueUnionCase => {
+      return (
+        typeof predicateValue == "object" && predicateValue.kind == "unionCase"
+      );
+    },
+    IsRecord: (
+      predicateValue: PredicateValue,
+    ): predicateValue is ValueRecord => {
+      return (
+        typeof predicateValue == "object" && predicateValue.kind == "record"
+      );
+    },
+    IsTuple: (predicateValue: PredicateValue): predicateValue is ValueTuple => {
+      return (
+        typeof predicateValue == "object" && predicateValue.kind == "tuple"
+      );
+    },
+    IsOption: (
+      predicateValue: PredicateValue,
+    ): predicateValue is ValueOption => {
+      return (
+        typeof predicateValue == "object" && predicateValue.kind == "option"
+      );
+    },
     ParseAsDate: (json: any): ValueOrErrors<PredicateValue, string> => {
       if (
         json.kind == "date" &&
@@ -324,6 +357,7 @@ export const PredicateValue = {
         return PredicateValue.Operations.ParseAsTuple(json, types);
       }
       if (type.kind == "primitive" && type.value == "Date") {
+        // TODO - date conversion and validation
         return ValueOrErrors.Default.return(json);
       }
       if (type.kind == "primitive" && type.value == "maybeBoolean") {
@@ -408,16 +442,10 @@ export const PredicateValue = {
           ),
         );
       }
+      // TODO: Use the option type instead of union case
       if (type.kind == "application" && type.value == "SingleSelection") {
-        // We parse single select as an Option, but it is not encoded as an Option in the type
-        return PredicateValue.Operations.parse(
-          json["IsSome"],
-          { kind: "expression" },
-          types,
-        ).Then((value) =>
-          ValueOrErrors.Default.return(
-            PredicateValue.Default.unionCase(value.toString(), value),
-          ),
+        ValueOrErrors.Default.return(
+          PredicateValue.Default.option(json["IsSome"], json["Value"]),
         );
       }
       if (type.kind == "application" && type.value == "MultiSelection") {
@@ -495,48 +523,44 @@ export const PredicateValue = {
             : ValueOrErrors.Default.throwOne(
                 `Error: cannot compare expressions of different types ${JSON.stringify(v1)} and ${JSON.stringify(v2)}.`,
               )
-            : v1.kind == "unionCase" && v2.kind == "unionCase"
-              ? v1.caseName == v2.caseName
-                ? PredicateValue.Operations.Equals(vars)(v1.value, v2.value)
+          : v1.kind == "unionCase" && v2.kind == "unionCase"
+            ? v1.caseName == v2.caseName
+              ? PredicateValue.Operations.Equals(vars)(v1.fields, v2.fields)
+              : ValueOrErrors.Default.return(false)
+            : v1.kind == "date" && v2.kind == "date"
+              ? v1.value.getTime() == v2.value.getTime()
+                ? ValueOrErrors.Default.return(true)
                 : ValueOrErrors.Default.return(false)
-              : v1.kind == "date" && v2.kind == "date"
-                ? v1.value.getTime() == v2.value.getTime()
-                  ? ValueOrErrors.Default.return(true)
-                  : ValueOrErrors.Default.return(false)
-                : v1.kind == "tuple" && v2.kind == "tuple"
-                  ? v1.values.length != v2.values.length
-                    ? ValueOrErrors.Default.return(false)
-                    : v1.values.length == 0
-                      ? ValueOrErrors.Default.return(true)
-                      : PredicateValue.Operations.Equals(vars)(
-                          v1.values[0],
-                          v2.values[0],
-                        ).Then((firstEqual) =>
-                          firstEqual
-                            ? PredicateValue.Operations.Equals(vars)(
-                                PredicateValue.Default.tuple(
-                                  v1.values.slice(1),
-                                ),
-                                PredicateValue.Default.tuple(
-                                  v2.values.slice(1),
-                                ),
-                              )
-                            : ValueOrErrors.Default.return(false),
-                        )
-                  : v1.kind == "record" && v2.kind == "record"
-                    ? PredicateValue.Operations.Equals(vars)(
-                        PredicateValue.Operations.recordToTuple(v1),
-                        PredicateValue.Operations.recordToTuple(v2),
+              : v1.kind == "tuple" && v2.kind == "tuple"
+                ? v1.values.length != v2.values.length
+                  ? ValueOrErrors.Default.return(false)
+                  : v1.values.length == 0
+                    ? ValueOrErrors.Default.return(true)
+                    : PredicateValue.Operations.Equals(vars)(
+                        v1.values[0],
+                        v2.values[0],
+                      ).Then((firstEqual) =>
+                        firstEqual
+                          ? PredicateValue.Operations.Equals(vars)(
+                              PredicateValue.Default.tuple(v1.values.slice(1)),
+                              PredicateValue.Default.tuple(v2.values.slice(1)),
+                            )
+                          : ValueOrErrors.Default.return(false),
                       )
-                    : v1.kind == "unit" && v2.kind == "unit"
-                      ? ValueOrErrors.Default.return(true)
-                      : v1.kind != v2.kind
-                        ? ValueOrErrors.Default.throwOne(
-                            `Error: cannot compare expressions of different types ${JSON.stringify(v1)} and ${JSON.stringify(v2)}.`,
-                          )
-                        : ValueOrErrors.Default.throwOne(
-                            `Error: structural equality is not implemented yet between ${JSON.stringify(v1)} and ${JSON.stringify(v2)}.`,
-                          ),
+                : v1.kind == "record" && v2.kind == "record"
+                  ? PredicateValue.Operations.Equals(vars)(
+                      PredicateValue.Operations.recordToTuple(v1),
+                      PredicateValue.Operations.recordToTuple(v2),
+                    )
+                  : v1.kind == "unit" && v2.kind == "unit"
+                    ? ValueOrErrors.Default.return(true)
+                    : v1.kind != v2.kind
+                      ? ValueOrErrors.Default.throwOne(
+                          `Error: cannot compare expressions of different types ${JSON.stringify(v1)} and ${JSON.stringify(v2)}.`,
+                        )
+                      : ValueOrErrors.Default.throwOne(
+                          `Error: structural equality is not implemented yet between ${JSON.stringify(v1)} and ${JSON.stringify(v2)}.`,
+                        ),
   },
 };
 

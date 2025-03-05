@@ -24,6 +24,11 @@ export const CollectionReference = {
     ...simpleUpdater<CollectionReference>()("Id"),
     ...simpleUpdater<CollectionReference>()("DisplayValue"),
   },
+  Operations: {
+    IsCollectionReference: (value: any): value is CollectionReference => {
+      return typeof value == "object" && value.Id && value.DisplayValue;
+    },
+  },
 };
 
 export type EnumReference = {
@@ -35,5 +40,10 @@ export const EnumReference = {
   }),
   Updaters: {
     ...simpleUpdater<EnumReference>()("Value"),
+  },
+  Operations: {
+    IsEnumReference: (value: any): value is EnumReference => {
+      return typeof value == "object" && value.Value;
+    },
   },
 };

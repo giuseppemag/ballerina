@@ -46,7 +46,7 @@ export const FormsApp = (props: {}) => {
   const [configFormsParser, setConfigFormsParser] = useState(
     FormsParserState.Default(),
   );
-  const [formToShow, setFormToShow] = useState(0);
+  const [formToShow, setFormToShow] = useState(1);
   const numForms = 3;
   const [personCreateFormState, setPersonCreateFormState] = useState(
     FormRunnerState.Default(),
@@ -65,6 +65,16 @@ export const FormsApp = (props: {}) => {
 
   const [renderParserState, renderForms] = [true, true];
   const logState = true;
+
+  if (
+    personCreateFormState.form.kind == "l" &&
+    personCreateFormState.form.value.entity.sync.kind == "loaded"
+  ) {
+    console.log(
+      "entity",
+      personCreateFormState.form.value.entity.sync.value.fields.toJS(),
+    );
+  }
 
   logState &&
     console.log({

@@ -10,7 +10,10 @@ import {
   Maybe,
   ParsedType,
   PredicateValue,
+  Sum,
   TypeName,
+  ValueRecord,
+  ValueTuple,
 } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 
@@ -32,7 +35,6 @@ export const PrimitiveTypes = [
   "string",
   "number",
   "boolean",
-  "maybeBoolean",
   "Date",
   "base64File",
   "secret",
@@ -60,7 +62,6 @@ export type ApiConverters<
 export type UnionCase = {
   caseName: string;
   fields: Record<string, any>;
-  value: any;
 };
 
 export type BuiltInApiConverters = {
@@ -69,7 +70,7 @@ export type BuiltInApiConverters = {
   boolean: ApiConverter<boolean>;
   base64File: ApiConverter<string>;
   secret: ApiConverter<string>;
-  Date: ApiConverter<Maybe<Date>>;
+  Date: ApiConverter<Date>;
   unionCase: ApiConverter<UnionCase>;
   SingleSelection: ApiConverter<
     CollectionSelection<CollectionReference | EnumReference>
@@ -264,6 +265,9 @@ export const fromAPIRawValue =
     injectedPrimitives?: InjectedPrimitives<T>,
   ) =>
   (raw: any): PredicateValue => {
+    console.debug("fromAPIRawValue raw", raw);
+    console.debug("fromAPIRawValue t", t);
+    console.debug("--------------------------------");
     if (raw == undefined) {
       return defaultValue(types, builtIns, injectedPrimitives)(t);
     }
@@ -289,15 +293,8 @@ export const fromAPIRawValue =
     }
     if (t.kind == "application") {
       if (t.value == "SingleSelection") {
-        const result = converters[t.value].fromAPIRawValue(
-          fromAPIRawValue(
-            t.args[0],
-            types,
-            builtIns,
-            converters,
-            injectedPrimitives,
-          )(raw),
-        );
+        const result = converters[t.value].fromAPIRawValue(raw);
+        console.debug("fromAPIRawValue result", result);
         return result.kind == "r"
           ? PredicateValue.Default.option(false, PredicateValue.Default.unit())
           : PredicateValue.Default.option(
@@ -314,16 +311,15 @@ export const fromAPIRawValue =
       if (t.value == "MultiSelection") {
         const result = converters[t.value].fromAPIRawValue(raw);
         return PredicateValue.Default.record(
-          result
-            .map(
-              fromAPIRawValue(
-                t.args[0],
-                types,
-                builtIns,
-                converters,
-                injectedPrimitives,
-              ),
-            )
+          result.map(
+            fromAPIRawValue(
+              t.args[0],
+              types,
+              builtIns,
+              converters,
+              injectedPrimitives,
+            ),
+          ),
         );
       }
       if (t.value == "List") {
@@ -342,52 +338,30 @@ export const fromAPIRawValue =
             .toArray(),
         );
       }
-      // TODO fix
       if (t.value == "Map" && t.args.length == 2) {
-
-
         const result = converters[t.value].fromAPIRawValue(raw);
         return PredicateValue.Default.tuple(
-          PredicateValue.Default.tuple(
-          result.map((keyValue) => ([
-            fromAPIRawValue(
-              t.args[0],
-              types,
-              builtIns,
-              converters,
-              injectedPrimitives,
-            )(keyValue[0]),
-            fromAPIRawValue(
-              t.args[1],
-              types,
-              builtIns,
-              converters,
-              injectedPrimitives,
-            )(keyValue[1])])
-          ).toArray()
-        
-        ))
-
-
-        // return converters[t.value]
-        //   .fromAPIRawValue(raw)
-        //   .map((keyValue) => [
-        //     fromAPIRawValue(
-        //       t.args[0],
-        //       types,
-        //       builtIns,
-        //       converters,
-        //       injectedPrimitives,
-        //     )(keyValue[0]),
-        //     fromAPIRawValue(
-        //       t.args[1],
-        //       types,
-        //       builtIns,
-        //       converters,
-        //       injectedPrimitives,
-        //     )(keyValue[1]),
-        //   ]);
-
+          result
+            .map(([key, value]) =>
+              PredicateValue.Default.tuple([
+                fromAPIRawValue(
+                  t.args[0],
+                  types,
+                  builtIns,
+                  converters,
+                  injectedPrimitives,
+                )(key),
+                fromAPIRawValue(
+                  t.args[1],
+                  types,
+                  builtIns,
+                  converters,
+                  injectedPrimitives,
+                )(value),
+              ]),
+            )
+            .toArray(),
+        );
       }
     }
 
@@ -401,18 +375,21 @@ export const fromAPIRawValue =
       )(raw);
 
     if (t.kind == "form") {
-      let result: any = { ...raw };
+      let result: Map<string, PredicateValue> = Map();
       t.fields.forEach((fieldType, fieldName) => {
         const fieldValue = raw[fieldName];
-        result[fieldName] = fromAPIRawValue(
-          fieldType,
-          types,
-          builtIns,
-          converters,
-          injectedPrimitives,
-        )(fieldValue);
+        result = result.set(
+          fieldName,
+          fromAPIRawValue(
+            fieldType,
+            types,
+            builtIns,
+            converters,
+            injectedPrimitives,
+          )(fieldValue),
+        );
       });
-      return result;
+      return PredicateValue.Default.record(result);
     }
 
     console.error(
@@ -430,17 +407,29 @@ export const toAPIRawValue =
     injectedPrimitives?: InjectedPrimitives<T>,
   ) =>
   (
-    raw: any,
+    raw: PredicateValue,
     formState: any,
     checkKeys: boolean,
   ): ValueOrErrors<any, string> => {
-    if (t.kind == "primitive")
+    if (t.kind == "primitive") {
+      if (t.value == "Date") {
+        if (!PredicateValue.Operations.IsDate(raw)) {
+          return ValueOrErrors.Default.throwOne(`Date expected but got ${raw}`);
+        }
+        return ValueOrErrors.Operations.Return(
+          converters[t.value].toAPIRawValue([
+            raw.value,
+            formState.modifiedByUser,
+          ]),
+        );
+      }
       return ValueOrErrors.Operations.Return(
         converters[t.value as string | keyof T].toAPIRawValue([
           raw,
           formState.modifiedByUser,
         ]),
       );
+    }
 
     if (t.kind == "union") {
       return toAPIRawValue(
@@ -453,147 +442,150 @@ export const toAPIRawValue =
     }
 
     if (t.kind == "unionCase") {
+      if (!PredicateValue.Operations.IsUnionCase(raw)) {
+        return ValueOrErrors.Default.throwOne(
+          `UnionCase expected but got ${raw}`,
+        );
+      }
       return ValueOrErrors.Operations.Return(
-        converters[t.kind].toAPIRawValue([raw, formState.modifiedByUser]),
+        converters[t.kind].toAPIRawValue([
+          { caseName: raw.caseName, fields: raw.fields },
+          formState.modifiedByUser,
+        ]),
       );
     }
     if (t.kind == "application") {
       if (t.value == "SingleSelection") {
+        if (!PredicateValue.Operations.IsOption(raw)) {
+          return ValueOrErrors.Default.throwOne(
+            `Option expected but got ${raw}`,
+          );
+        }
+        if (!PredicateValue.Operations.IsRecord(raw.value)) {
+          return ValueOrErrors.Default.throwOne(
+            `Record expected but got ${raw.value}`,
+          );
+        }
+        const rawValue = raw.value.fields.toJS();
+        if (
+          !CollectionReference.Operations.IsCollectionReference(rawValue) &&
+          !EnumReference.Operations.IsEnumReference(rawValue)
+        ) {
+          return ValueOrErrors.Default.throwOne(
+            `CollectionReference or EnumReference expected but got ${rawValue}`,
+          );
+        }
+        const rawToCollectionSelection: CollectionSelection<
+          CollectionReference | EnumReference
+        > = raw.isSome
+          ? Sum.Default.left(rawValue)
+          : Sum.Default.right("no selection");
         const result = converters[t.value].toAPIRawValue([
-          raw,
+          rawToCollectionSelection,
           formState.modifiedByUser,
         ]);
-        return result.IsSome == false
-          ? ValueOrErrors.Operations.Return(result)
-          : toAPIRawValue(
-              t.args[0],
-              types,
-              builtIns,
-              converters,
-              injectedPrimitives,
-            )(result.Value, formState, checkKeys).Then((value) => {
-              return ValueOrErrors.Default.return({
-                Value: value,
-                IsSome: result.IsSome,
-              });
-            });
+        return result;
       }
       if (t.value == "MultiSelection") {
-        const result = converters["MultiSelection"].toAPIRawValue([
-          raw,
+        if (!PredicateValue.Operations.IsRecord(raw)) {
+          return ValueOrErrors.Default.throwOne(
+            `Record expected but got ${raw}`,
+          );
+        }
+
+        // TODO - without casting -- check the collection reference vs enum reference type
+        const rawValue: Map<string, CollectionReference> = raw.fields.map(
+          (value) => {
+            return (value as ValueRecord).fields.toJS() as CollectionReference;
+          },
+        );
+
+        return converters[t.value].toAPIRawValue([
+          rawValue,
           formState.modifiedByUser,
         ]);
-
-        return ValueOrErrors.Operations.All(
-          List<ValueOrErrors<any, string>>(
-            result.map((_: any) =>
-              typeof _ == "object"
-                ? toAPIRawValue(
-                    t.args[0],
-                    types,
-                    builtIns,
-                    converters,
-                    injectedPrimitives,
-                  )(_, formState, checkKeys)
-                : ValueOrErrors.Operations.Return(_),
-            ),
-          ),
-        ).Then((values) => ValueOrErrors.Default.return(values.toArray()));
       }
       if (t.value == "List") {
-        const converterResult = converters[t.value].toAPIRawValue([
-          raw,
-          formState.modifiedByUser,
-        ]);
+        if (!PredicateValue.Operations.IsTuple(raw)) {
+          return ValueOrErrors.Default.throwOne(
+            `Tuple expected but got ${raw}`,
+          );
+        }
         return ValueOrErrors.Operations.All(
-          List<ValueOrErrors<any, string>>(
-            converterResult.map((item: any, index: number) =>
+          List(
+            raw.values.map((value, index) =>
               toAPIRawValue(
                 t.args[0],
                 types,
                 builtIns,
                 converters,
                 injectedPrimitives,
-              )(item, formState.elementFormStates.get(index), checkKeys),
+              )(value, formState.elementFormStates.get(index), checkKeys),
             ),
           ),
-        ).Then((values) => ValueOrErrors.Default.return(values.toArray()));
+        ).Then((values) =>
+          converters["List"].toAPIRawValue([values, formState.modifiedByUser]),
+        );
       }
       if (t.value == "Map") {
-        const converterResult = List(
-          converters[t.value].toAPIRawValue([raw, formState.modifiedByUser]),
-        );
-        const parsedMap: List<
-          ValueOrErrors<
-            { key: ValueOrErrors<any, any>; value: ValueOrErrors<any, any> },
-            any
-          >
-        > = converterResult.map((keyValue: any, index: number) => {
-          return toAPIRawValue(
+        const keyValues = (raw as ValueTuple).values.map((keyValue, index) =>
+          toAPIRawValue(
             t.args[0],
             types,
             builtIns,
             converters,
             injectedPrimitives,
           )(
-            keyValue[0],
-            formState.elementFormStates.get(index).KeyFormState,
+            (keyValue as ValueTuple).values[0],
+            formState.elementFormStates.get(index)[0],
             checkKeys,
-          ).Then((possiblyUndefinedKey) => {
-            if (
-              checkKeys &&
-              (possiblyUndefinedKey == undefined ||
+          )
+            .Then((possiblyUndefinedKey) => {
+              if (
+                possiblyUndefinedKey == undefined ||
                 possiblyUndefinedKey == null ||
                 possiblyUndefinedKey == "" ||
                 (typeof possiblyUndefinedKey == "object" &&
-                  Object.keys(possiblyUndefinedKey).length == 0))
-            ) {
-              return ValueOrErrors.Operations.Throw(
-                List([
+                  Object.keys(possiblyUndefinedKey).length == 0)
+              ) {
+                return ValueOrErrors.Default.throwOne(
                   `A mapped key is undefined for type ${JSON.stringify(t.args[0])}`,
-                ]),
-              );
-            } else
-              return toAPIRawValue(
+                );
+              } else {
+                return ValueOrErrors.Default.return(possiblyUndefinedKey);
+              }
+            })
+            .Then((key) =>
+              toAPIRawValue(
                 t.args[1],
                 types,
                 builtIns,
                 converters,
                 injectedPrimitives,
               )(
-                keyValue[1],
-                formState.elementFormStates.get(index).ValueFormState,
+                (keyValue as ValueTuple).values[1],
+                formState.elementFormStates.get(index)[1],
                 checkKeys,
-              ).Then((value) => {
-                return ValueOrErrors.Default.return({
-                  key: possiblyUndefinedKey,
-                  value: value,
-                });
-              });
-          });
-        });
-        const nonUniqueKeyErrors = parsedMap
-          .filter((_) => _.kind == "value")
-          .reduce(
-            (acc, _) => {
-              const id = simpleMapKeyToIdentifer(_.value.key);
-              acc.ids.contains(id)
-                ? (acc.errors = acc.errors.push(
-                    ValueOrErrors.Default.throw(
-                      List([`Keys in the map are not unique`]),
-                    ),
-                  ))
-                : (acc.ids = acc.ids.push(id));
-              return acc;
-            },
-            { ids: List<string>(), errors: List<ValueOrErrors<any, string>>() },
-          ).errors;
-
-        return ValueOrErrors.Operations.All(
-          parsedMap.concat(checkKeys ? nonUniqueKeyErrors : []),
-        ).Then((parsedMap) =>
-          ValueOrErrors.Default.return(parsedMap.toArray()),
+              ).Then((value) =>
+                ValueOrErrors.Default.return([key, value] as [any, any]),
+              ),
+            ),
         );
+
+        return ValueOrErrors.Operations.All(List(keyValues)).Then((values) => {
+          if (
+            values.map((kv) => JSON.stringify(kv[0])).toSet().size !=
+            values.size
+          ) {
+            return ValueOrErrors.Default.throwOne(
+              "Keys in the map are not unique",
+            );
+          }
+          return converters["Map"].toAPIRawValue([
+            values,
+            formState.modifiedByUser,
+          ]);
+        });
       }
     }
 
@@ -619,7 +611,8 @@ export const toAPIRawValue =
             converters,
             injectedPrimitives,
           )(
-            raw[fieldName],
+            // TODO - error if the field is not found
+            (raw as ValueRecord).fields.get(fieldName)!,
             formState["formFieldStates"]?.[fieldName] ?? formState,
             checkKeys,
           ),

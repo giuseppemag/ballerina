@@ -95,6 +95,7 @@ export const editFormRunner = <E, FS>() => {
   const parseEntity = Co.GetState().then((current) => {
     if (current.rawEntity.sync.kind == "loaded") {
       const parsed = current.fromApiParser(current.rawEntity.sync.value);
+      console.debug("parsed", parsed.fields.toJS());
       return Synchronize<Unit, any>(
         () => Promise.resolve(parsed),
         (_) => "transient failure",
