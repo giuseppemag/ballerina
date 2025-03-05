@@ -4,8 +4,6 @@ import {
   MapRepo,
   FieldName,
   ParsedType,
-  ApiErrors,
-  unit,
 } from "../../../../../../main";
 
 export type FieldPredicateExpression =
@@ -127,17 +125,22 @@ export type ValueUnionCase = {
   caseName: string;
   value: PredicateValue;
 };
+export type ValuePrimitive = number | string | boolean;
+export type ValueDate = { kind: "date"; value: Date }
+export type ValueUnit = { kind: "unit" };
 export type ValueTuple = { kind: "tuple"; values: Array<PredicateValue> };
+export type ValueOption = { kind: "option"; isSome: boolean; value: PredicateValue };
+export type ValueVarLookup = { kind: "varLookup"; varName: string };
+
 export type PredicateValue =
-  | number
-  | string
-  | boolean
-  | { kind: "guid"; value: string }
-  | { kind: "unit" }
-  | { kind: "varLookup"; varName: string }
+  | ValuePrimitive
+  | ValueDate
+  | ValueUnit
   | ValueTuple
   | ValueRecord
-  | ValueUnionCase;
+  | ValueUnionCase
+  | ValueOption
+  | ValueVarLookup;
 
 export type Expr =
   | PredicateValue
@@ -153,10 +156,14 @@ export type Bindings = Map<string, PredicateValue>;
 
 export const PredicateValue = {
   Default: {
+    string: () => "",
+    number: () => 0,
+    boolean: () => false,
+    date: (value: Date): PredicateValue => ({ kind: "date", value }),
     unit: (): PredicateValue => ({ kind: "unit" }),
-    varLookup: (varName: string): PredicateValue => ({
-      kind: "varLookup",
-      varName,
+    tuple: (values: Array<PredicateValue>): ValueTuple => ({
+      kind: "tuple",
+      values,
     }),
     record: (fields: Map<string, PredicateValue>): ValueRecord => ({
       kind: "record",
@@ -167,12 +174,31 @@ export const PredicateValue = {
       caseName,
       value,
     }),
-    tuple: (values: Array<PredicateValue>): ValueTuple => ({
-      kind: "tuple",
-      values,
+    option: (isSome: boolean, value: PredicateValue): ValueOption => ({
+      kind: "option",
+      isSome,
+      value,
+    }),
+    varLookup: (varName: string): PredicateValue => ({
+      kind: "varLookup",
+      varName,
     }),
   },
   Operations: {
+    ParseAsDate: (json: any): ValueOrErrors<PredicateValue, string> => {
+      if (
+        json.kind == "date" &&
+        json.value &&
+        Object.prototype.toString.call(json.value) == "[object Date]" &&
+        !isNaN(json.value)
+      )
+        return ValueOrErrors.Default.return(
+          PredicateValue.Default.date(json.value),
+        );
+      return ValueOrErrors.Default.throwOne(
+        `Error: date has invalid value property`,
+      );
+    },
     ParseAsVarLookup: (json: any): ValueOrErrors<PredicateValue, string> => {
       if (json.kind == "varLookup" && typeof json.varName == "string")
         return ValueOrErrors.Default.return(
@@ -266,6 +292,9 @@ export const PredicateValue = {
       }
       if (type.kind == "expression" && json.kind == "guid") {
         return ValueOrErrors.Default.return(json);
+      }
+      if (type.kind == "expression" && json.kind == "date") {
+        return PredicateValue.Operations.ParseAsDate(json);
       }
       if (type.kind == "expression" && json.kind == "unit") {
         return ValueOrErrors.Default.return(PredicateValue.Default.unit());
@@ -466,42 +495,48 @@ export const PredicateValue = {
             : ValueOrErrors.Default.throwOne(
                 `Error: cannot compare expressions of different types ${JSON.stringify(v1)} and ${JSON.stringify(v2)}.`,
               )
-          : v1.kind == "guid" && v2.kind == "guid"
-            ? ValueOrErrors.Default.return(v1.value == v2.value)
             : v1.kind == "unionCase" && v2.kind == "unionCase"
               ? v1.caseName == v2.caseName
                 ? PredicateValue.Operations.Equals(vars)(v1.value, v2.value)
                 : ValueOrErrors.Default.return(false)
-              : v1.kind == "tuple" && v2.kind == "tuple"
-                ? v1.values.length != v2.values.length
-                  ? ValueOrErrors.Default.return(false)
-                  : v1.values.length == 0
-                    ? ValueOrErrors.Default.return(true)
-                    : PredicateValue.Operations.Equals(vars)(
-                        v1.values[0],
-                        v2.values[0],
-                      ).Then((firstEqual) =>
-                        firstEqual
-                          ? PredicateValue.Operations.Equals(vars)(
-                              PredicateValue.Default.tuple(v1.values.slice(1)),
-                              PredicateValue.Default.tuple(v2.values.slice(1)),
-                            )
-                          : ValueOrErrors.Default.return(false),
-                      )
-                : v1.kind == "record" && v2.kind == "record"
-                  ? PredicateValue.Operations.Equals(vars)(
-                      PredicateValue.Operations.recordToTuple(v1),
-                      PredicateValue.Operations.recordToTuple(v2),
-                    )
-                  : v1.kind == "unit" && v2.kind == "unit"
-                    ? ValueOrErrors.Default.return(true)
-                    : v1.kind != v2.kind
-                      ? ValueOrErrors.Default.throwOne(
-                          `Error: cannot compare expressions of different types ${JSON.stringify(v1)} and ${JSON.stringify(v2)}.`,
+              : v1.kind == "date" && v2.kind == "date"
+                ? v1.value.getTime() == v2.value.getTime()
+                  ? ValueOrErrors.Default.return(true)
+                  : ValueOrErrors.Default.return(false)
+                : v1.kind == "tuple" && v2.kind == "tuple"
+                  ? v1.values.length != v2.values.length
+                    ? ValueOrErrors.Default.return(false)
+                    : v1.values.length == 0
+                      ? ValueOrErrors.Default.return(true)
+                      : PredicateValue.Operations.Equals(vars)(
+                          v1.values[0],
+                          v2.values[0],
+                        ).Then((firstEqual) =>
+                          firstEqual
+                            ? PredicateValue.Operations.Equals(vars)(
+                                PredicateValue.Default.tuple(
+                                  v1.values.slice(1),
+                                ),
+                                PredicateValue.Default.tuple(
+                                  v2.values.slice(1),
+                                ),
+                              )
+                            : ValueOrErrors.Default.return(false),
                         )
-                      : ValueOrErrors.Default.throwOne(
-                          `Error: structural equality is not implemented yet between ${JSON.stringify(v1)} and ${JSON.stringify(v2)}.`,
-                        ),
+                  : v1.kind == "record" && v2.kind == "record"
+                    ? PredicateValue.Operations.Equals(vars)(
+                        PredicateValue.Operations.recordToTuple(v1),
+                        PredicateValue.Operations.recordToTuple(v2),
+                      )
+                    : v1.kind == "unit" && v2.kind == "unit"
+                      ? ValueOrErrors.Default.return(true)
+                      : v1.kind != v2.kind
+                        ? ValueOrErrors.Default.throwOne(
+                            `Error: cannot compare expressions of different types ${JSON.stringify(v1)} and ${JSON.stringify(v2)}.`,
+                          )
+                        : ValueOrErrors.Default.throwOne(
+                            `Error: structural equality is not implemented yet between ${JSON.stringify(v1)} and ${JSON.stringify(v2)}.`,
+                          ),
   },
 };
 
@@ -600,7 +635,6 @@ export const Expr = {
         typeof e == "number" ||
         typeof e == "string" ||
         e.kind == "unit" ||
-        e.kind == "guid" ||
         e.kind == "record" ||
         e.kind == "tuple" ||
         e.kind == "unionCase"

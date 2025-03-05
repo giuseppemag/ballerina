@@ -9,8 +9,8 @@ import {
   InjectedPrimitives,
   Maybe,
   ParsedType,
+  PredicateValue,
   TypeName,
-  UnionCase,
 } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 
@@ -45,6 +45,7 @@ export const GenericTypes = [
   "List",
   "Map",
   "Union",
+  "Option",
 ] as const;
 export type GenericType = (typeof GenericTypes)[number];
 
@@ -56,11 +57,16 @@ export type ApiConverters<
   T extends { [key in keyof T]: { type: any; state: any } },
 > = { [key in keyof T]: ApiConverter<T[key]["type"]> } & BuiltInApiConverters;
 
+export type UnionCase = {
+  caseName: string;
+  fields: Record<string, any>;
+  value: any;
+};
+
 export type BuiltInApiConverters = {
   string: ApiConverter<string>;
   number: ApiConverter<number>;
   boolean: ApiConverter<boolean>;
-  maybeBoolean: ApiConverter<boolean | undefined>;
   base64File: ApiConverter<string>;
   secret: ApiConverter<string>;
   Date: ApiConverter<Maybe<Date>>;
@@ -75,7 +81,7 @@ export type BuiltInApiConverters = {
 
 export type PrimitiveBuiltIn = {
   renderers: Set<keyof BuiltIns["renderers"]>;
-  defaultValue: any;
+  defaultValue: PredicateValue;
 };
 export type GenericBuiltIn = { defaultValue: any };
 export type BuiltIns = {
@@ -83,7 +89,6 @@ export type BuiltIns = {
   generics: Map<string, GenericBuiltIn>;
   renderers: {
     boolean: Set<string>;
-    maybeBoolean: Set<string>;
     number: Set<string>;
     string: Set<string>;
     base64File: Set<string>;
@@ -99,51 +104,88 @@ export type BuiltIns = {
 };
 
 export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
-  let builtins: BuiltIns = {
+  const builtins: BuiltIns = {
     primitives: Map<string, PrimitiveBuiltIn>([
-      ["string", { renderers: Set(["string"]), defaultValue: "" }] as [
-        string,
-        PrimitiveBuiltIn,
-      ],
-      ["number", { renderers: Set(["number"]), defaultValue: 0 }] as [
-        string,
-        PrimitiveBuiltIn,
-      ],
-      ["boolean", { renderers: Set(["boolean"]), defaultValue: false }],
       [
-        "maybeBoolean",
-        { renderers: Set(["maybeBoolean"]), defaultValue: undefined },
+        "string",
+        {
+          renderers: Set(["string"]),
+          defaultValue: PredicateValue.Default.string(),
+        },
       ] as [string, PrimitiveBuiltIn],
-      ["date", { renderers: Set(["date"]), defaultValue: undefined }] as [
-        string,
-        PrimitiveBuiltIn,
-      ],
-      ["Date", { renderers: Set(["date"]), defaultValue: undefined }] as [
-        string,
-        PrimitiveBuiltIn,
-      ],
-      ["base64File", { renderers: Set(["base64File"]), defaultValue: "" }] as [
-        string,
-        PrimitiveBuiltIn,
-      ],
-      ["secret", { renderers: Set(["secret"]), defaultValue: "" }] as [
-        string,
-        PrimitiveBuiltIn,
-      ],
+      [
+        "number",
+        {
+          renderers: Set(["number"]),
+          defaultValue: PredicateValue.Default.number(),
+        },
+      ] as [string, PrimitiveBuiltIn],
+      [
+        "boolean",
+        {
+          renderers: Set(["boolean"]),
+          defaultValue: PredicateValue.Default.boolean(),
+        },
+      ] as [string, PrimitiveBuiltIn],
+      [
+        "date",
+        {
+          renderers: Set(["date"]),
+          defaultValue: PredicateValue.Default.date(new Date()),
+        },
+      ] as [string, PrimitiveBuiltIn],
+      [
+        "Date",
+        {
+          renderers: Set(["date"]),
+          defaultValue: PredicateValue.Default.date(new Date()),
+        },
+      ] as [string, PrimitiveBuiltIn],
+      [
+        "base64File",
+        {
+          renderers: Set(["base64File"]),
+          defaultValue: PredicateValue.Default.string(),
+        },
+      ] as [string, PrimitiveBuiltIn],
+      [
+        "secret",
+        {
+          renderers: Set(["secret"]),
+          defaultValue: PredicateValue.Default.string(),
+        },
+      ] as [string, PrimitiveBuiltIn],
     ]),
     generics: Map([
       [
         "SingleSelection",
-        { defaultValue: CollectionSelection().Default.right("no selection") },
+        {
+          defaultValue: PredicateValue.Default.option(
+            false,
+            PredicateValue.Default.unit(),
+          ),
+        },
       ] as [string, GenericBuiltIn],
-      ["MultiSelection", { defaultValue: Map() }] as [string, GenericBuiltIn],
-      ["List", { defaultValue: List() }] as [string, GenericBuiltIn],
-      ["Map", { defaultValue: List() }] as [string, GenericBuiltIn],
-      ["Union", { defaultValue: Map() }] as [string, GenericBuiltIn],
+      [
+        "MultiSelection",
+        { defaultValue: PredicateValue.Default.record(Map()) },
+      ] as [string, GenericBuiltIn],
+      ["List", { defaultValue: PredicateValue.Default.tuple([]) }] as [
+        string,
+        GenericBuiltIn,
+      ],
+      ["Map", { defaultValue: PredicateValue.Default.tuple([]) }] as [
+        string,
+        GenericBuiltIn,
+      ],
+      ["Union", { defaultValue: PredicateValue.Default.record(Map()) }] as [
+        string,
+        GenericBuiltIn,
+      ],
+      ["Option", { defaultValue: undefined }] as [string, GenericBuiltIn],
     ]),
     renderers: {
       boolean: Set(),
-      maybeBoolean: Set(),
       date: Set(),
       enumMultiSelection: Set(),
       enumSingleSelection: Set(),
@@ -175,7 +217,7 @@ export const defaultValue =
     builtIns: BuiltIns,
     injectedPrimitives?: InjectedPrimitives<T>,
   ) =>
-  (t: ParsedType<T>): any => {
+  (t: ParsedType<T>): PredicateValue => {
     if (t.kind == "primitive") {
       const primitive = builtIns.primitives.get(t.value as string);
       const injectedPrimitive = injectedPrimitives?.injectedPrimitives.get(
@@ -221,7 +263,7 @@ export const fromAPIRawValue =
     converters: ApiConverters<T>,
     injectedPrimitives?: InjectedPrimitives<T>,
   ) =>
-  (raw: any): any => {
+  (raw: any): PredicateValue => {
     if (raw == undefined) {
       return defaultValue(types, builtIns, injectedPrimitives)(t);
     }
@@ -239,50 +281,75 @@ export const fromAPIRawValue =
       )(raw);
     }
     if (t.kind == "unionCase") {
-      return converters[t.kind].fromAPIRawValue(raw);
+      const result = converters[t.kind].fromAPIRawValue(raw);
+      return PredicateValue.Default.unionCase(
+        result.caseName,
+        PredicateValue.Default.record(Map(result.fields)),
+      );
     }
     if (t.kind == "application") {
       if (t.value == "SingleSelection") {
-        return CollectionSelection().Updaters.left(
+        const result = converters[t.value].fromAPIRawValue(
           fromAPIRawValue(
             t.args[0],
             types,
             builtIns,
             converters,
             injectedPrimitives,
-          ),
-        )(converters[t.value].fromAPIRawValue(raw));
+          )(raw),
+        );
+        return result.kind == "r"
+          ? PredicateValue.Default.option(false, PredicateValue.Default.unit())
+          : PredicateValue.Default.option(
+              true,
+              fromAPIRawValue(
+                t.args[0],
+                types,
+                builtIns,
+                converters,
+                injectedPrimitives,
+              )(result.value),
+            );
       }
       if (t.value == "MultiSelection") {
-        return converters["MultiSelection"]
-          .fromAPIRawValue(raw)
-          .map(
-            fromAPIRawValue(
-              t.args[0],
-              types,
-              builtIns,
-              converters,
-              injectedPrimitives,
-            ),
-          );
+        const result = converters[t.value].fromAPIRawValue(raw);
+        return PredicateValue.Default.record(
+          result
+            .map(
+              fromAPIRawValue(
+                t.args[0],
+                types,
+                builtIns,
+                converters,
+                injectedPrimitives,
+              ),
+            )
+        );
       }
       if (t.value == "List") {
-        return converters[t.value]
-          .fromAPIRawValue(raw)
-          .map(
-            fromAPIRawValue(
-              t.args[0],
-              types,
-              builtIns,
-              converters,
-              injectedPrimitives,
-            ),
-          );
+        return PredicateValue.Default.tuple(
+          converters[t.value]
+            .fromAPIRawValue(raw)
+            .map(
+              fromAPIRawValue(
+                t.args[0],
+                types,
+                builtIns,
+                converters,
+                injectedPrimitives,
+              ),
+            )
+            .toArray(),
+        );
       }
+      // TODO fix
       if (t.value == "Map" && t.args.length == 2) {
-        return converters[t.value]
-          .fromAPIRawValue(raw)
-          .map((keyValue) => [
+
+
+        const result = converters[t.value].fromAPIRawValue(raw);
+        return PredicateValue.Default.tuple(
+          PredicateValue.Default.tuple(
+          result.map((keyValue) => ([
             fromAPIRawValue(
               t.args[0],
               types,
@@ -296,8 +363,31 @@ export const fromAPIRawValue =
               builtIns,
               converters,
               injectedPrimitives,
-            )(keyValue[1]),
-          ]);
+            )(keyValue[1])])
+          ).toArray()
+        
+        ))
+
+
+        // return converters[t.value]
+        //   .fromAPIRawValue(raw)
+        //   .map((keyValue) => [
+        //     fromAPIRawValue(
+        //       t.args[0],
+        //       types,
+        //       builtIns,
+        //       converters,
+        //       injectedPrimitives,
+        //     )(keyValue[0]),
+        //     fromAPIRawValue(
+        //       t.args[1],
+        //       types,
+        //       builtIns,
+        //       converters,
+        //       injectedPrimitives,
+        //     )(keyValue[1]),
+        //   ]);
+
       }
     }
 

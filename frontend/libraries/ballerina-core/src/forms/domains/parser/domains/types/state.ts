@@ -59,6 +59,11 @@ export type RawUnionType = {
   args?: Array<RawUnionCase>;
 };
 
+export type RawOptionType = {
+  fun?: "Option";
+  args?: Array<RawFieldType<any>>;
+};
+
 export type RawFormType = { fields?: object };
 
 export type RawFieldType<T> =
@@ -67,7 +72,9 @@ export type RawFieldType<T> =
   | PrimitiveTypeName<T>
   | RawUnionType
   | RawFormType
-  | RawUnionCase;
+  | RawUnionCase
+  | RawOptionType;
+
 export const RawFieldType = {
   isMaybePrimitive: (_: any) => isString(_),
   isPrimitive: <T>(
@@ -121,6 +128,15 @@ export const RawFieldType = {
     ),
   isForm: <T>(_: RawFieldType<T>): _ is { fields: Object } =>
     typeof _ == "object" && "fields" in _ && isObject(_.fields),
+  isOption: <T>(
+    _: RawFieldType<T>,
+  ): _ is { fun: "Option"; args: Array<RawFieldType<T>> } =>
+    typeof _ == "object" &&
+    "fun" in _ &&
+    _.fun == "Option" &&
+    "args" in _ &&
+    Array.isArray(_.args) &&
+    _.args.length == 1,
 };
 
 export type PrimitiveTypeName<T> =
@@ -141,6 +157,7 @@ export type ParsedUnionCase<T> = {
 };
 export type ParsedType<T> =
   | ParsedUnionCase<T>
+  | { kind: "option"; value: ParsedType<T> }
   | { kind: "form"; value: TypeName; fields: FormFields<T> }
   | { kind: "lookup"; name: TypeName }
   | { kind: "primitive"; value: PrimitiveTypeName<T> }
@@ -153,6 +170,10 @@ export const ParsedType = {
       name: CaseName,
       fields: ParsedType<T> | Unit,
     ): ParsedUnionCase<T> => ({ kind: "unionCase", name, fields }),
+    option: <T>(value: ParsedType<T>): ParsedType<T> => ({
+      kind: "option",
+      value,
+    }),
     form: <T>(value: TypeName, fields: FormFields<T>): ParsedType<T> => ({
       kind: "form",
       value,
@@ -230,6 +251,17 @@ export const ParsedType = {
         ).Then((parsedArgs) =>
           ValueOrErrors.Default.return(
             ParsedType.Default.application("List", [parsedArgs]),
+          ),
+        );
+      if (RawFieldType.isOption(rawFieldType))
+        return ParsedType.Operations.ParseRawFieldType(
+          fieldName,
+          rawFieldType.args[0],
+          types,
+          injectedPrimitives,
+        ).Then((parsedArg) =>
+          ValueOrErrors.Default.return(
+            ParsedType.Default.option(parsedArg),
           ),
         );
       if (RawFieldType.isMap(rawFieldType))

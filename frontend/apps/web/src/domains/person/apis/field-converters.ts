@@ -22,10 +22,6 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
     fromAPIRawValue: (_) => (typeof _ == "boolean" ? _ : false),
     toAPIRawValue: ([_, __]) => _,
   },
-  maybeBoolean: {
-    fromAPIRawValue: (_) => (typeof _ == "boolean" ? _ : undefined),
-    toAPIRawValue: ([_, __]) => _,
-  },
   base64File: {
     fromAPIRawValue: (_) => (typeof _ == "string" ? _ : ""),
     toAPIRawValue: ([_, __]) => _,
