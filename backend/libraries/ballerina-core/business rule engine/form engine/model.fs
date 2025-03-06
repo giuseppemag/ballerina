@@ -264,7 +264,11 @@ module Model =
       {| List: Renderer
          Element: NestedRenderer
          Children: RendererChildren |}
-    | SumRenderer of {| Sum:Renderer; Left:NestedRenderer; Right:NestedRenderer |}
+    | SumRenderer of
+      {| Sum:Renderer
+         Left:NestedRenderer
+         Right:NestedRenderer
+         Children: RendererChildren |}
     | EnumRenderer of EnumApiId * Renderer
     | StreamRenderer of StreamApiId * Renderer
     | FormRenderer of FormConfigId * ExprType * RendererChildren

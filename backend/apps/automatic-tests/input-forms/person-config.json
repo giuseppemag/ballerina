@@ -234,8 +234,16 @@
           "args": ["ColorRef"]
         },
         "gender": {
-          "fun": "SingleSelection",
-          "args": ["GenderRef"]
+          "fun": "Sum",
+          "args": [
+            {
+              "fun": "SingleSelection",
+              "args": [
+                "GenderRef"
+              ]
+            },
+            "string"
+          ]
         },
         "dependants": {
           "fun": "Map",
@@ -594,8 +602,20 @@
         },
         "gender": {
           "label": "gender",
-          "renderer": "defaultEnum",
-          "options": "genders",
+          "renderer": "defaultSum",
+          "leftRenderer": {
+            "label": "left",
+            "renderer": "defaultEnum",
+            "options": "genders",
+            "visible": true,
+            "disabled": false
+          },
+          "rightRenderer": {
+            "label": "right",
+            "renderer": "defaultString",
+            "visible": true,
+            "disabled": false
+          },
           "visible":{
             "kind":"matchCase",
             "operands":[

@@ -57,11 +57,12 @@ module Validator =
 
           return fr.Type
         | Renderer.SumRenderer(s) ->
-          let! genericSumRenderer = !s.Sum
-          let! leftRendererType = !s.Left.Renderer
-          let! rightRendererType = !s.Right.Renderer
-          let sumRenderer = ExprType.Substitute (Map.empty |> Map.add { VarName="a1" } leftRendererType |> Map.add { VarName="a2" } rightRendererType) genericSumRenderer
-          return sumRenderer
+          do! !s.Sum |> Sum.map ignore
+          do! !s.Left.Renderer |> Sum.map ignore
+          do! !s.Right.Renderer |> Sum.map ignore
+
+          do! s.Children |> validateChildren
+          return fr.Type
         | Renderer.PrimitiveRenderer p ->
           do! p.Children |> validateChildren
 
@@ -151,6 +152,8 @@ module Validator =
           do! !s.Sum
           do! !!s.Left
           do! !!s.Right
+
+          do! s.Children |> validateChildrenPredicates
         | Renderer.StreamRenderer(_, e) -> return! !e
         | Renderer.FormRenderer(f, e, children) ->
           let! f = ctx.TryFindForm f.FormName |> state.OfSum

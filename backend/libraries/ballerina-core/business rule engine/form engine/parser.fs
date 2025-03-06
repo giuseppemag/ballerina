@@ -147,10 +147,7 @@ module Parser =
       match self with
       | PrimitiveRenderer p -> p.Type
       | MapRenderer r -> ExprType.MapType(r.Key.Type, r.Value.Type)
-      | SumRenderer r -> ExprType.UnionType [ 
-          { CaseName = "l"; Fields = r.Left.Renderer.Type} ;
-          { CaseName = "r"; Fields = r.Right.Renderer.Type}
-        ]
+      | SumRenderer r -> ExprType.SumType(r.Left.Type, r.Right.Type)
       | ListRenderer r -> ExprType.ListType r.Element.Type
       | EnumRenderer(_, r)
       | StreamRenderer(_, r) -> r.Type
@@ -533,15 +530,13 @@ module Parser =
             SumRenderer
               {| Sum =
                   PrimitiveRenderer
-                    { PrimitiveRendererName=s
-                      PrimitiveRendererId=Guid.CreateVersion7()
-                      Type=ExprType.UnionType [ 
-                        { CaseName = "l"; Fields = leftRenderer.Type } ;
-                        { CaseName = "r"; Fields = rightRenderer.Type }
-                      ]
-                      Children = children }
-                 Left=leftRenderer
-                 Right=rightRenderer |}
+                    { PrimitiveRendererName = s
+                      PrimitiveRendererId = Guid.CreateVersion7()
+                      Type = ExprType.SumType(leftRenderer.Renderer.Type, rightRenderer.Renderer.Type)
+                      Children = { Fields = Map.empty } }
+                 Left = leftRenderer
+                 Right = rightRenderer
+                 Children = children |}
         elif config.List.SupportedRenderers |> Set.contains s then
           let! elementRendererJson = parentJsonFields |> sum.TryFindField "elementRenderer" |> state.OfSum
           let! elementRenderer = NestedRenderer.Parse elementRendererJson
@@ -1180,10 +1175,7 @@ module Parser =
                               let! argsJson = (fields |> state.TryFindField "args")
                               let! leftJson, rightJson = JsonValue.AsPair argsJson |> state.OfSum
                               let! left, right = state.All2 !leftJson !rightJson
-                              return ExprType.UnionType [ 
-                                { CaseName = "l"; Fields = left} ;
-                                { CaseName = "r"; Fields = right}
-                              ]
+                              return ExprType.SumType(left, right)
                             } |> state.MapError(Errors.WithPriority ErrorPriority.High)
                           }
                           state {
