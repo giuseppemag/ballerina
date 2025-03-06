@@ -9,7 +9,16 @@ type KeyValue[k comparable, v any] struct {
 	Value v
 }
 type Set[a comparable] []a
+
+func DefaultSet[a comparable]() Set[a] {
+	return make([]a, 0)
+}
+
 type Map[a comparable, b any] []KeyValue[a, b]
+
+func DefaultMap[a comparable, b any]() Map[a, b] {
+	return make([]KeyValue[a, b], 0)
+}
 
 type Sum[a any, b any] interface{}
 type left[a any, b any] struct {

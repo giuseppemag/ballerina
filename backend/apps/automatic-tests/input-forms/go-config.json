@@ -1,21 +1,21 @@
 {
-  "String":{ "GeneratedTypeName": "string", "RequiredImport": null, "SupportedRenderers": ["defaultString"] },
-  "Int":{ "GeneratedTypeName": "int", "RequiredImport": null, "SupportedRenderers": ["defaultNumber"] },
-  "Bool":{ "GeneratedTypeName": "bool", "RequiredImport": null, "SupportedRenderers": ["defaultBoolean"] },
-  "Date":{ "GeneratedTypeName": "time.Time", "RequiredImport": "time", "SupportedRenderers": ["defaultDate"] },
-  "Guid":{ "GeneratedTypeName": "uuid.UUID", "RequiredImport": "github.com/google/uuid", "SupportedRenderers": [] },
-  "Unit":{ "GeneratedTypeName": "ballerina.Unit", "RequiredImport": "ballerina.com/core", "SupportedRenderers": [] },
-  "Option":{ "GeneratedTypeName": "ballerina.Option", "RequiredImport": "ballerina.com/core", "SupportedRenderers": { "Enum":["defaultEnum"], "Stream":["defaultInfiniteStream"] } },
-  "Set":{ "GeneratedTypeName": "ballerina.Set", "RequiredImport": "ballerina.com/core", "SupportedRenderers": { "Enum":["defaultEnumMultiselect"], "Stream":["defaultInfiniteStreamMultiselect"] } },
-  "List":{ "GeneratedTypeName": "ballerina.Array", "RequiredImport": "ballerina.com/core", "SupportedRenderers": ["defaultList"], "MappingFunction":"ballerina.MapArray" },
-  "Map":{ "GeneratedTypeName": "ballerina.Map", "RequiredImport": "ballerina.com/core", "SupportedRenderers": ["defaultMap"] },
+  "String":{ "GeneratedTypeName": "string", "RequiredImport": null, "SupportedRenderers": ["defaultString"], "DefaultValue":"\"\""  },
+  "Int":{ "GeneratedTypeName": "int", "RequiredImport": null, "SupportedRenderers": ["defaultNumber"], "DefaultValue":"0" },
+  "Bool":{ "GeneratedTypeName": "bool", "RequiredImport": null, "SupportedRenderers": ["defaultBoolean"], "DefaultValue":"false" },
+  "Date":{ "GeneratedTypeName": "time.Time", "RequiredImport": "time", "SupportedRenderers": ["defaultDate"], "DefaultValue":"time.Now()" },
+  "Guid":{ "GeneratedTypeName": "uuid.UUID", "RequiredImport": "github.com/google/uuid", "SupportedRenderers": [], "DefaultValue":"uuid.Nil" },
+  "Unit":{ "GeneratedTypeName": "ballerina.Unit", "RequiredImport": "ballerina.com/core", "SupportedRenderers": [], "DefaultConstructor":"ballerina.DefaultUnit" },
+  "Option":{ "GeneratedTypeName": "ballerina.Option", "RequiredImport": "ballerina.com/core", "SupportedRenderers": { "Enum":["defaultEnum"], "Stream":["defaultInfiniteStream"] }, "DefaultConstructor":"ballerina.None" },
+  "Set":{ "GeneratedTypeName": "ballerina.Set", "RequiredImport": "ballerina.com/core", "SupportedRenderers": { "Enum":["defaultEnumMultiselect"], "Stream":["defaultInfiniteStreamMultiselect"] }, "DefaultConstructor":"ballerina.DefaultSet" },
+  "List":{ "GeneratedTypeName": "ballerina.Array", "RequiredImport": "ballerina.com/core", "SupportedRenderers": ["defaultList"], "MappingFunction":"ballerina.MapArray", "DefaultConstructor":"ballerina.DefaultArray" },
+  "Map":{ "GeneratedTypeName": "ballerina.Map", "RequiredImport": "ballerina.com/core", "SupportedRenderers": ["defaultMap"], "DefaultConstructor":"ballerina.DefaultMap" },
   "Tuple":[
-    {"Ariety" :2, "GeneratedTypeName": "ballerina.Tuple2", "RequiredImport": "ballerina.com/core", "SupportedRenderers": ["defaultTuple2"] },
-    {"Ariety" :3, "GeneratedTypeName": "ballerina.Tuple3", "RequiredImport": "ballerina.com/core", "SupportedRenderers": ["defaultTuple3"] }
+    {"Ariety" :2, "GeneratedTypeName": "ballerina.Tuple2", "RequiredImport": "ballerina.com/core", "SupportedRenderers": ["defaultTuple2"], "Constructor":"ballerina.NewTuple2" },
+    {"Ariety" :3, "GeneratedTypeName": "ballerina.Tuple3", "RequiredImport": "ballerina.com/core", "SupportedRenderers": ["defaultTuple3"], "Constructor":"ballerina.NewTuple3" }
   ],
   "Union":{ "SupportedRenderers": ["defaultUnionRenderer"] },
   "Custom": {
-    "injectedCategory": { "GeneratedTypeName": "ballerina.Unit", "RequiredImport": "ballerina.com/core", "SupportedRenderers": [ "defaultCategory" ] }
+    "injectedCategory": { "GeneratedTypeName": "ballerina.Unit", "RequiredImport": "ballerina.com/core", "SupportedRenderers": [ "defaultCategory" ], "DefaultConstructor":"ballerina.NewUnit" }
   },
   "IdentifierAllowedRegex": "[^a-zA-Z0-9/-]+",
   "StreamNotFoundError":{ "GeneratedTypeName": "ballerina.StreamNotFoundError", "RequiredImport":"ballerina.com/core", "Constructor":"ballerina.NewStreamNotFoundError" },

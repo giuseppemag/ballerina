@@ -11,14 +11,14 @@ module Model =
       String: CodegenConfigTypeDef
       Date: CodegenConfigTypeDef
       Guid: CodegenConfigTypeDef
-      Unit: CodegenConfigTypeDef
-      Option: EnumStreamCodegenConfigTypeDef
-      Set: EnumStreamCodegenConfigTypeDef
+      Unit: CodegenConfigUnitDef
+      Option: CodegenConfigOptionDef
+      Set: CodegenConfigSetDef
       List: CodegenConfigListDef
-      Map: CodegenConfigTypeDef
+      Map: CodegenConfigMapDef
       Tuple: List<TupleCodegenConfigTypeDef>
       Union: CodegenConfigUnionDef
-      Custom: Map<string, CodegenConfigTypeDef>
+      Custom: Map<string, CodegenConfigCustomDef>
       IdentifierAllowedRegex: string
       EnumNotFoundError: CodegenConfigErrorDef
       InvalidEnumValueCombinationError: CodegenConfigErrorDef
@@ -39,24 +39,54 @@ module Model =
     { Ariety: int
       GeneratedTypeName: string
       SupportedRenderers: Set<string>
+      Constructor: string
       RequiredImport: Option<string> }
 
   and CodegenConfigUnionDef = { SupportedRenderers: Set<string> }
+
+  and CodegenConfigUnitDef =
+    { GeneratedTypeName: string
+      RequiredImport: Option<string>
+      DefaultConstructor: string
+      SupportedRenderers: Set<string> }
 
   and CodegenConfigListDef =
     { GeneratedTypeName: string
       RequiredImport: Option<string>
       SupportedRenderers: Set<string>
+      DefaultConstructor: string
       MappingFunction: string }
+
+  and CodegenConfigMapDef =
+    { GeneratedTypeName: string
+      RequiredImport: Option<string>
+      DefaultConstructor: string
+      SupportedRenderers: Set<string> }
 
   and CodegenConfigTypeDef =
     { GeneratedTypeName: string
+      DefaultValue: string
       RequiredImport: Option<string>
       SupportedRenderers: Set<string> }
 
-  and EnumStreamCodegenConfigTypeDef =
+  and CodegenConfigCustomDef =
+    { GeneratedTypeName: string
+      DefaultConstructor: string
+      RequiredImport: Option<string>
+      SupportedRenderers: Set<string> }
+
+  and CodegenConfigOptionDef =
     { GeneratedTypeName: string
       RequiredImport: Option<string>
+      DefaultConstructor: string
+      SupportedRenderers:
+        {| Enum: Set<string>
+           Stream: Set<string> |} }
+
+  and CodegenConfigSetDef =
+    { GeneratedTypeName: string
+      RequiredImport: Option<string>
+      DefaultConstructor: string
       SupportedRenderers:
         {| Enum: Set<string>
            Stream: Set<string> |} }

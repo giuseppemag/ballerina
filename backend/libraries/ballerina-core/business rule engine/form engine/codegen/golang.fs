@@ -29,6 +29,51 @@ module Golang =
                   UsedImports = u (s.UsedImports) } |}
 
   type ExprType with
+    static member ToGolangDefaultValue(t: ExprType) =
+      let (!) = ExprType.ToGolangDefaultValue
+
+      state {
+        let! (cfg: CodeGenConfig) = state.GetContext()
+
+        match t with
+        | ExprType.PrimitiveType p ->
+          match p with
+          | PrimitiveType.BoolType -> return cfg.Bool.DefaultValue
+          | PrimitiveType.IntType -> return cfg.Int.DefaultValue
+          | PrimitiveType.DateOnlyType -> return cfg.Date.DefaultValue
+          | PrimitiveType.DateTimeType -> return cfg.Date.DefaultValue
+          | PrimitiveType.FloatType -> return cfg.Int.DefaultValue
+          | PrimitiveType.GuidType -> return cfg.Guid.DefaultValue
+          | PrimitiveType.StringType -> return cfg.String.DefaultValue
+          | _ -> return! state.Throw(Errors.Singleton $"Error: not implemented default value for primitive type {p}")
+        | ExprType.ListType e ->
+          let! e = e |> ExprType.ToGolangTypeAnnotation
+          return $"{cfg.List.DefaultConstructor}[{e}]()"
+        | ExprType.MapType(k, v) ->
+          let! k = k |> ExprType.ToGolangTypeAnnotation
+          let! v = v |> ExprType.ToGolangTypeAnnotation
+          return $"{cfg.Map.DefaultConstructor}[{k}, {v}]()"
+        | ExprType.OptionType(e) ->
+          let! e = e |> ExprType.ToGolangTypeAnnotation
+          return $"{cfg.Option.DefaultConstructor}[{e}]()"
+        | ExprType.SetType(e) ->
+          let! e = e |> ExprType.ToGolangTypeAnnotation
+          return $"{cfg.Set.DefaultConstructor}[{e}]()"
+        | ExprType.TupleType(items) ->
+          let! e = items |> Seq.map ExprType.ToGolangTypeAnnotation |> state.All
+          let! eDefaults = items |> Seq.map ExprType.ToGolangDefaultValue |> state.All
+
+          let! tupleConfig =
+            cfg.Tuple
+            |> List.tryFind (fun tc -> tc.Ariety = items.Length)
+            |> Sum.fromOption (fun () -> Errors.Singleton $"Error: cannot find tuple config for ariety {items.Length}")
+            |> state.OfSum
+
+          return $"{tupleConfig.Constructor}[{System.String.Join(',', e)}]({System.String.Join(',', eDefaults)})"
+        | ExprType.LookupType(l) -> return $"Default{l.TypeName}()"
+        | _ -> return! state.Throw(Errors.Singleton $"Error: not implemented default value for type {t}")
+      }
+
     static member ToGolangTypeAnnotation(t: ExprType) : State<string, CodeGenConfig, GoCodeGenState, Errors> =
       let (!) = ExprType.ToGolangTypeAnnotation
 
@@ -82,7 +127,9 @@ module Golang =
             |> GoCodeGenState.Updaters.UsedImports
             |> state.SetState
 
-          return tupleConfig.GeneratedTypeName
+          let! items = items |> Seq.map (!) |> state.All
+
+          return $"{tupleConfig.GeneratedTypeName}[{System.String.Join(',', items)}]"
 
         | ExprType.ListType e ->
           let! e = !e
@@ -359,6 +406,13 @@ module Golang =
                 seq {
                   yield StringBuilder.One "\n"
                   yield StringBuilder.One $"type {t.Key} = {t.Value.GeneratedTypeName}"
+                  yield StringBuilder.One "\n"
+                  yield StringBuilder.One $"func Default{t.Key}() {t.Key} {{"
+                  yield StringBuilder.One $"  return {t.Value.DefaultConstructor}();"
+                  yield StringBuilder.One "\n"
+                  yield StringBuilder.One "}"
+                  yield StringBuilder.One "\n"
+
                 }
               ))
 
@@ -368,7 +422,9 @@ module Golang =
               |> Seq.map (fun t ->
                 state {
                   match t.Value.Type with
-                  | ExprType.UnionType cases when cases |> Seq.forall (fun case -> case.Fields.IsUnitType) ->
+                  | ExprType.UnionType cases when
+                    cases |> Seq.forall (fun case -> case.Fields.IsUnitType) && cases.Length > 0
+                    ->
                     let enumCases = cases |> Seq.map (fun case -> case.CaseName)
 
                     return
@@ -392,9 +448,11 @@ module Golang =
                             yield StringBuilder.One $$"""{{t.Key}}{{!enumCase}}, """
 
                           yield StringBuilder.One "}\n"
+                          yield StringBuilder.One "\n"
+                          yield StringBuilder.One $"func Default{t.Key}() {t.Key} {{ return All{t.Key}Cases[0]; }}"
                         }
                       )
-                  | ExprType.UnionType cases ->
+                  | ExprType.UnionType cases when cases.Length > 0 ->
                     let! caseValues =
                       state.All(
                         cases
@@ -411,8 +469,6 @@ module Golang =
                                 )
                               )
 
-
-
                             let! fields =
                               fields
                               |> Seq.map (fun f ->
@@ -420,8 +476,12 @@ module Golang =
                                   // do System.Console.WriteLine(f.Value.ToFSharpString)
                                   // do System.Console.ReadLine() |> ignore
                                   let! field = f.Value |> ExprType.ToGolangTypeAnnotation
+                                  let! fieldDefault = f.Value |> ExprType.ToGolangDefaultValue
 
-                                  return f.Key, field
+                                  return
+                                    {| FieldName = f.Key
+                                       FieldType = field
+                                       FieldDefault = fieldDefault |}
                                 })
                               |> state.All
 
@@ -431,6 +491,12 @@ module Golang =
                       )
 
                     let caseValues = caseValues |> Map.ofList
+
+                    let! firstUnionCaseName =
+                      caseValues.Keys
+                      |> Seq.tryHead
+                      |> Sum.fromOption (fun () -> Errors.Singleton $"Error: union case must have at least one case.")
+                      |> state.OfSum
 
                     return
                       StringBuilder.Many(
@@ -442,8 +508,8 @@ module Golang =
 
                             match caseValues |> Map.tryFind case.CaseName with
                             | Some caseValue ->
-                              for fieldName, fieldType in caseValue do
-                                yield StringBuilder.One $"  {fieldName} {fieldType}; \n"
+                              for field in caseValue do
+                                yield StringBuilder.One $"  {field.FieldName} {field.FieldType}; \n"
                             | None -> ()
 
                             yield StringBuilder.One $"}}\n"
@@ -452,8 +518,8 @@ module Golang =
 
                             match caseValues |> Map.tryFind case.CaseName with
                             | Some caseValue ->
-                              for fieldName, fieldType in caseValue do
-                                yield StringBuilder.One $"{fieldName} {fieldType}, "
+                              for field in caseValue do
+                                yield StringBuilder.One $"{field.FieldName} {field.FieldType}, "
                             | None -> ()
 
                             yield StringBuilder.One $") {t.Key}{!case.CaseName}Value {{\n"
@@ -462,12 +528,29 @@ module Golang =
 
                             match caseValues |> Map.tryFind case.CaseName with
                             | Some caseValue ->
-                              for fieldName, fieldType in caseValue do
-                                yield StringBuilder.One $"  res.{fieldName} = {fieldName}; \n"
+                              for field in caseValue do
+                                yield StringBuilder.One $"  res.{field.FieldName} = {field.FieldName}; \n"
                             | None -> ()
 
                             yield StringBuilder.One $"  return res;\n"
                             yield StringBuilder.One $"}}\n"
+
+                            yield
+                              StringBuilder.One
+                                $"func Default{t.Key}{!case.CaseName}Value() {t.Key}{!case.CaseName}Value {{"
+
+                            yield StringBuilder.One $" return New{t.Key}{!case.CaseName}Value("
+
+                            match caseValues |> Map.tryFind case.CaseName with
+                            | Some caseValue ->
+                              for field in caseValue do
+                                yield StringBuilder.One $"{field.FieldDefault}, "
+                            | None -> ()
+
+                            yield StringBuilder.One $");"
+
+                            yield StringBuilder.One $"}}\n"
+
 
                           yield StringBuilder.One "\n"
                           yield StringBuilder.One $$"""type {{t.Key}}Cases string"""
@@ -497,6 +580,21 @@ module Golang =
                           yield StringBuilder.One "}"
                           yield StringBuilder.One "\n"
 
+                          yield StringBuilder.One $"func Default{t.Key}() {t.Key} {{"
+                          yield StringBuilder.One "\n"
+
+                          yield
+                            StringBuilder.One
+                              $"  return New{t.Key}{!firstUnionCaseName}(Default{t.Key}{!firstUnionCaseName}Value());"
+
+                          yield StringBuilder.One "\n"
+                          yield StringBuilder.One "}"
+                          yield StringBuilder.One "\n"
+
+                          // func Default{UnionName}() {UnionName} {
+                          // 	return New{FirstUnionCaseName}(Default{FirstUnionCaseName}Value());
+                          // }
+
                           for case in cases do
                             yield StringBuilder.One $$"""func New{{t.Key}}{{!case.CaseName}}( """
 
@@ -517,6 +615,8 @@ module Golang =
                           yield StringBuilder.One "\n"
 
                           yield StringBuilder.One $"func Match{t.Key}[result any](value {t.Key}, "
+
+                          // BUILD HERE THE DEFAULTING BASED ON THE INVOCATION OF THE CONSTRUCTOR OF THE FIRST CASE
 
                           for case in cases do
                             yield
@@ -606,6 +706,27 @@ module Golang =
                         }
                       )
 
+                    let! fieldDefaults = fields |> Seq.map snd |> Seq.map ExprType.ToGolangDefaultValue |> state.All
+
+                    let defaultValue: StringBuilder =
+                      StringBuilder.Many(
+                        seq {
+                          yield
+                            StringBuilder.One $"func Default{t.Value.TypeId.TypeName}() {t.Value.TypeId.TypeName} {{"
+
+                          yield StringBuilder.One "\n"
+                          yield StringBuilder.One $"  return New{t.Value.TypeId.TypeName}("
+
+                          for fieldDefault in fieldDefaults do
+                            yield StringBuilder.One(fieldDefault)
+                            yield StringBuilder.One ", "
+
+                          yield StringBuilder.One ");"
+                          yield StringBuilder.One "\n}\n"
+                          yield StringBuilder.One "\n"
+                        }
+                      )
+
                     return
                       StringBuilder.Many(
                         seq {
@@ -619,6 +740,7 @@ module Golang =
                           yield StringBuilder.One consDeclEnd
                           yield consFieldInits
                           yield StringBuilder.One consBodyEnd
+                          yield defaultValue
                         }
                       )
                 }

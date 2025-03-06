@@ -48,19 +48,37 @@
         ✅ validate the right number of items and that there are no holes
       ✅ Renderer::Validate, the substitutions are completely unnecessary
       ✅ Go generic types added correctly
-    ❌ add documentation (Confluence)
     ❌ entites visitors
-      ❌ entites DEFAULT - recursive
+      ✅ entites DEFAULT - recursive
+        ✅ add default values and constructors to the co-codegen
+        ✅ create default values as invocations of the existing constructors
+          ✅ primitives
+          ✅ generics
+          ✅ records
+          ✅ enums
+          ✅ streams
+          ✅ unions
+          ✅ injected types
+        ✅ extend the ballerina.core library to the necessary default values for Option, Set, List, Map, etc.
       ❌ entites GET - identical to stream GETter: pairs of get + serialize
-      ❌ entities GETDefault - identical to stream GETter: pairs of get + serialize
+      ❌ entities GETDefault - identical to stream GETter: pairs of get + serialize to which the default value is passed
       ❌ entities POST - how do we represent changes?
       ❌ entities PATCH - how do we represent changes?
-      ❌ make all these functions partially applied in the actual parameters vs the visitor parameters
     ❌ add paginated lists
     ❌ add lazy fields
     ❌ distinguish Sum (with renderer like List) from SingleSelection (only renderer for streams)
       ❌ allow Left and Right matching on Sum
       ❌ distinguish outer from inner renderers
+    ❌ add documentation (Confluence)
+    ❌ the validator is now mature
+    ❌ define live webservice variant in separate repo
+      ❌ database
+        ❌ syntax
+        ❌ in-memory storage
+        ❌ api extended overridden on top of database
+      ❌ OData (AST-only) API generator
+      ❌ rules and execution engine
+      ❌ database storage and migration manager in ES
     ❌ extensions in a separate (private) repo
       ❌ preprocessor plugins
         ❌ injected at specific times
@@ -69,12 +87,7 @@
       ❌ add homomorphic forms
       ❌ add homomorphic+config forms
     ❌ disallow unsupported keywords (`visibIle` wasted me a good chunk of time)
-    ❌ the validator is now mature
-    ❌ define live webservice variant in separate repo
-      ❌ database syntax
-        ❌ api extended overridden on top of database
-      ❌ database storage and migration manager
-      ❌ OData (AST-only) API generator
+    ❌ make recursive `Value/Expr` types work in Go
     ❌ add custom generics with their renderer (for example, `WithEvidenceAndApproval<value>`)
     ❌ refactor `sprintf` instances in `typeCheck.fs`
     ❌ add `sum.Map`, remove `Sum.Map` references (ugly and inconsistent wrt `state.Map`)

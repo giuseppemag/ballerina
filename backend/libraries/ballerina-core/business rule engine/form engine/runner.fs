@@ -120,7 +120,7 @@ module Runner =
           | Right(err, _) -> Right err
           | _ -> Right(Errors.Singleton $"Unexpected error: parsing produced no results.")
         with err ->
-          Right(Errors.Singleton $"Error when reading codegen config: {err.Message.ReasonablyClamped}")
+          Right(Errors.Singleton $"Error when reading codegen config: {err.Message}")
       with err ->
         Right(Errors.Singleton $"Error when reading json: {err.Message.ReasonablyClamped}")
 
