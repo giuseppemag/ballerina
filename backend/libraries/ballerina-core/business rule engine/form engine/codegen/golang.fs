@@ -180,11 +180,6 @@ module Golang =
             |> state.SetState
 
           return $"{config.Map.GeneratedTypeName}[{k},{v}]"
-        | ExprType.SumType(l, r) ->
-          let! l = !l
-          let! r = !r
-          do! config.Sum.RequiredImport |> Option.toList |> Set.ofList |> Set.union |> GoCodeGenState.Updaters.UsedImports |> state.SetState
-          return $"{config.Sum.GeneratedTypeName}[{l},{r}]"
         | _ -> return! error
       }
 
