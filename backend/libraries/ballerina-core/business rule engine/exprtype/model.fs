@@ -24,7 +24,6 @@ module Model =
       | RecordType of Map<string,ExprType> 
       | UnionType of List<UnionCase>
       | MapType of ExprType * ExprType
-      | SumType of ExprType * ExprType
       | TupleType of List<ExprType>
       | OptionType of ExprType
       | ListType of ExprType
@@ -56,7 +55,6 @@ module Model =
       | ExprType.SetType t -> $"Set<{!t}>"
       | ExprType.OptionType t -> $"Option<{!t}>"
       | ExprType.MapType(k, v) -> $"Map<{!k},{!v}>"
-        | ExprType.SumType(l, r) -> $"Sum<{!l},{!r}>"
       | ExprType.TupleType ts -> $"({ts |> List.map (!) |> (fun s -> String.Join(',', s))})"
       | ExprType.UnionType cs ->
         let printCase (c: UnionCase) = $"{c.CaseName} of {!c.Fields}"
@@ -92,7 +90,6 @@ module Model =
       | ExprType.OptionType t -> !t
       | ExprType.LookupType t -> Set.singleton t
       | ExprType.MapType(k, v) -> !k + !v
-        | ExprType.SumType(l,r) -> !l + !r
       | ExprType.SchemaLookupType _
       | ExprType.PrimitiveType _ -> Set.empty
       | ExprType.UnionType cs -> cs |> Seq.map (fun c -> !c.Fields) |> Seq.fold (+) Set.empty
@@ -115,7 +112,6 @@ module Model =
       | ExprType.SetType t -> ExprType.SetType(!t)
       | ExprType.OptionType t -> ExprType.OptionType(!t)
       | ExprType.MapType(k, v) -> ExprType.MapType(!k, !v)
-        | ExprType.SumType(l,r) -> ExprType.SumType(!l,!r)
       | ExprType.TupleType ts -> ExprType.TupleType(!!ts)
       | ExprType.UnionType cs -> ExprType.UnionType(cs |> List.map (fun c -> { c with Fields = !c.Fields }))
       | ExprType.RecordType fs -> ExprType.RecordType(fs |> Map.map (fun _ -> (!)))

@@ -91,9 +91,6 @@ module Unification =
         | ExprType.MapType(k1, v1), ExprType.MapType(k2, v2) ->
           let! partialUnifications = sum.All([ k1 =?= k2; v1 =?= v2 ])
           return partialUnifications |> Seq.fold (+) (UnificationConstraints.Zero())
-        | ExprType.SumType(l1,r1), ExprType.SumType(l2,r2) ->
-            let! partialUnifications = sum.All([l1 =?= l2; r1 =?= r2])
-            return partialUnifications |> Seq.fold (+) (UnificationConstraints.Zero())
         | ExprType.TupleType([]), ExprType.TupleType([]) -> return UnificationConstraints.Zero()
         | ExprType.TupleType(t1 :: ts1), ExprType.TupleType(t2 :: ts2) ->
           let! partialUnifications = sum.All([ t1 =?= t2; ExprType.TupleType(ts1) =?= ExprType.TupleType(ts2) ])
