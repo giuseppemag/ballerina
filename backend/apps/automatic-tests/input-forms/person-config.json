@@ -244,9 +244,15 @@
           ]
         },
         "gender": {
-          "fun": "SingleSelection",
+          "fun": "Sum",
           "args": [
-            "GenderRef"
+            {
+              "fun": "SingleSelection",
+              "args": [
+                "GenderRef"
+              ]
+            },
+            "string"
           ]
         },
         "dependants": {
@@ -651,8 +657,20 @@
         },
         "gender": {
           "label": "gender",
-          "renderer": "defaultEnum",
-          "options": "genders",
+          "renderer": "defaultSum",
+          "leftRenderer": {
+            "label": "left",
+            "renderer": "defaultEnum",
+            "options": "genders",
+            "visible": true,
+            "disabled": false
+          },
+          "rightRenderer": {
+            "label": "right",
+            "renderer": "defaultString",
+            "visible": true,
+            "disabled": false
+          },
           "visible":{
             "kind":"match-case",
             "operands":[
