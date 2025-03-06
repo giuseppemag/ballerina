@@ -207,18 +207,6 @@ export const ParsedRenderer = {
       keyRenderer,
       valueRenderer,
     }),
-    sum: <T>(type: ParsedType<T>, renderer: string, visible: any, disabled: any, leftRenderer: ParsedRenderer<T>, rightRenderer: ParsedRenderer<T>, label?: string, tooltip?: string, details?: string ): ParsedRenderer<T> => ({
-      kind: "sum",
-      type,
-      renderer,
-      label,
-      tooltip,
-      details,
-      visible,
-      disabled: disabled != undefined ? disabled : false,
-      leftRenderer,
-      rightRenderer
-    }),
   },
   Operations: {
     ParseRenderer: <T>(
