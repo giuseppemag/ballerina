@@ -49,6 +49,7 @@ export const GenericTypes = [
   "Map",
   "Union",
   "Option",
+  "Sum",
 ] as const;
 export type GenericType = (typeof GenericTypes)[number];
 
@@ -114,6 +115,7 @@ export type BuiltInApiConverters = {
   >;
   List: ApiConverter<List<any>>;
   Map: ApiConverter<List<[any, any]>>;
+  Sum: ApiConverter<Sum<any, any>>;
 };
 
 export type PrimitiveBuiltIn = {
@@ -137,6 +139,7 @@ export type BuiltIns = {
     streamMultiSelection: Set<string>;
     list: Set<string>;
     map: Set<string>;
+    sum: Set<string>;
   };
 };
 
@@ -242,6 +245,7 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
       base64File: Set(),
       secret: Set(),
       map: Set(),
+      sum: Set(),
     },
   };
   Object.keys(builtins.renderers).forEach((_categoryName) => {
@@ -512,6 +516,7 @@ export const fromAPIRawValue =
           ),
         );
       }
+      // TODO: add support for sum
     }
 
     if (t.kind == "lookup")
