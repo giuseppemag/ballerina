@@ -17,10 +17,10 @@ import {
   MapFieldView,
   Base64FileView,
   SecretView,
-  EnumReference,
+  
   PredicateValue,
 } from "ballerina-core";
-import { Category, CategoryView } from "../injected-forms/category";
+import { CategoryView } from "../injected-forms/category";
 
 export const MostUglyValidationDebugView = (props: {
   context: { commonFormState: CommonFormState };
@@ -496,18 +496,18 @@ export const PersonFieldViews = {
   list: {
     defaultList:
       <
-        Element,
         ElementFormState,
         Context extends FormLabel,
         ForeignMutationsExpected
       >(): ListFieldView<
-        Element,
         ElementFormState,
         Context,
         ForeignMutationsExpected
       > =>
       (props) =>
-        (
+        { 
+          console.debug('list PROPS', props.context);
+          return (
           <>
             {props.context.label && <h3>{props.context.label}</h3>}
             {props.context.tooltip && <p>{props.context.tooltip}</p>}
@@ -517,7 +517,7 @@ export const PersonFieldViews = {
               </p>
             )}
             <ul>
-              {props.context.value.map((element, elementIndex) => {
+              {props.context.value.values.map((_, elementIndex) => {
                 return (
                   <li
                     style={{
@@ -585,7 +585,7 @@ export const PersonFieldViews = {
               ➕
             </button>
           </>
-        ),
+        )},
   },
   base64File: {
     defaultBase64File:
@@ -640,15 +640,11 @@ export const PersonFieldViews = {
   map: {
     defaultMap:
       <
-        K,
-        V,
         KeyFormState,
         ValueFormState,
         Context extends FormLabel,
         ForeignMutationsExpected
       >(): MapFieldView<
-        K,
-        V,
         KeyFormState,
         ValueFormState,
         Context,
@@ -665,7 +661,7 @@ export const PersonFieldViews = {
               </p>
             )}
             <ul>
-              {props.context.value.map((element, elementIndex) => {
+              {props.context.value.values.map((_, elementIndex) => {
                 return (
                   <li>
                     <button

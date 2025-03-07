@@ -128,7 +128,7 @@ export type ValueUnionCase = {
 export type ValuePrimitive = number | string | boolean;
 export type ValueDate = { kind: "date"; value: Date };
 export type ValueUnit = { kind: "unit" };
-export type ValueTuple = { kind: "tuple"; values: Array<PredicateValue> };
+export type ValueTuple = { kind: "tuple"; values: List<PredicateValue> };
 export type ValueOption = {
   kind: "option";
   isSome: boolean;
@@ -165,7 +165,7 @@ export const PredicateValue = {
     boolean: () => false,
     date: (value: Date): ValueDate => ({ kind: "date", value }),
     unit: (): PredicateValue => ({ kind: "unit" }),
-    tuple: (values: Array<PredicateValue>): ValueTuple => ({
+    tuple: (values: List<PredicateValue>): ValueTuple => ({
       kind: "tuple",
       values,
     }),
@@ -298,7 +298,7 @@ export const PredicateValue = {
           ),
         ).Then((values) =>
           ValueOrErrors.Default.return(
-            PredicateValue.Default.tuple(values.toArray()),
+            PredicateValue.Default.tuple(values),
           ),
         );
       }
@@ -411,7 +411,7 @@ export const PredicateValue = {
           ),
         ).Then((values) =>
           ValueOrErrors.Default.return(
-            PredicateValue.Default.tuple(values.toArray()),
+            PredicateValue.Default.tuple(values),
           ),
         );
       }
@@ -430,7 +430,7 @@ export const PredicateValue = {
                   types,
                 ).Then((value) =>
                   ValueOrErrors.Default.return(
-                    PredicateValue.Default.tuple([key, value]),
+                    PredicateValue.Default.tuple(List([key, value])),
                   ),
                 ),
               ),
@@ -438,7 +438,7 @@ export const PredicateValue = {
           ),
         ).Then((values) =>
           ValueOrErrors.Default.return(
-            PredicateValue.Default.tuple(values.toArray()),
+            PredicateValue.Default.tuple(values),
           ),
         );
       }
@@ -460,7 +460,7 @@ export const PredicateValue = {
           ),
         ).Then((values) =>
           ValueOrErrors.Default.return(
-            PredicateValue.Default.tuple(values.toArray()),
+            PredicateValue.Default.tuple(values),
           ),
         );
       }
@@ -503,7 +503,7 @@ export const PredicateValue = {
         .map(([k, v]) => v)
         .valueSeq()
         .toArray();
-      return PredicateValue.Default.tuple(valuesSortedByName);
+      return PredicateValue.Default.tuple(List(valuesSortedByName));
     },
     Equals:
       (vars: Bindings) =>
@@ -531,13 +531,13 @@ export const PredicateValue = {
                 ? ValueOrErrors.Default.return(true)
                 : ValueOrErrors.Default.return(false)
               : v1.kind == "tuple" && v2.kind == "tuple"
-                ? v1.values.length != v2.values.length
+                ? v1.values.size != v2.values.size
                   ? ValueOrErrors.Default.return(false)
-                  : v1.values.length == 0
+                  : v1.values.size == 0
                     ? ValueOrErrors.Default.return(true)
                     : PredicateValue.Operations.Equals(vars)(
-                        v1.values[0],
-                        v2.values[0],
+                        v1.values.get(0)!,
+                        v2.values.get(0)!,
                       ).Then((firstEqual) =>
                         firstEqual
                           ? PredicateValue.Operations.Equals(vars)(
@@ -806,11 +806,11 @@ export const evaluatePredicates = <E>(
     }
     if (predicate.kind == "list") {
       return calculateVisibility(predicate.value, bindings).Then((result) => {
-        if (typeof raw == "object" && "kind" in raw && raw.kind == "tuple") {
+        if (PredicateValue.Operations.IsTuple(raw)) {
           return ValueOrErrors.Operations.All(
             List<ValueOrErrors<FormFieldPredicateEvaluation, string>>(
               raw.values.map((value, index) => {
-                const elementLocal = raw.values[index];
+                const elementLocal = raw.values.get(index);
                 if (elementLocal == undefined) {
                   return ValueOrErrors.Default.throwOne(
                     `Error: cannot find element of index ${index} in local ${JSON.stringify(raw)}`,
@@ -850,14 +850,10 @@ export const evaluatePredicates = <E>(
                 string
               >
             >(
-              raw.values.map((kv, kvIndex) => {
-                if (
-                  typeof raw.values[kvIndex] == "object" &&
-                  "kind" in raw.values[kvIndex] &&
-                  raw.values[kvIndex].kind == "tuple"
-                ) {
-                  const keyLocal = raw.values[kvIndex].values[0];
-                  const valueLocal = raw.values[kvIndex].values[1];
+              raw.values.map((kv) => {
+                if (PredicateValue.Operations.IsTuple(kv)) {
+                  const keyLocal = kv.values.get(0)!;
+                  const valueLocal = kv.values.get(1)!;
                   // TODO: Since we can have undefined values (date), this error check doesn't work,
                   // we should instead use Option for all undefined values
                   // if(keyLocal == undefined || valueLocal == undefined) {

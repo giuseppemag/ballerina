@@ -5,6 +5,7 @@ import {
   SimpleCallback,
   Unit,
   PredicateValue,
+  ValueTuple,
 } from "../../../../../../main";
 import { BasicFun } from "../../../../../fun/state";
 import { Template, View } from "../../../../../template/state";
@@ -12,20 +13,20 @@ import { Value } from "../../../../../value/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import { OnChange, CommonFormState } from "../../../singleton/state";
 
-export type ListFieldState<Element, ElementFormState> = {
+export type ListFieldState<ElementFormState> = {
   commonFormState: CommonFormState;
   elementFormStates: Map<number, ElementFormState>;
 };
-export const ListFieldState = <Element, ElementFormState>() => ({
+export const ListFieldState = <ElementFormState>() => ({
   Default: (
     elementFormStates: Map<number, ElementFormState>,
-  ): ListFieldState<Element, ElementFormState> => ({
+  ): ListFieldState<ElementFormState> => ({
     commonFormState: CommonFormState.Default(),
     elementFormStates,
   }),
   Updaters: {
     Core: {
-      ...simpleUpdater<ListFieldState<Element, ElementFormState>>()(
+      ...simpleUpdater<ListFieldState<ElementFormState>>()(
         "elementFormStates",
       ),
     },
@@ -33,15 +34,14 @@ export const ListFieldState = <Element, ElementFormState>() => ({
   },
 });
 export type ListFieldView<
-  Element extends PredicateValue | undefined,
   ElementFormState,
   Context extends FormLabel,
   ForeignMutationsExpected,
 > = View<
-  Context & Value<List<Element>> & ListFieldState<Element, ElementFormState>,
-  ListFieldState<Element, ElementFormState>,
+  Context & Value<ValueTuple> & ListFieldState<ElementFormState>,
+  ListFieldState<ElementFormState>,
   ForeignMutationsExpected & {
-    onChange: OnChange<List<Element>>;
+    onChange: OnChange<ValueTuple>;
     add: SimpleCallback<Unit>;
     remove: SimpleCallback<number>;
     move: (elementIndex: number, to: number) => void;
@@ -53,11 +53,11 @@ export type ListFieldView<
       number,
       Template<
         Context &
-          Value<List<Element>> &
-          ListFieldState<Element, ElementFormState>,
-        ListFieldState<Element, ElementFormState>,
+          Value<ValueTuple> &
+          ListFieldState<ElementFormState>,
+        ListFieldState<ElementFormState>,
         ForeignMutationsExpected & {
-          onChange: OnChange<List<Element>>;
+          onChange: OnChange<ValueTuple>;
           add: SimpleCallback<Unit>;
           remove: SimpleCallback<number>;
           move: (elementIndex: number, to: number) => void;

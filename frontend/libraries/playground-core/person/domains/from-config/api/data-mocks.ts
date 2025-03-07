@@ -147,7 +147,7 @@ const entityApis: EntityApis = {
             //           },
             //   },
             // ],
-            // emails: ["john@doe.it", "johnthedon@doe.com"],
+            emails: ["john@doe.it", "johnthedon@doe.com"],
             // addressesWithLabel: [
             //   {
             //     key: "home",

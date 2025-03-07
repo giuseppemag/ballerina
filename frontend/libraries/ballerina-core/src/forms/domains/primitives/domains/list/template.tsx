@@ -9,6 +9,7 @@ import {
   MapRepo,
   ListRepo,
   FormFieldPredicateEvaluation,
+  ValueTuple,
   PredicateValue,
 } from "../../../../../../main";
 import { Template } from "../../../../../template/state";
@@ -22,30 +23,29 @@ import {
 import { ListFieldState, ListFieldView } from "./state";
 
 export const ListForm = <
-  Element extends PredicateValue | undefined,
   ElementFormState,
   Context extends FormLabel & {
     elementVisibilities: FormFieldPredicateEvaluation[];
     elementDisabled: FormFieldPredicateEvaluation[];
   },
-  ForeignMutationsExpected,
+  ForeignMutationsExpected
 >(
   ElementFormState: { Default: () => ElementFormState },
-  Element: { Default: () => Element | undefined },
+  Element: { Default: () => PredicateValue },
   elementTemplate: Template<
-    Context & Value<Element | undefined> & ElementFormState,
+    Context & Value<PredicateValue> & ElementFormState,
     ElementFormState,
     ForeignMutationsExpected & {
-      onChange: OnChange<Element | undefined>;
+      onChange: OnChange<PredicateValue>;
     }
   >,
-  validation?: BasicFun<List<Element | undefined>, Promise<FieldValidation>>,
+  validation?: BasicFun<ValueTuple, Promise<FieldValidation>>
 ) => {
   const embeddedElementTemplate = (elementIndex: number) =>
     elementTemplate
       .mapForeignMutationsFromProps<
         ForeignMutationsExpected & {
-          onChange: OnChange<List<Element | undefined>>;
+          onChange: OnChange<ValueTuple>;
           add: SimpleCallback<Unit>;
           remove: SimpleCallback<number>;
           move: (elementIndex: number, to: number) => void;
@@ -54,19 +54,25 @@ export const ListForm = <
         }
       >(
         (
-          props,
+          props
         ): ForeignMutationsExpected & {
-          onChange: OnChange<Element | undefined>;
+          onChange: OnChange<PredicateValue>;
         } => ({
           ...props.foreignMutations,
           onChange: (elementUpdater, path) => {
             props.foreignMutations.onChange(
-              Updater((elements: List<Element | undefined>) =>
-                elements.has(elementIndex)
-                  ? elements.update(elementIndex, undefined, elementUpdater)
-                  : elements,
+              Updater((list) =>
+                list.values.has(elementIndex)
+                  ? PredicateValue.Default.tuple(
+                      list.values.update(
+                        elementIndex,
+                        PredicateValue.Default.unit(),
+                        elementUpdater
+                      )
+                    )
+                  : list
               ),
-              List([elementIndex]).concat(path),
+              List([elementIndex]).concat(path)
             );
             props.setState((_) => ({ ..._, modifiedByUser: true }));
           },
@@ -75,61 +81,48 @@ export const ListForm = <
           move: (elementIndex: number, to: number) => {},
           duplicate: (elementIndex: number) => {},
           insert: (elementIndex: number) => {},
-        }),
+        })
       )
       .mapContext(
         (
-          _: Context &
-            Value<List<Element | undefined>> &
-            ListFieldState<Element | undefined, ElementFormState>,
-        ):
-          | (Context & Value<Element | undefined> & ElementFormState)
-          | undefined => {
-          if (!_.value.has(elementIndex)) return undefined;
-          const element = _.value.get(elementIndex);
+          _: Context & Value<ValueTuple> & ListFieldState<ElementFormState>
+        ): (Context & Value<ValueTuple> & ElementFormState) | undefined => {
+          if (!_.value.values.has(elementIndex)) return undefined;
+          const element = _.value.values.get(elementIndex);
           const elementFormState =
             _.elementFormStates.get(elementIndex) || ElementFormState.Default();
           const elementVisibility = _.elementVisibilities[elementIndex];
           const elementDisabled = _.elementDisabled[elementIndex];
-          const elementContext: Context &
-            Value<Element | undefined> &
-            ElementFormState = {
-            ..._,
-            ...elementFormState,
-            value: element,
-            visibilities: elementVisibility,
-            disabledFields: elementDisabled,
-          };
+          const elementContext: Context & Value<ValueTuple> & ElementFormState =
+            {
+              ..._,
+              ...elementFormState,
+              value: element,
+              visibilities: elementVisibility,
+              disabledFields: elementDisabled,
+            };
           return elementContext;
-        },
+        }
       )
       .mapState(
         (
-          _: BasicUpdater<ElementFormState>,
-        ): Updater<ListFieldState<Element | undefined, ElementFormState>> =>
-          ListFieldState<
-            Element | undefined,
-            ElementFormState
-          >().Updaters.Core.elementFormStates(
+          _: BasicUpdater<ElementFormState>
+        ): Updater<ListFieldState<ElementFormState>> =>
+          ListFieldState<ElementFormState>().Updaters.Core.elementFormStates(
             MapRepo.Updaters.upsert(
               elementIndex,
               () => ElementFormState.Default(),
-              _,
-            ),
-          ),
+              _
+            )
+          )
       );
   return Template.Default<
-    Context & Value<List<Element | undefined>> & { disabled: boolean },
-    ListFieldState<Element | undefined, ElementFormState>,
+    Context & Value<ValueTuple> & { disabled: boolean },
+    ListFieldState<ElementFormState>,
     ForeignMutationsExpected & {
-      onChange: OnChange<List<Element | undefined>>;
+      onChange: OnChange<ValueTuple>;
     },
-    ListFieldView<
-      Element | undefined,
-      ElementFormState,
-      Context,
-      ForeignMutationsExpected
-    >
+    ListFieldView<ElementFormState, Context, ForeignMutationsExpected>
   >((props) => {
     return (
       <>
@@ -142,32 +135,60 @@ export const ListForm = <
             ...props.foreignMutations,
             add: (_) => {
               props.foreignMutations.onChange(
-                ListRepo.Updaters.push<Element | undefined>(Element.Default()),
-                List([{ kind: "add" }]),
+                Updater((list) =>
+                  PredicateValue.Default.tuple(
+                    ListRepo.Updaters.push<PredicateValue>(Element.Default())(
+                      list.values
+                    )
+                  )
+                ),
+                List([{ kind: "add" }])
               );
             },
             remove: (_) => {
               props.foreignMutations.onChange(
-                ListRepo.Updaters.remove(_),
-                List([_, { kind: "remove" }]),
+                Updater((list) =>
+                  PredicateValue.Default.tuple(
+                    ListRepo.Updaters.remove<PredicateValue>(_)(list.values)
+                  )
+                ),
+                List([_, { kind: "remove" }])
               );
             },
             move: (index, to) => {
               props.foreignMutations.onChange(
-                ListRepo.Updaters.move(index, to),
-                List([index, { kind: "move", to }]),
+                Updater((list) =>
+                  PredicateValue.Default.tuple(
+                    ListRepo.Updaters.move<PredicateValue>(
+                      index,
+                      to
+                    )(list.values)
+                  )
+                ),
+                List([index, { kind: "move", to }])
               );
             },
             duplicate: (_) => {
               props.foreignMutations.onChange(
-                ListRepo.Updaters.duplicate(_),
-                List([_, { kind: "duplicate" }]),
+                Updater((list) =>
+                  PredicateValue.Default.tuple(
+                    ListRepo.Updaters.duplicate<PredicateValue>(_)(list.values)
+                  )
+                ),
+                List([_, { kind: "duplicate" }])
               );
             },
             insert: (_) => {
               props.foreignMutations.onChange(
-                ListRepo.Updaters.insert(_, Element.Default()),
-                List([_, { kind: "insert" }]),
+                Updater((list) =>
+                  PredicateValue.Default.tuple(
+                    ListRepo.Updaters.insert<PredicateValue>(
+                      _,
+                      Element.Default()
+                    )(list.values)
+                  )
+                ),
+                List([_, { kind: "insert" }])
               );
             },
           }}
@@ -178,16 +199,16 @@ export const ListForm = <
   }).any([
     ValidateRunner<
       Context & { disabled: boolean },
-      ListFieldState<Element | undefined, ElementFormState>,
+      ListFieldState<ElementFormState>,
       ForeignMutationsExpected,
-      List<Element | undefined>
+      ValueTuple
     >(
       validation
         ? (_) =>
             validation(_).then(
-              FieldValidationWithPath.Default.fromFieldValidation,
+              FieldValidationWithPath.Default.fromFieldValidation
             )
-        : undefined,
+        : undefined
     ),
   ]);
 };

@@ -434,7 +434,7 @@ export const ParsedRenderer = {
                   ).Then((parsedElementRenderer) =>
                     ValueOrErrors.Default.return({
                       form: {
-                        renderer: ListForm<any, any, any & FormLabel, Unit>(
+                        renderer: ListForm<any, any & FormLabel, Unit>(
                           {
                             Default: () =>
                               parsedElementRenderer.form.initialState,
@@ -459,7 +459,7 @@ export const ParsedRenderer = {
                         initialValue: parsingContext.defaultValue(
                           parsedRenderer.type
                         ),
-                        initialState: ListFieldState<any, any>().Default(Map()),
+                        initialState: ListFieldState<any>().Default(Map()),
                       },
                       visibilityPredicateExpression:
                         FieldPredicateExpression.Default.list(
