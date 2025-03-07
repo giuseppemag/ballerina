@@ -222,11 +222,14 @@ module Golang =
               yield
                 StringBuilder.One $"\nfunc {formName}EntityGETter[id any, result any](entityName string, entityId id, "
 
-              yield!
+              let entityAPIsWithGET =
                 ctx.Apis.Entities
                 |> Map.values
                 |> Seq.filter (snd >> Set.contains CrudMethod.Get)
                 |> Seq.map fst
+
+              yield!
+                entityAPIsWithGET
                 |> Seq.map (fun e ->
                   StringBuilder.Many(
                     seq {
@@ -241,24 +244,79 @@ module Golang =
 
 
               yield StringBuilder.One ") (result,error) {\n"
+              yield StringBuilder.One "  var resultNil result;\n"
               yield StringBuilder.One "  switch entityName {\n"
 
-              for entityApi in ctx.Apis.Entities |> Map.values |> Seq.map fst do
+              for entityApi in entityAPIsWithGET do
                 yield StringBuilder.One $$"""    case "{{entityApi.TypeId.TypeName}}Entity":  """
                 yield StringBuilder.One "\n"
                 yield StringBuilder.One $$"""      var res, err = get{{entityApi.EntityName}}(entityId);  """
                 yield StringBuilder.One "\n"
 
-                yield StringBuilder.One $$"""      if err != nil { return serialize{{entityApi.EntityName}}(res); }  """
+                yield StringBuilder.One $$"""      if err != nil { return resultNil, err }  """
+                yield StringBuilder.One "\n"
+                yield StringBuilder.One $$"""      return serialize{{entityApi.EntityName}}(res); """
 
                 yield StringBuilder.One "\n"
 
               yield StringBuilder.One "  }\n"
 
-              yield StringBuilder.One "  var resultNil result;\n"
-
               yield
                 StringBuilder.One $"  return resultNil, {codegenConfig.EntityNotFoundError.Constructor}(entityName);\n"
+
+              yield StringBuilder.One "}\n\n"
+            }
+
+          let entityPOSTers =
+            seq {
+              yield
+                StringBuilder.One
+                  $"\nfunc {formName}EntityPOSTer[id any, payload any](entityName string, entityId id, entityValue payload, "
+
+              let entityAPIsWithPOST =
+                ctx.Apis.Entities
+                |> Map.values
+                |> Seq.filter (snd >> Set.contains CrudMethod.Create)
+                |> Seq.map fst
+
+              yield!
+                entityAPIsWithPOST
+                |> Seq.map (fun e ->
+                  StringBuilder.Many(
+                    seq {
+                      yield
+                        StringBuilder.One(
+                          $$"""deserialize{{e.EntityName}} func (id, payload) ({{e.TypeId.TypeName}},error), """
+                        )
+
+                      yield StringBuilder.One($$"""process{{e.EntityName}} func (id, {{e.TypeId.TypeName}}) error, """)
+                    }
+                  ))
+
+
+              yield StringBuilder.One ") error {\n"
+              yield StringBuilder.One "  switch entityName {\n"
+
+              for entityApi in entityAPIsWithPOST do
+                yield StringBuilder.One $$"""    case "{{entityApi.TypeId.TypeName}}Entity":  """
+                yield StringBuilder.One "\n"
+
+                yield
+                  StringBuilder.One
+                    $$"""      var res, err = deserialize{{entityApi.EntityName}}(entityId, entityValue);  """
+
+                yield StringBuilder.One "\n"
+
+                yield StringBuilder.One $$"""      if err != nil { return err; }  """
+
+                yield StringBuilder.One "\n"
+                yield StringBuilder.One $$"""      return process{{entityApi.EntityName}}(entityId, res);  """
+
+                yield StringBuilder.One "\n"
+
+              yield StringBuilder.One "  }\n"
+
+              yield StringBuilder.One $"  return {codegenConfig.EntityNotFoundError.Constructor}(entityName);\n"
 
               yield StringBuilder.One "}\n"
             }
@@ -820,6 +878,7 @@ module Golang =
             StringBuilder.Many(
               seq {
                 yield! entityGETters
+                yield! entityPOSTers
                 yield! enumCasesGETters
                 yield! enumCasesPOSTters
                 yield! streamGETters

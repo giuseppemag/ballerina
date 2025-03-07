@@ -64,7 +64,16 @@
         ✅ generate enum of entity names
         ✅ entity name not found error in ballerina
         ✅ entity serialization error in ballerina
-      ❌ entities POST - gets whole entity
+      ❌ deprecate the ENUMAUTOGETTER, it's shit anyway
+      ✅ all the `if err != nil` are not rethrowing the error!!!
+      ❌ entities GETDefault - gets whole entity, defaulted
+        ❌ make sure `Option` comes down as empty
+        ❌ make sure `Sum<x,Unit>` comes down as `Right`
+        ❌ make sure `Sum<Unit,x>` comes down as `Left`
+      ✅ entities POST - gets whole entity
+        ✅ entityName:string, id:'id, payload:'payload
+        ✅ deserializeA:'id x 'payload -> A + error
+        ✅ processA:'id x A -> error
       ❌ entities PATCH - gets single value and path of change
       ❌ whitespace improvement
         ❌ package imports and their trailing space
