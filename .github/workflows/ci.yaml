@@ -51,6 +51,7 @@ jobs:
         run: go mod tidy -diff
   publish-ballerina-runtime:
     needs:
+      - frontend
       - backend
       - ballerina-go
     runs-on: ubuntu-latest
