@@ -197,7 +197,6 @@ module Golang =
 
           let entityGETters =
             seq {
-              yield StringBuilder.One "\n"
               yield StringBuilder.One $"type {formName}EntitiesEnum string"
               yield StringBuilder.One "\n"
               yield StringBuilder.One "const ("
@@ -220,7 +219,7 @@ module Golang =
               yield StringBuilder.One "}\n"
 
               yield
-                StringBuilder.One $"\nfunc {formName}EntityGETter[id any, result any](entityName string, entityId id, "
+                StringBuilder.One $"func {formName}EntityGETter[id any, result any](entityName string, entityId id, "
 
               let entityAPIsWithGET =
                 ctx.Apis.Entities
@@ -267,11 +266,56 @@ module Golang =
               yield StringBuilder.One "}\n\n"
             }
 
+          let entityDEFAULTers =
+            seq {
+              yield StringBuilder.One $"func {formName}EntityDEFAULTer[result any](entityName string, "
+
+              let entityAPIsWithDEFAULT =
+                ctx.Apis.Entities
+                |> Map.values
+                |> Seq.filter (snd >> Set.contains CrudMethod.Default)
+                |> Seq.map fst
+
+              yield!
+                entityAPIsWithDEFAULT
+                |> Seq.map (fun e ->
+                  StringBuilder.Many(
+                    seq {
+                      yield
+                        StringBuilder.One(
+                          $$"""serialize{{e.EntityName}} func ({{e.TypeId.TypeName}}) (result,error), """
+                        )
+                    }
+                  ))
+
+
+              yield StringBuilder.One ") (result,error) {\n"
+              yield StringBuilder.One "  var resultNil result;\n"
+              yield StringBuilder.One "  switch entityName {\n"
+
+              for entityApi in entityAPIsWithDEFAULT do
+                yield StringBuilder.One $$"""    case "{{entityApi.TypeId.TypeName}}Entity":  """
+                yield StringBuilder.One "\n"
+
+                yield
+                  StringBuilder.One
+                    $$"""      return serialize{{entityApi.EntityName}}(Default{{entityApi.TypeId.TypeName}}()); """
+
+                yield StringBuilder.One "\n"
+
+              yield StringBuilder.One "  }\n"
+
+              yield
+                StringBuilder.One $"  return resultNil, {codegenConfig.EntityNotFoundError.Constructor}(entityName);\n"
+
+              yield StringBuilder.One "}\n\n"
+            }
+
           let entityPOSTers =
             seq {
               yield
                 StringBuilder.One
-                  $"\nfunc {formName}EntityPOSTer[id any, payload any](entityName string, entityId id, entityValue payload, "
+                  $"func {formName}EntityPOSTer[id any, payload any](entityName string, entityId id, entityValue payload, "
 
               let entityAPIsWithPOST =
                 ctx.Apis.Entities
@@ -323,30 +367,30 @@ module Golang =
 
           let enumCasesGETters =
             seq {
-              yield StringBuilder.One $"func {formName}EnumAutoGETter(enumName string) "
-              yield StringBuilder.One " ([]string,error) {\n"
-              yield StringBuilder.One "  switch enumName {\n"
+              // yield StringBuilder.One $"func {formName}EnumAutoGETter(enumName string) "
+              // yield StringBuilder.One " ([]string,error) {\n"
+              // yield StringBuilder.One "  switch enumName {\n"
 
-              yield!
-                ctx.Apis.Enums
-                |> Map.values
-                |> Seq.map (fun e ->
-                  StringBuilder.Many(
-                    seq {
-                      yield
-                        StringBuilder.One
-                          $$"""    case "{{e.EnumName}}": return {{codegenConfig.List.MappingFunction}}(All{{e.UnderlyingEnum.TypeName}}Cases[:], func (c {{e.UnderlyingEnum.TypeName}}) string { return string(c) }), nil"""
+              // yield!
+              //   ctx.Apis.Enums
+              //   |> Map.values
+              //   |> Seq.map (fun e ->
+              //     StringBuilder.Many(
+              //       seq {
+              //         yield
+              //           StringBuilder.One
+              //             $$"""    case "{{e.EnumName}}": return {{codegenConfig.List.MappingFunction}}(All{{e.UnderlyingEnum.TypeName}}Cases[:], func (c {{e.UnderlyingEnum.TypeName}}) string { return string(c) }), nil"""
 
-                      yield StringBuilder.One "\n"
-                    }
-                  ))
+              //         yield StringBuilder.One "\n"
+              //       }
+              //     ))
 
-              yield StringBuilder.One "  }\n"
-              yield StringBuilder.One "  var res []string\n"
+              // yield StringBuilder.One "  }\n"
+              // yield StringBuilder.One "  var res []string\n"
 
-              yield StringBuilder.One $$"""  return res, {{codegenConfig.EnumNotFoundError.Constructor}}(enumName)"""
+              // yield StringBuilder.One $$"""  return res, {{codegenConfig.EnumNotFoundError.Constructor}}(enumName)"""
 
-              yield StringBuilder.One "\n}\n\n"
+              // yield StringBuilder.One "\n}\n\n"
 
               yield StringBuilder.One $"func {formName}EnumGETter[result any](enumName string, "
 
@@ -665,6 +709,8 @@ module Golang =
                               StringBuilder.One
                                 $"func Default{t.Key}{!case.CaseName}Value() {t.Key}{!case.CaseName}Value {{"
 
+                            yield StringBuilder.One "\n"
+
                             yield StringBuilder.One $" return New{t.Key}{!case.CaseName}Value("
 
                             match caseValues |> Map.tryFind case.CaseName with
@@ -674,6 +720,7 @@ module Golang =
                             | None -> ()
 
                             yield StringBuilder.One $");"
+                            yield StringBuilder.One "\n"
 
                             yield StringBuilder.One $"}}\n"
 
@@ -878,6 +925,7 @@ module Golang =
             StringBuilder.Many(
               seq {
                 yield! entityGETters
+                yield! entityDEFAULTers
                 yield! entityPOSTers
                 yield! enumCasesGETters
                 yield! enumCasesPOSTters
@@ -958,11 +1006,11 @@ module Golang =
             StringBuilder.One
               $$"""package {{packageName}}
 
-      import (
-        "fmt"
-        {{imports |> Seq.map (sprintf "  \"%s\"\n") |> Seq.fold (+) ""}}
-      )
-      """
+import (
+  "fmt"
+{{imports |> Seq.map (sprintf "  \"%s\"\n") |> Seq.fold (+) ""}})
+
+"""
 
           StringBuilder.Many(
             seq {

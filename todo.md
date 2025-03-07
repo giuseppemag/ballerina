@@ -64,21 +64,14 @@
         ✅ generate enum of entity names
         ✅ entity name not found error in ballerina
         ✅ entity serialization error in ballerina
-      ❌ deprecate the ENUMAUTOGETTER, it's shit anyway
+      ✅ deprecate the ENUMAUTOGETTER, it's shit anyway
       ✅ all the `if err != nil` are not rethrowing the error!!!
-      ❌ entities GETDefault - gets whole entity, defaulted
-        ❌ make sure `Option` comes down as empty
-        ❌ make sure `Sum<x,Unit>` comes down as `Right`
-        ❌ make sure `Sum<Unit,x>` comes down as `Left`
+      ✅ entities GETDefault - gets whole entity, defaulted
       ✅ entities POST - gets whole entity
         ✅ entityName:string, id:'id, payload:'payload
         ✅ deserializeA:'id x 'payload -> A + error
         ✅ processA:'id x A -> error
       ❌ entities PATCH - gets single value and path of change
-      ❌ whitespace improvement
-        ❌ package imports and their trailing space
-          ❌ entityGETter shouldn't start with "\n"
-        ❌ defaulting methods (for unions?)
     ❌ add paginated lists
     ❌ add lazy fields
     ❌ add `extends` statement to unions
@@ -86,6 +79,10 @@
     ❌ distinguish Sum (with renderer like List) from SingleSelection (only renderer for streams)
       ❌ allow Left and Right matching on Sum
       ❌ distinguish outer from inner renderers
+      ❌ entities GETDefault - check what is defaulted in case of option and sum
+        ❌ make sure `Option` comes down as empty
+        ❌ make sure `Sum<x,Unit>` comes down as `Right`
+        ❌ make sure `Sum<Unit,x>` comes down as `Left`
     ❌ add documentation (Confluence)
     ❌ the validator is now mature
     ❌ define live webservice variant
