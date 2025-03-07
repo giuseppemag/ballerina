@@ -195,6 +195,34 @@ module Golang =
           let identifierAllowedRegex = Regex codegenConfig.IdentifierAllowedRegex
           let (!) (s: string) = identifierAllowedRegex.Replace(s, "_")
 
+          let entityGETters =
+            seq {
+              yield
+                StringBuilder.One $"\nfunc {formName}EntityGETter[id any, result any](enumName string, entityId id, "
+
+              yield!
+                ctx.Apis.Entities
+                |> Map.values
+                |> Seq.filter (snd >> Set.contains CrudMethod.Get)
+                |> Seq.map fst
+                |> Seq.map (fun e ->
+                  StringBuilder.Many(
+                    seq {
+                      yield StringBuilder.One($$"""get{{e.EntityName}} func (id) ({{e.TypeId.TypeName}},error), """)
+
+                      yield
+                        StringBuilder.One(
+                          $$"""serialize{{e.EntityName}} func ({{e.TypeId.TypeName}}) (result,error), """
+                        )
+                    }
+                  ))
+
+              yield StringBuilder.One ") (result,error) {\n"
+              yield StringBuilder.One "  var resultNil result;\n"
+              yield StringBuilder.One "  return resultNil, nil;\n"
+              yield StringBuilder.One "}\n"
+            }
+
           let enumCasesGETters =
             seq {
               yield StringBuilder.One $"func {formName}EnumAutoGETter(enumName string) "
@@ -254,7 +282,7 @@ module Golang =
               yield StringBuilder.One "\n}\n\n"
             }
 
-          let enumCasesPOSTter =
+          let enumCasesPOSTters =
             seq {
               yield StringBuilder.One $"func {formName}EnumPOSTter(enumName string, enumValue string, "
 
@@ -306,7 +334,7 @@ module Golang =
               yield StringBuilder.One "\n}\n\n"
             }
 
-          let streamGETter =
+          let streamGETters =
             seq {
               yield
                 StringBuilder.One
@@ -351,7 +379,7 @@ module Golang =
               yield StringBuilder.One "\n}\n\n"
             }
 
-          let streamPOSTter =
+          let streamPOSTters =
             seq {
               yield
                 StringBuilder.One
@@ -751,10 +779,11 @@ module Golang =
           return
             StringBuilder.Many(
               seq {
+                yield! entityGETters
                 yield! enumCasesGETters
-                yield! enumCasesPOSTter
-                yield! streamGETter
-                yield! streamPOSTter
+                yield! enumCasesPOSTters
+                yield! streamGETters
+                yield! streamPOSTters
                 // yield! entitiesOPSelector "GET" CrudMethod.Get
                 // yield! entitiesOPEnum "GET" CrudMethod.Get
                 // yield! entitiesOPSelector "POST" CrudMethod.Create

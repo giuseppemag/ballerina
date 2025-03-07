@@ -61,9 +61,15 @@
           ✅ injected types
         ✅ extend the ballerina.core library to the necessary default values for Option, Set, List, Map, etc.
       ❌ entites GET - identical to stream GETter: pairs of get + serialize
+        ❌ entity name not found error in ballerina
+        ❌ entity serialization error in ballerina
       ❌ entities GETDefault - identical to stream GETter: pairs of get + serialize to which the default value is passed
-      ❌ entities POST - how do we represent changes?
-      ❌ entities PATCH - how do we represent changes?
+      ❌ entities POST - gets whole entity
+      ❌ entities PATCH - gets single value and path of change
+      ❌ whitespace improvement
+        ❌ package imports and their trailing space
+          ❌ entityGETter shouldn't start with "\n"
+        ❌ defaulting methods (for unions?)
     ❌ add paginated lists
     ❌ add lazy fields
     ❌ distinguish Sum (with renderer like List) from SingleSelection (only renderer for streams)
@@ -71,7 +77,9 @@
       ❌ distinguish outer from inner renderers
     ❌ add documentation (Confluence)
     ❌ the validator is now mature
-    ❌ define live webservice variant in separate repo
+    ❌ define live webservice variant
+      ❌ in separate repo
+        ❌ move the Golang codegen there after extracting the intermediate representation for the codegen
       ❌ database
         ❌ syntax
         ❌ in-memory storage
