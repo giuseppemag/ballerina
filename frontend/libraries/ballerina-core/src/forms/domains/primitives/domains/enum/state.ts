@@ -1,51 +1,45 @@
 import { OrderedMap } from "immutable";
 import {
   Guid,
-  BasicPredicate,
+
   SimpleCallback,
   Synchronized,
   Unit,
   unit,
+  ValueOption,
+  PredicateValue,
+  ValueRecord,
 } from "../../../../../../main";
 import { View } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
-import {
-  CollectionReference,
-  EnumReference,
-} from "../../../collection/domains/reference/state";
-import { CollectionSelection } from "../../../collection/domains/selection/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import { OnChange, CommonFormState } from "../../../singleton/state";
 
-export type BaseEnumContext<Element extends EnumReference> = {
-  getOptions: () => Promise<OrderedMap<Guid, Element>>;
+export type BaseEnumContext = {
+  getOptions: () => Promise<OrderedMap<Guid, ValueRecord>>;
 };
-export type EnumFormState<Context, Element extends EnumReference> = {
+export type EnumFormState = {
   commonFormState: CommonFormState;
-  customFormState: { options: Synchronized<Unit, OrderedMap<Guid, Element>> };
+  customFormState: { options: Synchronized<Unit, OrderedMap<Guid, ValueRecord>> };
 };
-export const EnumFormState = <
-  Context extends BaseEnumContext<Element>,
-  Element extends EnumReference,
->() => ({
-  Default: (): EnumFormState<Context, Element> => ({
+export const EnumFormState = () => ({
+  Default: (): EnumFormState => ({
     commonFormState: CommonFormState.Default(),
     customFormState: { options: Synchronized.Default(unit) },
   }),
 });
 export type EnumView<
-  Context extends FormLabel & BaseEnumContext<Element>,
-  Element extends EnumReference,
+  Context extends FormLabel & BaseEnumContext,
   ForeignMutationsExpected,
 > = View<
   Context &
-    Value<CollectionSelection<Element>> &
-    EnumFormState<Context, Element> & {
-      activeOptions: "loading" | Array<Element>;
+    Value<ValueOption> &
+    EnumFormState & {
+      activeOptions: "loading" | Array<ValueRecord>;
     } & { disabled: boolean },
-  EnumFormState<Context, Element>,
+  EnumFormState,
   ForeignMutationsExpected & {
-    onChange: OnChange<CollectionSelection<Element>>;
+    onChange: OnChange<ValueOption>;
     setNewValue: SimpleCallback<Guid>;
   }
 >;

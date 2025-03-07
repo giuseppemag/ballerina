@@ -6,19 +6,19 @@
         {
           "case": "SAP:S2",
           "fields": {
-            "S2OnlyField":"boolean"
+            "S2OnlyField": "boolean"
           }
         },
         {
           "case": "SAP:S3",
           "fields": {
-            "S3OnlyField":"boolean"
+            "S3OnlyField": "boolean"
           }
         },
         {
           "case": "SAP:S4",
           "fields": {
-            "S4OnlyField":"boolean"
+            "S4OnlyField": "boolean"
           }
         }
       ]
@@ -29,7 +29,7 @@
         {
           "case": "ERP:SAP",
           "fields": {
-            "Value":"SAPConfig"
+            "Value": "SAPConfig"
           }
         },
         {
@@ -57,9 +57,7 @@
       }
     },
     "CityRef": {
-      "extends": [
-        "CollectionReference"
-      ],
+      "extends": ["CollectionReference"],
       "fields": {}
     },
     "LandArea": {
@@ -79,9 +77,7 @@
         "number": "number",
         "city": {
           "fun": "SingleSelection",
-          "args": [
-            "CityRef"
-          ]
+          "args": ["CityRef"]
         }
       }
     },
@@ -182,9 +178,7 @@
       }
     },
     "DepartmentRef": {
-      "extends": [
-        "CollectionReference"
-      ],
+      "extends": ["CollectionReference"],
       "fields": {}
     },
     "Person": {
@@ -197,76 +191,51 @@
         "subscribeToNewsletter": "boolean",
         "favoriteColor": {
           "fun": "SingleSelection",
-          "args": [
-            "ColorRef"
-          ]
+          "args": ["ColorRef"]
         },
         "gender": {
           "fun": "SingleSelection",
-          "args": [
-            "GenderRef"
-          ]
+          "args": ["GenderRef"]
         },
         "dependants": {
           "fun": "Map",
-          "args": [
-            "string",
-            "injectedCategory"
-          ]
+          "args": ["string", "injectedCategory"]
         },
         "friendsByCategory": {
           "fun": "Map",
-          "args": [
-            "injectedCategory",
-            "string"
-          ]
+          "args": ["injectedCategory", "string"]
         },
         "relatives": {
           "fun": "List",
-          "args": [
-            "injectedCategory"
-          ]
+          "args": ["injectedCategory"]
         },
         "interests": {
           "fun": "MultiSelection",
-          "args": [
-            "InterestRef"
-          ]
+          "args": ["InterestRef"]
         },
         "departments": {
           "fun": "MultiSelection",
-          "args": [
-            "DepartmentRef"
-          ]
+          "args": ["DepartmentRef"]
         },
         "mainAddress": "Address",
         "addresses": {
           "fun": "List",
-          "args": [
-            "Address"
-          ]
+          "args": ["Address"]
         },
         "emails": {
           "fun": "List",
-          "args": [
-            "string"
-          ]
+          "args": ["string"]
         },
         "addressesWithLabel": {
           "fun": "Map",
-          "args": [
-            "string",
-            "Address"
-          ]
+          "args": ["string", "Address"]
         },
         "addressesByCity": {
           "fun": "Map",
           "args": [
             {
               "fun": "SingleSelection",
-              "args": [
-                "CityRef"
-              ]
+              "args": ["CityRef"]
             },
             "Address"
           ]
@@ -276,9 +245,7 @@
           "args": [
             {
               "fun": "SingleSelection",
-              "args": [
-                "ColorRef"
-              ]
+              "args": ["ColorRef"]
             },
             "Address"
           ]
@@ -288,9 +255,7 @@
           "args": [
             {
               "fun": "SingleSelection",
-              "args": [
-                "PermissionRef"
-              ]
+              "args": ["PermissionRef"]
             },
             "boolean"
           ]
@@ -300,36 +265,25 @@
           "args": [
             {
               "fun": "SingleSelection",
-              "args": [
-                "DepartmentRef"
-              ]
+              "args": ["DepartmentRef"]
             },
             {
               "fun": "SingleSelection",
-              "args": [
-                "CityRef"
-              ]
+              "args": ["CityRef"]
             }
           ]
         },
         "shoeColours": {
           "fun": "MultiSelection",
-          "args": [
-            "ColorRef"
-          ]
+          "args": ["ColorRef"]
         },
         "friendsBirthdays": {
           "fun": "Map",
-          "args": [
-            "string",
-            "Date"
-          ]
+          "args": ["string", "Date"]
         },
         "holidays": {
           "fun": "List",
-          "args": [
-            "Date"
-          ]
+          "args": ["Date"]
         }
       }
     }
@@ -348,18 +302,11 @@
     "entities": {
       "person": {
         "type": "Person",
-        "methods": [
-          "create",
-          "get",
-          "update",
-          "default"
-        ]
+        "methods": ["create", "get", "update", "default"]
       },
       "globalConfiguration": {
         "type": "GlobalConfiguration",
-        "methods": [
-          "get"
-        ]
+        "methods": ["get"]
       }
     }
   },
@@ -388,7 +335,7 @@
         }
       }
     },
-    "plotInfo":{
+    "plotInfo": {
       "type": "PlotInfo",
       "fields": {
         "landArea": {
@@ -458,11 +405,7 @@
           "columns": {
             "main": {
               "groups": {
-                "main": [
-                  "street",
-                  "number",
-                  "city"
-                ]
+                "main": ["street", "number", "city"]
               }
             }
           }
@@ -472,14 +415,14 @@
     "person": {
       "type": "Person",
       "fields": {
-        "plotInfo": {
-          "renderer": "plotInfo",
-          "visible": true
-        },
-        "category": {
-          "label": "category",
-          "renderer": "defaultCategory"
-        },
+        // "plotInfo": {
+        //   "renderer": "plotInfo",
+        //   "visible": true
+        // },
+        // "category": {
+        //   "label": "category",
+        //   "renderer": "defaultCategory"
+        // },
         "name": {
           "label": "first name",
           "tooltip": "Any name will do",
@@ -489,233 +432,232 @@
           "label": "last name",
           "renderer": "defaultString"
         },
-        "birthday": {
-          "renderer": "defaultDate",
-          "tooltip": "happy birthday!"
-        },
+        // "birthday": {
+        //   "renderer": "defaultDate",
+        //   "tooltip": "happy birthday!"
+        // },
         "favoriteColor": {
           "renderer": "defaultEnum",
           "options": "colors"
-        },
-        "gender": {
-          "label": "gender",
-          "renderer": "defaultEnum",
-          "options": "genders",
-          "visible": {
-            "kind": "or",
-            "operands": [
-              {
-                "kind": "fieldLookup",
-                "operands": [
-                  {
-                    "kind": "varLookup",
-                    "varName": "global"
-                  },
-                  "IsAdmin"
-                ]
-              },
-              {
-                "kind": "isCase",
-                "operands": [
-                  {
-                    "kind": "fieldLookup",
-                    "operands": [
-                      {
-                        "kind": "varLookup",
-                        "varName": "global"
-                      },
-                      "ERP"
-                    ]
-                  },
-                  "ERP:SAP"
-                ]
-              }
-            ]
-          }
-        },
-        "dependants": {
-          "label": "dependants",
-          "renderer": "defaultMap",
-          "tooltip": "someone who depends on you",
-          "keyRenderer": {
-            "label": "name",
-            "tooltip": "their name",
-            "renderer": "defaultString"
-          },
-          "valueRenderer": {
-            "label": "category",
-            "tooltip": "their category",
-            "renderer": "defaultCategory"
-          }
-        },
-        "friendsByCategory": {
-          "label": "friends by category",
-          "renderer": "defaultMap",
-          "keyRenderer": {
-            "label": "category",
-            "renderer": "defaultCategory"
-          },
-          "valueRenderer": {
-            "label": "name",
-            "renderer": "defaultString"
-          }
-        },
-        "relatives": {
-          "label": "relatives",
-          "tooltip": "someone who you are related to",
-          "renderer":"defaultList",
-          "elementRenderer": {
-            "label": "one relative",
-            "tooltip": "relative",
-            "renderer": "defaultCategory"
-          }
-        },
-        "subscribeToNewsletter": {
-          "label": "subscribe to newsletter",
-          "renderer": "defaultBoolean"
-        },
-        "interests": {
-          "label": "interests",
-          "renderer": "defaultEnumMultiselect",
-          "options": "interests",
-          "visible": {
-            "kind": "fieldLookup",
-            "operands": [
-              {
-                "kind": "varLookup",
-                "varName": "root"
-              },
-              "subscribeToNewsletter"
-            ]
-          }
-        },
-        "departments": {
-          "label": "departments",
-          "renderer": "defaultInfiniteStreamMultiselect",
-          "stream": "departments"
-          ,
-          "disabled": {
-            "kind": "fieldLookup",
-            "operands": [
-              {
-                "kind": "varLookup",
-                "varName": "local"
-              },
-              "subscribeToNewsletter"
-            ]
-          }
-        },
-        "mainAddress": {
-          "label": "main address",
-          "renderer": "address"
-        },
-        "addresses": {
-          "label": "other addresses",
-          "renderer": "defaultList",
-          "elementRenderer": {
-            "label": "address",
-            "renderer": "address"
-          }
-        },
-        "emails": {
-          "label": "emails",
-          "renderer": "defaultList",
-          "elementRenderer": {
-            "label": "email",
-            "renderer": "defaultString"
-          }
-        },
-        "addressesWithLabel": {
-          "label": "addresses with label",
-          "renderer": "defaultMap",
-          "keyRenderer": {
-            "label": "address label",
-            "renderer": "defaultString"
-          },
-          "valueRenderer": {
-            "label": "address",
-            "renderer": "address"
-          }
-        },
-        "addressesByCity": {
-          "label": "addresses by city",
-          "renderer": "defaultMap",
-          "keyRenderer": {
-            "label": "city",
-            "tooltip": "a nice place to live",
-            "renderer": "defaultInfiniteStream",
-            "stream": "cities"
-          },
-          "valueRenderer": {
-            "label": "address",
-            "renderer": "address"
-          }
-        },
-        "addressesWithColorLabel": {
-          "renderer": "defaultMap",
-          "label": "addresses with color label",
-          "keyRenderer": {
-            "label": "color",
-            "renderer": "defaultEnum",
-            "options": "colors"
-          },
-          "valueRenderer": {
-            "label": "address",
-            "renderer": "address"
-          }
-        },
-        "permissions": {
-          "label": "permissions",
-          "renderer": "defaultMap",
-          "keyRenderer": {
-            "label": "permission",
-            "renderer": "defaultEnum",
-            "options": "permissions"
-          },
-          "valueRenderer": {
-            "label": "granted",
-            "renderer": "defaultBoolean"
-          }
-        },
-        "cityByDepartment": {
-          "label": "city by department",
-          "renderer": "defaultMap",
-          "keyRenderer": {
-            "label": "department",
-            "renderer": "defaultInfiniteStream",
-            "stream": "departments"
-          },
-          "valueRenderer": {
-            "label": "city",
-            "renderer": "defaultInfiniteStream",
-            "stream": "cities"
-          }
-        },
-        "shoeColours": {
-          "label": "shoe colours",
-          "renderer": "defaultEnumMultiselect",
-          "options": "colors"
-        },
-        "friendsBirthdays": {
-          "renderer": "defaultMap",
-          "label": "friends birthdays",
-          "keyRenderer": {
-            "label": "name",
-            "renderer": "defaultString"
-          },
-          "valueRenderer": {
-            "label": "birthday",
-            "renderer": "defaultDate"
-          }
-        },
-        "holidays": {
-          "label": "holidays",
-          "renderer": "defaultList",
-          "elementRenderer": {
-            "label": "holiday",
-            "renderer": "defaultDate"
-          }
         }
+        // "gender": {
+        //   "label": "gender",
+        //   "renderer": "defaultEnum",
+        //   "options": "genders",
+        //   "visible": {
+        //     "kind": "or",
+        //     "operands": [
+        //       {
+        //         "kind": "fieldLookup",
+        //         "operands": [
+        //           {
+        //             "kind": "varLookup",
+        //             "varName": "global"
+        //           },
+        //           "IsAdmin"
+        //         ]
+        //       },
+        //       {
+        //         "kind": "isCase",
+        //         "operands": [
+        //           {
+        //             "kind": "fieldLookup",
+        //             "operands": [
+        //               {
+        //                 "kind": "varLookup",
+        //                 "varName": "global"
+        //               },
+        //               "ERP"
+        //             ]
+        //           },
+        //           "ERP:SAP"
+        //         ]
+        //       }
+        //     ]
+        //   }
+        // },
+        // "dependants": {
+        //   "label": "dependants",
+        //   "renderer": "defaultMap",
+        //   "tooltip": "someone who depends on you",
+        //   "keyRenderer": {
+        //     "label": "name",
+        //     "tooltip": "their name",
+        //     "renderer": "defaultString"
+        //   },
+        //   "valueRenderer": {
+        //     "label": "category",
+        //     "tooltip": "their category",
+        //     "renderer": "defaultCategory"
+        //   }
+        // },
+        // "friendsByCategory": {
+        //   "label": "friends by category",
+        //   "renderer": "defaultMap",
+        //   "keyRenderer": {
+        //     "label": "category",
+        //     "renderer": "defaultCategory"
+        //   },
+        //   "valueRenderer": {
+        //     "label": "name",
+        //     "renderer": "defaultString"
+        //   }
+        // },
+        // "relatives": {
+        //   "label": "relatives",
+        //   "tooltip": "someone who you are related to",
+        //   "renderer": "defaultList",
+        //   "elementRenderer": {
+        //     "label": "one relative",
+        //     "tooltip": "relative",
+        //     "renderer": "defaultCategory"
+        //   }
+        // },
+        // "subscribeToNewsletter": {
+        //   "label": "subscribe to newsletter",
+        //   "renderer": "defaultBoolean"
+        // },
+        // "interests": {
+        //   "label": "interests",
+        //   "renderer": "defaultEnumMultiselect",
+        //   "options": "interests",
+        //   "visible": {
+        //     "kind": "fieldLookup",
+        //     "operands": [
+        //       {
+        //         "kind": "varLookup",
+        //         "varName": "root"
+        //       },
+        //       "subscribeToNewsletter"
+        //     ]
+        //   }
+        // },
+        // "departments": {
+        //   "label": "departments",
+        //   "renderer": "defaultInfiniteStreamMultiselect",
+        //   "stream": "departments",
+        //   "disabled": {
+        //     "kind": "fieldLookup",
+        //     "operands": [
+        //       {
+        //         "kind": "varLookup",
+        //         "varName": "local"
+        //       },
+        //       "subscribeToNewsletter"
+        //     ]
+        //   }
+        // },
+        // "mainAddress": {
+        //   "label": "main address",
+        //   "renderer": "address"
+        // },
+        // "addresses": {
+        //   "label": "other addresses",
+        //   "renderer": "defaultList",
+        //   "elementRenderer": {
+        //     "label": "address",
+        //     "renderer": "address"
+        //   }
+        // },
+        // "emails": {
+        //   "label": "emails",
+        //   "renderer": "defaultList",
+        //   "elementRenderer": {
+        //     "label": "email",
+        //     "renderer": "defaultString"
+        //   }
+        // },
+        // "addressesWithLabel": {
+        //   "label": "addresses with label",
+        //   "renderer": "defaultMap",
+        //   "keyRenderer": {
+        //     "label": "address label",
+        //     "renderer": "defaultString"
+        //   },
+        //   "valueRenderer": {
+        //     "label": "address",
+        //     "renderer": "address"
+        //   }
+        // },
+        // "addressesByCity": {
+        //   "label": "addresses by city",
+        //   "renderer": "defaultMap",
+        //   "keyRenderer": {
+        //     "label": "city",
+        //     "tooltip": "a nice place to live",
+        //     "renderer": "defaultInfiniteStream",
+        //     "stream": "cities"
+        //   },
+        //   "valueRenderer": {
+        //     "label": "address",
+        //     "renderer": "address"
+        //   }
+        // },
+        // "addressesWithColorLabel": {
+        //   "renderer": "defaultMap",
+        //   "label": "addresses with color label",
+        //   "keyRenderer": {
+        //     "label": "color",
+        //     "renderer": "defaultEnum",
+        //     "options": "colors"
+        //   },
+        //   "valueRenderer": {
+        //     "label": "address",
+        //     "renderer": "address"
+        //   }
+        // },
+        // "permissions": {
+        //   "label": "permissions",
+        //   "renderer": "defaultMap",
+        //   "keyRenderer": {
+        //     "label": "permission",
+        //     "renderer": "defaultEnum",
+        //     "options": "permissions"
+        //   },
+        //   "valueRenderer": {
+        //     "label": "granted",
+        //     "renderer": "defaultBoolean"
+        //   }
+        // },
+        // "cityByDepartment": {
+        //   "label": "city by department",
+        //   "renderer": "defaultMap",
+        //   "keyRenderer": {
+        //     "label": "department",
+        //     "renderer": "defaultInfiniteStream",
+        //     "stream": "departments"
+        //   },
+        //   "valueRenderer": {
+        //     "label": "city",
+        //     "renderer": "defaultInfiniteStream",
+        //     "stream": "cities"
+        //   }
+        // },
+        // "shoeColours": {
+        //   "label": "shoe colours",
+        //   "renderer": "defaultEnumMultiselect",
+        //   "options": "colors"
+        // },
+        // "friendsBirthdays": {
+        //   "renderer": "defaultMap",
+        //   "label": "friends birthdays",
+        //   "keyRenderer": {
+        //     "label": "name",
+        //     "renderer": "defaultString"
+        //   },
+        //   "valueRenderer": {
+        //     "label": "birthday",
+        //     "renderer": "defaultDate"
+        //   }
+        // },
+        // "holidays": {
+        //   "label": "holidays",
+        //   "renderer": "defaultList",
+        //   "elementRenderer": {
+        //     "label": "holiday",
+        //     "renderer": "defaultDate"
+        //   }
+        // }
       },
       "tabs": {
         "main": {
@@ -723,45 +665,45 @@
             "demographics": {
               "groups": {
                 "main": [
-                  "plotInfo",
-                  "category",
+                  // "plotInfo",
+                  // "category",
                   "name",
-                  "surname",
-                  "birthday",
-                  "gender",
-                  "emails",
-                  "dependants",
-                  "friendsByCategory",
-                  "relatives",
-                  "friendsBirthdays",
-                  "shoeColours"
+                  "surname"
+                  // "birthday",
+                  // "gender",
+                  // "emails",
+                  // "dependants",
+                  // "friendsByCategory",
+                  // "relatives",
+                  // "friendsBirthdays",
+                  // "shoeColours"
                 ]
               }
             },
             "mailing": {
               "groups": {
                 "main": [
-                  "subscribeToNewsletter",
-                  "interests",
+                  // "subscribeToNewsletter",
+                  // "interests",
                   "favoriteColor"
                 ]
               }
-            },
-            "addresses": {
-              "groups": {
-                "main": [
-                  "departments",
-                  "mainAddress",
-                  "addresses",
-                  "addressesWithLabel",
-                  "addressesByCity",
-                  "addressesWithColorLabel",
-                  "permissions",
-                  "cityByDepartment",
-                  "holidays"
-                ]
-              }
             }
+            // "addresses": {
+            //   "groups": {
+            //     "main": [
+            //       "departments",
+            //       "mainAddress",
+            //       "addresses",
+            //       "addressesWithLabel",
+            //       "addressesByCity",
+            //       "addressesWithColorLabel",
+            //       "permissions",
+            //       "cityByDepartment",
+            //       "holidays"
+            //     ]
+            //   }
+            // }
           }
         }
       }

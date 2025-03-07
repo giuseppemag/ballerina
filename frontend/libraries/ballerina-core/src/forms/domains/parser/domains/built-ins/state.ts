@@ -75,7 +75,7 @@ export type BuiltInApiConverters = {
   SingleSelection: ApiConverter<
     CollectionSelection<CollectionReference | EnumReference>
   >;
-  MultiSelection: ApiConverter<OrderedMap<string, CollectionReference>>;
+  MultiSelection: ApiConverter<OrderedMap<string, CollectionReference | EnumReference>>;
   List: ApiConverter<List<any>>;
   Map: ApiConverter<List<[any, any]>>;
 };
@@ -265,6 +265,8 @@ export const fromAPIRawValue =
     injectedPrimitives?: InjectedPrimitives<T>,
   ) =>
   (raw: any): PredicateValue => {
+    console.debug("fromAPIRawValue raw", raw);
+    console.debug("fromAPIRawValue t", t);
     if (raw == undefined) {
       return defaultValue(types, builtIns, injectedPrimitives)(t);
     }
@@ -295,27 +297,14 @@ export const fromAPIRawValue =
           ? PredicateValue.Default.option(false, PredicateValue.Default.unit())
           : PredicateValue.Default.option(
               true,
-              fromAPIRawValue(
-                t.args[0],
-                types,
-                builtIns,
-                converters,
-                injectedPrimitives,
-              )(result.value),
+              PredicateValue.Default.record(Map(result.value)),
             );
       }
       if (t.value == "MultiSelection") {
         const result = converters[t.value].fromAPIRawValue(raw);
-        return PredicateValue.Default.record(
-          result.map(
-            fromAPIRawValue(
-              t.args[0],
-              types,
-              builtIns,
-              converters,
-              injectedPrimitives,
-            ),
-          ),
+        const values = result.map(_ => PredicateValue.Default.record(Map(_)))
+        return PredicateValue.Default.record(          
+            Map(values),
         );
       }
       if (t.value == "List") {

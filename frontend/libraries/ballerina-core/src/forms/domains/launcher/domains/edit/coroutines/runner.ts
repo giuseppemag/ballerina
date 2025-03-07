@@ -28,24 +28,33 @@ export const editFormRunner = <FS>() => {
   const init = Co.GetState().then((current) => {
     return Co.Seq([
       Co.SetState(
-        EditFormState<FS>().Updaters.Core.customFormState.children.initApiChecker(
-          ApiResponseChecker.Updaters().toUnchecked()
-        ).then(EditFormState<FS>().Updaters.Core.customFormState.children.configApiChecker(
-          ApiResponseChecker.Updaters().toUnchecked()
-        ))
+        EditFormState<FS>()
+          .Updaters.Core.customFormState.children.initApiChecker(
+            ApiResponseChecker.Updaters().toUnchecked()
+          )
+          .then(
+            EditFormState<FS>().Updaters.Core.customFormState.children.configApiChecker(
+              ApiResponseChecker.Updaters().toUnchecked()
+            )
+          )
       ),
       Co.All([
         Synchronize<Unit, any>(
-          () => current.api.get(current.entityId).then((raw) => current.fromApiParser(raw)),
+          () =>
+            current.api.get(current.entityId).then((raw) => {
+              const x = current.fromApiParser(raw);
+              console.log("x", x.fields.toJS());
+              return x;
+            }),
           (_) => "transient failure",
           5,
           50
-        ).embed(
-          (_) => _.entity,
-          EditFormState<FS>().Updaters.Core.entity
-        ),
+        ).embed((_) => _.entity, EditFormState<FS>().Updaters.Core.entity),
         Synchronize<Unit, any>(
-          () => current.api.getGlobalConfiguration().then((raw) => current.parseGlobalConfiguration(raw)),
+          () =>
+            current.api
+              .getGlobalConfiguration()
+              .then((raw) => current.parseGlobalConfiguration(raw)),
           (_) => "transient failure",
           5,
           50
@@ -86,11 +95,7 @@ export const editFormRunner = <FS>() => {
       current.entity.sync.kind == "loaded" &&
       current.globalConfiguration.sync.kind == "loaded"
     ) {
-
-
-      if (
-        current.globalConfiguration.sync.value.kind == "errors"
-      ) {
+      if (current.globalConfiguration.sync.value.kind == "errors") {
         console.error("error parsing bindings");
         return Co.Do(() => {});
       }
@@ -149,7 +154,10 @@ export const editFormRunner = <FS>() => {
         }
 
         if (current.globalConfiguration.sync.value.kind == "errors") {
-          console.error("error parsing global configuration predicate", current.globalConfiguration.sync.value);
+          console.error(
+            "error parsing global configuration predicate",
+            current.globalConfiguration.sync.value
+          );
           return PredicatesCo.Return<ApiResultStatus>("permanent failure");
         }
         return PredicatesCo.SetState(
@@ -186,9 +194,7 @@ export const editFormRunner = <FS>() => {
     Co.GetState().then((editFormState) =>
       Co.Seq([
         Co.SetState(
-          EditFormState<
-            FS
-          >().Updaters.Core.customFormState.children.updateApiChecker(
+          EditFormState<FS>().Updaters.Core.customFormState.children.updateApiChecker(
             ApiResponseChecker.Updaters().toUnchecked()
           )
         ),
@@ -232,9 +238,7 @@ export const editFormRunner = <FS>() => {
           handleError: editFormState.apiHandlers?.onUpdateError,
         }),
         Co.SetState(
-          EditFormState<
-            FS
-          >().Updaters.Core.customFormState.children.updateApiChecker(
+          EditFormState<FS>().Updaters.Core.customFormState.children.updateApiChecker(
             ApiResponseChecker.Updaters().toChecked()
           )
         ),
@@ -246,9 +250,7 @@ export const editFormRunner = <FS>() => {
     interval: 15,
     runFilter: (props) =>
       !AsyncState.Operations.hasValue(props.context.entity.sync) ||
-      !AsyncState.Operations.hasValue(
-        props.context.globalConfiguration.sync
-      ) ||
+      !AsyncState.Operations.hasValue(props.context.globalConfiguration.sync) ||
       !ApiResponseChecker.Operations.checked(
         props.context.customFormState.initApiChecker
       ),

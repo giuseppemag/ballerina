@@ -30,7 +30,7 @@ import {
   CategoryState,
   PersonFormInjectedTypes,
 } from "./domains/person-from-config/injected-forms/category";
-import PersonConfig from "../../../../backend/apps/ballerina-runtime/input-forms/person-config.json";
+import PersonConfigSimple from "../../../../backend/apps/ballerina-runtime/input-forms/person-config-simple.json";
 import { PassthroughFormContainerWrapper } from "./domains/passthrough-forms/views/wrappers";
 
 const ShowFormsParsingErrors = (parsedFormsConfig: FormParsingResult) => (
@@ -220,7 +220,7 @@ export const FormsApp = (props: {}) => {
                     enumOptionsSources: PersonFromConfigApis.enumApis,
                     entityApis: PersonFromConfigApis.entityApis,
                     getFormsConfig: () =>
-                      PromiseRepo.Default.mock(() => PersonConfig),
+                      PromiseRepo.Default.mock(() => PersonConfigSimple),
                     injectedPrimitives: Map([
                       [
                         "injectedCategory",

@@ -4,6 +4,7 @@ import {
   Updater,
   SimpleCallback,
   Unit,
+  PredicateValue,
 } from "../../../../../../main";
 import { BasicFun } from "../../../../../fun/state";
 import { Template, View } from "../../../../../template/state";
@@ -11,7 +12,12 @@ import { Value } from "../../../../../value/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import { OnChange, CommonFormState } from "../../../singleton/state";
 
-export type MapFieldState<K, V, KeyFormState, ValueFormState> = {
+export type MapFieldState<
+  K extends PredicateValue,
+  V extends PredicateValue,
+  KeyFormState,
+  ValueFormState,
+> = {
   commonFormState: CommonFormState;
 } & {
   elementFormStates: Map<
@@ -19,7 +25,12 @@ export type MapFieldState<K, V, KeyFormState, ValueFormState> = {
     { KeyFormState: KeyFormState; ValueFormState: ValueFormState }
   >;
 };
-export const MapFieldState = <K, V, KeyFormState, ValueFormState>() => ({
+export const MapFieldState = <
+  K extends PredicateValue,
+  V extends PredicateValue,
+  KeyFormState,
+  ValueFormState,
+>() => ({
   Default: (
     elementFormStates: MapFieldState<
       K,
@@ -41,8 +52,8 @@ export const MapFieldState = <K, V, KeyFormState, ValueFormState>() => ({
   },
 });
 export type MapFieldView<
-  K,
-  V,
+  K extends PredicateValue,
+  V extends PredicateValue,
   KeyFormState,
   ValueFormState,
   Context extends FormLabel,

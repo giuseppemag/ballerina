@@ -18,18 +18,3 @@ export type BooleanView<
     setNewValue: SimpleCallback<boolean>;
   }
 >;
-
-export type MaybeBooleanView<
-  Context extends FormLabel,
-  ForeignMutationsExpected,
-> = View<
-  Context &
-    Value<boolean | undefined> & { commonFormState: CommonFormState } & {
-      disabled: boolean;
-    },
-  { commonFormState: CommonFormState },
-  ForeignMutationsExpected & {
-    onChange: OnChange<boolean | undefined>;
-    setNewValue: SimpleCallback<boolean | undefined>;
-  }
->;

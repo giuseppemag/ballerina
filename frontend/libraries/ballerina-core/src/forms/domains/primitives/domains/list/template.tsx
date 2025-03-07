@@ -8,11 +8,8 @@ import {
   BasicUpdater,
   MapRepo,
   ListRepo,
-  CoTypedFactory,
-  Debounce,
-  Synchronize,
   FormFieldPredicateEvaluation,
-  replaceWith,
+  PredicateValue,
 } from "../../../../../../main";
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
@@ -20,14 +17,12 @@ import { FormLabel } from "../../../singleton/domains/form-label/state";
 import {
   FieldValidation,
   FieldValidationWithPath,
-  FormValidatorSynchronized,
   OnChange,
-  CommonFormState,
 } from "../../../singleton/state";
 import { ListFieldState, ListFieldView } from "./state";
 
 export const ListForm = <
-  Element,
+  Element extends PredicateValue | undefined,
   ElementFormState,
   Context extends FormLabel & {
     elementVisibilities: FormFieldPredicateEvaluation[];

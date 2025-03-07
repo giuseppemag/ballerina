@@ -4,6 +4,7 @@ import {
   Updater,
   SimpleCallback,
   Unit,
+  PredicateValue,
 } from "../../../../../../main";
 import { BasicFun } from "../../../../../fun/state";
 import { Template, View } from "../../../../../template/state";
@@ -32,7 +33,7 @@ export const ListFieldState = <Element, ElementFormState>() => ({
   },
 });
 export type ListFieldView<
-  Element,
+  Element extends PredicateValue | undefined,
   ElementFormState,
   Context extends FormLabel,
   ForeignMutationsExpected,

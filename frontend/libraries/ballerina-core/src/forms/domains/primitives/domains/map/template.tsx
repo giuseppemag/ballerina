@@ -9,6 +9,7 @@ import {
   MapRepo,
   ListRepo,
   FormFieldPredicateEvaluation,
+  PredicateValue,
 } from "../../../../../../main";
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
@@ -21,8 +22,8 @@ import {
 import { MapFieldState, MapFieldView } from "./state";
 
 export const MapForm = <
-  K,
-  V,
+  K extends PredicateValue,
+  V extends PredicateValue,
   KeyFormState,
   ValueFormState,
   Context extends FormLabel & {

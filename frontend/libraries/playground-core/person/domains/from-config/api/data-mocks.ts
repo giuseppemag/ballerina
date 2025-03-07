@@ -91,150 +91,150 @@ const entityApis: EntityApis = {
         return (id: Guid) => {
           console.log(`get person ${id}`);
           return Promise.resolve({
-            plotInfo: {
-              landArea: {
-                x: Math.floor(Math.random() * 100),
-                y: Math.floor(Math.random() * 100),
-              },
-            },
-            category: ["child", "adult", "senior"][
-              Math.round(Math.random() * 10) % 3
-            ],
+            // plotInfo: {
+            //   landArea: {
+            //     x: Math.floor(Math.random() * 100),
+            //     y: Math.floor(Math.random() * 100),
+            //   },
+            // },
+            // category: ["child", "adult", "senior"][
+            //   Math.round(Math.random() * 10) % 3
+            // ],
             name: faker.person.firstName(),
             surname: faker.person.lastName(),
-            birthday: new Date(
-              Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45,
-            ).toISOString(),
-            subscribeToNewsletter: Math.random() > 0.5,
+            // birthday: new Date(
+            //   Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45,
+            // ).toISOString(),
+            // subscribeToNewsletter: Math.random() > 0.5,
             favoriteColor: {
               Value: { Value: colors[Math.round(Math.random() * 10) % 3] },
               IsSome: true,
             },
-            gender: { IsSome: false, Value: { Value: "" } },
-            dependants: [
-              { key: "Steve", value: "adult" },
-              { key: "Alice", value: "senior" },
-            ],
-            friendsByCategory: [],
-            relatives: [
-              ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3],
-              ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3],
-              ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3],
-            ],
-            interests: [{ Value: interests[1] }, { Value: interests[2] }],
-            departments: [],
-            mainAddress: {
-              street: faker.location.street(),
-              number: Math.floor(Math.random() * 500),
-              city:
-                Math.random() > 0.5
-                  ? { IsSome: false, Value: { Value: "" } }
-                  : {
-                      Value: { ...City.Default(v4(), faker.location.city()) },
-                      IsSome: true,
-                    },
-            },
-            addresses: [
-              {
-                street: faker.location.street(),
-                number: Math.floor(Math.random() * 500),
-                city:
-                  Math.random() > 0.5
-                    ? { IsSome: false, Value: { Value: "" } }
-                    : {
-                        Value: { ...City.Default(v4(), faker.location.city()) },
-                        IsSome: true,
-                      },
-              },
-            ],
-            emails: ["john@doe.it", "johnthedon@doe.com"],
-            addressesWithLabel: [
-              {
-                key: "home",
-                value: {
-                  street: faker.location.street(),
-                  number: Math.floor(Math.random() * 500),
-                  city:
-                    Math.random() > 0.5
-                      ? { IsSome: false, Value: { Value: "" } }
-                      : {
-                          Value: {
-                            ...City.Default(v4(), faker.location.city()),
-                          },
-                          IsSome: true,
-                        },
-                },
-              },
-            ],
-            addressesByCity: [
-              {
-                key: {
-                  IsSome: true,
-                  Value: { ...City.Default(v4(), faker.location.city()) },
-                },
-                value: {
-                  street: faker.location.street(),
-                  number: Math.floor(Math.random() * 500),
-                  city:
-                    Math.random() > 0.5
-                      ? { IsSome: false, Value: { Value: "" } }
-                      : {
-                          IsSome: true,
-                          Value: {
-                            ...City.Default(v4(), faker.location.city()),
-                          },
-                        },
-                },
-              },
-              {
-                key: {
-                  IsSome: true,
-                  Value: { ...City.Default(v4(), faker.location.city()) },
-                },
-                value: {
-                  street: faker.location.street(),
-                  number: Math.floor(Math.random() * 500),
-                  city:
-                    Math.random() > 0.5
-                      ? { IsSome: false, Value: { Value: "" } }
-                      : {
-                          IsSome: true,
-                          Value: {
-                            ...City.Default(v4(), faker.location.city()),
-                          },
-                        },
-                },
-              },
-            ],
-            addressesWithColorLabel: [
-              {
-                key: {
-                  IsSome: true,
-                  Value: { Value: colors[Math.round(Math.random() * 10) % 3] },
-                },
-                value: {
-                  street: faker.location.street(),
-                  number: Math.floor(Math.random() * 500),
-                  city: { IsSome: false, Value: { Value: "" } },
-                },
-              },
-              {
-                key: {
-                  IsSome: true,
-                  Value: { Value: colors[Math.round(Math.random() * 10) % 3] },
-                },
-                value: {
-                  street: faker.location.street(),
-                  number: Math.floor(Math.random() * 500),
-                  city: { IsSome: false, Value: { Value: "" } },
-                },
-              },
-            ],
-            permissions: [],
-            cityByDepartment: [],
-            shoeColours: [],
-            friendsBirthdays: [],
-            holidays: [],
+            // gender: { IsSome: false, Value: { Value: "" } },
+            // dependants: [
+            //   { key: "Steve", value: "adult" },
+            //   { key: "Alice", value: "senior" },
+            // ],
+            // friendsByCategory: [],
+            // relatives: [
+            //   ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3],
+            //   ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3],
+            //   ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3],
+            // ],
+            // interests: [{ Value: interests[1] }, { Value: interests[2] }],
+            // departments: [],
+            // mainAddress: {
+            //   street: faker.location.street(),
+            //   number: Math.floor(Math.random() * 500),
+            //   city:
+            //     Math.random() > 0.5
+            //       ? { IsSome: false, Value: { Value: "" } }
+            //       : {
+            //           Value: { ...City.Default(v4(), faker.location.city()) },
+            //           IsSome: true,
+            //         },
+            // },
+            // addresses: [
+            //   {
+            //     street: faker.location.street(),
+            //     number: Math.floor(Math.random() * 500),
+            //     city:
+            //       Math.random() > 0.5
+            //         ? { IsSome: false, Value: { Value: "" } }
+            //         : {
+            //             Value: { ...City.Default(v4(), faker.location.city()) },
+            //             IsSome: true,
+            //           },
+            //   },
+            // ],
+            // emails: ["john@doe.it", "johnthedon@doe.com"],
+            // addressesWithLabel: [
+            //   {
+            //     key: "home",
+            //     value: {
+            //       street: faker.location.street(),
+            //       number: Math.floor(Math.random() * 500),
+            //       city:
+            //         Math.random() > 0.5
+            //           ? { IsSome: false, Value: { Value: "" } }
+            //           : {
+            //               Value: {
+            //                 ...City.Default(v4(), faker.location.city()),
+            //               },
+            //               IsSome: true,
+            //             },
+            //     },
+            //   },
+            // ],
+            // addressesByCity: [
+            //   {
+            //     key: {
+            //       IsSome: true,
+            //       Value: { ...City.Default(v4(), faker.location.city()) },
+            //     },
+            //     value: {
+            //       street: faker.location.street(),
+            //       number: Math.floor(Math.random() * 500),
+            //       city:
+            //         Math.random() > 0.5
+            //           ? { IsSome: false, Value: { Value: "" } }
+            //           : {
+            //               IsSome: true,
+            //               Value: {
+            //                 ...City.Default(v4(), faker.location.city()),
+            //               },
+            //             },
+            //     },
+            //   },
+            //   {
+            //     key: {
+            //       IsSome: true,
+            //       Value: { ...City.Default(v4(), faker.location.city()) },
+            //     },
+            //     value: {
+            //       street: faker.location.street(),
+            //       number: Math.floor(Math.random() * 500),
+            //       city:
+            //         Math.random() > 0.5
+            //           ? { IsSome: false, Value: { Value: "" } }
+            //           : {
+            //               IsSome: true,
+            //               Value: {
+            //                 ...City.Default(v4(), faker.location.city()),
+            //               },
+            //             },
+            //     },
+            //   },
+            // ],
+            // addressesWithColorLabel: [
+            //   {
+            //     key: {
+            //       IsSome: true,
+            //       Value: { Value: colors[Math.round(Math.random() * 10) % 3] },
+            //     },
+            //     value: {
+            //       street: faker.location.street(),
+            //       number: Math.floor(Math.random() * 500),
+            //       city: { IsSome: false, Value: { Value: "" } },
+            //     },
+            //   },
+            //   {
+            //     key: {
+            //       IsSome: true,
+            //       Value: { Value: colors[Math.round(Math.random() * 10) % 3] },
+            //     },
+            //     value: {
+            //       street: faker.location.street(),
+            //       number: Math.floor(Math.random() * 500),
+            //       city: { IsSome: false, Value: { Value: "" } },
+            //     },
+            //   },
+            // ],
+            // permissions: [],
+            // cityByDepartment: [],
+            // shoeColours: [],
+            // friendsBirthdays: [],
+            // holidays: [],
           });
         };
       case "globalConfiguration":
