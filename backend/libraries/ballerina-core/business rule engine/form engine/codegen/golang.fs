@@ -197,8 +197,30 @@ module Golang =
 
           let entityGETters =
             seq {
+              yield StringBuilder.One "\n"
+              yield StringBuilder.One $"type {formName}EntitiesEnum string"
+              yield StringBuilder.One "\n"
+              yield StringBuilder.One "const ("
+              yield StringBuilder.One "\n"
+
+              for entityApi in ctx.Apis.Entities |> Map.values |> Seq.map fst do
+                yield
+                  StringBuilder.One
+                    $$"""  {{entityApi.TypeId.TypeName}}Entity {{formName}}EntitiesEnum = "{{entityApi.TypeId.TypeName}}" """
+
+                yield StringBuilder.One "\n"
+
+              yield StringBuilder.One ")"
+              yield StringBuilder.One "\n"
+              yield StringBuilder.One $$"""var All{{formName}}EntitiesEnum = [...]{{formName}}EntitiesEnum{ """
+
+              for entityApi in ctx.Apis.Entities |> Map.values |> Seq.map fst do
+                yield StringBuilder.One $$"""{{entityApi.TypeId.TypeName}}Entity, """
+
+              yield StringBuilder.One "}\n"
+
               yield
-                StringBuilder.One $"\nfunc {formName}EntityGETter[id any, result any](enumName string, entityId id, "
+                StringBuilder.One $"\nfunc {formName}EntityGETter[id any, result any](entityName string, entityId id, "
 
               yield!
                 ctx.Apis.Entities
@@ -217,9 +239,27 @@ module Golang =
                     }
                   ))
 
+
               yield StringBuilder.One ") (result,error) {\n"
+              yield StringBuilder.One "  switch entityName {\n"
+
+              for entityApi in ctx.Apis.Entities |> Map.values |> Seq.map fst do
+                yield StringBuilder.One $$"""    case "{{entityApi.TypeId.TypeName}}Entity":  """
+                yield StringBuilder.One "\n"
+                yield StringBuilder.One $$"""      var res, err = get{{entityApi.EntityName}}(entityId);  """
+                yield StringBuilder.One "\n"
+
+                yield StringBuilder.One $$"""      if err != nil { return serialize{{entityApi.EntityName}}(res); }  """
+
+                yield StringBuilder.One "\n"
+
+              yield StringBuilder.One "  }\n"
+
               yield StringBuilder.One "  var resultNil result;\n"
-              yield StringBuilder.One "  return resultNil, nil;\n"
+
+              yield
+                StringBuilder.One $"  return resultNil, {codegenConfig.EntityNotFoundError.Constructor}(entityName);\n"
+
               yield StringBuilder.One "}\n"
             }
 
@@ -824,6 +864,13 @@ module Golang =
               + (codegenConfig.InvalidEnumValueCombinationError.RequiredImport
                  |> Option.toList
                  |> Set.ofList)
+            else
+              imports
+
+          let imports =
+            if ctx.Apis.Entities |> Map.isEmpty |> not then
+              imports
+              + (codegenConfig.EntityNotFoundError.RequiredImport |> Option.toList |> Set.ofList)
             else
               imports
 

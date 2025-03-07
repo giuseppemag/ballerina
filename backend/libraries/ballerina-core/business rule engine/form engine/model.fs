@@ -20,6 +20,7 @@ module Model =
       Union: CodegenConfigUnionDef
       Custom: Map<string, CodegenConfigCustomDef>
       IdentifierAllowedRegex: string
+      EntityNotFoundError: CodegenConfigErrorDef
       EnumNotFoundError: CodegenConfigErrorDef
       InvalidEnumValueCombinationError: CodegenConfigErrorDef
       StreamNotFoundError: CodegenConfigErrorDef }

@@ -4,6 +4,18 @@ import (
 	"fmt"
 )
 
+type EntityNotFoundError struct {
+	EntityName string
+}
+
+func (err *EntityNotFoundError) Error() string {
+	return fmt.Sprintf("%s is not a valid entity name", err.EntityName)
+}
+
+func NewEntityNotFoundError(entityName string) error {
+	return &EntityNotFoundError{EntityName: entityName}
+}
+
 type StreamNotFoundError struct {
 	StreamName string
 }

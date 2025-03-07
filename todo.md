@@ -60,10 +60,10 @@
           ✅ unions
           ✅ injected types
         ✅ extend the ballerina.core library to the necessary default values for Option, Set, List, Map, etc.
-      ❌ entites GET - identical to stream GETter: pairs of get + serialize
-        ❌ entity name not found error in ballerina
-        ❌ entity serialization error in ballerina
-      ❌ entities GETDefault - identical to stream GETter: pairs of get + serialize to which the default value is passed
+      ✅ entites GET - identical to stream GETter: pairs of get + serialize
+        ✅ generate enum of entity names
+        ✅ entity name not found error in ballerina
+        ✅ entity serialization error in ballerina
       ❌ entities POST - gets whole entity
       ❌ entities PATCH - gets single value and path of change
       ❌ whitespace improvement
@@ -72,6 +72,8 @@
         ❌ defaulting methods (for unions?)
     ❌ add paginated lists
     ❌ add lazy fields
+    ❌ add `extends` statement to unions
+    ❌ add `extends` statement to unions
     ❌ distinguish Sum (with renderer like List) from SingleSelection (only renderer for streams)
       ❌ allow Left and Right matching on Sum
       ❌ distinguish outer from inner renderers

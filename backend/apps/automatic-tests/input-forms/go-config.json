@@ -18,6 +18,7 @@
     "injectedCategory": { "GeneratedTypeName": "ballerina.Unit", "RequiredImport": "ballerina.com/core", "SupportedRenderers": [ "defaultCategory" ], "DefaultConstructor":"ballerina.NewUnit" }
   },
   "IdentifierAllowedRegex": "[^a-zA-Z0-9/-]+",
+  "EntityNotFoundError":{ "GeneratedTypeName": "ballerina.EntityNotFoundError", "RequiredImport":"ballerina.com/core", "Constructor":"ballerina.NewEntityNotFoundError" },
   "StreamNotFoundError":{ "GeneratedTypeName": "ballerina.StreamNotFoundError", "RequiredImport":"ballerina.com/core", "Constructor":"ballerina.NewStreamNotFoundError" },
   "EnumNotFoundError":{ "GeneratedTypeName": "ballerina.EnumNotFoundError", "RequiredImport":"ballerina.com/core", "Constructor":"ballerina.NewEnumNotFoundError" },
   "InvalidEnumValueCombinationError":{ "GeneratedTypeName": "ballerina.InvalidEnumValueCombinationError", "RequiredImport":"ballerina.com/core", "Constructor":"ballerina.NewInvalidEnumValueCombinationError" }
