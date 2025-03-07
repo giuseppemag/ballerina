@@ -121,14 +121,14 @@
       },
       "Swashbuckle.AspNetCore": {
         "type": "Direct",
-        "requested": "[7.1.0, )",
-        "resolved": "7.1.0",
-        "contentHash": "PpKwEZNCciDPczWPnuqaTVuN5jR/fG2RubQYgKHVWY2KB+TpvKkOrQJoF51S1yMJxygaofCM3BXlLy4PK/o8WA==",
+        "requested": "[7.3.1, )",
+        "resolved": "7.3.1",
+        "contentHash": "6u8w+UXp/sF89xQjfydWw6znQrUpbpFOmEIs8ODE+S0bV+mCQ9dNP4mk+HRsGHylpDaP5KSYSCEfFSgluLXHsA==",
         "dependencies": {
           "Microsoft.Extensions.ApiDescription.Server": "6.0.5",
-          "Swashbuckle.AspNetCore.Swagger": "7.1.0",
-          "Swashbuckle.AspNetCore.SwaggerGen": "7.1.0",
-          "Swashbuckle.AspNetCore.SwaggerUI": "7.1.0"
+          "Swashbuckle.AspNetCore.Swagger": "7.3.1",
+          "Swashbuckle.AspNetCore.SwaggerGen": "7.3.1",
+          "Swashbuckle.AspNetCore.SwaggerUI": "7.3.1"
         }
       },
       "System.CommandLine": {
@@ -507,24 +507,24 @@
       },
       "Swashbuckle.AspNetCore.Swagger": {
         "type": "Transitive",
-        "resolved": "7.1.0",
-        "contentHash": "+vzt/nV82YVCJt7GIuRV9xe67dvzrVwqDgO8DiQPmUZwtvtjK4rrb+qnoXbcu90VVaz2xjEK/Ma5/3AVWifSHQ==",
+        "resolved": "7.3.1",
+        "contentHash": "jQuJ8kVbq+YE8WsJE3RwWHlF1kasp0QkA9Gl6NeNLICrhcgN8IQIthMufYW6t/4hpcN5cBIdES5jCEV81WjHbA==",
         "dependencies": {
           "Microsoft.OpenApi": "1.6.22"
         }
       },
       "Swashbuckle.AspNetCore.SwaggerGen": {
         "type": "Transitive",
-        "resolved": "7.1.0",
-        "contentHash": "Nd1O1rVTpeX3U2fr+4FMjTD1BqnGBZcX5t0EkhVBdQWz/anf/68xTpJpAjZ9DS9CVDVKAm7qI6eJmq9psqFpVQ==",
+        "resolved": "7.3.1",
+        "contentHash": "xs7Pznb3SSjZy7HpThE0ILqECfQFsGDHOrRoIYD/j67ktdRR1juDG4AMyidXXCOipgzHanZoF+nFrc+Nmjqjyw==",
         "dependencies": {
-          "Swashbuckle.AspNetCore.Swagger": "7.1.0"
+          "Swashbuckle.AspNetCore.Swagger": "7.3.1"
         }
       },
       "Swashbuckle.AspNetCore.SwaggerUI": {
         "type": "Transitive",
-        "resolved": "7.1.0",
-        "contentHash": "Tn9+gbG2wGekFDcm1+XQXPZoSZWOHn3DiEGaEw3/SMCtKdhkYiejoKpmTzZueKOBQf0Lzgvxs6Lss0WObN0RPA=="
+        "resolved": "7.3.1",
+        "contentHash": "hs6C+lmNEzipOA1WPQpIaGvvoXjUbnoevbv6l7o9ZQE8SNF8ggjOmK6NB6cYdMcEvk0uBeKl4Qq/BnRt5MFVqg=="
       },
       "System.CodeDom": {
         "type": "Transitive",
