@@ -40,7 +40,7 @@ export const DateForm = <Context extends FormLabel, ForeignMutationsExpected>(
             const newValue = _ == undefined ? _ : new Date(_);
             setTimeout(() => {
               props.foreignMutations.onChange(
-                newValue == undefined ? id : replaceWith(newValue),
+                newValue == undefined || isNaN(newValue.getTime()) ? id : replaceWith(newValue),
                 List()
               );
             }, 0);

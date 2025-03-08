@@ -237,10 +237,11 @@ export const PredicateValue = {
       return typeof value == "string";
     },
     IsDate: (value: PredicateValue | Expr): value is Date => {
-      // TODO - test
       return (
         typeof value == "object" &&
-        Object.prototype.toString.call(value) === "[object Date]"
+        Object.prototype.toString.call(value) === "[object Date]" &&
+        value instanceof Date &&
+        !isNaN(value.getTime())
       );
     },
     IsUnit: (value: PredicateValue | Expr): value is ValueUnit => {

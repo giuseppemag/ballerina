@@ -211,7 +211,7 @@ export const PersonFieldViews = {
       > =>
       (props) =>
         { 
-          const displayValue = props.context.commonFormState.modifiedByUser
+          const displayValue = props.context.commonFormState.modifiedByUser 
           ? props.context.customFormState.possiblyInvalidInput
           : props.context.value?.toISOString();
 
