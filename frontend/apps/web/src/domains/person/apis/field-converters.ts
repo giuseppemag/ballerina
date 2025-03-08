@@ -4,11 +4,8 @@ import { PersonFormInjectedTypes } from "src/domains/person-from-config/injected
 
 export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
   injectedCategory: {
-    fromAPIRawValue: (_) => ({
-      category: _ ?? "adult",
-      kind: "category" as const,
-    }),
-    toAPIRawValue: ([_, __]) => _.category,
+    fromAPIRawValue: (_) => _ ?? "adult",
+    toAPIRawValue: ([_, __]) => _,
   },
   string: {
     fromAPIRawValue: (_) => (typeof _ == "string" ? _ : ""),

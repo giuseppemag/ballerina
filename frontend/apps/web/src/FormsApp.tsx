@@ -30,7 +30,7 @@ import {
   CategoryState,
   PersonFormInjectedTypes,
 } from "./domains/person-from-config/injected-forms/category";
-import PersonConfigSimple from "../../../../backend/apps/ballerina-runtime/input-forms/person-config-simple.json";
+import PersonConfig from "../../../../backend/apps/ballerina-runtime/input-forms/person-config-simple.json";
 import { PassthroughFormContainerWrapper } from "./domains/passthrough-forms/views/wrappers";
 
 const ShowFormsParsingErrors = (parsedFormsConfig: FormParsingResult) => (
@@ -207,7 +207,7 @@ export const FormsApp = (props: {}) => {
                     setFormToShow(formToShow + 1);
                   }}
                 >
-                  Show next form
+                  Show next formx
                 </button>
                 <InstantiedPersonFormsParserTemplate
                   context={{
@@ -220,13 +220,13 @@ export const FormsApp = (props: {}) => {
                     enumOptionsSources: PersonFromConfigApis.enumApis,
                     entityApis: PersonFromConfigApis.entityApis,
                     getFormsConfig: () =>
-                      PromiseRepo.Default.mock(() => PersonConfigSimple),
+                      PromiseRepo.Default.mock(() => PersonConfig),
                     injectedPrimitives: Map([
                       [
                         "injectedCategory",
                         {
                           fieldView: categoryForm,
-                          defaultValue: { category: "adult", kind: "category" },
+                          defaultValue: "adult",
                           defaultState: CategoryState.Default(),
                         },
                       ],

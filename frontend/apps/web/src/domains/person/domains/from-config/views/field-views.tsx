@@ -12,7 +12,6 @@ import {
   SearchableInfiniteStreamView,
   InfiniteStreamMultiselectView,
   BaseEnumContext,
-  MaybeBooleanView,
   ListFieldView,
   unit,
   Value,
@@ -47,28 +46,6 @@ export const MostUglyValidationDebugView = (props: {
   );
 
 export const PersonFieldViews = {
-  maybeBoolean: {
-    defaultMaybeBoolean:
-      <Context extends FormLabel, ForeignMutationsExpected>(): MaybeBooleanView<
-        Context,
-        ForeignMutationsExpected
-      > =>
-      (props) => (
-        <>
-          {props.context.label && <h3>{props.context.label}</h3>}
-          <input
-            disabled={props.context.disabled}
-            type="checkbox"
-            checked={props.context.value}
-            onChange={(e) =>
-              props.foreignMutations.setNewValue(e.currentTarget.checked)
-            }
-          />
-          {props.context.value == undefined ? "*" : undefined}
-          <MostUglyValidationDebugView {...props} />
-        </>
-      ),
-  },
   boolean: {
     defaultBoolean:
       <Context extends FormLabel, ForeignMutationsExpected>(): BooleanView<

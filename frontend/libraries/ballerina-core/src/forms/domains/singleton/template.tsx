@@ -87,7 +87,6 @@ export const Form = <
               > & { disabled: boolean }
             >((_) => {
               // disabled flag is passed in from the wrapping container when mapping over fields
-              console.log("config[field] context", field, _);
               const visibilitiesFromParent =
                 _.visibilities?.kind == "form"
                   ? _.visibilities?.fields.get(field as string)!

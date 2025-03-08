@@ -183,39 +183,9 @@
     },
     "Person": {
       "fields": {
-        "name": "string",
-        "surname": "string",
-        "birthday": "Date",
-        "category": "injectedCategory",
         "favoriteColor": {
           "fun": "SingleSelection",
           "args": ["ColorRef"]
-        },
-        "interests": {
-          "fun": "MultiSelection",
-          "args": ["InterestRef"]
-        },
-        "emails": {
-          "fun": "List",
-          "args": ["string"]
-        },
-        "permissions": {
-          "fun": "Map",
-          "args": [
-            {
-              "fun": "SingleSelection",
-              "args": ["PermissionRef"]
-            },
-            "boolean"
-          ]
-        },
-        "homeCity": {
-          "fun": "SingleSelection",
-          "args": ["CityRef"]
-        },
-        "departments": {
-          "fun": "MultiSelection",
-          "args": ["DepartmentRef"]
         }
       }
     }
@@ -347,79 +317,18 @@
     "person": {
       "type": "Person",
       "fields": {
-        "name": {
-          "label": "first name",
-          "tooltip": "Any name will do",
-          "renderer": "defaultString"
-        },
-        "surname": {
-          "label": "last name",
-          "renderer": "defaultString"
-        },
-        "birthday": {
-          "label": "birthday",
-          "renderer": "defaultDate"
-        },
-        "category": {
-          "label": "category",
-          "renderer": "defaultCategory"
-        },
         "favoriteColor": {
           "renderer": "defaultEnum",
           "options": "colors"
-        },
-        "interests": {
-          "renderer": "defaultEnumMultiselect",
-          "options": "interests"
-        },
-        "emails": {
-          "label": "emails",
-          "renderer": "defaultList",
-          "elementRenderer": {
-            "label": "email",
-            "renderer": "defaultString"
-          }
-        },
-        "permissions": {
-          "label": "permissions",
-          "renderer": "defaultMap",
-          "keyRenderer": {
-            "label": "permission",
-            "renderer": "defaultEnum",
-            "options": "permissions"
-          },
-          "valueRenderer": {
-            "label": "granted",
-            "renderer": "defaultBoolean"
-          }
-        },
-        "homeCity": {
-          "renderer": "defaultInfiniteStream",
-          "stream": "cities"
-        },
-        "departments": {
-          "label": "departments",
-          "renderer": "defaultInfiniteStreamMultiselect",
-          "stream": "departments"
         }
       },
       "tabs": {
         "main": {
           "columns": {
-            "demographics": {
-              "groups": {
-                "main": ["name", "surname", "category", "birthday", "graduationDate"]
-              }
-            },
             "mailing": {
               "groups": {
                 "main": [
-                  "favoriteColor",
-                  "interests",
-                  "emails",
-                  "permissions",
-                  "homeCity",
-                  "departments"
+                  "favoriteColor"
                 ]
               }
             }

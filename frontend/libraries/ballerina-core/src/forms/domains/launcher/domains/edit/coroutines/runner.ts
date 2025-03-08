@@ -43,7 +43,6 @@ export const editFormRunner = <FS>() => {
           () =>
             current.api.get(current.entityId).then((raw) => {
               const x = current.fromApiParser(raw);
-              console.log("x", x.fields.toJS());
               return x;
             }),
           (_) => "transient failure",

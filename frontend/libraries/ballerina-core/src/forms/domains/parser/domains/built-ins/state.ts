@@ -134,14 +134,14 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
         "date",
         {
           renderers: Set(["date"]),
-          defaultValue: PredicateValue.Default.date(new Date()),
+          defaultValue: PredicateValue.Default.date(),
         },
       ] as [string, PrimitiveBuiltIn],
       [
         "Date",
         {
           renderers: Set(["date"]),
-          defaultValue: PredicateValue.Default.date(new Date()),
+          defaultValue: PredicateValue.Default.date(),
         },
       ] as [string, PrimitiveBuiltIn],
       [
@@ -185,7 +185,15 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
         string,
         GenericBuiltIn
       ],
-      ["Option", { defaultValue: PredicateValue.Default.option(false, PredicateValue.Default.unit()) }] as [string, GenericBuiltIn],
+      [
+        "Option",
+        {
+          defaultValue: PredicateValue.Default.option(
+            false,
+            PredicateValue.Default.unit()
+          ),
+        },
+      ] as [string, GenericBuiltIn],
     ]),
     renderers: {
       boolean: Set(),
@@ -395,18 +403,11 @@ export const toAPIRawValue =
     formState: any,
     checkKeys: boolean
   ): ValueOrErrors<any, string> => {
+    console.debug("toAPIRaw");
+    console.debug("raw", raw);
+    console.debug("t", t);
+    console.debug("--------------------------------");
     if (t.kind == "primitive") {
-      if (t.value == "Date") {
-        if (!PredicateValue.Operations.IsDate(raw)) {
-          return ValueOrErrors.Default.throwOne(`Date expected but got ${raw}`);
-        }
-        return ValueOrErrors.Operations.Return(
-          converters[t.value].toAPIRawValue([
-            raw.value,
-            formState.modifiedByUser,
-          ])
-        );
-      }
       return ValueOrErrors.Operations.Return(
         converters[t.value as string | keyof T].toAPIRawValue([
           raw,
@@ -459,16 +460,18 @@ export const toAPIRawValue =
             `CollectionReference or EnumReference expected but got ${rawValue}`
           );
         }
+
         const rawToCollectionSelection: CollectionSelection<
           CollectionReference | EnumReference
         > = raw.isSome
           ? Sum.Default.left(rawValue)
           : Sum.Default.right("no selection");
-        const result = converters[t.value].toAPIRawValue([
-          rawToCollectionSelection,
-          formState.modifiedByUser,
-        ]);
-        return result;
+        return ValueOrErrors.Operations.Return(
+          converters[t.value].toAPIRawValue([
+            rawToCollectionSelection,
+            formState.modifiedByUser,
+          ])
+        );
       }
       if (t.value == "MultiSelection") {
         if (!PredicateValue.Operations.IsRecord(raw)) {
@@ -484,10 +487,12 @@ export const toAPIRawValue =
           }
         );
 
-        return converters[t.value].toAPIRawValue([
-          rawValue,
-          formState.modifiedByUser,
-        ]);
+        return ValueOrErrors.Operations.Return(
+          converters[t.value].toAPIRawValue([
+            rawValue,
+            formState.modifiedByUser,
+          ])
+        );
       }
       if (t.value == "List") {
         if (!PredicateValue.Operations.IsTuple(raw)) {
@@ -508,7 +513,9 @@ export const toAPIRawValue =
             )
           )
         ).Then((values) =>
-          converters["List"].toAPIRawValue([values, formState.modifiedByUser])
+          ValueOrErrors.Default.return(
+            converters["List"].toAPIRawValue([values, formState.modifiedByUser])
+          )
         );
       }
       if (t.value == "Map") {
@@ -567,10 +574,12 @@ export const toAPIRawValue =
               "Keys in the map are not unique"
             );
           }
-          return converters["Map"].toAPIRawValue([
-            values,
-            formState.modifiedByUser,
-          ]);
+          return ValueOrErrors.Operations.Return(
+            converters["Map"].toAPIRawValue([
+              values,
+              formState.modifiedByUser,
+            ])
+          );
         });
       }
     }

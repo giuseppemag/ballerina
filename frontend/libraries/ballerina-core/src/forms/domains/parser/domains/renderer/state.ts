@@ -25,6 +25,7 @@ import {
   ListForm,
   MapFieldState,
   MapForm,
+  Maybe,
   NumberForm,
   ParsedForms,
   ParsedType,
@@ -37,7 +38,6 @@ import {
   unit,
   Unit,
   Value,
-  ValueDate,
   ValueOption,
   ValueRecord,
 } from "../../../../../../main";
@@ -495,8 +495,6 @@ export const ParsedRenderer = {
                           renderer: MapForm<
                             any,
                             any,
-                            any,
-                            any,
                             any & FormLabel,
                             Unit
                           >(
@@ -534,8 +532,6 @@ export const ParsedRenderer = {
                             parsedRenderer.type
                           ),
                           initialState: MapFieldState<
-                            any,
-                            any,
                             any,
                             any
                           >().Default(Map()),
@@ -588,7 +584,7 @@ export const ParsedRenderer = {
       if (viewKind == "date")
         return DateForm<any & FormLabel, Unit>()
           .withView(formViews[viewKind][viewName]())
-          .mapContext<any & DateFormState & Value<ValueDate>>((_) => ({
+          .mapContext<any & DateFormState & Value<Maybe<Date>>>((_) => ({
             ..._,
             label,
             tooltip,
@@ -616,7 +612,6 @@ export const ParsedRenderer = {
         return EnumForm<any & FormLabel & BaseEnumContext, Unit>()
           .withView(formViews[viewKind][viewName]())
           .mapContext<any & EnumFormState & ValueOption>((_) => {
-            console.log("rendererConfig context", _);
             return {
               ..._,
               label,
@@ -658,19 +653,17 @@ export const ParsedRenderer = {
           }));
       if (viewKind == "streamSingleSelection")
         return SearchableInfiniteStreamForm<
-          CollectionReference,
           any & FormLabel,
           Unit
         >()
           .withView(formViews[viewKind][viewName]())
           .mapContext<
             any &
-              SearchableInfiniteStreamState<CollectionReference> &
+              SearchableInfiniteStreamState &
               Value<CollectionSelection<CollectionReference>>
           >((_) => ({ ..._, label, tooltip, details }));
       if (viewKind == "streamMultiSelection")
         return InfiniteMultiselectDropdownForm<
-          CollectionReference,
           any & FormLabel,
           Unit
         >()
@@ -679,7 +672,7 @@ export const ParsedRenderer = {
             any &
               FormLabel &
               CommonFormState &
-              SearchableInfiniteStreamState<CollectionReference> &
+              SearchableInfiniteStreamState &
               Value<OrderedMap<Guid, CollectionReference>>
           >((_) => ({
             ..._,
@@ -751,7 +744,7 @@ export const ParsedRenderer = {
           viewType == "streamMultiSelection") &&
         renderer.kind == "stream"
       ) {
-        return SearchableInfiniteStreamState<any>().Default(
+        return SearchableInfiniteStreamState().Default(
           "",
           (InfiniteStreamSources as any)(renderer.stream)
         );

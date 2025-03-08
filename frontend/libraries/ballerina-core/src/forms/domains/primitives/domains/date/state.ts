@@ -4,7 +4,6 @@ import {
   simpleUpdater,
   simpleUpdaterWithChildren,
   Value,
-  ValueDate,
 } from "../../../../../../main";
 import { View } from "../../../../../template/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
@@ -33,10 +32,10 @@ export type DateView<
   Context extends FormLabel,
   ForeignMutationsExpected,
 > = View<
-  Context & Value<ValueDate> & DateFormState & { disabled: boolean },
+  Context & Value<Maybe<Date>> & DateFormState & { disabled: boolean },
   DateFormState,
   ForeignMutationsExpected & {
-    onChange: OnChange<ValueDate>;
+    onChange: OnChange<Date>;
     setNewValue: SimpleCallback<Maybe<string>>;
   }
 >;

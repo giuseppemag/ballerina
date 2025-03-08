@@ -97,14 +97,14 @@ const entityApis: EntityApis = {
             //     y: Math.floor(Math.random() * 100),
             //   },
             // },
-            // category: ["child", "adult", "senior"][
-            //   Math.round(Math.random() * 10) % 3
-            // ],
+            category: ["child", "adult", "senior"][
+              Math.round(Math.random() * 10) % 3
+            ],
             name: faker.person.firstName(),
             surname: faker.person.lastName(),
-            // birthday: new Date(
-            //   Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45,
-            // ).toISOString(),
+            birthday: new Date(
+              Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45
+            ).toISOString(),
             // subscribeToNewsletter: Math.random() > 0.5,
             favoriteColor: {
               Value: { Value: colors[Math.round(Math.random() * 10) % 3] },
@@ -152,7 +152,7 @@ const entityApis: EntityApis = {
             // ],
             emails: ["john@doe.it", "johnthedon@doe.com"],
             homeCity: {
-              Value: { Value: { Value: faker.location.city(), IsSome: true } },
+              Value: { Id: v4(), DisplayValue: faker.location.city() },
               IsSome: true,
             },
             // addressesWithLabel: [
