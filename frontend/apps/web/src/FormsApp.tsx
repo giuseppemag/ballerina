@@ -46,7 +46,7 @@ export const FormsApp = (props: {}) => {
   const [configFormsParser, setConfigFormsParser] = useState(
     FormsParserState.Default(),
   );
-  const [formToShow, setFormToShow] = useState(1);
+  const [formToShow, setFormToShow] = useState(0);
   const numForms = 3;
   const [personCreateFormState, setPersonCreateFormState] = useState(
     FormRunnerState.Default(),
@@ -207,7 +207,7 @@ export const FormsApp = (props: {}) => {
                     setFormToShow(formToShow + 1);
                   }}
                 >
-                  Show next formx
+                  Show next form
                 </button>
                 <InstantiedPersonFormsParserTemplate
                   context={{

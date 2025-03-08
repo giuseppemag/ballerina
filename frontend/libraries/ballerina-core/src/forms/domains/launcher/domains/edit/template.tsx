@@ -13,26 +13,26 @@ import {
   EditFormWritableState,
 } from "./state";
 
-export type EditFormView<E, FS> = Template<
-  EditFormContext<E, FS> & EditFormWritableState<E, FS>,
-  EditFormWritableState<E, FS>,
-  EditFormForeignMutationsExpected<E, FS> & { onSubmit: SimpleCallback<void> },
+export type EditFormView<T, FS> = Template<
+  EditFormContext<T, FS> & EditFormWritableState<T, FS>,
+  EditFormWritableState<T, FS>,
+  EditFormForeignMutationsExpected<T, FS> & { onSubmit: SimpleCallback<void> },
   {
     actualForm: JSX.Element | undefined;
   }
 >;
-export type EditFormTemplate<E, FS> = Template<
-  EditFormContext<E, FS> & EditFormWritableState<E, FS>,
-  EditFormWritableState<E, FS>,
-  EditFormForeignMutationsExpected<E, FS>,
-  EditFormView<E, FS>
+export type EditFormTemplate<T, FS> = Template<
+  EditFormContext<T, FS> & EditFormWritableState<T, FS>,
+  EditFormWritableState<T, FS>,
+  EditFormForeignMutationsExpected<T, FS>,
+  EditFormView<T, FS>
 >;
-export const EditFormTemplate = <E, FS>(): EditFormTemplate<E, FS> =>
+export const EditFormTemplate = <T, FS>(): EditFormTemplate<T, FS> =>
   Template.Default<
-    EditFormContext<E, FS> & EditFormWritableState<E, FS>,
-    EditFormWritableState<E, FS>,
-    EditFormForeignMutationsExpected<E, FS>,
-    EditFormView<E, FS>
+    EditFormContext<T, FS> & EditFormWritableState<T, FS>,
+    EditFormWritableState<T, FS>,
+    EditFormForeignMutationsExpected<T, FS>,
+    EditFormView<T, FS>
   >((props) => {
     const visibilities =
       props.context.customFormState.predicateEvaluations.kind == "value" &&
@@ -55,14 +55,14 @@ export const EditFormTemplate = <E, FS>(): EditFormTemplate<E, FS> =>
           foreignMutations: {
             ...props.foreignMutations,
             onSubmit: () => {
-              props.setState(EditFormState<E, FS>().Updaters.Template.submit());
+              props.setState(EditFormState<T, FS>().Updaters.Template.submit());
             },
           },
           view: {
             ...props.view,
             actualForm:
               !AsyncState.Operations.hasValue(props.context.entity.sync) ||
-              props.context.globalConfiguration.kind == "r"
+              !AsyncState.Operations.hasValue(props.context.globalConfiguration.sync)
                 ? undefined
                 : props.context.actualForm({
                     context: {
@@ -82,13 +82,10 @@ export const EditFormTemplate = <E, FS>(): EditFormTemplate<E, FS> =>
                     foreignMutations: {
                       onChange: (e) => {
                         props.setState(
-                          EditFormState<E, FS>().Updaters.Template.entity(e),
+                          EditFormState<T, FS>().Updaters.Template.entity(e),
                         );
                         props.setState(
-                          EditFormState<
-                            E,
-                            FS
-                          >().Updaters.Template.recalculatePredicates(),
+                          EditFormState<T, FS>().Updaters.Template.recalculatePredicates(),
                         );
                       },
                     },
@@ -99,7 +96,7 @@ export const EditFormTemplate = <E, FS>(): EditFormTemplate<E, FS> =>
       </>
     );
   }).any([
-    editFormRunner<E, FS>().mapContextFromProps((props) => ({
+    editFormRunner<T, FS>().mapContextFromProps((props) => ({
       ...props.context,
       apiHandlers: {
         onGetSuccess: props.foreignMutations.apiHandlers?.onGetSuccess,

@@ -21,155 +21,117 @@ import {
 import { CoTypedFactory } from "../../../../../../coroutines/builder";
 import { CreateFormContext, CreateFormWritableState } from "../state";
 
-export const createFormRunner = <E, FS>() => {
+export const createFormRunner = <T, FS>() => {
   const Co = CoTypedFactory<
-    CreateFormContext<E, FS> & CreateFormForeignMutationsExpected<E, FS>,
-    CreateFormWritableState<E, FS>
+    CreateFormContext<T, FS> & CreateFormForeignMutationsExpected<T, FS>,
+    CreateFormWritableState<T, FS>
   >();
 
   const init = Co.GetState().then((current) =>
     Co.Seq([
       Co.SetState(
-        CreateFormState<
-          E,
-          FS
-        >().Updaters.Core.customFormState.children.initApiChecker(
-          ApiResponseChecker.Updaters().toUnchecked(),
-        ),
+        CreateFormState<T, FS>()
+          .Updaters.Core.customFormState.children.initApiChecker(
+            ApiResponseChecker.Updaters().toUnchecked()
+          )
+          .then(
+            CreateFormState<
+              T,
+              FS
+            >().Updaters.Core.customFormState.children.configApiChecker(
+              ApiResponseChecker.Updaters().toUnchecked()
+            )
+          )
       ),
       Co.All([
-        Synchronize<Unit, E>(
-          () => current.api.default(),
+        Synchronize<Unit, PredicateValue>(
+          () => current.api.default().then((raw) => current.fromApiParser(raw)),
           (_) => "transient failure",
           5,
-          50,
-        ).embed(
-          (_) => _.rawEntity,
-          CreateFormState<E, FS>().Updaters.Core.rawEntity,
-        ),
+          50
+        ).embed((_) => _.entity, CreateFormState<T, FS>().Updaters.Core.entity),
         Synchronize<Unit, any>(
-          () => current.api.getGlobalConfiguration(),
+          () => current.api.getGlobalConfiguration().then((raw) => current.parseGlobalConfiguration(raw)),
           (_) => "transient failure",
           5,
-          50,
+          50
         ).embed(
-          (_) => _.rawGlobalConfiguration,
-          CreateFormState<E, FS>().Updaters.Core.rawGlobalConfiguration,
+          (_) => _.globalConfiguration,
+          CreateFormState<T, FS>().Updaters.Core.globalConfiguration
         ),
       ]),
       HandleApiResponse<
-        CreateFormWritableState<E, FS>,
-        CreateFormContext<E, FS>,
+        CreateFormWritableState<T, FS>,
+        CreateFormContext<T, FS>,
         any
-      >((_) => _.rawEntity.sync, {
+      >((_) => _.entity.sync, {
         handleSuccess: current.apiHandlers?.onDefaultSuccess,
         handleError: current.apiHandlers?.onDefaultError,
       }),
       Co.SetState(
         CreateFormState<
-          E,
+          T,
           FS
         >().Updaters.Core.customFormState.children.initApiChecker(
-          ApiResponseChecker.Updaters().toChecked(),
-        ),
+          ApiResponseChecker.Updaters().toChecked()
+        )
       ),
       HandleApiResponse<
-        CreateFormWritableState<E, FS>,
-        CreateFormContext<E, FS>,
+        CreateFormWritableState<T, FS>,
+        CreateFormContext<T, FS>,
         any
-      >((_) => _.rawGlobalConfiguration.sync, {
+      >((_) => _.globalConfiguration.sync, {
         handleSuccess: current.apiHandlers?.onConfigSuccess,
         handleError: current.apiHandlers?.onConfigError,
       }),
       Co.SetState(
         CreateFormState<
-          E,
+          T,
           FS
         >().Updaters.Core.customFormState.children.configApiChecker(
-          ApiResponseChecker.Updaters().toChecked(),
-        ),
+          ApiResponseChecker.Updaters().toChecked()
+        )
       ),
-    ]),
+    ])
   );
-
-  const parseEntity = Co.GetState().then((current) => {
-    if (current.rawEntity.sync.kind == "loaded") {
-      const parsed = current.fromApiParser(current.rawEntity.sync.value);
-      return Synchronize<Unit, any>(
-        () => Promise.resolve(parsed),
-        (_) => "transient failure",
-        5,
-        50,
-      ).embed((_) => _.entity, CreateFormState<E, FS>().Updaters.Core.entity);
-    }
-    return Co.Do(() => {});
-  });
-
-  const parseGlobalConfiguration = Co.GetState().then((current) => {
-    if (current.rawGlobalConfiguration.sync.kind == "loaded") {
-      const parsed = current.parseGlobalConfiguration(
-        current.rawGlobalConfiguration.sync.value,
-      );
-      if (parsed.kind == "value")
-        return Co.SetState(
-          CreateFormState<E, FS>().Updaters.Core.globalConfiguration(
-            replaceWith(Sum.Default.left(parsed.value)),
-          ),
-        );
-    }
-    return Co.Do(() => {});
-  });
 
   const calculateInitialVisibilities = Co.GetState().then((current) => {
     if (
-      current.rawEntity.sync.kind == "loaded" &&
-      current.rawGlobalConfiguration.sync.kind == "loaded"
+      current.entity.sync.kind == "loaded" &&
+      current.globalConfiguration.sync.kind == "loaded"
     ) {
-      const parsedRootPredicate = PredicateValue.Operations.parse(
-        current.rawEntity.sync.value,
-        current.formType,
-        current.types,
-      );
-
-      if (
-        parsedRootPredicate.kind == "errors" ||
-        current.globalConfiguration.kind == "r"
-      )
+      if (current.globalConfiguration.sync.value.kind == "errors") {
+        console.error("error parsing bindings");
         return Co.Do(() => {});
-      if (
-        typeof parsedRootPredicate.value != "object" ||
-        !("kind" in parsedRootPredicate.value) ||
-        parsedRootPredicate.value.kind != "record"
-      )
-        return Co.Do(() => {});
+      }
       return Co.SetState(
         CreateFormState<
-          E,
+          T,
           FS
         >().Updaters.Core.customFormState.children.predicateEvaluations(
           replaceWith(
             Debounced.Default(
               evaluatePredicates(
                 {
-                  global: current.globalConfiguration.value,
-                  types: current.types,
+                  global: current.globalConfiguration.sync.value.value,
                   visibilityPredicateExpressions:
                     current.visibilityPredicateExpressions,
                   disabledPredicatedExpressions:
                     current.disabledPredicatedExpressions,
                 },
-                parsedRootPredicate.value,
-              ),
-            ),
-          ),
-        ),
+                // TODO - value or errors
+                current.entity.sync.value
+              )
+            )
+          )
+        )
       );
     }
     return Co.Do(() => {});
   });
 
   const PredicatesCo = CoTypedFactory<
-    CreateFormWritableState<E, FS> & CreateFormContext<E, FS>,
+    CreateFormWritableState<T, FS> & CreateFormContext<T, FS>,
     ValueOrErrors<
       {
         visiblityPredicateEvaluations: FormFieldPredicateEvaluation;
@@ -188,181 +150,152 @@ export const createFormRunner = <E, FS>() => {
         },
         string
       >,
-      CreateFormContext<E, FS> & CreateFormWritableState<E, FS>
+      CreateFormContext<T, FS> & CreateFormWritableState<T, FS>
     >(
       PredicatesCo.GetState().then((current) => {
         if (
-          current.globalConfiguration.kind == "r" ||
+          current.globalConfiguration.sync.kind != "loaded" ||
           current.entity.sync.kind != "loaded"
         ) {
           return PredicatesCo.Return<ApiResultStatus>("permanent failure");
         }
-        const parsedEntity = current.toApiParser(
-          current.entity.sync.value,
-          current,
-          false,
-        );
-        if (parsedEntity.kind == "errors") {
-          console.error("parsedEntity", parsedEntity);
+        if (current.globalConfiguration.sync.value.kind == "errors") {
+          console.error("error parsing bindings");
           return PredicatesCo.Return<ApiResultStatus>("permanent failure");
         }
-        const parseRootPredicate = PredicateValue.Operations.parse(
-          parsedEntity.value,
-          current.formType,
-          current.types,
-        );
-        if (parseRootPredicate.kind == "errors") {
-          console.error("parseRootPredicate", parseRootPredicate);
-          return PredicatesCo.Return<ApiResultStatus>("permanent failure");
-        }
+
         return PredicatesCo.SetState(
           replaceWith(
             evaluatePredicates(
               {
-                global: current.globalConfiguration.value,
-                types: current.types,
+                global: current.globalConfiguration.sync.value.value,
                 visibilityPredicateExpressions:
                   current.visibilityPredicateExpressions,
                 disabledPredicatedExpressions:
                   current.disabledPredicatedExpressions,
               },
-              parseRootPredicate.value,
-            ),
-          ),
+              // TODO - value or errors
+              current.entity.sync.value
+            )
+          )
         ).then(() => PredicatesCo.Return<ApiResultStatus>("success"));
       }),
-      50,
+      50
     ).embed(
       (_) => ({ ..._, ..._.customFormState.predicateEvaluations }),
-      CreateFormState<E, FS>().Updaters.Core.customFormState.children
-        .predicateEvaluations,
-    ),
+      CreateFormState<T, FS>().Updaters.Core.customFormState.children
+        .predicateEvaluations
+    )
   );
 
+  const SynchronizeCo = CoTypedFactory<
+    CreateFormWritableState<T, FS>,
+    Synchronized<Unit, ApiErrors>
+  >();
+
   const synchronize = Co.Repeat(
-    Co.GetState().then((current) =>
+    Co.GetState().then((createFormState) =>
       Co.Seq([
         Co.SetState(
           CreateFormState<
-            E,
+            T,
             FS
           >().Updaters.Core.customFormState.children.createApiChecker(
-            ApiResponseChecker.Updaters().toUnchecked(),
-          ),
+            ApiResponseChecker.Updaters().toUnchecked()
+          )
         ),
-        Debounce<Synchronized<Unit, ApiErrors>, CreateFormWritableState<E, FS>>(
-          (() => {
+        Debounce<Synchronized<Unit, ApiErrors>, CreateFormWritableState<T, FS>>(
+          SynchronizeCo.GetState().then((current) => {
             if (current.entity.sync.kind != "loaded") {
-              return Synchronize<
-                Unit,
-                ApiErrors,
-                CreateFormWritableState<E, FS>
-              >(
+              return Synchronize<Unit, ApiErrors, CreateFormWritableState<T, FS>>(
                 (_) => Promise.resolve([]),
                 (_) => "transient failure",
                 5,
-                50,
+                50
               );
             }
-            const parsed = current.toApiParser(
+            const parsed = createFormState.toApiParser(
               current.entity.sync.value,
               current,
-              true,
+              true
             );
 
-            return Synchronize<Unit, ApiErrors, CreateFormWritableState<E, FS>>(
+            return Synchronize<Unit, ApiErrors, CreateFormWritableState<T, FS>>(
               (_) =>
                 parsed.kind == "errors"
                   ? Promise.reject(parsed.errors)
-                  : current.api.create(parsed),
+                  : createFormState.api.create(parsed),
               (_) => "transient failure",
               parsed.kind == "errors" ? 1 : 5,
-              50,
+              50
             );
-          })(),
-          15,
+          }),
+          15
         ).embed(
           (_) => ({ ..._, ..._.customFormState.apiRunner }),
-          CreateFormState<E, FS>().Updaters.Core.customFormState.children
-            .apiRunner,
+          CreateFormState<T, FS>().Updaters.Core.customFormState.children
+            .apiRunner
         ),
         HandleApiResponse<
-          CreateFormWritableState<E, FS>,
-          CreateFormContext<E, FS>,
+          CreateFormWritableState<T, FS>,
+          CreateFormContext<T, FS>,
           ApiErrors
         >((_) => _.customFormState.apiRunner.sync, {
-          handleSuccess: current.apiHandlers?.onCreateSuccess,
-          handleError: current.apiHandlers?.onCreateError,
+          handleSuccess: createFormState.apiHandlers?.onCreateSuccess,
+          handleError: createFormState.apiHandlers?.onCreateError,
         }),
         Co.SetState(
           CreateFormState<
-            E,
+            T,
             FS
           >().Updaters.Core.customFormState.children.createApiChecker(
-            ApiResponseChecker.Updaters().toChecked(),
-          ),
+            ApiResponseChecker.Updaters().toChecked()
+          )
         ),
-      ]),
-    ),
+      ])
+    )
   );
 
-  return Co.Template<CreateFormForeignMutationsExpected<E, FS>>(init, {
+  return Co.Template<CreateFormForeignMutationsExpected<T, FS>>(init, {
     interval: 15,
     runFilter: (props) =>
-      !AsyncState.Operations.hasValue(props.context.rawEntity.sync) ||
-      !AsyncState.Operations.hasValue(
-        props.context.rawGlobalConfiguration.sync,
-      ) ||
+      !AsyncState.Operations.hasValue(props.context.entity.sync) ||
+      !AsyncState.Operations.hasValue(props.context.globalConfiguration.sync) ||
       !ApiResponseChecker.Operations.checked(
-        props.context.customFormState.initApiChecker,
+        props.context.customFormState.initApiChecker
       ),
   }).any([
-    Co.Template<CreateFormForeignMutationsExpected<E, FS>>(parseEntity, {
-      interval: 15,
-      runFilter: (props) =>
-        props.context.rawEntity.sync.kind == "loaded" &&
-        !AsyncState.Operations.hasValue(props.context.entity.sync),
-    }),
-    Co.Template<CreateFormForeignMutationsExpected<E, FS>>(
-      parseGlobalConfiguration,
-      {
-        interval: 15,
-        runFilter: (props) =>
-          props.context.rawGlobalConfiguration.sync.kind == "loaded" &&
-          props.context.globalConfiguration.kind == "r",
-      },
-    ),
-    Co.Template<CreateFormForeignMutationsExpected<E, FS>>(
+    Co.Template<CreateFormForeignMutationsExpected<T, FS>>(
       calculateInitialVisibilities,
       {
         interval: 15,
         runFilter: (props) =>
-          props.context.rawEntity.sync.kind == "loaded" &&
-          props.context.globalConfiguration.kind == "l",
-      },
+          props.context.entity.sync.kind == "loaded" &&
+          props.context.globalConfiguration.sync.kind == "loaded",
+      }
     ),
-    Co.Template<CreateFormForeignMutationsExpected<E, FS>>(synchronize, {
+    Co.Template<CreateFormForeignMutationsExpected<T, FS>>(synchronize, {
       interval: 15,
       runFilter: (props) =>
-        props.context.entity.sync.kind === "loaded" &&
+        props.context.entity.sync.kind == "loaded" &&
         (Debounced.Operations.shouldCoroutineRun(
-          props.context.customFormState.apiRunner,
+          props.context.customFormState.apiRunner
         ) ||
           !ApiResponseChecker.Operations.checked(
-            props.context.customFormState.createApiChecker,
+            props.context.customFormState.createApiChecker
           )),
     }),
-    Co.Template<CreateFormForeignMutationsExpected<E, FS>>(
+    Co.Template<CreateFormForeignMutationsExpected<T, FS>>(
       calculateVisibilities,
       {
         interval: 15,
         runFilter: (props) =>
           props.context.entity.sync.kind == "loaded" &&
-          props.context.globalConfiguration.kind == "l" &&
+          props.context.globalConfiguration.sync.kind == "loaded" &&
           Debounced.Operations.shouldCoroutineRun(
-            props.context.customFormState.predicateEvaluations,
+            props.context.customFormState.predicateEvaluations
           ),
-      },
+      }
     ),
   ]);
 };

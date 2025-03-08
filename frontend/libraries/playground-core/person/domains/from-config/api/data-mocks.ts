@@ -151,10 +151,6 @@ const entityApis: EntityApis = {
               },
             ],
             emails: ["john@doe.it", "johnthedon@doe.com"],
-            homeCity: {
-              Value: { Id: v4(), DisplayValue: faker.location.city() },
-              IsSome: true,
-            },
             addressesWithLabel: [
               {
                 key: "home",
@@ -287,7 +283,7 @@ const entityApis: EntityApis = {
               category: "",
               name: "",
               surname: "",
-              birthday: "",
+              birthday: "01/01/2000",
               subscribeToNewsletter: false,
               favoriteColor: { Value: { Value: null }, IsSome: false },
               gender: { IsSome: false, Value: { Value: null } },
