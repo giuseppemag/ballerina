@@ -267,8 +267,6 @@ export const fromAPIRawValue =
     injectedPrimitives?: InjectedPrimitives<T>
   ) =>
   (raw: any): PredicateValue => {
-    console.debug("fromAPIRawValue raw", raw);
-    console.debug("fromAPIRawValue t", t);
     if (raw == undefined) {
       return defaultValue(types, builtIns, injectedPrimitives)(t);
     }

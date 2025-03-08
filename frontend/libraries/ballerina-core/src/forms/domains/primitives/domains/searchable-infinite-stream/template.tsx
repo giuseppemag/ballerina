@@ -7,6 +7,8 @@ import {
   replaceWith,
   BasicFun,
   ValidateRunner,
+  ValueOption,
+  PredicateValue,
 } from "../../../../../../main";
 import { CoTypedFactory } from "../../../../../coroutines/builder";
 import { Debounced } from "../../../../../debounced/state";
@@ -14,7 +16,6 @@ import { InfiniteStreamState } from "../../../../../infinite-data-stream/state";
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
 import { CollectionReference } from "../../../collection/domains/reference/state";
-import { CollectionSelection } from "../../../collection/domains/selection/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import {
   FieldValidation,
@@ -27,21 +28,20 @@ import {
 } from "./state";
 
 export const SearchableInfiniteStreamForm = <
-  Element extends CollectionReference,
   Context extends FormLabel,
   ForeignMutationsExpected,
 >(
-  validation?: BasicFun<CollectionSelection<Element>, Promise<FieldValidation>>,
+  validation?: BasicFun<ValueOption, Promise<FieldValidation>>,
 ) => {
   const Co = CoTypedFactory<
-    Context & Value<CollectionSelection<Element>> & { disabled: boolean },
-    SearchableInfiniteStreamState<Element>
+    Context & Value<ValueOption> & { disabled: boolean },
+    SearchableInfiniteStreamState
   >();
   const DebouncerCo = CoTypedFactory<
     Context & { onDebounce: SimpleCallback<void> } & Value<
-        CollectionSelection<Element>
+        ValueOption
       >,
-    SearchableInfiniteStreamState<Element>
+    SearchableInfiniteStreamState
   >();
   const DebouncedCo = CoTypedFactory<
     { onDebounce: SimpleCallback<void> },
@@ -57,7 +57,7 @@ export const SearchableInfiniteStreamForm = <
         250,
       ).embed(
         (_) => ({ ..._, ..._.customFormState.searchText }),
-        SearchableInfiniteStreamState<Element>().Updaters.Core.customFormState
+        SearchableInfiniteStreamState().Updaters.Core.customFormState
           .children.searchText,
       ),
       DebouncerCo.Wait(0),
@@ -65,7 +65,7 @@ export const SearchableInfiniteStreamForm = <
   );
   const debouncerRunner = DebouncerCo.Template<
     ForeignMutationsExpected & {
-      onChange: OnChange<CollectionSelection<Element>>;
+      onChange: OnChange<ValueOption>;
     }
   >(debouncer, {
     interval: 15,
@@ -76,12 +76,12 @@ export const SearchableInfiniteStreamForm = <
   });
   const loaderRunner = Co.Template<
     ForeignMutationsExpected & {
-      onChange: OnChange<CollectionSelection<Element>>;
+      onChange: OnChange<ValueOption>;
     }
   >(
-    InfiniteStreamLoader<Element>().embed(
+    InfiniteStreamLoader<CollectionReference>().embed(
       (_) => _.customFormState.stream,
-      SearchableInfiniteStreamState<Element>().Updaters.Core.customFormState
+      SearchableInfiniteStreamState().Updaters.Core.customFormState
         .children.stream,
     ),
     {
@@ -94,12 +94,12 @@ export const SearchableInfiniteStreamForm = <
   );
 
   return Template.Default<
-    Context & Value<CollectionSelection<Element>> & { disabled: boolean },
-    SearchableInfiniteStreamState<Element>,
+    Context & Value<ValueOption> & { disabled: boolean },
+    SearchableInfiniteStreamState,
     ForeignMutationsExpected & {
-      onChange: OnChange<CollectionSelection<Element>>;
+      onChange: OnChange<ValueOption>;
     },
-    SearchableInfiniteStreamView<Element, Context, ForeignMutationsExpected>
+    SearchableInfiniteStreamView<Context, ForeignMutationsExpected>
   >((props) => (
     <>
       <props.view
@@ -115,7 +115,7 @@ export const SearchableInfiniteStreamForm = <
           ...props.foreignMutations,
           toggleOpen: () =>
             props.setState(
-              SearchableInfiniteStreamState<Element>()
+              SearchableInfiniteStreamState()
                 .Updaters.Core.customFormState.children.status(
                   replaceWith(
                     props.context.customFormState.status == "closed"
@@ -126,8 +126,8 @@ export const SearchableInfiniteStreamForm = <
                 .then(
                   props.context.customFormState.stream.loadedElements.count() ==
                     0
-                    ? SearchableInfiniteStreamState<Element>().Updaters.Core.customFormState.children.stream(
-                        InfiniteStreamState<Element>().Updaters.Template.loadMore(),
+                    ? SearchableInfiniteStreamState().Updaters.Core.customFormState.children.stream(
+                        InfiniteStreamState<CollectionReference>().Updaters.Template.loadMore(),
                       )
                     : id,
                 ),
@@ -135,34 +135,33 @@ export const SearchableInfiniteStreamForm = <
           clearSelection: () => {
             props.foreignMutations.onChange(
               replaceWith(
-                CollectionSelection<Element>().Default.right("no selection"),
+                PredicateValue.Default.option(false, PredicateValue.Default.unit()),
               ),
               List(),
             );
           },
           setSearchText: (_) =>
             props.setState(
-              SearchableInfiniteStreamState<Element>().Updaters.Template.searchText(
+              SearchableInfiniteStreamState().Updaters.Template.searchText(
                 replaceWith(_),
               ),
             ),
           loadMore: () =>
             props.setState(
-              SearchableInfiniteStreamState<Element>().Updaters.Core.customFormState.children.stream(
-                InfiniteStreamState<Element>().Updaters.Template.loadMore(),
+              SearchableInfiniteStreamState().Updaters.Core.customFormState.children.stream(
+                InfiniteStreamState<CollectionReference>().Updaters.Template.loadMore(),
               ),
             ),
           reload: () =>
             props.setState(
-              SearchableInfiniteStreamState<Element>().Updaters.Template.searchText(
+              SearchableInfiniteStreamState().Updaters.Template.searchText(
                 replaceWith(""),
               ),
             ),
           select: (_) =>
             props.foreignMutations.onChange(
-              replaceWith<CollectionSelection<Element>>(
-                CollectionSelection<Element>().Default.left(_),
-              ),
+              /// TODO: This won't work, need to handle cases 
+              replaceWith(_),
               List(),
             ),
         }}
@@ -174,8 +173,8 @@ export const SearchableInfiniteStreamForm = <
       ...props.context,
       onDebounce: () =>
         props.setState(
-          SearchableInfiniteStreamState<Element>().Updaters.Core.customFormState.children.stream(
-            InfiniteStreamState<Element>().Updaters.Template.reload(
+          SearchableInfiniteStreamState().Updaters.Core.customFormState.children.stream(
+            InfiniteStreamState<CollectionReference>().Updaters.Template.reload(
               props.context.customFormState.getChunk(
                 props.context.customFormState.searchText.value,
               ),
@@ -185,9 +184,9 @@ export const SearchableInfiniteStreamForm = <
     })),
     ValidateRunner<
       Context & { disabled: boolean },
-      SearchableInfiniteStreamState<Element>,
+      SearchableInfiniteStreamState,
       ForeignMutationsExpected,
-      CollectionSelection<Element>
+      ValueOption
     >(
       validation
         ? (_) =>

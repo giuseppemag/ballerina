@@ -206,6 +206,14 @@
             },
             "boolean"
           ]
+        },
+        "homeCity": {
+          "fun": "SingleSelection",
+          "args": ["CityRef"]
+        },
+        "departments": {
+          "fun": "MultiSelection",
+          "args": ["DepartmentRef"]
         }
       }
     }
@@ -374,6 +382,15 @@
             "label": "granted",
             "renderer": "defaultBoolean"
           }
+        },
+        "homeCity": {
+          "renderer": "defaultInfiniteStream",
+          "stream": "cities"
+        },
+        "departments": {
+          "label": "departments",
+          "renderer": "defaultInfiniteStreamMultiselect",
+          "stream": "departments"
         }
       },
       "tabs": {
@@ -386,7 +403,14 @@
             },
             "mailing": {
               "groups": {
-                "main": ["favoriteColor", "interests", "emails", "permissions"]
+                "main": [
+                  "favoriteColor",
+                  "interests",
+                  "emails",
+                  "permissions",
+                  "homeCity",
+                  "departments"
+                ]
               }
             }
           }

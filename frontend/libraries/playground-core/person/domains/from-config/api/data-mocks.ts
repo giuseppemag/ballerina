@@ -24,14 +24,14 @@ const streamApis: InfiniteStreamSources = (streamName: string) =>
   streamName == "departments"
     ? PersonApi.getDepartments()
     : streamName == "cities"
-      ? AddressApi.getCities()
-      : (_) => (_) => {
-          alert(`Cannot find stream API ${streamName}`);
-          return Promise.resolve({
-            hasMoreValues: false,
-            data: OrderedMap(),
-          });
-        };
+    ? AddressApi.getCities()
+    : (_: any) => (_: any) => {
+        alert(`Cannot find stream API ${streamName}`);
+        return Promise.resolve({
+          hasMoreValues: false,
+          data: OrderedMap(),
+        });
+      };
 const enumApis: EnumOptionsSources = (enumName: string) =>
   enumName == "colors"
     ? () =>
@@ -39,37 +39,37 @@ const enumApis: EnumOptionsSources = (enumName: string) =>
           () => colors.map((_) => ({ Value: _ })),
           undefined,
           1,
-          0,
+          0
         )
     : enumName == "permissions"
-      ? () =>
-          PromiseRepo.Default.mock(
-            () => permissions.map((_) => ({ Value: _ })),
-            undefined,
-            1,
-            0,
-          )
-      : enumName == "genders"
-        ? () =>
-            PromiseRepo.Default.mock(
-              () => genders.map((_) => ({ Value: _ })),
-              undefined,
-              1,
-              0,
-            )
-        : enumName == "interests"
-          ? () =>
-              PromiseRepo.Default.mock(
-                () => interests.map((_) => ({ Value: _ })),
-                undefined,
-                1,
-                0,
-              )
-          : () =>
-              PromiseRepo.Default.mock(() => {
-                alert(`Cannot find enum API ${enumName}`);
-                return [];
-              });
+    ? () =>
+        PromiseRepo.Default.mock(
+          () => permissions.map((_) => ({ Value: _ })),
+          undefined,
+          1,
+          0
+        )
+    : enumName == "genders"
+    ? () =>
+        PromiseRepo.Default.mock(
+          () => genders.map((_) => ({ Value: _ })),
+          undefined,
+          1,
+          0
+        )
+    : enumName == "interests"
+    ? () =>
+        PromiseRepo.Default.mock(
+          () => interests.map((_) => ({ Value: _ })),
+          undefined,
+          1,
+          0
+        )
+    : () =>
+        PromiseRepo.Default.mock(() => {
+          alert(`Cannot find enum API ${enumName}`);
+          return [];
+        });
 const entityApis: EntityApis = {
   create: (apiName: string) =>
     apiName == "person"
@@ -77,7 +77,7 @@ const entityApis: EntityApis = {
           PromiseRepo.Default.mock(() => {
             console.log(
               "person create api post body",
-              JSON.stringify(e, undefined, 2),
+              JSON.stringify(e, undefined, 2)
             );
             return unit;
           })
@@ -121,8 +121,11 @@ const entityApis: EntityApis = {
             //   ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3],
             //   ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3],
             // ],
-            // interests: [{ Value: interests[1] }, { Value: interests[2] }],
-            // departments: [],
+            interests: [{ Value: interests[1] }, { Value: interests[2] }],
+            departments: [
+              { Id: v4(), DisplayValue: "Department 1" },
+              { Id: v4(), DisplayValue: "Department 2" },
+            ],
             // mainAddress: {
             //   street: faker.location.street(),
             //   number: Math.floor(Math.random() * 500),
@@ -148,6 +151,10 @@ const entityApis: EntityApis = {
             //   },
             // ],
             emails: ["john@doe.it", "johnthedon@doe.com"],
+            homeCity: {
+              Value: { Value: { Value: faker.location.city(), IsSome: true } },
+              IsSome: true,
+            },
             // addressesWithLabel: [
             //   {
             //     key: "home",

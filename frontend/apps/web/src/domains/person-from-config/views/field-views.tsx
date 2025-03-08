@@ -19,7 +19,9 @@ import {
   SecretView,
   
   PredicateValue,
+  ValueRecord,
 } from "ballerina-core";
+import { Map } from "immutable";
 import { CategoryView } from "../injected-forms/category";
 
 export const MostUglyValidationDebugView = (props: {
@@ -336,11 +338,9 @@ export const PersonFieldViews = {
   streamSingleSelection: {
     defaultInfiniteStream:
       <
-        Element extends CollectionReference,
         Context extends FormLabel,
         ForeignMutationsExpected
       >(): SearchableInfiniteStreamView<
-        Element,
         Context,
         ForeignMutationsExpected
       > =>
@@ -358,8 +358,8 @@ export const PersonFieldViews = {
               disabled={props.context.disabled}
               onClick={() => props.foreignMutations.toggleOpen()}
             >
-              {props.context.value.kind == "l" &&
-                props.context.value.value.DisplayValue}{" "}
+              {props.context.value.isSome &&
+                (props.context.value.value as ValueRecord).fields.get("DisplayValue") as string}{" "}
               {props.context.customFormState.status == "open" ? "➖" : "➕"}
             </button>
             <button
@@ -388,12 +388,14 @@ export const PersonFieldViews = {
                           <button
                             disabled={props.context.disabled}
                             onClick={() =>
-                              props.foreignMutations.select(element)
+                              props.foreignMutations.select(
+                                PredicateValue.Default.option(true, ValueRecord.Default.fromJSON(element))
+                              )
                             }
                           >
                             {element.DisplayValue}{" "}
-                            {props.context.value.kind == "l" &&
-                            props.context.value.value.Id == element.Id
+                            {props.context.value.isSome &&
+                            (props.context.value.value as ValueRecord).fields.get('Id') == element.Id
                               ? "✅"
                               : ""}
                           </button>
@@ -417,16 +419,15 @@ export const PersonFieldViews = {
   streamMultiSelection: {
     defaultInfiniteStreamMultiselect:
       <
-        Element extends CollectionReference,
         Context extends FormLabel,
         ForeignMutationsExpected
       >(): InfiniteStreamMultiselectView<
-        Element,
         Context,
         ForeignMutationsExpected
       > =>
       (props) =>
-        (
+        {
+          return (
           <>
             {props.context.label && <h3>{props.context.label}</h3>}
             {props.context.details && (
@@ -438,7 +439,7 @@ export const PersonFieldViews = {
               disabled={props.context.disabled}
               onClick={() => props.foreignMutations.toggleOpen()}
             >
-              {props.context.value.map((_) => _.DisplayValue).join(", ")}{" "}
+              {props.context.value.fields.map((_) => (_ as ValueRecord).fields.get("DisplayValue") as string).join(", ")}{" "}
               {props.context.customFormState.status == "open" ? "➖" : "➕"}
             </button>
             <button
@@ -459,19 +460,21 @@ export const PersonFieldViews = {
                   }
                 />
                 <ul>
-                  {props.context.availableOptions.map((element) => (
+                  {props.context.availableOptions.map((element) => {
+                    console.debug('element', element);
+                    return (
                     <li>
                       <button
                         disabled={props.context.disabled}
                         onClick={() =>
-                          props.foreignMutations.toggleSelection(element)
+                          props.foreignMutations.toggleSelection(ValueRecord.Default.fromJSON(element))
                         }
                       >
                         {element.DisplayValue}{" "}
-                        {props.context.value.has(element.Id) ? "✅" : ""}
+                        {props.context.value.fields.has(element.Id) ? "✅" : ""}
                       </button>
                     </li>
-                  ))}
+                  )})}
                 </ul>
               </>
             )}
@@ -491,7 +494,7 @@ export const PersonFieldViews = {
               🔄
             </button>
           </>
-        ),
+        )}
   },
   list: {
     defaultList:
@@ -506,7 +509,6 @@ export const PersonFieldViews = {
       > =>
       (props) =>
         { 
-          console.debug('list PROPS', props.context);
           return (
           <>
             {props.context.label && <h3>{props.context.label}</h3>}

@@ -199,7 +199,7 @@ export const ParseForms =
           defaultValue(formsConfig.types, builtIns, injectedPrimitives),
           injectedPrimitives,
         );
-        const formBuilder = Form<any, any, any, any>().Default<any>();
+        const formBuilder = Form<any, any, any>().Default<any>();
         const form = formBuilder
           .template({
             ...parsedForm.formConfig,
@@ -318,7 +318,7 @@ export type ParsedLaunchers = {
 export type ParsedForms<T> = Map<
   string,
   ParsedForm<T> & {
-    form: EntityFormTemplate<any, any, any, any, any>;
+    form: EntityFormTemplate<any, any, any, any>;
     visibilityPredicateExpressions: FieldPredicateExpressions;
     disabledPredicatedExpressions: FieldPredicateExpressions;
   }
@@ -333,7 +333,7 @@ export type EnumOptionsSources = BasicFun<
 export type StreamName = string;
 export type InfiniteStreamSources = BasicFun<
   StreamName,
-  SearchableInfiniteStreamState<CollectionReference>["customFormState"]["getChunk"]
+  SearchableInfiniteStreamState["customFormState"]["getChunk"]
 >;
 export type ConfigName = string;
 export type GlobalConfigurationSources = BasicFun<ConfigName, Promise<any>>;

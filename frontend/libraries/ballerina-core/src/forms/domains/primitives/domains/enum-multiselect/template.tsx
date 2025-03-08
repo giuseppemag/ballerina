@@ -42,7 +42,6 @@ export const EnumMultiselectForm = <
     },
     EnumMultiselectView<Context, ForeignMutationsExpected>
   >((props) => {
-    console.debug("EnumMultiselectForm props", props);
     return <>
       <props.view
         {...props}

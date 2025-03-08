@@ -1,4 +1,4 @@
-import { List, OrderedMap } from "immutable";
+import { List, Map } from "immutable";
 import {
   Guid,
   SimpleCallback,
@@ -13,6 +13,9 @@ import {
   Synchronize,
   Unit,
   ValidateRunner,
+  ValueRecord,
+  PredicateValue,
+  MapRepo,
 } from "../../../../../../main";
 import { CoTypedFactory } from "../../../../../coroutines/builder";
 import { Debounced } from "../../../../../debounced/state";
@@ -32,21 +35,18 @@ import { SearchableInfiniteStreamState } from "../searchable-infinite-stream/sta
 import { InfiniteStreamMultiselectView } from "./state";
 
 export const InfiniteMultiselectDropdownForm = <
-  Element extends CollectionReference,
   Context extends FormLabel,
-  ForeignMutationsExpected,
+  ForeignMutationsExpected
 >(
-  validation?: BasicFun<OrderedMap<Guid, Element>, Promise<FieldValidation>>,
+  validation?: BasicFun<ValueRecord, Promise<FieldValidation>>
 ) => {
   const Co = CoTypedFactory<
-    Context & Value<OrderedMap<Guid, Element>> & { disabled: boolean },
-    SearchableInfiniteStreamState<Element>
+    Context & Value<ValueRecord> & { disabled: boolean },
+    SearchableInfiniteStreamState
   >();
   const DebouncerCo = CoTypedFactory<
-    Context & { onDebounce: SimpleCallback<void> } & Value<
-        OrderedMap<Guid, Element>
-      >,
-    SearchableInfiniteStreamState<Element>
+    Context & { onDebounce: SimpleCallback<void> } & Value<ValueRecord>,
+    SearchableInfiniteStreamState
   >();
   const DebouncedCo = CoTypedFactory<
     { onDebounce: SimpleCallback<void> },
@@ -59,48 +59,48 @@ export const InfiniteMultiselectDropdownForm = <
           .then((current) => DebouncedCo.Do(() => current.onDebounce()))
           //.SetState(SearchNow.Updaters.reloadsRequested(_ => _ + 1))
           .then((_) => DebouncedCo.Return("success")),
-        250,
+        250
       ).embed(
         (_) => ({ ..._, ..._.customFormState.searchText }),
-        SearchableInfiniteStreamState<Element>().Updaters.Core.customFormState
-          .children.searchText,
+        SearchableInfiniteStreamState().Updaters.Core.customFormState.children
+          .searchText
       ),
       DebouncerCo.Wait(0),
-    ]),
+    ])
   );
   const debouncerRunner = DebouncerCo.Template<
-    ForeignMutationsExpected & { onChange: OnChange<OrderedMap<Guid, Element>> }
+    ForeignMutationsExpected & { onChange: OnChange<ValueRecord> }
   >(debouncer, {
     interval: 15,
     runFilter: (props) =>
       Debounced.Operations.shouldCoroutineRun(
-        props.context.customFormState.searchText,
+        props.context.customFormState.searchText
       ),
   });
   const loaderRunner = Co.Template<
-    ForeignMutationsExpected & { onChange: OnChange<OrderedMap<Guid, Element>> }
+    ForeignMutationsExpected & { onChange: OnChange<ValueRecord> }
   >(
-    InfiniteStreamLoader<Element>().embed(
+    InfiniteStreamLoader<CollectionReference>().embed(
       (_) => _.customFormState.stream,
-      SearchableInfiniteStreamState<Element>().Updaters.Core.customFormState
-        .children.stream,
+      SearchableInfiniteStreamState().Updaters.Core.customFormState.children
+        .stream
     ),
     {
       interval: 15,
       runFilter: (props) =>
         InfiniteStreamState().Operations.shouldCoroutineRun(
-          props.context.customFormState.stream,
+          props.context.customFormState.stream
         ),
-    },
+    }
   );
 
   return Template.Default<
-    Context & Value<OrderedMap<Guid, Element>> & { disabled: boolean },
-    SearchableInfiniteStreamState<Element>,
+    Context & Value<ValueRecord> & { disabled: boolean },
+    SearchableInfiniteStreamState,
     ForeignMutationsExpected & {
-      onChange: OnChange<OrderedMap<Guid, Element>>;
+      onChange: OnChange<ValueRecord>;
     },
-    InfiniteStreamMultiselectView<Element, Context, ForeignMutationsExpected>
+    InfiniteStreamMultiselectView<Context, ForeignMutationsExpected>
   >((props) => (
     <>
       <props.view
@@ -112,7 +112,7 @@ export const InfiniteMultiselectDropdownForm = <
               ?.hasMoreValues == false
           ),
           isLoading: AsyncState.Operations.isLoading(
-            props.context.customFormState.stream.loadingMore,
+            props.context.customFormState.stream.loadingMore
           ),
           availableOptions: props.context.customFormState.stream.loadedElements
             .valueSeq()
@@ -123,54 +123,64 @@ export const InfiniteMultiselectDropdownForm = <
           ...props.foreignMutations,
           toggleOpen: () =>
             props.setState(
-              SearchableInfiniteStreamState<Element>()
+              SearchableInfiniteStreamState()
                 .Updaters.Core.customFormState.children.status(
                   replaceWith(
                     props.context.customFormState.status == "closed"
                       ? "open"
-                      : "closed",
-                  ),
+                      : "closed"
+                  )
                 )
                 .then(
                   props.context.customFormState.stream.loadedElements.count() ==
                     0
-                    ? SearchableInfiniteStreamState<Element>().Updaters.Core.customFormState.children.stream(
-                        InfiniteStreamState<Element>().Updaters.Template.loadMore(),
+                    ? SearchableInfiniteStreamState().Updaters.Core.customFormState.children.stream(
+                        InfiniteStreamState<CollectionReference>().Updaters.Template.loadMore()
                       )
-                    : id,
-                ),
+                    : id
+                )
             ),
           clearSelection: () => {
             props.foreignMutations.onChange(
-              OrderedMapRepo.Updaters.clear(),
-              List(),
+              ValueRecord.Updaters.clear(),
+              List()
             );
           },
           setSearchText: (_) =>
             props.setState(
-              SearchableInfiniteStreamState<Element>().Updaters.Template.searchText(
-                replaceWith(_),
-              ),
+              SearchableInfiniteStreamState().Updaters.Template.searchText(
+                replaceWith(_)
+              )
             ),
           loadMore: () =>
             props.setState(
-              SearchableInfiniteStreamState<Element>().Updaters.Core.customFormState.children.stream(
-                InfiniteStreamState<Element>().Updaters.Template.loadMore(),
-              ),
+              SearchableInfiniteStreamState().Updaters.Core.customFormState.children.stream(
+                InfiniteStreamState<CollectionReference>().Updaters.Template.loadMore()
+              )
             ),
           reload: () =>
             props.setState(
-              SearchableInfiniteStreamState<Element>().Updaters.Template.searchText(
-                replaceWith(""),
-              ),
+              SearchableInfiniteStreamState().Updaters.Template.searchText(
+                replaceWith("")
+              )
             ),
-          toggleSelection: (element) =>
+          toggleSelection: (elementRecord: ValueRecord) =>{
+            console.debug('toggleSelection', elementRecord);
             props.foreignMutations.onChange(
-              props.context.value.has(element.Id)
-                ? OrderedMapRepo.Updaters.remove(element.Id)
-                : OrderedMapRepo.Updaters.set(element.Id, element),
-              List(),
-            ),
+              props.context.value.fields.has(
+                elementRecord.fields.get("Id")! as string 
+              )
+                ? ValueRecord.Updaters.remove(
+                    elementRecord.fields.get("Id")! as string
+                  )
+                : ValueRecord.Updaters.set(
+                    elementRecord.fields.get("Id")! as string,
+                    elementRecord
+                  ),
+
+              List()
+            )
+          }
         }}
       />
     </>
@@ -180,27 +190,27 @@ export const InfiniteMultiselectDropdownForm = <
       ...props.context,
       onDebounce: () =>
         props.setState(
-          SearchableInfiniteStreamState<Element>().Updaters.Core.customFormState.children.stream(
-            InfiniteStreamState<Element>().Updaters.Template.reload(
+          SearchableInfiniteStreamState().Updaters.Core.customFormState.children.stream(
+            InfiniteStreamState<CollectionReference>().Updaters.Template.reload(
               props.context.customFormState.getChunk(
-                props.context.customFormState.searchText.value,
-              ),
-            ),
-          ),
+                props.context.customFormState.searchText.value
+              )
+            )
+          )
         ),
     })),
     ValidateRunner<
       Context & { disabled: boolean },
-      SearchableInfiniteStreamState<Element>,
+      SearchableInfiniteStreamState,
       ForeignMutationsExpected,
-      OrderedMap<Guid, Element>
+      ValueRecord
     >(
       validation
         ? (_) =>
             validation(_).then(
-              FieldValidationWithPath.Default.fromFieldValidation,
+              FieldValidationWithPath.Default.fromFieldValidation
             )
-        : undefined,
+        : undefined
     ),
   ]);
 };

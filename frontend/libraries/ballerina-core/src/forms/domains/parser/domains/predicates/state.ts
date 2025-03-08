@@ -4,6 +4,9 @@ import {
   MapRepo,
   FieldName,
   ParsedType,
+  Updater,
+  simpleUpdater,
+  replaceWith,
 } from "../../../../../../main";
 
 export type FieldPredicateExpression =
@@ -119,6 +122,30 @@ export type EvaluationPredicateValue = {
 export type ValueRecord = {
   kind: "record";
   fields: Map<string, PredicateValue>;
+};
+export const ValueRecord = {
+  Default: {
+    empty: (): ValueRecord => ({ kind: "record", fields: Map() }),
+    fromJSON: (json: object): ValueRecord => ({ kind: "record", fields: Map(json) }),
+    fromMap: (map: Map<string, PredicateValue>): ValueRecord => ({ kind: "record", fields: map }),
+  },
+  Operations: {
+    has: (record: ValueRecord, key: string): boolean => {
+      return record.fields.has(key);
+    },
+  },
+  Updaters: {
+    ...simpleUpdater<ValueRecord>()("fields"),
+    set: (key: string, value: PredicateValue): Updater<ValueRecord> => {
+      return ValueRecord.Updaters.fields(MapRepo.Updaters.set(key, value))
+    },
+    remove: (key: string): Updater<ValueRecord> => {
+      return ValueRecord.Updaters.fields(MapRepo.Updaters.remove(key))
+    },
+    clear: (): Updater<ValueRecord> => {
+      return ValueRecord.Updaters.fields(replaceWith(Map()))
+    },
+  },
 };
 export type ValueUnionCase = {
   kind: "unionCase";
