@@ -224,8 +224,7 @@ export const editFormRunner = <T, FS>() => {
             }
             const parsed = editFormState.toApiParser(
               current.entity.sync.value,
-              current,
-              true
+              current
             );
 
             return Synchronize<Unit, ApiErrors, EditFormWritableState<T, FS>>(

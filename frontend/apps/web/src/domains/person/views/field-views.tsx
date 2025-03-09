@@ -378,7 +378,6 @@ export const PersonFieldViews = {
             />
             <ul>
               {props.context.availableOptions.map((element) => {
-                console.debug("element", element);
                 return (
                   <li>
                     <button

@@ -307,11 +307,7 @@ export type ParsedLaunchers = {
       >;
       initialState: PassthroughFormState<T, FormState>;
       fromApiParser: (value: any) => PredicateValue;
-      toApiParser: (
-        value: PredicateValue,
-        formState: any,
-        checkKeys: boolean
-      ) => any;
+      toApiParser: (value: PredicateValue, formState: any) => any;
       parseGlobalConfiguration: (
         raw: any
       ) => ValueOrErrors<PredicateValue, string>;
@@ -447,18 +443,14 @@ export const parseFormsToLaunchers =
                     apiConverters,
                     injectedPrimitives
                   )(value),
-                toApiParser: (
-                  value: PredicateValue,
-                  formState: any,
-                  checkKeys: boolean
-                ) =>
+                toApiParser: (value: PredicateValue, formState: any) =>
                   toAPIRawValue(
                     formType,
                     formsConfig.types,
                     builtIns,
                     apiConverters,
                     injectedPrimitives
-                  )(value, formState, checkKeys),
+                  )(value, formState),
                 actualForm: form
                   .withView(containerFormView)
                   .mapContext((_: any) => ({
@@ -565,18 +557,14 @@ export const parseFormsToLaunchers =
                   apiConverters,
                   injectedPrimitives
                 )(value),
-              toApiParser: (
-                value: PredicateValue,
-                formState: any,
-                checkKeys: boolean
-              ) =>
+              toApiParser: (value: PredicateValue, formState: any) =>
                 toAPIRawValue(
                   formType,
                   formsConfig.types,
                   builtIns,
                   apiConverters,
                   injectedPrimitives
-                )(value, formState, checkKeys),
+                )(value, formState),
               actualForm: form
                 .withView(containerFormView)
                 .mapContext((_: any) => {
@@ -672,18 +660,14 @@ export const parseFormsToLaunchers =
                       apiConverters,
                       injectedPrimitives
                     )(value),
-                  toApiParser: (
-                    value: any,
-                    formState: any,
-                    checkKeys: boolean
-                  ) =>
+                  toApiParser: (value: any, formState: any) =>
                     toAPIRawValue(
                       formType,
                       formsConfig.types,
                       builtIns,
                       apiConverters,
                       injectedPrimitives
-                    )(value, formState, checkKeys),
+                    )(value, formState),
                   actualForm: form
                     .withView(containerFormView)
                     .mapContext((_: any) => ({
@@ -720,14 +704,14 @@ export const parseFormsToLaunchers =
               apiConverters,
               injectedPrimitives
             )(value),
-          toApiParser: (value: any, formState: any, checkKeys: boolean) =>
+          toApiParser: (value: any, formState: any) =>
             toAPIRawValue(
               formType,
               formsConfig.types,
               builtIns,
               apiConverters,
               injectedPrimitives
-            )(value, formState, checkKeys),
+            )(value, formState),
           parseGlobalConfiguration: (raw: any) =>
             PredicateValue.Operations.parse(
               raw,

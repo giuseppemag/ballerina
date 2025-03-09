@@ -214,7 +214,6 @@ export const PersonFieldViews = {
           ? props.context.customFormState.possiblyInvalidInput
           : props.context.value?.toISOString();
 
-          console.debug("props", props);
           return (
           <>
             {props.context.label && <h3>{props.context.label}</h3>}
@@ -454,7 +453,6 @@ export const PersonFieldViews = {
                 />
                 <ul>
                   {props.context.availableOptions.map((element) => {
-                    console.debug("element", element);
                     return (
                       <li>
                         <button

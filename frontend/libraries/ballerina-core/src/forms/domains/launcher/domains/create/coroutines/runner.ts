@@ -216,8 +216,7 @@ export const createFormRunner = <T, FS>() => {
             }
             const parsed = createFormState.toApiParser(
               current.entity.sync.value,
-              current,
-              true
+              current
             );
 
             return Synchronize<Unit, ApiErrors, CreateFormWritableState<T, FS>>(

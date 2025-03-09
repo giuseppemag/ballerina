@@ -35,8 +35,7 @@ export type CreateFormContext<T, FS> = {
   formType: ParsedType<T>;
   toApiParser: (
     entity: PredicateValue,
-    formstate: CreateFormState<T, FS>,
-    checkKeys: boolean
+    formstate: CreateFormState<T, FS>
   ) => ValueOrErrors<any, ApiErrors>;
   fromApiParser: (raw: any) => PredicateValue;
   parseGlobalConfiguration: (

@@ -165,7 +165,6 @@ export const InfiniteMultiselectDropdownForm = <
               )
             ),
           toggleSelection: (elementRecord: ValueRecord) =>{
-            console.debug('toggleSelection', elementRecord);
             props.foreignMutations.onChange(
               props.context.value.fields.has(
                 elementRecord.fields.get("Id")! as string 

@@ -398,16 +398,7 @@ export const toAPIRawValue =
     converters: ApiConverters<T>,
     injectedPrimitives?: InjectedPrimitives<T>
   ) =>
-  (
-    raw: PredicateValue,
-    formState: any,
-    checkKeys: boolean
-  ): ValueOrErrors<any, string> => {
-    console.debug("toAPIRaw");
-    console.debug("raw", raw);
-    console.debug("t", t);
-    console.debug("formState", formState);
-    console.debug("--------------------------------");
+  (raw: PredicateValue, formState: any): ValueOrErrors<any, string> => {
     if (t.kind == "primitive") {
       return ValueOrErrors.Operations.Return(
         converters[t.value as string | keyof T].toAPIRawValue([
@@ -424,7 +415,7 @@ export const toAPIRawValue =
         builtIns,
         converters,
         injectedPrimitives
-      )(raw, formState, checkKeys);
+      )(raw, formState);
     }
 
     if (t.kind == "unionCase") {
@@ -516,7 +507,7 @@ export const toAPIRawValue =
                 builtIns,
                 converters,
                 injectedPrimitives
-              )(value, formState.elementFormStates.get(index), checkKeys)
+              )(value, formState.elementFormStates.get(index))
             )
           )
         ).Then((values) =>
@@ -526,11 +517,8 @@ export const toAPIRawValue =
         );
       }
       if (t.value == "Map") {
-        console.debug("FS", JSON.stringify(formState, null, 2));
-        const keyValues = (raw as ValueTuple).values.map((keyValue, index) =>
-          {
-            console.debug("FS", JSON.stringify(formState.elementFormStates.get(index), null, 2));
-            return toAPIRawValue(
+        const keyValues = (raw as ValueTuple).values.map((keyValue, index) => {
+          return toAPIRawValue(
             t.args[0],
             types,
             builtIns,
@@ -538,8 +526,7 @@ export const toAPIRawValue =
             injectedPrimitives
           )(
             (keyValue as ValueTuple).values.get(0)!,
-            formState.elementFormStates.get(index).KeyFormState.commonFormState,
-            checkKeys
+            formState.elementFormStates.get(index).KeyFormState.commonFormState
           )
             .Then((possiblyUndefinedKey) => {
               if (
@@ -567,14 +554,13 @@ export const toAPIRawValue =
                 injectedPrimitives
               )(
                 (keyValue as ValueTuple).values.get(1)!,
-                formState.elementFormStates.get(index).ValueFormState.commonFormState,
-                checkKeys
+                formState.elementFormStates.get(index).ValueFormState
+                  .commonFormState
               ).Then((value) =>
                 ValueOrErrors.Default.return([key, value] as [any, any])
               )
-            )
-          }
-        );
+            );
+        });
 
         return ValueOrErrors.Operations.All(List(keyValues)).Then((values) => {
           if (
@@ -599,7 +585,7 @@ export const toAPIRawValue =
         builtIns,
         converters,
         injectedPrimitives
-      )(raw, formState, checkKeys);
+      )(raw, formState);
 
     if (t.kind == "form") {
       const res = [] as any;
@@ -616,8 +602,7 @@ export const toAPIRawValue =
           )(
             // TODO - error if the field is not found
             (raw as ValueRecord).fields.get(fieldName)!,
-            formState["formFieldStates"]?.[fieldName] ?? formState,
-            checkKeys
+            formState["formFieldStates"]?.[fieldName] ?? formState
           ),
         ])
       );

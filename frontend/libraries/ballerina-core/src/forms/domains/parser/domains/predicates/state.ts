@@ -727,7 +727,6 @@ export const Expr = {
       (vars: Bindings) =>
       (e: Expr): ValueOrErrors<PredicateValue, string> =>
         {
-          console.debug("Evaluate", e);
           return PredicateValue.Operations.IsBoolean(e) ||
         PredicateValue.Operations.IsNumber(e) ||
         PredicateValue.Operations.IsString(e) ||
@@ -745,7 +744,7 @@ export const Expr = {
           : Expr.Operations.IsFieldLookup(e)
           ? Expr.Operations.Evaluate(vars)(e.operands[0]).Then(
               (record: PredicateValue) =>
-                (console.debug("EvaluateAsRecord", record), Expr.Operations.EvaluateAsRecord(vars)(record)).Then(
+                Expr.Operations.EvaluateAsRecord(vars)(record).Then(
                   (record: ValueRecord) =>
                     MapRepo.Operations.tryFindWithError(
                       e.operands[1],
