@@ -33,13 +33,12 @@ export type CreateFormContext<T, FS> = {
     getGlobalConfiguration: () => Promise<any>;
   };
   formType: ParsedType<T>;
-  types: Map<string, ParsedType<T>>;
   toApiParser: (
     entity: PredicateValue,
     formstate: CreateFormState<T, FS>,
     checkKeys: boolean
-  ) => ValueOrErrors<PredicateValue, ApiErrors>;
-  fromApiParser: (raw: any) => any;
+  ) => ValueOrErrors<any, ApiErrors>;
+  fromApiParser: (raw: any) => PredicateValue;
   parseGlobalConfiguration: (
     raw: any
   ) => ValueOrErrors<PredicateValue, ApiErrors>;

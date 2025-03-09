@@ -3,6 +3,7 @@ import {
   replaceWith,
   ValueOrErrors,
   Debounce,
+  Updater,
 } from "../../../../../../../main";
 import { ApiResultStatus } from "../../../../../../apiResultStatus/state";
 import { CoTypedFactory } from "../../../../../../coroutines/builder";
@@ -19,55 +20,44 @@ import {
   PassthroughFormState,
 } from "../state";
 
-export const passthroughFormRunner = <E, FS>() => {
+export const passthroughFormRunner = <T, FS>() => {
   const Co = CoTypedFactory<
-    PassthroughFormContext<E, FS> &
-      PassthroughFormForeignMutationsExpected<E, FS> & {
-        onRawEntityChange: (updatedRawEntity: any, path: List<string>) => void;
+    PassthroughFormContext<T, FS> &
+      PassthroughFormForeignMutationsExpected<T, FS> & {
+        onEntityChange: (updater: Updater<PredicateValue>, path: List<string>) => void;
       },
-    PassthroughFormWritableState<E, FS>
+    PassthroughFormWritableState<T, FS>
   >();
 
   const calculateInitialVisibilities = Co.GetState().then((current) => {
-    const parsedRootPredicate = PredicateValue.Operations.parse(
-      current.initialRawEntity.value,
-      current.formType,
-      current.types,
-    );
-
-    if (parsedRootPredicate.kind == "errors") {
-      console.error("error parsing bindings", parsedRootPredicate);
-      return Co.Do(() => {});
-    }
     if (
-      typeof parsedRootPredicate.value != "object" ||
-      !("kind" in parsedRootPredicate.value) ||
-      parsedRootPredicate.value.kind != "record"
+      typeof current.entity.value != "object" ||
+      !("kind" in current.entity.value) ||
+      current.entity.value.kind != "record"
     ) {
       return Co.Do(() => {});
     }
     return Co.SetState(
-      PassthroughFormState<E, FS>()
+      PassthroughFormState<T, FS>()
         .Updaters.Core.customFormState.children.predicateEvaluations(
           replaceWith(
             Debounced.Default(
               evaluatePredicates(
                 {
                   global: current.globalConfiguration.value,
-                  types: current.types,
                   visibilityPredicateExpressions:
                     current.visibilityPredicateExpressions,
                   disabledPredicatedExpressions:
                     current.disabledPredicatedExpressions,
                 },
-                parsedRootPredicate.value,
+                current.entity.value,
               ),
             ),
           ),
         )
         .then(
           PassthroughFormState<
-            E,
+            T,
             FS
           >().Updaters.Core.customFormState.children.isInitialized(
             replaceWith(true),
@@ -77,7 +67,7 @@ export const passthroughFormRunner = <E, FS>() => {
   });
 
   const PredicatesCo = CoTypedFactory<
-    PassthroughFormWritableState<E, FS> & PassthroughFormContext<E, FS>,
+    PassthroughFormWritableState<T, FS> & PassthroughFormContext<T, FS>,
     ValueOrErrors<
       {
         visiblityPredicateEvaluations: FormFieldPredicateEvaluation;
@@ -96,7 +86,7 @@ export const passthroughFormRunner = <E, FS>() => {
         },
         string
       >,
-      PassthroughFormContext<E, FS> & PassthroughFormWritableState<E, FS>
+      PassthroughFormContext<T, FS> & PassthroughFormWritableState<T, FS>
     >(
       PredicatesCo.GetState().then((current) => {
         if (
@@ -105,36 +95,17 @@ export const passthroughFormRunner = <E, FS>() => {
         ) {
           return PredicatesCo.Return<ApiResultStatus>("permanent failure");
         }
-        const parsedEntity = current.toApiParser(
-          current.entity.value,
-          current,
-          false,
-        );
-        if (parsedEntity.kind == "errors") {
-          console.error("error parsing entity", parsedEntity);
-          return PredicatesCo.Return<ApiResultStatus>("permanent failure");
-        }
-        const parseRootPredicate = PredicateValue.Operations.parse(
-          parsedEntity.value,
-          current.formType,
-          current.types,
-        );
-        if (parseRootPredicate.kind == "errors") {
-          console.error("error parsing", parseRootPredicate);
-          return PredicatesCo.Return<ApiResultStatus>("permanent failure");
-        }
         return PredicatesCo.SetState(
           replaceWith(
             evaluatePredicates(
               {
                 global: current.globalConfiguration.value,
-                types: current.types,
                 visibilityPredicateExpressions:
                   current.visibilityPredicateExpressions,
                 disabledPredicatedExpressions:
                   current.disabledPredicatedExpressions,
               },
-              parseRootPredicate.value,
+              current.entity.value,
             ),
           ),
         ).then(() => PredicatesCo.Return<ApiResultStatus>("success"));
@@ -142,22 +113,22 @@ export const passthroughFormRunner = <E, FS>() => {
       50,
     ).embed(
       (_) => ({ ..._, ..._.customFormState.predicateEvaluations }),
-      PassthroughFormState<E, FS>().Updaters.Core.customFormState.children
+      PassthroughFormState<T, FS>().Updaters.Core.customFormState.children
         .predicateEvaluations,
     ),
   );
 
-  return Co.Template<PassthroughFormForeignMutationsExpected<E, FS>>(
+  return Co.Template<PassthroughFormForeignMutationsExpected<T, FS>>(
     calculateInitialVisibilities,
     {
       interval: 15,
       runFilter: (props) =>
         !props.context.customFormState.isInitialized &&
         props.context.globalConfiguration.kind != "r" &&
-        props.context.initialRawEntity.kind != "r",
+        props.context.entity.kind != "r",
     },
   ).any([
-    Co.Template<PassthroughFormForeignMutationsExpected<E, FS>>(
+    Co.Template<PassthroughFormForeignMutationsExpected<T, FS>>(
       calculateVisibilities,
       {
         interval: 15,

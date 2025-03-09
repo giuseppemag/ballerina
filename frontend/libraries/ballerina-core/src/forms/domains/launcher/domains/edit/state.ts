@@ -34,12 +34,11 @@ export type EditFormContext<T, FS> = {
     getGlobalConfiguration: () => Promise<PredicateValue>;
   };
   formType: ParsedType<T>;
-  types: Map<string, ParsedType<T>>;
   toApiParser: (
     entity: PredicateValue,
     formstate: EditFormState<T, FS>,
     checkKeys: boolean
-  ) => ValueOrErrors<PredicateValue, string>;
+  ) => ValueOrErrors<any, string>;
   fromApiParser: (raw: any) => PredicateValue;
   parseGlobalConfiguration: (raw: any) => ValueOrErrors<PredicateValue, string>;
   visibilityPredicateExpressions: FieldPredicateExpressions;

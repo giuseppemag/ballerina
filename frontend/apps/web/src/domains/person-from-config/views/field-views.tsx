@@ -20,7 +20,6 @@ import {
   PredicateValue,
   ValueRecord,
 } from "ballerina-core";
-import { Map } from "immutable";
 import { CategoryView } from "../injected-forms/category";
 
 export const MostUglyValidationDebugView = (props: {

@@ -99,9 +99,6 @@ export const FormsApp = (props: {}) => {
   }
 
   // Passthrough form only
-  const [initialRawEntity, setInitialRawEntity] = useState<
-    Sum<any, "not initialized">
-  >(Sum.Default.right("not initialized"));
   const [entity, setEntity] = useState<Sum<any, "not initialized">>(
     Sum.Default.right("not initialized"),
   );
@@ -110,7 +107,7 @@ export const FormsApp = (props: {}) => {
   >(Sum.Default.right("not initialized"));
   const [entityPath, setEntityPath] = useState<List<string>>(List());
 
-  const onRawEntityChange = (
+  const onEntityChange = (
     updater: Updater<any>,
     path: List<string>,
   ): void => {
@@ -136,9 +133,6 @@ export const FormsApp = (props: {}) => {
                 "person-transparent",
               )!().fromApiParser(raw);
             setEntity(Sum.Default.left(parsed));
-            if (initialRawEntity.kind == "r") {
-              setInitialRawEntity(Sum.Default.left(raw));
-            }
           }
         });
       PersonFromConfigApis.entityApis
@@ -380,9 +374,8 @@ export const FormsApp = (props: {}) => {
                           kind: "passthrough",
                           containerWrapper: PassthroughFormContainerWrapper,
                           entity,
-                          initialRawEntity,
                           globalConfiguration,
-                          onRawEntityChange,
+                          onEntityChange,
                         },
                         showFormParsingErrors: ShowFormsParsingErrors,
                         extraContext: {
