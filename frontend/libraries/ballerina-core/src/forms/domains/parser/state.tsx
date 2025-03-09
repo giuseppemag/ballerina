@@ -306,8 +306,8 @@ export type ParsedLaunchers = {
         Unit
       >;
       initialState: PassthroughFormState<T, FormState>;
-      fromApiParser: (value: any) => PredicateValue;
-      toApiParser: (value: PredicateValue, formState: any) => any;
+      fromApiParser: (value: any) => ValueOrErrors<PredicateValue, string>;
+      toApiParser: (value: PredicateValue, formState: any) => ValueOrErrors<any, string>;
       parseGlobalConfiguration: (
         raw: any
       ) => ValueOrErrors<PredicateValue, string>;
@@ -696,7 +696,7 @@ export const parseFormsToLaunchers =
             initialState.formFieldStates,
             initialState.commonFormState
           ),
-          fromApiParser: (value: any): PredicateValue =>
+          fromApiParser: (value: any): ValueOrErrors<PredicateValue, string> =>
             fromAPIRawValue(
               formType,
               formsConfig.types,
@@ -704,7 +704,7 @@ export const parseFormsToLaunchers =
               apiConverters,
               injectedPrimitives
             )(value),
-          toApiParser: (value: any, formState: any) =>
+          toApiParser: (value: PredicateValue, formState: any) =>
             toAPIRawValue(
               formType,
               formsConfig.types,

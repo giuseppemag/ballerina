@@ -29,7 +29,7 @@ export type PassthroughFormContext<T, FS> = {
     entity: PredicateValue,
     formstate: PassthroughFormState<T, FS>
   ) => ValueOrErrors<any, string>;
-  fromApiParser: (raw: any) => PredicateValue;
+  fromApiParser: (raw: any) => ValueOrErrors<PredicateValue, string>;
   parseGlobalConfiguration: (raw: any) => ValueOrErrors<PredicateValue, string>;
   visibilityPredicateExpressions: FieldPredicateExpressions;
   disabledPredicatedExpressions: FieldPredicateExpressions;

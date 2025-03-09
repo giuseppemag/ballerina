@@ -227,6 +227,9 @@ export const PredicateValue = {
     }),
   },
   Operations: {
+    IsPrimitive: (value: PredicateValue | Expr): value is boolean | number | string | Date => {
+      return PredicateValue.Operations.IsBoolean(value) || PredicateValue.Operations.IsNumber(value) || PredicateValue.Operations.IsString(value) || PredicateValue.Operations.IsDate(value);
+    },
     IsBoolean: (value: PredicateValue | Expr): value is boolean => {
       return typeof value == "boolean";
     },
@@ -826,7 +829,7 @@ export const evaluatePredicates = <T>(
     if (predicate.kind == "form") {
       if (typeof raw != "object" || !("kind" in raw) || raw.kind != "record") {
         return ValueOrErrors.Default.throwOne(
-          `Error: parsing ${JSON.stringify(predicate)} expected record in raw, got ${JSON.stringify(raw)}`
+          `Error: parsing expected record in raw, got ${JSON.stringify(raw)}`
         );
       }
       return calculateVisibility(predicate.value, bindings).Then((result) =>
@@ -841,7 +844,7 @@ export const evaluatePredicates = <T>(
 
                 if (fieldRaw == undefined) {
                   return ValueOrErrors.Default.throwOne(
-                    `Error: parsing ${JSON.stringify(predicate)} cannot find field ${fieldName} in raw ${JSON.stringify(
+                    `Error: parsing cannot find field ${fieldName} in raw ${JSON.stringify(
                       raw
                     )}`
                   );
@@ -852,7 +855,7 @@ export const evaluatePredicates = <T>(
                   const fieldLocal = localBindings.fields.get(fieldName);
                   if (fieldLocal == undefined) {
                     return ValueOrErrors.Default.throwOne(
-                      `Error: parsing ${JSON.stringify(predicate)} cannot find field ${fieldName} in local ${JSON.stringify(
+                      `Error: parsing cannot find field ${fieldName} in local ${JSON.stringify(
                         localBindings
                       )}`
                     );
@@ -888,7 +891,7 @@ export const evaluatePredicates = <T>(
                 const elementLocal = raw.values.get(index);
                 if (elementLocal == undefined) {
                   return ValueOrErrors.Default.throwOne(
-                    `Error: parsing ${JSON.stringify(predicate)} cannot find element of index ${index} in local ${JSON.stringify(
+                    `Error: cannot find element of index ${index} in local ${JSON.stringify(
                       raw
                     )}`
                   );
@@ -910,7 +913,7 @@ export const evaluatePredicates = <T>(
           });
         }
         return ValueOrErrors.Default.throwOne(
-          `Error: parsing ${JSON.stringify(predicate)} expected tuple, got ${JSON.stringify(raw)}`
+          `Error: parsing expected tuple, got ${JSON.stringify(raw)}`
         );
       });
     }
@@ -957,7 +960,7 @@ export const evaluatePredicates = <T>(
                   });
                 }
                 return ValueOrErrors.Default.throwOne(
-                  `Error: parsing ${JSON.stringify(predicate)} expected tuple of key and value, got ${JSON.stringify(
+                  `Error: parsing expected tuple of key and value, got ${JSON.stringify(
                     kv
                   )}`
                 );
@@ -972,12 +975,12 @@ export const evaluatePredicates = <T>(
           });
         }
         return ValueOrErrors.Default.throwOne(
-          `Error: parsing ${JSON.stringify(predicate)} expected tuple of key value pairs, got ${JSON.stringify(raw)}`
+          `Error: parsing expected tuple of key value pairs, got ${JSON.stringify(raw)}`
         );
       });
     }
     return ValueOrErrors.Default.throwOne(
-      `Error: parsing ${JSON.stringify(predicate)} unsupported predicate kind ${JSON.stringify(raw)}`
+      `Error: parsing unsupported predicate kind ${JSON.stringify(raw)}`
     );
   };
 

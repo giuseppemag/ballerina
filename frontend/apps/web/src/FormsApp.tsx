@@ -46,7 +46,7 @@ export const FormsApp = (props: {}) => {
   const [configFormsParser, setConfigFormsParser] = useState(
     FormsParserState.Default(),
   );
-  const [formToShow, setFormToShow] = useState(1);
+  const [formToShow, setFormToShow] = useState(0);
   const numForms = 3;
   const [personCreateFormState, setPersonCreateFormState] = useState(
     FormRunnerState.Default(),
@@ -99,7 +99,7 @@ export const FormsApp = (props: {}) => {
   }
 
   // Passthrough form only
-  const [entity, setEntity] = useState<Sum<any, "not initialized">>(
+  const [entity, setEntity] = useState<Sum<PredicateValue, "not initialized">>(
     Sum.Default.right("not initialized"),
   );
   const [globalConfiguration, setGlobalConfiguration] = useState<
@@ -128,11 +128,15 @@ export const FormsApp = (props: {}) => {
             configFormsParser.formsConfig.sync.kind == "loaded" &&
             configFormsParser.formsConfig.sync.value.kind == "l"
           ) {
-            const parsed: any =
+            const parsed =
               configFormsParser.formsConfig.sync.value.value.passthrough.get(
                 "person-transparent",
               )!().fromApiParser(raw);
-            setEntity(Sum.Default.left(parsed));
+            if (parsed.kind == "errors") {
+              console.error(parsed.errors);
+            } else {
+              setEntity(Sum.Default.left(parsed.value));
+            }
           }
         });
       PersonFromConfigApis.entityApis
@@ -142,7 +146,7 @@ export const FormsApp = (props: {}) => {
             configFormsParser.formsConfig.sync.kind == "loaded" &&
             configFormsParser.formsConfig.sync.value.kind == "l"
           ) {
-            const parsed: any =
+            const parsed =
               configFormsParser.formsConfig.sync.value.value.passthrough.get(
                 "person-transparent",
               )!().parseGlobalConfiguration(raw);

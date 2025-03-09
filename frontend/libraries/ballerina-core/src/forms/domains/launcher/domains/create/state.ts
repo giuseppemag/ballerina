@@ -23,12 +23,11 @@ import {
   Value,
 } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
-import { Map } from "immutable";
 
 export type CreateFormContext<T, FS> = {
   entityId: string;
   api: {
-    default: () => Promise<PredicateValue>;
+    default: () => Promise<any>;
     create: (raw: any) => Promise<ApiErrors>;
     getGlobalConfiguration: () => Promise<any>;
   };
@@ -36,11 +35,9 @@ export type CreateFormContext<T, FS> = {
   toApiParser: (
     entity: PredicateValue,
     formstate: CreateFormState<T, FS>
-  ) => ValueOrErrors<any, ApiErrors>;
-  fromApiParser: (raw: any) => PredicateValue;
-  parseGlobalConfiguration: (
-    raw: any
-  ) => ValueOrErrors<PredicateValue, ApiErrors>;
+  ) => ValueOrErrors<any, string>;
+  fromApiParser: (raw: any) => ValueOrErrors<PredicateValue, string>;
+  parseGlobalConfiguration: (raw: any) => ValueOrErrors<PredicateValue, string>;
   visibilityPredicateExpressions: FieldPredicateExpressions;
   disabledPredicatedExpressions: FieldPredicateExpressions;
   actualForm: Template<
@@ -56,10 +53,7 @@ export type CreateFormContext<T, FS> = {
 
 export type CreateFormState<T, FS> = {
   entity: Synchronized<Unit, PredicateValue>;
-  globalConfiguration: Synchronized<
-    Unit,
-    ValueOrErrors<PredicateValue, string>
-  >;
+  globalConfiguration: Synchronized<Unit, PredicateValue>;
   formFieldStates: FS;
   commonFormState: CommonFormState;
   customFormState: {

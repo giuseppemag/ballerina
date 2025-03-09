@@ -47,16 +47,26 @@ export const editFormRunner = <T, FS>() => {
           () =>
             current.api
               .get(current.entityId)
-              .then((raw) => current.fromApiParser(raw)),
+              .then((raw) => {
+                const result = current.fromApiParser(raw);
+                return result.kind == "errors"
+                  ? Promise.reject(result.errors)
+                  : Promise.resolve(result.value);
+              }),
           (_) => "transient failure",
           5,
           50
         ).embed((_) => _.entity, EditFormState<T, FS>().Updaters.Core.entity),
-        Synchronize<Unit, any>(
+        Synchronize<Unit, PredicateValue>(
           () =>
             current.api
               .getGlobalConfiguration()
-              .then((raw) => current.parseGlobalConfiguration(raw)),
+              .then((raw) => {
+                const result = current.parseGlobalConfiguration(raw);
+                return result.kind == "errors"
+                  ? Promise.reject(result.errors)
+                  : Promise.resolve(result.value);
+              }),
           (_) => "transient failure",
           5,
           50
@@ -105,10 +115,8 @@ export const editFormRunner = <T, FS>() => {
       current.entity.sync.kind == "loaded" &&
       current.globalConfiguration.sync.kind == "loaded"
     ) {
-      if (current.globalConfiguration.sync.value.kind == "errors") {
-        console.error("error parsing bindings");
-        return Co.Do(() => {});
-      }
+      // console.debug("calculateInitialVisibilities", current.entity.sync.value.fields.toJS());
+      // console.debug("calculateInitialVisibilities", current.globalConfiguration.sync.value);
       return Co.SetState(
         EditFormState<
           T,
@@ -118,13 +126,12 @@ export const editFormRunner = <T, FS>() => {
             Debounced.Default(
               evaluatePredicates(
                 {
-                  global: current.globalConfiguration.sync.value.value,
+                  global: current.globalConfiguration.sync.value,
                   visibilityPredicateExpressions:
                     current.visibilityPredicateExpressions,
                   disabledPredicatedExpressions:
                     current.disabledPredicatedExpressions,
                 },
-                // TODO - value or errors
                 current.entity.sync.value
               )
             )
@@ -164,25 +171,16 @@ export const editFormRunner = <T, FS>() => {
         ) {
           return PredicatesCo.Return<ApiResultStatus>("permanent failure");
         }
-
-        if (current.globalConfiguration.sync.value.kind == "errors") {
-          console.error(
-            "error parsing global configuration predicate",
-            current.globalConfiguration.sync.value
-          );
-          return PredicatesCo.Return<ApiResultStatus>("permanent failure");
-        }
         return PredicatesCo.SetState(
           replaceWith(
             evaluatePredicates(
               {
-                global: current.globalConfiguration.sync.value.value,
+                global: current.globalConfiguration.sync.value,
                 visibilityPredicateExpressions:
                   current.visibilityPredicateExpressions,
                 disabledPredicatedExpressions:
                   current.disabledPredicatedExpressions,
               },
-              // TODO - value or errors
               current.entity.sync.value
             )
           )

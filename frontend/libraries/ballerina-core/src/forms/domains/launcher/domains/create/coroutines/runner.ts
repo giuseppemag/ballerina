@@ -45,13 +45,29 @@ export const createFormRunner = <T, FS>() => {
       ),
       Co.All([
         Synchronize<Unit, PredicateValue>(
-          () => current.api.default().then((raw) => current.fromApiParser(raw)),
+          () =>
+            current.api
+              .default()
+              .then((raw) => {
+                const result = current.fromApiParser(raw);
+                return result.kind == "errors"
+                  ? Promise.reject(result.errors)
+                  : Promise.resolve(result.value);
+              }),
           (_) => "transient failure",
           5,
           50
         ).embed((_) => _.entity, CreateFormState<T, FS>().Updaters.Core.entity),
-        Synchronize<Unit, any>(
-          () => current.api.getGlobalConfiguration().then((raw) => current.parseGlobalConfiguration(raw)),
+        Synchronize<Unit, PredicateValue>(
+          () =>
+            current.api
+              .getGlobalConfiguration()
+              .then((raw) => {
+                const result = current.parseGlobalConfiguration(raw);
+                return result.kind == "errors"
+                  ? Promise.reject(result.errors)
+                  : Promise.resolve(result.value);
+              }),
           (_) => "transient failure",
           5,
           50
@@ -100,10 +116,6 @@ export const createFormRunner = <T, FS>() => {
       current.entity.sync.kind == "loaded" &&
       current.globalConfiguration.sync.kind == "loaded"
     ) {
-      if (current.globalConfiguration.sync.value.kind == "errors") {
-        console.error("error parsing bindings");
-        return Co.Do(() => {});
-      }
       return Co.SetState(
         CreateFormState<
           T,
@@ -113,13 +125,12 @@ export const createFormRunner = <T, FS>() => {
             Debounced.Default(
               evaluatePredicates(
                 {
-                  global: current.globalConfiguration.sync.value.value,
+                  global: current.globalConfiguration.sync.value,
                   visibilityPredicateExpressions:
                     current.visibilityPredicateExpressions,
                   disabledPredicatedExpressions:
                     current.disabledPredicatedExpressions,
                 },
-                // TODO - value or errors
                 current.entity.sync.value
               )
             )
@@ -159,22 +170,17 @@ export const createFormRunner = <T, FS>() => {
         ) {
           return PredicatesCo.Return<ApiResultStatus>("permanent failure");
         }
-        if (current.globalConfiguration.sync.value.kind == "errors") {
-          console.error("error parsing bindings");
-          return PredicatesCo.Return<ApiResultStatus>("permanent failure");
-        }
 
         return PredicatesCo.SetState(
           replaceWith(
             evaluatePredicates(
               {
-                global: current.globalConfiguration.sync.value.value,
+                global: current.globalConfiguration.sync.value,
                 visibilityPredicateExpressions:
                   current.visibilityPredicateExpressions,
                 disabledPredicatedExpressions:
                   current.disabledPredicatedExpressions,
               },
-              // TODO - value or errors
               current.entity.sync.value
             )
           )
@@ -207,7 +213,11 @@ export const createFormRunner = <T, FS>() => {
         Debounce<Synchronized<Unit, ApiErrors>, CreateFormWritableState<T, FS>>(
           SynchronizeCo.GetState().then((current) => {
             if (current.entity.sync.kind != "loaded") {
-              return Synchronize<Unit, ApiErrors, CreateFormWritableState<T, FS>>(
+              return Synchronize<
+                Unit,
+                ApiErrors,
+                CreateFormWritableState<T, FS>
+              >(
                 (_) => Promise.resolve([]),
                 (_) => "transient failure",
                 5,

@@ -29,16 +29,16 @@ export type ApiErrors = Array<string>;
 export type EditFormContext<T, FS> = {
   entityId: string;
   api: {
-    get: (id: Guid) => Promise<PredicateValue>;
+    get: (id: Guid) => Promise<any>;
     update: (id: Guid, raw: any) => Promise<ApiErrors>;
-    getGlobalConfiguration: () => Promise<PredicateValue>;
+    getGlobalConfiguration: () => Promise<any>;
   };
   formType: ParsedType<T>;
   toApiParser: (
     entity: PredicateValue,
     formstate: EditFormState<T, FS>
   ) => ValueOrErrors<any, string>;
-  fromApiParser: (raw: any) => PredicateValue;
+  fromApiParser: (raw: any) => ValueOrErrors<PredicateValue, string>;
   parseGlobalConfiguration: (raw: any) => ValueOrErrors<PredicateValue, string>;
   visibilityPredicateExpressions: FieldPredicateExpressions;
   disabledPredicatedExpressions: FieldPredicateExpressions;
@@ -54,11 +54,8 @@ export type EditFormContext<T, FS> = {
 };
 
 export type EditFormState<T, FS> = {
-  entity: Synchronized<Unit, PredicateValue>
-  globalConfiguration: Synchronized<
-    Unit,
-    ValueOrErrors<PredicateValue, string>
-  >;
+  entity: Synchronized<Unit, PredicateValue>;
+  globalConfiguration: Synchronized<Unit, PredicateValue>;
   formFieldStates: FS;
   commonFormState: CommonFormState;
   customFormState: {
