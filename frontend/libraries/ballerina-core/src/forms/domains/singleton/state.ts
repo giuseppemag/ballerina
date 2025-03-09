@@ -86,12 +86,7 @@ export type EntityFormContext<
   Context,
   ForeignMutationsExpected,
 > = Context &
-  EntityFormState<
-    Fields,
-    FieldStates,
-    Context,
-    ForeignMutationsExpected
-  > & {
+  EntityFormState<Fields, FieldStates, Context, ForeignMutationsExpected> & {
     elementVisibilities: FormFieldPredicateEvaluation[] | undefined;
     elementDisabledFields: FormFieldPredicateEvaluation | undefined;
     extraContext: any;
@@ -132,18 +127,8 @@ export type EntityFormView<
   Context,
   ForeignMutationsExpected,
 > = View<
-  EntityFormContext<
-    Fields,
-    FieldStates,
-    Context,
-    ForeignMutationsExpected
-  >,
-  EntityFormState<
-    Fields,
-    FieldStates,
-    Context,
-    ForeignMutationsExpected
-  >,
+  EntityFormContext<Fields, FieldStates, Context, ForeignMutationsExpected>,
+  EntityFormState<Fields, FieldStates, Context, ForeignMutationsExpected>,
   EntityFormForeignMutationsExpected<
     Fields,
     FieldStates,
@@ -167,18 +152,8 @@ export type EntityFormTemplate<
   Context,
   ForeignMutationsExpected,
 > = Template<
-  EntityFormContext<
-    Fields,
-    FieldStates,
-    Context,
-    ForeignMutationsExpected
-  >,
-  EntityFormState<
-    Fields,
-    FieldStates,
-    Context,
-    ForeignMutationsExpected
-  >,
+  EntityFormContext<Fields, FieldStates, Context, ForeignMutationsExpected>,
+  EntityFormState<Fields, FieldStates, Context, ForeignMutationsExpected>,
   EntityFormForeignMutationsExpected<
     Fields,
     FieldStates,
@@ -193,18 +168,10 @@ export type EmbeddedFieldTemplate<
   Context,
   ForeignMutationsExpected,
 > = Template<
-  EntityFormContext<
-    Fields,
-    FieldStates,
-    Context,
-    ForeignMutationsExpected
-  > & { disabled: boolean },
-  EntityFormState<
-    Fields,
-    FieldStates,
-    Context,
-    ForeignMutationsExpected
-  >,
+  EntityFormContext<Fields, FieldStates, Context, ForeignMutationsExpected> & {
+    disabled: boolean;
+  },
+  EntityFormState<Fields, FieldStates, Context, ForeignMutationsExpected>,
   EntityFormForeignMutationsExpected<
     Fields,
     FieldStates,

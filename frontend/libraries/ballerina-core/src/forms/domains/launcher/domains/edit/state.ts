@@ -36,7 +36,7 @@ export type EditFormContext<T, FS> = {
   formType: ParsedType<T>;
   toApiParser: (
     entity: PredicateValue,
-    formstate: EditFormState<T, FS>
+    formstate: EditFormState<T, FS>,
   ) => ValueOrErrors<any, string>;
   fromApiParser: (raw: any) => ValueOrErrors<PredicateValue, string>;
   parseGlobalConfiguration: (raw: any) => ValueOrErrors<PredicateValue, string>;
@@ -93,7 +93,7 @@ export const EditFormState = <T, FS>() => ({
         >
       >;
       apiRunner: Debounced<Synchronized<Unit, ApiErrors>>;
-    }
+    },
   ): EditFormState<T, FS> => ({
     entity: Synchronized.Default(unit),
     globalConfiguration: Synchronized.Default(unit),
@@ -108,42 +108,42 @@ export const EditFormState = <T, FS>() => ({
       ...simpleUpdater<EditFormState<T, FS>>()("globalConfiguration"),
       ...simpleUpdaterWithChildren<EditFormState<T, FS>>()({
         ...simpleUpdater<EditFormState<T, FS>["customFormState"]>()(
-          "initApiChecker"
+          "initApiChecker",
         ),
         ...simpleUpdater<EditFormState<T, FS>["customFormState"]>()(
-          "configApiChecker"
+          "configApiChecker",
         ),
         ...simpleUpdater<EditFormState<T, FS>["customFormState"]>()(
-          "updateApiChecker"
+          "updateApiChecker",
         ),
         ...simpleUpdater<EditFormState<T, FS>["customFormState"]>()(
-          "apiRunner"
+          "apiRunner",
         ),
         ...simpleUpdater<EditFormState<T, FS>["customFormState"]>()(
-          "predicateEvaluations"
+          "predicateEvaluations",
         ),
       })("customFormState"),
       ...simpleUpdater<EditFormState<T, FS>>()("commonFormState"),
     },
     Template: {
       entity: (
-        _: BasicUpdater<PredicateValue>
+        _: BasicUpdater<PredicateValue>,
       ): Updater<EditFormState<T, FS>> =>
         EditFormState<T, FS>().Updaters.Core.entity(
-          Synchronized.Updaters.sync(AsyncState.Operations.map(_))
+          Synchronized.Updaters.sync(AsyncState.Operations.map(_)),
         ),
       submit: (): Updater<EditFormState<T, FS>> =>
         EditFormState<T, FS>().Updaters.Core.customFormState.children.apiRunner(
           Debounced.Updaters.Template.value(
-            Synchronized.Updaters.sync(AsyncState.Operations.map(id))
-          )
+            Synchronized.Updaters.sync(AsyncState.Operations.map(id)),
+          ),
         ),
       recalculatePredicates: (): Updater<EditFormState<T, FS>> =>
         EditFormState<
           T,
           FS
         >().Updaters.Core.customFormState.children.predicateEvaluations(
-          Debounced.Updaters.Template.value(id)
+          Debounced.Updaters.Template.value(id),
         ),
     },
   },
@@ -151,7 +151,7 @@ export const EditFormState = <T, FS>() => ({
     _: ForeignMutationsInput<
       EditFormContext<T, FS>,
       EditFormWritableState<T, FS>
-    >
+    >,
   ) => ({}),
 });
 
@@ -162,15 +162,15 @@ export type EditFormForeignMutationsExposed<T, FS> = ReturnType<
 export type EditFormForeignMutationsExpected<T, FS> = {
   apiHandlers?: {
     onGetSuccess?: (
-      _: (EditFormWritableState<T, FS> & EditFormContext<T, FS>) | undefined
+      _: (EditFormWritableState<T, FS> & EditFormContext<T, FS>) | undefined,
     ) => void;
     onGetError?: <ApiErrors>(_: ApiErrors | undefined) => void;
     onUpdateSuccess?: (
-      _: (EditFormWritableState<T, FS> & EditFormContext<T, FS>) | undefined
+      _: (EditFormWritableState<T, FS> & EditFormContext<T, FS>) | undefined,
     ) => void;
     onUpdateError?: <ApiErrors>(_: ApiErrors | undefined) => void;
     onConfigSuccess?: (
-      _: (EditFormWritableState<T, FS> & EditFormContext<T, FS>) | undefined
+      _: (EditFormWritableState<T, FS> & EditFormContext<T, FS>) | undefined,
     ) => void;
     onConfigError?: <ApiErrors>(_: ApiErrors | undefined) => void;
   };

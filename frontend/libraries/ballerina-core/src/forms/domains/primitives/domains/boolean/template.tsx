@@ -17,9 +17,9 @@ import {
 
 export const BooleanForm = <
   Context extends FormLabel,
-  ForeignMutationsExpected
+  ForeignMutationsExpected,
 >(
-  validation?: BasicFun<boolean, Promise<FieldValidation>>
+  validation?: BasicFun<boolean, Promise<FieldValidation>>,
 ) => {
   return Template.Default<
     Context & Value<boolean> & { disabled: boolean },
@@ -47,9 +47,9 @@ export const BooleanForm = <
       validation
         ? (_) =>
             validation(_).then(
-              FieldValidationWithPath.Default.fromFieldValidation
+              FieldValidationWithPath.Default.fromFieldValidation,
             )
-        : undefined
+        : undefined,
     ),
   ]);
 };

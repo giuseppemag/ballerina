@@ -18,7 +18,7 @@ import {
 import { DateFormState, DateView } from "./state";
 
 export const DateForm = <Context extends FormLabel, ForeignMutationsExpected>(
-  validation?: BasicFun<Date, Promise<FieldValidation>>
+  validation?: BasicFun<Date, Promise<FieldValidation>>,
 ) => {
   return Template.Default<
     Context & Value<Date> & { disabled: boolean },
@@ -34,14 +34,16 @@ export const DateForm = <Context extends FormLabel, ForeignMutationsExpected>(
           setNewValue: (_) => {
             props.setState(
               DateFormState.Updaters.Core.customFormState.children.possiblyInvalidInput(
-                replaceWith(_)
-              )
+                replaceWith(_),
+              ),
             );
             const newValue = _ == undefined ? _ : new Date(_);
             setTimeout(() => {
               props.foreignMutations.onChange(
-                newValue == undefined || isNaN(newValue.getTime()) ? id : replaceWith(newValue),
-                List()
+                newValue == undefined || isNaN(newValue.getTime())
+                  ? id
+                  : replaceWith(newValue),
+                List(),
               );
             }, 0);
           },
@@ -58,9 +60,9 @@ export const DateForm = <Context extends FormLabel, ForeignMutationsExpected>(
       validation
         ? (_) =>
             validation(_).then(
-              FieldValidationWithPath.Default.fromFieldValidation
+              FieldValidationWithPath.Default.fromFieldValidation,
             )
-        : undefined
+        : undefined,
     ),
   ]);
 };

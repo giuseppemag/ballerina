@@ -62,7 +62,9 @@ export const EditFormTemplate = <T, FS>(): EditFormTemplate<T, FS> =>
             ...props.view,
             actualForm:
               !AsyncState.Operations.hasValue(props.context.entity.sync) ||
-              !AsyncState.Operations.hasValue(props.context.globalConfiguration.sync)
+              !AsyncState.Operations.hasValue(
+                props.context.globalConfiguration.sync,
+              )
                 ? undefined
                 : props.context.actualForm({
                     context: {
@@ -85,7 +87,10 @@ export const EditFormTemplate = <T, FS>(): EditFormTemplate<T, FS> =>
                           EditFormState<T, FS>().Updaters.Template.entity(e),
                         );
                         props.setState(
-                          EditFormState<T, FS>().Updaters.Template.recalculatePredicates(),
+                          EditFormState<
+                            T,
+                            FS
+                          >().Updaters.Template.recalculatePredicates(),
                         );
                       },
                     },

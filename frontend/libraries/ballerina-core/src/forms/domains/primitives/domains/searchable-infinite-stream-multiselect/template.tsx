@@ -36,9 +36,9 @@ import { InfiniteStreamMultiselectView } from "./state";
 
 export const InfiniteMultiselectDropdownForm = <
   Context extends FormLabel,
-  ForeignMutationsExpected
+  ForeignMutationsExpected,
 >(
-  validation?: BasicFun<ValueRecord, Promise<FieldValidation>>
+  validation?: BasicFun<ValueRecord, Promise<FieldValidation>>,
 ) => {
   const Co = CoTypedFactory<
     Context & Value<ValueRecord> & { disabled: boolean },
@@ -59,14 +59,14 @@ export const InfiniteMultiselectDropdownForm = <
           .then((current) => DebouncedCo.Do(() => current.onDebounce()))
           //.SetState(SearchNow.Updaters.reloadsRequested(_ => _ + 1))
           .then((_) => DebouncedCo.Return("success")),
-        250
+        250,
       ).embed(
         (_) => ({ ..._, ..._.customFormState.searchText }),
         SearchableInfiniteStreamState().Updaters.Core.customFormState.children
-          .searchText
+          .searchText,
       ),
       DebouncerCo.Wait(0),
-    ])
+    ]),
   );
   const debouncerRunner = DebouncerCo.Template<
     ForeignMutationsExpected & { onChange: OnChange<ValueRecord> }
@@ -74,7 +74,7 @@ export const InfiniteMultiselectDropdownForm = <
     interval: 15,
     runFilter: (props) =>
       Debounced.Operations.shouldCoroutineRun(
-        props.context.customFormState.searchText
+        props.context.customFormState.searchText,
       ),
   });
   const loaderRunner = Co.Template<
@@ -83,15 +83,15 @@ export const InfiniteMultiselectDropdownForm = <
     InfiniteStreamLoader<CollectionReference>().embed(
       (_) => _.customFormState.stream,
       SearchableInfiniteStreamState().Updaters.Core.customFormState.children
-        .stream
+        .stream,
     ),
     {
       interval: 15,
       runFilter: (props) =>
         InfiniteStreamState().Operations.shouldCoroutineRun(
-          props.context.customFormState.stream
+          props.context.customFormState.stream,
         ),
-    }
+    },
   );
 
   return Template.Default<
@@ -112,7 +112,7 @@ export const InfiniteMultiselectDropdownForm = <
               ?.hasMoreValues == false
           ),
           isLoading: AsyncState.Operations.isLoading(
-            props.context.customFormState.stream.loadingMore
+            props.context.customFormState.stream.loadingMore,
           ),
           availableOptions: props.context.customFormState.stream.loadedElements
             .valueSeq()
@@ -128,58 +128,58 @@ export const InfiniteMultiselectDropdownForm = <
                   replaceWith(
                     props.context.customFormState.status == "closed"
                       ? "open"
-                      : "closed"
-                  )
+                      : "closed",
+                  ),
                 )
                 .then(
                   props.context.customFormState.stream.loadedElements.count() ==
                     0
                     ? SearchableInfiniteStreamState().Updaters.Core.customFormState.children.stream(
-                        InfiniteStreamState<CollectionReference>().Updaters.Template.loadMore()
+                        InfiniteStreamState<CollectionReference>().Updaters.Template.loadMore(),
                       )
-                    : id
-                )
+                    : id,
+                ),
             ),
           clearSelection: () => {
             props.foreignMutations.onChange(
               ValueRecord.Updaters.clear(),
-              List()
+              List(),
             );
           },
           setSearchText: (_) =>
             props.setState(
               SearchableInfiniteStreamState().Updaters.Template.searchText(
-                replaceWith(_)
-              )
+                replaceWith(_),
+              ),
             ),
           loadMore: () =>
             props.setState(
               SearchableInfiniteStreamState().Updaters.Core.customFormState.children.stream(
-                InfiniteStreamState<CollectionReference>().Updaters.Template.loadMore()
-              )
+                InfiniteStreamState<CollectionReference>().Updaters.Template.loadMore(),
+              ),
             ),
           reload: () =>
             props.setState(
               SearchableInfiniteStreamState().Updaters.Template.searchText(
-                replaceWith("")
-              )
+                replaceWith(""),
+              ),
             ),
-          toggleSelection: (elementRecord: ValueRecord) =>{
+          toggleSelection: (elementRecord: ValueRecord) => {
             props.foreignMutations.onChange(
               props.context.value.fields.has(
-                elementRecord.fields.get("Id")! as string 
+                elementRecord.fields.get("Id")! as string,
               )
                 ? ValueRecord.Updaters.remove(
-                    elementRecord.fields.get("Id")! as string
+                    elementRecord.fields.get("Id")! as string,
                   )
                 : ValueRecord.Updaters.set(
                     elementRecord.fields.get("Id")! as string,
-                    elementRecord
+                    elementRecord,
                   ),
 
-              List()
-            )
-          }
+              List(),
+            );
+          },
         }}
       />
     </>
@@ -192,10 +192,10 @@ export const InfiniteMultiselectDropdownForm = <
           SearchableInfiniteStreamState().Updaters.Core.customFormState.children.stream(
             InfiniteStreamState<CollectionReference>().Updaters.Template.reload(
               props.context.customFormState.getChunk(
-                props.context.customFormState.searchText.value
-              )
-            )
-          )
+                props.context.customFormState.searchText.value,
+              ),
+            ),
+          ),
         ),
     })),
     ValidateRunner<
@@ -207,9 +207,9 @@ export const InfiniteMultiselectDropdownForm = <
       validation
         ? (_) =>
             validation(_).then(
-              FieldValidationWithPath.Default.fromFieldValidation
+              FieldValidationWithPath.Default.fromFieldValidation,
             )
-        : undefined
+        : undefined,
     ),
   ]);
 };

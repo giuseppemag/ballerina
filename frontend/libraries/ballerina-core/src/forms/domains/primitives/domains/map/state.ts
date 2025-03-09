@@ -13,10 +13,7 @@ import { Value } from "../../../../../value/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import { OnChange, CommonFormState } from "../../../singleton/state";
 
-export type MapFieldState<
-  KeyFormState,
-  ValueFormState,
-> = {
+export type MapFieldState<KeyFormState, ValueFormState> = {
   commonFormState: CommonFormState;
 } & {
   elementFormStates: Map<
@@ -24,10 +21,7 @@ export type MapFieldState<
     { KeyFormState: KeyFormState; ValueFormState: ValueFormState }
   >;
 };
-export const MapFieldState = <
-  KeyFormState,
-  ValueFormState,
->() => ({
+export const MapFieldState = <KeyFormState, ValueFormState>() => ({
   Default: (
     elementFormStates: MapFieldState<
       KeyFormState,
@@ -52,9 +46,7 @@ export type MapFieldView<
   Context extends FormLabel,
   ForeignMutationsExpected,
 > = View<
-  Context &
-    Value<ValueTuple> &
-    MapFieldState<KeyFormState, ValueFormState>,
+  Context & Value<ValueTuple> & MapFieldState<KeyFormState, ValueFormState>,
   MapFieldState<KeyFormState, ValueFormState>,
   ForeignMutationsExpected & {
     onChange: OnChange<ValueTuple>;

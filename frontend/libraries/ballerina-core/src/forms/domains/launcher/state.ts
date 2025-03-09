@@ -43,7 +43,10 @@ export type FormRef = {
       entity: Sum<any, "not initialized">;
       globalConfiguration: Sum<any, "not initialized">;
       containerWrapper: any;
-      onEntityChange: (updater: Updater<PredicateValue>, path: List<string>) => void;
+      onEntityChange: (
+        updater: Updater<PredicateValue>,
+        path: List<string>,
+      ) => void;
     }
 );
 

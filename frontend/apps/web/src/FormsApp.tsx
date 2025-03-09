@@ -107,10 +107,7 @@ export const FormsApp = (props: {}) => {
   >(Sum.Default.right("not initialized"));
   const [entityPath, setEntityPath] = useState<List<string>>(List());
 
-  const onEntityChange = (
-    updater: Updater<any>,
-    path: List<string>,
-  ): void => {
+  const onEntityChange = (updater: Updater<any>, path: List<string>): void => {
     if (personPassthroughFormState.form.kind == "r") return;
     setTimeout(() => {}, 500);
     const newEntity = updater(entity.value);

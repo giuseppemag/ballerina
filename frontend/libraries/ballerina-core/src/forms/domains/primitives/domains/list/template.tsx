@@ -28,7 +28,7 @@ export const ListForm = <
     elementVisibilities: FormFieldPredicateEvaluation[];
     elementDisabled: FormFieldPredicateEvaluation[];
   },
-  ForeignMutationsExpected
+  ForeignMutationsExpected,
 >(
   ElementFormState: { Default: () => ElementFormState },
   Element: { Default: () => PredicateValue },
@@ -39,7 +39,7 @@ export const ListForm = <
       onChange: OnChange<PredicateValue>;
     }
   >,
-  validation?: BasicFun<ValueTuple, Promise<FieldValidation>>
+  validation?: BasicFun<ValueTuple, Promise<FieldValidation>>,
 ) => {
   const embeddedElementTemplate = (elementIndex: number) =>
     elementTemplate
@@ -54,7 +54,7 @@ export const ListForm = <
         }
       >(
         (
-          props
+          props,
         ): ForeignMutationsExpected & {
           onChange: OnChange<PredicateValue>;
         } => ({
@@ -67,12 +67,12 @@ export const ListForm = <
                       list.values.update(
                         elementIndex,
                         PredicateValue.Default.unit(),
-                        elementUpdater
-                      )
+                        elementUpdater,
+                      ),
                     )
-                  : list
+                  : list,
               ),
-              List([elementIndex]).concat(path)
+              List([elementIndex]).concat(path),
             );
             props.setState((_) => ({ ..._, modifiedByUser: true }));
           },
@@ -81,11 +81,11 @@ export const ListForm = <
           move: (elementIndex: number, to: number) => {},
           duplicate: (elementIndex: number) => {},
           insert: (elementIndex: number) => {},
-        })
+        }),
       )
       .mapContext(
         (
-          _: Context & Value<ValueTuple> & ListFieldState<ElementFormState>
+          _: Context & Value<ValueTuple> & ListFieldState<ElementFormState>,
         ): (Context & Value<ValueTuple> & ElementFormState) | undefined => {
           if (!_.value.values.has(elementIndex)) return undefined;
           const element = _.value.values.get(elementIndex);
@@ -102,19 +102,19 @@ export const ListForm = <
               disabledFields: elementDisabled,
             };
           return elementContext;
-        }
+        },
       )
       .mapState(
         (
-          _: BasicUpdater<ElementFormState>
+          _: BasicUpdater<ElementFormState>,
         ): Updater<ListFieldState<ElementFormState>> =>
           ListFieldState<ElementFormState>().Updaters.Core.elementFormStates(
             MapRepo.Updaters.upsert(
               elementIndex,
               () => ElementFormState.Default(),
-              _
-            )
-          )
+              _,
+            ),
+          ),
       );
   return Template.Default<
     Context & Value<ValueTuple> & { disabled: boolean },
@@ -138,21 +138,21 @@ export const ListForm = <
                 Updater((list) =>
                   PredicateValue.Default.tuple(
                     ListRepo.Updaters.push<PredicateValue>(Element.Default())(
-                      list.values
-                    )
-                  )
+                      list.values,
+                    ),
+                  ),
                 ),
-                List([{ kind: "add" }])
+                List([{ kind: "add" }]),
               );
             },
             remove: (_) => {
               props.foreignMutations.onChange(
                 Updater((list) =>
                   PredicateValue.Default.tuple(
-                    ListRepo.Updaters.remove<PredicateValue>(_)(list.values)
-                  )
+                    ListRepo.Updaters.remove<PredicateValue>(_)(list.values),
+                  ),
                 ),
-                List([_, { kind: "remove" }])
+                List([_, { kind: "remove" }]),
               );
             },
             move: (index, to) => {
@@ -161,21 +161,21 @@ export const ListForm = <
                   PredicateValue.Default.tuple(
                     ListRepo.Updaters.move<PredicateValue>(
                       index,
-                      to
-                    )(list.values)
-                  )
+                      to,
+                    )(list.values),
+                  ),
                 ),
-                List([index, { kind: "move", to }])
+                List([index, { kind: "move", to }]),
               );
             },
             duplicate: (_) => {
               props.foreignMutations.onChange(
                 Updater((list) =>
                   PredicateValue.Default.tuple(
-                    ListRepo.Updaters.duplicate<PredicateValue>(_)(list.values)
-                  )
+                    ListRepo.Updaters.duplicate<PredicateValue>(_)(list.values),
+                  ),
                 ),
-                List([_, { kind: "duplicate" }])
+                List([_, { kind: "duplicate" }]),
               );
             },
             insert: (_) => {
@@ -184,11 +184,11 @@ export const ListForm = <
                   PredicateValue.Default.tuple(
                     ListRepo.Updaters.insert<PredicateValue>(
                       _,
-                      Element.Default()
-                    )(list.values)
-                  )
+                      Element.Default(),
+                    )(list.values),
+                  ),
                 ),
-                List([_, { kind: "insert" }])
+                List([_, { kind: "insert" }]),
               );
             },
           }}
@@ -206,9 +206,9 @@ export const ListForm = <
       validation
         ? (_) =>
             validation(_).then(
-              FieldValidationWithPath.Default.fromFieldValidation
+              FieldValidationWithPath.Default.fromFieldValidation,
             )
-        : undefined
+        : undefined,
     ),
   ]);
 };

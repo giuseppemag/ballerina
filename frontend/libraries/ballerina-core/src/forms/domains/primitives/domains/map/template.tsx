@@ -36,7 +36,7 @@ export const MapForm = <
       value: FormFieldPredicateEvaluation;
     }[];
   },
-  ForeignMutationsExpected
+  ForeignMutationsExpected,
 >(
   KeyFormState: { Default: () => KeyFormState },
   ValueFormState: { Default: () => ValueFormState },
@@ -56,7 +56,7 @@ export const MapForm = <
       onChange: OnChange<PredicateValue>;
     }
   >,
-  validation?: BasicFun<ValueTuple, Promise<FieldValidation>>
+  validation?: BasicFun<ValueTuple, Promise<FieldValidation>>,
 ) => {
   const embeddedKeyTemplate = (elementIndex: number) =>
     keyTemplate
@@ -68,7 +68,7 @@ export const MapForm = <
         }
       >(
         (
-          props
+          props,
         ): ForeignMutationsExpected & {
           onChange: OnChange<PredicateValue>;
         } => ({
@@ -84,29 +84,32 @@ export const MapForm = <
                       _ == undefined
                         ? _
                         : !PredicateValue.Operations.IsTuple(_)
-                        ? _
-                        : PredicateValue.Default.tuple(
-                            List([
-                              elementUpdater(_.values.get(0)!),
-                              _.values.get(1)!,
-                            ])
-                          )
-                  )
-                )
+                          ? _
+                          : PredicateValue.Default.tuple(
+                              List([
+                                elementUpdater(_.values.get(0)!),
+                                _.values.get(1)!,
+                              ]),
+                            ),
+                  ),
+                ),
               ),
-              List([elementIndex.toString(), "key"]).concat(path)
+              List([elementIndex.toString(), "key"]).concat(path),
             );
-            props.setState((_) => ({ ..._, commonFormState: {..._.commonFormState, modifiedByUser: true} }));
+            props.setState((_) => ({
+              ..._,
+              commonFormState: { ..._.commonFormState, modifiedByUser: true },
+            }));
           },
           add: (newElement: ValueTuple) => {},
           remove: (elementIndex: number) => {},
-        })
+        }),
       )
       .mapContext(
         (
           _: Context &
             Value<ValueTuple> &
-            MapFieldState<KeyFormState, ValueFormState>
+            MapFieldState<KeyFormState, ValueFormState>,
         ): (Context & Value<ValueTuple> & KeyFormState) | undefined => {
           const element = _.value.values.get(elementIndex) as ValueTuple;
           if (element == undefined) return undefined;
@@ -124,11 +127,11 @@ export const MapForm = <
             disabledFields: elementDisabled,
           };
           return elementContext;
-        }
+        },
       )
       .mapState(
         (
-          _: BasicUpdater<KeyFormState>
+          _: BasicUpdater<KeyFormState>,
         ): Updater<MapFieldState<KeyFormState, ValueFormState>> =>
           MapFieldState<
             KeyFormState,
@@ -143,9 +146,9 @@ export const MapForm = <
               (current) => ({
                 ...current,
                 KeyFormState: _(current.KeyFormState),
-              })
-            )
-          )
+              }),
+            ),
+          ),
       );
   const embeddedValueTemplate = (elementIndex: number) =>
     valueTemplate
@@ -157,7 +160,7 @@ export const MapForm = <
         }
       >(
         (
-          props
+          props,
         ): ForeignMutationsExpected & {
           onChange: OnChange<PredicateValue>;
         } => ({
@@ -173,29 +176,32 @@ export const MapForm = <
                       _ == undefined
                         ? _
                         : !PredicateValue.Operations.IsTuple(_)
-                        ? _
-                        : PredicateValue.Default.tuple(
-                            List([
-                              _.values.get(0)!,
-                              elementUpdater(_.values.get(1)!),
-                            ])
-                          )
-                  )
-                )
+                          ? _
+                          : PredicateValue.Default.tuple(
+                              List([
+                                _.values.get(0)!,
+                                elementUpdater(_.values.get(1)!),
+                              ]),
+                            ),
+                  ),
+                ),
               ),
-              List([elementIndex.toString(), "value"]).concat(path)
+              List([elementIndex.toString(), "value"]).concat(path),
             );
-            props.setState((_) => ({ ..._, commonFormState: {..._.commonFormState, modifiedByUser: true} }));
+            props.setState((_) => ({
+              ..._,
+              commonFormState: { ..._.commonFormState, modifiedByUser: true },
+            }));
           },
           add: (newElement: ValueTuple) => {},
           remove: (elementIndex: number) => {},
-        })
+        }),
       )
       .mapContext(
         (
           _: Context &
             Value<ValueTuple> &
-            MapFieldState<KeyFormState, ValueFormState>
+            MapFieldState<KeyFormState, ValueFormState>,
         ): (Context & Value<ValueTuple> & ValueFormState) | undefined => {
           const element = _.value.values.get(elementIndex) as ValueTuple;
           if (element == undefined) return undefined;
@@ -213,11 +219,11 @@ export const MapForm = <
             disabledFields: elementDisabled,
           };
           return elementContext;
-        }
+        },
       )
       .mapState(
         (
-          _: BasicUpdater<ValueFormState>
+          _: BasicUpdater<ValueFormState>,
         ): Updater<MapFieldState<KeyFormState, ValueFormState>> =>
           MapFieldState<
             KeyFormState,
@@ -232,9 +238,9 @@ export const MapForm = <
               (current) => ({
                 ...current,
                 ValueFormState: _(current.ValueFormState),
-              })
-            )
-          )
+              }),
+            ),
+          ),
       );
   return Template.Default<
     Context & Value<ValueTuple> & { disabled: boolean },
@@ -261,12 +267,12 @@ export const MapForm = <
                 PredicateValue.Default.tuple(
                   ListRepo.Updaters.push<ValueTuple>(
                     PredicateValue.Default.tuple(
-                      List([Key.Default(), Value.Default()])
-                    )
-                  )(list.values as List<ValueTuple>)
-                )
+                      List([Key.Default(), Value.Default()]),
+                    ),
+                  )(list.values as List<ValueTuple>),
+                ),
               ),
-              List([{ kind: "add" }])
+              List([{ kind: "add" }]),
             );
           },
           remove: (_) => {
@@ -274,11 +280,11 @@ export const MapForm = <
               Updater((list) =>
                 PredicateValue.Default.tuple(
                   ListRepo.Updaters.remove<ValueTuple>(_)(
-                    list.values as List<ValueTuple>
-                  )
-                )
+                    list.values as List<ValueTuple>,
+                  ),
+                ),
               ),
-              List([_, { kind: "remove" }])
+              List([_, { kind: "remove" }]),
             );
           },
         }}
@@ -296,9 +302,9 @@ export const MapForm = <
       validation
         ? (_) =>
             validation(_).then(
-              FieldValidationWithPath.Default.fromFieldValidation
+              FieldValidationWithPath.Default.fromFieldValidation,
             )
-        : undefined
+        : undefined,
     ),
   ]);
 };

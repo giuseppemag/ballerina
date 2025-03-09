@@ -60,7 +60,7 @@ export const AddressFormState = {
         commonFormState: CommonFormState.Default(),
         customFormState: SearchableInfiniteStreamState().Default(
           "",
-          AddressApi.getCities()
+          AddressApi.getCities(),
         ),
       },
     },

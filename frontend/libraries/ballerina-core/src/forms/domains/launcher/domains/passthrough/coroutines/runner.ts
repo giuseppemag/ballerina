@@ -24,7 +24,10 @@ export const passthroughFormRunner = <T, FS>() => {
   const Co = CoTypedFactory<
     PassthroughFormContext<T, FS> &
       PassthroughFormForeignMutationsExpected<T, FS> & {
-        onEntityChange: (updater: Updater<PredicateValue>, path: List<string>) => void;
+        onEntityChange: (
+          updater: Updater<PredicateValue>,
+          path: List<string>,
+        ) => void;
       },
     PassthroughFormWritableState<T, FS>
   >();

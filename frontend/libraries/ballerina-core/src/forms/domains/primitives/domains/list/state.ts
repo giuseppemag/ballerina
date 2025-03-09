@@ -26,9 +26,7 @@ export const ListFieldState = <ElementFormState>() => ({
   }),
   Updaters: {
     Core: {
-      ...simpleUpdater<ListFieldState<ElementFormState>>()(
-        "elementFormStates",
-      ),
+      ...simpleUpdater<ListFieldState<ElementFormState>>()("elementFormStates"),
     },
     Template: {},
   },
@@ -52,9 +50,7 @@ export type ListFieldView<
     embeddedElementTemplate: BasicFun<
       number,
       Template<
-        Context &
-          Value<ValueTuple> &
-          ListFieldState<ElementFormState>,
+        Context & Value<ValueTuple> & ListFieldState<ElementFormState>,
         ListFieldState<ElementFormState>,
         ForeignMutationsExpected & {
           onChange: OnChange<ValueTuple>;

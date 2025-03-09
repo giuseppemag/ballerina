@@ -34,7 +34,7 @@ export type CreateFormContext<T, FS> = {
   formType: ParsedType<T>;
   toApiParser: (
     entity: PredicateValue,
-    formstate: CreateFormState<T, FS>
+    formstate: CreateFormState<T, FS>,
   ) => ValueOrErrors<any, string>;
   fromApiParser: (raw: any) => ValueOrErrors<PredicateValue, string>;
   parseGlobalConfiguration: (raw: any) => ValueOrErrors<PredicateValue, string>;
@@ -91,7 +91,7 @@ export const CreateFormState = <T, FS>() => ({
         >
       >;
       apiRunner: Debounced<Synchronized<Unit, ApiErrors>>;
-    }
+    },
   ): CreateFormState<T, FS> => ({
     entity: Synchronized.Default(unit),
     globalConfiguration: Synchronized.Default(unit),
@@ -106,29 +106,29 @@ export const CreateFormState = <T, FS>() => ({
       ...simpleUpdater<CreateFormState<T, FS>>()("formFieldStates"),
       ...simpleUpdaterWithChildren<CreateFormState<T, FS>>()({
         ...simpleUpdater<CreateFormState<T, FS>["customFormState"]>()(
-          "initApiChecker"
+          "initApiChecker",
         ),
         ...simpleUpdater<CreateFormState<T, FS>["customFormState"]>()(
-          "configApiChecker"
+          "configApiChecker",
         ),
         ...simpleUpdater<CreateFormState<T, FS>["customFormState"]>()(
-          "createApiChecker"
+          "createApiChecker",
         ),
         ...simpleUpdater<CreateFormState<T, FS>["customFormState"]>()(
-          "apiRunner"
+          "apiRunner",
         ),
         ...simpleUpdater<CreateFormState<T, FS>["customFormState"]>()(
-          "predicateEvaluations"
+          "predicateEvaluations",
         ),
       })("customFormState"),
       ...simpleUpdater<CreateFormState<T, FS>>()("commonFormState"),
     },
     Template: {
       entity: (
-        _: BasicUpdater<PredicateValue>
+        _: BasicUpdater<PredicateValue>,
       ): Updater<CreateFormState<T, FS>> =>
         CreateFormState<T, FS>().Updaters.Core.entity(
-          Synchronized.Updaters.sync(AsyncState.Operations.map(_))
+          Synchronized.Updaters.sync(AsyncState.Operations.map(_)),
         ),
       submit: (): Updater<CreateFormState<T, FS>> =>
         CreateFormState<
@@ -136,15 +136,15 @@ export const CreateFormState = <T, FS>() => ({
           FS
         >().Updaters.Core.customFormState.children.apiRunner(
           Debounced.Updaters.Template.value(
-            Synchronized.Updaters.sync(AsyncState.Operations.map(id))
-          )
+            Synchronized.Updaters.sync(AsyncState.Operations.map(id)),
+          ),
         ),
       recalculatePredicates: (): Updater<CreateFormState<T, FS>> =>
         CreateFormState<
           T,
           FS
         >().Updaters.Core.customFormState.children.predicateEvaluations(
-          Debounced.Updaters.Template.value(id)
+          Debounced.Updaters.Template.value(id),
         ),
     },
   },
@@ -152,7 +152,7 @@ export const CreateFormState = <T, FS>() => ({
     _: ForeignMutationsInput<
       CreateFormContext<T, FS>,
       CreateFormWritableState<T, FS>
-    >
+    >,
   ) => ({}),
 });
 
@@ -163,15 +163,21 @@ export type CreateFormForeignMutationsExposed<T, FS> = ReturnType<
 export type CreateFormForeignMutationsExpected<T, FS> = {
   apiHandlers?: {
     onDefaultSuccess?: (
-      _: (CreateFormWritableState<T, FS> & CreateFormContext<T, FS>) | undefined
+      _:
+        | (CreateFormWritableState<T, FS> & CreateFormContext<T, FS>)
+        | undefined,
     ) => void;
     onDefaultError?: <ApiErrors>(_: ApiErrors | undefined) => void;
     onConfigSuccess?: (
-      _: (CreateFormWritableState<T, FS> & CreateFormContext<T, FS>) | undefined
+      _:
+        | (CreateFormWritableState<T, FS> & CreateFormContext<T, FS>)
+        | undefined,
     ) => void;
     onConfigError?: <ApiErrors>(_: ApiErrors | undefined) => void;
     onCreateSuccess?: (
-      _: (CreateFormWritableState<T, FS> & CreateFormContext<T, FS>) | undefined
+      _:
+        | (CreateFormWritableState<T, FS> & CreateFormContext<T, FS>)
+        | undefined,
     ) => void;
     onCreateError?: <ApiErrors>(_: ApiErrors | undefined) => void;
   };

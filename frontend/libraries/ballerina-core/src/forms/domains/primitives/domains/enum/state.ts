@@ -1,7 +1,6 @@
 import { OrderedMap } from "immutable";
 import {
   Guid,
-
   SimpleCallback,
   Synchronized,
   Unit,
@@ -20,7 +19,9 @@ export type BaseEnumContext = {
 };
 export type EnumFormState = {
   commonFormState: CommonFormState;
-  customFormState: { options: Synchronized<Unit, OrderedMap<Guid, ValueRecord>> };
+  customFormState: {
+    options: Synchronized<Unit, OrderedMap<Guid, ValueRecord>>;
+  };
 };
 export const EnumFormState = () => ({
   Default: (): EnumFormState => ({

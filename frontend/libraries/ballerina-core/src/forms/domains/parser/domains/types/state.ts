@@ -260,9 +260,7 @@ export const ParsedType = {
           types,
           injectedPrimitives,
         ).Then((parsedArg) =>
-          ValueOrErrors.Default.return(
-            ParsedType.Default.option(parsedArg),
-          ),
+          ValueOrErrors.Default.return(ParsedType.Default.option(parsedArg)),
         );
       if (RawFieldType.isMap(rawFieldType))
         return ParsedType.Operations.ParseRawFieldType(

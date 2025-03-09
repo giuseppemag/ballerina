@@ -81,7 +81,7 @@ export const PassthroughFormTemplate = <T, FS>(): PassthroughFormTemplate<
                     PassthroughFormState<
                       T,
                       FS
-                    >().Updaters.Template.recalculatePredicates()
+                    >().Updaters.Template.recalculatePredicates(),
                   );
                 },
               },

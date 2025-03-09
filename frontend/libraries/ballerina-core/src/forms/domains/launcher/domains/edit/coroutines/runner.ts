@@ -31,48 +31,44 @@ export const editFormRunner = <T, FS>() => {
       Co.SetState(
         EditFormState<T, FS>()
           .Updaters.Core.customFormState.children.initApiChecker(
-            ApiResponseChecker.Updaters().toUnchecked()
+            ApiResponseChecker.Updaters().toUnchecked(),
           )
           .then(
             EditFormState<
               T,
               FS
             >().Updaters.Core.customFormState.children.configApiChecker(
-              ApiResponseChecker.Updaters().toUnchecked()
-            )
-          )
+              ApiResponseChecker.Updaters().toUnchecked(),
+            ),
+          ),
       ),
       Co.All([
         Synchronize<Unit, PredicateValue>(
           () =>
-            current.api
-              .get(current.entityId)
-              .then((raw) => {
-                const result = current.fromApiParser(raw);
-                return result.kind == "errors"
-                  ? Promise.reject(result.errors)
-                  : Promise.resolve(result.value);
-              }),
+            current.api.get(current.entityId).then((raw) => {
+              const result = current.fromApiParser(raw);
+              return result.kind == "errors"
+                ? Promise.reject(result.errors)
+                : Promise.resolve(result.value);
+            }),
           (_) => "transient failure",
           5,
-          50
+          50,
         ).embed((_) => _.entity, EditFormState<T, FS>().Updaters.Core.entity),
         Synchronize<Unit, PredicateValue>(
           () =>
-            current.api
-              .getGlobalConfiguration()
-              .then((raw) => {
-                const result = current.parseGlobalConfiguration(raw);
-                return result.kind == "errors"
-                  ? Promise.reject(result.errors)
-                  : Promise.resolve(result.value);
-              }),
+            current.api.getGlobalConfiguration().then((raw) => {
+              const result = current.parseGlobalConfiguration(raw);
+              return result.kind == "errors"
+                ? Promise.reject(result.errors)
+                : Promise.resolve(result.value);
+            }),
           (_) => "transient failure",
           5,
-          50
+          50,
         ).embed(
           (_) => _.globalConfiguration,
-          EditFormState<T, FS>().Updaters.Core.globalConfiguration
+          EditFormState<T, FS>().Updaters.Core.globalConfiguration,
         ),
       ]),
       HandleApiResponse<
@@ -88,8 +84,8 @@ export const editFormRunner = <T, FS>() => {
           T,
           FS
         >().Updaters.Core.customFormState.children.initApiChecker(
-          ApiResponseChecker.Updaters().toChecked()
-        )
+          ApiResponseChecker.Updaters().toChecked(),
+        ),
       ),
       HandleApiResponse<
         EditFormWritableState<T, FS>,
@@ -104,8 +100,8 @@ export const editFormRunner = <T, FS>() => {
           T,
           FS
         >().Updaters.Core.customFormState.children.configApiChecker(
-          ApiResponseChecker.Updaters().toChecked()
-        )
+          ApiResponseChecker.Updaters().toChecked(),
+        ),
       ),
     ]);
   });
@@ -132,11 +128,11 @@ export const editFormRunner = <T, FS>() => {
                   disabledPredicatedExpressions:
                     current.disabledPredicatedExpressions,
                 },
-                current.entity.sync.value
-              )
-            )
-          )
-        )
+                current.entity.sync.value,
+              ),
+            ),
+          ),
+        ),
       );
     }
     return Co.Do(() => {});
@@ -181,17 +177,17 @@ export const editFormRunner = <T, FS>() => {
                 disabledPredicatedExpressions:
                   current.disabledPredicatedExpressions,
               },
-              current.entity.sync.value
-            )
-          )
+              current.entity.sync.value,
+            ),
+          ),
         ).then(() => PredicatesCo.Return<ApiResultStatus>("success"));
       }),
-      50
+      50,
     ).embed(
       (_) => ({ ..._, ..._.customFormState.predicateEvaluations }),
       EditFormState<T, FS>().Updaters.Core.customFormState.children
-        .predicateEvaluations
-    )
+        .predicateEvaluations,
+    ),
   );
 
   const SynchronizeCo = CoTypedFactory<
@@ -207,8 +203,8 @@ export const editFormRunner = <T, FS>() => {
             T,
             FS
           >().Updaters.Core.customFormState.children.updateApiChecker(
-            ApiResponseChecker.Updaters().toUnchecked()
-          )
+            ApiResponseChecker.Updaters().toUnchecked(),
+          ),
         ),
         Debounce<Synchronized<Unit, ApiErrors>, EditFormWritableState<T, FS>>(
           SynchronizeCo.GetState().then((current) => {
@@ -217,12 +213,12 @@ export const editFormRunner = <T, FS>() => {
                 (_) => Promise.resolve([]),
                 (_) => "transient failure",
                 5,
-                50
+                50,
               );
             }
             const parsed = editFormState.toApiParser(
               current.entity.sync.value,
-              current
+              current,
             );
 
             return Synchronize<Unit, ApiErrors, EditFormWritableState<T, FS>>(
@@ -232,14 +228,14 @@ export const editFormRunner = <T, FS>() => {
                   : editFormState.api.update(editFormState.entityId, parsed),
               (_) => "transient failure",
               parsed.kind == "errors" ? 1 : 5,
-              50
+              50,
             );
           }),
-          15
+          15,
         ).embed(
           (_) => ({ ..._, ..._.customFormState.apiRunner }),
           EditFormState<T, FS>().Updaters.Core.customFormState.children
-            .apiRunner
+            .apiRunner,
         ),
         HandleApiResponse<
           EditFormWritableState<T, FS>,
@@ -254,11 +250,11 @@ export const editFormRunner = <T, FS>() => {
             T,
             FS
           >().Updaters.Core.customFormState.children.updateApiChecker(
-            ApiResponseChecker.Updaters().toChecked()
-          )
+            ApiResponseChecker.Updaters().toChecked(),
+          ),
         ),
-      ])
-    )
+      ]),
+    ),
   );
 
   return Co.Template<EditFormForeignMutationsExpected<T, FS>>(init, {
@@ -267,7 +263,7 @@ export const editFormRunner = <T, FS>() => {
       !AsyncState.Operations.hasValue(props.context.entity.sync) ||
       !AsyncState.Operations.hasValue(props.context.globalConfiguration.sync) ||
       !ApiResponseChecker.Operations.checked(
-        props.context.customFormState.initApiChecker
+        props.context.customFormState.initApiChecker,
       ),
   }).any([
     Co.Template<EditFormForeignMutationsExpected<T, FS>>(
@@ -277,17 +273,17 @@ export const editFormRunner = <T, FS>() => {
         runFilter: (props) =>
           props.context.entity.sync.kind == "loaded" &&
           props.context.globalConfiguration.sync.kind == "loaded",
-      }
+      },
     ),
     Co.Template<EditFormForeignMutationsExpected<T, FS>>(synchronize, {
       interval: 15,
       runFilter: (props) =>
         props.context.entity.sync.kind == "loaded" &&
         (Debounced.Operations.shouldCoroutineRun(
-          props.context.customFormState.apiRunner
+          props.context.customFormState.apiRunner,
         ) ||
           !ApiResponseChecker.Operations.checked(
-            props.context.customFormState.updateApiChecker
+            props.context.customFormState.updateApiChecker,
           )),
     }),
     Co.Template<EditFormForeignMutationsExpected<T, FS>>(
@@ -298,9 +294,9 @@ export const editFormRunner = <T, FS>() => {
           props.context.entity.sync.kind == "loaded" &&
           props.context.globalConfiguration.sync.kind == "loaded" &&
           Debounced.Operations.shouldCoroutineRun(
-            props.context.customFormState.predicateEvaluations
+            props.context.customFormState.predicateEvaluations,
           ),
-      }
+      },
     ),
   ]);
 };

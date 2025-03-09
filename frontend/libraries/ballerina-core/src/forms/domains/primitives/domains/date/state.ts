@@ -1,4 +1,4 @@
-import { 
+import {
   Maybe,
   SimpleCallback,
   simpleUpdater,

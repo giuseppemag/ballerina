@@ -17,41 +17,49 @@ import { CollectionSelection } from "../../../collection/domains/selection/state
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import { OnChange, CommonFormState } from "../../../singleton/state";
 
-export type SearchableInfiniteStreamState =
-  {
-    commonFormState: CommonFormState;
-    customFormState: {
-      searchText: Debounced<Value<string>>;
-      status: "open" | "closed";
-      stream: InfiniteStreamState<CollectionReference>;
-      getChunk: BasicFun<string, InfiniteStreamState<CollectionReference>["getChunk"]>;
-    };
+export type SearchableInfiniteStreamState = {
+  commonFormState: CommonFormState;
+  customFormState: {
+    searchText: Debounced<Value<string>>;
+    status: "open" | "closed";
+    stream: InfiniteStreamState<CollectionReference>;
+    getChunk: BasicFun<
+      string,
+      InfiniteStreamState<CollectionReference>["getChunk"]
+    >;
   };
+};
 export const SearchableInfiniteStreamState = () => ({
   Default: (
     searchText: string,
-    getChunk: BasicFun<string, InfiniteStreamState<CollectionReference>["getChunk"]>,
+    getChunk: BasicFun<
+      string,
+      InfiniteStreamState<CollectionReference>["getChunk"]
+    >,
   ): SearchableInfiniteStreamState => ({
     commonFormState: CommonFormState.Default(),
     customFormState: {
       searchText: Debounced.Default(Value.Default(searchText)),
       status: "closed",
       getChunk,
-      stream: InfiniteStreamState<CollectionReference>().Default(10, getChunk(searchText)),
+      stream: InfiniteStreamState<CollectionReference>().Default(
+        10,
+        getChunk(searchText),
+      ),
     },
   }),
   Updaters: {
     Core: {
       ...simpleUpdaterWithChildren<SearchableInfiniteStreamState>()({
-        ...simpleUpdater<
-          SearchableInfiniteStreamState["customFormState"]
-        >()("status"),
-        ...simpleUpdater<
-          SearchableInfiniteStreamState["customFormState"]
-        >()("stream"),
-        ...simpleUpdater<
-          SearchableInfiniteStreamState["customFormState"]
-        >()("searchText"),
+        ...simpleUpdater<SearchableInfiniteStreamState["customFormState"]>()(
+          "status",
+        ),
+        ...simpleUpdater<SearchableInfiniteStreamState["customFormState"]>()(
+          "stream",
+        ),
+        ...simpleUpdater<SearchableInfiniteStreamState["customFormState"]>()(
+          "searchText",
+        ),
       })("customFormState"),
     },
     Template: {

@@ -24,14 +24,12 @@ import { EnumMultiselectView } from "./state";
 
 export const EnumMultiselectForm = <
   Context extends FormLabel & BaseEnumContext,
-  ForeignMutationsExpected
+  ForeignMutationsExpected,
 >(
-  validation?: BasicFun<ValueRecord, Promise<FieldValidation>>
+  validation?: BasicFun<ValueRecord, Promise<FieldValidation>>,
 ) => {
   const Co = CoTypedFactory<
-    Context &
-      Value<ValueRecord> &
-      EnumFormState & { disabled: boolean },
+    Context & Value<ValueRecord> & EnumFormState & { disabled: boolean },
     EnumFormState
   >();
   return Template.Default<
@@ -42,49 +40,48 @@ export const EnumMultiselectForm = <
     },
     EnumMultiselectView<Context, ForeignMutationsExpected>
   >((props) => {
-    return <>
-      <props.view
-        {...props}
-        context={{
-          ...props.context,
-          selectedIds: props.context.value.fields.keySeq().toArray(),
-          activeOptions: !AsyncState.Operations.hasValue(
-            props.context.customFormState.options.sync
-          )
-            ? "loading"
-            : props.context.customFormState.options.sync.value
-                .valueSeq()
-                .toArray(),
-        }}
-        foreignMutations={{
-          ...props.foreignMutations,
-          setNewValue: (_) => {
-            if (
-              !AsyncState.Operations.hasValue(
-                props.context.customFormState.options.sync
-              )
+    return (
+      <>
+        <props.view
+          {...props}
+          context={{
+            ...props.context,
+            selectedIds: props.context.value.fields.keySeq().toArray(),
+            activeOptions: !AsyncState.Operations.hasValue(
+              props.context.customFormState.options.sync,
             )
-              return;
-            const options = props.context.customFormState.options.sync.value;
-            const newSelection = _.flatMap((_) => {
-              const selectedItem = options.get(_);
-              if (selectedItem != undefined) {
-                const item: [string, ValueRecord] = [
-                  _,
-                  selectedItem,
-                ];
-                return [item];
-              }
-              return [];
-            });
-            props.foreignMutations.onChange(
-              replaceWith(PredicateValue.Default.record(Map(newSelection))),
-              List()
-            );
-          },
-        }}
-      />
-    </>
+              ? "loading"
+              : props.context.customFormState.options.sync.value
+                  .valueSeq()
+                  .toArray(),
+          }}
+          foreignMutations={{
+            ...props.foreignMutations,
+            setNewValue: (_) => {
+              if (
+                !AsyncState.Operations.hasValue(
+                  props.context.customFormState.options.sync,
+                )
+              )
+                return;
+              const options = props.context.customFormState.options.sync.value;
+              const newSelection = _.flatMap((_) => {
+                const selectedItem = options.get(_);
+                if (selectedItem != undefined) {
+                  const item: [string, ValueRecord] = [_, selectedItem];
+                  return [item];
+                }
+                return [];
+              });
+              props.foreignMutations.onChange(
+                replaceWith(PredicateValue.Default.record(Map(newSelection))),
+                List(),
+              );
+            },
+          }}
+        />
+      </>
+    );
   }).any([
     ValidateRunner<
       Context & { disabled: boolean },
@@ -95,9 +92,9 @@ export const EnumMultiselectForm = <
       validation
         ? (_) =>
             validation(_).then(
-              FieldValidationWithPath.Default.fromFieldValidation
+              FieldValidationWithPath.Default.fromFieldValidation,
             )
-        : undefined
+        : undefined,
     ),
     Co.Template<
       ForeignMutationsExpected & {
@@ -109,7 +106,7 @@ export const EnumMultiselectForm = <
           current.getOptions,
           () => "transient failure",
           5,
-          50
+          50,
         ).embed(
           (_) => _.customFormState.options,
           (_) => (current) => ({
@@ -118,16 +115,16 @@ export const EnumMultiselectForm = <
               ...current.customFormState,
               options: _(current.customFormState.options),
             },
-          })
-        )
+          }),
+        ),
       ),
       {
         interval: 15,
         runFilter: (props) =>
           !AsyncState.Operations.hasValue(
-            props.context.customFormState.options.sync
+            props.context.customFormState.options.sync,
           ),
-      }
+      },
     ),
   ]);
 };

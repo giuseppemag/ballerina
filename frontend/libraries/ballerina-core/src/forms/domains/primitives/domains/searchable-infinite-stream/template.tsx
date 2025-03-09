@@ -38,9 +38,7 @@ export const SearchableInfiniteStreamForm = <
     SearchableInfiniteStreamState
   >();
   const DebouncerCo = CoTypedFactory<
-    Context & { onDebounce: SimpleCallback<void> } & Value<
-        ValueOption
-      >,
+    Context & { onDebounce: SimpleCallback<void> } & Value<ValueOption>,
     SearchableInfiniteStreamState
   >();
   const DebouncedCo = CoTypedFactory<
@@ -57,8 +55,8 @@ export const SearchableInfiniteStreamForm = <
         250,
       ).embed(
         (_) => ({ ..._, ..._.customFormState.searchText }),
-        SearchableInfiniteStreamState().Updaters.Core.customFormState
-          .children.searchText,
+        SearchableInfiniteStreamState().Updaters.Core.customFormState.children
+          .searchText,
       ),
       DebouncerCo.Wait(0),
     ]),
@@ -81,8 +79,8 @@ export const SearchableInfiniteStreamForm = <
   >(
     InfiniteStreamLoader<CollectionReference>().embed(
       (_) => _.customFormState.stream,
-      SearchableInfiniteStreamState().Updaters.Core.customFormState
-        .children.stream,
+      SearchableInfiniteStreamState().Updaters.Core.customFormState.children
+        .stream,
     ),
     {
       interval: 15,
@@ -135,7 +133,10 @@ export const SearchableInfiniteStreamForm = <
           clearSelection: () => {
             props.foreignMutations.onChange(
               replaceWith(
-                PredicateValue.Default.option(false, PredicateValue.Default.unit()),
+                PredicateValue.Default.option(
+                  false,
+                  PredicateValue.Default.unit(),
+                ),
               ),
               List(),
             );
@@ -160,7 +161,7 @@ export const SearchableInfiniteStreamForm = <
             ),
           select: (_) =>
             props.foreignMutations.onChange(
-              /// TODO: This won't work, need to handle cases 
+              /// TODO: This won't work, need to handle cases
               replaceWith(_),
               List(),
             ),

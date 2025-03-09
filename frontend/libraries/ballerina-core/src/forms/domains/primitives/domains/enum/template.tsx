@@ -24,7 +24,7 @@ import { BaseEnumContext, EnumFormState, EnumView } from "./state";
 
 export const EnumForm = <
   Context extends FormLabel & BaseEnumContext,
-  ForeignMutationsExpected, 
+  ForeignMutationsExpected,
 >(
   validation?: BasicFun<ValueOption, Promise<FieldValidation>>,
 ) => {
@@ -78,10 +78,7 @@ export const EnumForm = <
               else
                 return props.foreignMutations.onChange(
                   replaceWith(
-                    PredicateValue.Default.option(
-                      true,
-                      newSelection
-                    ),
+                    PredicateValue.Default.option(true, newSelection),
                   ),
                   List(),
                 );

@@ -23,11 +23,11 @@ export type PassthroughFormContext<T, FS> = {
   entity: Sum<PredicateValue, "not initialized">;
   onEntityChange: (
     updater: Updater<PredicateValue>,
-    path: List<string>
+    path: List<string>,
   ) => void;
   toApiParser: (
     entity: PredicateValue,
-    formstate: PassthroughFormState<T, FS>
+    formstate: PassthroughFormState<T, FS>,
   ) => ValueOrErrors<any, string>;
   fromApiParser: (raw: any) => ValueOrErrors<PredicateValue, string>;
   parseGlobalConfiguration: (raw: any) => ValueOrErrors<PredicateValue, string>;
@@ -64,7 +64,7 @@ export type PassthroughFormState<E, FS> = {
 export const PassthroughFormState = <T, FS>() => ({
   Default: (
     formFieldStates: FS,
-    commonFormState: CommonFormState
+    commonFormState: CommonFormState,
   ): PassthroughFormState<T, FS> => ({
     formFieldStates,
     commonFormState,
@@ -76,7 +76,7 @@ export const PassthroughFormState = <T, FS>() => ({
             FormFieldPredicateEvaluation.Default.form(false, Map()),
           disabledPredicateEvaluations:
             FormFieldPredicateEvaluation.Default.form(false, Map()),
-        })
+        }),
       ),
     },
   }),
@@ -85,10 +85,10 @@ export const PassthroughFormState = <T, FS>() => ({
       ...simpleUpdater<PassthroughFormState<T, FS>>()("formFieldStates"),
       ...simpleUpdaterWithChildren<PassthroughFormState<T, FS>>()({
         ...simpleUpdater<PassthroughFormState<T, FS>["customFormState"]>()(
-          "predicateEvaluations"
+          "predicateEvaluations",
         ),
         ...simpleUpdater<PassthroughFormState<T, FS>["customFormState"]>()(
-          "isInitialized"
+          "isInitialized",
         ),
       })("customFormState"),
       ...simpleUpdater<PassthroughFormState<T, FS>>()("commonFormState"),
@@ -99,7 +99,7 @@ export const PassthroughFormState = <T, FS>() => ({
           T,
           FS
         >().Updaters.Core.customFormState.children.predicateEvaluations(
-          Debounced.Updaters.Template.value(id)
+          Debounced.Updaters.Template.value(id),
         ),
     },
   },
@@ -107,7 +107,7 @@ export const PassthroughFormState = <T, FS>() => ({
     _: ForeignMutationsInput<
       PassthroughFormContext<T, FS>,
       PassthroughFormWritableState<T, FS>
-    >
+    >,
   ) => ({}),
 });
 
