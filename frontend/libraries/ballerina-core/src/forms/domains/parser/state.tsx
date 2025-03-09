@@ -37,7 +37,6 @@ import {
   PassthroughFormState,
   PassthroughFormContext,
   PassthroughFormTemplate,
-  Entity,
 } from "../../../../main";
 import { EnumReference } from "../collection/domains/reference/state";
 import { SearchableInfiniteStreamState } from "../primitives/domains/searchable-infinite-stream/state";

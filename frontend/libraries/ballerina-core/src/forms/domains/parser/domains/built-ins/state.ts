@@ -406,6 +406,7 @@ export const toAPIRawValue =
     console.debug("toAPIRaw");
     console.debug("raw", raw);
     console.debug("t", t);
+    console.debug("formState", formState);
     console.debug("--------------------------------");
     if (t.kind == "primitive") {
       return ValueOrErrors.Operations.Return(
@@ -446,37 +447,43 @@ export const toAPIRawValue =
             `Option expected but got ${raw}`
           );
         }
-        if (!PredicateValue.Operations.IsRecord(raw.value)) {
-          return ValueOrErrors.Default.throwOne(
-            `Record expected but got ${raw.value}`
-          );
-        }
-        const rawValue = raw.value.fields.toJS();
-        if (
-          !CollectionReference.Operations.IsCollectionReference(rawValue) &&
-          !EnumReference.Operations.IsEnumReference(rawValue)
-        ) {
-          return ValueOrErrors.Default.throwOne(
-            `CollectionReference or EnumReference expected but got ${rawValue}`
-          );
-        }
 
-        const rawToCollectionSelection: CollectionSelection<
-          CollectionReference | EnumReference
-        > = raw.isSome
-          ? Sum.Default.left(rawValue)
-          : Sum.Default.right("no selection");
-        return ValueOrErrors.Operations.Return(
-          converters[t.value].toAPIRawValue([
-            rawToCollectionSelection,
-            formState.modifiedByUser,
-          ])
-        );
+        if (raw.isSome) {
+          if (!PredicateValue.Operations.IsRecord(raw.value)) {
+            return ValueOrErrors.Default.throwOne(
+              `Record expected but got ${raw.value}`
+            );
+          }
+          const rawValue = raw.value.fields.toJS();
+          if (
+            !CollectionReference.Operations.IsCollectionReference(rawValue) &&
+            !EnumReference.Operations.IsEnumReference(rawValue)
+          ) {
+            return ValueOrErrors.Default.throwOne(
+              `CollectionReference or EnumReference expected but got ${rawValue}`
+            );
+          }
+
+          return ValueOrErrors.Operations.Return(
+            converters[t.value].toAPIRawValue([
+              Sum.Default.left(rawValue),
+              formState.modifiedByUser,
+            ])
+          );
+        } else {
+          return ValueOrErrors.Operations.Return(
+            converters[t.value].toAPIRawValue([
+              Sum.Default.right("no selection"),
+              formState.modifiedByUser,
+            ])
+          );
+        }
       }
+
       if (t.value == "MultiSelection") {
         if (!PredicateValue.Operations.IsRecord(raw)) {
           return ValueOrErrors.Default.throwOne(
-            `Record expected but got ${raw}`
+            `Record expected but got ms ${JSON.stringify(raw)}`
           );
         }
 
@@ -519,8 +526,11 @@ export const toAPIRawValue =
         );
       }
       if (t.value == "Map") {
+        console.debug("FS", JSON.stringify(formState, null, 2));
         const keyValues = (raw as ValueTuple).values.map((keyValue, index) =>
-          toAPIRawValue(
+          {
+            console.debug("FS", JSON.stringify(formState.elementFormStates.get(index), null, 2));
+            return toAPIRawValue(
             t.args[0],
             types,
             builtIns,
@@ -528,7 +538,7 @@ export const toAPIRawValue =
             injectedPrimitives
           )(
             (keyValue as ValueTuple).values.get(0)!,
-            formState.elementFormStates.get(index)[0],
+            formState.elementFormStates.get(index).KeyFormState.commonFormState,
             checkKeys
           )
             .Then((possiblyUndefinedKey) => {
@@ -557,12 +567,13 @@ export const toAPIRawValue =
                 injectedPrimitives
               )(
                 (keyValue as ValueTuple).values.get(1)!,
-                formState.elementFormStates.get(index)[1],
+                formState.elementFormStates.get(index).ValueFormState.commonFormState,
                 checkKeys
               ).Then((value) =>
                 ValueOrErrors.Default.return([key, value] as [any, any])
               )
             )
+          }
         );
 
         return ValueOrErrors.Operations.All(List(keyValues)).Then((values) => {
@@ -575,10 +586,7 @@ export const toAPIRawValue =
             );
           }
           return ValueOrErrors.Operations.Return(
-            converters["Map"].toAPIRawValue([
-              values,
-              formState.modifiedByUser,
-            ])
+            converters["Map"].toAPIRawValue([values, formState.modifiedByUser])
           );
         });
       }

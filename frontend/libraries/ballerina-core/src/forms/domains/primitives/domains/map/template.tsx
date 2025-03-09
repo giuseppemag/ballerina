@@ -16,6 +16,7 @@ import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import {
+  CommonFormState,
   FieldValidation,
   FieldValidationWithPath,
   OnChange,
@@ -23,8 +24,8 @@ import {
 import { MapFieldState, MapFieldView } from "./state";
 
 export const MapForm = <
-  KeyFormState,
-  ValueFormState,
+  KeyFormState extends { commonFormState: CommonFormState },
+  ValueFormState extends { commonFormState: CommonFormState },
   Context extends FormLabel & {
     elementVisibilities: {
       key: FormFieldPredicateEvaluation;
@@ -95,7 +96,7 @@ export const MapForm = <
               ),
               List([elementIndex.toString(), "key"]).concat(path)
             );
-            props.setState((_) => ({ ..._, modifiedByUser: true }));
+            props.setState((_) => ({ ..._, commonFormState: {..._.commonFormState, modifiedByUser: true} }));
           },
           add: (newElement: ValueTuple) => {},
           remove: (elementIndex: number) => {},
@@ -184,7 +185,7 @@ export const MapForm = <
               ),
               List([elementIndex.toString(), "value"]).concat(path)
             );
-            props.setState((_) => ({ ..._, modifiedByUser: true }));
+            props.setState((_) => ({ ..._, commonFormState: {..._.commonFormState, modifiedByUser: true} }));
           },
           add: (newElement: ValueTuple) => {},
           remove: (elementIndex: number) => {},
