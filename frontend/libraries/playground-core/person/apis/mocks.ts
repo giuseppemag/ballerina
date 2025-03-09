@@ -24,7 +24,7 @@ export type Interest = CollectionReference;
 
 export const PersonApi = {
   getDepartments:
-    (): SearchableInfiniteStreamState<Department>["customFormState"]["getChunk"] =>
+    (): SearchableInfiniteStreamState["customFormState"]["getChunk"] =>
     (_searchText) =>
     (_streamPosition) =>
       PromiseRepo.Default.mock(() => ({

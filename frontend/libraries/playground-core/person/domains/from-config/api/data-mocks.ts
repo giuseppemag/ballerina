@@ -25,7 +25,7 @@ const streamApis: InfiniteStreamSources = (streamName: string) =>
     ? PersonApi.getDepartments()
     : streamName == "cities"
       ? AddressApi.getCities()
-      : (_) => (_) => {
+      : (_: any) => (_: any) => {
           alert(`Cannot find stream API ${streamName}`);
           return Promise.resolve({
             hasMoreValues: false,
@@ -122,7 +122,10 @@ const entityApis: EntityApis = {
               ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3],
             ],
             interests: [{ Value: interests[1] }, { Value: interests[2] }],
-            departments: [],
+            departments: [
+              { Id: v4(), DisplayValue: "Department 1" },
+              { Id: v4(), DisplayValue: "Department 2" },
+            ],
             mainAddress: {
               street: faker.location.street(),
               number: Math.floor(Math.random() * 500),
@@ -280,7 +283,7 @@ const entityApis: EntityApis = {
               category: "",
               name: "",
               surname: "",
-              birthday: "",
+              birthday: "01/01/2000",
               subscribeToNewsletter: false,
               favoriteColor: { Value: { Value: null }, IsSome: false },
               gender: { IsSome: false, Value: { Value: null } },

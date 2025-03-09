@@ -23,44 +23,37 @@ import {
   Value,
 } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
-import { Map } from "immutable";
 
-export type CreateFormContext<E, FS> = {
+export type CreateFormContext<T, FS> = {
   entityId: string;
   api: {
-    default: () => Promise<E>;
+    default: () => Promise<any>;
     create: (raw: any) => Promise<ApiErrors>;
     getGlobalConfiguration: () => Promise<any>;
   };
-  formType: ParsedType<E>;
-  types: Map<string, ParsedType<E>>;
+  formType: ParsedType<T>;
   toApiParser: (
-    entity: E,
-    formstate: CreateFormState<E, FS>,
-    checkKeys: boolean,
-  ) => ValueOrErrors<E, ApiErrors>;
-  fromApiParser: (raw: any) => any;
-  parseGlobalConfiguration: (
-    raw: any,
-  ) => ValueOrErrors<PredicateValue, ApiErrors>;
+    entity: PredicateValue,
+    formstate: CreateFormState<T, FS>,
+  ) => ValueOrErrors<any, string>;
+  fromApiParser: (raw: any) => ValueOrErrors<PredicateValue, string>;
+  parseGlobalConfiguration: (raw: any) => ValueOrErrors<PredicateValue, string>;
   visibilityPredicateExpressions: FieldPredicateExpressions;
   disabledPredicatedExpressions: FieldPredicateExpressions;
   actualForm: Template<
-    Value<E> & { formFieldStates: FS } & {
+    Value<PredicateValue> & { formFieldStates: FS } & {
       commonFormState: CommonFormState;
     } & { visibilities: FormFieldPredicateEvaluation | undefined } & {
       disabledFields: FormFieldPredicateEvaluation | undefined;
     },
     { formFieldStates: FS } & { commonFormState: CommonFormState },
-    { onChange: SimpleCallback<BasicUpdater<E>> }
+    { onChange: SimpleCallback<BasicUpdater<PredicateValue>> }
   >;
 };
 
-export type CreateFormState<E, FS> = {
-  rawEntity: Synchronized<Unit, any>;
-  entity: Synchronized<Unit, E>;
-  rawGlobalConfiguration: Synchronized<Unit, any>;
-  globalConfiguration: Sum<any, "not parsed">;
+export type CreateFormState<T, FS> = {
+  entity: Synchronized<Unit, PredicateValue>;
+  globalConfiguration: Synchronized<Unit, PredicateValue>;
   formFieldStates: FS;
   commonFormState: CommonFormState;
   customFormState: {
@@ -80,7 +73,7 @@ export type CreateFormState<E, FS> = {
   };
 };
 
-export const CreateFormState = <E, FS>() => ({
+export const CreateFormState = <T, FS>() => ({
   Default: (
     formFieldStates: FS,
     commonFormState: CommonFormState,
@@ -99,58 +92,56 @@ export const CreateFormState = <E, FS>() => ({
       >;
       apiRunner: Debounced<Synchronized<Unit, ApiErrors>>;
     },
-  ): CreateFormState<E, FS> => ({
-    rawEntity: Synchronized.Default(unit),
+  ): CreateFormState<T, FS> => ({
     entity: Synchronized.Default(unit),
-    rawGlobalConfiguration: Synchronized.Default(unit),
-    globalConfiguration: Sum.Default.right("not parsed"),
+    globalConfiguration: Synchronized.Default(unit),
     formFieldStates,
     commonFormState,
     customFormState,
   }),
   Updaters: {
     Core: {
-      ...simpleUpdater<CreateFormState<E, FS>>()("rawEntity"),
-      ...simpleUpdater<CreateFormState<E, FS>>()("entity"),
-      ...simpleUpdater<CreateFormState<E, FS>>()("rawGlobalConfiguration"),
-      ...simpleUpdater<CreateFormState<E, FS>>()("globalConfiguration"),
-      ...simpleUpdater<CreateFormState<E, FS>>()("formFieldStates"),
-      ...simpleUpdaterWithChildren<CreateFormState<E, FS>>()({
-        ...simpleUpdater<CreateFormState<E, FS>["customFormState"]>()(
+      ...simpleUpdater<CreateFormState<T, FS>>()("entity"),
+      ...simpleUpdater<CreateFormState<T, FS>>()("globalConfiguration"),
+      ...simpleUpdater<CreateFormState<T, FS>>()("formFieldStates"),
+      ...simpleUpdaterWithChildren<CreateFormState<T, FS>>()({
+        ...simpleUpdater<CreateFormState<T, FS>["customFormState"]>()(
           "initApiChecker",
         ),
-        ...simpleUpdater<CreateFormState<E, FS>["customFormState"]>()(
+        ...simpleUpdater<CreateFormState<T, FS>["customFormState"]>()(
           "configApiChecker",
         ),
-        ...simpleUpdater<CreateFormState<E, FS>["customFormState"]>()(
+        ...simpleUpdater<CreateFormState<T, FS>["customFormState"]>()(
           "createApiChecker",
         ),
-        ...simpleUpdater<CreateFormState<E, FS>["customFormState"]>()(
+        ...simpleUpdater<CreateFormState<T, FS>["customFormState"]>()(
           "apiRunner",
         ),
-        ...simpleUpdater<CreateFormState<E, FS>["customFormState"]>()(
+        ...simpleUpdater<CreateFormState<T, FS>["customFormState"]>()(
           "predicateEvaluations",
         ),
       })("customFormState"),
-      ...simpleUpdater<CreateFormState<E, FS>>()("commonFormState"),
+      ...simpleUpdater<CreateFormState<T, FS>>()("commonFormState"),
     },
     Template: {
-      entity: (_: BasicUpdater<E>): Updater<CreateFormState<E, FS>> =>
-        CreateFormState<E, FS>().Updaters.Core.entity(
+      entity: (
+        _: BasicUpdater<PredicateValue>,
+      ): Updater<CreateFormState<T, FS>> =>
+        CreateFormState<T, FS>().Updaters.Core.entity(
           Synchronized.Updaters.sync(AsyncState.Operations.map(_)),
         ),
-      submit: (): Updater<CreateFormState<E, FS>> =>
+      submit: (): Updater<CreateFormState<T, FS>> =>
         CreateFormState<
-          E,
+          T,
           FS
         >().Updaters.Core.customFormState.children.apiRunner(
           Debounced.Updaters.Template.value(
             Synchronized.Updaters.sync(AsyncState.Operations.map(id)),
           ),
         ),
-      recalculatePredicates: (): Updater<CreateFormState<E, FS>> =>
+      recalculatePredicates: (): Updater<CreateFormState<T, FS>> =>
         CreateFormState<
-          E,
+          T,
           FS
         >().Updaters.Core.customFormState.children.predicateEvaluations(
           Debounced.Updaters.Template.value(id),
@@ -159,33 +150,33 @@ export const CreateFormState = <E, FS>() => ({
   },
   ForeignMutations: (
     _: ForeignMutationsInput<
-      CreateFormContext<E, FS>,
-      CreateFormWritableState<E, FS>
+      CreateFormContext<T, FS>,
+      CreateFormWritableState<T, FS>
     >,
   ) => ({}),
 });
 
-export type CreateFormWritableState<E, FS> = CreateFormState<E, FS>;
-export type CreateFormForeignMutationsExposed<E, FS> = ReturnType<
-  ReturnType<typeof CreateFormState<E, FS>>["ForeignMutations"]
+export type CreateFormWritableState<T, FS> = CreateFormState<T, FS>;
+export type CreateFormForeignMutationsExposed<T, FS> = ReturnType<
+  ReturnType<typeof CreateFormState<T, FS>>["ForeignMutations"]
 >;
-export type CreateFormForeignMutationsExpected<E, FS> = {
+export type CreateFormForeignMutationsExpected<T, FS> = {
   apiHandlers?: {
     onDefaultSuccess?: (
       _:
-        | (CreateFormWritableState<E, FS> & CreateFormContext<E, FS>)
+        | (CreateFormWritableState<T, FS> & CreateFormContext<T, FS>)
         | undefined,
     ) => void;
     onDefaultError?: <ApiErrors>(_: ApiErrors | undefined) => void;
     onConfigSuccess?: (
       _:
-        | (CreateFormWritableState<E, FS> & CreateFormContext<E, FS>)
+        | (CreateFormWritableState<T, FS> & CreateFormContext<T, FS>)
         | undefined,
     ) => void;
     onConfigError?: <ApiErrors>(_: ApiErrors | undefined) => void;
     onCreateSuccess?: (
       _:
-        | (CreateFormWritableState<E, FS> & CreateFormContext<E, FS>)
+        | (CreateFormWritableState<T, FS> & CreateFormContext<T, FS>)
         | undefined,
     ) => void;
     onCreateError?: <ApiErrors>(_: ApiErrors | undefined) => void;

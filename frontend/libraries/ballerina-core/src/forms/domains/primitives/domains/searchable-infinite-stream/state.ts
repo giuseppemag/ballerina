@@ -5,6 +5,7 @@ import {
   SimpleCallback,
   replaceWith,
   simpleUpdaterWithChildren,
+  ValueOption,
 } from "../../../../../../main";
 import { Debounced } from "../../../../../debounced/state";
 import { BasicFun } from "../../../../../fun/state";
@@ -16,73 +17,78 @@ import { CollectionSelection } from "../../../collection/domains/selection/state
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import { OnChange, CommonFormState } from "../../../singleton/state";
 
-export type SearchableInfiniteStreamState<Element extends CollectionReference> =
-  {
-    commonFormState: CommonFormState;
-    customFormState: {
-      searchText: Debounced<Value<string>>;
-      status: "open" | "closed";
-      stream: InfiniteStreamState<Element>;
-      getChunk: BasicFun<string, InfiniteStreamState<Element>["getChunk"]>;
-    };
+export type SearchableInfiniteStreamState = {
+  commonFormState: CommonFormState;
+  customFormState: {
+    searchText: Debounced<Value<string>>;
+    status: "open" | "closed";
+    stream: InfiniteStreamState<CollectionReference>;
+    getChunk: BasicFun<
+      string,
+      InfiniteStreamState<CollectionReference>["getChunk"]
+    >;
   };
-export const SearchableInfiniteStreamState = <
-  Element extends CollectionReference,
->() => ({
+};
+export const SearchableInfiniteStreamState = () => ({
   Default: (
     searchText: string,
-    getChunk: BasicFun<string, InfiniteStreamState<Element>["getChunk"]>,
-  ): SearchableInfiniteStreamState<Element> => ({
+    getChunk: BasicFun<
+      string,
+      InfiniteStreamState<CollectionReference>["getChunk"]
+    >,
+  ): SearchableInfiniteStreamState => ({
     commonFormState: CommonFormState.Default(),
     customFormState: {
       searchText: Debounced.Default(Value.Default(searchText)),
       status: "closed",
       getChunk,
-      stream: InfiniteStreamState<Element>().Default(10, getChunk(searchText)),
+      stream: InfiniteStreamState<CollectionReference>().Default(
+        10,
+        getChunk(searchText),
+      ),
     },
   }),
   Updaters: {
     Core: {
-      ...simpleUpdaterWithChildren<SearchableInfiniteStreamState<Element>>()({
-        ...simpleUpdater<
-          SearchableInfiniteStreamState<Element>["customFormState"]
-        >()("status"),
-        ...simpleUpdater<
-          SearchableInfiniteStreamState<Element>["customFormState"]
-        >()("stream"),
-        ...simpleUpdater<
-          SearchableInfiniteStreamState<Element>["customFormState"]
-        >()("searchText"),
+      ...simpleUpdaterWithChildren<SearchableInfiniteStreamState>()({
+        ...simpleUpdater<SearchableInfiniteStreamState["customFormState"]>()(
+          "status",
+        ),
+        ...simpleUpdater<SearchableInfiniteStreamState["customFormState"]>()(
+          "stream",
+        ),
+        ...simpleUpdater<SearchableInfiniteStreamState["customFormState"]>()(
+          "searchText",
+        ),
       })("customFormState"),
     },
     Template: {
       searchText: (
         _: BasicUpdater<string>,
-      ): Updater<SearchableInfiniteStreamState<Element>> =>
-        SearchableInfiniteStreamState<Element>().Updaters.Core.customFormState.children.searchText(
+      ): Updater<SearchableInfiniteStreamState> =>
+        SearchableInfiniteStreamState().Updaters.Core.customFormState.children.searchText(
           Debounced.Updaters.Template.value(Value.Updaters.value(_)),
         ),
     },
   },
 });
 export type SearchableInfiniteStreamView<
-  Element extends CollectionReference,
   Context extends FormLabel,
   ForeignMutationsExpected,
 > = View<
   Context &
-    Value<CollectionSelection<Element>> &
-    SearchableInfiniteStreamState<Element> & {
+    Value<ValueOption> &
+    SearchableInfiniteStreamState & {
       hasMoreValues: boolean;
       disabled: boolean;
     },
-  SearchableInfiniteStreamState<Element>,
+  SearchableInfiniteStreamState,
   ForeignMutationsExpected & {
-    onChange: OnChange<CollectionSelection<Element>>;
+    onChange: OnChange<ValueOption>;
     toggleOpen: SimpleCallback<void>;
     clearSelection: SimpleCallback<void>;
     setSearchText: SimpleCallback<string>;
-    select: SimpleCallback<Element>;
+    select: SimpleCallback<ValueOption>;
     loadMore: SimpleCallback<void>;
     reload: SimpleCallback<void>;
   }

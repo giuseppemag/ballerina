@@ -12,7 +12,6 @@ import {
   HandleApiResponse,
   PredicateValue,
   replaceWith,
-  Sum,
   Synchronize,
   Synchronized,
   Unit,
@@ -21,69 +20,84 @@ import {
 import { CoTypedFactory } from "../../../../../../coroutines/builder";
 import { EditFormContext, EditFormWritableState } from "../state";
 
-export const editFormRunner = <E, FS>() => {
+export const editFormRunner = <T, FS>() => {
   const Co = CoTypedFactory<
-    EditFormContext<E, FS> & EditFormForeignMutationsExpected<E, FS>,
-    EditFormWritableState<E, FS>
+    EditFormContext<T, FS> & EditFormForeignMutationsExpected<T, FS>,
+    EditFormWritableState<T, FS>
   >();
 
   const init = Co.GetState().then((current) => {
     return Co.Seq([
       Co.SetState(
-        EditFormState<
-          E,
-          FS
-        >().Updaters.Core.customFormState.children.initApiChecker(
-          ApiResponseChecker.Updaters().toUnchecked(),
-        ),
+        EditFormState<T, FS>()
+          .Updaters.Core.customFormState.children.initApiChecker(
+            ApiResponseChecker.Updaters().toUnchecked(),
+          )
+          .then(
+            EditFormState<
+              T,
+              FS
+            >().Updaters.Core.customFormState.children.configApiChecker(
+              ApiResponseChecker.Updaters().toUnchecked(),
+            ),
+          ),
       ),
       Co.All([
-        Synchronize<Unit, any>(
-          () => current.api.get(current.entityId),
+        Synchronize<Unit, PredicateValue>(
+          () =>
+            current.api.get(current.entityId).then((raw) => {
+              const result = current.fromApiParser(raw);
+              return result.kind == "errors"
+                ? Promise.reject(result.errors)
+                : Promise.resolve(result.value);
+            }),
+          (_) => "transient failure",
+          5,
+          50,
+        ).embed((_) => _.entity, EditFormState<T, FS>().Updaters.Core.entity),
+        Synchronize<Unit, PredicateValue>(
+          () =>
+            current.api.getGlobalConfiguration().then((raw) => {
+              const result = current.parseGlobalConfiguration(raw);
+              return result.kind == "errors"
+                ? Promise.reject(result.errors)
+                : Promise.resolve(result.value);
+            }),
           (_) => "transient failure",
           5,
           50,
         ).embed(
-          (_) => _.rawEntity,
-          EditFormState<E, FS>().Updaters.Core.rawEntity,
-        ),
-        Synchronize<Unit, any>(
-          () => current.api.getGlobalConfiguration(),
-          (_) => "transient failure",
-          5,
-          50,
-        ).embed(
-          (_) => _.rawGlobalConfiguration,
-          EditFormState<E, FS>().Updaters.Core.rawGlobalConfiguration,
+          (_) => _.globalConfiguration,
+          EditFormState<T, FS>().Updaters.Core.globalConfiguration,
         ),
       ]),
       HandleApiResponse<
-        EditFormWritableState<E, FS>,
-        EditFormContext<E, FS>,
+        EditFormWritableState<T, FS>,
+        EditFormContext<T, FS>,
         any
-      >((_) => _.rawEntity.sync, {
+      >((_) => _.entity.sync, {
         handleSuccess: current.apiHandlers?.onGetSuccess,
         handleError: current.apiHandlers?.onGetError,
       }),
       Co.SetState(
         EditFormState<
-          E,
+          T,
           FS
         >().Updaters.Core.customFormState.children.initApiChecker(
           ApiResponseChecker.Updaters().toChecked(),
         ),
       ),
       HandleApiResponse<
-        EditFormWritableState<E, FS>,
-        EditFormContext<E, FS>,
+        EditFormWritableState<T, FS>,
+        EditFormContext<T, FS>,
         any
-      >((_) => _.rawGlobalConfiguration.sync, {
+      >((_) => _.globalConfiguration.sync, {
         handleSuccess: current.apiHandlers?.onConfigSuccess,
         handleError: current.apiHandlers?.onConfigError,
       }),
       Co.SetState(
         EditFormState<
-          E,
+          T,
           FS
         >().Updaters.Core.customFormState.children.configApiChecker(
           ApiResponseChecker.Updaters().toChecked(),
@@ -92,77 +106,29 @@ export const editFormRunner = <E, FS>() => {
     ]);
   });
 
-  const parseEntity = Co.GetState().then((current) => {
-    if (current.rawEntity.sync.kind == "loaded") {
-      const parsed = current.fromApiParser(current.rawEntity.sync.value);
-      return Synchronize<Unit, any>(
-        () => Promise.resolve(parsed),
-        (_) => "transient failure",
-        5,
-        50,
-      ).embed((_) => _.entity, EditFormState<E, FS>().Updaters.Core.entity);
-    }
-    return Co.Do(() => {});
-  });
-
-  const parseGlobalConfiguration = Co.GetState().then((current) => {
-    if (current.rawGlobalConfiguration.sync.kind == "loaded") {
-      const parsed = current.parseGlobalConfiguration(
-        current.rawGlobalConfiguration.sync.value,
-      );
-      if (parsed.kind == "value") {
-        return Co.SetState(
-          EditFormState<E, FS>().Updaters.Core.globalConfiguration(
-            replaceWith(Sum.Default.left(parsed.value)),
-          ),
-        );
-      }
-    }
-    return Co.Do(() => {});
-  });
-
   const calculateInitialVisibilities = Co.GetState().then((current) => {
     if (
-      current.rawEntity.sync.kind == "loaded" &&
-      current.rawGlobalConfiguration.sync.kind == "loaded"
+      current.entity.sync.kind == "loaded" &&
+      current.globalConfiguration.sync.kind == "loaded"
     ) {
-      const parsedRootPredicate = PredicateValue.Operations.parse(
-        current.rawEntity.sync.value,
-        current.formType,
-        current.types,
-      );
-
-      if (
-        parsedRootPredicate.kind == "errors" ||
-        current.globalConfiguration.kind == "r"
-      ) {
-        console.error("error parsing bindings");
-        return Co.Do(() => {});
-      }
-      if (
-        typeof parsedRootPredicate.value != "object" ||
-        !("kind" in parsedRootPredicate.value) ||
-        parsedRootPredicate.value.kind != "record"
-      ) {
-        return Co.Do(() => {});
-      }
+      // console.debug("calculateInitialVisibilities", current.entity.sync.value.fields.toJS());
+      // console.debug("calculateInitialVisibilities", current.globalConfiguration.sync.value);
       return Co.SetState(
         EditFormState<
-          E,
+          T,
           FS
         >().Updaters.Core.customFormState.children.predicateEvaluations(
           replaceWith(
             Debounced.Default(
               evaluatePredicates(
                 {
-                  global: current.globalConfiguration.value,
-                  types: current.types,
+                  global: current.globalConfiguration.sync.value,
                   visibilityPredicateExpressions:
                     current.visibilityPredicateExpressions,
                   disabledPredicatedExpressions:
                     current.disabledPredicatedExpressions,
                 },
-                parsedRootPredicate.value,
+                current.entity.sync.value,
               ),
             ),
           ),
@@ -173,7 +139,7 @@ export const editFormRunner = <E, FS>() => {
   });
 
   const PredicatesCo = CoTypedFactory<
-    EditFormWritableState<E, FS> & EditFormContext<E, FS>,
+    EditFormWritableState<T, FS> & EditFormContext<T, FS>,
     ValueOrErrors<
       {
         visiblityPredicateEvaluations: FormFieldPredicateEvaluation;
@@ -192,45 +158,26 @@ export const editFormRunner = <E, FS>() => {
         },
         string
       >,
-      EditFormContext<E, FS> & EditFormWritableState<E, FS>
+      EditFormContext<T, FS> & EditFormWritableState<T, FS>
     >(
       PredicatesCo.GetState().then((current) => {
         if (
-          current.globalConfiguration.kind == "r" ||
+          current.globalConfiguration.sync.kind != "loaded" ||
           current.entity.sync.kind != "loaded"
         ) {
-          return PredicatesCo.Return<ApiResultStatus>("permanent failure");
-        }
-        const parsedEntity = current.toApiParser(
-          current.entity.sync.value,
-          current,
-          false,
-        );
-        if (parsedEntity.kind == "errors") {
-          console.error("error parsing entity", parsedEntity);
-          return PredicatesCo.Return<ApiResultStatus>("permanent failure");
-        }
-        const parseRootPredicate = PredicateValue.Operations.parse(
-          parsedEntity.value,
-          current.formType,
-          current.types,
-        );
-        if (parseRootPredicate.kind == "errors") {
-          console.error("error parsing root predicate", parseRootPredicate);
           return PredicatesCo.Return<ApiResultStatus>("permanent failure");
         }
         return PredicatesCo.SetState(
           replaceWith(
             evaluatePredicates(
               {
-                global: current.globalConfiguration.value,
-                types: current.types,
+                global: current.globalConfiguration.sync.value,
                 visibilityPredicateExpressions:
                   current.visibilityPredicateExpressions,
                 disabledPredicatedExpressions:
                   current.disabledPredicatedExpressions,
               },
-              parseRootPredicate.value,
+              current.entity.sync.value,
             ),
           ),
         ).then(() => PredicatesCo.Return<ApiResultStatus>("success"));
@@ -238,13 +185,13 @@ export const editFormRunner = <E, FS>() => {
       50,
     ).embed(
       (_) => ({ ..._, ..._.customFormState.predicateEvaluations }),
-      EditFormState<E, FS>().Updaters.Core.customFormState.children
+      EditFormState<T, FS>().Updaters.Core.customFormState.children
         .predicateEvaluations,
     ),
   );
 
   const SynchronizeCo = CoTypedFactory<
-    EditFormWritableState<E, FS>,
+    EditFormWritableState<T, FS>,
     Synchronized<Unit, ApiErrors>
   >();
 
@@ -253,16 +200,16 @@ export const editFormRunner = <E, FS>() => {
       Co.Seq([
         Co.SetState(
           EditFormState<
-            E,
+            T,
             FS
           >().Updaters.Core.customFormState.children.updateApiChecker(
             ApiResponseChecker.Updaters().toUnchecked(),
           ),
         ),
-        Debounce<Synchronized<Unit, ApiErrors>, EditFormWritableState<E, FS>>(
+        Debounce<Synchronized<Unit, ApiErrors>, EditFormWritableState<T, FS>>(
           SynchronizeCo.GetState().then((current) => {
             if (current.entity.sync.kind != "loaded") {
-              return Synchronize<Unit, ApiErrors, EditFormWritableState<E, FS>>(
+              return Synchronize<Unit, ApiErrors, EditFormWritableState<T, FS>>(
                 (_) => Promise.resolve([]),
                 (_) => "transient failure",
                 5,
@@ -272,10 +219,9 @@ export const editFormRunner = <E, FS>() => {
             const parsed = editFormState.toApiParser(
               current.entity.sync.value,
               current,
-              true,
             );
 
-            return Synchronize<Unit, ApiErrors, EditFormWritableState<E, FS>>(
+            return Synchronize<Unit, ApiErrors, EditFormWritableState<T, FS>>(
               (_) =>
                 parsed.kind == "errors"
                   ? Promise.reject(parsed.errors)
@@ -288,12 +234,12 @@ export const editFormRunner = <E, FS>() => {
           15,
         ).embed(
           (_) => ({ ..._, ..._.customFormState.apiRunner }),
-          EditFormState<E, FS>().Updaters.Core.customFormState.children
+          EditFormState<T, FS>().Updaters.Core.customFormState.children
             .apiRunner,
         ),
         HandleApiResponse<
-          EditFormWritableState<E, FS>,
-          EditFormContext<E, FS>,
+          EditFormWritableState<T, FS>,
+          EditFormContext<T, FS>,
           ApiErrors
         >((_) => _.customFormState.apiRunner.sync, {
           handleSuccess: editFormState.apiHandlers?.onUpdateSuccess,
@@ -301,7 +247,7 @@ export const editFormRunner = <E, FS>() => {
         }),
         Co.SetState(
           EditFormState<
-            E,
+            T,
             FS
           >().Updaters.Core.customFormState.children.updateApiChecker(
             ApiResponseChecker.Updaters().toChecked(),
@@ -311,42 +257,25 @@ export const editFormRunner = <E, FS>() => {
     ),
   );
 
-  return Co.Template<EditFormForeignMutationsExpected<E, FS>>(init, {
+  return Co.Template<EditFormForeignMutationsExpected<T, FS>>(init, {
     interval: 15,
     runFilter: (props) =>
-      !AsyncState.Operations.hasValue(props.context.rawEntity.sync) ||
-      !AsyncState.Operations.hasValue(
-        props.context.rawGlobalConfiguration.sync,
-      ) ||
+      !AsyncState.Operations.hasValue(props.context.entity.sync) ||
+      !AsyncState.Operations.hasValue(props.context.globalConfiguration.sync) ||
       !ApiResponseChecker.Operations.checked(
         props.context.customFormState.initApiChecker,
       ),
   }).any([
-    Co.Template<EditFormForeignMutationsExpected<E, FS>>(parseEntity, {
-      interval: 15,
-      runFilter: (props) =>
-        props.context.rawEntity.sync.kind == "loaded" &&
-        !AsyncState.Operations.hasValue(props.context.entity.sync),
-    }),
-    Co.Template<EditFormForeignMutationsExpected<E, FS>>(
-      parseGlobalConfiguration,
-      {
-        interval: 15,
-        runFilter: (props) =>
-          props.context.rawGlobalConfiguration.sync.kind == "loaded" &&
-          props.context.globalConfiguration.kind == "r",
-      },
-    ),
-    Co.Template<EditFormForeignMutationsExpected<E, FS>>(
+    Co.Template<EditFormForeignMutationsExpected<T, FS>>(
       calculateInitialVisibilities,
       {
         interval: 15,
         runFilter: (props) =>
-          props.context.rawEntity.sync.kind == "loaded" &&
-          props.context.globalConfiguration.kind == "l",
+          props.context.entity.sync.kind == "loaded" &&
+          props.context.globalConfiguration.sync.kind == "loaded",
       },
     ),
-    Co.Template<EditFormForeignMutationsExpected<E, FS>>(synchronize, {
+    Co.Template<EditFormForeignMutationsExpected<T, FS>>(synchronize, {
       interval: 15,
       runFilter: (props) =>
         props.context.entity.sync.kind == "loaded" &&
@@ -357,13 +286,13 @@ export const editFormRunner = <E, FS>() => {
             props.context.customFormState.updateApiChecker,
           )),
     }),
-    Co.Template<EditFormForeignMutationsExpected<E, FS>>(
+    Co.Template<EditFormForeignMutationsExpected<T, FS>>(
       calculateVisibilities,
       {
         interval: 15,
         runFilter: (props) =>
           props.context.entity.sync.kind == "loaded" &&
-          props.context.globalConfiguration.kind == "l" &&
+          props.context.globalConfiguration.sync.kind == "loaded" &&
           Debounced.Operations.shouldCoroutineRun(
             props.context.customFormState.predicateEvaluations,
           ),

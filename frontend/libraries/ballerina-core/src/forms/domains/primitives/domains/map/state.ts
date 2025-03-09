@@ -4,6 +4,8 @@ import {
   Updater,
   SimpleCallback,
   Unit,
+  PredicateValue,
+  ValueTuple,
 } from "../../../../../../main";
 import { BasicFun } from "../../../../../fun/state";
 import { Template, View } from "../../../../../template/state";
@@ -11,7 +13,7 @@ import { Value } from "../../../../../value/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import { OnChange, CommonFormState } from "../../../singleton/state";
 
-export type MapFieldState<K, V, KeyFormState, ValueFormState> = {
+export type MapFieldState<KeyFormState, ValueFormState> = {
   commonFormState: CommonFormState;
 } & {
   elementFormStates: Map<
@@ -19,21 +21,19 @@ export type MapFieldState<K, V, KeyFormState, ValueFormState> = {
     { KeyFormState: KeyFormState; ValueFormState: ValueFormState }
   >;
 };
-export const MapFieldState = <K, V, KeyFormState, ValueFormState>() => ({
+export const MapFieldState = <KeyFormState, ValueFormState>() => ({
   Default: (
     elementFormStates: MapFieldState<
-      K,
-      V,
       KeyFormState,
       ValueFormState
     >["elementFormStates"],
-  ): MapFieldState<K, V, KeyFormState, ValueFormState> => ({
+  ): MapFieldState<KeyFormState, ValueFormState> => ({
     commonFormState: CommonFormState.Default(),
     elementFormStates,
   }),
   Updaters: {
     Core: {
-      ...simpleUpdater<MapFieldState<K, V, KeyFormState, ValueFormState>>()(
+      ...simpleUpdater<MapFieldState<KeyFormState, ValueFormState>>()(
         "elementFormStates",
       ),
     },
@@ -41,19 +41,15 @@ export const MapFieldState = <K, V, KeyFormState, ValueFormState>() => ({
   },
 });
 export type MapFieldView<
-  K,
-  V,
   KeyFormState,
   ValueFormState,
   Context extends FormLabel,
   ForeignMutationsExpected,
 > = View<
-  Context &
-    Value<List<[K, V]>> &
-    MapFieldState<K, V, KeyFormState, ValueFormState>,
-  MapFieldState<K, V, KeyFormState, ValueFormState>,
+  Context & Value<ValueTuple> & MapFieldState<KeyFormState, ValueFormState>,
+  MapFieldState<KeyFormState, ValueFormState>,
   ForeignMutationsExpected & {
-    onChange: OnChange<List<[K, V]>>;
+    onChange: OnChange<ValueTuple>;
     add: SimpleCallback<Unit>;
     remove: SimpleCallback<number>;
   },
@@ -62,11 +58,11 @@ export type MapFieldView<
       number,
       Template<
         Context &
-          Value<List<[K, V]>> &
-          MapFieldState<K, V, KeyFormState, ValueFormState>,
-        MapFieldState<K, V, KeyFormState, ValueFormState>,
+          Value<ValueTuple> &
+          MapFieldState<KeyFormState, ValueFormState>,
+        MapFieldState<KeyFormState, ValueFormState>,
         ForeignMutationsExpected & {
-          onChange: OnChange<List<[K, V]>>;
+          onChange: OnChange<ValueTuple>;
           add: SimpleCallback<Unit>;
           remove: SimpleCallback<number>;
         }
@@ -76,11 +72,11 @@ export type MapFieldView<
       number,
       Template<
         Context &
-          Value<List<[K, V]>> &
-          MapFieldState<K, V, KeyFormState, ValueFormState>,
-        MapFieldState<K, V, KeyFormState, ValueFormState>,
+          Value<ValueTuple> &
+          MapFieldState<KeyFormState, ValueFormState>,
+        MapFieldState<KeyFormState, ValueFormState>,
         ForeignMutationsExpected & {
-          onChange: OnChange<List<[K, V]>>;
+          onChange: OnChange<ValueTuple>;
           add: SimpleCallback<Unit>;
           remove: SimpleCallback<number>;
         }

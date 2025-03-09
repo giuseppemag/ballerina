@@ -2,51 +2,43 @@ import { List, OrderedMap } from "immutable";
 import {
   AsyncState,
   BasicFun,
-  BasicPredicate,
   CoTypedFactory,
-  Debounce,
-  Debounced,
   Guid,
+  PredicateValue,
   replaceWith,
   Synchronize,
   Unit,
   ValidateRunner,
+  ValueOption,
+  ValueRecord,
 } from "../../../../../../main";
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
-import {
-  CollectionReference,
-  EnumReference,
-} from "../../../collection/domains/reference/state";
-import { CollectionSelection } from "../../../collection/domains/selection/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import {
   FieldValidation,
   FieldValidationWithPath,
-  FormValidatorSynchronized,
   OnChange,
-  ValidationError,
 } from "../../../singleton/state";
 import { BaseEnumContext, EnumFormState, EnumView } from "./state";
 
 export const EnumForm = <
-  Context extends FormLabel & BaseEnumContext<Element>,
+  Context extends FormLabel & BaseEnumContext,
   ForeignMutationsExpected,
-  Element extends EnumReference,
 >(
-  validation?: BasicFun<CollectionSelection<Element>, Promise<FieldValidation>>,
+  validation?: BasicFun<ValueOption, Promise<FieldValidation>>,
 ) => {
   const Co = CoTypedFactory<
-    Context & Value<CollectionSelection<Element>> & { disabled: boolean },
-    EnumFormState<Context, Element>
+    Context & Value<ValueOption> & { disabled: boolean },
+    EnumFormState
   >();
   return Template.Default<
-    Context & Value<CollectionSelection<Element>> & { disabled: boolean },
-    EnumFormState<Context, Element>,
+    Context & Value<ValueOption> & { disabled: boolean },
+    EnumFormState,
     ForeignMutationsExpected & {
-      onChange: OnChange<CollectionSelection<Element>>;
+      onChange: OnChange<ValueOption>;
     },
-    EnumView<Context, Element, ForeignMutationsExpected>
+    EnumView<Context, ForeignMutationsExpected>
   >((props) => {
     return (
       <>
@@ -76,8 +68,9 @@ export const EnumForm = <
               if (newSelection == undefined)
                 return props.foreignMutations.onChange(
                   replaceWith(
-                    CollectionSelection<Element>().Default.right(
-                      "no selection",
+                    PredicateValue.Default.option(
+                      false,
+                      PredicateValue.Default.unit(),
                     ),
                   ),
                   List(),
@@ -85,7 +78,7 @@ export const EnumForm = <
               else
                 return props.foreignMutations.onChange(
                   replaceWith(
-                    CollectionSelection<Element>().Default.left(newSelection),
+                    PredicateValue.Default.option(true, newSelection),
                   ),
                   List(),
                 );
@@ -97,9 +90,9 @@ export const EnumForm = <
   }).any([
     ValidateRunner<
       Context & { disabled: boolean },
-      EnumFormState<Context, Element>,
+      EnumFormState,
       ForeignMutationsExpected,
-      CollectionSelection<Element>
+      ValueOption
     >(
       validation
         ? (_) =>
@@ -110,11 +103,11 @@ export const EnumForm = <
     ),
     Co.Template<
       ForeignMutationsExpected & {
-        onChange: OnChange<CollectionSelection<Element>>;
+        onChange: OnChange<ValueOption>;
       }
     >(
       Co.GetState().then((current) => {
-        return Synchronize<Unit, OrderedMap<Guid, Element>>(
+        return Synchronize<Unit, OrderedMap<Guid, ValueRecord>>(
           current.getOptions,
           () => "transient failure",
           5,

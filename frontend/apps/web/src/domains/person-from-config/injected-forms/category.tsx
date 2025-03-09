@@ -17,14 +17,7 @@ import {
 } from "ballerina-core";
 import { List } from "immutable";
 
-export type Category = {
-  category: "child" | "adult" | "senior";
-  kind: "category";
-};
-
-// export const Category = {
-//   Default: (_: Category["category"] | undefined) => ({ category: _ ?? "adult", kind: "category" as const })
-// }
+export type Category = "child" | "adult" | "senior";
 
 export type CategoryState = {
   customFormState: {

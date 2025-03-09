@@ -1,12 +1,14 @@
 import { List } from "immutable";
 import {
   BasicFun,
+  id,
   Maybe,
+  PredicateValue,
   replaceWith,
   ValidateRunner,
+  Value,
 } from "../../../../../../main";
 import { Template } from "../../../../../template/state";
-import { Value } from "../../../../../value/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import {
   FieldValidation,
@@ -16,12 +18,12 @@ import {
 import { DateFormState, DateView } from "./state";
 
 export const DateForm = <Context extends FormLabel, ForeignMutationsExpected>(
-  validation?: BasicFun<Maybe<Date>, Promise<FieldValidation>>,
+  validation?: BasicFun<Date, Promise<FieldValidation>>,
 ) => {
   return Template.Default<
-    Context & Value<Maybe<Date>> & { disabled: boolean },
+    Context & Value<Date> & { disabled: boolean },
     DateFormState,
-    ForeignMutationsExpected & { onChange: OnChange<Maybe<Date>> },
+    ForeignMutationsExpected & { onChange: OnChange<Date> },
     DateView<Context, ForeignMutationsExpected>
   >((props) => (
     <>
@@ -37,7 +39,12 @@ export const DateForm = <Context extends FormLabel, ForeignMutationsExpected>(
             );
             const newValue = _ == undefined ? _ : new Date(_);
             setTimeout(() => {
-              props.foreignMutations.onChange(replaceWith(newValue), List());
+              props.foreignMutations.onChange(
+                newValue == undefined || isNaN(newValue.getTime())
+                  ? id
+                  : replaceWith(newValue),
+                List(),
+              );
             }, 0);
           },
         }}
@@ -48,7 +55,7 @@ export const DateForm = <Context extends FormLabel, ForeignMutationsExpected>(
       Context & { disabled: boolean },
       DateFormState,
       ForeignMutationsExpected,
-      Maybe<Date>
+      Date
     >(
       validation
         ? (_) =>

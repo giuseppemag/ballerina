@@ -16,6 +16,8 @@ import {
   FormFieldPredicateEvaluation,
   FormFieldPredicateEvaluations,
   FieldName,
+  PredicateValue,
+  ValueRecord,
 } from "../../../../main";
 import { Template, View } from "../../../template/state";
 import { Value } from "../../../value/state";
@@ -56,8 +58,7 @@ export const CommonFormState = {
   }),
 };
 export type EntityFormState<
-  Entity,
-  Fields extends keyof Entity & keyof FieldStates,
+  Fields extends keyof FieldStates,
   FieldStates,
   Context,
   ForeignMutationsExpected,
@@ -80,49 +81,39 @@ export type EntityAction =
   | { kind: "duplicate" }
   | { kind: "insert" };
 export type EntityFormContext<
-  Entity,
-  Fields extends keyof Entity & keyof FieldStates,
+  Fields extends keyof FieldStates,
   FieldStates,
   Context,
   ForeignMutationsExpected,
 > = Context &
-  EntityFormState<
-    Entity,
-    Fields,
-    FieldStates,
-    Context,
-    ForeignMutationsExpected
-  > & {
+  EntityFormState<Fields, FieldStates, Context, ForeignMutationsExpected> & {
     elementVisibilities: FormFieldPredicateEvaluation[] | undefined;
     elementDisabledFields: FormFieldPredicateEvaluation | undefined;
     extraContext: any;
     visibilities: FormFieldPredicateEvaluation | undefined;
     disabledFields: FormFieldPredicateEvaluation | undefined;
     label?: string;
-  } & Value<Entity> & { rootValue: Entity };
+  } & Value<ValueRecord> & { rootValue: ValueRecord };
 export type OnChange<Entity> = (
   updater: BasicUpdater<Entity>,
   path: List<string | number | EntityAction>,
 ) => void;
 export type EntityFormForeignMutationsExpected<
-  Entity,
-  Fields extends keyof Entity & keyof FieldStates,
+  Fields extends keyof FieldStates,
   FieldStates,
   Context,
   ForeignMutationsExpected,
 > = ForeignMutationsExpected & {
-  onChange: OnChange<Entity>;
+  onChange: OnChange<PredicateValue>;
 };
 
 export type FieldTemplates<
-  Entity,
-  Fields extends keyof Entity & keyof FieldStates,
+  Fields extends keyof FieldStates,
   FieldStates,
   Context,
   ForeignMutationsExpected,
 > = {
   [f in Fields]: EmbeddedFieldTemplate<
-    Entity,
     Fields,
     FieldStates,
     Context,
@@ -131,28 +122,14 @@ export type FieldTemplates<
 };
 
 export type EntityFormView<
-  Entity,
-  Fields extends keyof Entity & keyof FieldStates,
+  Fields extends keyof FieldStates,
   FieldStates,
   Context,
   ForeignMutationsExpected,
 > = View<
-  EntityFormContext<
-    Entity,
-    Fields,
-    FieldStates,
-    Context,
-    ForeignMutationsExpected
-  >,
-  EntityFormState<
-    Entity,
-    Fields,
-    FieldStates,
-    Context,
-    ForeignMutationsExpected
-  >,
+  EntityFormContext<Fields, FieldStates, Context, ForeignMutationsExpected>,
+  EntityFormState<Fields, FieldStates, Context, ForeignMutationsExpected>,
   EntityFormForeignMutationsExpected<
-    Entity,
     Fields,
     FieldStates,
     Context,
@@ -160,7 +137,6 @@ export type EntityFormView<
   >,
   {
     EmbeddedFields: FieldTemplates<
-      Entity,
       Fields,
       FieldStates,
       Context,
@@ -171,58 +147,32 @@ export type EntityFormView<
   }
 >;
 export type EntityFormTemplate<
-  Entity,
-  Fields extends keyof Entity & keyof FieldStates,
+  Fields extends keyof FieldStates,
   FieldStates,
   Context,
   ForeignMutationsExpected,
 > = Template<
-  EntityFormContext<
-    Entity,
-    Fields,
-    FieldStates,
-    Context,
-    ForeignMutationsExpected
-  >,
-  EntityFormState<
-    Entity,
-    Fields,
-    FieldStates,
-    Context,
-    ForeignMutationsExpected
-  >,
+  EntityFormContext<Fields, FieldStates, Context, ForeignMutationsExpected>,
+  EntityFormState<Fields, FieldStates, Context, ForeignMutationsExpected>,
   EntityFormForeignMutationsExpected<
-    Entity,
     Fields,
     FieldStates,
     Context,
     ForeignMutationsExpected
   >,
-  EntityFormView<Entity, Fields, FieldStates, Context, ForeignMutationsExpected>
+  EntityFormView<Fields, FieldStates, Context, ForeignMutationsExpected>
 >;
 export type EmbeddedFieldTemplate<
-  Entity,
-  Fields extends keyof Entity & keyof FieldStates,
+  Fields extends keyof FieldStates,
   FieldStates,
   Context,
   ForeignMutationsExpected,
 > = Template<
-  EntityFormContext<
-    Entity,
-    Fields,
-    FieldStates,
-    Context,
-    ForeignMutationsExpected
-  > & { disabled: boolean },
-  EntityFormState<
-    Entity,
-    Fields,
-    FieldStates,
-    Context,
-    ForeignMutationsExpected
-  >,
+  EntityFormContext<Fields, FieldStates, Context, ForeignMutationsExpected> & {
+    disabled: boolean;
+  },
+  EntityFormState<Fields, FieldStates, Context, ForeignMutationsExpected>,
   EntityFormForeignMutationsExpected<
-    Entity,
     Fields,
     FieldStates,
     Context,

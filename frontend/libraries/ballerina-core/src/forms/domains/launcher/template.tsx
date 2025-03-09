@@ -28,11 +28,9 @@ export const FormRunnerErrorsTemplate = (
   //   props.context.showFormParsingErrors(parsedFormsConfig)
   // ),
   formFieldStates: unit,
-  rawEntity: unit,
   entity: unit,
   commonFormState: unit,
   customFormState: unit,
-  rawGlobalConfiguration: unit,
   globalConfiguration: unit,
 });
 
@@ -50,25 +48,18 @@ export const FormRunnerTemplate = Template.Default<
             props.context.formRef.kind == "edit"
               ? props.context.formRef.entityId
               : undefined,
-          initialRawEntity:
-            props.context.formRef.kind == "passthrough"
-              ? props.context.formRef.initialRawEntity
-              : undefined,
           entity:
             props.context.formRef.kind == "passthrough"
               ? props.context.formRef.entity
               : props.context.form.value.entity,
-          onRawEntityChange:
+          onEntityChange:
             props.context.formRef.kind == "passthrough"
-              ? props.context.formRef.onRawEntityChange
+              ? props.context.formRef.onEntityChange
               : undefined,
           globalConfiguration:
             props.context.formRef.kind == "passthrough"
               ? props.context.formRef.globalConfiguration
               : props.context.form.value.globalConfiguration,
-          rawEntity: props.context.form.value.rawEntity,
-          rawGlobalConfiguration:
-            props.context.form.value.rawGlobalConfiguration,
           formFieldStates: props.context.form.value.formFieldStates,
           commonFormState: props.context.form.value.commonFormState,
           customFormState: props.context.form.value.customFormState,

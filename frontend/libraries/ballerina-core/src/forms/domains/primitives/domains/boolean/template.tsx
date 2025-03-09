@@ -2,7 +2,6 @@ import { List } from "immutable";
 import {
   BasicFun,
   BooleanView,
-  MaybeBooleanView,
   replaceWith,
   ValidateRunner,
 } from "../../../../../../main";
@@ -44,45 +43,6 @@ export const BooleanForm = <
       { commonFormState: CommonFormState },
       ForeignMutationsExpected,
       boolean
-    >(
-      validation
-        ? (_) =>
-            validation(_).then(
-              FieldValidationWithPath.Default.fromFieldValidation,
-            )
-        : undefined,
-    ),
-  ]);
-};
-
-export const MaybeBooleanForm = <
-  Context extends FormLabel,
-  ForeignMutationsExpected,
->(
-  validation?: BasicFun<boolean | undefined, Promise<FieldValidation>>,
-) => {
-  return Template.Default<
-    Context & Value<boolean | undefined> & { disabled: boolean },
-    { commonFormState: CommonFormState },
-    ForeignMutationsExpected & { onChange: OnChange<boolean | undefined> },
-    MaybeBooleanView<Context, ForeignMutationsExpected>
-  >((props) => (
-    <>
-      <props.view
-        {...props}
-        foreignMutations={{
-          ...props.foreignMutations,
-          setNewValue: (_) =>
-            props.foreignMutations.onChange(replaceWith(_), List()),
-        }}
-      />
-    </>
-  )).any([
-    ValidateRunner<
-      Context & { disabled: boolean },
-      { commonFormState: CommonFormState },
-      ForeignMutationsExpected,
-      boolean | undefined
     >(
       validation
         ? (_) =>

@@ -6,7 +6,7 @@ import {
   simpleUpdater,
   Sum,
   Unit,
-  ValueOrErrors,
+  Updater,
 } from "../../../../main";
 import { FormParsingResult, FormsParserState } from "../parser/state";
 
@@ -40,11 +40,13 @@ export type FormRef = {
     }
   | {
       kind: "passthrough";
-      initialRawEntity: Sum<any, "not initialized">;
       entity: Sum<any, "not initialized">;
-      globalConfiguration: Sum<PredicateValue, "not initialized">;
+      globalConfiguration: Sum<any, "not initialized">;
       containerWrapper: any;
-      onRawEntityChange: (updatedRawEntity: any, path: List<string>) => void;
+      onEntityChange: (
+        updater: Updater<PredicateValue>,
+        path: List<string>,
+      ) => void;
     }
 );
 
@@ -60,8 +62,6 @@ export type FormRunnerState = {
       form: any;
       formFieldStates: any;
       entity: any;
-      rawEntity: any;
-      rawGlobalConfiguration: any;
       commonFormState: any;
       customFormState: any;
       globalConfiguration: any;

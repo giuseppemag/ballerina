@@ -20,7 +20,6 @@ import {
 export const PersonContainerFormView: EntityFormView<
   any,
   any,
-  any,
   { layout: FormLayout },
   Unit
 > = (props) => {
@@ -61,7 +60,6 @@ export const PersonContainerFormView: EntityFormView<
 };
 
 export const PersonNestedContainerFormView: EntityFormView<
-  any,
   any,
   any,
   { layout: FormLayout },
