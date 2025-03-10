@@ -9,11 +9,14 @@ import {
   MapRepo,
   ListRepo,
   FormFieldPredicateEvaluation,
+  PredicateValue,
+  ValueTuple,
 } from "../../../../../../main";
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import {
+  CommonFormState,
   FieldValidation,
   FieldValidationWithPath,
   OnChange,
@@ -21,10 +24,8 @@ import {
 import { MapFieldState, MapFieldView } from "./state";
 
 export const MapForm = <
-  K,
-  V,
-  KeyFormState,
-  ValueFormState,
+  KeyFormState extends { commonFormState: CommonFormState },
+  ValueFormState extends { commonFormState: CommonFormState },
   Context extends FormLabel & {
     elementVisibilities: {
       key: FormFieldPredicateEvaluation;
@@ -39,29 +40,29 @@ export const MapForm = <
 >(
   KeyFormState: { Default: () => KeyFormState },
   ValueFormState: { Default: () => ValueFormState },
-  Key: { Default: () => K },
-  Value: { Default: () => V },
+  Key: { Default: () => PredicateValue },
+  Value: { Default: () => PredicateValue },
   keyTemplate: Template<
-    Context & Value<K> & KeyFormState,
+    Context & Value<PredicateValue> & KeyFormState,
     KeyFormState,
     ForeignMutationsExpected & {
-      onChange: OnChange<K>;
+      onChange: OnChange<PredicateValue>;
     }
   >,
   valueTemplate: Template<
-    Context & Value<V> & ValueFormState,
+    Context & Value<PredicateValue> & ValueFormState,
     ValueFormState,
     ForeignMutationsExpected & {
-      onChange: OnChange<V>;
+      onChange: OnChange<PredicateValue>;
     }
   >,
-  validation?: BasicFun<List<[K, V]>, Promise<FieldValidation>>,
+  validation?: BasicFun<ValueTuple, Promise<FieldValidation>>,
 ) => {
   const embeddedKeyTemplate = (elementIndex: number) =>
     keyTemplate
       .mapForeignMutationsFromProps<
         ForeignMutationsExpected & {
-          onChange: OnChange<List<[K, V]>>;
+          onChange: OnChange<ValueTuple>;
           add: SimpleCallback<Unit>;
           remove: SimpleCallback<number>;
         }
@@ -69,31 +70,48 @@ export const MapForm = <
         (
           props,
         ): ForeignMutationsExpected & {
-          onChange: OnChange<K>;
+          onChange: OnChange<PredicateValue>;
         } => ({
           ...props.foreignMutations,
           onChange: (elementUpdater, path) => {
             props.foreignMutations.onChange(
-              Updater((elements: List<[K, V]>) =>
-                elements.update(elementIndex, (_: [K, V] | undefined) =>
-                  _ == undefined ? _ : [elementUpdater(_[0]), _[1]],
+              Updater((elements: ValueTuple) =>
+                PredicateValue.Default.tuple(
+                  elements.values.update(
+                    elementIndex,
+                    PredicateValue.Default.unit(),
+                    (_) =>
+                      _ == undefined
+                        ? _
+                        : !PredicateValue.Operations.IsTuple(_)
+                          ? _
+                          : PredicateValue.Default.tuple(
+                              List([
+                                elementUpdater(_.values.get(0)!),
+                                _.values.get(1)!,
+                              ]),
+                            ),
+                  ),
                 ),
               ),
               List([elementIndex.toString(), "key"]).concat(path),
             );
-            props.setState((_) => ({ ..._, modifiedByUser: true }));
+            props.setState((_) => ({
+              ..._,
+              commonFormState: { ..._.commonFormState, modifiedByUser: true },
+            }));
           },
-          add: (newElement: [K, V]) => {},
+          add: (newElement: ValueTuple) => {},
           remove: (elementIndex: number) => {},
         }),
       )
       .mapContext(
         (
           _: Context &
-            Value<List<[K, V]>> &
-            MapFieldState<K, V, KeyFormState, ValueFormState>,
-        ): (Context & Value<K> & KeyFormState) | undefined => {
-          const element = _.value.get(elementIndex);
+            Value<ValueTuple> &
+            MapFieldState<KeyFormState, ValueFormState>,
+        ): (Context & Value<ValueTuple> & KeyFormState) | undefined => {
+          const element = _.value.values.get(elementIndex) as ValueTuple;
           if (element == undefined) return undefined;
           const elementFormState = _.elementFormStates.get(elementIndex) || {
             KeyFormState: KeyFormState.Default(),
@@ -101,10 +119,10 @@ export const MapForm = <
           };
           const elementVisibility = _.elementVisibilities[elementIndex]?.key;
           const elementDisabled = _.elementDisabled[elementIndex]?.key;
-          const elementContext: Context & Value<K> & KeyFormState = {
+          const elementContext: Context & Value<ValueTuple> & KeyFormState = {
             ..._,
             ...elementFormState.KeyFormState,
-            value: element[0],
+            value: element.values.get(0)!,
             visibilities: elementVisibility,
             disabledFields: elementDisabled,
           };
@@ -114,10 +132,8 @@ export const MapForm = <
       .mapState(
         (
           _: BasicUpdater<KeyFormState>,
-        ): Updater<MapFieldState<K, V, KeyFormState, ValueFormState>> =>
+        ): Updater<MapFieldState<KeyFormState, ValueFormState>> =>
           MapFieldState<
-            K,
-            V,
             KeyFormState,
             ValueFormState
           >().Updaters.Core.elementFormStates(
@@ -138,7 +154,7 @@ export const MapForm = <
     valueTemplate
       .mapForeignMutationsFromProps<
         ForeignMutationsExpected & {
-          onChange: OnChange<List<[K, V]>>;
+          onChange: OnChange<ValueTuple>;
           add: SimpleCallback<Unit>;
           remove: SimpleCallback<number>;
         }
@@ -146,31 +162,48 @@ export const MapForm = <
         (
           props,
         ): ForeignMutationsExpected & {
-          onChange: OnChange<V>;
+          onChange: OnChange<PredicateValue>;
         } => ({
           ...props.foreignMutations,
           onChange: (elementUpdater, path) => {
             props.foreignMutations.onChange(
-              Updater((elements: List<[K, V]>) =>
-                elements.update(elementIndex, (_: [K, V] | undefined) =>
-                  _ == undefined ? _ : [_[0], elementUpdater(_[1])],
+              Updater((elements: ValueTuple) =>
+                PredicateValue.Default.tuple(
+                  elements.values.update(
+                    elementIndex,
+                    PredicateValue.Default.unit(),
+                    (_) =>
+                      _ == undefined
+                        ? _
+                        : !PredicateValue.Operations.IsTuple(_)
+                          ? _
+                          : PredicateValue.Default.tuple(
+                              List([
+                                _.values.get(0)!,
+                                elementUpdater(_.values.get(1)!),
+                              ]),
+                            ),
+                  ),
                 ),
               ),
-              List([elementIndex, "value"]).concat(path),
+              List([elementIndex.toString(), "value"]).concat(path),
             );
-            props.setState((_) => ({ ..._, modifiedByUser: true }));
+            props.setState((_) => ({
+              ..._,
+              commonFormState: { ..._.commonFormState, modifiedByUser: true },
+            }));
           },
-          add: (newElement: [K, V]) => {},
+          add: (newElement: ValueTuple) => {},
           remove: (elementIndex: number) => {},
         }),
       )
       .mapContext(
         (
           _: Context &
-            Value<List<[K, V]>> &
-            MapFieldState<K, V, KeyFormState, ValueFormState>,
-        ): (Context & Value<V> & ValueFormState) | undefined => {
-          const element = _.value.get(elementIndex);
+            Value<ValueTuple> &
+            MapFieldState<KeyFormState, ValueFormState>,
+        ): (Context & Value<ValueTuple> & ValueFormState) | undefined => {
+          const element = _.value.values.get(elementIndex) as ValueTuple;
           if (element == undefined) return undefined;
           const elementFormState = _.elementFormStates.get(elementIndex) || {
             KeyFormState: KeyFormState.Default(),
@@ -178,10 +211,10 @@ export const MapForm = <
           };
           const elementVisibility = _.elementVisibilities[elementIndex]?.value;
           const elementDisabled = _.elementDisabled[elementIndex]?.value;
-          const elementContext: Context & Value<V> & ValueFormState = {
+          const elementContext: Context & Value<ValueTuple> & ValueFormState = {
             ..._,
             ...elementFormState.ValueFormState,
-            value: element[1],
+            value: element.values.get(1)!,
             visibilities: elementVisibility,
             disabledFields: elementDisabled,
           };
@@ -191,10 +224,8 @@ export const MapForm = <
       .mapState(
         (
           _: BasicUpdater<ValueFormState>,
-        ): Updater<MapFieldState<K, V, KeyFormState, ValueFormState>> =>
+        ): Updater<MapFieldState<KeyFormState, ValueFormState>> =>
           MapFieldState<
-            K,
-            V,
             KeyFormState,
             ValueFormState
           >().Updaters.Core.elementFormStates(
@@ -212,12 +243,10 @@ export const MapForm = <
           ),
       );
   return Template.Default<
-    Context & Value<List<[K, V]>> & { disabled: boolean },
-    MapFieldState<K, V, KeyFormState, ValueFormState>,
-    ForeignMutationsExpected & { onChange: OnChange<List<[K, V]>> },
+    Context & Value<ValueTuple> & { disabled: boolean },
+    MapFieldState<KeyFormState, ValueFormState>,
+    ForeignMutationsExpected & { onChange: OnChange<ValueTuple> },
     MapFieldView<
-      K,
-      V,
       KeyFormState,
       ValueFormState,
       Context,
@@ -234,13 +263,27 @@ export const MapForm = <
           ...props.foreignMutations,
           add: (_) => {
             props.foreignMutations.onChange(
-              ListRepo.Updaters.push([Key.Default(), Value.Default()]),
+              Updater((list) =>
+                PredicateValue.Default.tuple(
+                  ListRepo.Updaters.push<ValueTuple>(
+                    PredicateValue.Default.tuple(
+                      List([Key.Default(), Value.Default()]),
+                    ),
+                  )(list.values as List<ValueTuple>),
+                ),
+              ),
               List([{ kind: "add" }]),
             );
           },
           remove: (_) => {
             props.foreignMutations.onChange(
-              ListRepo.Updaters.remove(_),
+              Updater((list) =>
+                PredicateValue.Default.tuple(
+                  ListRepo.Updaters.remove<ValueTuple>(_)(
+                    list.values as List<ValueTuple>,
+                  ),
+                ),
+              ),
               List([_, { kind: "remove" }]),
             );
           },
@@ -252,9 +295,9 @@ export const MapForm = <
   )).any([
     ValidateRunner<
       Context & { disabled: boolean },
-      MapFieldState<K, V, KeyFormState, ValueFormState>,
+      MapFieldState<KeyFormState, ValueFormState>,
       ForeignMutationsExpected,
-      List<[K, V]>
+      ValueTuple
     >(
       validation
         ? (_) =>

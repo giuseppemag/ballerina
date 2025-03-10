@@ -41,7 +41,7 @@ export const Address = {
 export type AddressFormState = FormStateFromEntity<
   Address,
   {
-    city: SearchableInfiniteStreamState<City>;
+    city: SearchableInfiniteStreamState;
   }
 >;
 export const AddressFormState = {
@@ -58,7 +58,7 @@ export const AddressFormState = {
       },
       city: {
         commonFormState: CommonFormState.Default(),
-        customFormState: SearchableInfiniteStreamState<City>().Default(
+        customFormState: SearchableInfiniteStreamState().Default(
           "",
           AddressApi.getCities(),
         ),

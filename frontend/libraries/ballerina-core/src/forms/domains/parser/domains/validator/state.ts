@@ -231,7 +231,7 @@ export const FormsConfig = {
                 // This validation must be done at runtime, as we need to know the injectedPrimitives and field names
                 errors = errors.push(
                   `field ${rawFieldName} in type ${rawTypeName}: fields, injectedPrimitive and builtIns cannot have the same name`,
-                ); //TODO remind GM of this for BE parser
+                );
                 return;
               }
 

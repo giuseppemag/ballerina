@@ -7,29 +7,29 @@ import {
   PassthroughFormWritableState,
 } from "./state";
 import { passthroughFormRunner } from "./coroutines/runner";
-export type PassthroughFormView<E, FS> = Template<
-  PassthroughFormContext<E, FS> & PassthroughFormWritableState<E, FS>,
-  PassthroughFormWritableState<E, FS>,
-  PassthroughFormForeignMutationsExpected<E, FS>,
+export type PassthroughFormView<T, FS> = Template<
+  PassthroughFormContext<T, FS> & PassthroughFormWritableState<T, FS>,
+  PassthroughFormWritableState<T, FS>,
+  PassthroughFormForeignMutationsExpected<T, FS>,
   {
     actualForm: JSX.Element | undefined;
   }
 >;
-export type PassthroughFormTemplate<E, FS> = Template<
-  PassthroughFormContext<E, FS> & PassthroughFormWritableState<E, FS>,
-  PassthroughFormWritableState<E, FS>,
-  PassthroughFormForeignMutationsExpected<E, FS>,
-  PassthroughFormView<E, FS>
+export type PassthroughFormTemplate<T, FS> = Template<
+  PassthroughFormContext<T, FS> & PassthroughFormWritableState<T, FS>,
+  PassthroughFormWritableState<T, FS>,
+  PassthroughFormForeignMutationsExpected<T, FS>,
+  PassthroughFormView<T, FS>
 >;
-export const PassthroughFormTemplate = <E, FS>(): PassthroughFormTemplate<
-  E,
+export const PassthroughFormTemplate = <T, FS>(): PassthroughFormTemplate<
+  T,
   FS
 > =>
   Template.Default<
-    PassthroughFormContext<E, FS> & PassthroughFormWritableState<E, FS>,
-    PassthroughFormWritableState<E, FS>,
-    PassthroughFormForeignMutationsExpected<E, FS>,
-    PassthroughFormView<E, FS>
+    PassthroughFormContext<T, FS> & PassthroughFormWritableState<T, FS>,
+    PassthroughFormWritableState<T, FS>,
+    PassthroughFormForeignMutationsExpected<T, FS>,
+    PassthroughFormView<T, FS>
   >((props) => {
     if (
       props.context.entity.kind == "r" ||
@@ -76,10 +76,10 @@ export const PassthroughFormTemplate = <E, FS>(): PassthroughFormTemplate<
               foreignMutations: {
                 onChange: (updater, path) => {
                   if (props.context.entity.kind == "r") return;
-                  props.context.onRawEntityChange(updater, path);
+                  props.context.onEntityChange(updater, path);
                   props.setState(
                     PassthroughFormState<
-                      E,
+                      T,
                       FS
                     >().Updaters.Template.recalculatePredicates(),
                   );
@@ -91,4 +91,4 @@ export const PassthroughFormTemplate = <E, FS>(): PassthroughFormTemplate<
         })}
       </>
     );
-  }).any([passthroughFormRunner<E, FS>()]);
+  }).any([passthroughFormRunner<T, FS>()]);

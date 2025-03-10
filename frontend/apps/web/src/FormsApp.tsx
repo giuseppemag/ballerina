@@ -66,6 +66,26 @@ export const FormsApp = (props: {}) => {
   const [renderParserState, renderForms] = [true, true];
   const logState = true;
 
+  if (
+    personCreateFormState.form.kind == "l" &&
+    personCreateFormState.form.value.entity.sync.kind == "loaded"
+  ) {
+    console.log(
+      "entity",
+      personCreateFormState.form.value.entity.sync.value.fields.toJS(),
+    );
+  }
+
+  if (
+    personEditFormState.form.kind == "l" &&
+    personEditFormState.form.value.entity.sync.kind == "loaded"
+  ) {
+    console.log(
+      "entity",
+      personEditFormState.form.value.entity.sync.value.fields.toJS(),
+    );
+  }
+
   logState &&
     console.log({
       parser: configFormsParser,
@@ -89,10 +109,7 @@ export const FormsApp = (props: {}) => {
   }
 
   // Passthrough form only
-  const [initialRawEntity, setInitialRawEntity] = useState<
-    Sum<any, "not initialized">
-  >(Sum.Default.right("not initialized"));
-  const [entity, setEntity] = useState<Sum<any, "not initialized">>(
+  const [entity, setEntity] = useState<Sum<PredicateValue, "not initialized">>(
     Sum.Default.right("not initialized"),
   );
   const [globalConfiguration, setGlobalConfiguration] = useState<
@@ -100,10 +117,7 @@ export const FormsApp = (props: {}) => {
   >(Sum.Default.right("not initialized"));
   const [entityPath, setEntityPath] = useState<List<string>>(List());
 
-  const onRawEntityChange = (
-    updater: Updater<any>,
-    path: List<string>,
-  ): void => {
+  const onEntityChange = (updater: Updater<any>, path: List<string>): void => {
     if (personPassthroughFormState.form.kind == "r") return;
     setTimeout(() => {}, 500);
     const newEntity = updater(entity.value);
@@ -121,13 +135,14 @@ export const FormsApp = (props: {}) => {
             configFormsParser.formsConfig.sync.kind == "loaded" &&
             configFormsParser.formsConfig.sync.value.kind == "l"
           ) {
-            const parsed: any =
+            const parsed =
               configFormsParser.formsConfig.sync.value.value.passthrough.get(
                 "person-transparent",
               )!().fromApiParser(raw);
-            setEntity(Sum.Default.left(parsed));
-            if (initialRawEntity.kind == "r") {
-              setInitialRawEntity(Sum.Default.left(raw));
+            if (parsed.kind == "errors") {
+              console.error(parsed.errors);
+            } else {
+              setEntity(Sum.Default.left(parsed.value));
             }
           }
         });
@@ -138,7 +153,7 @@ export const FormsApp = (props: {}) => {
             configFormsParser.formsConfig.sync.kind == "loaded" &&
             configFormsParser.formsConfig.sync.value.kind == "l"
           ) {
-            const parsed: any =
+            const parsed =
               configFormsParser.formsConfig.sync.value.value.passthrough.get(
                 "person-transparent",
               )!().parseGlobalConfiguration(raw);
@@ -216,7 +231,7 @@ export const FormsApp = (props: {}) => {
                         "injectedCategory",
                         {
                           fieldView: categoryForm,
-                          defaultValue: { category: "adult", kind: "category" },
+                          defaultValue: "adult",
                           defaultState: CategoryState.Default(),
                         },
                       ],
@@ -370,9 +385,8 @@ export const FormsApp = (props: {}) => {
                           kind: "passthrough",
                           containerWrapper: PassthroughFormContainerWrapper,
                           entity,
-                          initialRawEntity,
                           globalConfiguration,
-                          onRawEntityChange,
+                          onEntityChange,
                         },
                         showFormParsingErrors: ShowFormsParsingErrors,
                         extraContext: {

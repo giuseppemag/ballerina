@@ -10,7 +10,7 @@ import { Range } from "immutable";
 
 export const AddressApi = {
   getCities:
-    (): SearchableInfiniteStreamState<City>["customFormState"]["getChunk"] =>
+    (): SearchableInfiniteStreamState["customFormState"]["getChunk"] =>
     (_searchText) =>
     (_streamPosition) =>
       PromiseRepo.Default.mock(() => ({
