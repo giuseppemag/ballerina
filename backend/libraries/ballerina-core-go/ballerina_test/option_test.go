@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	ballerina "Ballerina.com/core"
+	ballerina "ballerina.com/core"
 	"github.com/stretchr/testify/require"
 )
 
