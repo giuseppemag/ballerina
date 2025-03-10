@@ -76,6 +76,16 @@ export const FormsApp = (props: {}) => {
     );
   }
 
+  if (
+    personEditFormState.form.kind == "l" &&
+    personEditFormState.form.value.entity.sync.kind == "loaded"
+  ) {
+    console.log(
+      "entity",
+      personEditFormState.form.value.entity.sync.value.fields.toJS(),
+    );
+  }
+
   logState &&
     console.log({
       parser: configFormsParser,

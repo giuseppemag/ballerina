@@ -284,7 +284,7 @@ export const defaultValue =
       )(types.get(t.name)!);
 
     if (t.kind == "form") {
-      let res = {} as any;
+      let res = {} as Record<string, PredicateValue>;
       t.fields.forEach((field, fieldName) => {
         res[fieldName] = defaultValue(
           types,
@@ -292,7 +292,7 @@ export const defaultValue =
           injectedPrimitives,
         )(field);
       });
-      return res;
+      return PredicateValue.Default.record(Map(res));
     }
     throw Error(
       `cannot find type ${JSON.stringify(t)} when resolving defaultValue`,

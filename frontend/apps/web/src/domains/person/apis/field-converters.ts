@@ -65,6 +65,12 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
       _ == undefined
         ? List()
         : List(_.map((_: { key: any; value: any }) => [_.key, _.value])),
-    toAPIRawValue: ([_, __]) => _.valueSeq().toArray(),
+    toAPIRawValue: ([_, __]) =>
+      _.valueSeq()
+        .toArray()
+        .map((_: any) => ({
+          key: _[0],
+          value: _[1],
+        })),
   },
 };
