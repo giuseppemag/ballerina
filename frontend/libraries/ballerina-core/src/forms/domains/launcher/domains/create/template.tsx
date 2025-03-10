@@ -13,28 +13,28 @@ import {
   CreateFormWritableState,
 } from "./state";
 
-export type CreateFormView<E, FS> = Template<
-  CreateFormContext<E, FS> & CreateFormWritableState<E, FS>,
-  CreateFormWritableState<E, FS>,
-  CreateFormForeignMutationsExpected<E, FS> & {
+export type CreateFormView<T, FS> = Template<
+  CreateFormContext<T, FS> & CreateFormWritableState<T, FS>,
+  CreateFormWritableState<T, FS>,
+  CreateFormForeignMutationsExpected<T, FS> & {
     onSubmit: SimpleCallback<void>;
   },
   {
     actualForm: JSX.Element | undefined;
   }
 >;
-export type CreateFormTemplate<E, FS> = Template<
-  CreateFormContext<E, FS> & CreateFormWritableState<E, FS>,
-  CreateFormWritableState<E, FS>,
-  CreateFormForeignMutationsExpected<E, FS>,
-  CreateFormView<E, FS>
+export type CreateFormTemplate<T, FS> = Template<
+  CreateFormContext<T, FS> & CreateFormWritableState<T, FS>,
+  CreateFormWritableState<T, FS>,
+  CreateFormForeignMutationsExpected<T, FS>,
+  CreateFormView<T, FS>
 >;
-export const CreateFormTemplate = <E, FS>(): CreateFormTemplate<E, FS> =>
+export const CreateFormTemplate = <T, FS>(): CreateFormTemplate<T, FS> =>
   Template.Default<
-    CreateFormContext<E, FS> & CreateFormWritableState<E, FS>,
-    CreateFormWritableState<E, FS>,
-    CreateFormForeignMutationsExpected<E, FS>,
-    CreateFormView<E, FS>
+    CreateFormContext<T, FS> & CreateFormWritableState<T, FS>,
+    CreateFormWritableState<T, FS>,
+    CreateFormForeignMutationsExpected<T, FS>,
+    CreateFormView<T, FS>
   >((props) => {
     const visibilities =
       props.context.customFormState.predicateEvaluations.kind == "value" &&
@@ -58,7 +58,7 @@ export const CreateFormTemplate = <E, FS>(): CreateFormTemplate<E, FS> =>
             ...props.foreignMutations,
             onSubmit: () => {
               props.setState(
-                CreateFormState<E, FS>().Updaters.Template.submit(),
+                CreateFormState<T, FS>().Updaters.Template.submit(),
               );
             },
           },
@@ -86,11 +86,11 @@ export const CreateFormTemplate = <E, FS>(): CreateFormTemplate<E, FS> =>
                   foreignMutations: {
                     onChange: (e) => {
                       props.setState(
-                        CreateFormState<E, FS>().Updaters.Template.entity(e),
+                        CreateFormState<T, FS>().Updaters.Template.entity(e),
                       );
                       props.setState(
                         CreateFormState<
-                          E,
+                          T,
                           FS
                         >().Updaters.Template.recalculatePredicates(),
                       );
@@ -103,7 +103,7 @@ export const CreateFormTemplate = <E, FS>(): CreateFormTemplate<E, FS> =>
       </>
     );
   }).any([
-    createFormRunner<E, FS>().mapContextFromProps((props) => ({
+    createFormRunner<T, FS>().mapContextFromProps((props) => ({
       ...props.context,
       apiHandlers: {
         onDefaultSuccess: props.foreignMutations.apiHandlers?.onDefaultSuccess,

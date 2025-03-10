@@ -17,30 +17,30 @@ import {
 } from "../../../../../../main";
 import { List, Map } from "immutable";
 
-export type PassthroughFormContext<E, FS> = {
-  formType: ParsedType<E>;
-  types: Map<string, ParsedType<E>>;
+export type PassthroughFormContext<T, FS> = {
+  formType: ParsedType<T>;
   globalConfiguration: Sum<PredicateValue, "not initialized">;
-  initialRawEntity: Sum<any, "not initialized">;
-  entity: Sum<E, "not initialized">;
-  onRawEntityChange: (updater: Updater<E>, path: List<string>) => void;
+  entity: Sum<PredicateValue, "not initialized">;
+  onEntityChange: (
+    updater: Updater<PredicateValue>,
+    path: List<string>,
+  ) => void;
   toApiParser: (
-    entity: E,
-    formstate: PassthroughFormState<E, FS>,
-    checkKeys: boolean,
-  ) => ValueOrErrors<E, string>;
-  fromApiParser: (raw: any) => any;
+    entity: PredicateValue,
+    formstate: PassthroughFormState<T, FS>,
+  ) => ValueOrErrors<any, string>;
+  fromApiParser: (raw: any) => ValueOrErrors<PredicateValue, string>;
   parseGlobalConfiguration: (raw: any) => ValueOrErrors<PredicateValue, string>;
   visibilityPredicateExpressions: FieldPredicateExpressions;
   disabledPredicatedExpressions: FieldPredicateExpressions;
   actualForm: Template<
-    Value<E> & { formFieldStates: FS } & {
+    Value<PredicateValue> & { formFieldStates: FS } & {
       commonFormState: CommonFormState;
     } & { visibilities: FormFieldPredicateEvaluation | undefined } & {
       disabledFields: FormFieldPredicateEvaluation | undefined;
     },
     { formFieldStates: FS } & { commonFormState: CommonFormState },
-    { onChange: (e: Updater<E>, path: List<string>) => void }
+    { onChange: (e: Updater<PredicateValue>, path: List<string>) => void }
   >;
 };
 
@@ -61,11 +61,11 @@ export type PassthroughFormState<E, FS> = {
   };
 };
 
-export const PassthroughFormState = <E, FS>() => ({
+export const PassthroughFormState = <T, FS>() => ({
   Default: (
     formFieldStates: FS,
     commonFormState: CommonFormState,
-  ): PassthroughFormState<E, FS> => ({
+  ): PassthroughFormState<T, FS> => ({
     formFieldStates,
     commonFormState,
     customFormState: {
@@ -82,21 +82,21 @@ export const PassthroughFormState = <E, FS>() => ({
   }),
   Updaters: {
     Core: {
-      ...simpleUpdater<PassthroughFormState<E, FS>>()("formFieldStates"),
-      ...simpleUpdaterWithChildren<PassthroughFormState<E, FS>>()({
-        ...simpleUpdater<PassthroughFormState<E, FS>["customFormState"]>()(
+      ...simpleUpdater<PassthroughFormState<T, FS>>()("formFieldStates"),
+      ...simpleUpdaterWithChildren<PassthroughFormState<T, FS>>()({
+        ...simpleUpdater<PassthroughFormState<T, FS>["customFormState"]>()(
           "predicateEvaluations",
         ),
-        ...simpleUpdater<PassthroughFormState<E, FS>["customFormState"]>()(
+        ...simpleUpdater<PassthroughFormState<T, FS>["customFormState"]>()(
           "isInitialized",
         ),
       })("customFormState"),
-      ...simpleUpdater<PassthroughFormState<E, FS>>()("commonFormState"),
+      ...simpleUpdater<PassthroughFormState<T, FS>>()("commonFormState"),
     },
     Template: {
-      recalculatePredicates: (): Updater<PassthroughFormState<E, FS>> =>
+      recalculatePredicates: (): Updater<PassthroughFormState<T, FS>> =>
         PassthroughFormState<
-          E,
+          T,
           FS
         >().Updaters.Core.customFormState.children.predicateEvaluations(
           Debounced.Updaters.Template.value(id),
@@ -105,14 +105,14 @@ export const PassthroughFormState = <E, FS>() => ({
   },
   ForeignMutations: (
     _: ForeignMutationsInput<
-      PassthroughFormContext<E, FS>,
-      PassthroughFormWritableState<E, FS>
+      PassthroughFormContext<T, FS>,
+      PassthroughFormWritableState<T, FS>
     >,
   ) => ({}),
 });
 
-export type PassthroughFormWritableState<E, FS> = PassthroughFormState<E, FS>;
-export type PassthroughFormForeignMutationsExposed<E, FS> = ReturnType<
-  ReturnType<typeof PassthroughFormState<E, FS>>["ForeignMutations"]
+export type PassthroughFormWritableState<T, FS> = PassthroughFormState<T, FS>;
+export type PassthroughFormForeignMutationsExposed<T, FS> = ReturnType<
+  ReturnType<typeof PassthroughFormState<T, FS>>["ForeignMutations"]
 >;
-export type PassthroughFormForeignMutationsExpected<E, FS> = {};
+export type PassthroughFormForeignMutationsExpected<T, FS> = {};

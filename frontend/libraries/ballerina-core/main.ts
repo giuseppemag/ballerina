@@ -116,7 +116,6 @@ export * from "./src/forms/domains/launcher/coroutines/runner";
 export * from "./src/forms/domains/launcher/state";
 export * from "./src/forms/domains/launcher/template";
 export * from "./src/forms/domains/parser/domains/injectables/state";
-export * from "./src/forms/domains/collection/domains/unionCase/state";
 export * from "./src/forms/domains/parser/domains/predicates/state";
 export * from "./src/forms/domains/launcher/domains/passthrough/state";
 export * from "./src/forms/domains/launcher/domains/passthrough/template";

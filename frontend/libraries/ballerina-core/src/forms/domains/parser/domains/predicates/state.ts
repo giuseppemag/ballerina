@@ -4,8 +4,9 @@ import {
   MapRepo,
   FieldName,
   ParsedType,
-  ApiErrors,
-  unit,
+  Updater,
+  simpleUpdater,
+  replaceWith,
 } from "../../../../../../main";
 
 export type FieldPredicateExpression =
@@ -122,28 +123,72 @@ export type ValueRecord = {
   kind: "record";
   fields: Map<string, PredicateValue>;
 };
+export const ValueRecord = {
+  Default: {
+    empty: (): ValueRecord => ({ kind: "record", fields: Map() }),
+    fromJSON: (json: object): ValueRecord => ({
+      kind: "record",
+      fields: Map(json),
+    }),
+    fromMap: (map: Map<string, PredicateValue>): ValueRecord => ({
+      kind: "record",
+      fields: map,
+    }),
+  },
+  Operations: {
+    has: (record: ValueRecord, key: string): boolean => {
+      return record.fields.has(key);
+    },
+  },
+  Updaters: {
+    ...simpleUpdater<ValueRecord>()("fields"),
+    set: (key: string, value: PredicateValue): Updater<ValueRecord> => {
+      return ValueRecord.Updaters.fields(MapRepo.Updaters.set(key, value));
+    },
+    remove: (key: string): Updater<ValueRecord> => {
+      return ValueRecord.Updaters.fields(MapRepo.Updaters.remove(key));
+    },
+    clear: (): Updater<ValueRecord> => {
+      return ValueRecord.Updaters.fields(replaceWith(Map()));
+    },
+  },
+};
 export type ValueUnionCase = {
   kind: "unionCase";
   caseName: string;
+  fields: ValueRecord;
+};
+export type ValuePrimitive = number | string | boolean | Date;
+export type ValueUnit = { kind: "unit" };
+export type ValueTuple = { kind: "tuple"; values: List<PredicateValue> };
+export type ValueOption = {
+  kind: "option";
+  isSome: boolean;
   value: PredicateValue;
 };
-export type ValueTuple = { kind: "tuple"; values: Array<PredicateValue> };
+export type ValueVarLookup = { kind: "varLookup"; varName: string };
+
 export type PredicateValue =
-  | number
-  | string
-  | boolean
-  | { kind: "guid"; value: string }
-  | { kind: "unit" }
-  | { kind: "varLookup"; varName: string }
+  | ValuePrimitive
+  | ValueUnit
   | ValueTuple
   | ValueRecord
-  | ValueUnionCase;
+  | ValueUnionCase
+  | ValueOption
+  | ValueVarLookup;
+
+export type ExprFieldLookup = { kind: "fieldLookup"; operands: [Expr, string] };
+export type ExprIsCase = { kind: "isCase"; operands: [Expr, string] };
+export type ExprBinaryOperator = {
+  kind: BinaryOperator;
+  operands: [Expr, Expr];
+};
 
 export type Expr =
   | PredicateValue
-  | { kind: "fieldLookup"; operands: [Expr, string] }
-  | { kind: "isCase"; operands: [Expr, string] }
-  | { kind: BinaryOperator; operands: [Expr, Expr] };
+  | ExprFieldLookup
+  | ExprIsCase
+  | ExprBinaryOperator;
 
 export const BinaryOperators = ["or", "equals"] as const;
 export const BinaryOperatorsSet = Set(BinaryOperators);
@@ -153,26 +198,111 @@ export type Bindings = Map<string, PredicateValue>;
 
 export const PredicateValue = {
   Default: {
+    string: () => "",
+    number: () => 0,
+    boolean: () => false,
+    date: () => new Date(),
     unit: (): PredicateValue => ({ kind: "unit" }),
-    varLookup: (varName: string): PredicateValue => ({
-      kind: "varLookup",
-      varName,
+    tuple: (values: List<PredicateValue>): ValueTuple => ({
+      kind: "tuple",
+      values,
     }),
     record: (fields: Map<string, PredicateValue>): ValueRecord => ({
       kind: "record",
       fields,
     }),
-    unionCase: (caseName: string, value: PredicateValue): ValueUnionCase => ({
+    unionCase: (caseName: string, fields: ValueRecord): ValueUnionCase => ({
       kind: "unionCase",
       caseName,
+      fields,
+    }),
+    option: (isSome: boolean, value: PredicateValue): ValueOption => ({
+      kind: "option",
+      isSome,
       value,
     }),
-    tuple: (values: Array<PredicateValue>): ValueTuple => ({
-      kind: "tuple",
-      values,
+    varLookup: (varName: string): PredicateValue => ({
+      kind: "varLookup",
+      varName,
     }),
   },
   Operations: {
+    IsPrimitive: (
+      value: PredicateValue | Expr,
+    ): value is boolean | number | string | Date => {
+      return (
+        PredicateValue.Operations.IsBoolean(value) ||
+        PredicateValue.Operations.IsNumber(value) ||
+        PredicateValue.Operations.IsString(value) ||
+        PredicateValue.Operations.IsDate(value)
+      );
+    },
+    IsBoolean: (value: PredicateValue | Expr): value is boolean => {
+      return typeof value == "boolean";
+    },
+    IsNumber: (value: PredicateValue | Expr): value is number => {
+      return typeof value == "number";
+    },
+    IsString: (value: PredicateValue | Expr): value is string => {
+      return typeof value == "string";
+    },
+    IsDate: (value: PredicateValue | Expr): value is Date => {
+      return (
+        typeof value == "object" &&
+        Object.prototype.toString.call(value) === "[object Date]" &&
+        value instanceof Date &&
+        !isNaN(value.getTime())
+      );
+    },
+    IsUnit: (value: PredicateValue | Expr): value is ValueUnit => {
+      return (
+        typeof value == "object" &&
+        !PredicateValue.Operations.IsDate(value) &&
+        value.kind == "unit"
+      );
+    },
+    IsUnionCase: (value: PredicateValue | Expr): value is ValueUnionCase => {
+      return (
+        typeof value == "object" &&
+        !PredicateValue.Operations.IsDate(value) &&
+        value.kind == "unionCase"
+      );
+    },
+    IsRecord: (value: PredicateValue | Expr): value is ValueRecord => {
+      return (
+        typeof value == "object" &&
+        !PredicateValue.Operations.IsDate(value) &&
+        value.kind == "record"
+      );
+    },
+    IsTuple: (value: PredicateValue | Expr): value is ValueTuple => {
+      return (
+        typeof value == "object" &&
+        !PredicateValue.Operations.IsDate(value) &&
+        value.kind == "tuple"
+      );
+    },
+    IsOption: (value: PredicateValue | Expr): value is ValueOption => {
+      return (
+        typeof value == "object" &&
+        !PredicateValue.Operations.IsDate(value) &&
+        value.kind == "option"
+      );
+    },
+    IsVarLookup: (value: PredicateValue | Expr): value is ValueVarLookup => {
+      return (
+        typeof value == "object" &&
+        !PredicateValue.Operations.IsDate(value) &&
+        value.kind == "varLookup"
+      );
+    },
+    ParseAsDate: (json: any): ValueOrErrors<PredicateValue, string> => {
+      if (PredicateValue.Operations.IsDate(json))
+        return ValueOrErrors.Default.return(json);
+      return ValueOrErrors.Default.throwOne(
+        `Error: date has invalid value property`,
+      );
+    },
     ParseAsVarLookup: (json: any): ValueOrErrors<PredicateValue, string> => {
       if (json.kind == "varLookup" && typeof json.varName == "string")
         return ValueOrErrors.Default.return(
@@ -238,9 +368,7 @@ export const PredicateValue = {
             ),
           ),
         ).Then((values) =>
-          ValueOrErrors.Default.return(
-            PredicateValue.Default.tuple(values.toArray()),
-          ),
+          ValueOrErrors.Default.return(PredicateValue.Default.tuple(values)),
         );
       }
       return ValueOrErrors.Default.throwOne(
@@ -266,6 +394,9 @@ export const PredicateValue = {
       }
       if (type.kind == "expression" && json.kind == "guid") {
         return ValueOrErrors.Default.return(json);
+      }
+      if (type.kind == "expression" && json.kind == "date") {
+        return PredicateValue.Operations.ParseAsDate(json);
       }
       if (type.kind == "expression" && json.kind == "unit") {
         return ValueOrErrors.Default.return(PredicateValue.Default.unit());
@@ -295,7 +426,12 @@ export const PredicateValue = {
         return PredicateValue.Operations.ParseAsTuple(json, types);
       }
       if (type.kind == "primitive" && type.value == "Date") {
-        return ValueOrErrors.Default.return(json);
+        if (PredicateValue.Operations.IsDate(json)) {
+          return ValueOrErrors.Default.return(json);
+        }
+        return ValueOrErrors.Default.throwOne(
+          `Error: failed to parse date ${JSON.stringify(json)}`,
+        );
       }
       if (type.kind == "primitive" && type.value == "maybeBoolean") {
         return json == undefined
@@ -347,9 +483,7 @@ export const PredicateValue = {
             ),
           ),
         ).Then((values) =>
-          ValueOrErrors.Default.return(
-            PredicateValue.Default.tuple(values.toArray()),
-          ),
+          ValueOrErrors.Default.return(PredicateValue.Default.tuple(values)),
         );
       }
       if (type.kind == "application" && type.value == "Map") {
@@ -367,28 +501,19 @@ export const PredicateValue = {
                   types,
                 ).Then((value) =>
                   ValueOrErrors.Default.return(
-                    PredicateValue.Default.tuple([key, value]),
+                    PredicateValue.Default.tuple(List([key, value])),
                   ),
                 ),
               ),
             ),
           ),
         ).Then((values) =>
-          ValueOrErrors.Default.return(
-            PredicateValue.Default.tuple(values.toArray()),
-          ),
+          ValueOrErrors.Default.return(PredicateValue.Default.tuple(values)),
         );
       }
       if (type.kind == "application" && type.value == "SingleSelection") {
-        // We parse single select as an Option, but it is not encoded as an Option in the type
-        return PredicateValue.Operations.parse(
-          json["IsSome"],
-          { kind: "expression" },
-          types,
-        ).Then((value) =>
-          ValueOrErrors.Default.return(
-            PredicateValue.Default.unionCase(value.toString(), value),
-          ),
+        ValueOrErrors.Default.return(
+          PredicateValue.Default.option(json["IsSome"], json["Value"]),
         );
       }
       if (type.kind == "application" && type.value == "MultiSelection") {
@@ -403,9 +528,7 @@ export const PredicateValue = {
             ),
           ),
         ).Then((values) =>
-          ValueOrErrors.Default.return(
-            PredicateValue.Default.tuple(values.toArray()),
-          ),
+          ValueOrErrors.Default.return(PredicateValue.Default.tuple(values)),
         );
       }
       if (type.kind == "form") {
@@ -415,7 +538,9 @@ export const PredicateValue = {
               const subType = type.fields.get(fieldName);
               if (subType == undefined) {
                 return ValueOrErrors.Default.throwOne(
-                  `Error: cannot find field ${fieldName} in type ${JSON.stringify(type)}`,
+                  `Error: cannot find field ${fieldName} in type ${JSON.stringify(
+                    type,
+                  )}`,
                 );
               }
               return PredicateValue.Operations.parse(
@@ -447,7 +572,7 @@ export const PredicateValue = {
         .map(([k, v]) => v)
         .valueSeq()
         .toArray();
-      return PredicateValue.Default.tuple(valuesSortedByName);
+      return PredicateValue.Default.tuple(List(valuesSortedByName));
     },
     Equals:
       (vars: Bindings) =>
@@ -464,22 +589,29 @@ export const PredicateValue = {
           ? typeof v1 == typeof v2
             ? ValueOrErrors.Default.return(v1 == v2)
             : ValueOrErrors.Default.throwOne(
-                `Error: cannot compare expressions of different types ${JSON.stringify(v1)} and ${JSON.stringify(v2)}.`,
+                `Error: cannot compare expressions of different types ${JSON.stringify(
+                  v1,
+                )} and ${JSON.stringify(v2)}.`,
               )
-          : v1.kind == "guid" && v2.kind == "guid"
-            ? ValueOrErrors.Default.return(v1.value == v2.value)
-            : v1.kind == "unionCase" && v2.kind == "unionCase"
+          : PredicateValue.Operations.IsDate(v1) &&
+              PredicateValue.Operations.IsDate(v2)
+            ? v1.getTime() == v2.getTime()
+              ? ValueOrErrors.Default.return(true)
+              : ValueOrErrors.Default.return(false)
+            : PredicateValue.Operations.IsUnionCase(v1) &&
+                PredicateValue.Operations.IsUnionCase(v2)
               ? v1.caseName == v2.caseName
-                ? PredicateValue.Operations.Equals(vars)(v1.value, v2.value)
+                ? PredicateValue.Operations.Equals(vars)(v1.fields, v2.fields)
                 : ValueOrErrors.Default.return(false)
-              : v1.kind == "tuple" && v2.kind == "tuple"
-                ? v1.values.length != v2.values.length
+              : PredicateValue.Operations.IsTuple(v1) &&
+                  PredicateValue.Operations.IsTuple(v2)
+                ? v1.values.size != v2.values.size
                   ? ValueOrErrors.Default.return(false)
-                  : v1.values.length == 0
+                  : v1.values.size == 0
                     ? ValueOrErrors.Default.return(true)
                     : PredicateValue.Operations.Equals(vars)(
-                        v1.values[0],
-                        v2.values[0],
+                        v1.values.get(0)!,
+                        v2.values.get(0)!,
                       ).Then((firstEqual) =>
                         firstEqual
                           ? PredicateValue.Operations.Equals(vars)(
@@ -488,19 +620,26 @@ export const PredicateValue = {
                             )
                           : ValueOrErrors.Default.return(false),
                       )
-                : v1.kind == "record" && v2.kind == "record"
+                : PredicateValue.Operations.IsRecord(v1) &&
+                    PredicateValue.Operations.IsRecord(v2)
                   ? PredicateValue.Operations.Equals(vars)(
                       PredicateValue.Operations.recordToTuple(v1),
                       PredicateValue.Operations.recordToTuple(v2),
                     )
-                  : v1.kind == "unit" && v2.kind == "unit"
+                  : PredicateValue.Operations.IsUnit(v1) &&
+                      PredicateValue.Operations.IsUnit(v2)
                     ? ValueOrErrors.Default.return(true)
-                    : v1.kind != v2.kind
+                    : PredicateValue.Operations.IsUnit(v1) !=
+                        PredicateValue.Operations.IsUnit(v2)
                       ? ValueOrErrors.Default.throwOne(
-                          `Error: cannot compare expressions of different types ${JSON.stringify(v1)} and ${JSON.stringify(v2)}.`,
+                          `Error: cannot compare expressions of different types ${JSON.stringify(
+                            v1,
+                          )} and ${JSON.stringify(v2)}.`,
                         )
                       : ValueOrErrors.Default.throwOne(
-                          `Error: structural equality is not implemented yet between ${JSON.stringify(v1)} and ${JSON.stringify(v2)}.`,
+                          `Error: structural equality is not implemented yet between ${JSON.stringify(
+                            v1,
+                          )} and ${JSON.stringify(v2)}.`,
                         ),
   },
 };
@@ -521,6 +660,27 @@ export const Expr = {
     }),
   },
   Operations: {
+    IsFieldLookup: (e: Expr): e is ExprFieldLookup => {
+      return (
+        typeof e == "object" &&
+        !PredicateValue.Operations.IsDate(e) &&
+        e.kind == "fieldLookup"
+      );
+    },
+    IsIsCase: (e: Expr): e is ExprIsCase => {
+      return (
+        typeof e == "object" &&
+        !PredicateValue.Operations.IsDate(e) &&
+        e.kind == "isCase"
+      );
+    },
+    IsBinaryOperator: (e: Expr): e is ExprBinaryOperator => {
+      return (
+        typeof e == "object" &&
+        !PredicateValue.Operations.IsDate(e) &&
+        BinaryOperatorsSet.has(e.kind as BinaryOperator)
+      );
+    },
     parse: (json: any): ValueOrErrors<Expr, string> => {
       const asValue = PredicateValue.Operations.parse(
         json,
@@ -566,10 +726,7 @@ export const Expr = {
     EvaluateAsRecord:
       (vars: Bindings) =>
       (e: Expr): ValueOrErrors<ValueRecord, string> =>
-        typeof e == "boolean" ||
-        typeof e == "number" ||
-        typeof e == "string" ||
-        e.kind != "record"
+        !PredicateValue.Operations.IsRecord(e)
           ? ValueOrErrors.Default.throwOne(
               `Error: expected record, got ${JSON.stringify(e)}`,
             )
@@ -577,10 +734,7 @@ export const Expr = {
     EvaluateAsUnionCase:
       (vars: Bindings) =>
       (e: Expr): ValueOrErrors<ValueUnionCase, string> =>
-        typeof e == "boolean" ||
-        typeof e == "number" ||
-        typeof e == "string" ||
-        e.kind != "unionCase"
+        !PredicateValue.Operations.IsUnionCase(e)
           ? ValueOrErrors.Default.throwOne(
               `Error: expected union case, got ${JSON.stringify(e)}`,
             )
@@ -588,31 +742,30 @@ export const Expr = {
     EvaluateAsBoolean:
       (vars: Bindings) =>
       (e: Expr): ValueOrErrors<boolean, string> =>
-        typeof e == "boolean"
-          ? ValueOrErrors.Default.return(e)
-          : ValueOrErrors.Default.throwOne(
+        !PredicateValue.Operations.IsBoolean(e)
+          ? ValueOrErrors.Default.throwOne(
               `Error: expected boolean, got ${JSON.stringify(e)}`,
-            ),
+            )
+          : ValueOrErrors.Default.return(e),
     Evaluate:
       (vars: Bindings) =>
-      (e: Expr): ValueOrErrors<PredicateValue, string> =>
-        typeof e == "boolean" ||
-        typeof e == "number" ||
-        typeof e == "string" ||
-        e.kind == "unit" ||
-        e.kind == "guid" ||
-        e.kind == "record" ||
-        e.kind == "tuple" ||
-        e.kind == "unionCase"
+      (e: Expr): ValueOrErrors<PredicateValue, string> => {
+        return PredicateValue.Operations.IsBoolean(e) ||
+          PredicateValue.Operations.IsNumber(e) ||
+          PredicateValue.Operations.IsString(e) ||
+          PredicateValue.Operations.IsUnit(e) ||
+          PredicateValue.Operations.IsRecord(e) ||
+          PredicateValue.Operations.IsTuple(e) ||
+          PredicateValue.Operations.IsUnionCase(e)
           ? ValueOrErrors.Default.return(e)
-          : e.kind == "varLookup"
+          : PredicateValue.Operations.IsVarLookup(e)
             ? MapRepo.Operations.tryFindWithError(
                 e.varName,
                 vars,
                 () =>
                   `Error: cannot find variable ${JSON.stringify(e.varName)}`,
               )
-            : e.kind == "fieldLookup"
+            : Expr.Operations.IsFieldLookup(e)
               ? Expr.Operations.Evaluate(vars)(e.operands[0]).Then(
                   (record: PredicateValue) =>
                     Expr.Operations.EvaluateAsRecord(vars)(record).Then(
@@ -621,11 +774,13 @@ export const Expr = {
                           e.operands[1],
                           record.fields,
                           () =>
-                            `Error: cannot find field ${e.operands[1]} in record ${JSON.stringify(record)}`,
+                            `Error: cannot find field ${
+                              e.operands[1]
+                            } in record ${JSON.stringify(record)}`,
                         ),
                     ),
                 )
-              : e.kind == "isCase"
+              : Expr.Operations.IsIsCase(e)
                 ? Expr.Operations.Evaluate(vars)(e.operands[0]).Then(
                     (unionCase: PredicateValue) =>
                       Expr.Operations.EvaluateAsUnionCase(vars)(unionCase).Then(
@@ -635,7 +790,7 @@ export const Expr = {
                           ),
                       ),
                   )
-                : e.kind == "equals"
+                : Expr.Operations.IsBinaryOperator(e) && e.kind == "equals"
                   ? Expr.Operations.Evaluate(vars)(e.operands[0]).Then((v1) =>
                       Expr.Operations.Evaluate(vars)(e.operands[1]).Then((v2) =>
                         PredicateValue.Operations.Equals(vars)(v1, v2).Then(
@@ -643,7 +798,7 @@ export const Expr = {
                         ),
                       ),
                     )
-                  : e.kind == "or"
+                  : Expr.Operations.IsBinaryOperator(e) && e.kind == "or"
                     ? Expr.Operations.Evaluate(vars)(e.operands[0]).Then((v1) =>
                         Expr.Operations.Evaluate(vars)(e.operands[1]).Then(
                           (v2) =>
@@ -659,14 +814,14 @@ export const Expr = {
                       )
                     : ValueOrErrors.Default.throwOne(
                         `Error: unsupported expression ${JSON.stringify(e)}`,
-                      ),
+                      );
+      },
   },
 };
 
-export const evaluatePredicates = <E>(
+export const evaluatePredicates = <T>(
   context: {
     global: PredicateValue;
-    types: Map<string, ParsedType<E>>;
     visibilityPredicateExpressions: FieldPredicateExpressions;
     disabledPredicatedExpressions: FieldPredicateExpressions;
   },
@@ -698,7 +853,7 @@ export const evaluatePredicates = <E>(
     if (predicate.kind == "form") {
       if (typeof raw != "object" || !("kind" in raw) || raw.kind != "record") {
         return ValueOrErrors.Default.throwOne(
-          `Error: expected record in raw, got ${JSON.stringify(raw)}`,
+          `Error: parsing expected record in raw, got ${JSON.stringify(raw)}`,
         );
       }
       return calculateVisibility(predicate.value, bindings).Then((result) =>
@@ -713,7 +868,9 @@ export const evaluatePredicates = <E>(
 
                 if (fieldRaw == undefined) {
                   return ValueOrErrors.Default.throwOne(
-                    `Error: cannot find field ${fieldName} in raw ${JSON.stringify(raw)}`,
+                    `Error: parsing cannot find field ${fieldName} in raw ${JSON.stringify(
+                      raw,
+                    )}`,
                   );
                 }
 
@@ -722,7 +879,9 @@ export const evaluatePredicates = <E>(
                   const fieldLocal = localBindings.fields.get(fieldName);
                   if (fieldLocal == undefined) {
                     return ValueOrErrors.Default.throwOne(
-                      `Error: cannot find field ${fieldName} in local ${JSON.stringify(localBindings)}`,
+                      `Error: parsing cannot find field ${fieldName} in local ${JSON.stringify(
+                        localBindings,
+                      )}`,
                     );
                   }
                   const fieldBindings = bindings.set("local", fieldLocal);
@@ -749,14 +908,16 @@ export const evaluatePredicates = <E>(
     }
     if (predicate.kind == "list") {
       return calculateVisibility(predicate.value, bindings).Then((result) => {
-        if (typeof raw == "object" && "kind" in raw && raw.kind == "tuple") {
+        if (PredicateValue.Operations.IsTuple(raw)) {
           return ValueOrErrors.Operations.All(
             List<ValueOrErrors<FormFieldPredicateEvaluation, string>>(
               raw.values.map((value, index) => {
-                const elementLocal = raw.values[index];
+                const elementLocal = raw.values.get(index);
                 if (elementLocal == undefined) {
                   return ValueOrErrors.Default.throwOne(
-                    `Error: cannot find element of index ${index} in local ${JSON.stringify(raw)}`,
+                    `Error: cannot find element of index ${index} in local ${JSON.stringify(
+                      raw,
+                    )}`,
                   );
                 }
                 const elementBindings = bindings.set("local", elementLocal);
@@ -776,7 +937,7 @@ export const evaluatePredicates = <E>(
           });
         }
         return ValueOrErrors.Default.throwOne(
-          `Error: expected tuple, got ${JSON.stringify(raw)}`,
+          `Error: parsing expected tuple, got ${JSON.stringify(raw)}`,
         );
       });
     }
@@ -793,20 +954,15 @@ export const evaluatePredicates = <E>(
                 string
               >
             >(
-              raw.values.map((kv, kvIndex) => {
-                if (
-                  typeof raw.values[kvIndex] == "object" &&
-                  "kind" in raw.values[kvIndex] &&
-                  raw.values[kvIndex].kind == "tuple"
-                ) {
-                  const keyLocal = raw.values[kvIndex].values[0];
-                  const valueLocal = raw.values[kvIndex].values[1];
-                  // TODO: Since we can have undefined values (date), this error check doesn't work,
-                  // we should instead use Option for all undefined values
-                  // if(keyLocal == undefined || valueLocal == undefined) {
-                  //   console.error(raw.values[kvIndex])
-                  //   return ValueOrErrors.Default.throwOne(`Error: cannot find key or value of ${kvIndex} in local ${JSON.stringify(raw)}`)
-                  // }
+              raw.values.map((kv) => {
+                if (PredicateValue.Operations.IsTuple(kv)) {
+                  const keyLocal = kv.values.get(0)!;
+                  const valueLocal = kv.values.get(1)!;
+                  if (keyLocal == undefined || valueLocal == undefined) {
+                    return ValueOrErrors.Default.throwOne(
+                      `Error: cannot find key or value of ${JSON.stringify(kv)} in local ${JSON.stringify(raw)}`,
+                    );
+                  }
                   const keyBindings = bindings.set("local", keyLocal);
                   const valueBindings = bindings.set("local", valueLocal);
                   return traverse(
@@ -827,7 +983,9 @@ export const evaluatePredicates = <E>(
                   });
                 }
                 return ValueOrErrors.Default.throwOne(
-                  `Error: expected tuple of key and value, got ${JSON.stringify(kv)}`,
+                  `Error: parsing expected tuple of key and value, got ${JSON.stringify(
+                    kv,
+                  )}`,
                 );
               }),
             ),
@@ -840,12 +998,12 @@ export const evaluatePredicates = <E>(
           });
         }
         return ValueOrErrors.Default.throwOne(
-          `Error: expected tuple of key value pairs, got ${JSON.stringify(raw)}`,
+          `Error: parsing expected tuple of key value pairs, got ${JSON.stringify(raw)}`,
         );
       });
     }
     return ValueOrErrors.Default.throwOne(
-      `Error: unsupported predicate kind ${JSON.stringify(predicate)}`,
+      `Error: parsing unsupported predicate kind ${JSON.stringify(raw)}`,
     );
   };
 

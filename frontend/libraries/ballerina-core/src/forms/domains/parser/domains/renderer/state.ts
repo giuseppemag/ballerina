@@ -3,7 +3,6 @@ import {
   Base64FileForm,
   BaseEnumContext,
   BasicFun,
-  BasicPredicate,
   BooleanForm,
   BoolExpr,
   CollectionReference,
@@ -18,7 +17,6 @@ import {
   EnumReference,
   Expr,
   FieldPredicateExpression,
-  FieldPredicateExpressions,
   FormLabel,
   Guid,
   InfiniteMultiselectDropdownForm,
@@ -28,18 +26,20 @@ import {
   MapFieldState,
   MapForm,
   Maybe,
-  MaybeBooleanForm,
   NumberForm,
-  OrderedMapRepo,
   ParsedForms,
   ParsedType,
+  PredicateValue,
   SearchableInfiniteStreamForm,
   SearchableInfiniteStreamState,
   SecretForm,
   StringForm,
   Template,
+  unit,
   Unit,
   Value,
+  ValueOption,
+  ValueRecord,
 } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 
@@ -293,7 +293,9 @@ export const ParsedRenderer = {
         );
       }
       console.error(
-        `Invalid field type ${JSON.stringify(fieldType)} for field ${JSON.stringify(field)}`,
+        `Invalid field type ${JSON.stringify(
+          fieldType,
+        )} for field ${JSON.stringify(field)}`,
       );
       throw new Error("Invalid field type");
     },
@@ -432,7 +434,7 @@ export const ParsedRenderer = {
                   ).Then((parsedElementRenderer) =>
                     ValueOrErrors.Default.return({
                       form: {
-                        renderer: ListForm<any, any, any & FormLabel, Unit>(
+                        renderer: ListForm<any, any & FormLabel, Unit>(
                           {
                             Default: () =>
                               parsedElementRenderer.form.initialState,
@@ -457,7 +459,7 @@ export const ParsedRenderer = {
                         initialValue: parsingContext.defaultValue(
                           parsedRenderer.type,
                         ),
-                        initialState: ListFieldState<any, any>().Default(Map()),
+                        initialState: ListFieldState<any>().Default(Map()),
                       },
                       visibilityPredicateExpression:
                         FieldPredicateExpression.Default.list(
@@ -490,14 +492,7 @@ export const ParsedRenderer = {
                     ).Then((parsedValueRenderer) =>
                       ValueOrErrors.Default.return({
                         form: {
-                          renderer: MapForm<
-                            any,
-                            any,
-                            any,
-                            any,
-                            any & FormLabel,
-                            Unit
-                          >(
+                          renderer: MapForm<any, any, any & FormLabel, Unit>(
                             {
                               Default: () =>
                                 parsedKeyRenderer.form.initialState,
@@ -531,12 +526,9 @@ export const ParsedRenderer = {
                           initialValue: parsingContext.defaultValue(
                             parsedRenderer.type,
                           ),
-                          initialState: MapFieldState<
-                            any,
-                            any,
-                            any,
-                            any
-                          >().Default(Map()),
+                          initialState: MapFieldState<any, any>().Default(
+                            Map(),
+                          ),
                         },
                         visibilityPredicateExpression:
                           FieldPredicateExpression.Default.map(
@@ -574,15 +566,6 @@ export const ParsedRenderer = {
       enumOptionsSources: EnumOptionsSources,
       injectedPrimitives?: InjectedPrimitives<T>,
     ): any => {
-      if (viewKind == "maybeBoolean")
-        return MaybeBooleanForm<any & FormLabel, Unit>()
-          .withView(formViews[viewKind][viewName]())
-          .mapContext<any & CommonFormState & Value<boolean>>((_) => ({
-            ..._,
-            label,
-            tooltip,
-            details,
-          }));
       if (viewKind == "boolean")
         return BooleanForm<any & FormLabel, Unit>()
           .withView(formViews[viewKind][viewName]())
@@ -620,86 +603,65 @@ export const ParsedRenderer = {
             details,
           }));
       if (viewKind == "enumSingleSelection" && rendererConfig.kind == "enum")
-        return EnumForm<
-          any & FormLabel & BaseEnumContext<EnumReference>,
-          Unit,
-          EnumReference
-        >()
+        return EnumForm<any & FormLabel & BaseEnumContext, Unit>()
           .withView(formViews[viewKind][viewName]())
-          .mapContext<
-            any &
-              EnumFormState<
-                any & BaseEnumContext<EnumReference>,
-                EnumReference
-              > &
-              Value<CollectionSelection<EnumReference>>
-          >((_) => ({
-            ..._,
-            label,
-            tooltip,
-            details,
-            getOptions: () => {
-              return (
-                (enumOptionsSources as any)(
-                  rendererConfig.options,
-                )() as Promise<any>
-              ).then((options) =>
-                Map(options.map((o: EnumReference) => [o.Value, o])),
-              );
-            },
-          }));
+          .mapContext<any & EnumFormState & ValueOption>((_) => {
+            return {
+              ..._,
+              label,
+              tooltip,
+              details,
+              getOptions: (): Promise<OrderedMap<Guid, ValueRecord>> => {
+                return enumOptionsSources(rendererConfig.options)(unit).then(
+                  (options) =>
+                    OrderedMap(
+                      options.map((o: EnumReference) => [
+                        o.Value,
+                        PredicateValue.Default.record(Map(o)),
+                      ]),
+                    ),
+                );
+              },
+            };
+          });
       if (viewKind == "enumMultiSelection" && rendererConfig.kind == "enum")
-        return EnumMultiselectForm<
-          any & FormLabel & BaseEnumContext<EnumReference>,
-          Unit,
-          EnumReference
-        >()
+        return EnumMultiselectForm<any & FormLabel & BaseEnumContext, Unit>()
           .withView(formViews[viewKind][viewName]())
-          .mapContext<
-            any &
-              EnumFormState<
-                any & BaseEnumContext<EnumReference>,
-                EnumReference
-              > &
-              Value<OrderedMap<Guid, EnumReference>>
-          >((_) => ({
-            ..._,
-            label,
-            details,
-            tooltip,
-            getOptions: () =>
-              (
-                (enumOptionsSources as any)(
-                  rendererConfig.options,
-                )() as Promise<any>
-              ).then((options) =>
-                OrderedMap(options.map((o: EnumReference) => [o.Value, o])),
-              ),
-          }));
+          .mapContext<EnumFormState & Value<OrderedMap<Guid, ValueRecord>>>(
+            (_) => ({
+              ..._,
+              label,
+              details,
+              tooltip,
+              getOptions: (): Promise<OrderedMap<Guid, ValueRecord>> => {
+                return enumOptionsSources(rendererConfig.options)(unit).then(
+                  (options) =>
+                    OrderedMap(
+                      options.map((o: EnumReference) => [
+                        o.Value,
+                        PredicateValue.Default.record(Map(o)),
+                      ]),
+                    ),
+                );
+              },
+            }),
+          );
       if (viewKind == "streamSingleSelection")
-        return SearchableInfiniteStreamForm<
-          CollectionReference,
-          any & FormLabel,
-          Unit
-        >()
+        return SearchableInfiniteStreamForm<any & FormLabel, Unit>()
           .withView(formViews[viewKind][viewName]())
           .mapContext<
             any &
-              SearchableInfiniteStreamState<CollectionReference> &
+              SearchableInfiniteStreamState &
               Value<CollectionSelection<CollectionReference>>
           >((_) => ({ ..._, label, tooltip, details }));
       if (viewKind == "streamMultiSelection")
-        return InfiniteMultiselectDropdownForm<
-          CollectionReference,
-          any & FormLabel,
-          Unit
-        >()
+        return InfiniteMultiselectDropdownForm<any & FormLabel, Unit>()
           .withView(formViews[viewKind][viewName]())
           .mapContext<
             any &
               FormLabel &
               CommonFormState &
-              SearchableInfiniteStreamState<CollectionReference> &
+              SearchableInfiniteStreamState &
               Value<OrderedMap<Guid, CollectionReference>>
           >((_) => ({
             ..._,
@@ -734,7 +696,9 @@ export const ParsedRenderer = {
           details,
         );
       }
-      return `error: the view for ${viewKind as string}::${viewName as string} cannot be found`;
+      return `error: the view for ${viewKind as string}::${
+        viewName as string
+      } cannot be found`;
     },
     FormStates: <T>(
       renderer: ParsedRenderer<T>,
@@ -744,7 +708,6 @@ export const ParsedRenderer = {
       injectedPrimitives?: InjectedPrimitives<T>,
     ): any => {
       if (
-        viewType == "maybeBoolean" ||
         viewType == "boolean" ||
         viewType == "number" ||
         viewType == "string" ||
@@ -764,18 +727,20 @@ export const ParsedRenderer = {
       }
       if (viewType == "date") return DateFormState.Default();
       if (viewType == "enumSingleSelection" || viewType == "enumMultiSelection")
-        return EnumFormState<any, any>().Default();
+        return EnumFormState().Default();
       if (
         (viewType == "streamSingleSelection" ||
           viewType == "streamMultiSelection") &&
         renderer.kind == "stream"
       ) {
-        return SearchableInfiniteStreamState<any>().Default(
+        return SearchableInfiniteStreamState().Default(
           "",
           (InfiniteStreamSources as any)(renderer.stream),
         );
       }
-      return `error: the view for ${viewType as string}::${viewName as string} cannot be found when creating the corresponding field form state`;
+      return `error: the view for ${viewType as string}::${
+        viewName as string
+      } cannot be found when creating the corresponding field form state`;
     },
   },
 };

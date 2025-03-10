@@ -38,10 +38,7 @@ import {
   PassthroughFormContext,
   PassthroughFormTemplate,
 } from "../../../../main";
-import {
-  CollectionReference,
-  EnumReference,
-} from "../collection/domains/reference/state";
+import { EnumReference } from "../collection/domains/reference/state";
 import { SearchableInfiniteStreamState } from "../primitives/domains/searchable-infinite-stream/state";
 import { Form } from "../singleton/template";
 import { ParsedRenderer } from "./domains/renderer/state";
@@ -91,8 +88,7 @@ export const ParseForm = <T,>(
       formDef.fields.get(fieldName)!,
     );
     if (parsedFormConfig.kind == "errors")
-      throw Error(`Error parsing form ${fieldsViewsConfig[fieldName]}`); // TODO - better error handling
-
+      throw Error(`Error parsing form ${fieldsViewsConfig[fieldName]}`);
     formConfig[fieldName] = parsedFormConfig.value.form.renderer;
     visibilityPredicateExpressions = visibilityPredicateExpressions.set(
       fieldName,
@@ -137,7 +133,9 @@ export const ParseForms =
       }
       if (seen.has(formDef.name)) {
         errors.push(
-          `aborting: cycle detected when parsing forms: ${JSON.stringify(formProcessingOrder.reverse().toArray())} -> ${formDef.name}`,
+          `aborting: cycle detected when parsing forms: ${JSON.stringify(
+            formProcessingOrder.reverse().toArray(),
+          )} -> ${formDef.name}`,
         );
         return;
       }
@@ -199,7 +197,7 @@ export const ParseForms =
           defaultValue(formsConfig.types, builtIns, injectedPrimitives),
           injectedPrimitives,
         );
-        const formBuilder = Form<any, any, any, any>().Default<any>();
+        const formBuilder = Form<any, any, any>().Default<any>();
         const form = formBuilder
           .template({
             ...parsedForm.formConfig,
@@ -242,9 +240,9 @@ export const ParseForms =
 
     return ValueOrErrors.Default.return(parsedForms);
   };
-export type EditLauncherContext<Entity, FormState, ExtraContext> = Omit<
-  EditFormContext<Entity, FormState> &
-    EditFormState<Entity, FormState> & {
+export type EditLauncherContext<T, FormState, ExtraContext> = Omit<
+  EditFormContext<T, FormState> &
+    EditFormState<T, FormState> & {
       extraContext: ExtraContext;
       containerFormView: any;
       submitButtonWrapper: any;
@@ -252,9 +250,9 @@ export type EditLauncherContext<Entity, FormState, ExtraContext> = Omit<
   "api" | "parser" | "actualForm"
 >;
 
-export type CreateLauncherContext<Entity, FormState, ExtraContext> = Omit<
-  CreateFormContext<Entity, FormState> &
-    CreateFormState<Entity, FormState> & {
+export type CreateLauncherContext<T, FormState, ExtraContext> = Omit<
+  CreateFormContext<T, FormState> &
+    CreateFormState<T, FormState> & {
       extraContext: ExtraContext;
       containerFormView: any;
       submitButtonWrapper: any;
@@ -262,9 +260,9 @@ export type CreateLauncherContext<Entity, FormState, ExtraContext> = Omit<
   "api" | "actualForm"
 >;
 
-export type PassthroughLauncherContext<Entity, FormState, ExtraContext> = Omit<
-  PassthroughFormContext<Entity, FormState> &
-    PassthroughFormState<Entity, FormState> & {
+export type PassthroughLauncherContext<T, FormState, ExtraContext> = Omit<
+  PassthroughFormContext<T, FormState> &
+    PassthroughFormState<T, FormState> & {
       extraContext: ExtraContext;
       containerFormView: any;
       containerWrapper: any;
@@ -275,40 +273,43 @@ export type PassthroughLauncherContext<Entity, FormState, ExtraContext> = Omit<
 export type ParsedLaunchers = {
   create: Map<
     string,
-    <Entity, FormState, ExtraContext>() => {
+    <T, FormState, ExtraContext>() => {
       form: Template<
-        CreateLauncherContext<Entity, FormState, ExtraContext> &
-          CreateFormState<Entity, FormState>,
-        CreateFormState<Entity, FormState>,
+        CreateLauncherContext<T, FormState, ExtraContext> &
+          CreateFormState<T, FormState>,
+        CreateFormState<T, FormState>,
         Unit
       >;
-      initialState: CreateFormState<Entity, FormState>;
+      initialState: CreateFormState<T, FormState>;
     }
   >;
   edit: Map<
     string,
-    <Entity, FormState, ExtraContext>() => {
+    <T, FormState, ExtraContext>() => {
       form: Template<
-        EditLauncherContext<Entity, FormState, ExtraContext> &
-          EditFormState<Entity, FormState>,
-        EditFormState<Entity, FormState>,
-        EditFormForeignMutationsExpected<Entity, FormState>
+        EditLauncherContext<T, FormState, ExtraContext> &
+          EditFormState<T, FormState>,
+        EditFormState<T, FormState>,
+        EditFormForeignMutationsExpected<T, FormState>
       >;
-      initialState: EditFormState<Entity, FormState>;
+      initialState: EditFormState<T, FormState>;
     }
   >;
   passthrough: Map<
     string,
-    <Entity, FormState, ExtraContext>() => {
+    <T, FormState, ExtraContext>() => {
       form: Template<
-        PassthroughLauncherContext<Entity, FormState, ExtraContext> &
-          PassthroughFormState<Entity, FormState>,
-        PassthroughFormState<Entity, FormState>,
+        PassthroughLauncherContext<T, FormState, ExtraContext> &
+          PassthroughFormState<T, FormState>,
+        PassthroughFormState<T, FormState>,
         Unit
       >;
-      initialState: PassthroughFormState<Entity, FormState>;
-      fromApiParser: (value: any) => Entity;
-      toApiParser: (value: any, formState: any, checkKeys: boolean) => any;
+      initialState: PassthroughFormState<T, FormState>;
+      fromApiParser: (value: any) => ValueOrErrors<PredicateValue, string>;
+      toApiParser: (
+        value: PredicateValue,
+        formState: any,
+      ) => ValueOrErrors<any, string>;
       parseGlobalConfiguration: (
         raw: any,
       ) => ValueOrErrors<PredicateValue, string>;
@@ -318,7 +319,7 @@ export type ParsedLaunchers = {
 export type ParsedForms<T> = Map<
   string,
   ParsedForm<T> & {
-    form: EntityFormTemplate<any, any, any, any, any>;
+    form: EntityFormTemplate<any, any, any, any>;
     visibilityPredicateExpressions: FieldPredicateExpressions;
     disabledPredicatedExpressions: FieldPredicateExpressions;
   }
@@ -333,7 +334,7 @@ export type EnumOptionsSources = BasicFun<
 export type StreamName = string;
 export type InfiniteStreamSources = BasicFun<
   StreamName,
-  SearchableInfiniteStreamState<CollectionReference>["customFormState"]["getChunk"]
+  SearchableInfiniteStreamState["customFormState"]["getChunk"]
 >;
 export type ConfigName = string;
 export type GlobalConfigurationSources = BasicFun<ConfigName, Promise<any>>;
@@ -395,7 +396,6 @@ export const parseFormsToLaunchers =
         parsedForm.visibilityPredicateExpressions;
       const disabledPredicatedExpressions =
         parsedForm.disabledPredicatedExpressions;
-      console.debug("entity apis", entityApis.get(launcher.configApi));
       const api = {
         getGlobalConfiguration: () => entityApis.get(launcher.configApi)(""),
         get: (id: string) => entityApis.get(launcher.api)(id),
@@ -406,12 +406,12 @@ export const parseFormsToLaunchers =
         },
       };
       parsedLaunchers.edit = parsedLaunchers.edit.set(launcherName, <
-        Entity,
+        T,
         FormState,
         ExtraContext,
-        Context extends EditLauncherContext<Entity, FormState, ExtraContext>,
+        Context extends EditLauncherContext<T, FormState, ExtraContext>,
       >() => ({
-        form: EditFormTemplate<Entity, FormState>()
+        form: EditFormTemplate<T, FormState>()
           .mapContext(
             (parentContext: Context) =>
               ({
@@ -419,9 +419,7 @@ export const parseFormsToLaunchers =
                   parentContext.entity.sync.kind == "loaded"
                     ? parentContext.entity.sync.value
                     : undefined,
-                rawEntity: parentContext.rawEntity,
                 entity: parentContext.entity,
-                rawGlobalConfiguration: parentContext.rawGlobalConfiguration,
                 globalConfiguration: parentContext.globalConfiguration,
                 entityId: parentContext.entityId,
                 commonFormState: parentContext.commonFormState,
@@ -447,14 +445,14 @@ export const parseFormsToLaunchers =
                     apiConverters,
                     injectedPrimitives,
                   )(value),
-                toApiParser: (value: any, formState: any, checkKeys: boolean) =>
+                toApiParser: (value: PredicateValue, formState: any) =>
                   toAPIRawValue(
                     formType,
                     formsConfig.types,
                     builtIns,
                     apiConverters,
                     injectedPrimitives,
-                  )(value, formState, checkKeys),
+                  )(value, formState),
                 actualForm: form
                   .withView(containerFormView)
                   .mapContext((_: any) => ({
@@ -478,7 +476,7 @@ export const parseFormsToLaunchers =
           .mapForeignMutationsFromProps(
             (props) => props.foreignMutations as any,
           ),
-        initialState: EditFormState<Entity, FormState>().Default(
+        initialState: EditFormState<T, FormState>().Default(
           initialState.formFieldStates,
           initialState.commonFormState,
           {
@@ -523,21 +521,19 @@ export const parseFormsToLaunchers =
             : entityApis.create(launcher.api)(parsed.value),
       };
       parsedLaunchers.create = parsedLaunchers.create.set(launcherName, <
-        Entity,
+        T,
         FormState,
         ExtraContext,
-        Context extends CreateLauncherContext<Entity, FormState, ExtraContext>,
+        Context extends CreateLauncherContext<T, FormState, ExtraContext>,
       >() => ({
-        form: CreateFormTemplate<Entity, FormState>()
+        form: CreateFormTemplate<T, FormState>()
           .mapContext((parentContext: Context) => {
             return {
               value:
                 parentContext.entity.sync.kind == "loaded"
                   ? parentContext.entity.sync.value
                   : undefined,
-              rawEntity: parentContext.rawEntity,
               entity: parentContext.entity,
-              rawGlobalConfiguration: parentContext.rawGlobalConfiguration,
               globalConfiguration: parentContext.globalConfiguration,
               entityId: parentContext.entityId,
               commonFormState: parentContext.commonFormState,
@@ -563,14 +559,14 @@ export const parseFormsToLaunchers =
                   apiConverters,
                   injectedPrimitives,
                 )(value),
-              toApiParser: (value: any, formState: any, checkKeys: boolean) =>
+              toApiParser: (value: PredicateValue, formState: any) =>
                 toAPIRawValue(
                   formType,
                   formsConfig.types,
                   builtIns,
                   apiConverters,
                   injectedPrimitives,
-                )(value, formState, checkKeys),
+                )(value, formState),
               actualForm: form
                 .withView(containerFormView)
                 .mapContext((_: any) => {
@@ -596,7 +592,7 @@ export const parseFormsToLaunchers =
           .mapForeignMutationsFromProps(
             (props) => props.foreignMutations as any,
           ),
-        initialState: CreateFormState<any, any>().Default(
+        initialState: CreateFormState<T, FormState>().Default(
           initialState.formFieldStates,
           initialState.commonFormState,
           {
@@ -632,20 +628,19 @@ export const parseFormsToLaunchers =
       parsedLaunchers.passthrough = parsedLaunchers.passthrough.set(
         launcherName,
         <
-          Entity,
+          T,
           FormState,
           ExtraContext,
           Context extends PassthroughLauncherContext<
-            Entity,
+            T,
             FormState,
             ExtraContext
           >,
         >() => ({
-          form: PassthroughFormTemplate<Entity, FormState>()
+          form: PassthroughFormTemplate<T, FormState>()
             .mapContext(
               (parentContext: Context) =>
                 ({
-                  initialRawEntity: parentContext.initialRawEntity,
                   entity: parentContext.entity,
                   globalConfiguration: parentContext.globalConfiguration,
                   commonFormState: parentContext.commonFormState,
@@ -656,7 +651,7 @@ export const parseFormsToLaunchers =
                   disabledPredicatedExpressions,
                   types: formsConfig.types,
                   formType: formType,
-                  onRawEntityChange: parentContext.onRawEntityChange,
+                  onEntityChange: parentContext.onEntityChange,
                   parseGlobalConfiguration: (raw: any) =>
                     PredicateValue.Operations.parse(
                       raw,
@@ -671,18 +666,14 @@ export const parseFormsToLaunchers =
                       apiConverters,
                       injectedPrimitives,
                     )(value),
-                  toApiParser: (
-                    value: any,
-                    formState: any,
-                    checkKeys: boolean,
-                  ) =>
+                  toApiParser: (value: any, formState: any) =>
                     toAPIRawValue(
                       formType,
                       formsConfig.types,
                       builtIns,
                       apiConverters,
                       injectedPrimitives,
-                    )(value, formState, checkKeys),
+                    )(value, formState),
                   actualForm: form
                     .withView(containerFormView)
                     .mapContext((_: any) => ({
@@ -707,11 +698,11 @@ export const parseFormsToLaunchers =
             .mapForeignMutationsFromProps(
               (props) => props.foreignMutations as any,
             ),
-          initialState: PassthroughFormState<Entity, FormState>().Default(
+          initialState: PassthroughFormState<T, FormState>().Default(
             initialState.formFieldStates,
             initialState.commonFormState,
           ),
-          fromApiParser: (value: any): Entity =>
+          fromApiParser: (value: any): ValueOrErrors<PredicateValue, string> =>
             fromAPIRawValue(
               formType,
               formsConfig.types,
@@ -719,14 +710,14 @@ export const parseFormsToLaunchers =
               apiConverters,
               injectedPrimitives,
             )(value),
-          toApiParser: (value: any, formState: any, checkKeys: boolean) =>
+          toApiParser: (value: PredicateValue, formState: any) =>
             toAPIRawValue(
               formType,
               formsConfig.types,
               builtIns,
               apiConverters,
               injectedPrimitives,
-            )(value, formState, checkKeys),
+            )(value, formState),
           parseGlobalConfiguration: (raw: any) =>
             PredicateValue.Operations.parse(
               raw,

@@ -59,6 +59,11 @@ export type RawUnionType = {
   args?: Array<RawUnionCase>;
 };
 
+export type RawOptionType = {
+  fun?: "Option";
+  args?: Array<RawFieldType<any>>;
+};
+
 export type RawFormType = { fields?: object };
 
 export type RawFieldType<T> =
@@ -67,7 +72,9 @@ export type RawFieldType<T> =
   | PrimitiveTypeName<T>
   | RawUnionType
   | RawFormType
-  | RawUnionCase;
+  | RawUnionCase
+  | RawOptionType;
+
 export const RawFieldType = {
   isMaybePrimitive: (_: any) => isString(_),
   isPrimitive: <T>(
@@ -121,6 +128,15 @@ export const RawFieldType = {
     ),
   isForm: <T>(_: RawFieldType<T>): _ is { fields: Object } =>
     typeof _ == "object" && "fields" in _ && isObject(_.fields),
+  isOption: <T>(
+    _: RawFieldType<T>,
+  ): _ is { fun: "Option"; args: Array<RawFieldType<T>> } =>
+    typeof _ == "object" &&
+    "fun" in _ &&
+    _.fun == "Option" &&
+    "args" in _ &&
+    Array.isArray(_.args) &&
+    _.args.length == 1,
 };
 
 export type PrimitiveTypeName<T> =
@@ -141,6 +157,7 @@ export type ParsedUnionCase<T> = {
 };
 export type ParsedType<T> =
   | ParsedUnionCase<T>
+  | { kind: "option"; value: ParsedType<T> }
   | { kind: "form"; value: TypeName; fields: FormFields<T> }
   | { kind: "lookup"; name: TypeName }
   | { kind: "primitive"; value: PrimitiveTypeName<T> }
@@ -153,6 +170,10 @@ export const ParsedType = {
       name: CaseName,
       fields: ParsedType<T> | Unit,
     ): ParsedUnionCase<T> => ({ kind: "unionCase", name, fields }),
+    option: <T>(value: ParsedType<T>): ParsedType<T> => ({
+      kind: "option",
+      value,
+    }),
     form: <T>(value: TypeName, fields: FormFields<T>): ParsedType<T> => ({
       kind: "form",
       value,
@@ -173,7 +194,6 @@ export const ParsedType = {
     lookup: <T>(name: string): ParsedType<T> => ({ kind: "lookup", name }),
   },
   Operations: {
-    //TODO: Add cases
     Equals: <T>(fst: ParsedType<T>, snd: ParsedType<T>): boolean =>
       fst.kind == "form" && snd.kind == "form"
         ? fst.value == snd.value
@@ -185,7 +205,18 @@ export const ParsedType = {
               ? fst.value == snd.value &&
                 fst.args.length == snd.args.length &&
                 fst.args.every((v, i) => v == snd.args[i])
-              : false,
+              : fst.kind == "option" && snd.kind == "option"
+                ? fst.value.kind == "option" &&
+                  snd.value.kind == "option" &&
+                  ParsedType.Operations.Equals(fst.value.value, snd.value.value)
+                : fst.kind == "union" && snd.kind == "union"
+                  ? fst.args.size == snd.args.size &&
+                    fst.args.every((v, i) =>
+                      ParsedType.Operations.Equals(v, snd.args.get(i)!),
+                    )
+                  : fst.kind == "unionCase" && snd.kind == "unionCase"
+                    ? fst.name == snd.name
+                    : false,
 
     ParseRawFieldType: <T>(
       fieldName: TypeName,
@@ -231,6 +262,15 @@ export const ParsedType = {
           ValueOrErrors.Default.return(
             ParsedType.Default.application("List", [parsedArgs]),
           ),
+        );
+      if (RawFieldType.isOption(rawFieldType))
+        return ParsedType.Operations.ParseRawFieldType(
+          fieldName,
+          rawFieldType.args[0],
+          types,
+          injectedPrimitives,
+        ).Then((parsedArg) =>
+          ValueOrErrors.Default.return(ParsedType.Default.option(parsedArg)),
         );
       if (RawFieldType.isMap(rawFieldType))
         return ParsedType.Operations.ParseRawFieldType(
@@ -299,7 +339,9 @@ export const ParsedType = {
             rawFieldType.args.map((unionCase) => {
               if (!RawFieldType.isUnionCase(unionCase)) {
                 return ValueOrErrors.Default.throwOne(
-                  `Error: arg ${JSON.stringify(unionCase)} is not a valid union case`,
+                  `Error: arg ${JSON.stringify(
+                    unionCase,
+                  )} is not a valid union case`,
                 );
               }
               return ValueOrErrors.Default.return(
@@ -322,7 +364,9 @@ export const ParsedType = {
 
       return ValueOrErrors.Default.throw(
         List([
-          `Invalid type ${JSON.stringify(rawFieldType)} for field ${JSON.stringify(fieldName)}`,
+          `Invalid type ${JSON.stringify(
+            rawFieldType,
+          )} for field ${JSON.stringify(fieldName)}`,
         ]),
       );
     },

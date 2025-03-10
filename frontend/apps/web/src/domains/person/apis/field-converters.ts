@@ -4,11 +4,8 @@ import { PersonFormInjectedTypes } from "src/domains/person-from-config/injected
 
 export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
   injectedCategory: {
-    fromAPIRawValue: (_) => ({
-      category: _ ?? "adult",
-      kind: "category" as const,
-    }),
-    toAPIRawValue: ([_, __]) => _.category,
+    fromAPIRawValue: (_) => _ ?? "adult",
+    toAPIRawValue: ([_, __]) => _,
   },
   string: {
     fromAPIRawValue: (_) => (typeof _ == "string" ? _ : ""),
@@ -20,10 +17,6 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
   },
   boolean: {
     fromAPIRawValue: (_) => (typeof _ == "boolean" ? _ : false),
-    toAPIRawValue: ([_, __]) => _,
-  },
-  maybeBoolean: {
-    fromAPIRawValue: (_) => (typeof _ == "boolean" ? _ : undefined),
     toAPIRawValue: ([_, __]) => _,
   },
   base64File: {
@@ -72,6 +65,12 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
       _ == undefined
         ? List()
         : List(_.map((_: { key: any; value: any }) => [_.key, _.value])),
-    toAPIRawValue: ([_, __]) => _.valueSeq().toArray(),
+    toAPIRawValue: ([_, __]) =>
+      _.valueSeq()
+        .toArray()
+        .map((_: any) => ({
+          key: _[0],
+          value: _[1],
+        })),
   },
 };

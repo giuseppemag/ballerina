@@ -320,7 +320,7 @@ export const Expr = {
                 () =>
                   `Error: cannot find variable ${JSON.stringify(e.varName)}`,
               )
-              : e.kind == "fieldLookup"
+            : e.kind == "fieldLookup"
               ? Expr.Operations.Evaluate(vars)(e.operands[0]).Then(
                   (record: Value) =>
                     Expr.Operations.EvaluateAsRecord(vars)(record).Then(
@@ -333,21 +333,27 @@ export const Expr = {
                         ),
                     ),
                 )
-            : e.kind == "itemLookup"
-              ? Expr.Operations.Evaluate(vars)(e.operands[0]).Then(
-                  (tuple: Value) =>
-                    Expr.Operations.EvaluateAsTuple(vars)(tuple).Then(
-                      (tuple: ValueTuple) =>
-                        e.operands[1] >= 1 && e.operands[1] <= tuple.values.length ?
-                          ValueOrErrors.Default.return(tuple.values[e.operands[1]-1])
-                        : ValueOrErrors.Default.throwOne(`Error: cannot find field ${e.operands[1]} in tuple ${JSON.stringify(tuple)}`)
-                        )
-                    )
-              : e.kind == "match-case"
+              : e.kind == "itemLookup"
                 ? Expr.Operations.Evaluate(vars)(e.operands[0]).Then(
-                    (unionCase: Value) =>
-                      Expr.Operations.EvaluateAsUnionCase(vars)(unionCase).Then(
-                        (unionCase: ValueUnionCase) => {
+                    (tuple: Value) =>
+                      Expr.Operations.EvaluateAsTuple(vars)(tuple).Then(
+                        (tuple: ValueTuple) =>
+                          e.operands[1] >= 1 &&
+                          e.operands[1] <= tuple.values.length
+                            ? ValueOrErrors.Default.return(
+                                tuple.values[e.operands[1] - 1],
+                              )
+                            : ValueOrErrors.Default.throwOne(
+                                `Error: cannot find field ${e.operands[1]} in tuple ${JSON.stringify(tuple)}`,
+                              ),
+                      ),
+                  )
+                : e.kind == "match-case"
+                  ? Expr.Operations.Evaluate(vars)(e.operands[0]).Then(
+                      (unionCase: Value) =>
+                        Expr.Operations.EvaluateAsUnionCase(vars)(
+                          unionCase,
+                        ).Then((unionCase: ValueUnionCase) => {
                           const caseHandler = e.operands[1].get(
                             unionCase.caseName,
                           );
@@ -358,34 +364,35 @@ export const Expr = {
                           return Expr.Operations.Evaluate(
                             vars.set(caseHandler.parameter, unionCase.value),
                           )(caseHandler.body);
-                        },
-                      ),
-                  )
-                : e.kind == "isCase"
-                  ? Expr.Operations.Evaluate(vars)(e.operands[0]).Then(
-                      (unionCase: Value) =>
-                        Expr.Operations.EvaluateAsUnionCase(vars)(
-                          unionCase,
-                        ).Then((unionCase: ValueUnionCase) =>
-                          ValueOrErrors.Default.return(
-                            unionCase.caseName == e.operands[1],
-                          ),
-                        ),
+                        }),
                     )
-                  : e.kind == "equals"
-                    ? Expr.Operations.Evaluate(vars)(e.operands[0]).Then((v1) =>
-                        Expr.Operations.Evaluate(vars)(e.operands[1]).Then(
-                          (v2) =>
-                            Value.Operations.Equals(vars)(v1, v2).Then((eq) =>
-                              ValueOrErrors.Default.return(eq),
+                  : e.kind == "isCase"
+                    ? Expr.Operations.Evaluate(vars)(e.operands[0]).Then(
+                        (unionCase: Value) =>
+                          Expr.Operations.EvaluateAsUnionCase(vars)(
+                            unionCase,
+                          ).Then((unionCase: ValueUnionCase) =>
+                            ValueOrErrors.Default.return(
+                              unionCase.caseName == e.operands[1],
                             ),
-                        ),
+                          ),
                       )
-                    : e.kind == "or"
+                    : e.kind == "equals"
                       ? Expr.Operations.Evaluate(vars)(e.operands[0]).Then(
                           (v1) =>
                             Expr.Operations.Evaluate(vars)(e.operands[1]).Then(
                               (v2) =>
+                                Value.Operations.Equals(vars)(v1, v2).Then(
+                                  (eq) => ValueOrErrors.Default.return(eq),
+                                ),
+                            ),
+                        )
+                      : e.kind == "or"
+                        ? Expr.Operations.Evaluate(vars)(e.operands[0]).Then(
+                            (v1) =>
+                              Expr.Operations.Evaluate(vars)(
+                                e.operands[1],
+                              ).Then((v2) =>
                                 Expr.Operations.EvaluateAsBoolean(vars)(
                                   v1,
                                 ).Then((v1) =>
@@ -395,11 +402,11 @@ export const Expr = {
                                     ValueOrErrors.Default.return(v1 || v2),
                                   ),
                                 ),
-                            ),
-                        )
-                      : ValueOrErrors.Default.throwOne(
-                          `Error: unsupported expression ${JSON.stringify(e)}`,
-                        ),
+                              ),
+                          )
+                        : ValueOrErrors.Default.throwOne(
+                            `Error: unsupported expression ${JSON.stringify(e)}`,
+                          ),
   },
 };
 
