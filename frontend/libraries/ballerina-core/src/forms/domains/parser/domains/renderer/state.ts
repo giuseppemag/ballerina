@@ -72,11 +72,6 @@ export type ParsedRenderer<T> = (
       keyRenderer: ParsedRenderer<T>;
       valueRenderer: ParsedRenderer<T>;
     }
-  | {
-      kind: "sum";
-      leftRenderer: ParsedRenderer<T>;
-      rightRenderer: ParsedRenderer<T>;
-    }
 ) & {
   renderer: string;
   type: ParsedType<T>;
