@@ -585,7 +585,7 @@ export const ParsedRenderer = {
                   ValueOrErrors.Default.return(
                     {
                       form: {
-                        renderer: SumForm<any, any, any, any, any & FormLabel, Unit>(
+                        renderer: SumForm<any, any, any & FormLabel, Unit>(
                           { Default: () => parsedLeftRenderer.form.initialState },
                           { Default: () => parsedRightRenderer.form.initialState },
                           { Default: () => parsedLeftRenderer.form.initialValue },
@@ -595,7 +595,7 @@ export const ParsedRenderer = {
                       ).withView(((parsingContext.formViews)[viewKind])[parsedRenderer.renderer]() as any)
                         .mapContext<any>(_ => ({ ..._, label: parsedRenderer.label, tooltip: parsedRenderer.tooltip, details: parsedRenderer.details })),
                         initialValue: parsingContext.defaultValue(parsedRenderer.type),
-                        initialState: SumFieldState<any, any, any, any>().Default(Sum.Default.right(parsedRightRenderer.form.initialState))
+                        initialState: SumFieldState<any, any>().Default({ left: parsedLeftRenderer.form.initialState, right: parsedRightRenderer.form.initialState })
                       },
                     visibilityPredicateExpression: FieldPredicateExpression.Default.sum(visibilityExpr, parsedLeftRenderer.visibilityPredicateExpression, parsedRightRenderer.visibilityPredicateExpression),
                     disabledPredicatedExpression: FieldPredicateExpression.Default.sum(disabledExpr, parsedLeftRenderer.disabledPredicatedExpression, parsedRightRenderer.disabledPredicatedExpression),

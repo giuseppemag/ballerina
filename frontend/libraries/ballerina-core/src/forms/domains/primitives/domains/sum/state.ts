@@ -7,63 +7,62 @@ import {
   Sum,
   Template,
   Value,
+  ValueSum,
   View,
 } from "../../../../../../main";
 import { CommonFormState } from "../../../singleton/state";
 
-export type SumFieldState<L, R, LeftFormState, RightFormState> = {
+export type SumFieldState<LeftFormState, RightFormState> = {
   commonFormState: CommonFormState;
 } & {
-  sumFormState: Sum<LeftFormState, RightFormState>;
+  customFormState: {
+    left: LeftFormState,
+    right: RightFormState
+  };
 };
 
-export const SumFieldState = <L, R, LeftFormState, RightFormState>() => ({
+export const SumFieldState = <LeftFormState, RightFormState>() => ({
   Default: (
-    sumFormState: SumFieldState<
-      L,
-      R,
+    customFormState: SumFieldState<
       LeftFormState,
       RightFormState
-    >["sumFormState"]
-  ): SumFieldState<L, R, LeftFormState, RightFormState> => ({
+    >["customFormState"]
+  ): SumFieldState<LeftFormState, RightFormState> => ({
     commonFormState: CommonFormState.Default(),
-    sumFormState,
+    customFormState,
   }),
   Updaters: {
     Core: {
-      ...simpleUpdater<SumFieldState<L, R, LeftFormState, RightFormState>>()(
-        "sumFormState"
+      ...simpleUpdater<SumFieldState<LeftFormState, RightFormState>>()(
+        "customFormState"
       ),
     },
     Template: {},
   },
 });
 export type SumFieldView<
-  L,
-  R,
   LeftFormState,
   RightFormState,
   Context extends FormLabel,
   ForeignMutationsExpected
 > = View<
   Context &
-    Value<Sum<L, R>> &
-    SumFieldState<L, R, LeftFormState, RightFormState>,
-  SumFieldState<L, R, LeftFormState, RightFormState>,
+    Value<ValueSum> &
+    SumFieldState<LeftFormState, RightFormState>,
+  SumFieldState<LeftFormState, RightFormState>,
   ForeignMutationsExpected & {
-    onChange: OnChange<Sum<L, R>>;
-    switch: SimpleCallback<Sum<L, R>>;
+    onChange: OnChange<ValueSum>;
   },
   {
     embeddedLeftTemplate: BasicFun<
       void,
       Template<
         Context &
-          Value<Sum<L, R>> &
-          SumFieldState<L, R, LeftFormState, RightFormState>,
-        SumFieldState<L, R, LeftFormState, RightFormState>,
+          Value<ValueSum> &
+          SumFieldState<LeftFormState, RightFormState>,
+        SumFieldState<LeftFormState, RightFormState>,
         ForeignMutationsExpected & {
-          onChange: OnChange<Sum<L, R>>;
+          onChange: OnChange<ValueSum>;
         }
       >
     >;
@@ -71,11 +70,11 @@ export type SumFieldView<
       void,
       Template<
         Context &
-          Value<Sum<L, R>> &
-          SumFieldState<L, R, LeftFormState, RightFormState>,
-        SumFieldState<L, R, LeftFormState, RightFormState>,
+          Value<ValueSum> &
+          SumFieldState<LeftFormState, RightFormState>,
+        SumFieldState<LeftFormState, RightFormState>,
         ForeignMutationsExpected & {
-          onChange: OnChange<Sum<L, R>>;
+          onChange: OnChange<ValueSum>;
         }
       >
     >;

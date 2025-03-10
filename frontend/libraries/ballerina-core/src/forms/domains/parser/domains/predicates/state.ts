@@ -7,6 +7,7 @@ import {
   Updater,
   simpleUpdater,
   replaceWith,
+  Sum,
 } from "../../../../../../main";
 
 export type FieldPredicateExpression =
@@ -104,8 +105,7 @@ export type FormFieldPredicateEvaluation =
   | {
     kind: 'sum';
     value: boolean;
-    leftValue: FormFieldPredicateEvaluation;
-    rightValue: FormFieldPredicateEvaluation;
+    innerValue: FormFieldPredicateEvaluation;
   }
 
 export const FormFieldPredicateEvaluation = {
@@ -131,9 +131,8 @@ export const FormFieldPredicateEvaluation = {
     ): FormFieldPredicateEvaluation => ({ kind: "map", value, elementValues }),
     sum: (
       value: boolean,
-      leftValue: FormFieldPredicateEvaluation,
-      rightValue: FormFieldPredicateEvaluation
-    ): FormFieldPredicateEvaluation => ({ kind: "sum", value, leftValue, rightValue }),
+      innerValue: FormFieldPredicateEvaluation
+    ): FormFieldPredicateEvaluation => ({ kind: "sum", value, innerValue }),
   },
 };
 
@@ -194,6 +193,7 @@ export type ValueOption = {
   value: PredicateValue;
 };
 export type ValueVarLookup = { kind: "varLookup"; varName: string };
+export type ValueSum = { kind: 'sum', value: Sum<PredicateValue, PredicateValue>}
 
 export type PredicateValue =
   | ValuePrimitive
@@ -202,7 +202,8 @@ export type PredicateValue =
   | ValueRecord
   | ValueUnionCase
   | ValueOption
-  | ValueVarLookup;
+  | ValueVarLookup
+  | ValueSum;
 
 export type ExprLambda = { kind: "lambda"; parameter: string; body: Expr };
 export type ExprMatchCase = { kind: "matchCase"; operands: Expr[] };
@@ -262,6 +263,10 @@ export const PredicateValue = {
       kind: "varLookup",
       varName,
     }),
+    sum: (value: Sum<PredicateValue, PredicateValue>): ValueSum => ({
+      kind: 'sum',
+      value
+    })
   },
   Operations: {
     IsPrimitive: (
@@ -324,6 +329,13 @@ export const PredicateValue = {
         typeof value == "object" &&
         !PredicateValue.Operations.IsDate(value) &&
         value.kind == "option"
+      );
+    },
+    IsSum: (value: PredicateValue | Expr): value is ValueSum => {
+      return (
+        typeof value == "object" &&
+        !PredicateValue.Operations.IsDate(value) &&
+        value.kind == "sum"
       );
     },
     IsVarLookup: (value: PredicateValue | Expr): value is ValueVarLookup => {
@@ -548,11 +560,11 @@ export const PredicateValue = {
         return ValueOrErrors.Operations.All(List<ValueOrErrors<PredicateValue, string>>(
           json.map((keyValue: any) => PredicateValue.Operations.parse(keyValue.key, type.args[0], types).Then(key =>
             PredicateValue.Operations.parse(keyValue.value, type?.args[1], types).Then(value =>
-             ValueOrErrors.Default.return(PredicateValue.Default.tuple([key, value]))
+             ValueOrErrors.Default.return(PredicateValue.Default.tuple(List([key, value])))
             ))
           )
         )).Then(values =>
-          ValueOrErrors.Default.return(PredicateValue.Default.tuple(values.toArray())))
+          ValueOrErrors.Default.return(PredicateValue.Default.tuple(values)))
       }
       if (type.kind == "application" && type.value == "SingleSelection") {
         ValueOrErrors.Default.return(
@@ -1162,37 +1174,23 @@ export const evaluatePredicates = <T>(
       });
     }
     if(predicate.kind == "sum") {
-      // TODO
-      // return calculateVisibility(predicate.value, bindings).Then(result => {
-      //   if(typeof raw == "object" && "kind" in raw && raw.kind == "tuple"){
-      //     return ValueOrErrors.Operations.All(List<ValueOrErrors<{key: FormFieldPredicateEvaluation, value: FormFieldPredicateEvaluation}, string>>(
-      //       raw.values.map((kv, kvIndex) => {
-      //         if(typeof raw.values[kvIndex] == "object" && "kind" in raw.values[kvIndex] && raw.values[kvIndex].kind == "tuple"){
-      //           const keyLocal = raw.values[kvIndex].values[0];
-      //           const valueLocal = raw.values[kvIndex].values[1];
-      //           // TODO: Since we can have undefined values (date), this error check doesn't work, 
-      //           // we should instead use Option for all undefined values
-      //           // if(keyLocal == undefined || valueLocal == undefined) {
-      //           //   console.error(raw.values[kvIndex])
-      //           //   return ValueOrErrors.Default.throwOne(`Error: cannot find key or value of ${kvIndex} in local ${JSON.stringify(raw)}`)
-      //           // }
-      //           const keyBindings = bindings.set("local", keyLocal);
-      //           const valueBindings = bindings.set("local", valueLocal);
-      //           return traverse(keyBindings, predicate.keyExpression, keyLocal).Then(keyResult => {
-      //             return traverse(valueBindings, predicate.valueExpression, valueLocal).Then(valueResult => {
-      //               return ValueOrErrors.Default.return({key: keyResult, value: valueResult})
-      //             })
-      //           })
-      //         }
-      //         return ValueOrErrors.Default.throwOne(`Error: expected tuple of key and value, got ${JSON.stringify(kv)}`)
-      //       })
-      //     )).Then(keyValues => {
-      //       return ValueOrErrors.Default.return({kind: "map", value: result, elementValues: keyValues.toArray()})
-      //     })
-
-      //   }
-      //   return ValueOrErrors.Default.throwOne(`Error: expected tuple of key value pairs, got ${JSON.stringify(raw)}`)
-      // })
+      return calculateVisibility(predicate.value, bindings).Then(result => {
+        if(PredicateValue.Operations.IsSum(raw)){
+          const local = raw.value.value;
+          const innerBindings = bindings.set("local", local);
+          return traverse(innerBindings, raw.value.kind === 'l' ? predicate.leftExpression : predicate.rightExpression, local).Then(innerRes => {
+            return ValueOrErrors.Default.return(
+              FormFieldPredicateEvaluation.Default.sum(result, innerRes)
+            )
+          }
+          )
+        }
+          
+          return ValueOrErrors.Default.throwOne(
+            `Error: parsing expected tuple of key value pairs, got ${JSON.stringify(raw)}`,
+          );
+        }
+      )
     }
     return ValueOrErrors.Default.throwOne(
       `Error: parsing unsupported predicate kind ${JSON.stringify(raw)}`,

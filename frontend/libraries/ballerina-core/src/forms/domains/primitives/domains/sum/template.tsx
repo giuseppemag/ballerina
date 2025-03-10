@@ -3,11 +3,13 @@ import {
   BasicFun,
   BasicUpdater,
   FormFieldPredicateEvaluation,
+  PredicateValue,
   replaceWith,
   Sum,
   Updater,
   ValidateRunner,
   Value,
+  ValueSum,
 } from "../../../../../../main";
 import { Template } from "../../../../../template/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
@@ -21,8 +23,6 @@ import { SumFieldState, SumFieldView } from "./state";
 export type StateWithDefault<S> = { Default: () => S };
 
 export const SumForm = <
-  L,
-  R,
   LeftFormState,
   RightFormState,
   Context extends FormLabel & {
@@ -39,44 +39,40 @@ export const SumForm = <
 >(
   LeftFormState: StateWithDefault<LeftFormState>,
   RightFormState: StateWithDefault<RightFormState>,
-  Left: StateWithDefault<L>,
-  Right: StateWithDefault<R>,
+  Left: StateWithDefault<PredicateValue>,
+  Right: StateWithDefault<PredicateValue>,
   leftTemplate: Template<
-    Context & Value<L> & LeftFormState,
+    Context & Value<PredicateValue> & LeftFormState,
     LeftFormState,
     ForeignMutationsExpected & {
-      onChange: OnChange<L>;
+      onChange: OnChange<PredicateValue>;
     }
   >,
   rightTemplate: Template<
-    Context & Value<R> & RightFormState,
+    Context & Value<PredicateValue> & RightFormState,
     RightFormState,
     ForeignMutationsExpected & {
-      onChange: OnChange<R>;
+      onChange: OnChange<PredicateValue>;
     }
   >,
-  validation?: BasicFun<Sum<L, R>, Promise<FieldValidation>>
+  validation?: BasicFun<ValueSum, Promise<FieldValidation>>
 ) => {
   const embeddedLeftTemplate = () =>
     leftTemplate
       .mapForeignMutationsFromProps<
         ForeignMutationsExpected & {
-          onChange: OnChange<Sum<L, R>>;
+          onChange: OnChange<ValueSum>;
         }
       >(
         (
           props
         ): ForeignMutationsExpected & {
-          onChange: OnChange<L>;
+          onChange: OnChange<PredicateValue>;
         } => ({
           ...props.foreignMutations,
           onChange: (elementUpdater, path) => {
             props.foreignMutations.onChange(
-              Updater((sum: Sum<L, R>) =>
-                sum === undefined
-                  ? sum
-                  : Sum.Updaters.left<L, R>(elementUpdater)(sum)
-              ),
+              (_) => ({ ..._, left: elementUpdater(_.value.value) }),
               path
             );
             props.setState((_) => ({ ..._, modifiedByUser: true }));
@@ -86,14 +82,15 @@ export const SumForm = <
       .mapContext(
         (
           _: Context &
-            Value<Sum<L, R>> &
-            SumFieldState<L, R, LeftFormState, RightFormState>
-        ): (Context & Value<L> & LeftFormState) | undefined => {
-          if (_.value.kind !== "l" || _.sumFormState.kind !== "l") {
+            Value<ValueSum> &
+            SumFieldState<LeftFormState, RightFormState>
+        ): (Context & Value<PredicateValue> & LeftFormState) | undefined => {
+          if (_.value.value.kind !== "l") {
             return undefined;
           }
-          const leftFormState = _.sumFormState.value || LeftFormState.Default();
-          const leftContext: Context & Value<L> & LeftFormState = {
+          const leftFormState =
+            _.customFormState.left || LeftFormState.Default();
+          const leftContext: Context & Value<PredicateValue> & LeftFormState = {
             ..._,
             ...leftFormState,
             value: _.value.value,
@@ -105,35 +102,32 @@ export const SumForm = <
       )
       .mapState(
         (
-          _: BasicUpdater<LeftFormState>
-        ): Updater<SumFieldState<L, R, LeftFormState, RightFormState>> =>
+          upd: BasicUpdater<LeftFormState>
+        ): Updater<SumFieldState<LeftFormState, RightFormState>> =>
           SumFieldState<
-            L,
-            R,
             LeftFormState,
             RightFormState
-          >().Updaters.Core.sumFormState(Sum.Updaters.left(_))
+          >().Updaters.Core.customFormState((_) => ({
+            ..._,
+            left: upd(_.left),
+          }))
       );
   const embeddedRightTemplate = () =>
     rightTemplate
       .mapForeignMutationsFromProps<
         ForeignMutationsExpected & {
-          onChange: OnChange<Sum<L, R>>;
+          onChange: OnChange<ValueSum>;
         }
       >(
         (
           props
         ): ForeignMutationsExpected & {
-          onChange: OnChange<R>;
+          onChange: OnChange<PredicateValue>;
         } => ({
           ...props.foreignMutations,
           onChange: (elementUpdater, path) => {
             props.foreignMutations.onChange(
-              Updater((sum: Sum<L, R>) =>
-                sum === undefined
-                  ? sum
-                  : Sum.Updaters.right<L, R>(elementUpdater)(sum)
-              ),
+              (_) => ({ ..._, right: elementUpdater(_.value.value) }),
               path
             );
             props.setState((_) => ({ ..._, modifiedByUser: true }));
@@ -143,42 +137,42 @@ export const SumForm = <
       .mapContext(
         (
           _: Context &
-            Value<Sum<L, R>> &
-            SumFieldState<L, R, LeftFormState, RightFormState>
-        ): (Context & Value<R> & RightFormState) | undefined => {
-          if (_.value.kind !== "r" || _.sumFormState.kind !== "r") {
+            Value<ValueSum> &
+            SumFieldState<LeftFormState, RightFormState>
+        ): (Context & Value<PredicateValue> & RightFormState) | undefined => {
+          if (_.value.value.kind !== "r") {
             return undefined;
           }
           const rightFormState =
-            _.sumFormState.value || RightFormState.Default();
-          const rightContext: Context & Value<R> & RightFormState = {
-            ..._,
-            ...rightFormState,
-            value: _.value.value,
-            visibilities: _.elementVisibilities.right,
-            disabledFields: _.elementDisabled.right,
-          };
+            _.customFormState.right || RightFormState.Default();
+          const rightContext: Context & Value<PredicateValue> & RightFormState =
+            {
+              ..._,
+              ...rightFormState,
+              value: _.value.value,
+              visibilities: _.elementVisibilities.right,
+              disabledFields: _.elementDisabled.right,
+            };
           return rightContext;
         }
       )
       .mapState(
         (
-          _: BasicUpdater<RightFormState>
-        ): Updater<SumFieldState<L, R, LeftFormState, RightFormState>> =>
+          upd: BasicUpdater<RightFormState>
+        ): Updater<SumFieldState<LeftFormState, RightFormState>> =>
           SumFieldState<
-            L,
-            R,
             LeftFormState,
             RightFormState
-          >().Updaters.Core.sumFormState(Sum.Updaters.right(_))
+          >().Updaters.Core.customFormState((_) => ({
+            ..._,
+            right: upd(_.right),
+          }))
       );
   return Template.Default<
-    Context & Value<Sum<L, R>> & { disabled: boolean },
-    SumFieldState<L, R, LeftFormState, RightFormState>,
-    ForeignMutationsExpected & { onChange: OnChange<Sum<L, R>> },
+    Context & Value<ValueSum> & { disabled: boolean },
+    SumFieldState<LeftFormState, RightFormState>,
+    ForeignMutationsExpected & { onChange: OnChange<ValueSum> },
     SumFieldView<
-      L,
-      R,
       LeftFormState,
       RightFormState,
       Context,
@@ -191,16 +185,6 @@ export const SumForm = <
         context={{ ...props.context }}
         foreignMutations={{
           ...props.foreignMutations,
-          switch: (_) => {
-            props.foreignMutations.onChange(
-              replaceWith(
-                _.kind === "l"
-                  ? Sum.Default.left(_.value)
-                  : Sum.Default.right(_.value)
-              ),
-              List()
-            );
-          },
         }}
         embeddedLeftTemplate={embeddedLeftTemplate}
         embeddedRightTemplate={embeddedRightTemplate}
@@ -209,9 +193,9 @@ export const SumForm = <
   )).any([
     ValidateRunner<
       Context & { disabled: boolean },
-      SumFieldState<L, R, LeftFormState, RightFormState>,
+      SumFieldState<LeftFormState, RightFormState>,
       ForeignMutationsExpected,
-      Sum<L, R>
+      ValueSum
     >(
       validation
         ? (_) =>
