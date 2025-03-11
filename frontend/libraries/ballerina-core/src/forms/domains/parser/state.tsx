@@ -432,11 +432,13 @@ export const parseFormsToLaunchers =
                 formType: formType,
                 api: api,
                 parseGlobalConfiguration: (raw: any) =>
-                  PredicateValue.Operations.parse(
-                    raw,
+                  fromAPIRawValue(
                     globalConfigurationType,
                     formsConfig.types,
-                  ),
+                    builtIns,
+                    apiConverters,
+                    injectedPrimitives,
+                  )(raw),
                 fromApiParser: (value: any) =>
                   fromAPIRawValue(
                     formType,
@@ -546,11 +548,13 @@ export const parseFormsToLaunchers =
               formType: formType,
               api: api,
               parseGlobalConfiguration: (raw: any) =>
-                PredicateValue.Operations.parse(
-                  raw,
+                fromAPIRawValue(
                   globalConfigurationType,
                   formsConfig.types,
-                ),
+                  builtIns,
+                  apiConverters,
+                  injectedPrimitives,
+                )(raw),
               fromApiParser: (value: any) =>
                 fromAPIRawValue(
                   formType,
@@ -653,11 +657,13 @@ export const parseFormsToLaunchers =
                   formType: formType,
                   onEntityChange: parentContext.onEntityChange,
                   parseGlobalConfiguration: (raw: any) =>
-                    PredicateValue.Operations.parse(
-                      raw,
+                    fromAPIRawValue(
                       globalConfigurationType,
                       formsConfig.types,
-                    ),
+                      builtIns,
+                      apiConverters,
+                      injectedPrimitives,
+                    )(raw),
                   fromApiParser: (value: any) =>
                     fromAPIRawValue(
                       formType,

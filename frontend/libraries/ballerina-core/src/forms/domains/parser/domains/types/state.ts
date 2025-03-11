@@ -153,7 +153,7 @@ export type FormFields<T> = Map<FieldName, ParsedType<T>>;
 export type ParsedUnionCase<T> = {
   kind: "unionCase";
   name: CaseName;
-  fields: ParsedType<T> | Unit;
+  fields: ParsedType<T>;
 };
 export type ParsedType<T> =
   | ParsedUnionCase<T>
@@ -168,7 +168,7 @@ export const ParsedType = {
   Default: {
     unionCase: <T>(
       name: CaseName,
-      fields: ParsedType<T> | Unit,
+      fields: ParsedType<T>,
     ): ParsedUnionCase<T> => ({ kind: "unionCase", name, fields }),
     option: <T>(value: ParsedType<T>): ParsedType<T> => ({
       kind: "option",
@@ -329,7 +329,7 @@ export const ParsedType = {
           injectedPrimitives,
         ).Then((parsedFields) =>
           ValueOrErrors.Default.return(
-            ParsedType.Default.unionCase(rawFieldType.case, unit),
+            ParsedType.Default.unionCase(rawFieldType.case, parsedFields),
           ),
         );
       }
@@ -344,8 +344,15 @@ export const ParsedType = {
                   )} is not a valid union case`,
                 );
               }
-              return ValueOrErrors.Default.return(
-                ParsedType.Default.unionCase(unionCase.case, unit),
+              return ParsedType.Operations.ParseRawFieldType(
+                unionCase.case,
+                unionCase,
+                types,
+                injectedPrimitives,
+              ).Then((parsedFields) =>
+                ValueOrErrors.Default.return(
+                  ParsedType.Default.unionCase(unionCase.case, parsedFields),
+                ),
               );
             }),
           ),

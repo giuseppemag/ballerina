@@ -348,41 +348,41 @@ export const ParsedRenderer = {
         case "enum":
         case "stream":
           return Expr.Operations.parse(parsedRenderer.visible ?? true).Then(
-            (visibilityExpr) =>
-              Expr.Operations.parse(parsedRenderer.disabled ?? false).Then(
-                (disabledExpr) =>
-                  ValueOrErrors.Default.return({
-                    form: {
-                      renderer: ParsedRenderer.Operations.FormRenderers(
-                        parsedRenderer,
-                        parsingContext.formViews,
-                        viewKind,
-                        parsedRenderer.renderer,
-                        parsedRenderer.label,
-                        parsedRenderer.tooltip,
-                        parsedRenderer.details,
-                        parsingContext.enumOptionsSources,
-                        parsingContext.injectedPrimitives,
-                      ),
-                      initialValue: parsingContext.defaultValue(
-                        parsedRenderer.type,
-                      ),
-                      initialState: ParsedRenderer.Operations.FormStates(
-                        parsedRenderer,
-                        viewKind,
-                        parsedRenderer.renderer,
-                        parsingContext.infiniteStreamSources,
-                        parsingContext.injectedPrimitives,
-                      ),
-                    },
-                    visibilityPredicateExpression:
-                      FieldPredicateExpression.Default.primitive(
-                        visibilityExpr,
-                      ),
-                    disabledPredicatedExpression:
-                      FieldPredicateExpression.Default.primitive(disabledExpr),
-                  }),
-              ),
+            (visibilityExpr) => {
+              return Expr.Operations.parse(
+                parsedRenderer.disabled ?? false,
+              ).Then((disabledExpr) =>
+                ValueOrErrors.Default.return({
+                  form: {
+                    renderer: ParsedRenderer.Operations.FormRenderers(
+                      parsedRenderer,
+                      parsingContext.formViews,
+                      viewKind,
+                      parsedRenderer.renderer,
+                      parsedRenderer.label,
+                      parsedRenderer.tooltip,
+                      parsedRenderer.details,
+                      parsingContext.enumOptionsSources,
+                      parsingContext.injectedPrimitives,
+                    ),
+                    initialValue: parsingContext.defaultValue(
+                      parsedRenderer.type,
+                    ),
+                    initialState: ParsedRenderer.Operations.FormStates(
+                      parsedRenderer,
+                      viewKind,
+                      parsedRenderer.renderer,
+                      parsingContext.infiniteStreamSources,
+                      parsingContext.injectedPrimitives,
+                    ),
+                  },
+                  visibilityPredicateExpression:
+                    FieldPredicateExpression.Default.primitive(visibilityExpr),
+                  disabledPredicatedExpression:
+                    FieldPredicateExpression.Default.primitive(disabledExpr),
+                }),
+              );
+            },
           );
         case "form":
           return Expr.Operations.parse(parsedRenderer.visible ?? true).Then(
