@@ -270,7 +270,9 @@ export const FormsApp = (props: {}) => {
                           apiHandlers: {
                             onDefaultSuccess: (_) => {
                               console.log(
-                                `Success getting default person ${JSON.stringify(_)}`,
+                                `Success getting default person ${JSON.stringify(
+                                  _,
+                                )}`,
                               );
                             },
                             onDefaultError: (_) => {
@@ -279,7 +281,9 @@ export const FormsApp = (props: {}) => {
                                 List(["Error getting default person"]),
                               );
                               console.log(
-                                `Error getting default person ${JSON.stringify(_)}`,
+                                `Error getting default person ${JSON.stringify(
+                                  _,
+                                )}`,
                               );
                             },
                             onCreateError: (_) => {
@@ -287,14 +291,18 @@ export const FormsApp = (props: {}) => {
                               setFormSuccess(false);
                               setFormErrors(List(["Error creating person"]));
                               console.log(
-                                `Error submitting new person ${JSON.stringify(_)}`,
+                                `Error submitting new person ${JSON.stringify(
+                                  _,
+                                )}`,
                               );
                             },
                             onCreateSuccess: (_) => {
                               setFormSuccess(true);
                               setFormErrors(List());
                               console.log(
-                                `Success creating person ${JSON.stringify(_.entity.sync.value)}`,
+                                `Success creating person ${JSON.stringify(
+                                  _.entity.sync.value,
+                                )}`,
                               );
                             },
                           },

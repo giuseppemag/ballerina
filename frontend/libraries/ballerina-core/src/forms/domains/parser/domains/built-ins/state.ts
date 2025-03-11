@@ -99,6 +99,15 @@ export const RawOption = {
   },
 };
 
+export type RawSum = { Kind: "l" | "r"; Value: any };
+export const RawSum = {
+  Operations: {
+    IsRawSum: (value: any): value is RawSum => {
+      return typeof value == "object" && "Kind" in value && "Value" in value;
+    },
+  },
+};
+
 export type BuiltInApiConverters = {
   string: ApiConverter<string>;
   number: ApiConverter<number>;
@@ -217,6 +226,14 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
       ["Map", { defaultValue: PredicateValue.Default.tuple(List()) }] as [
         string,
         GenericBuiltIn,
+      ],
+      [
+        "Sum",
+        {
+          defaultValue: PredicateValue.Default.sum(
+            Sum.Default.right(PredicateValue.Default.unit()),
+          ),
+        },
       ],
       ["Union", { defaultValue: PredicateValue.Default.record(Map()) }] as [
         string,
@@ -516,7 +533,42 @@ export const fromAPIRawValue =
           ),
         );
       }
-      // TODO: add support for sum
+
+      if (t.value === "Sum" && t.args.length === 2) {
+        if (!RawSum.Operations.IsRawSum(raw)) {
+          return ValueOrErrors.Default.throwOne(
+            `Sum expected but got ${JSON.stringify(raw)}`,
+          );
+        }
+
+        const result = converters[t.value].fromAPIRawValue(raw);
+
+        if (raw.Kind === "l") {
+          return fromAPIRawValue(
+            t.args[0],
+            types,
+            builtIns,
+            converters,
+            injectedPrimitives,
+          )(result.value).Then((value) =>
+            ValueOrErrors.Default.return(
+              PredicateValue.Default.sum(Sum.Default.left(value)),
+            ),
+          );
+        }
+
+        return fromAPIRawValue(
+          t.args[1],
+          types,
+          builtIns,
+          converters,
+          injectedPrimitives,
+        )(result.value).Then((value) =>
+          ValueOrErrors.Default.return(
+            PredicateValue.Default.sum(Sum.Default.right(value)),
+          ),
+        );
+      }
     }
 
     if (t.kind == "lookup")

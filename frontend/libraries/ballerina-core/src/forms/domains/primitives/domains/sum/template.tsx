@@ -4,7 +4,6 @@ import {
   BasicUpdater,
   FormFieldPredicateEvaluation,
   PredicateValue,
-  replaceWith,
   Sum,
   Updater,
   ValidateRunner,
@@ -72,7 +71,12 @@ export const SumForm = <
           ...props.foreignMutations,
           onChange: (elementUpdater, path) => {
             props.foreignMutations.onChange(
-              (_) => ({ ..._, left: elementUpdater(_.value.value) }),
+              (_) => ({
+                ..._,
+                value: Sum.Updaters.left<PredicateValue, PredicateValue>(
+                  elementUpdater,
+                )(_.value),
+              }),
               path,
             );
             props.setState((_) => ({ ..._, modifiedByUser: true }));
@@ -93,7 +97,7 @@ export const SumForm = <
           const leftContext: Context & Value<PredicateValue> & LeftFormState = {
             ..._,
             ...leftFormState,
-            value: _.value.value,
+            value: _.value.value.value,
             visibilities: _.elementVisibilities.left,
             disabledFields: _.elementDisabled.left,
           };
@@ -127,7 +131,12 @@ export const SumForm = <
           ...props.foreignMutations,
           onChange: (elementUpdater, path) => {
             props.foreignMutations.onChange(
-              (_) => ({ ..._, right: elementUpdater(_.value.value) }),
+              (_) => ({
+                ..._,
+                value: Sum.Updaters.right<PredicateValue, PredicateValue>(
+                  elementUpdater,
+                )(_.value),
+              }),
               path,
             );
             props.setState((_) => ({ ..._, modifiedByUser: true }));
@@ -149,7 +158,7 @@ export const SumForm = <
             {
               ..._,
               ...rightFormState,
-              value: _.value.value,
+              value: _.value.value.value,
               visibilities: _.elementVisibilities.right,
               disabledFields: _.elementDisabled.right,
             };
@@ -171,7 +180,9 @@ export const SumForm = <
   return Template.Default<
     Context & Value<ValueSum> & { disabled: boolean },
     SumFieldState<LeftFormState, RightFormState>,
-    ForeignMutationsExpected & { onChange: OnChange<ValueSum> },
+    ForeignMutationsExpected & {
+      onChange: OnChange<ValueSum>;
+    },
     SumFieldView<
       LeftFormState,
       RightFormState,
@@ -185,6 +196,19 @@ export const SumForm = <
         context={{ ...props.context }}
         foreignMutations={{
           ...props.foreignMutations,
+          onSwitch: () => {
+            props.foreignMutations.onChange(
+              (_) =>
+                _.value.kind === "l"
+                  ? PredicateValue.Default.sum(
+                      Sum.Default.right(Right.Default()),
+                    )
+                  : PredicateValue.Default.sum(
+                      Sum.Default.left(Left.Default()),
+                    ),
+              List(["switch"]),
+            );
+          },
         }}
         embeddedLeftTemplate={embeddedLeftTemplate}
         embeddedRightTemplate={embeddedRightTemplate}

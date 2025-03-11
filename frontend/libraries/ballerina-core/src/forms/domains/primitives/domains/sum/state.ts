@@ -50,6 +50,7 @@ export type SumFieldView<
   SumFieldState<LeftFormState, RightFormState>,
   ForeignMutationsExpected & {
     onChange: OnChange<ValueSum>;
+    onSwitch: SimpleCallback;
   },
   {
     embeddedLeftTemplate: BasicFun<

@@ -1210,7 +1210,7 @@ export const evaluatePredicates = <T>(
         }
 
         return ValueOrErrors.Default.throwOne(
-          `Error: parsing expected tuple of key value pairs, got ${JSON.stringify(raw)}`,
+          `Error: parsing expected sum, got ${JSON.stringify(raw)}`,
         );
       });
     }

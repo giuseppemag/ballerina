@@ -1,4 +1,11 @@
-import { ApiConverters, CollectionSelection } from "ballerina-core";
+import {
+  ApiConverters,
+  CollectionSelection,
+  fromAPIRawValue,
+  RawSum,
+  Sum,
+  toAPIRawValue,
+} from "ballerina-core";
 import { List, OrderedMap } from "immutable";
 import { PersonFormInjectedTypes } from "src/domains/person-from-config/injected-forms/category";
 
@@ -72,5 +79,14 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
           key: _[0],
           value: _[1],
         })),
+  },
+  Sum: {
+    fromAPIRawValue: (_: RawSum) =>
+      _ === undefined
+        ? Sum.Default.right(null)
+        : _.Kind === "l"
+          ? Sum.Default.left(_.Value)
+          : Sum.Default.right(_.Value),
+    toAPIRawValue: ([_, __]) => _,
   },
 };

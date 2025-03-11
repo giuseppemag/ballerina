@@ -110,7 +110,10 @@ const entityApis: EntityApis = {
               Value: { Value: colors[Math.round(Math.random() * 10) % 3] },
               IsSome: true,
             },
-            gender: { IsSome: false, Value: { Value: "" } },
+            gender: {
+              Kind: "r",
+              Value: { IsSome: true, Value: { Value: "M" } },
+            },
             dependants: [
               { key: "Steve", value: "adult" },
               { key: "Alice", value: "senior" },
@@ -296,7 +299,10 @@ const entityApis: EntityApis = {
               birthday: "01/01/2000",
               subscribeToNewsletter: false,
               favoriteColor: { Value: { Value: null }, IsSome: false },
-              gender: { IsSome: false, Value: { Value: null } },
+              gender: {
+                Kind: "r",
+                Value: { IsSome: true, Value: { Value: "M" } },
+              },
               dependants: [],
               friendsByCategory: [],
               relatives: [],

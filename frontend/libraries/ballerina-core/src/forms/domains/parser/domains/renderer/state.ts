@@ -62,6 +62,8 @@ export type RawRenderer = {
   elementRenderer?: any;
   keyRenderer?: any;
   valueRenderer?: any;
+  leftRenderer?: any;
+  rightRenderer?: any;
   details?: any;
 };
 export type ParsedRenderer<T> = (
@@ -309,6 +311,26 @@ export const ParsedRenderer = {
           ParsedRenderer.Operations.ParseRenderer(
             fieldType.args[1],
             field.valueRenderer,
+            types,
+          ),
+          field.label,
+          field.tooltip,
+          field.details,
+        );
+      if (fieldType.kind == "application" && fieldType.value == "Sum")
+        return ParsedRenderer.Default.sum(
+          fieldType,
+          field.renderer,
+          field.visible,
+          field.disabled,
+          ParsedRenderer.Operations.ParseRenderer(
+            fieldType.args[0],
+            field.leftRenderer,
+            types,
+          ),
+          ParsedRenderer.Operations.ParseRenderer(
+            fieldType.args[1],
+            field.rightRenderer,
             types,
           ),
           field.label,
