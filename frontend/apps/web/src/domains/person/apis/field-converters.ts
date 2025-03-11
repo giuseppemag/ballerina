@@ -87,6 +87,9 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
         : _.Kind === "l"
           ? Sum.Default.left(_.Value)
           : Sum.Default.right(_.Value),
-    toAPIRawValue: ([_, __]) => _,
+    toAPIRawValue: ([_, __]) => ({
+      Kind: _.kind,
+      Value: _.value,
+    }),
   },
 };

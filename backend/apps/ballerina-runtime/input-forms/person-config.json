@@ -246,12 +246,6 @@
           ]
         },
         "mainAddress": "Address",
-        "addresses": {
-          "fun": "List",
-          "args": [
-            "Address"
-          ]
-        },
         "emails": {
           "fun": "List",
           "args": [
@@ -275,6 +269,30 @@
               ]
             },
             "Address"
+          ]
+        },
+        "addressesBy": {
+          "fun": "Sum",
+          "args": [
+            {
+              "fun": "Map",
+              "args": [
+                {
+                  "fun": "SingleSelection",
+                  "args": [
+                    "ColorRef"
+                  ]
+                },
+                "Address"
+              ]
+            },
+            {
+              "fun": "Map",
+              "args": [
+                "string",
+                "Address"
+              ]
+            }
           ]
         },
         "addressesWithColorLabel": {
@@ -691,6 +709,40 @@
             "renderer": "address"
           }
         },
+        "addressesBy": {
+          "label": "alternative addresses",
+          "renderer": "defaultSum",
+          "leftRenderer": {
+            "label": "left",
+            "renderer": "defaultMap",
+            "keyRenderer": {
+              "label": "address color",
+              "renderer": "defaultEnum",
+              "options": "colors"
+            },
+            "elementRenderer": {
+              "label": "address",
+              "renderer": "address"
+            },
+            "visible": true,
+            "disabled": false
+          },
+          "rightRenderer": {
+            "label": "right",
+            "renderer": "defaultMap",
+            "keyRenderer": {
+              "label": "address color",
+              "renderer": "defaultEnum",
+              "options": "colors"
+            },
+            "elementRenderer": {
+              "label": "address",
+              "renderer": "defaultString"
+            },
+            "visible": true,
+            "disabled": false
+          }
+        },
         "emails": {
           "label": "emails",
           "renderer": "defaultList",
@@ -830,6 +882,7 @@
                   "addressesWithLabel",
                   "addressesByCity",
                   "addressesWithColorLabel",
+                  "addressesBy",
                   "permissions",
                   "cityByDepartment",
                   "holidays"
