@@ -840,6 +840,47 @@ export const toAPIRawValue =
           );
         });
       }
+
+      if (t.value === "Sum") {
+        console.debug("toAPIRawValue: ", raw, t);
+        if (!PredicateValue.Operations.IsSum(raw)) {
+          return ValueOrErrors.Default.throwOne(
+            `Sum expected but got ${JSON.stringify(raw)}`,
+          );
+        }
+
+        if (raw.value.kind === "l") {
+          return toAPIRawValue(
+            t.args[0],
+            types,
+            builtIns,
+            converters,
+            injectedPrimitives,
+          )(raw.value.value, formState.customFormState.left).Then((value) =>
+            ValueOrErrors.Default.return(
+              converters["Sum"].toAPIRawValue([
+                Sum.Default.left(value),
+                formState.commonFormState.modifiedByUser,
+              ]),
+            ),
+          );
+        }
+
+        return toAPIRawValue(
+          t.args[1],
+          types,
+          builtIns,
+          converters,
+          injectedPrimitives,
+        )(raw.value.value, formState.customFormState.right).Then((value) =>
+          ValueOrErrors.Default.return(
+            converters["Sum"].toAPIRawValue([
+              Sum.Default.right(value),
+              formState.commonFormState.modifiedByUser,
+            ]),
+          ),
+        );
+      }
     }
 
     if (t.kind == "lookup")

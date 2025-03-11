@@ -687,7 +687,6 @@ export const PersonFieldViews = {
       ForeignMutationsExpected
     > => {
       return (props) => {
-        console.debug("sum view", props);
         return (
           <>
             {props.context.label && <h3>{props.context.label}</h3>}
