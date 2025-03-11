@@ -21,11 +21,11 @@ export type FieldPredicateExpression =
       valueExpression: FieldPredicateExpression;
     }
   | {
-      kind: "sum", 
-      value: Expr, 
-      leftExpression: FieldPredicateExpression,
-      rightExpression: FieldPredicateExpression
-    }
+      kind: "sum";
+      value: Expr;
+      leftExpression: FieldPredicateExpression;
+      rightExpression: FieldPredicateExpression;
+    };
 
 const calculateVisibility = (
   expr: Expr,
@@ -71,12 +71,12 @@ export const FieldPredicateExpression = {
     sum: (
       value: Expr,
       leftExpression: FieldPredicateExpression,
-      rightExpression: FieldPredicateExpression
+      rightExpression: FieldPredicateExpression,
     ): FieldPredicateExpression => ({
       kind: "sum",
       value,
       leftExpression,
-      rightExpression
+      rightExpression,
     }),
   },
 };
@@ -103,10 +103,10 @@ export type FormFieldPredicateEvaluation =
       }[];
     }
   | {
-    kind: 'sum';
-    value: boolean;
-    innerValue: FormFieldPredicateEvaluation;
-  }
+      kind: "sum";
+      value: boolean;
+      innerValue: FormFieldPredicateEvaluation;
+    };
 
 export const FormFieldPredicateEvaluation = {
   Default: {
@@ -131,7 +131,7 @@ export const FormFieldPredicateEvaluation = {
     ): FormFieldPredicateEvaluation => ({ kind: "map", value, elementValues }),
     sum: (
       value: boolean,
-      innerValue: FormFieldPredicateEvaluation
+      innerValue: FormFieldPredicateEvaluation,
     ): FormFieldPredicateEvaluation => ({ kind: "sum", value, innerValue }),
   },
 };
@@ -193,7 +193,10 @@ export type ValueOption = {
   value: PredicateValue;
 };
 export type ValueVarLookup = { kind: "varLookup"; varName: string };
-export type ValueSum = { kind: 'sum', value: Sum<PredicateValue, PredicateValue>}
+export type ValueSum = {
+  kind: "sum";
+  value: Sum<PredicateValue, PredicateValue>;
+};
 
 export type PredicateValue =
   | ValuePrimitive
@@ -264,9 +267,9 @@ export const PredicateValue = {
       varName,
     }),
     sum: (value: Sum<PredicateValue, PredicateValue>): ValueSum => ({
-      kind: 'sum',
-      value
-    })
+      kind: "sum",
+      value,
+    }),
   },
   Operations: {
     IsPrimitive: (
@@ -555,16 +558,31 @@ export const PredicateValue = {
           ValueOrErrors.Default.return(PredicateValue.Default.tuple(values)),
         );
       }
-      if(type.kind == "application" && type.value == "Sum"){
+      if (type.kind == "application" && type.value == "Sum") {
         // TODO
-        return ValueOrErrors.Operations.All(List<ValueOrErrors<PredicateValue, string>>(
-          json.map((keyValue: any) => PredicateValue.Operations.parse(keyValue.key, type.args[0], types).Then(key =>
-            PredicateValue.Operations.parse(keyValue.value, type?.args[1], types).Then(value =>
-             ValueOrErrors.Default.return(PredicateValue.Default.tuple(List([key, value])))
-            ))
-          )
-        )).Then(values =>
-          ValueOrErrors.Default.return(PredicateValue.Default.tuple(values)))
+        return ValueOrErrors.Operations.All(
+          List<ValueOrErrors<PredicateValue, string>>(
+            json.map((keyValue: any) =>
+              PredicateValue.Operations.parse(
+                keyValue.key,
+                type.args[0],
+                types,
+              ).Then((key) =>
+                PredicateValue.Operations.parse(
+                  keyValue.value,
+                  type?.args[1],
+                  types,
+                ).Then((value) =>
+                  ValueOrErrors.Default.return(
+                    PredicateValue.Default.tuple(List([key, value])),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ).Then((values) =>
+          ValueOrErrors.Default.return(PredicateValue.Default.tuple(values)),
+        );
       }
       if (type.kind == "application" && type.value == "SingleSelection") {
         ValueOrErrors.Default.return(
@@ -1173,24 +1191,28 @@ export const evaluatePredicates = <T>(
         );
       });
     }
-    if(predicate.kind == "sum") {
-      return calculateVisibility(predicate.value, bindings).Then(result => {
-        if(PredicateValue.Operations.IsSum(raw)){
+    if (predicate.kind == "sum") {
+      return calculateVisibility(predicate.value, bindings).Then((result) => {
+        if (PredicateValue.Operations.IsSum(raw)) {
           const local = raw.value.value;
           const innerBindings = bindings.set("local", local);
-          return traverse(innerBindings, raw.value.kind === 'l' ? predicate.leftExpression : predicate.rightExpression, local).Then(innerRes => {
+          return traverse(
+            innerBindings,
+            raw.value.kind === "l"
+              ? predicate.leftExpression
+              : predicate.rightExpression,
+            local,
+          ).Then((innerRes) => {
             return ValueOrErrors.Default.return(
-              FormFieldPredicateEvaluation.Default.sum(result, innerRes)
-            )
-          }
-          )
+              FormFieldPredicateEvaluation.Default.sum(result, innerRes),
+            );
+          });
         }
-          
-          return ValueOrErrors.Default.throwOne(
-            `Error: parsing expected tuple of key value pairs, got ${JSON.stringify(raw)}`,
-          );
-        }
-      )
+
+        return ValueOrErrors.Default.throwOne(
+          `Error: parsing expected tuple of key value pairs, got ${JSON.stringify(raw)}`,
+        );
+      });
     }
     return ValueOrErrors.Default.throwOne(
       `Error: parsing unsupported predicate kind ${JSON.stringify(raw)}`,

@@ -16,8 +16,8 @@ export type SumFieldState<LeftFormState, RightFormState> = {
   commonFormState: CommonFormState;
 } & {
   customFormState: {
-    left: LeftFormState,
-    right: RightFormState
+    left: LeftFormState;
+    right: RightFormState;
   };
 };
 
@@ -26,7 +26,7 @@ export const SumFieldState = <LeftFormState, RightFormState>() => ({
     customFormState: SumFieldState<
       LeftFormState,
       RightFormState
-    >["customFormState"]
+    >["customFormState"],
   ): SumFieldState<LeftFormState, RightFormState> => ({
     commonFormState: CommonFormState.Default(),
     customFormState,
@@ -34,7 +34,7 @@ export const SumFieldState = <LeftFormState, RightFormState>() => ({
   Updaters: {
     Core: {
       ...simpleUpdater<SumFieldState<LeftFormState, RightFormState>>()(
-        "customFormState"
+        "customFormState",
       ),
     },
     Template: {},
@@ -44,11 +44,9 @@ export type SumFieldView<
   LeftFormState,
   RightFormState,
   Context extends FormLabel,
-  ForeignMutationsExpected
+  ForeignMutationsExpected,
 > = View<
-  Context &
-    Value<ValueSum> &
-    SumFieldState<LeftFormState, RightFormState>,
+  Context & Value<ValueSum> & SumFieldState<LeftFormState, RightFormState>,
   SumFieldState<LeftFormState, RightFormState>,
   ForeignMutationsExpected & {
     onChange: OnChange<ValueSum>;

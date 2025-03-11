@@ -35,7 +35,7 @@ export const SumForm = <
       right: FormFieldPredicateEvaluation;
     };
   },
-  ForeignMutationsExpected
+  ForeignMutationsExpected,
 >(
   LeftFormState: StateWithDefault<LeftFormState>,
   RightFormState: StateWithDefault<RightFormState>,
@@ -55,7 +55,7 @@ export const SumForm = <
       onChange: OnChange<PredicateValue>;
     }
   >,
-  validation?: BasicFun<ValueSum, Promise<FieldValidation>>
+  validation?: BasicFun<ValueSum, Promise<FieldValidation>>,
 ) => {
   const embeddedLeftTemplate = () =>
     leftTemplate
@@ -65,7 +65,7 @@ export const SumForm = <
         }
       >(
         (
-          props
+          props,
         ): ForeignMutationsExpected & {
           onChange: OnChange<PredicateValue>;
         } => ({
@@ -73,17 +73,17 @@ export const SumForm = <
           onChange: (elementUpdater, path) => {
             props.foreignMutations.onChange(
               (_) => ({ ..._, left: elementUpdater(_.value.value) }),
-              path
+              path,
             );
             props.setState((_) => ({ ..._, modifiedByUser: true }));
           },
-        })
+        }),
       )
       .mapContext(
         (
           _: Context &
             Value<ValueSum> &
-            SumFieldState<LeftFormState, RightFormState>
+            SumFieldState<LeftFormState, RightFormState>,
         ): (Context & Value<PredicateValue> & LeftFormState) | undefined => {
           if (_.value.value.kind !== "l") {
             return undefined;
@@ -98,11 +98,11 @@ export const SumForm = <
             disabledFields: _.elementDisabled.left,
           };
           return leftContext;
-        }
+        },
       )
       .mapState(
         (
-          upd: BasicUpdater<LeftFormState>
+          upd: BasicUpdater<LeftFormState>,
         ): Updater<SumFieldState<LeftFormState, RightFormState>> =>
           SumFieldState<
             LeftFormState,
@@ -110,7 +110,7 @@ export const SumForm = <
           >().Updaters.Core.customFormState((_) => ({
             ..._,
             left: upd(_.left),
-          }))
+          })),
       );
   const embeddedRightTemplate = () =>
     rightTemplate
@@ -120,7 +120,7 @@ export const SumForm = <
         }
       >(
         (
-          props
+          props,
         ): ForeignMutationsExpected & {
           onChange: OnChange<PredicateValue>;
         } => ({
@@ -128,17 +128,17 @@ export const SumForm = <
           onChange: (elementUpdater, path) => {
             props.foreignMutations.onChange(
               (_) => ({ ..._, right: elementUpdater(_.value.value) }),
-              path
+              path,
             );
             props.setState((_) => ({ ..._, modifiedByUser: true }));
           },
-        })
+        }),
       )
       .mapContext(
         (
           _: Context &
             Value<ValueSum> &
-            SumFieldState<LeftFormState, RightFormState>
+            SumFieldState<LeftFormState, RightFormState>,
         ): (Context & Value<PredicateValue> & RightFormState) | undefined => {
           if (_.value.value.kind !== "r") {
             return undefined;
@@ -154,11 +154,11 @@ export const SumForm = <
               disabledFields: _.elementDisabled.right,
             };
           return rightContext;
-        }
+        },
       )
       .mapState(
         (
-          upd: BasicUpdater<RightFormState>
+          upd: BasicUpdater<RightFormState>,
         ): Updater<SumFieldState<LeftFormState, RightFormState>> =>
           SumFieldState<
             LeftFormState,
@@ -166,7 +166,7 @@ export const SumForm = <
           >().Updaters.Core.customFormState((_) => ({
             ..._,
             right: upd(_.right),
-          }))
+          })),
       );
   return Template.Default<
     Context & Value<ValueSum> & { disabled: boolean },
@@ -200,9 +200,9 @@ export const SumForm = <
       validation
         ? (_) =>
             validation(_).then(
-              FieldValidationWithPath.Default.fromFieldValidation
+              FieldValidationWithPath.Default.fromFieldValidation,
             )
-        : undefined
+        : undefined,
     ),
   ]);
 };

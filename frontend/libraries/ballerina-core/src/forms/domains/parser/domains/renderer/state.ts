@@ -218,7 +218,7 @@ export const ParsedRenderer = {
       rightRenderer: ParsedRenderer<T>,
       label?: string,
       tooltip?: string,
-      details?: string
+      details?: string,
     ): ParsedRenderer<T> => ({
       kind: "sum",
       type,
@@ -229,7 +229,7 @@ export const ParsedRenderer = {
       visible,
       disabled: disabled != undefined ? disabled : false,
       leftRenderer,
-      rightRenderer
+      rightRenderer,
     }),
   },
   Operations: {
@@ -578,33 +578,78 @@ export const ParsedRenderer = {
               ),
           );
         case "sum":
-          return Expr.Operations.parse(parsedRenderer.visible ?? true).Then(visibilityExpr =>
-            Expr.Operations.parse(parsedRenderer.disabled ?? false).Then(disabledExpr =>
-              ParsedRenderer.Operations.RendererToForm(fieldName, parsingContext, parsedRenderer.leftRenderer).Then(parsedLeftRenderer =>
-                ParsedRenderer.Operations.RendererToForm(fieldName, parsingContext, parsedRenderer.rightRenderer).Then(parsedRightRenderer => 
-                  ValueOrErrors.Default.return(
-                    {
-                      form: {
-                        renderer: SumForm<any, any, any & FormLabel, Unit>(
-                          { Default: () => parsedLeftRenderer.form.initialState },
-                          { Default: () => parsedRightRenderer.form.initialState },
-                          { Default: () => parsedLeftRenderer.form.initialValue },
-                          { Default: () => parsedRightRenderer.form.initialValue },
-                          parsedLeftRenderer.form.renderer,
-                          parsedRightRenderer.form.renderer
-                      ).withView(((parsingContext.formViews)[viewKind])[parsedRenderer.renderer]() as any)
-                        .mapContext<any>(_ => ({ ..._, label: parsedRenderer.label, tooltip: parsedRenderer.tooltip, details: parsedRenderer.details })),
-                        initialValue: parsingContext.defaultValue(parsedRenderer.type),
-                        initialState: SumFieldState<any, any>().Default({ left: parsedLeftRenderer.form.initialState, right: parsedRightRenderer.form.initialState })
-                      },
-                    visibilityPredicateExpression: FieldPredicateExpression.Default.sum(visibilityExpr, parsedLeftRenderer.visibilityPredicateExpression, parsedRightRenderer.visibilityPredicateExpression),
-                    disabledPredicatedExpression: FieldPredicateExpression.Default.sum(disabledExpr, parsedLeftRenderer.disabledPredicatedExpression, parsedRightRenderer.disabledPredicatedExpression),
-                  }
-                )
-              )
-            )
-          )
-        )
+          return Expr.Operations.parse(parsedRenderer.visible ?? true).Then(
+            (visibilityExpr) =>
+              Expr.Operations.parse(parsedRenderer.disabled ?? false).Then(
+                (disabledExpr) =>
+                  ParsedRenderer.Operations.RendererToForm(
+                    fieldName,
+                    parsingContext,
+                    parsedRenderer.leftRenderer,
+                  ).Then((parsedLeftRenderer) =>
+                    ParsedRenderer.Operations.RendererToForm(
+                      fieldName,
+                      parsingContext,
+                      parsedRenderer.rightRenderer,
+                    ).Then((parsedRightRenderer) =>
+                      ValueOrErrors.Default.return({
+                        form: {
+                          renderer: SumForm<any, any, any & FormLabel, Unit>(
+                            {
+                              Default: () =>
+                                parsedLeftRenderer.form.initialState,
+                            },
+                            {
+                              Default: () =>
+                                parsedRightRenderer.form.initialState,
+                            },
+                            {
+                              Default: () =>
+                                parsedLeftRenderer.form.initialValue,
+                            },
+                            {
+                              Default: () =>
+                                parsedRightRenderer.form.initialValue,
+                            },
+                            parsedLeftRenderer.form.renderer,
+                            parsedRightRenderer.form.renderer,
+                          )
+                            .withView(
+                              parsingContext.formViews[viewKind][
+                                parsedRenderer.renderer
+                              ]() as any,
+                            )
+                            .mapContext<any>((_) => ({
+                              ..._,
+                              label: parsedRenderer.label,
+                              tooltip: parsedRenderer.tooltip,
+                              details: parsedRenderer.details,
+                            })),
+                          initialValue: parsingContext.defaultValue(
+                            parsedRenderer.type,
+                          ),
+                          initialState: SumFieldState<any, any>().Default({
+                            left: parsedLeftRenderer.form.initialState,
+                            right: parsedRightRenderer.form.initialState,
+                          }),
+                        },
+                        visibilityPredicateExpression:
+                          FieldPredicateExpression.Default.sum(
+                            visibilityExpr,
+                            parsedLeftRenderer.visibilityPredicateExpression,
+                            parsedRightRenderer.visibilityPredicateExpression,
+                          ),
+                        disabledPredicatedExpression:
+                          FieldPredicateExpression.Default.sum(
+                            disabledExpr,
+                            parsedLeftRenderer.disabledPredicatedExpression,
+                            parsedRightRenderer.disabledPredicatedExpression,
+                          ),
+                      }),
+                    ),
+                  ),
+              ),
+          );
         default:
           return ValueOrErrors.Default.throw(
             List([
