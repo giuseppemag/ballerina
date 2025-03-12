@@ -245,12 +245,12 @@ const entityApis: EntityApis = {
           return Promise.resolve({
             IsAdmin: false,
             ERP: {
-              case: "ERP:SAP",
+              caseName: "ERP:SAP",
               fields: {
                 Value: {
-                  case: "SAP:S2",
+                  caseName: "SAP:S2",
                   fields: {
-                    S2OnlyField: false,
+                    S2OnlyField: true,
                   },
                 },
               },

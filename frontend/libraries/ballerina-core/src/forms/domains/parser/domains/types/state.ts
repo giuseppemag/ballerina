@@ -41,7 +41,7 @@ export const RawType = {
     _.fun == "Union" &&
     Array.isArray(_["args"]) &&
     _["args"].every(
-      (__) => typeof __ == "object" && "caseName"ame" in __ && "fields" in __,
+      (__) => typeof __ == "object" && "caseName" in __ && "fields" in __,
     ),
 };
 export type RawApplicationType<T> = {
@@ -113,8 +113,10 @@ export const RawFieldType = {
     RawFieldType.isApplication(_) &&
     _.fun == "MultiSelection" &&
     _.args.length == 1,
-  isUnionCase: <T>(_: RawFieldType<T>): _ is { case: string; fields: object } =>
-    typeof _ == "object" && "caseName"ame" in _ && "fields" in _,
+  isUnionCase: <T>(
+    _: RawFieldType<T>,
+  ): _ is { caseName: string; fields: object } =>
+    typeof _ == "object" && "caseName" in _ && "fields" in _,
   isUnion: <T>(
     _: RawFieldType<T>,
   ): _ is { fun: "Union"; args: Array<{ case: string; fields: object }> } =>
@@ -124,7 +126,7 @@ export const RawFieldType = {
     _.fun == "Union" &&
     _.args.length > 0 &&
     _.args.every(
-      (__) => typeof __ == "object" && "caseName"ame" in __ && "fields" in __,
+      (__) => typeof __ == "object" && "caseName" in __ && "fields" in __,
     ),
   isForm: <T>(_: RawFieldType<T>): _ is { fields: Object } =>
     typeof _ == "object" && "fields" in _ && isObject(_.fields),
@@ -323,13 +325,13 @@ export const ParsedType = {
       }
       if (RawFieldType.isUnionCase(rawFieldType)) {
         return ParsedType.Operations.ParseRawFieldType(
-          rawFieldType.case,
+          rawFieldType.caseName,
           rawFieldType.fields,
           types,
           injectedPrimitives,
         ).Then((parsedFields) =>
           ValueOrErrors.Default.return(
-            ParsedType.Default.unionCase(rawFieldType.case, parsedFields),
+            ParsedType.Default.unionCase(rawFieldType.caseName, parsedFields),
           ),
         );
       }
@@ -351,7 +353,10 @@ export const ParsedType = {
                 injectedPrimitives,
               ).Then((parsedFields) =>
                 ValueOrErrors.Default.return(
-                  ParsedType.Default.unionCase(unionCase.case, parsedFields),
+                  ParsedType.Default.unionCase(
+                    unionCase.caseName,
+                    parsedFields,
+                  ),
                 ),
               );
             }),
