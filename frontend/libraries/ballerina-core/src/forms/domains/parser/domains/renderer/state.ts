@@ -548,12 +548,15 @@ export const ParsedRenderer = {
                               parsedRenderer.renderer
                             ]() as any,
                           )
-                          .mapContext<any>((_) => ({
-                            ..._,
-                            label: parsedRenderer.label,
-                            tooltip: parsedRenderer.tooltip,
-                            details: parsedRenderer.details,
-                          })),
+                          .mapContext<any>((_) => {
+                            console.debug(parsedRenderer.label, _);
+                            return {
+                              ..._,
+                              label: parsedRenderer.label,
+                              tooltip: parsedRenderer.tooltip,
+                              details: parsedRenderer.details,
+                            };
+                          }),
                         initialValue: parsingContext.defaultValue(
                           parsedRenderer.type,
                         ),

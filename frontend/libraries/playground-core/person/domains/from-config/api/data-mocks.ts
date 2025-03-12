@@ -39,7 +39,7 @@ const enumApis: EnumOptionsSources = (enumName: string) =>
           () => colors.map((_) => ({ Value: _ })),
           undefined,
           1,
-          0
+          0,
         )
     : enumName == "permissions"
     ? () =>
@@ -47,7 +47,7 @@ const enumApis: EnumOptionsSources = (enumName: string) =>
           () => permissions.map((_) => ({ Value: _ })),
           undefined,
           1,
-          0
+          0,
         )
     : enumName == "genders"
     ? () =>
@@ -55,7 +55,7 @@ const enumApis: EnumOptionsSources = (enumName: string) =>
           () => genders.map((_) => ({ Value: _ })),
           undefined,
           1,
-          0
+          0,
         )
     : enumName == "interests"
     ? () =>
@@ -63,7 +63,7 @@ const enumApis: EnumOptionsSources = (enumName: string) =>
           () => interests.map((_) => ({ Value: _ })),
           undefined,
           1,
-          0
+          0,
         )
     : () =>
         PromiseRepo.Default.mock(() => {
@@ -77,7 +77,7 @@ const entityApis: EntityApis = {
           PromiseRepo.Default.mock(() => {
             console.log(
               "person create api post body",
-              JSON.stringify(e, undefined, 2)
+              JSON.stringify(e, undefined, 2),
             );
             return unit;
           })
@@ -103,7 +103,7 @@ const entityApis: EntityApis = {
             name: faker.person.firstName(),
             surname: faker.person.lastName(),
             birthday: new Date(
-              Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45
+              Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45,
             ).toISOString(),
             subscribeToNewsletter: Math.random() > 0.5,
             favoriteColor: {
@@ -157,7 +157,7 @@ const entityApis: EntityApis = {
             importantDate: {
               Kind: "r",
               Value: new Date(
-                Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45
+                Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45,
               ).toISOString(),
             },
             addresses: [
@@ -329,8 +329,19 @@ const entityApis: EntityApis = {
               interests: [],
               departments: [],
               mainAddress: {
-                Kind: "l",
-                Value: "",
+                Kind: "r",
+                Value: {
+                  streetNumberAndCity: [
+                    "",
+                    0,
+                    {
+                      Value: {
+                        Value: "",
+                      },
+                      IsSome: false,
+                    },
+                  ],
+                },
               },
               addressesBy: {
                 Kind: "r",
@@ -341,7 +352,7 @@ const entityApis: EntityApis = {
                 Value: "",
               },
               emails: [],
-              addressesAndAddressesWithLabel: [[],[]],
+              addressesAndAddressesWithLabel: [[], []],
               addressesByCity: [],
               addressesWithColorLabel: [],
               permissions: [],

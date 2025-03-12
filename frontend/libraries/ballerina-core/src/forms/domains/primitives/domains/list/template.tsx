@@ -25,8 +25,8 @@ import { ListFieldState, ListFieldView } from "./state";
 export const ListForm = <
   ElementFormState extends { commonFormState: { modifiedByUser: boolean } },
   Context extends FormLabel & {
-    elementVisibilities: FormFieldPredicateEvaluation[];
-    elementDisabled: FormFieldPredicateEvaluation[];
+    visibilities: FormFieldPredicateEvaluation;
+    disabledFields: FormFieldPredicateEvaluation;
   },
   ForeignMutationsExpected,
 >(
@@ -91,11 +91,13 @@ export const ListForm = <
           _: Context & Value<ValueTuple> & ListFieldState<ElementFormState>,
         ): (Context & Value<ValueTuple> & ElementFormState) | undefined => {
           if (!_.value.values.has(elementIndex)) return undefined;
+          if (_.visibilities.kind != "list") return undefined;
+          if (_.disabledFields.kind != "list") return undefined;
           const element = _.value.values.get(elementIndex);
           const elementFormState =
             _.elementFormStates.get(elementIndex) || ElementFormState.Default();
-          const elementVisibility = _.elementVisibilities[elementIndex];
-          const elementDisabled = _.elementDisabled[elementIndex];
+          const elementVisibility = _.visibilities.elementValues[elementIndex];
+          const elementDisabled = _.disabledFields.elementValues[elementIndex];
           const elementContext: Context & Value<ValueTuple> & ElementFormState =
             {
               ..._,

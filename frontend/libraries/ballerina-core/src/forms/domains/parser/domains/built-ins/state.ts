@@ -353,8 +353,6 @@ export const fromAPIRawValue =
     injectedPrimitives?: InjectedPrimitives<T>,
   ) =>
   (raw: any): ValueOrErrors<PredicateValue, string> => {
-    console.debug(`fromAPIRawValue ${JSON.stringify(raw, undefined, 2)}`);
-    console.debug(`fromAPIRawValue ${JSON.stringify(t, undefined, 2)}`);
     if (raw == undefined) {
       return ValueOrErrors.Default.throwOne(
         `raw value is undefined for type ${JSON.stringify(t)}`,

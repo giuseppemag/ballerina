@@ -27,14 +27,8 @@ export const MapForm = <
   KeyFormState extends { commonFormState: CommonFormState },
   ValueFormState extends { commonFormState: CommonFormState },
   Context extends FormLabel & {
-    elementVisibilities: {
-      key: FormFieldPredicateEvaluation;
-      value: FormFieldPredicateEvaluation;
-    }[];
-    elementDisabled: {
-      key: FormFieldPredicateEvaluation;
-      value: FormFieldPredicateEvaluation;
-    }[];
+    visibilities: FormFieldPredicateEvaluation;
+    disabledFields: FormFieldPredicateEvaluation;
   },
   ForeignMutationsExpected,
 >(
@@ -113,12 +107,14 @@ export const MapForm = <
         ): (Context & Value<ValueTuple> & KeyFormState) | undefined => {
           const element = _.value.values.get(elementIndex) as ValueTuple;
           if (element == undefined) return undefined;
+          if (_.visibilities.kind != "map") return undefined;
+          if (_.disabledFields.kind != "map") return undefined;
           const elementFormState = _.elementFormStates.get(elementIndex) || {
             KeyFormState: KeyFormState.Default(),
             ValueFormState: ValueFormState.Default(),
           };
-          const elementVisibility = _.elementVisibilities[elementIndex]?.key;
-          const elementDisabled = _.elementDisabled[elementIndex]?.key;
+          const elementVisibility = _.visibilities.elementValues[elementIndex]?.key;
+          const elementDisabled = _.disabledFields.elementValues[elementIndex]?.key;
           const elementContext: Context & Value<ValueTuple> & KeyFormState = {
             ..._,
             ...elementFormState.KeyFormState,
@@ -205,12 +201,14 @@ export const MapForm = <
         ): (Context & Value<ValueTuple> & ValueFormState) | undefined => {
           const element = _.value.values.get(elementIndex) as ValueTuple;
           if (element == undefined) return undefined;
+          if (_.visibilities.kind != "map") return undefined;
+          if (_.disabledFields.kind != "map") return undefined;
           const elementFormState = _.elementFormStates.get(elementIndex) || {
             KeyFormState: KeyFormState.Default(),
             ValueFormState: ValueFormState.Default(),
           };
-          const elementVisibility = _.elementVisibilities[elementIndex]?.value;
-          const elementDisabled = _.elementDisabled[elementIndex]?.value;
+          const elementVisibility = _.visibilities.elementValues[elementIndex]?.value;
+          const elementDisabled = _.disabledFields.elementValues[elementIndex]?.value;
           const elementContext: Context & Value<ValueTuple> & ValueFormState = {
             ..._,
             ...elementFormState.ValueFormState,
