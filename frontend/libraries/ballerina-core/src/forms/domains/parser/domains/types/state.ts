@@ -146,6 +146,7 @@ export const RawFieldType = {
 };
 
 export type PrimitiveTypeName<T> =
+  | "unit"
   | "string"
   | "number"
   | "maybeBoolean"

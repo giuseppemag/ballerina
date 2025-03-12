@@ -136,6 +136,7 @@ export type BuiltIns = {
   primitives: Map<string, PrimitiveBuiltIn>;
   generics: Map<string, GenericBuiltIn>;
   renderers: {
+    unit: Set<string>;
     boolean: Set<string>;
     number: Set<string>;
     string: Set<string>;
@@ -155,6 +156,13 @@ export type BuiltIns = {
 export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
   const builtins: BuiltIns = {
     primitives: Map<string, PrimitiveBuiltIn>([
+      [
+        "unit",
+        {
+          renderers: Set(["unit"]),
+          defaultValue: PredicateValue.Default.unit(),
+        },
+      ] as [string, PrimitiveBuiltIn],
       [
         "string",
         {
@@ -250,6 +258,7 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
       ] as [string, GenericBuiltIn],
     ]),
     renderers: {
+      unit: Set(),
       boolean: Set(),
       date: Set(),
       enumMultiSelection: Set(),

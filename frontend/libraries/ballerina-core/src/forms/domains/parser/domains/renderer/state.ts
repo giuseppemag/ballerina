@@ -833,6 +833,7 @@ export const ParsedRenderer = {
       injectedPrimitives?: InjectedPrimitives<T>,
     ): any => {
       if (
+        viewType == "unit" ||
         viewType == "boolean" ||
         viewType == "number" ||
         viewType == "string" ||
