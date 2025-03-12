@@ -218,11 +218,13 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
         string,
         GenericBuiltIn,
       ],
-      // TODO - this won't work, may need to be a map or function to generate the default values based on types
-      ["Tuple", { defaultValue: PredicateValue.Default.tuple(List()) }] as [
-        string,
-        GenericBuiltIn,
-      ],
+      [
+        "Tuple",
+        {
+          defaultValue: (values: PredicateValue[]) =>
+            PredicateValue.Default.tuple(List(values)),
+        },
+      ] as [string, GenericBuiltIn],
       ["Union", { defaultValue: PredicateValue.Default.record(Map()) }] as [
         string,
         GenericBuiltIn,
@@ -284,7 +286,15 @@ export const defaultValue =
     }
 
     // TODO: Special case for Tuple
-
+    if (t.kind == "application" && t.value == "Tuple") {
+      return builtIns.generics
+        .get("Tuple")!
+        .defaultValue(
+          t.args.map((_) =>
+            defaultValue(types, builtIns, injectedPrimitives)(_),
+          ),
+        );
+    }
     if (t.kind == "application") {
       const generic = builtIns.generics.get(t.value);
       if (generic) return generic.defaultValue;

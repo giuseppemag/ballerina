@@ -685,6 +685,14 @@ export const PersonFieldViews = {
       (props) => (
         <>
           {props.context.label && <h3>{props.context.label}</h3>}
+          {props.context.value.values.map((_, elementIndex) => {
+            return (
+              <div>
+                  {props.embeddedElementTemplates(elementIndex)({...props, view: unit,
+                })}
+              </div>
+            );
+          })}
         </>
       ),
     defaultTuple3:
@@ -696,6 +704,14 @@ export const PersonFieldViews = {
       (props) => (
         <>
           {props.context.label && <h3>{props.context.label}</h3>}
+          {props.context.value.values.map((_, elementIndex) => {  
+            return (
+              <div>
+                {props.embeddedElementTemplates(elementIndex)({...props, view: unit,
+                })}
+              </div>
+            );
+          })}
         </>
       ),
   },

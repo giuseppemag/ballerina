@@ -613,30 +613,40 @@ export const ParsedRenderer = {
                         renderer: TupleForm<any, any & FormLabel, Unit>(
                           itemRenderers.map((item) => item.form.initialState),
                           itemRenderers.map((item) => item.form.renderer),
-                        ).withView(
-                          parsingContext.formViews[viewKind][
-                            parsedRenderer.renderer
-                          ]() as any,
-                        ).mapContext<any>((_) => ({
-                          ..._,
-                          label: parsedRenderer.label,
-                          tooltip: parsedRenderer.tooltip,
-                          details: parsedRenderer.details,
-                        })),
+                        )
+                          .withView(
+                            parsingContext.formViews[viewKind][
+                              parsedRenderer.renderer
+                            ]() as any,
+                          )
+                          .mapContext<any>((_) => ({
+                            ..._,
+                            label: parsedRenderer.label,
+                            tooltip: parsedRenderer.tooltip,
+                            details: parsedRenderer.details,
+                          })),
                         initialValue: parsingContext.defaultValue(
                           parsedRenderer.type,
                         ),
-                        initialState: TupleFieldState<any>().Default(List()),
+                        initialState: TupleFieldState<any>().Default(
+                          List(
+                            itemRenderers.map((item) => item.form.initialState),
+                          ),
+                        ),
                       },
                       visibilityPredicateExpression:
                         FieldPredicateExpression.Default.tuple(
                           visibilityExpr,
-                          itemRenderers.map((item) => item.visibilityPredicateExpression).toArray(),
+                          itemRenderers
+                            .map((item) => item.visibilityPredicateExpression)
+                            .toArray(),
                         ),
                       disabledPredicatedExpression:
                         FieldPredicateExpression.Default.tuple(
                           disabledExpr,
-                          itemRenderers.map((item) => item.disabledPredicatedExpression).toArray(),
+                          itemRenderers
+                            .map((item) => item.disabledPredicatedExpression)
+                            .toArray(),
                         ),
                     }),
                   );
