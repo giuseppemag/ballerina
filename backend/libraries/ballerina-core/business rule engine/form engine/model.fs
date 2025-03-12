@@ -16,7 +16,7 @@ module Model =
       Set: CodegenConfigSetDef
       List: CodegenConfigListDef
       Map: CodegenConfigMapDef
-      Sum: CodegenConfigTypeDef
+      Sum: CodegenConfigSumDef
       Tuple: List<TupleCodegenConfigTypeDef>
       Union: CodegenConfigUnionDef
       Custom: Map<string, CodegenConfigCustomDef>
@@ -60,6 +60,12 @@ module Model =
       MappingFunction: string }
 
   and CodegenConfigMapDef =
+    { GeneratedTypeName: string
+      RequiredImport: Option<string>
+      DefaultConstructor: string
+      SupportedRenderers: Set<string> }
+
+  and CodegenConfigSumDef =
     { GeneratedTypeName: string
       RequiredImport: Option<string>
       DefaultConstructor: string
