@@ -32,7 +32,7 @@ import { Value } from "../../../value/state";
 export const Form = <
   FieldStates extends { formFieldStates: any },
   Context,
-  ForeignMutationsExpected,
+  ForeignMutationsExpected
 >() => ({
   Default: <Fields extends keyof FieldStates["formFieldStates"]>() => {
     type State = EntityFormState<
@@ -58,7 +58,7 @@ export const Form = <
       config: id<EntityFormConfig>,
       template: (
         config: EntityFormConfig,
-        validation?: BasicFun<PredicateValue, Promise<FieldValidationWithPath>>,
+        validation?: BasicFun<PredicateValue, Promise<FieldValidationWithPath>>
       ): EntityFormTemplate<
         Fields,
         FieldStates,
@@ -96,8 +96,11 @@ export const Form = <
                 visibilitiesFromParent?.kind == "map"
                   ? visibilitiesFromParent.elementValues
                   : visibilitiesFromParent?.kind == "sum"
-                    ? visibilitiesFromParent.innerValue
-                    : undefined;
+                  ? visibilitiesFromParent.innerValue?.kind == 'list'
+                    || visibilitiesFromParent.innerValue?.kind == 'map'
+                  ? visibilitiesFromParent.innerValue.elementValues
+                  : visibilitiesFromParent.innerValue
+                  : undefined;
 
               const disabledFieldsFromParent =
                 _.disabledFields?.kind == "form"
@@ -160,7 +163,7 @@ export const Form = <
                         modifiedByUser: true,
                         validation:
                           Debounced.Updaters.Template.value<FormValidatorSynchronized>(
-                            Synchronized.Updaters.value(replaceWith(unit)),
+                            Synchronized.Updaters.value(replaceWith(unit))
                           )(_.commonFormState.validation),
                       },
                       formFieldStates: {
@@ -172,7 +175,7 @@ export const Form = <
                             modifiedByUser: true,
                             validation:
                               Debounced.Updaters.Template.value<FormValidatorSynchronized>(
-                                Synchronized.Updaters.value(replaceWith(unit)),
+                                Synchronized.Updaters.value(replaceWith(unit))
                               )(_.commonFormState.validation),
                           },
                         },
@@ -206,11 +209,11 @@ export const Form = <
                           current.fields.update(
                             field as string,
                             PredicateValue.Default.unit(),
-                            _,
-                          ),
+                            _
+                          )
                         )
                       : current,
-                  path.unshift(field as string),
+                  path.unshift(field as string)
                 );
               },
             }));
@@ -299,9 +302,9 @@ export const ValidateRunner = <
   Context,
   FormState extends { commonFormState: CommonFormState },
   ForeignMutationsExpected,
-  Entity extends PredicateValue,
+  Entity extends PredicateValue
 >(
-  validation?: BasicFun<Entity, Promise<FieldValidationWithPath>>,
+  validation?: BasicFun<Entity, Promise<FieldValidationWithPath>>
 ) => {
   const Co = CoTypedFactory<Context & Value<Entity> & FormState, FormState>();
   return Co.Template<ForeignMutationsExpected & { onChange: OnChange<Entity> }>(
@@ -312,9 +315,9 @@ export const ValidateRunner = <
               (_) => (validation ? validation(_.value) : Promise.resolve([])),
               () => "transient failure",
               3,
-              50,
+              50
             ),
-            50,
+            50
           ).embed(
             (_) => ({ ..._.commonFormState.validation, value: _.value }),
             (_) => (curr) => ({
@@ -323,15 +326,15 @@ export const ValidateRunner = <
                 ...curr.commonFormState,
                 validation: _(curr.commonFormState.validation),
               },
-            }),
-          ),
+            })
+          )
         )
       : Co.SetState((curr) => ({
           ...curr,
           commonFormState: {
             ...curr.commonFormState,
             validation: Debounced.Updaters.Core.dirty(
-              replaceWith<DirtyStatus>("not dirty"),
+              replaceWith<DirtyStatus>("not dirty")
             ),
           },
         })),
@@ -339,8 +342,8 @@ export const ValidateRunner = <
       interval: 15,
       runFilter: (props) =>
         Debounced.Operations.shouldCoroutineRun(
-          props.context.commonFormState.validation,
+          props.context.commonFormState.validation
         ),
-    },
+    }
   );
 };
