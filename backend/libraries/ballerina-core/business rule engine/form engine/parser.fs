@@ -147,6 +147,7 @@ module Parser =
       match self with
       | PrimitiveRenderer p -> p.Type
       | MapRenderer r -> ExprType.MapType(r.Key.Type, r.Value.Type)
+      | SumRenderer r -> ExprType.SumType(r.Left.Type, r.Right.Type)
       | ListRenderer r -> ExprType.ListType r.Element.Type
       | EnumRenderer(_, r)
       | StreamRenderer(_, r) -> r.Type
@@ -159,6 +160,7 @@ module Parser =
             { CaseName = cn.CaseName
               Fields = c.Type })
         )
+      | UnitRenderer r -> r.Type
 
   type Expr with
     static member ParseMatchCase
@@ -429,6 +431,13 @@ module Parser =
                 PrimitiveRendererId = Guid.CreateVersion7()
                 Type = ExprType.PrimitiveType PrimitiveType.DateOnlyType
                 Children = children }
+        elif config.Unit.SupportedRenderers |> Set.contains s then
+          return
+            PrimitiveRenderer
+              { PrimitiveRendererName = s
+                PrimitiveRendererId = Guid.CreateVersion7()
+                Type = ExprType.UnitType
+                Children = children }
         elif config.Guid.SupportedRenderers |> Set.contains s then
           return
             PrimitiveRenderer
@@ -517,6 +526,24 @@ module Parser =
                       Children = { Fields = Map.empty } }
                  Key = keyRenderer
                  Value = valueRenderer
+                 Children = children |}
+        elif config.Sum.SupportedRenderers |> Set.contains s then
+          let! (leftRendererJson, rightRendererJson) = 
+            state.All2
+              (parentJsonFields  |> state.TryFindField "leftRenderer")
+              (parentJsonFields  |> state.TryFindField "rightRenderer")
+          let! leftRenderer = NestedRenderer.Parse leftRendererJson
+          let! rightRenderer = NestedRenderer.Parse rightRendererJson
+          return
+            SumRenderer
+              {| Sum =
+                  PrimitiveRenderer
+                    { PrimitiveRendererName = s
+                      PrimitiveRendererId = Guid.CreateVersion7()
+                      Type = ExprType.SumType(leftRenderer.Renderer.Type, rightRenderer.Renderer.Type)
+                      Children = { Fields = Map.empty } }
+                 Left = leftRenderer
+                 Right = rightRenderer
                  Children = children |}
         elif config.List.SupportedRenderers |> Set.contains s then
           let! elementRendererJson = parentJsonFields |> sum.TryFindField "elementRenderer" |> state.OfSum
@@ -1004,10 +1031,16 @@ module Parser =
           state.Any(
             NonEmptyList.OfList(
               state {
-                do! json |> JsonValue.AsEmptyRecord |> state.OfSum
-                return ExprType.UnitType
-              },
-              [ state {
+                  do!
+                    json
+                    |> JsonValue.AsEnum(Set.singleton "unit")
+                    |> state.OfSum
+                    |> state.Map ignore
+
+                  return ExprType.UnitType
+                },
+              [ 
+                state {
                   do!
                     json
                     |> JsonValue.AsEnum(Set.singleton "guid")
@@ -1149,6 +1182,15 @@ module Parser =
                                 return ExprType.MapType(key, value)
                               }
                               |> state.MapError(Errors.WithPriority ErrorPriority.High)
+                          }
+                          state{
+                            do! funJson |> JsonValue.AsEnum (Set.singleton "Sum") |> state.OfSum |> state.Map (ignore)
+                            return! state{
+                              let! argsJson = (fields |> state.TryFindField "args")
+                              let! leftJson, rightJson = JsonValue.AsPair argsJson |> state.OfSum
+                              let! left, right = state.All2 !leftJson !rightJson
+                              return ExprType.SumType(left, right)
+                            } |> state.MapError(Errors.WithPriority ErrorPriority.High)
                           }
                           state {
                             do!

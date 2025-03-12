@@ -34,6 +34,9 @@ import {
   SearchableInfiniteStreamState,
   SecretForm,
   StringForm,
+  Sum,
+  SumFieldState,
+  SumForm,
   Template,
   TupleFieldState,
   TupleForm,
@@ -62,6 +65,8 @@ export type RawRenderer = {
   keyRenderer?: any;
   valueRenderer?: any;
   itemRenderers?: Array<any>;
+  leftRenderer?: any;
+  rightRenderer?: any;
   details?: any;
 };
 export type ParsedRenderer<T> = (
@@ -78,6 +83,11 @@ export type ParsedRenderer<T> = (
   | {
       kind: "tuple";
       itemRenderers: Array<ParsedRenderer<T>>;
+    }
+  | {
+      kind: "sum";
+      leftRenderer: ParsedRenderer<T>;
+      rightRenderer: ParsedRenderer<T>;
     }
 ) & {
   renderer: string;
@@ -228,6 +238,28 @@ export const ParsedRenderer = {
       disabled: disabled != undefined ? disabled : false,
       itemRenderers,
     }),
+    sum: <T>(
+      type: ParsedType<T>,
+      renderer: string,
+      visible: any,
+      disabled: any,
+      leftRenderer: ParsedRenderer<T>,
+      rightRenderer: ParsedRenderer<T>,
+      label?: string,
+      tooltip?: string,
+      details?: string,
+    ): ParsedRenderer<T> => ({
+      kind: "sum",
+      type,
+      renderer,
+      label,
+      tooltip,
+      details,
+      visible,
+      disabled: disabled != undefined ? disabled : false,
+      leftRenderer,
+      rightRenderer,
+    }),
   },
   Operations: {
     ParseRenderer: <T>(
@@ -326,6 +358,27 @@ export const ParsedRenderer = {
               types,
             ),
           ) ?? [],
+          field.label,
+          field.tooltip,
+          field.details,
+        );
+
+      if (fieldType.kind == "application" && fieldType.value == "Sum")
+        return ParsedRenderer.Default.sum(
+          fieldType,
+          field.renderer,
+          field.visible,
+          field.disabled,
+          ParsedRenderer.Operations.ParseRenderer(
+            fieldType.args[0],
+            field.leftRenderer,
+            types,
+          ),
+          ParsedRenderer.Operations.ParseRenderer(
+            fieldType.args[1],
+            field.rightRenderer,
+            types,
+          ),
           field.label,
           field.tooltip,
           field.details,
@@ -651,6 +704,79 @@ export const ParsedRenderer = {
                     }),
                   );
                 },
+              ),
+          );
+        case "sum":
+          return Expr.Operations.parse(parsedRenderer.visible ?? true).Then(
+            (visibilityExpr) =>
+              Expr.Operations.parse(parsedRenderer.disabled ?? false).Then(
+                (disabledExpr) =>
+                  ParsedRenderer.Operations.RendererToForm(
+                    fieldName,
+                    parsingContext,
+                    parsedRenderer.leftRenderer,
+                  ).Then((parsedLeftRenderer) =>
+                    ParsedRenderer.Operations.RendererToForm(
+                      fieldName,
+                      parsingContext,
+                      parsedRenderer.rightRenderer,
+                    ).Then((parsedRightRenderer) =>
+                      ValueOrErrors.Default.return({
+                        form: {
+                          renderer: SumForm<any, any, any & FormLabel, Unit>(
+                            {
+                              Default: () =>
+                                parsedLeftRenderer.form.initialState,
+                            },
+                            {
+                              Default: () =>
+                                parsedRightRenderer.form.initialState,
+                            },
+                            {
+                              Default: () =>
+                                parsedLeftRenderer.form.initialValue,
+                            },
+                            {
+                              Default: () =>
+                                parsedRightRenderer.form.initialValue,
+                            },
+                            parsedLeftRenderer.form.renderer,
+                            parsedRightRenderer.form.renderer,
+                          )
+                            .withView(
+                              parsingContext.formViews[viewKind][
+                                parsedRenderer.renderer
+                              ]() as any,
+                            )
+                            .mapContext<any>((_) => ({
+                              ..._,
+                              label: parsedRenderer.label,
+                              tooltip: parsedRenderer.tooltip,
+                              details: parsedRenderer.details,
+                            })),
+                          initialValue: parsingContext.defaultValue(
+                            parsedRenderer.type,
+                          ),
+                          initialState: SumFieldState<any, any>().Default({
+                            left: parsedLeftRenderer.form.initialState,
+                            right: parsedRightRenderer.form.initialState,
+                          }),
+                        },
+                        visibilityPredicateExpression:
+                          FieldPredicateExpression.Default.sum(
+                            visibilityExpr,
+                            parsedLeftRenderer.visibilityPredicateExpression,
+                            parsedRightRenderer.visibilityPredicateExpression,
+                          ),
+                        disabledPredicatedExpression:
+                          FieldPredicateExpression.Default.sum(
+                            disabledExpr,
+                            parsedLeftRenderer.disabledPredicatedExpression,
+                            parsedRightRenderer.disabledPredicatedExpression,
+                          ),
+                      }),
+                    ),
+                  ),
               ),
           );
         default:

@@ -234,8 +234,16 @@
           "args": ["ColorRef"]
         },
         "gender": {
-          "fun": "SingleSelection",
-          "args": ["GenderRef"]
+          "fun": "Sum",
+          "args": [
+            {
+              "fun": "SingleSelection",
+              "args": [
+                "GenderRef"
+              ]
+            },
+            "string"
+          ]
         },
         "dependants": {
           "fun": "Map",
@@ -329,7 +337,8 @@
         "holidays": {
           "fun": "List",
           "args": ["Date"]
-        }
+        },
+        "unused": "unit"
       }
     }
   },
@@ -594,8 +603,20 @@
         },
         "gender": {
           "label": "gender",
-          "renderer": "defaultEnum",
-          "options": "genders",
+          "renderer": "defaultSum",
+          "leftRenderer": {
+            "label": "left",
+            "renderer": "defaultEnum",
+            "options": "genders",
+            "visible": true,
+            "disabled": false
+          },
+          "rightRenderer": {
+            "label": "right",
+            "renderer": "defaultString",
+            "visible": true,
+            "disabled": false
+          },
           "visible":{
             "kind":"matchCase",
             "operands":[
@@ -817,6 +838,10 @@
             "label": "holiday",
             "renderer": "defaultDate"
           }
+        },
+        "unused": {
+          "label": "unused field",
+          "renderer": "defaultUnit"
         }
       },
       "tabs": {
@@ -835,7 +860,8 @@
                   "friendsByCategory",
                   "relatives",
                   "friendsBirthdays",
-                  "shoeColours"
+                  "shoeColours",
+                  "unused"
                 ]
               }
             },

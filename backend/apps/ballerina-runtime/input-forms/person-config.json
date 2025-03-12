@@ -205,9 +205,15 @@
           ]
         },
         "gender": {
-          "fun": "SingleSelection",
+          "fun": "Sum",
           "args": [
-            "GenderRef"
+            "string",
+            {
+              "fun": "SingleSelection",
+              "args": [
+                "GenderRef"
+              ]
+            }
           ]
         },
         "dependants": {
@@ -272,6 +278,50 @@
               ]
             },
             "Address"
+          ]
+        },
+        "mainAddress": {
+          "fun": "Sum",
+          "args": [
+            "string",
+            "Address"
+          ]
+        },
+        "addresses": {
+          "fun": "List",
+          "args": [
+            "Address"
+          ]
+        },
+        "importantDate": {
+          "fun": "Sum",
+          "args": [
+            "string",
+            "Date"
+          ]
+        },
+        "addressesBy": {
+          "fun": "Sum",
+          "args": [
+            {
+              "fun": "Map",
+              "args": [
+                {
+                  "fun": "SingleSelection",
+                  "args": [
+                    "ColorRef"
+                  ]
+                },
+                "Address"
+              ]
+            },
+            {
+              "fun": "Map",
+              "args": [
+                "string",
+                "Address"
+              ]
+            }
           ]
         },
         "addressesWithColorLabel": {
@@ -472,8 +522,18 @@
         },
         "gender": {
           "label": "gender",
-          "renderer": "defaultEnum",
-          "options": "genders",
+          "renderer": "defaultSum",
+          "leftRenderer": {
+            "label": "left",
+            "renderer": "defaultString"
+          },
+          "rightRenderer": {
+            "label": "right",
+            "renderer": "defaultEnum",
+            "options": "genders",
+            "visible": true,
+            "disabled": false
+          },
           "visible": {
             "kind": "matchCase",
             "operands": [
@@ -636,7 +696,68 @@
         },
         "mainAddress": {
           "label": "main address",
-          "renderer": "address"
+          "renderer": "defaultSum",
+          "leftRenderer": {
+            "label": "as string",
+            "renderer": "defaultString"
+          },
+          "rightRenderer": {
+            "label": "as address",
+            "renderer": "address"
+          },
+          "visible": {
+            "kind": "fieldLookup",
+            "operands": [
+              {
+                "kind": "varLookup",
+                "varName": "local"
+              },
+              "subscribeToNewsletter"
+            ]
+          }
+        },
+        "addressesBy": {
+          "label": "addresses by",
+          "renderer": "defaultSum",
+          "leftRenderer": {
+            "label": "by color",
+            "renderer": "defaultMap",
+            "keyRenderer": {
+              "label": "address color",
+              "renderer": "defaultEnum",
+              "options": "colors" 
+            },
+            "valueRenderer": {
+              "label": "address",
+              "renderer": "address"
+            }
+          },
+          "rightRenderer": {
+            "label": "by label",
+            "renderer": "defaultMap",
+            "keyRenderer": {
+              "label": "address label",
+              "renderer": "defaultString"
+            },
+            "valueRenderer": {
+              "label": "address",
+              "renderer": "address"
+            }
+          }
+        },
+        "importantDate": {
+          "label": "important date",
+          "renderer": "defaultSum",
+          "leftRenderer": {
+            "label": "no date",
+            "renderer": "defaultString"
+          },
+          "rightRenderer": {
+            "label": "date",
+            "renderer": "defaultDate"
+          },
+          "visible": true,
+          "disabled": false
         },
         "emails": {
           "label": "emails",
@@ -767,7 +888,8 @@
                   "friendsByCategory",
                   "relatives",
                   "friendsBirthdays",
-                  "shoeColours"
+                  "shoeColours",
+                  "importantDate"
                 ]
               }
             },
@@ -788,6 +910,7 @@
                   "addressesAndAddressesWithLabel",
                   "addressesByCity",
                   "addressesWithColorLabel",
+                  "addressesBy",
                   "permissions",
                   "cityByDepartment",
                   "holidays"

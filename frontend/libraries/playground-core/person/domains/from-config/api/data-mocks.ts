@@ -39,7 +39,7 @@ const enumApis: EnumOptionsSources = (enumName: string) =>
           () => colors.map((_) => ({ Value: _ })),
           undefined,
           1,
-          0,
+          0
         )
     : enumName == "permissions"
     ? () =>
@@ -47,7 +47,7 @@ const enumApis: EnumOptionsSources = (enumName: string) =>
           () => permissions.map((_) => ({ Value: _ })),
           undefined,
           1,
-          0,
+          0
         )
     : enumName == "genders"
     ? () =>
@@ -55,7 +55,7 @@ const enumApis: EnumOptionsSources = (enumName: string) =>
           () => genders.map((_) => ({ Value: _ })),
           undefined,
           1,
-          0,
+          0
         )
     : enumName == "interests"
     ? () =>
@@ -63,7 +63,7 @@ const enumApis: EnumOptionsSources = (enumName: string) =>
           () => interests.map((_) => ({ Value: _ })),
           undefined,
           1,
-          0,
+          0
         )
     : () =>
         PromiseRepo.Default.mock(() => {
@@ -77,7 +77,7 @@ const entityApis: EntityApis = {
           PromiseRepo.Default.mock(() => {
             console.log(
               "person create api post body",
-              JSON.stringify(e, undefined, 2),
+              JSON.stringify(e, undefined, 2)
             );
             return unit;
           })
@@ -103,14 +103,17 @@ const entityApis: EntityApis = {
             name: faker.person.firstName(),
             surname: faker.person.lastName(),
             birthday: new Date(
-              Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45,
+              Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45
             ).toISOString(),
             subscribeToNewsletter: Math.random() > 0.5,
             favoriteColor: {
               Value: { Value: colors[Math.round(Math.random() * 10) % 3] },
               IsSome: true,
             },
-            gender: { IsSome: false, Value: { Value: "" } },
+            gender: {
+              Kind: "r",
+              Value: { IsSome: true, Value: { Value: "M" } },
+            },
             dependants: [
               { key: "Steve", value: "adult" },
               { key: "Alice", value: "senior" },
@@ -127,15 +130,35 @@ const entityApis: EntityApis = {
               { Id: v4(), DisplayValue: "Department 2" },
             ],
             mainAddress: {
-              street: faker.location.street(),
-              number: Math.floor(Math.random() * 500),
-              city:
-                Math.random() > 0.5
-                  ? { IsSome: false, Value: { Value: "" } }
-                  : {
-                      Value: { ...City.Default(v4(), faker.location.city()) },
-                      IsSome: true,
-                    },
+              Kind: "l",
+              Value: "",
+            },
+            addressesBy: {
+              Kind: "r",
+              Value: [
+                {
+                  key: "home",
+                  value: {
+                    street: faker.location.street(),
+                    number: Math.floor(Math.random() * 500),
+                    city:
+                      Math.random() > 0.5
+                        ? { IsSome: false, Value: { Value: "" } }
+                        : {
+                            Value: {
+                              ...City.Default(v4(), faker.location.city()),
+                            },
+                            IsSome: true,
+                          },
+                  },
+                },
+              ],
+            },
+            importantDate: {
+              Kind: "r",
+              Value: new Date(
+                Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45
+              ).toISOString(),
             },
             addresses: [
               {
@@ -296,7 +319,10 @@ const entityApis: EntityApis = {
               birthday: "01/01/2000",
               subscribeToNewsletter: false,
               favoriteColor: { Value: { Value: null }, IsSome: false },
-              gender: { IsSome: false, Value: { Value: null } },
+              gender: {
+                Kind: "r",
+                Value: { IsSome: true, Value: { Value: "M" } },
+              },
               dependants: [],
               friendsByCategory: [],
               relatives: [],
@@ -308,6 +334,14 @@ const entityApis: EntityApis = {
                   0,
                   { IsSome: false, Value: { Value: null } },
                 ],
+              },
+              addressesBy: {
+                Kind: "r",
+                Value: [],
+              },
+              importantDate: {
+                Kind: "l",
+                Value: "",
               },
               emails: [],
               addressesAndAddressesWithLabel: [],
