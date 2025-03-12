@@ -272,7 +272,7 @@
             "Right":{
               "renderer":"expr",
               "visible":{
-                "kind":"match-case",
+                "kind":"matchCase",
                 "operands":[
                   { "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"local" }, "Left"] },
                   { "case":"Binary", "handler":{ "kind":"lambda", "parameter":"_", "body":true } },

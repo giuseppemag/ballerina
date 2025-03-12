@@ -654,11 +654,11 @@
           "renderer": "defaultEnum",
           "options": "genders",
           "visible":{
-            "kind":"match-case",
+            "kind":"matchCase",
             "operands":[
               { "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"global" }, "ERP"] },
               { "case":"ERP:SAP", "handler":{ "kind":"lambda", "parameter":"sapFields", "body":{
-                "kind":"match-case",
+                "kind":"matchCase",
                 "operands":[
                   { "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"sapFields" }, "Value"] },
                   { "case":"SAP:S2", "handler":{ "kind":"lambda", "parameter":"s2Fields", "body":{ 

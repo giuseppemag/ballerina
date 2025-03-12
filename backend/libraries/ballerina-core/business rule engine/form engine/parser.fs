@@ -253,7 +253,7 @@ module Parser =
 
                             do!
                               kindJson
-                              |> JsonValue.AsEnum(Set.singleton "match-case")
+                              |> JsonValue.AsEnum(Set.singleton "matchCase")
                               |> state.OfSum
                               |> state.Map ignore
 
@@ -267,7 +267,7 @@ module Parser =
                                   return!
                                     state.Throw(
                                       Errors.Singleton
-                                        $"Error: match-case needs at least one operand, the value to match. Instead, found zero operands."
+                                        $"Error: matchCase needs at least one operand, the value to match. Instead, found zero operands."
                                     )
                                 else
                                   let valueJson = operandsJson.[0]

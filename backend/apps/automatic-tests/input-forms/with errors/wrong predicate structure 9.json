@@ -65,7 +65,7 @@
         "Surname": {
           "renderer": "defaultString",
           "visible":{
-            "kind":"match-case",
+            "kind":"matchCase",
             "operands":[
               { "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"NonExistingVariable" }, "Role"] },
               { "case":"Admin", "handler":{ "kind":"lambda", "parameter":"adminFields", "body":

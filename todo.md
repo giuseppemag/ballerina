@@ -19,7 +19,7 @@
           ❌ non-existent case
           ❌ case arg and chosen renderer type mismatch
         ✅ actual person-config as a reference of something that should work
-          ❌ add a few correct instances of visiblity predicates using `match-case`
+          ❌ add a few correct instances of visiblity predicates using `matchCase`
           ❌ add one that matches `Some`, `None` over a `SingleSelection`
           ❌ add one that matches `Some`, `None` over an `Option`
           ❌ add one that matches `Left`, `Right` over a `Sum`

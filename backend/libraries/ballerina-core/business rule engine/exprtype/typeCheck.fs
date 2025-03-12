@@ -136,7 +136,7 @@ module TypeCheck =
                     return!
                       sum.Throw(
                         Errors.Singleton
-                          $"Error: match-case {e} has no case handlers. One case handler is required for each possible case."
+                          $"Error: matchCase {e} has no case handlers. One case handler is required for each possible case."
                       )
                   | x :: xs ->
                     let! ``type`` =
@@ -156,7 +156,7 @@ module TypeCheck =
               | t ->
                 return!
                   sum.Throw(
-                    sprintf "Error: unexpected match-case on type %A when typechecking expression %A" t e
+                    sprintf "Error: unexpected matchCase on type %A when typechecking expression %A" t e
                     |> Errors.Singleton
                   )
             }

@@ -25,7 +25,7 @@ export type Expr =
   | { kind: "itemLookup"; operands: [Expr, number] }
   | { kind: "fieldLookup"; operands: [Expr, string] }
   | { kind: "isCase"; operands: [Expr, string] }
-  | { kind: "match-case"; operands: [Expr, Map<string, MatchCaseHandler>] }
+  | { kind: "matchCase"; operands: [Expr, Map<string, MatchCaseHandler>] }
   | { kind: BinaryOperator; operands: [Expr, Expr] };
 
 export const BinaryOperators = ["or", "equals"] as const;
@@ -348,7 +348,7 @@ export const Expr = {
                               ),
                       ),
                   )
-                : e.kind == "match-case"
+                : e.kind == "matchCase"
                   ? Expr.Operations.Evaluate(vars)(e.operands[0]).Then(
                       (unionCase: Value) =>
                         Expr.Operations.EvaluateAsUnionCase(vars)(
@@ -456,7 +456,7 @@ const sample2: Expr = {
       ],
     },
     {
-      kind: "match-case",
+      kind: "matchCase",
       operands: [
         {
           kind: "fieldLookup",
@@ -466,7 +466,7 @@ const sample2: Expr = {
           .set("ERP:SAP", {
             parameter: "sapFields",
             body: {
-              kind: "match-case",
+              kind: "matchCase",
               operands: [
                 {
                   kind: "fieldLookup",

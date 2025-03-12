@@ -69,7 +69,7 @@
             "operands":[
               10,
               {
-                "kind":"match-case",
+                "kind":"matchCase",
                 "operands":[
                   { "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"global" }, "Role"] },
                   { "case":"Admin", "handler":{ "kind":"lambda", "parameter":"adminFields", "body":
