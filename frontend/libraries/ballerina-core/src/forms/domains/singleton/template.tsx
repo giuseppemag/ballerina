@@ -96,10 +96,10 @@ export const Form = <
                 visibilitiesFromParent?.kind == "map"
                   ? visibilitiesFromParent.elementValues
                   : visibilitiesFromParent?.kind == "sum"
-                  ? visibilitiesFromParent.innerValue?.kind == 'list'
-                    || visibilitiesFromParent.innerValue?.kind == 'map'
-                  ? visibilitiesFromParent.innerValue.elementValues
-                  : visibilitiesFromParent.innerValue
+                  ? visibilitiesFromParent.innerValue?.kind == "list" ||
+                    visibilitiesFromParent.innerValue?.kind == "map"
+                    ? visibilitiesFromParent.innerValue.elementValues
+                    : visibilitiesFromParent.innerValue
                   : undefined;
 
               const disabledFieldsFromParent =
@@ -111,8 +111,8 @@ export const Form = <
                 disabledFieldsFromParent?.kind == "map"
                   ? disabledFieldsFromParent.elementValues
                   : disabledFieldsFromParent?.kind == "sum"
-                    ? disabledFieldsFromParent.innerValue
-                    : undefined;
+                  ? disabledFieldsFromParent.innerValue
+                  : undefined;
 
               return {
                 rootValue: _.rootValue,

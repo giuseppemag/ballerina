@@ -545,9 +545,7 @@
           "renderer": "defaultSum",
           "leftRenderer": {
             "label": "left",
-            "renderer": "defaultString",
-            "visible": true,
-            "disabled": false
+            "renderer": "defaultString"
           },
           "rightRenderer": {
             "label": "right",
@@ -734,6 +732,16 @@
           "rightRenderer": {
             "label": "as address",
             "renderer": "address"
+          },
+          "visible": {
+            "kind": "fieldLookup",
+            "operands": [
+              {
+                "kind": "varLookup",
+                "varName": "local"
+              },
+              "subscribeToNewsletter"
+            ]
           }
         },
         "addressesBy": {
