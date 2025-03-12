@@ -98,17 +98,25 @@ module Unification =
           return partialUnifications |> Seq.fold (+) (UnificationConstraints.Zero())
         | ExprType.TupleType(_), ExprType.TupleType(_) ->
           return! sum.Throw(Errors.Singleton($"Error: tuples of different length {t1} and {t2} cannot be unified"))
-        | ExprType.UnionType([]), ExprType.UnionType([]) -> return UnificationConstraints.Zero()
-        | ExprType.UnionType(t1 :: ts1), ExprType.UnionType(t2 :: ts2) ->
-          if t1.CaseName <> t2.CaseName then
-            return! sum.Throw(Errors.Singleton($"Error: cases {t1} and {t2} cannot be unified"))
-          else
-            let! partialUnifications =
-              sum.All([ t1.Fields =?= t2.Fields; ExprType.UnionType(ts1) =?= ExprType.UnionType(ts2) ])
+        | ExprType.UnionType(cs1), ExprType.UnionType(cs2) when cs1 |> Map.isEmpty && cs2 |> Map.isEmpty ->
+          return UnificationConstraints.Zero()
+        | ExprType.UnionType(cs1), ExprType.UnionType(cs2) ->
+          match cs1 |> Seq.tryHead with
+          | Some t1 ->
+            match cs2 |> Map.tryFind t1.Key with
+            | Some t2 ->
 
-            return partialUnifications |> Seq.fold (+) (UnificationConstraints.Zero())
-        | ExprType.UnionType(_), ExprType.UnionType(_) ->
-          return! sum.Throw(Errors.Singleton($"Error: unions of different length {t1} and {t2} cannot be unified"))
+              let! partialUnifications =
+                sum.All(
+                  [ t1.Value.Fields =?= t2.Fields
+                    ExprType.UnionType(cs1 |> Map.remove t1.Key)
+                    =?= ExprType.UnionType(cs2 |> Map.remove t1.Key) ]
+                )
+
+              return partialUnifications |> Seq.fold (+) (UnificationConstraints.Zero())
+            | _ -> return! sum.Throw(Errors.Singleton($"Error: cases {cs1} and {cs2} cannot be unified"))
+          | _ ->
+            return! sum.Throw(Errors.Singleton($"Error: unions of different length {t1} and {t2} cannot be unified"))
         | ExprType.RecordType(m1), ExprType.RecordType(m2) when m1 |> Map.isEmpty && m2 |> Map.isEmpty ->
           return UnificationConstraints.Zero()
         | ExprType.RecordType(m1), ExprType.RecordType(m2) ->

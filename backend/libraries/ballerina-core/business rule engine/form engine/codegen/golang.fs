@@ -593,9 +593,10 @@ module Golang =
                 state {
                   match t.Value.Type with
                   | ExprType.UnionType cases when
-                    cases |> Seq.forall (fun case -> case.Fields.IsUnitType) && cases.Length > 0
+                    cases |> Map.values |> Seq.forall (fun case -> case.Fields.IsUnitType)
+                    && cases |> Map.isEmpty |> not
                     ->
-                    let enumCases = cases |> Seq.map (fun case -> case.CaseName)
+                    let enumCases = cases |> Map.values |> Seq.map (fun case -> case.CaseName)
 
                     return
                       StringBuilder.Many(
@@ -622,10 +623,11 @@ module Golang =
                           yield StringBuilder.One $"func Default{t.Key}() {t.Key} {{ return All{t.Key}Cases[0]; }}"
                         }
                       )
-                  | ExprType.UnionType cases when cases.Length > 0 ->
+                  | ExprType.UnionType cases when cases |> Map.isEmpty |> not ->
                     let! caseValues =
                       state.All(
                         cases
+                        |> Map.values
                         |> Seq.map (fun case ->
                           state {
                             let! fields = case.Fields |> ExprType.ResolveLookup ctx |> state.OfSum
@@ -673,7 +675,7 @@ module Golang =
                         seq {
                           yield StringBuilder.One "\n"
 
-                          for case in cases do
+                          for case in cases |> Map.values do
                             yield StringBuilder.One $"type {t.Key}{!case.CaseName}Value struct {{\n"
 
                             match caseValues |> Map.tryFind case.CaseName with
@@ -731,7 +733,7 @@ module Golang =
                           yield StringBuilder.One "const ("
                           yield StringBuilder.One "\n"
 
-                          for case in cases do
+                          for case in cases |> Map.values do
                             yield
                               StringBuilder.One
                                 $$"""  {{t.Key}}{{!case.CaseName}} {{t.Key}}Cases = "{{case.CaseName}}"; """
@@ -745,7 +747,7 @@ module Golang =
                           yield StringBuilder.One "\n"
                           yield StringBuilder.One $"  Discriminator {t.Key}Cases\n"
 
-                          for case in cases do
+                          for case in cases |> Map.values do
                             yield StringBuilder.One $"  {t.Key}{!case.CaseName} {t.Key}{!case.CaseName}Value; "
 
                             yield StringBuilder.One "\n"
@@ -768,7 +770,7 @@ module Golang =
                           // 	return New{FirstUnionCaseName}(Default{FirstUnionCaseName}Value());
                           // }
 
-                          for case in cases do
+                          for case in cases |> Map.values do
                             yield StringBuilder.One $$"""func New{{t.Key}}{{!case.CaseName}}( """
 
                             yield StringBuilder.One $"value {t.Key}{!case.CaseName}Value, "
@@ -791,7 +793,7 @@ module Golang =
 
                           // BUILD HERE THE DEFAULTING BASED ON THE INVOCATION OF THE CONSTRUCTOR OF THE FIRST CASE
 
-                          for case in cases do
+                          for case in cases |> Map.values do
                             yield
                               StringBuilder.One
                                 $"on{t.Key}{!case.CaseName} func({t.Key}{!case.CaseName}Value) (result,error), "
@@ -799,7 +801,7 @@ module Golang =
                           yield StringBuilder.One $") (result,error) {{\n"
                           yield StringBuilder.One $"  switch value.Discriminator {{\n"
 
-                          for case in cases do
+                          for case in cases |> Map.values do
                             yield StringBuilder.One $"    case {t.Key}{!case.CaseName}: \n"
 
                             yield

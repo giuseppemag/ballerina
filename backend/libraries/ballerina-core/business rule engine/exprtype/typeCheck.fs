@@ -80,7 +80,7 @@ module TypeCheck =
               | UnionType cases ->
                 let! unionCase =
                   cases
-                  |> Seq.tryFind (fun case -> case.CaseName = caseName)
+                  |> Map.tryFind { CaseName = caseName }
                   |> Sum.fromOption (fun () ->
                     $$"""Error: invalid case name {{caseName}} on {{eType}}""" |> Errors.Singleton)
 
@@ -99,7 +99,9 @@ module TypeCheck =
               match eType with
               | UnionType cases ->
                 let handledCases = caseHandlers |> Seq.map (fun h -> h.Key) |> Set.ofSeq
-                let expectedCases = cases |> Seq.map (fun h -> h.CaseName) |> Set.ofSeq
+
+                let expectedCases =
+                  cases |> Map.values |> Seq.map (fun h -> h.CaseName) |> Set.ofSeq
 
                 if Set.isProperSuperset handledCases expectedCases then
                   return! sum.Throw(Errors.Singleton $"Error: too many handlers {handledCases - expectedCases}")
@@ -109,7 +111,8 @@ module TypeCheck =
                 else
                   let! casesWithHandler =
                     cases
-                    |> List.map (fun case ->
+                    |> Map.values
+                    |> Seq.map (fun case ->
                       caseHandlers
                       |> Map.tryFind case.CaseName
                       |> Option.map (fun (varName, body) -> case, varName, body)

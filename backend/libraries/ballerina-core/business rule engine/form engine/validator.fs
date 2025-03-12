@@ -173,7 +173,7 @@ module Validator =
               Renderer.Validate ctx formType fc.Renderer
               |> sum.WithErrorContext $"...when validating renderer"
 
-            let result =
+            do!
               ExprType.Unify
                 Map.empty
                 (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq)
@@ -181,7 +181,7 @@ module Validator =
                 fieldType
               |> Sum.map ignore
 
-            return! result
+            return ()
           | None ->
             return!
               sum.Throw(Errors.Singleton(sprintf "Error: field name %A is not found in type %A" fc.FieldName formType))
@@ -280,7 +280,9 @@ module Validator =
 
         match formType.Type, formConfig.Body with
         | ExprType.UnionType typeCases, FormBody.Cases formCases ->
-          let typeCaseNames = typeCases |> Seq.map (fun c -> c.CaseName) |> Set.ofSeq
+          let typeCaseNames =
+            typeCases |> Map.values |> Seq.map (fun c -> c.CaseName) |> Set.ofSeq
+
           let formCaseNames = formCases |> Map.keys |> Set.ofSeq
 
           let missingTypeCases = typeCaseNames - formCaseNames
@@ -294,9 +296,10 @@ module Validator =
             do!
               typeCases
               |> Seq.map (fun typeCase ->
-                match formCases |> Map.tryFind typeCase.CaseName with
-                | None -> sum.Throw(Errors.Singleton $"Error: cannot find form case for type case {typeCase.CaseName}")
-                | Some formCase -> FormFields.Validate ctx typeCase.Fields formCase)
+                match formCases |> Map.tryFind typeCase.Key.CaseName with
+                | None ->
+                  sum.Throw(Errors.Singleton $"Error: cannot find form case for type case {typeCase.Key.CaseName}")
+                | Some formCase -> FormFields.Validate ctx typeCase.Value.Fields formCase)
               |> sum.All
               |> Sum.map ignore
         | ExprType.UnionType typeCases, _ ->
@@ -337,7 +340,7 @@ module Validator =
             for case in cases do
               let! typeCase =
                 typeCases
-                |> List.tryFind (fun tc -> tc.CaseName = case.Key)
+                |> Map.tryFind ({ CaseName = case.Key })
                 |> Sum.fromOption (fun () -> Errors.Singleton $"Error: cannot find type case {case.Key}")
                 |> state.OfSum
 
@@ -474,7 +477,7 @@ module Validator =
           let! valuesType = ExprType.ResolveLookup ctx valuesType
           let! cases = ExprType.GetCases valuesType
 
-          if cases |> Seq.exists (fun case -> case.Fields.IsUnitType |> not) then
+          if cases |> Map.values |> Seq.exists (fun case -> case.Fields.IsUnitType |> not) then
             return! error
           else
             return ()

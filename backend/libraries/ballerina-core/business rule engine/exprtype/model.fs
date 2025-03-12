@@ -23,7 +23,7 @@ module Model =
     | LookupType of TypeId
     | PrimitiveType of PrimitiveType
     | RecordType of Map<string, ExprType>
-    | UnionType of List<UnionCase>
+    | UnionType of Map<CaseName, UnionCase>
     | MapType of ExprType * ExprType
     | TupleType of List<ExprType>
     | OptionType of ExprType
@@ -59,6 +59,7 @@ module Model =
       | ExprType.MapType(k, v) -> $"Map<{!k},{!v}>"
       | ExprType.TupleType ts -> $"({ts |> List.map (!) |> (fun s -> String.Join(',', s))})"
       | ExprType.UnionType cs ->
+        let cs = cs |> Map.values |> List.ofSeq
         let printCase (c: UnionCase) = $"{c.CaseName} of {!c.Fields}"
         $"({cs |> List.map printCase |> (fun s -> String.Join('|', s))})"
       | ExprType.RecordType fs ->
@@ -94,7 +95,9 @@ module Model =
       | ExprType.MapType(k, v) -> !k + !v
       | ExprType.SchemaLookupType _
       | ExprType.PrimitiveType _ -> Set.empty
-      | ExprType.UnionType cs -> cs |> Seq.map (fun c -> !c.Fields) |> Seq.fold (+) Set.empty
+      | ExprType.UnionType cs ->
+        let cs = cs |> Map.values |> List.ofSeq
+        cs |> Seq.map (fun c -> !c.Fields) |> Seq.fold (+) Set.empty
       | ExprType.RecordType fs -> fs |> Map.values |> Seq.map (!) |> Seq.fold (+) Set.empty
 
     static member Substitute (tvars: TypeVarBindings) (t: ExprType) : ExprType =
@@ -115,5 +118,5 @@ module Model =
       | ExprType.OptionType t -> ExprType.OptionType(!t)
       | ExprType.MapType(k, v) -> ExprType.MapType(!k, !v)
       | ExprType.TupleType ts -> ExprType.TupleType(!!ts)
-      | ExprType.UnionType cs -> ExprType.UnionType(cs |> List.map (fun c -> { c with Fields = !c.Fields }))
+      | ExprType.UnionType cs -> ExprType.UnionType(cs |> Map.map (fun _ c -> { c with Fields = !c.Fields }))
       | ExprType.RecordType fs -> ExprType.RecordType(fs |> Map.map (fun _ -> (!)))

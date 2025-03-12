@@ -1,10 +1,6 @@
 
 # Todo (✅/❌)
 
-  ❌ make validator partial
-  ❌ show both data-sync and type-safe forms in FormsApp
-
-  ❌ check that we can inspect a local DB (MySQL, Redis, ES, Postgres)
   ❌ form validator and code generator
     ❌ break the form engine in all possible ways and ensure good errors arise
       ❌ define tests, one minimal spec for anything that can go wrong
@@ -26,6 +22,7 @@
           ❌ add a few correct instances of visiblity predicates using `match-case`
           ❌ add one that matches `Some`, `None` over a `SingleSelection`
           ❌ add one that matches `Some`, `None` over an `Option`
+          ❌ add one that matches `Left`, `Right` over a `Sum`
           ❌ add validation predicate to a switched form renderer and ensure that the `root` type is the narrowed one
         ❌ add invalid form `extends` clauses
           ❌ missing forms
@@ -33,48 +30,50 @@
         ❌ add invalid form `cases` clauses
           ❌ missing cases on either side
           ❌ mismatched type of cases in renderer vs type
-    ✅ add tuple[N] renderers
-      ✅ targets
-        ✅ `street, number, city ref`
-          ✅ with visibility predicate on the `number` using `FieldLookup` on `Item2`
-        ✅ mainAddress, addresses
-      ✅ Parser
-      ✅ Validation
-      ✅ PredicateValidation
-      ✅ Value in F#
-      ✅ Value in TypeScript eval
-      ✅ Expr and visibility predicates
-      ✅ Renderer with `Items:Map<int,Renderer>`
-        ✅ validate the right number of items and that there are no holes
-      ✅ Renderer::Validate, the substitutions are completely unnecessary
-      ✅ Go generic types added correctly
+          ❌ wrong use of `Sum`
+    ✅ turn union cases into maps - makes lookups more robust and ensures uniqueness
     ❌ entites visitors
-      ✅ entites DEFAULT - recursive
-        ✅ add default values and constructors to the co-codegen
-        ✅ create default values as invocations of the existing constructors
-          ✅ primitives
-          ✅ generics
-          ✅ records
-          ✅ enums
-          ✅ streams
-          ✅ unions
-          ✅ injected types
-        ✅ extend the ballerina.core library to the necessary default values for Option, Set, List, Map, etc.
-      ✅ entites GET - identical to stream GETter: pairs of get + serialize
-        ✅ generate enum of entity names
-        ✅ entity name not found error in ballerina
-        ✅ entity serialization error in ballerina
-      ✅ deprecate the ENUMAUTOGETTER, it's shit anyway
-      ✅ all the `if err != nil` are not rethrowing the error!!!
-      ✅ entities GETDefault - gets whole entity, defaulted
-      ✅ entities POST - gets whole entity
-        ✅ entityName:string, id:'id, payload:'payload
-        ✅ deserializeA:'id x 'payload -> A + error
-        ✅ processA:'id x A -> error
       ❌ entities PATCH - gets single value and path of change
+        ❌ this is not easy to consume, can we facilitate the building of concrete writers?
+        ❌ type DeltaBase, inherited by DeltaX for each entity X
+          ❌ all those `Delta*` types are generic parameters of the method
+          ❌ the writers are the transitive closure of all the types with an update API
+            ❌ watch out for loops in the type definitions
+            ❌ test it on the expr sample
+          ❌ the writers are a single parameter with one instance of the interface of each writer as fields
+            ❌ generic in all the deltas
+          ❌ `WriterX = { ... f:Delta -> DeltaX + error }` when `f` is a primitive field in any of the cases of the union or the fields of the record
+          ❌ `WriterX = { ... Y:DeltaY x Delta -> DeltaX + error }` when `Y` is a nested entity field of type `Y`
+            ❌ `DeltaY` are the folded/accumulated effects from the child up
+            ❌ `Delta` is the next step of effects, a polymorphic structure that might also define adding/removing operations on collections
+        ❌ `Patch[Delta](writerA, writerB, ...) => (path:[Delta x FieldName], EntityName)`
+        ```
+        assuming
+          A
+            B
+              C.x
+            C.x
+        if path.Length == 0 return error
+        switch entityName {
+            case "A":
+              switch path[0].FieldName {
+                case "B": <- field name
+                  if B is a lookup, and path.length > 1
+                    var deltaB:DeltaB = entityPatch(... writers ...)(path[1..], "B") <- not field name, but rather type of child entity
+                    if deltaB is error return error
+                    else return writerA.B(deltaB, path[0].Delta)
+                  elif B is a primitive, and path.length == 1
+                    return writerA.B(path[0].Delta) <- path.Length == 1, and terminal field
+                case "C": ...
+              }
+            case "B":
+              ...
+        }
+        ```
+        ❌ generated comment on how to instantiate the whole thing
+    ❌ currying the arguments of `entityGET` and `entityPOST`
     ❌ add paginated lists
     ❌ add lazy fields
-    ❌ add `extends` statement to unions
     ❌ add `extends` statement to unions
     ❌ distinguish Sum (with renderer like List) from SingleSelection (only renderer for streams)
       ❌ allow Left and Right matching on Sum
@@ -143,10 +142,10 @@
     ❌ improve the syntax of types and expressions with fslex and fsyacc
     ❌ codegen the `import` command with some sort of linking strategy for shared files
     ✅ allow union types (needs adjustment in frontend too)
-  ✅ models
-    ✅ users
-    ✅ registration-tokens
-    ✅ user events
+
+  ❌ make validator partial
+  ❌ show both data-sync and type-safe forms in FormsApp
+  ❌ check that we can inspect a local DB (MySQL, Redis, ES, Postgres)
   ❌ expose ballerina-core as a nuget package
   ❌ expose ballerina-runtime as a nuget package
   ❌ registration, etc. coroutines
@@ -557,12 +556,3 @@
         then the widenChildren operator checks the kind and decides how to perform the mapping
   ❌ pair
   ❌ standard templates for unions, lists, trees, products, and sums
-
-❌ Backend
-  ❌ Coroutines
-    ❌ Streams
-  ❌ OData-style queries
-  ❌ Some sort of scaffolder and query-generator connected to endpoints and based on coroutines
-  ❌ Entities, relations, and permissions scaffolder
-  ❌ Endpoints scaffolder
-  ❌ Language-independent backend framework

@@ -155,10 +155,9 @@ module Parser =
       | UnionRenderer r ->
         ExprType.UnionType(
           r.Cases
-          |> Seq.map (fun c ->
-            { CaseName = c.Key.CaseName
-              Fields = c.Value.Type })
-          |> List.ofSeq
+          |> Map.map (fun cn c ->
+            { CaseName = cn.CaseName
+              Fields = c.Type })
         )
 
   type Expr with
@@ -554,7 +553,9 @@ module Parser =
                       PrimitiveRendererId = Guid.CreateVersion7()
                       Type =
                         ExprType.UnionType(
-                          cases |> Seq.map (fun (n, t) -> { CaseName = n; Fields = t.Type }) |> List.ofSeq
+                          cases
+                          |> Seq.map (fun (n, t) -> ({ CaseName = n }, { CaseName = n; Fields = t.Type }))
+                          |> Map.ofSeq
                         )
                       Children = { Fields = Map.empty } }
                  Cases = cases |> Seq.map (fun (n, t) -> { CaseName = n }, t) |> Map.ofSeq
@@ -1162,7 +1163,10 @@ module Parser =
 
                                 let! cases = state.All(cases |> Seq.map (ExprType.ParseUnionCase))
 
-                                return ExprType.UnionType cases
+                                return
+                                  ExprType.UnionType(
+                                    cases |> Seq.map (fun c -> { CaseName = c.CaseName }, c) |> Map.ofSeq
+                                  )
                               }
                               |> state.MapError(Errors.WithPriority ErrorPriority.High)
                           }
@@ -1187,7 +1191,7 @@ module Parser =
           |> Errors.Singleton
         )
 
-    static member GetCases(t: ExprType) : Sum<List<UnionCase>, Errors> =
+    static member GetCases(t: ExprType) : Sum<Map<CaseName, UnionCase>, Errors> =
       match t with
       | ExprType.UnionType cs -> sum { return cs }
       | _ -> sum.Throw(sprintf "Error: type %A is no union and thus has no cases" t |> Errors.Singleton)
