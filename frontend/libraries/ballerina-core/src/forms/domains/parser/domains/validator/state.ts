@@ -254,7 +254,6 @@ export const FormsConfig = {
           );
           parsedTypes = parsedTypes.set(rawTypeName, parsedType);
         });
-
         let enums: Map<string, TypeName> = Map();
         Object.entries(formsConfig.apis.enumOptions).forEach(
           ([enumOptionName, enumOption]) =>
@@ -284,6 +283,9 @@ export const FormsConfig = {
             });
           },
         );
+
+        console.debug("parsed types");
+        console.debug(parsedTypes.toJS());
 
         let forms: Map<string, ParsedFormConfig<T>> = Map();
         Object.entries(formsConfig.forms).forEach(
@@ -316,7 +318,11 @@ export const FormsConfig = {
 
             Object.entries(form.fields).forEach(
               ([fieldName, field]: [fieldName: string, field: any]) => {
+                console.debug("HI 1");
+                console.debug(fieldName);
                 const fieldType = formType.fields.get(fieldName)!;
+                console.debug(fieldType);
+                console.debug("HI 2");
 
                 const bwcompatiblefield =
                   fieldType.kind == "application" &&

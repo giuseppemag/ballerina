@@ -75,12 +75,15 @@
     },
     "Address": {
       "fields": {
-        "street": "string",
-        "number": "number",
-        "city": {
-          "fun": "SingleSelection",
+        "streetNumberAndCity": {
+          "fun": "Tuple",
           "args": [
-            "CityRef"
+            "string",
+            "number",
+            {
+              "fun": "SingleSelection",
+              "args": ["CityRef"]
+            }
           ]
         }
       }
@@ -239,24 +242,24 @@
             "DepartmentRef"
           ]
         },
-        "mainAddress": "Address",
-        "addresses": {
-          "fun": "List",
-          "args": [
-            "Address"
-          ]
-        },
         "emails": {
           "fun": "List",
           "args": [
             "string"
           ]
         },
-        "addressesWithLabel": {
-          "fun": "Map",
+        "mainAddress": "Address",
+        "addressesAndAddressesWithLabel": {
+          "fun": "Tuple",
           "args": [
-            "string",
-            "Address"
+            {
+              "fun": "List",
+              "args": ["Address"]
+            },
+            {
+              "fun": "Map",
+              "args": ["string", "Address"]
+            }
           ]
         },
         "addressesByCity": {
@@ -411,46 +414,20 @@
     "address": {
       "type": "Address",
       "fields": {
-        "street": {
-          "renderer": "defaultString",
-          "visible": {
-            "kind": "or",
-            "operands": [
-              {
-                "kind": "fieldLookup",
-                "operands": [
-                  {
-                    "kind": "varLookup",
-                    "varName": "root"
-                  },
-                  "subscribeToNewsletter"
-                ]
-              },
-              {
-                "kind": "equals",
-                "operands": [
-                  {
-                    "kind": "fieldLookup",
-                    "operands": [
-                      {
-                        "kind": "varLookup",
-                        "varName": "local"
-                      },
-                      "number"
-                    ]
-                  },
-                  10
-                ]
-              }
-            ]
-          }
-        },
-        "number": {
-          "renderer": "defaultNumber"
-        },
-        "city": {
-          "renderer": "defaultInfiniteStream",
-          "stream": "cities"
+        "streetNumberAndCity": {
+          "renderer": "defaultTuple3",
+          "itemRenderers": [
+            {
+              "renderer": "defaultString"
+            },
+            {
+              "renderer": "defaultNumber"
+            },
+            {
+              "renderer": "defaultInfiniteStream",
+              "stream": "cities"
+            }
+          ]
         }
       },
       "tabs": {
@@ -458,11 +435,7 @@
           "columns": {
             "main": {
               "groups": {
-                "main": [
-                  "street",
-                  "number",
-                  "city"
-                ]
+                "main": ["streetNumberAndCity"]
               }
             }
           }
@@ -665,14 +638,6 @@
           "label": "main address",
           "renderer": "address"
         },
-        "addresses": {
-          "label": "other addresses",
-          "renderer": "defaultList",
-          "elementRenderer": {
-            "label": "address",
-            "renderer": "address"
-          }
-        },
         "emails": {
           "label": "emails",
           "renderer": "defaultList",
@@ -681,17 +646,29 @@
             "renderer": "defaultString"
           }
         },
-        "addressesWithLabel": {
-          "label": "addresses with label",
-          "renderer": "defaultMap",
-          "keyRenderer": {
-            "label": "address label",
-            "renderer": "defaultString"
-          },
-          "valueRenderer": {
-            "label": "address",
-            "renderer": "address"
-          }
+        "addressesAndAddressesWithLabel": {
+          "label": "other addresses",
+          "renderer": "defaultTuple2",
+          "itemRenderers": [
+            {
+              "renderer": "defaultList",
+              "elementRenderer": {
+                "label": "address",
+                "renderer": "address"
+              }
+            },
+            {
+              "renderer": "defaultMap",
+              "keyRenderer": {
+                "label": "address label",
+                "renderer": "defaultString"
+              },
+              "valueRenderer": {
+                "label": "address",
+                "renderer": "address"
+              }
+            }
+          ]
         },
         "addressesByCity": {
           "label": "addresses by city",
@@ -808,8 +785,7 @@
                 "main": [
                   "departments",
                   "mainAddress",
-                  "addresses",
-                  "addressesWithLabel",
+                  "addressesAndAddressesWithLabel",
                   "addressesByCity",
                   "addressesWithColorLabel",
                   "permissions",

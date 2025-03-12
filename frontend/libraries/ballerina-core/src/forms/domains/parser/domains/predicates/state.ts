@@ -18,6 +18,11 @@ export type FieldPredicateExpression =
       value: Expr;
       keyExpression: FieldPredicateExpression;
       valueExpression: FieldPredicateExpression;
+    }
+  | {
+      kind: "tuple";
+      value: Expr;
+      elementExpressions: FieldPredicateExpression[];
     };
 
 const calculateVisibility = (
@@ -61,6 +66,10 @@ export const FieldPredicateExpression = {
       keyExpression,
       valueExpression,
     }),
+    tuple: (
+      value: Expr,
+      elementExpressions: FieldPredicateExpression[],
+    ): FieldPredicateExpression => ({ kind: "tuple", value, elementExpressions }),
   },
 };
 
@@ -84,6 +93,11 @@ export type FormFieldPredicateEvaluation =
         key: FormFieldPredicateEvaluation;
         value: FormFieldPredicateEvaluation;
       }[];
+    }
+  | {
+      kind: "tuple";
+      value: boolean;
+      elementValues: FormFieldPredicateEvaluation[];
     };
 
 export const FormFieldPredicateEvaluation = {
@@ -107,6 +121,10 @@ export const FormFieldPredicateEvaluation = {
         value: FormFieldPredicateEvaluation;
       }[],
     ): FormFieldPredicateEvaluation => ({ kind: "map", value, elementValues }),
+    tuple: (
+      value: boolean,
+      elementValues: FormFieldPredicateEvaluation[],
+    ): FormFieldPredicateEvaluation => ({ kind: "tuple", value, elementValues }),
   },
 };
 

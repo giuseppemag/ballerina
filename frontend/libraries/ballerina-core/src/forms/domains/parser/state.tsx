@@ -87,8 +87,10 @@ export const ParseForm = <T,>(
       },
       formDef.fields.get(fieldName)!,
     );
-    if (parsedFormConfig.kind == "errors")
+    if (parsedFormConfig.kind == "errors"){
+      console.error(parsedFormConfig.errors.toJS());
       throw Error(`Error parsing form ${fieldsViewsConfig[fieldName]}`);
+    }
     formConfig[fieldName] = parsedFormConfig.value.form.renderer;
     visibilityPredicateExpressions = visibilityPredicateExpressions.set(
       fieldName,
@@ -381,6 +383,8 @@ export const parseFormsToLaunchers =
 
     const parsedForms = parsedFormsResult.value;
 
+    console.debug("parsedForms", parsedForms);
+
     formsConfig.launchers.edit.forEach((launcher, launcherName) => {
       const parsedForm = parsedForms.get(launcher.form)!;
       const form = parsedForm.form;
@@ -472,7 +476,7 @@ export const parseFormsToLaunchers =
                     visibilities: _.visibilities,
                     disabledFields: _.disabledFields,
                   })),
-              }) as any,
+              } as any),
           )
           .withViewFromProps((props) => props.context.submitButtonWrapper)
           .mapForeignMutationsFromProps(
@@ -698,7 +702,7 @@ export const parseFormsToLaunchers =
                       visibilities: _.visibilities,
                       disabledFields: _.disabledFields,
                     })),
-                }) as any,
+                } as any),
             )
             .withViewFromProps((props) => props.context.containerWrapper)
             .mapForeignMutationsFromProps(

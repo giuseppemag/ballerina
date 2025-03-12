@@ -73,4 +73,8 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
           value: _[1],
         })),
   },
+  Tuple: {
+    fromAPIRawValue: (_) => (_ == undefined ? List() : List(_)),
+    toAPIRawValue: ([_, __]) => _.valueSeq().toArray(),
+  },
 };

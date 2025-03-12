@@ -19,8 +19,10 @@ import {
   SecretView,
   PredicateValue,
   ValueRecord,
+  TupleFieldView,
 } from "ballerina-core";
 import { CategoryView } from "../injected-forms/category";
+import { List } from "node_modules/immutable/dist/immutable";
 
 export const MostUglyValidationDebugView = (props: {
   context: { commonFormState: CommonFormState };
@@ -670,6 +672,30 @@ export const PersonFieldViews = {
           >
             ➕
           </button>
+        </>
+      ),
+  },
+  tuple: {
+    defaultTuple2:
+      <
+        FormState extends List<{ commonFormState: { modifiedByUser: boolean } }>,
+        Context extends FormLabel,
+        ForeignMutationsExpected,
+      >(): TupleFieldView<FormState, Context, ForeignMutationsExpected> =>
+      (props) => (
+        <>
+          {props.context.label && <h3>{props.context.label}</h3>}
+        </>
+      ),
+    defaultTuple3:
+      <
+        FormState extends List<{ commonFormState: { modifiedByUser: boolean } }>,
+        Context extends FormLabel,
+        ForeignMutationsExpected,
+      >(): TupleFieldView<FormState, Context, ForeignMutationsExpected> =>
+      (props) => (
+        <>
+          {props.context.label && <h3>{props.context.label}</h3>}
         </>
       ),
   },

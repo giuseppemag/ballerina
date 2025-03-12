@@ -119,6 +119,8 @@ export * from "./src/forms/domains/parser/domains/injectables/state";
 export * from "./src/forms/domains/parser/domains/predicates/state";
 export * from "./src/forms/domains/launcher/domains/passthrough/state";
 export * from "./src/forms/domains/launcher/domains/passthrough/template";
+export * from "./src/forms/domains/primitives/domains/tuple/state";
+export * from "./src/forms/domains/primitives/domains/tuple/template";
 
 // import { simpleUpdater, simpleUpdaterWithChildren } from "./src/fun/domains/updater/domains/simpleUpdater/state"
 // import { Updater } from "./src/fun/domains/updater/state"

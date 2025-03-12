@@ -48,6 +48,7 @@ export const GenericTypes = [
   "List",
   "Map",
   "Union",
+  "Tuple",
   "Option",
 ] as const;
 export type GenericType = (typeof GenericTypes)[number];
@@ -114,6 +115,7 @@ export type BuiltInApiConverters = {
   >;
   List: ApiConverter<List<any>>;
   Map: ApiConverter<List<[any, any]>>;
+  Tuple: ApiConverter<List<any>>;
 };
 
 export type PrimitiveBuiltIn = {
@@ -137,6 +139,7 @@ export type BuiltIns = {
     streamMultiSelection: Set<string>;
     list: Set<string>;
     map: Set<string>;
+    tuple: Set<string>;
   };
 };
 
@@ -215,6 +218,11 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
         string,
         GenericBuiltIn,
       ],
+      // TODO - this won't work, may need to be a map or function to generate the default values based on types
+      ["Tuple", { defaultValue: PredicateValue.Default.tuple(List()) }] as [
+        string,
+        GenericBuiltIn,
+      ],
       ["Union", { defaultValue: PredicateValue.Default.record(Map()) }] as [
         string,
         GenericBuiltIn,
@@ -239,12 +247,14 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
       number: Set(),
       string: Set(),
       list: Set(),
+      tuple: Set(),
       base64File: Set(),
       secret: Set(),
       map: Set(),
     },
   };
   Object.keys(builtins.renderers).forEach((_categoryName) => {
+    console.debug(_categoryName);
     const categoryName = _categoryName as keyof BuiltIns["renderers"];
     if (categoryName in fieldViews) {
       Object.keys(fieldViews[categoryName]).forEach((viewName) => {
@@ -253,6 +263,7 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
       });
     }
   });
+  console.debug(builtins.renderers);
   return builtins;
 };
 
@@ -271,6 +282,8 @@ export const defaultValue =
       if (primitive != undefined) return primitive.defaultValue;
       if (injectedPrimitive != undefined) return injectedPrimitive.defaultValue;
     }
+
+    // TODO: Special case for Tuple
 
     if (t.kind == "application") {
       const generic = builtIns.generics.get(t.value);
@@ -309,6 +322,8 @@ export const fromAPIRawValue =
     injectedPrimitives?: InjectedPrimitives<T>,
   ) =>
   (raw: any): ValueOrErrors<PredicateValue, string> => {
+    console.debug(`fromAPIRawValue ${JSON.stringify(raw, undefined, 2)}`);
+    console.debug(`fromAPIRawValue ${JSON.stringify(t, undefined, 2)}`);
     if (raw == undefined) {
       return ValueOrErrors.Default.throwOne(
         `raw value is undefined for type ${JSON.stringify(t)}`,
@@ -479,7 +494,6 @@ export const fromAPIRawValue =
             )}`,
           );
         }
-
         const result = converters[t.value].fromAPIRawValue(raw);
 
         return ValueOrErrors.Operations.All(
@@ -504,6 +518,28 @@ export const fromAPIRawValue =
                   ),
                 ),
               ),
+            ),
+          ),
+        ).Then((values) =>
+          ValueOrErrors.Default.return(
+            PredicateValue.Default.tuple(List(values)),
+          ),
+        );
+      }
+
+      if (t.value == "Tuple") {
+        // TODO checks
+        const result = converters[t.value].fromAPIRawValue(raw);
+        return ValueOrErrors.Operations.All(
+          List<ValueOrErrors<PredicateValue, string>>(
+            result.map((_, index) =>
+              fromAPIRawValue(
+                t.args[index],
+                types,
+                builtIns,
+                converters,
+                injectedPrimitives,
+              )(_),
             ),
           ),
         ).Then((values) =>
