@@ -56,6 +56,13 @@ module Validator =
           do! m.Children |> validateChildren
 
           return fr.Type
+        | Renderer.SumRenderer(s) ->
+          do! !s.Sum |> Sum.map ignore
+          do! !s.Left.Renderer |> Sum.map ignore
+          do! !s.Right.Renderer |> Sum.map ignore
+
+          do! s.Children |> validateChildren
+          return fr.Type
         | Renderer.PrimitiveRenderer p ->
           do! p.Children |> validateChildren
 
@@ -141,6 +148,12 @@ module Validator =
           do! !!kv.Value
 
           do! kv.Children |> validateChildrenPredicates
+        | Renderer.SumRenderer s ->
+          do! !s.Sum
+          do! !!s.Left
+          do! !!s.Right
+
+          do! s.Children |> validateChildrenPredicates
         | Renderer.StreamRenderer(_, e) -> return! !e
         | Renderer.FormRenderer(f, e, children) ->
           let! f = ctx.TryFindForm f.FormName |> state.OfSum

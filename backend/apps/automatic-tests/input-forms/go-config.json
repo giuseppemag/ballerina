@@ -9,6 +9,7 @@
   "Set":{ "GeneratedTypeName": "ballerina.Set", "RequiredImport": "ballerina.com/core", "SupportedRenderers": { "Enum":["defaultEnumMultiselect"], "Stream":["defaultInfiniteStreamMultiselect"] }, "DefaultConstructor":"ballerina.DefaultSet" },
   "List":{ "GeneratedTypeName": "ballerina.Array", "RequiredImport": "ballerina.com/core", "SupportedRenderers": ["defaultList"], "MappingFunction":"ballerina.MapArray", "DefaultConstructor":"ballerina.DefaultArray" },
   "Map":{ "GeneratedTypeName": "ballerina.Map", "RequiredImport": "ballerina.com/core", "SupportedRenderers": ["defaultMap"], "DefaultConstructor":"ballerina.DefaultMap" },
+  "Sum":{ "GeneratedTypeName": "ballerina.Sum", "RequiredImport": "ballerina.com/core", "SupportedRenderers": ["defaultSum"], "DefaultConstructor":"ballerina.DefaultSum" },
   "Tuple":[
     {"Ariety" :2, "GeneratedTypeName": "ballerina.Tuple2", "RequiredImport": "ballerina.com/core", "SupportedRenderers": ["defaultTuple2"], "Constructor":"ballerina.NewTuple2" },
     {"Ariety" :3, "GeneratedTypeName": "ballerina.Tuple3", "RequiredImport": "ballerina.com/core", "SupportedRenderers": ["defaultTuple3"], "Constructor":"ballerina.NewTuple3" }

@@ -53,6 +53,10 @@ module Golang =
           let! k = k |> ExprType.ToGolangTypeAnnotation
           let! v = v |> ExprType.ToGolangTypeAnnotation
           return $"{cfg.Map.DefaultConstructor}[{k}, {v}]()"
+        | ExprType.SumType(l, r) ->
+          let! l = l |> ExprType.ToGolangTypeAnnotation
+          let! r = r |> ExprType.ToGolangTypeAnnotation
+          return $"{cfg.Sum.DefaultConstructor}[{l}, {r}]()"
         | ExprType.OptionType(e) ->
           let! e = e |> ExprType.ToGolangTypeAnnotation
           return $"{cfg.Option.DefaultConstructor}[{e}]()"
@@ -180,6 +184,19 @@ module Golang =
             |> state.SetState
 
           return $"{config.Map.GeneratedTypeName}[{k},{v}]"
+        | ExprType.SumType(l, r) ->
+          let! l = !l
+          let! r = !r
+
+          do!
+            config.Sum.RequiredImport
+            |> Option.toList
+            |> Set.ofList
+            |> Set.union
+            |> GoCodeGenState.Updaters.UsedImports
+            |> state.SetState
+            
+          return $"{config.Sum.GeneratedTypeName}[{l},{r}]"
         | _ -> return! error
       }
 
