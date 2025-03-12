@@ -254,7 +254,6 @@
             "string"
           ]
         },
-        "mainAddress": "Address",
         "addressesAndAddressesWithLabel": {
           "fun": "Tuple",
           "args": [
@@ -284,12 +283,6 @@
           "fun": "Sum",
           "args": [
             "string",
-            "Address"
-          ]
-        },
-        "addresses": {
-          "fun": "List",
-          "args": [
             "Address"
           ]
         },

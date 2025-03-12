@@ -317,7 +317,6 @@ const entityApis: EntityApis = {
               name: "",
               surname: "",
               birthday: "01/01/2000",
-              subscribeToNewsletter: false,
               favoriteColor: { Value: { Value: null }, IsSome: false },
               gender: {
                 Kind: "r",
@@ -326,14 +325,12 @@ const entityApis: EntityApis = {
               dependants: [],
               friendsByCategory: [],
               relatives: [],
+              subscribeToNewsletter: false,
               interests: [],
               departments: [],
               mainAddress: {
-                streetNumberAndCity: [
-                  "",
-                  0,
-                  { IsSome: false, Value: { Value: null } },
-                ],
+                Kind: "l",
+                Value: "",
               },
               addressesBy: {
                 Kind: "r",
@@ -344,7 +341,7 @@ const entityApis: EntityApis = {
                 Value: "",
               },
               emails: [],
-              addressesAndAddressesWithLabel: [],
+              addressesAndAddressesWithLabel: [[],[]],
               addressesByCity: [],
               addressesWithColorLabel: [],
               permissions: [],

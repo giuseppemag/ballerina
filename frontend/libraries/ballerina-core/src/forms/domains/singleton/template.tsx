@@ -93,11 +93,13 @@ export const Form = <
                   : undefined;
               const elementVisibilities =
                 visibilitiesFromParent?.kind == "list" ||
-                visibilitiesFromParent?.kind == "map"
+                visibilitiesFromParent?.kind == "map" ||
+                visibilitiesFromParent?.kind == "tuple"
                   ? visibilitiesFromParent.elementValues
                   : visibilitiesFromParent?.kind == "sum"
                   ? visibilitiesFromParent.innerValue?.kind == "list" ||
-                    visibilitiesFromParent.innerValue?.kind == "map"
+                    visibilitiesFromParent.innerValue?.kind == "map" ||
+                    visibilitiesFromParent.innerValue?.kind == "tuple"
                     ? visibilitiesFromParent.innerValue.elementValues
                     : visibilitiesFromParent.innerValue
                   : undefined;
@@ -108,11 +110,13 @@ export const Form = <
                   : undefined;
               const elementDisabled =
                 disabledFieldsFromParent?.kind == "list" ||
-                disabledFieldsFromParent?.kind == "map"
+                disabledFieldsFromParent?.kind == "map" ||
+                disabledFieldsFromParent?.kind == "tuple"
                   ? disabledFieldsFromParent.elementValues
                   : disabledFieldsFromParent?.kind == "sum"
                   ? disabledFieldsFromParent.innerValue?.kind == "list" ||
-                    disabledFieldsFromParent.innerValue?.kind == "map"
+                    disabledFieldsFromParent.innerValue?.kind == "map" ||
+                    disabledFieldsFromParent.innerValue?.kind == "tuple"
                     ? disabledFieldsFromParent.innerValue.elementValues
                     : disabledFieldsFromParent.innerValue
                   : undefined;
