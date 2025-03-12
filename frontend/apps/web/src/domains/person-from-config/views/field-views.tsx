@@ -19,6 +19,7 @@ import {
   SecretView,
   PredicateValue,
   ValueRecord,
+  SumFieldView,
 } from "ballerina-core";
 import { CategoryView } from "../injected-forms/category";
 
@@ -672,5 +673,45 @@ export const PersonFieldViews = {
           </button>
         </>
       ),
+  },
+  sum: {
+    defaultSum: <
+      LeftFormState,
+      RightFormState,
+      Context extends FormLabel,
+      ForeignMutationsExpected,
+    >(): SumFieldView<
+      LeftFormState,
+      RightFormState,
+      Context,
+      ForeignMutationsExpected
+    > => {
+      return (props) => {
+        const checkboxId = 'sum-switch-' + props.context.label?.replaceAll(' ', '-')
+        return (
+          <>
+            {props.context.label && <h3>{props.context.label}</h3>}
+            <input
+              id={checkboxId}
+              type="checkbox"
+              checked={props.context.value.value.kind === "l"}
+              onChange={(e) => props.foreignMutations.onSwitch()}
+            />
+            <label htmlFor={checkboxId}>
+              current: {props.context.value.value.kind.toUpperCase()}
+            </label>
+            {props.embeddedLeftTemplate()({
+              ...props,
+              view: unit,
+            })}
+            {props.embeddedRightTemplate()({
+              ...props,
+              view: unit,
+            })}
+            <MostUglyValidationDebugView {...props} />
+          </>
+        );
+      };
+    },
   },
 };
