@@ -842,7 +842,6 @@ export const toAPIRawValue =
       }
 
       if (t.value === "Sum") {
-        console.debug("toAPIRawValue: ", raw, t);
         if (!PredicateValue.Operations.IsSum(raw)) {
           return ValueOrErrors.Default.throwOne(
             `Sum expected but got ${JSON.stringify(raw)}`,

@@ -559,30 +559,21 @@ export const PredicateValue = {
         );
       }
       if (type.kind == "application" && type.value == "Sum") {
-        // TODO
-        return ValueOrErrors.Operations.All(
-          List<ValueOrErrors<PredicateValue, string>>(
-            json.map((keyValue: any) =>
-              PredicateValue.Operations.parse(
-                keyValue.key,
-                type.args[0],
-                types,
-              ).Then((key) =>
-                PredicateValue.Operations.parse(
-                  keyValue.value,
-                  type?.args[1],
-                  types,
-                ).Then((value) =>
-                  ValueOrErrors.Default.return(
-                    PredicateValue.Default.tuple(List([key, value])),
-                  ),
-                ),
-              ),
+        return PredicateValue.Operations.parse(
+          json.left,
+          type?.args[0],
+          types,
+        ).Then((left) =>
+          PredicateValue.Operations.parse(
+            json.right,
+            type?.args[1],
+            types,
+          ).Then((right) =>
+            ValueOrErrors.Default.return(
+              PredicateValue.Default.tuple(List([left, right])),
             ),
           ),
-        ).Then((values) =>
-          ValueOrErrors.Default.return(PredicateValue.Default.tuple(values)),
-        );
+        )
       }
       if (type.kind == "application" && type.value == "SingleSelection") {
         ValueOrErrors.Default.return(
