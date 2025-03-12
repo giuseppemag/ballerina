@@ -4,11 +4,11 @@
       "fun": "Union",
       "args": [
         {
-          "case": "ERP:SAP",
+          "caseName": "ERP:SAP",
           "fields": {}
         },
         {
-          "case": "ERP:BC",
+          "caseName": "ERP:BC",
           "fields": {}
         },
         {

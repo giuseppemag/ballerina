@@ -512,8 +512,8 @@ const sample2: Expr = {
           .set("ERP:BC", { parameter: "_", body: false })
           .set("ERP:FAndO", { parameter: "_", body: false }),
 
-        // { "case":"ERP:BC", "handler":{ "kind":"lambda", "parameter":"_", "body":false } },
-        // { "case":"ERP:FAndO", "handler":{ "kind":"lambda", "parameter":"_", "body":false } }
+        // { "caseName":"ERP:BC", "handler":{ "kind":"lambda", "parameter":"_", "body":false } },
+        // { "caseName":"ERP:FAndO", "handler":{ "kind":"lambda", "parameter":"_", "body":false } }
       ],
     },
   ],

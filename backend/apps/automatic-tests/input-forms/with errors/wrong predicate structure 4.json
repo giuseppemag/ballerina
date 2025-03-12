@@ -4,18 +4,18 @@
       "fun": "Union",
       "args": [
         {
-          "case": "Admin",
+          "caseName": "Admin",
           "fields": {
             "IsSuperAdmin":"boolean"
           }
         },
         {
-          "case": "SuperUser",
+          "caseName": "SuperUser",
           "fields": {
           }
         },
         {
-          "case": "User",
+          "caseName": "User",
           "fields": {
           }
         }
@@ -68,10 +68,10 @@
             "kind":"matchCase",
             "operands":[
               { "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"global" }, "Role"] },
-              { "case":"Admin", "handler":{ "kind":"lambda", "parameter":"adminFields", "body":
+              { "caseName":"Admin", "handler":{ "kind":"lambda", "parameter":"adminFields", "body":
                 { "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"adminFields" }, "IsSuperAdmin"] }
               } },
-              { "case":"SuperUser", "handler":{ "kind":"lambda", "parameter":"_", "body":true } }
+              { "caseName":"SuperUser", "handler":{ "kind":"lambda", "parameter":"_", "body":true } }
             ]
           }
         }

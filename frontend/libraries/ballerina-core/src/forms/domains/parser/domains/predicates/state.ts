@@ -179,7 +179,7 @@ export type PredicateValue =
 
 export type ExprLambda = { kind: "lambda"; parameter: string; body: Expr };
 export type ExprMatchCase = { kind: "matchCase"; operands: Expr[] };
-export type ExprCase = { kind: "case"; caseName: string; handler: ExprLambda };
+export type ExprCase = { kind: "caseName"; caseName: string; handler: ExprLambda };
 export type ExprFieldLookup = { kind: "fieldLookup"; operands: [Expr, string] };
 export type ExprIsCase = { kind: "isCase"; operands: [Expr, string] };
 export type ExprBinaryOperator = {
@@ -669,7 +669,7 @@ export const Expr = {
       body,
     }),
     case: (caseName: string, handler: ExprLambda): Expr => ({
-      kind: "case",
+      kind: "caseName",
       caseName,
       handler,
     }),
@@ -700,7 +700,7 @@ export const Expr = {
       return (
         typeof e == "object" &&
         !PredicateValue.Operations.IsDate(e) &&
-        e.kind == "case"
+        e.kind == "caseName"
       );
     },
     IsCaseArray: (e: Expr[]): e is ExprCase[] => {

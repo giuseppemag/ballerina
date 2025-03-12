@@ -4,18 +4,18 @@
       "fun": "Union",
       "args": [
         {
-          "case": "Admin",
+          "caseName": "Admin",
           "fields": {
             "IsSuperAdmin":"boolean"
           }
         },
         {
-          "case": "SuperUser",
+          "caseName": "SuperUser",
           "fields": {
           }
         },
         {
-          "case": "User",
+          "caseName": "User",
           "fields": {
           }
         }

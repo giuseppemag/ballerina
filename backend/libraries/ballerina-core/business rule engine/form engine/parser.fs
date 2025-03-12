@@ -166,7 +166,7 @@ module Parser =
       : State<string * VarName * Expr, CodeGenConfig, ParsedFormsContext, Errors> =
       state {
         let! json = json |> JsonValue.AsRecord |> state.OfSum
-        let! caseJson = json |> sum.TryFindField "case" |> state.OfSum
+        let! caseJson = json |> sum.TryFindField "caseName" |> state.OfSum
 
         return!
           state {
@@ -961,7 +961,8 @@ module Parser =
       state {
         let! args = json |> JsonValue.AsRecord |> state.OfSum
 
-        let! caseJson, fieldsJson = state.All2 (args |> state.TryFindField "case") (args |> state.TryFindField "fields")
+        let! caseJson, fieldsJson =
+          state.All2 (args |> state.TryFindField "caseName") (args |> state.TryFindField "fields")
 
         let! caseName = caseJson |> JsonValue.AsString |> state.OfSum
 

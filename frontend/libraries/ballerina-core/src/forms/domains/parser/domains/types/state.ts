@@ -41,7 +41,7 @@ export const RawType = {
     _.fun == "Union" &&
     Array.isArray(_["args"]) &&
     _["args"].every(
-      (__) => typeof __ == "object" && "case" in __ && "fields" in __,
+      (__) => typeof __ == "object" && "caseName"ame" in __ && "fields" in __,
     ),
 };
 export type RawApplicationType<T> = {
@@ -114,7 +114,7 @@ export const RawFieldType = {
     _.fun == "MultiSelection" &&
     _.args.length == 1,
   isUnionCase: <T>(_: RawFieldType<T>): _ is { case: string; fields: object } =>
-    typeof _ == "object" && "case" in _ && "fields" in _,
+    typeof _ == "object" && "caseName"ame" in _ && "fields" in _,
   isUnion: <T>(
     _: RawFieldType<T>,
   ): _ is { fun: "Union"; args: Array<{ case: string; fields: object }> } =>
@@ -124,7 +124,7 @@ export const RawFieldType = {
     _.fun == "Union" &&
     _.args.length > 0 &&
     _.args.every(
-      (__) => typeof __ == "object" && "case" in __ && "fields" in __,
+      (__) => typeof __ == "object" && "caseName"ame" in __ && "fields" in __,
     ),
   isForm: <T>(_: RawFieldType<T>): _ is { fields: Object } =>
     typeof _ == "object" && "fields" in _ && isObject(_.fields),

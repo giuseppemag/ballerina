@@ -4,19 +4,19 @@
       "fun": "Union",
       "args": [
         {
-          "case": "SAP:S2",
+          "caseName": "SAP:S2",
           "fields": {
             "S2OnlyField": "boolean"
           }
         },
         {
-          "case": "SAP:S3",
+          "caseName": "SAP:S3",
           "fields": {
             "S3OnlyField": "boolean"
           }
         },
         {
-          "case": "SAP:S4",
+          "caseName": "SAP:S4",
           "fields": {
             "S4OnlyField": "boolean"
           }
@@ -27,17 +27,17 @@
       "fun": "Union",
       "args": [
         {
-          "case": "ERP:SAP",
+          "caseName": "ERP:SAP",
           "fields": {
             "Value": "SAPConfig"
           }
         },
         {
-          "case": "ERP:BC",
+          "caseName": "ERP:BC",
           "fields": {}
         },
         {
-          "case": "ERP:FAndO",
+          "caseName": "ERP:FAndO",
           "fields": {}
         }
       ]
@@ -67,11 +67,11 @@
       "fun": "Union",
       "args": [
         {
-          "case": "Barista",
+          "caseName": "Barista",
           "fields": "BaristaJob"
         },
         {
-          "case": "Waiter",
+          "caseName": "Waiter",
           "fields": "WaiterJob"
         }
       ]
@@ -124,15 +124,15 @@
       "fun": "Union",
       "args": [
         {
-          "case": "M",
+          "caseName": "M",
           "fields": {}
         },
         {
-          "case": "F",
+          "caseName": "F",
           "fields": {}
         },
         {
-          "case": "X",
+          "caseName": "X",
           "fields": {}
         }
       ]
@@ -146,15 +146,15 @@
       "fun": "Union",
       "args": [
         {
-          "case": "Red",
+          "caseName": "Red",
           "fields": {}
         },
         {
-          "case": "Green",
+          "caseName": "Green",
           "fields": {}
         },
         {
-          "case": "Blue",
+          "caseName": "Blue",
           "fields": {}
         }
       ]
@@ -168,19 +168,19 @@
       "fun": "Union",
       "args": [
         {
-          "case": "Soccer",
+          "caseName": "Soccer",
           "fields": {}
         },
         {
-          "case": "Hockey",
+          "caseName": "Hockey",
           "fields": {}
         },
         {
-          "case": "BoardGames",
+          "caseName": "BoardGames",
           "fields": {}
         },
         {
-          "case": "HegelianPhilosophy",
+          "caseName": "HegelianPhilosophy",
           "fields": {}
         }
       ]
@@ -194,19 +194,19 @@
       "fun": "Union",
       "args": [
         {
-          "case": "Create",
+          "caseName": "Create",
           "fields": {}
         },
         {
-          "case": "Read",
+          "caseName": "Read",
           "fields": {}
         },
         {
-          "case": "Update",
+          "caseName": "Update",
           "fields": {}
         },
         {
-          "case": "Delete",
+          "caseName": "Delete",
           "fields": {}
         }
       ]
@@ -600,27 +600,27 @@
             "kind":"matchCase",
             "operands":[
               { "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"global" }, "ERP"] },
-              { "case":"ERP:SAP", "handler":{ "kind":"lambda", "parameter":"sapFields", "body":{
+              { "caseName":"ERP:SAP", "handler":{ "kind":"lambda", "parameter":"sapFields", "body":{
                 "kind":"matchCase",
                 "operands":[
                   { "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"sapFields" }, "Value"] },
-                  { "case":"SAP:S2", "handler":{ "kind":"lambda", "parameter":"s2Fields", "body":{ 
+                  { "caseName":"SAP:S2", "handler":{ "kind":"lambda", "parameter":"s2Fields", "body":{ 
                     "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"s2Fields" }, "S2OnlyField"] } } },
-                  { "case":"SAP:S3", "handler":{ "kind":"lambda", "parameter":"s3Fields", "body":{ 
+                  { "caseName":"SAP:S3", "handler":{ "kind":"lambda", "parameter":"s3Fields", "body":{ 
                     "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"s3Fields" }, "S3OnlyField"] } } },
-                  { "case":"SAP:S4", "handler":{ "kind":"lambda", "parameter":"s4Fields", "body":{ 
+                  { "caseName":"SAP:S4", "handler":{ "kind":"lambda", "parameter":"s4Fields", "body":{ 
                     "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"s4Fields" }, "S4OnlyField"] } } }
                     ]
                   }
                 }
               },
               {
-                "kind": "case",
+                "kind": "caseName",
                 "caseName": "ERP:BC",
                 "handler": { "kind": "lambda", "parameter": "_", "body": false }
               },
               {
-                "kind": "case",
+                "kind": "caseName",
                 "caseName": "ERP:FAndO",
                 "handler": { "kind": "lambda", "parameter": "_", "body": false }
               }

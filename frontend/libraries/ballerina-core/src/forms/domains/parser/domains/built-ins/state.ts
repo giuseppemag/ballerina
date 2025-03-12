@@ -70,7 +70,7 @@ export const VerifiedRawUnionCase = {
     IsVerifiedRawUnionCase: (value: any): value is VerifiedRawUnionCase => {
       return (
         typeof value == "object" &&
-        "case" in value &&
+        "caseName" in value &&
         typeof value.case == "string" &&
         "fields" in value &&
         typeof value.fields == "object"
