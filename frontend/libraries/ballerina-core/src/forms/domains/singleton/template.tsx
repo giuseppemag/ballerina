@@ -111,7 +111,10 @@ export const Form = <
                 disabledFieldsFromParent?.kind == "map"
                   ? disabledFieldsFromParent.elementValues
                   : disabledFieldsFromParent?.kind == "sum"
-                  ? disabledFieldsFromParent.innerValue
+                  ? disabledFieldsFromParent.innerValue?.kind == "list" ||
+                    disabledFieldsFromParent.innerValue?.kind == "map"
+                    ? disabledFieldsFromParent.innerValue.elementValues
+                    : disabledFieldsFromParent.innerValue
                   : undefined;
 
               return {

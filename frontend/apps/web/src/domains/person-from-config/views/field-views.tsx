@@ -687,16 +687,19 @@ export const PersonFieldViews = {
       ForeignMutationsExpected
     > => {
       return (props) => {
+        const checkboxId = 'sum-switch-' + props.context.label?.replaceAll(' ', '-')
         return (
           <>
             {props.context.label && <h3>{props.context.label}</h3>}
             <input
-              id="sum-switch"
+              id={checkboxId}
               type="checkbox"
               checked={props.context.value.value.kind === "l"}
               onChange={(e) => props.foreignMutations.onSwitch()}
             />
-            <label htmlFor="sum-switch">current: {props.context.value.value.kind.toUpperCase()}</label>
+            <label htmlFor={checkboxId}>
+              current: {props.context.value.value.kind.toUpperCase()}
+            </label>
             {props.embeddedLeftTemplate()({
               ...props,
               view: unit,

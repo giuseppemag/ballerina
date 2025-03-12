@@ -771,9 +771,7 @@
               "label": "address",
               "renderer": "address"
             }
-          },
-          "visible": true,
-          "disabled": false
+          }
         },
         "importantDate": {
           "label": "important date",

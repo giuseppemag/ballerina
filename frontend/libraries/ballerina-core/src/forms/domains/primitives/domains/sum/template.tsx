@@ -26,10 +26,7 @@ export const SumForm = <
   RightFormState,
   Context extends FormLabel & {
     elementVisibilities: FormFieldPredicateEvaluation;
-    elementDisabled: {
-      left: FormFieldPredicateEvaluation;
-      right: FormFieldPredicateEvaluation;
-    };
+    elementDisabled: FormFieldPredicateEvaluation;
   },
   ForeignMutationsExpected,
 >(
@@ -96,7 +93,7 @@ export const SumForm = <
             ...leftFormState,
             value: _.value.value.value,
             visibilities: _.elementVisibilities,
-            disabledFields: _.elementDisabled.left,
+            disabledFields: _.elementDisabled,
           };
           return leftContext;
         },
@@ -157,7 +154,7 @@ export const SumForm = <
               ...rightFormState,
               value: _.value.value.value,
               visibilities: _.elementVisibilities,
-              disabledFields: _.elementDisabled.right,
+              disabledFields: _.elementDisabled,
             };
           return rightContext;
         },
