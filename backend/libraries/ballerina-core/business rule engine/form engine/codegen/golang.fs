@@ -216,10 +216,9 @@ module Golang =
               for entityApi in ctx.Apis.Entities |> Map.values |> Seq.map fst do
                 yield StringBuilder.One $$"""{{entityApi.TypeId.TypeName}}Entity, """
 
-              yield StringBuilder.One "}\n"
+              yield StringBuilder.One "}\n\n"
 
-              yield
-                StringBuilder.One $"func {formName}EntityGETter[id any, result any](entityName string, entityId id, "
+              yield StringBuilder.One $"func {formName}EntityGETter[id any, result any]("
 
               let entityAPIsWithGET =
                 ctx.Apis.Entities
@@ -242,33 +241,38 @@ module Golang =
                   ))
 
 
-              yield StringBuilder.One ") (result,error) {\n"
-              yield StringBuilder.One "  var resultNil result;\n"
-              yield StringBuilder.One "  switch entityName {\n"
+              yield
+                StringBuilder.One
+                  ") func (string, id) (result,error) { return func (entityName string, entityId id) (result,error) {\n"
+
+              yield StringBuilder.One "    var resultNil result;\n"
+              yield StringBuilder.One "    switch entityName {\n"
 
               for entityApi in entityAPIsWithGET do
-                yield StringBuilder.One $$"""    case "{{entityApi.TypeId.TypeName}}Entity":  """
+                yield StringBuilder.One $$"""      case "{{entityApi.TypeId.TypeName}}Entity":  """
                 yield StringBuilder.One "\n"
-                yield StringBuilder.One $$"""      var res, err = get{{entityApi.EntityName}}(entityId);  """
-                yield StringBuilder.One "\n"
-
-                yield StringBuilder.One $$"""      if err != nil { return resultNil, err }  """
-                yield StringBuilder.One "\n"
-                yield StringBuilder.One $$"""      return serialize{{entityApi.EntityName}}(res); """
-
+                yield StringBuilder.One $$"""        var res, err = get{{entityApi.EntityName}}(entityId);  """
                 yield StringBuilder.One "\n"
 
-              yield StringBuilder.One "  }\n"
+                yield StringBuilder.One $$"""        if err != nil { return resultNil, err }  """
+                yield StringBuilder.One "\n"
+                yield StringBuilder.One $$"""        return serialize{{entityApi.EntityName}}(res); """
+
+                yield StringBuilder.One "\n"
+
+              yield StringBuilder.One "    }\n"
 
               yield
-                StringBuilder.One $"  return resultNil, {codegenConfig.EntityNotFoundError.Constructor}(entityName);\n"
+                StringBuilder.One
+                  $"    return resultNil, {codegenConfig.EntityNotFoundError.Constructor}(entityName);\n"
 
+              yield StringBuilder.One "  }\n"
               yield StringBuilder.One "}\n\n"
             }
 
           let entityDEFAULTers =
             seq {
-              yield StringBuilder.One $"func {formName}EntityDEFAULTer[result any](entityName string, "
+              yield StringBuilder.One $"func {formName}EntityDEFAULTer[result any]("
 
               let entityAPIsWithDEFAULT =
                 ctx.Apis.Entities
@@ -289,33 +293,35 @@ module Golang =
                   ))
 
 
-              yield StringBuilder.One ") (result,error) {\n"
-              yield StringBuilder.One "  var resultNil result;\n"
-              yield StringBuilder.One "  switch entityName {\n"
+              yield
+                StringBuilder.One ") func(string) (result, error) { return func(entityName string) (result, error) {\n"
+
+              yield StringBuilder.One "    var resultNil result;\n"
+              yield StringBuilder.One "    switch entityName {\n"
 
               for entityApi in entityAPIsWithDEFAULT do
-                yield StringBuilder.One $$"""    case "{{entityApi.TypeId.TypeName}}Entity":  """
+                yield StringBuilder.One $$"""      case "{{entityApi.TypeId.TypeName}}Entity":  """
                 yield StringBuilder.One "\n"
 
                 yield
                   StringBuilder.One
-                    $$"""      return serialize{{entityApi.EntityName}}(Default{{entityApi.TypeId.TypeName}}()); """
+                    $$"""        return serialize{{entityApi.EntityName}}(Default{{entityApi.TypeId.TypeName}}()); """
 
                 yield StringBuilder.One "\n"
 
-              yield StringBuilder.One "  }\n"
+              yield StringBuilder.One "    }\n"
 
               yield
-                StringBuilder.One $"  return resultNil, {codegenConfig.EntityNotFoundError.Constructor}(entityName);\n"
+                StringBuilder.One
+                  $"    return resultNil, {codegenConfig.EntityNotFoundError.Constructor}(entityName);\n"
 
+              yield StringBuilder.One "  }\n"
               yield StringBuilder.One "}\n\n"
             }
 
           let entityPOSTers =
             seq {
-              yield
-                StringBuilder.One
-                  $"func {formName}EntityPOSTer[id any, payload any](entityName string, entityId id, entityValue payload, "
+              yield StringBuilder.One $"func {formName}EntityPOSTer[id any, payload any]("
 
               let entityAPIsWithPOST =
                 ctx.Apis.Entities
@@ -338,30 +344,34 @@ module Golang =
                   ))
 
 
-              yield StringBuilder.One ") error {\n"
-              yield StringBuilder.One "  switch entityName {\n"
+              yield
+                StringBuilder.One
+                  ") func (string, id, payload) error { return func(entityName string, entityId id, entityValue payload) error {\n"
+
+              yield StringBuilder.One "    switch entityName {\n"
 
               for entityApi in entityAPIsWithPOST do
-                yield StringBuilder.One $$"""    case "{{entityApi.TypeId.TypeName}}Entity":  """
+                yield StringBuilder.One $$"""      case "{{entityApi.TypeId.TypeName}}Entity":  """
                 yield StringBuilder.One "\n"
 
                 yield
                   StringBuilder.One
-                    $$"""      var res, err = deserialize{{entityApi.EntityName}}(entityId, entityValue);  """
+                    $$"""        var res, err = deserialize{{entityApi.EntityName}}(entityId, entityValue);  """
 
                 yield StringBuilder.One "\n"
 
-                yield StringBuilder.One $$"""      if err != nil { return err; }  """
+                yield StringBuilder.One $$"""        if err != nil { return err; }  """
 
                 yield StringBuilder.One "\n"
-                yield StringBuilder.One $$"""      return process{{entityApi.EntityName}}(entityId, res);  """
+                yield StringBuilder.One $$"""        return process{{entityApi.EntityName}}(entityId, res);  """
 
                 yield StringBuilder.One "\n"
+
+              yield StringBuilder.One "    }\n"
+
+              yield StringBuilder.One $"    return {codegenConfig.EntityNotFoundError.Constructor}(entityName);\n"
 
               yield StringBuilder.One "  }\n"
-
-              yield StringBuilder.One $"  return {codegenConfig.EntityNotFoundError.Constructor}(entityName);\n"
-
               yield StringBuilder.One "}\n"
             }
 

@@ -34,54 +34,16 @@
     ✅ turn union cases into maps - makes lookups more robust and ensures uniqueness
     ❌ entites visitors
       ❌ entities PATCH - gets single value and path of change
-        ❌ this is not easy to consume, can we facilitate the building of concrete writers?
-        ❌ type DeltaBase, inherited by DeltaX for each entity X
-          ❌ all those `Delta*` types are generic parameters of the method
-          ❌ the writers are the transitive closure of all the types with an update API
-            ❌ watch out for loops in the type definitions
-            ❌ test it on the expr sample
-          ❌ the writers are a single parameter with one instance of the interface of each writer as fields
-            ❌ generic in all the deltas
-          ❌ `WriterX = { ... f:Delta -> DeltaX + error }` when `f` is a primitive field in any of the cases of the union or the fields of the record
-          ❌ `WriterX = { ... Y:DeltaY x Delta -> DeltaX + error }` when `Y` is a nested entity field of type `Y`
-            ❌ `DeltaY` are the folded/accumulated effects from the child up
-            ❌ `Delta` is the next step of effects, a polymorphic structure that might also define adding/removing operations on collections
-        ❌ `Patch[Delta](writerA, writerB, ...) => (path:[Delta x FieldName], EntityName)`
-        ```
-        assuming
-          A
-            B
-              C.x
-            C.x
-        if path.Length == 0 return error
-        switch entityName {
-            case "A":
-              switch path[0].FieldName {
-                case "B": <- field name
-                  if B is a lookup, and path.length > 1
-                    var deltaB:DeltaB = entityPatch(... writers ...)(path[1..], "B") <- not field name, but rather type of child entity
-                    if deltaB is error return error
-                    else return writerA.B(deltaB, path[0].Delta)
-                  elif B is a primitive, and path.length == 1
-                    return writerA.B(path[0].Delta) <- path.Length == 1, and terminal field
-                case "C": ...
-              }
-            case "B":
-              ...
-        }
-        ```
-        ❌ generated comment on how to instantiate the whole thing
-    ❌ currying the arguments of `entityGET` and `entityPOST`
+        ❌ `writerA: { x:Delta -> DeltaA + error; B:DeltaB x Delta -> DeltaA + error; Zero:() -> DeltaA + error }`
+        ❌ `writerB: { B1:DeltaB_B1 x Delta -> DeltaB + error; B2:DeltaB_B2 x Delta -> DeltaB + error }`
+        ❌ in short, traverse the entity, generate the deltas recursively for any nested constructs, lookups refer to existing writers, and loops are prevented with a `visited` set
+    ✅ currying the arguments of `entityGET` and `entityPOST`
     ❌ add paginated lists
     ❌ add lazy fields
+    ❌ add union renderers
+    ❌ add tuple renderers
+    ❌ add proper Sum
     ❌ add `extends` statement to unions
-    ❌ distinguish Sum (with renderer like List) from SingleSelection (only renderer for streams)
-      ❌ allow Left and Right matching on Sum
-      ❌ distinguish outer from inner renderers
-      ❌ entities GETDefault - check what is defaulted in case of option and sum
-        ❌ make sure `Option` comes down as empty
-        ❌ make sure `Sum<x,Unit>` comes down as `Right`
-        ❌ make sure `Sum<Unit,x>` comes down as `Left`
     ❌ add documentation (Confluence)
     ❌ the validator is now mature
     ❌ define live webservice variant
