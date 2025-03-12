@@ -337,7 +337,8 @@
         "holidays": {
           "fun": "List",
           "args": ["Date"]
-        }
+        },
+        "unused": "unit"
       }
     }
   },
@@ -837,6 +838,10 @@
             "label": "holiday",
             "renderer": "defaultDate"
           }
+        },
+        "unused": {
+          "label": "unused field",
+          "renderer": "defaultUnit"
         }
       },
       "tabs": {
@@ -855,7 +860,8 @@
                   "friendsByCategory",
                   "relatives",
                   "friendsBirthdays",
-                  "shoeColours"
+                  "shoeColours",
+                  "unused"
                 ]
               }
             },

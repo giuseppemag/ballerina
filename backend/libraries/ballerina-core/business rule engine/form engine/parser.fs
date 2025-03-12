@@ -160,6 +160,7 @@ module Parser =
             { CaseName = cn.CaseName
               Fields = c.Type })
         )
+      | UnitRenderer r -> r.Type
 
   type Expr with
     static member ParseMatchCase
@@ -429,6 +430,13 @@ module Parser =
               { PrimitiveRendererName = s
                 PrimitiveRendererId = Guid.CreateVersion7()
                 Type = ExprType.PrimitiveType PrimitiveType.DateOnlyType
+                Children = children }
+        elif config.Unit.SupportedRenderers |> Set.contains s then
+          return
+            PrimitiveRenderer
+              { PrimitiveRendererName = s
+                PrimitiveRendererId = Guid.CreateVersion7()
+                Type = ExprType.UnitType
                 Children = children }
         elif config.Guid.SupportedRenderers |> Set.contains s then
           return
@@ -1023,10 +1031,16 @@ module Parser =
           state.Any(
             NonEmptyList.OfList(
               state {
-                do! json |> JsonValue.AsEmptyRecord |> state.OfSum
-                return ExprType.UnitType
-              },
-              [ state {
+                  do!
+                    json
+                    |> JsonValue.AsEnum(Set.singleton "unit")
+                    |> state.OfSum
+                    |> state.Map ignore
+
+                  return ExprType.UnitType
+                },
+              [ 
+                state {
                   do!
                     json
                     |> JsonValue.AsEnum(Set.singleton "guid")
