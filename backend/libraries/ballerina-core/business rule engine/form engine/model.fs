@@ -282,6 +282,7 @@ module Model =
       {| Union: Renderer
          Cases: Map<CaseName, NestedRenderer>
          Children: RendererChildren |}
+    | UnitRenderer of NestedRenderer
 
   and NestedRenderer =
     { Label: Option<string>

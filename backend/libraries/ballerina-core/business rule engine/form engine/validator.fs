@@ -85,6 +85,9 @@ module Validator =
             |> Sum.map ignore
 
           return fr.Type
+        | Renderer.UnitRenderer nr ->
+          do! !nr.Renderer |> Sum.map ignore
+          return fr.Type
       }
 
   and NestedRenderer with
@@ -173,6 +176,7 @@ module Validator =
             |> Seq.map (NestedRenderer.ValidatePredicates ctx globalType rootType localType)
             |> state.All
             |> state.Map ignore
+        | Renderer.UnitRenderer e -> do! !!e
       }
 
   and FieldConfig with

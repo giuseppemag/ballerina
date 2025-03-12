@@ -36,6 +36,7 @@ module Golang =
         let! (cfg: CodeGenConfig) = state.GetContext()
 
         match t with
+        | ExprType.UnitType -> return cfg.Unit.DefaultConstructor
         | ExprType.PrimitiveType p ->
           match p with
           | PrimitiveType.BoolType -> return cfg.Bool.DefaultValue
@@ -105,6 +106,7 @@ module Golang =
         let! config = state.GetContext()
 
         match t with
+        | ExprType.UnitType -> return config.Unit.GeneratedTypeName
         | ExprType.LookupType t -> return t.TypeName
         | ExprType.PrimitiveType p ->
           match p with

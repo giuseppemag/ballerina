@@ -4,7 +4,7 @@
   "Bool":{ "GeneratedTypeName": "bool", "RequiredImport": null, "SupportedRenderers": ["defaultBoolean"], "DefaultValue":"false" },
   "Date":{ "GeneratedTypeName": "time.Time", "RequiredImport": "time", "SupportedRenderers": ["defaultDate"], "DefaultValue":"time.Now()" },
   "Guid":{ "GeneratedTypeName": "uuid.UUID", "RequiredImport": "github.com/google/uuid", "SupportedRenderers": [], "DefaultValue":"uuid.Nil" },
-  "Unit":{ "GeneratedTypeName": "ballerina.Unit", "RequiredImport": "ballerina.com/core", "SupportedRenderers": [], "DefaultConstructor":"ballerina.DefaultUnit" },
+  "Unit":{ "GeneratedTypeName": "ballerina.Unit", "RequiredImport": "ballerina.com/core", "SupportedRenderers": ["defaultUnit"], "DefaultConstructor":"ballerina.DefaultUnit" },
   "Option":{ "GeneratedTypeName": "ballerina.Option", "RequiredImport": "ballerina.com/core", "SupportedRenderers": { "Enum":["defaultEnum"], "Stream":["defaultInfiniteStream"] }, "DefaultConstructor":"ballerina.None" },
   "Set":{ "GeneratedTypeName": "ballerina.Set", "RequiredImport": "ballerina.com/core", "SupportedRenderers": { "Enum":["defaultEnumMultiselect"], "Stream":["defaultInfiniteStreamMultiselect"] }, "DefaultConstructor":"ballerina.DefaultSet" },
   "List":{ "GeneratedTypeName": "ballerina.Array", "RequiredImport": "ballerina.com/core", "SupportedRenderers": ["defaultList"], "MappingFunction":"ballerina.MapArray", "DefaultConstructor":"ballerina.DefaultArray" },
