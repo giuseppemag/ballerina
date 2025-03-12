@@ -12,6 +12,7 @@ import {
   PredicateValue,
   Sum,
   TypeName,
+  unit,
   ValueRecord,
   ValueTuple,
 } from "../../../../../../main";
@@ -60,7 +61,7 @@ export type ApiConverters<
 > = { [key in keyof T]: ApiConverter<T[key]["type"]> } & BuiltInApiConverters;
 
 export type VerifiedRawUnionCase = {
-  caseName: string;
+  case: string;
   fields: Record<string, any>;
 };
 
@@ -69,8 +70,8 @@ export const VerifiedRawUnionCase = {
     IsVerifiedRawUnionCase: (value: any): value is VerifiedRawUnionCase => {
       return (
         typeof value == "object" &&
-        "caseName" in value &&
-        typeof value.caseName == "string" &&
+        "case" in value &&
+        typeof value.case == "string" &&
         "fields" in value &&
         typeof value.fields == "object"
       );
@@ -325,8 +326,19 @@ export const fromAPIRawValue =
       );
     }
     if (t.kind == "union") {
+      if (!VerifiedRawUnionCase.Operations.IsVerifiedRawUnionCase(raw)) {
+        return ValueOrErrors.Default.throwOne(
+          `union expected but got ${JSON.stringify(raw)}`,
+        );
+      }
+      const caseType = t.args.get(raw.case);
+      if (caseType == undefined) {
+        return ValueOrErrors.Default.throwOne(
+          `union case ${raw.case} not found in type ${JSON.stringify(t)}`,
+        );
+      }
       return fromAPIRawValue(
-        { kind: "unionCase", name: "", fields: {} as ParsedType<T> },
+        caseType,
         types,
         builtIns,
         converters,
@@ -340,12 +352,28 @@ export const fromAPIRawValue =
         );
       }
       const result = converters[t.kind].fromAPIRawValue(raw);
-      return ValueOrErrors.Default.return(
-        PredicateValue.Default.unionCase(
-          result.caseName,
-          PredicateValue.Default.record(Map(result.fields)),
-        ),
-      );
+      return fromAPIRawValue(
+        t.fields == unit
+          ? {
+              kind: "form",
+              value: "unionCase",
+              fields: Map<string, ParsedType<T>>(),
+            }
+          : t.fields,
+        types,
+        builtIns,
+        converters,
+        injectedPrimitives,
+      )(result.fields).Then((fields) => {
+        if (!PredicateValue.Operations.IsRecord(fields)) {
+          return ValueOrErrors.Default.throwOne(
+            `record expected but got ${JSON.stringify(fields)}`,
+          );
+        }
+        return ValueOrErrors.Default.return(
+          PredicateValue.Default.unionCase(result.case, fields),
+        );
+      });
     }
     if (t.kind == "application") {
       if (t.value == "SingleSelection") {
@@ -567,7 +595,7 @@ export const toAPIRawValue =
       }
       return ValueOrErrors.Operations.Return(
         converters[t.kind].toAPIRawValue([
-          { caseName: raw.caseName, fields: raw.fields },
+          { case: raw.caseName, fields: raw.fields },
           formState.modifiedByUser,
         ]),
       );
@@ -637,7 +665,9 @@ export const toAPIRawValue =
             !EnumReference.Operations.IsEnumReference(fieldsObject)
           ) {
             return ValueOrErrors.Default.throwOne(
-              `CollectionReference or EnumReference expected but got ${JSON.stringify(fieldsObject)}`,
+              `CollectionReference or EnumReference expected but got ${JSON.stringify(
+                fieldsObject,
+              )}`,
             );
           }
           return ValueOrErrors.Default.return(fieldsObject);
