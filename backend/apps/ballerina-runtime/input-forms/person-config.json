@@ -502,33 +502,89 @@
           "renderer": "defaultEnum",
           "options": "genders",
           "visible": {
-            "kind": "or",
+            "kind": "matchCase",
             "operands": [
               {
                 "kind": "fieldLookup",
                 "operands": [
-                  {
-                    "kind": "varLookup",
-                    "varName": "global"
-                  },
-                  "IsAdmin"
+                  { "kind": "varLookup", "varName": "global" },
+                  "ERP"
                 ]
               },
               {
-                "kind": "isCase",
-                "operands": [
-                  {
-                    "kind": "fieldLookup",
+                "kind": "case",
+                "caseName": "ERP:SAP",
+                "handler": {
+                  "kind": "lambda",
+                  "parameter": "sapFields",
+                  "body": {
+                    "kind": "matchCase",
                     "operands": [
                       {
-                        "kind": "varLookup",
-                        "varName": "global"
+                        "kind": "fieldLookup",
+                        "operands": [
+                          { "kind": "varLookup", "varName": "sapFields" },
+                          "Value"
+                        ]
                       },
-                      "ERP"
+                      {
+                        "kind": "case",
+                        "caseName": "SAP:S2",
+                        "handler": {
+                          "kind": "lambda",
+                          "parameter": "s2Fields",
+                          "body": {
+                            "kind": "fieldLookup",
+                            "operands": [
+                              { "kind": "varLookup", "varName": "s2Fields" },
+                              "S2OnlyField"
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "kind": "case",
+                        "caseName": "SAP:S3",
+                        "handler": {
+                          "kind": "lambda",
+                          "parameter": "s3Fields",
+                          "body": {
+                            "kind": "fieldLookup",
+                            "operands": [
+                              { "kind": "varLookup", "varName": "s3Fields" },
+                              "S3OnlyField"
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "kind": "case",
+                        "caseName": "SAP:S4",
+                        "handler": {
+                          "kind": "lambda",
+                          "parameter": "s4Fields",
+                          "body": {
+                            "kind": "fieldLookup",
+                            "operands": [
+                              { "kind": "varLookup", "varName": "s4Fields" },
+                              "S4OnlyField"
+                            ]
+                          }
+                        }
+                      }
                     ]
-                  },
-                  "ERP:SAP"
-                ]
+                  }
+                }
+              },
+              {
+                "kind": "case",
+                "caseName": "ERP:BC",
+                "handler": { "kind": "lambda", "parameter": "_", "body": false }
+              },
+              {
+                "kind": "case",
+                "caseName": "ERP:FAndO",
+                "handler": { "kind": "lambda", "parameter": "_", "body": false }
               }
             ]
           }

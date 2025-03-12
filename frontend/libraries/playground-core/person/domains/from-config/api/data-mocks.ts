@@ -244,7 +244,17 @@ const entityApis: EntityApis = {
         return (_: Guid) => {
           return Promise.resolve({
             IsAdmin: false,
-            ERP: "ERP:SAP",
+            ERP: {
+              case: "ERP:SAP",
+              fields: {
+                Value: {
+                  case: "SAP:S2",
+                  fields: {
+                    S2OnlyField: false,
+                  },
+                },
+              },
+            },
           });
         };
       default:

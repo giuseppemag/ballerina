@@ -6,19 +6,19 @@
         {
           "case": "SAP:S2",
           "fields": {
-            "S2OnlyField":"boolean"
+            "S2OnlyField": "boolean"
           }
         },
         {
           "case": "SAP:S3",
           "fields": {
-            "S3OnlyField":"boolean"
+            "S3OnlyField": "boolean"
           }
         },
         {
           "case": "SAP:S4",
           "fields": {
-            "S4OnlyField":"boolean"
+            "S4OnlyField": "boolean"
           }
         }
       ]
@@ -29,7 +29,7 @@
         {
           "case": "ERP:SAP",
           "fields": {
-            "Value":"SAPConfig"
+            "Value": "SAPConfig"
           }
         },
         {
@@ -44,25 +44,23 @@
     },
     "JobBase": {
       "fields": {
-        "Name":"string",
-        "Salary":"number"
+        "Name": "string",
+        "Salary": "number"
       }
     },
     "BaristaJob": {
       "extends": ["JobBase"],
       "fields": {
-        "Drinks":{
+        "Drinks": {
           "fun": "List",
-          "args": [
-            "string"
-          ]
+          "args": ["string"]
         }
       }
     },
     "WaiterJob": {
       "extends": ["JobBase"],
       "fields": {
-        "Patience":"number"
+        "Patience": "number"
       }
     },
     "Job": {
@@ -93,9 +91,7 @@
       }
     },
     "CityRef": {
-      "extends": [
-        "CollectionReference"
-      ],
+      "extends": ["CollectionReference"],
       "fields": {}
     },
     "LandArea": {
@@ -112,15 +108,13 @@
     "Address": {
       "fields": {
         "streetNumberAndCity": {
-          "fun":"Tuple",
-          "args":[
+          "fun": "Tuple",
+          "args": [
             "string",
             "number",
             {
               "fun": "SingleSelection",
-              "args": [
-                "CityRef"
-              ]
+              "args": ["CityRef"]
             }
           ]
         }
@@ -223,9 +217,7 @@
       }
     },
     "DepartmentRef": {
-      "extends": [
-        "CollectionReference"
-      ],
+      "extends": ["CollectionReference"],
       "fields": {}
     },
     "Person": {
@@ -239,70 +231,47 @@
         "subscribeToNewsletter": "boolean",
         "favoriteColor": {
           "fun": "SingleSelection",
-          "args": [
-            "ColorRef"
-          ]
+          "args": ["ColorRef"]
         },
         "gender": {
           "fun": "SingleSelection",
-          "args": [
-            "GenderRef"
-          ]
+          "args": ["GenderRef"]
         },
         "dependants": {
           "fun": "Map",
-          "args": [
-            "string",
-            "injectedCategory"
-          ]
+          "args": ["string", "injectedCategory"]
         },
         "friendsByCategory": {
           "fun": "Map",
-          "args": [
-            "injectedCategory",
-            "string"
-          ]
+          "args": ["injectedCategory", "string"]
         },
         "relatives": {
           "fun": "List",
-          "args": [
-            "injectedCategory"
-          ]
+          "args": ["injectedCategory"]
         },
         "interests": {
           "fun": "MultiSelection",
-          "args": [
-            "InterestRef"
-          ]
+          "args": ["InterestRef"]
         },
         "departments": {
           "fun": "MultiSelection",
-          "args": [
-            "DepartmentRef"
-          ]
+          "args": ["DepartmentRef"]
         },
         "emails": {
           "fun": "List",
-          "args": [
-            "string"
-          ]
+          "args": ["string"]
         },
         "mainAddress": "Address",
         "addressesAndAddressesWithLabel": {
           "fun": "Tuple",
-          "args":[
+          "args": [
             {
               "fun": "List",
-              "args": [
-                "Address"
-              ]
+              "args": ["Address"]
             },
             {
               "fun": "Map",
-              "args": [
-                "string",
-                "Address"
-              ]
+              "args": ["string", "Address"]
             }
           ]
         },
@@ -311,9 +280,7 @@
           "args": [
             {
               "fun": "SingleSelection",
-              "args": [
-                "CityRef"
-              ]
+              "args": ["CityRef"]
             },
             "Address"
           ]
@@ -323,9 +290,7 @@
           "args": [
             {
               "fun": "SingleSelection",
-              "args": [
-                "ColorRef"
-              ]
+              "args": ["ColorRef"]
             },
             "Address"
           ]
@@ -335,9 +300,7 @@
           "args": [
             {
               "fun": "SingleSelection",
-              "args": [
-                "PermissionRef"
-              ]
+              "args": ["PermissionRef"]
             },
             "boolean"
           ]
@@ -347,36 +310,25 @@
           "args": [
             {
               "fun": "SingleSelection",
-              "args": [
-                "DepartmentRef"
-              ]
+              "args": ["DepartmentRef"]
             },
             {
               "fun": "SingleSelection",
-              "args": [
-                "CityRef"
-              ]
+              "args": ["CityRef"]
             }
           ]
         },
         "shoeColours": {
           "fun": "MultiSelection",
-          "args": [
-            "ColorRef"
-          ]
+          "args": ["ColorRef"]
         },
         "friendsBirthdays": {
           "fun": "Map",
-          "args": [
-            "string",
-            "Date"
-          ]
+          "args": ["string", "Date"]
         },
         "holidays": {
           "fun": "List",
-          "args": [
-            "Date"
-          ]
+          "args": ["Date"]
         }
       }
     }
@@ -395,18 +347,11 @@
     "entities": {
       "person": {
         "type": "Person",
-        "methods": [
-          "create",
-          "get",
-          "update",
-          "default"
-        ]
+        "methods": ["create", "get", "update", "default"]
       },
       "globalConfiguration": {
         "type": "GlobalConfiguration",
-        "methods": [
-          "get"
-        ]
+        "methods": ["get"]
       }
     }
   },
@@ -414,24 +359,24 @@
     "jobBase": {
       "type": "JobBase",
       "fields": {
-        "Name":{
+        "Name": {
           "renderer": "defaultString"
         },
-        "Salary":{
+        "Salary": {
           "renderer": "defaultNumber"
         }
       },
-      "tabs":{}
+      "tabs": {}
     },
     "baristaJob": {
       "type": "BaristaJob",
-      "extends":["jobBase"],
+      "extends": ["jobBase"],
       "fields": {
-        "Salary":{
+        "Salary": {
           "renderer": "defaultNumber"
         },
-        "Drinks":{
-          "renderer":"defaultList",
+        "Drinks": {
+          "renderer": "defaultList",
           "elementRenderer": {
             "renderer": "defaultString"
           }
@@ -451,9 +396,9 @@
     },
     "waiterJob": {
       "type": "WaiterJob",
-      "extends":["jobBase"],
+      "extends": ["jobBase"],
       "fields": {
-        "Salary":{
+        "Salary": {
           "renderer": "defaultNumber",
           "visible": {
             "kind": "or",
@@ -487,7 +432,7 @@
             ]
           }
         },
-        "Patience":{
+        "Patience": {
           "renderer": "defaultNumber"
         }
       },
@@ -525,7 +470,7 @@
         }
       }
     },
-    "plotInfo":{
+    "plotInfo": {
       "type": "PlotInfo",
       "fields": {
         "landArea": {
@@ -549,7 +494,7 @@
       "fields": {
         "streetNumberAndCity": {
           "renderer": "defaultTuple3",
-          "itemRenderers":[
+          "itemRenderers": [
             {
               "renderer": "defaultString"
             },
@@ -582,7 +527,7 @@
                     "operands": [
                       {
                         "kind": "fieldLookup",
-                        "operands":[
+                        "operands": [
                           {
                             "kind": "varLookup",
                             "varName": "local"
@@ -605,9 +550,7 @@
           "columns": {
             "main": {
               "groups": {
-                "main": [
-                  "streetNumberAndCity"
-                ]
+                "main": ["streetNumberAndCity"]
               }
             }
           }
@@ -630,17 +573,17 @@
           "label": "last name",
           "renderer": "defaultString"
         },
-        "job":{
-          "renderer":"defaultUnionRenderer",
-          "cases":{
-            "Barista":{
-              "renderer":"baristaJob"
+        "job": {
+          "renderer": "defaultUnionRenderer",
+          "cases": {
+            "Barista": {
+              "renderer": "baristaJob"
             },
-            "Waiter":{
-              "renderer":"waiterJob"
+            "Waiter": {
+              "renderer": "waiterJob"
             }
           }
-        },    
+        },
         "birthday": {
           "renderer": "defaultDate",
           "tooltip": "happy birthday!"
@@ -667,10 +610,20 @@
                     "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"s3Fields" }, "S3OnlyField"] } } },
                   { "case":"SAP:S4", "handler":{ "kind":"lambda", "parameter":"s4Fields", "body":{ 
                     "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"s4Fields" }, "S4OnlyField"] } } }
-                ]
-              } } },
-              { "case":"ERP:BC", "handler":{ "kind":"lambda", "parameter":"_", "body":false } },
-              { "case":"ERP:FAndO", "handler":{ "kind":"lambda", "parameter":"_", "body":false } }
+                    ]
+                  }
+                }
+              },
+              {
+                "kind": "case",
+                "caseName": "ERP:BC",
+                "handler": { "kind": "lambda", "parameter": "_", "body": false }
+              },
+              {
+                "kind": "case",
+                "caseName": "ERP:FAndO",
+                "handler": { "kind": "lambda", "parameter": "_", "body": false }
+              }
             ]
           }
         },
@@ -704,7 +657,7 @@
         "relatives": {
           "label": "relatives",
           "tooltip": "someone who you are related to",
-          "renderer":"defaultList",
+          "renderer": "defaultList",
           "elementRenderer": {
             "label": "one relative",
             "tooltip": "relative",
@@ -733,8 +686,7 @@
         "departments": {
           "label": "departments",
           "renderer": "defaultInfiniteStreamMultiselect",
-          "stream": "departments"
-          ,
+          "stream": "departments",
           "disabled": {
             "kind": "fieldLookup",
             "operands": [
@@ -749,7 +701,7 @@
         "mainAddress": {
           "label": "main address",
           "renderer": "address",
-          "children":{
+          "children": {
             "plotInfo": {
               "renderer": "plotInfo"
             }
@@ -763,10 +715,10 @@
             "renderer": "defaultString"
           }
         },
-        "addressesAndAddressesWithLabel":{
+        "addressesAndAddressesWithLabel": {
           "label": "other addresses",
           "renderer": "defaultTuple2",
-          "itemRenderers":[
+          "itemRenderers": [
             {
               "renderer": "defaultList",
               "elementRenderer": {
@@ -889,11 +841,7 @@
             },
             "mailing": {
               "groups": {
-                "main": [
-                  "subscribeToNewsletter",
-                  "interests",
-                  "favoriteColor"
-                ]
+                "main": ["subscribeToNewsletter", "interests", "favoriteColor"]
               }
             },
             "addresses": {
