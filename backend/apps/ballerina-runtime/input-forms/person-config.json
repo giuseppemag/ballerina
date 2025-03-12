@@ -245,7 +245,6 @@
             "DepartmentRef"
           ]
         },
-        "mainAddress": "Address",
         "emails": {
           "fun": "List",
           "args": [
@@ -269,6 +268,26 @@
               ]
             },
             "Address"
+          ]
+        },
+        "mainAddress": {
+          "fun": "Sum",
+          "args": [
+            "string",
+            "Address"
+          ]
+        },
+        "addresses": {
+          "fun": "List",
+          "args": [
+            "Address"
+          ]
+        },
+        "importantDate": {
+          "fun": "Sum",
+          "args": [
+            "string",
+            "Date"
           ]
         },
         "addressesBy": {
@@ -697,10 +716,6 @@
             ]
           }
         },
-        "mainAddress": {
-          "label": "main address",
-          "renderer": "address"
-        },
         "addresses": {
           "label": "other addresses",
           "renderer": "defaultList",
@@ -709,39 +724,62 @@
             "renderer": "address"
           }
         },
-        "addressesBy": {
-          "label": "alternative addresses",
+        "mainAddress": {
+          "label": "main address",
           "renderer": "defaultSum",
           "leftRenderer": {
-            "label": "left",
-            "renderer": "defaultMap",
-            "keyRenderer": {
-              "label": "address color",
-              "renderer": "defaultEnum",
-              "options": "colors"
-            },
-            "elementRenderer": {
-              "label": "address",
-              "renderer": "address"
-            },
-            "visible": true,
-            "disabled": false
+            "label": "as string",
+            "renderer": "defaultString"
           },
           "rightRenderer": {
-            "label": "right",
+            "label": "as address",
+            "renderer": "address"
+          }
+        },
+        "addressesBy": {
+          "label": "addresses by",
+          "renderer": "defaultSum",
+          "leftRenderer": {
+            "label": "by color",
             "renderer": "defaultMap",
             "keyRenderer": {
               "label": "address color",
               "renderer": "defaultEnum",
-              "options": "colors"
+              "options": "colors" 
             },
-            "elementRenderer": {
+            "valueRenderer": {
               "label": "address",
+              "renderer": "address"
+            }
+          },
+          "rightRenderer": {
+            "label": "by label",
+            "renderer": "defaultMap",
+            "keyRenderer": {
+              "label": "address label",
               "renderer": "defaultString"
             },
-            "visible": true,
-            "disabled": false
-          }
+            "valueRenderer": {
+              "label": "address",
+              "renderer": "address"
+            }
+          },
+          "visible": true,
+          "disabled": false
+        },
+        "importantDate": {
+          "label": "important date",
+          "renderer": "defaultSum",
+          "leftRenderer": {
+            "label": "no date",
+            "renderer": "defaultString"
+          },
+          "rightRenderer": {
+            "label": "date",
+            "renderer": "defaultDate"
+          },
+          "visible": true,
+          "disabled": false
         },
         "emails": {
           "label": "emails",
@@ -860,7 +898,8 @@
                   "friendsByCategory",
                   "relatives",
                   "friendsBirthdays",
-                  "shoeColours"
+                  "shoeColours",
+                  "importantDate"
                 ]
               }
             },
