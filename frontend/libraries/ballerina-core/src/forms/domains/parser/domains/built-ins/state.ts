@@ -61,7 +61,7 @@ export type ApiConverters<
 > = { [key in keyof T]: ApiConverter<T[key]["type"]> } & BuiltInApiConverters;
 
 export type VerifiedRawUnionCase = {
-  case: string;
+  caseName: string;
   fields: Record<string, any>;
 };
 
@@ -71,7 +71,7 @@ export const VerifiedRawUnionCase = {
       return (
         typeof value == "object" &&
         "caseName" in value &&
-        typeof value.case == "string" &&
+        typeof value.caseName == "string" &&
         "fields" in value &&
         typeof value.fields == "object"
       );
@@ -331,10 +331,10 @@ export const fromAPIRawValue =
           `union expected but got ${JSON.stringify(raw)}`,
         );
       }
-      const caseType = t.args.get(raw.case);
+      const caseType = t.args.get(raw.caseName);
       if (caseType == undefined) {
         return ValueOrErrors.Default.throwOne(
-          `union case ${raw.case} not found in type ${JSON.stringify(t)}`,
+          `union case ${raw.caseName} not found in type ${JSON.stringify(t)}`,
         );
       }
       return fromAPIRawValue(
@@ -371,7 +371,7 @@ export const fromAPIRawValue =
           );
         }
         return ValueOrErrors.Default.return(
-          PredicateValue.Default.unionCase(result.case, fields),
+          PredicateValue.Default.unionCase(result.caseName, fields),
         );
       });
     }
@@ -595,7 +595,7 @@ export const toAPIRawValue =
       }
       return ValueOrErrors.Operations.Return(
         converters[t.kind].toAPIRawValue([
-          { case: raw.caseName, fields: raw.fields },
+          { caseName: raw.caseName, fields: raw.fields },
           formState.modifiedByUser,
         ]),
       );

@@ -179,7 +179,11 @@ export type PredicateValue =
 
 export type ExprLambda = { kind: "lambda"; parameter: string; body: Expr };
 export type ExprMatchCase = { kind: "matchCase"; operands: Expr[] };
-export type ExprCase = { kind: "caseName"; caseName: string; handler: ExprLambda };
+export type ExprCase = {
+  kind: "caseName";
+  caseName: string;
+  handler: ExprLambda;
+};
 export type ExprFieldLookup = { kind: "fieldLookup"; operands: [Expr, string] };
 export type ExprIsCase = { kind: "isCase"; operands: [Expr, string] };
 export type ExprBinaryOperator = {
