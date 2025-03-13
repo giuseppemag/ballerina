@@ -841,7 +841,10 @@ export const Expr = {
       if (Expr.Operations.IsItemLookup(json)) {
         const [first, second]: Array<any> = json["operands"];
         return Expr.Operations.parse(first).Then((first) =>
-          ValueOrErrors.Default.return(Expr.Default.itemLookup(first, second)),
+          ValueOrErrors.Default.return(
+            // Tuples are 1-indexed
+            Expr.Default.itemLookup(first, second - 1),
+          ),
         );
       }
       if (Expr.Operations.IsFieldLookup(json)) {
