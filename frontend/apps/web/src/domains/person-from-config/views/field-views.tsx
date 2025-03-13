@@ -184,8 +184,8 @@ export const PersonFieldViews = {
         Context,
         ForeignMutationsExpected
       > =>
-      (props) =>
-        (
+      (props) => {
+        return (
           <>
             {props.context.label && <h3>{props.context.label}</h3>}
             {props.context.tooltip && <p>{props.context.tooltip}</p>}
@@ -203,7 +203,8 @@ export const PersonFieldViews = {
             />
             <MostUglyValidationDebugView {...props} />
           </>
-        ),
+        );
+      },
   },
   date: {
     defaultDate:

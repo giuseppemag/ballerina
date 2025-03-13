@@ -21,7 +21,7 @@ export const DateForm = <Context extends FormLabel, ForeignMutationsExpected>(
   validation?: BasicFun<Date, Promise<FieldValidation>>,
 ) => {
   return Template.Default<
-    Context & Value<Date> & { disabled: boolean },
+    Context & Value<Date> & { disabled: boolean; visible: boolean },
     DateFormState,
     ForeignMutationsExpected & { onChange: OnChange<Date> },
     DateView<Context, ForeignMutationsExpected>
@@ -52,7 +52,7 @@ export const DateForm = <Context extends FormLabel, ForeignMutationsExpected>(
     </>
   )).any([
     ValidateRunner<
-      Context & { disabled: boolean },
+      Context & { disabled: boolean; visible: boolean },
       DateFormState,
       ForeignMutationsExpected,
       Date

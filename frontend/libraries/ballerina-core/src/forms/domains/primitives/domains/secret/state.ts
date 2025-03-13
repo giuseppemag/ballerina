@@ -11,6 +11,7 @@ export type SecretView<
   Context &
     Value<string> & { commonFormState: CommonFormState } & {
       disabled: boolean;
+      visible: boolean;
     },
   { commonFormState: CommonFormState },
   ForeignMutationsExpected & {

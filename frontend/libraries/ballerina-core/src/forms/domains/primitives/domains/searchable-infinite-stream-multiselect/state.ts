@@ -18,6 +18,7 @@ export type InfiniteStreamMultiselectView<
       isLoading: boolean;
       availableOptions: Array<CollectionReference>;
       disabled: boolean;
+      visible: boolean;
     },
   SearchableInfiniteStreamState,
   ForeignMutationsExpected & {

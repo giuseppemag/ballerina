@@ -19,7 +19,7 @@ export const NumberForm = <Context extends FormLabel, ForeignMutationsExpected>(
   validation?: BasicFun<number, Promise<FieldValidation>>,
 ) => {
   return Template.Default<
-    Context & Value<number> & { disabled: boolean },
+    Context & Value<number> & { disabled: boolean; visible: boolean },
     { commonFormState: CommonFormState },
     ForeignMutationsExpected & { onChange: OnChange<number> },
     NumberView<Context, ForeignMutationsExpected>
@@ -36,7 +36,7 @@ export const NumberForm = <Context extends FormLabel, ForeignMutationsExpected>(
     </>
   )).any([
     ValidateRunner<
-      Context & { disabled: boolean },
+      Context & { disabled: boolean; visible: boolean },
       { commonFormState: CommonFormState },
       ForeignMutationsExpected,
       number

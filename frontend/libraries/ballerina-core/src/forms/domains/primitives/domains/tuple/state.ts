@@ -63,7 +63,7 @@ export type TupleFieldView<
         ForeignMutationsExpected & {
           onChange: OnChange<ValueTuple>;
         }
-      > | (() => undefined)
+      >
     >;
   }
 >;

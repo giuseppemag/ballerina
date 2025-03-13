@@ -29,11 +29,11 @@ export const EnumForm = <
   validation?: BasicFun<ValueOption, Promise<FieldValidation>>,
 ) => {
   const Co = CoTypedFactory<
-    Context & Value<ValueOption> & { disabled: boolean },
+    Context & Value<ValueOption> & { disabled: boolean; visible: boolean },
     EnumFormState
   >();
   return Template.Default<
-    Context & Value<ValueOption> & { disabled: boolean },
+    Context & Value<ValueOption> & { disabled: boolean; visible: boolean },
     EnumFormState,
     ForeignMutationsExpected & {
       onChange: OnChange<ValueOption>;
@@ -89,7 +89,7 @@ export const EnumForm = <
     );
   }).any([
     ValidateRunner<
-      Context & { disabled: boolean },
+      Context & { disabled: boolean; visible: boolean },
       EnumFormState,
       ForeignMutationsExpected,
       ValueOption

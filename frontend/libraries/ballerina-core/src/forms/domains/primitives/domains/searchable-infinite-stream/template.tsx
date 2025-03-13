@@ -34,7 +34,7 @@ export const SearchableInfiniteStreamForm = <
   validation?: BasicFun<ValueOption, Promise<FieldValidation>>,
 ) => {
   const Co = CoTypedFactory<
-    Context & Value<ValueOption> & { disabled: boolean },
+    Context & Value<ValueOption> & { disabled: boolean; visible: boolean },
     SearchableInfiniteStreamState
   >();
   const DebouncerCo = CoTypedFactory<
@@ -92,7 +92,7 @@ export const SearchableInfiniteStreamForm = <
   );
 
   return Template.Default<
-    Context & Value<ValueOption> & { disabled: boolean },
+    Context & Value<ValueOption> & { disabled: boolean; visible: boolean },
     SearchableInfiniteStreamState,
     ForeignMutationsExpected & {
       onChange: OnChange<ValueOption>;
@@ -180,7 +180,7 @@ export const SearchableInfiniteStreamForm = <
         ),
     })),
     ValidateRunner<
-      Context & { disabled: boolean },
+      Context & { disabled: boolean; visible: boolean },
       SearchableInfiniteStreamState,
       ForeignMutationsExpected,
       ValueOption

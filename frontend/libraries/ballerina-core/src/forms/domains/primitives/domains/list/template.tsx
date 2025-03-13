@@ -42,11 +42,9 @@ export const ListForm = <
   validation?: BasicFun<ValueTuple, Promise<FieldValidation>>,
 ) => {
   const embeddedElementTemplate =
-    (visibilities: ListFieldPredicateEvaluation) =>
     (elementIndex: number) =>
-      visibilities.elementValues[elementIndex].value
-        ? elementTemplate
-            .mapForeignMutationsFromProps<
+      elementTemplate
+        .mapForeignMutationsFromProps<
               ForeignMutationsExpected & {
                 onChange: OnChange<ValueTuple>;
                 add: SimpleCallback<Unit>;
@@ -104,9 +102,9 @@ export const ListForm = <
                 if (_.visibilities.kind != "list") return undefined;
                 if (_.disabledFields.kind != "list") return undefined;
                 const disabled =
-                  _.disabledFields.elementValues[elementIndex].value;
+                  _.disabledFields.elementValues[elementIndex]?.value ?? true;
                 const visible =
-                  _.visibilities.elementValues[elementIndex].value;
+                  _.visibilities.elementValues[elementIndex]?.value ?? false;
                 const element = _.value.values.get(elementIndex);
                 const elementFormState =
                   _.elementFormStates.get(elementIndex) ||
@@ -141,7 +139,6 @@ export const ListForm = <
                   ),
                 ),
             )
-        : () => undefined;
   return Template.Default<
     Context & Value<ValueTuple> & { disabled: boolean },
     ListFieldState<ElementFormState>,
@@ -218,9 +215,7 @@ export const ListForm = <
               );
             },
           }}
-          embeddedElementTemplate={embeddedElementTemplate(
-            props.context.visibilities,
-          )}
+          embeddedElementTemplate={embeddedElementTemplate}
         />
       </>
     );

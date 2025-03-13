@@ -15,7 +15,7 @@ export const SecretForm = <Context extends FormLabel, ForeignMutationsExpected>(
   validation?: BasicFun<string, Promise<FieldValidation>>,
 ) => {
   return Template.Default<
-    Context & Value<string> & { disabled: boolean },
+    Context & Value<string> & { disabled: boolean; visible: boolean },
     { commonFormState: CommonFormState },
     ForeignMutationsExpected & { onChange: OnChange<string> },
     SecretView<Context, ForeignMutationsExpected>
@@ -32,7 +32,7 @@ export const SecretForm = <Context extends FormLabel, ForeignMutationsExpected>(
     </>
   )).any([
     ValidateRunner<
-      Context & { disabled: boolean },
+      Context & { disabled: boolean; visible: boolean },
       { commonFormState: CommonFormState },
       ForeignMutationsExpected,
       string

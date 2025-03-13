@@ -11,6 +11,7 @@ export type Base64FileView<
   Context &
     Value<string> & { commonFormState: CommonFormState } & {
       disabled: boolean;
+      visible: boolean;
     },
   { commonFormState: CommonFormState },
   ForeignMutationsExpected & {

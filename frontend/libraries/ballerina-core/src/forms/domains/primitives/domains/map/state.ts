@@ -66,7 +66,7 @@ export type MapFieldView<
           add: SimpleCallback<Unit>;
           remove: SimpleCallback<number>;
         }
-      > | (() => undefined)
+      >
     >;
     embeddedValueTemplate: BasicFun<
       number,
@@ -80,7 +80,7 @@ export type MapFieldView<
           add: SimpleCallback<Unit>;
           remove: SimpleCallback<number>;
         }
-      > | (() => undefined)
+      >
     >;
   }
 >;

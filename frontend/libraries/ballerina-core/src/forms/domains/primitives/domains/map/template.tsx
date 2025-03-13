@@ -54,10 +54,8 @@ export const MapForm = <
   validation?: BasicFun<ValueTuple, Promise<FieldValidation>>,
 ) => {
   const embeddedKeyTemplate =
-    (mapFieldVisibities: MapFieldPredicateEvaluation) =>
     (elementIndex: number) =>
-      mapFieldVisibities.elementValues[elementIndex].key.value
-        ? keyTemplate
+      keyTemplate
             .mapForeignMutationsFromProps<
               ForeignMutationsExpected & {
                 onChange: OnChange<ValueTuple>;
@@ -165,13 +163,10 @@ export const MapForm = <
                   ),
                 ),
             )
-        : () => undefined;
   const embeddedValueTemplate =
-    (mapFieldVisibities: MapFieldPredicateEvaluation) =>
     (elementIndex: number) =>
-      mapFieldVisibities.elementValues[elementIndex].value.value
-        ? valueTemplate
-            .mapForeignMutationsFromProps<
+      valueTemplate
+        .mapForeignMutationsFromProps<
               ForeignMutationsExpected & {
                 onChange: OnChange<ValueTuple>;
                 add: SimpleCallback<Unit>;
@@ -278,7 +273,6 @@ export const MapForm = <
                   ),
                 ),
             )
-        : () => undefined;
   return Template.Default<
     Context & Value<ValueTuple> & { disabled: boolean },
     MapFieldState<KeyFormState, ValueFormState>,
@@ -326,10 +320,8 @@ export const MapForm = <
               );
             },
           }}
-          embeddedKeyTemplate={embeddedKeyTemplate(props.context.visibilities)}
-          embeddedValueTemplate={embeddedValueTemplate(
-            props.context.visibilities,
-          )}
+          embeddedKeyTemplate={embeddedKeyTemplate}
+          embeddedValueTemplate={embeddedValueTemplate}
         />
       </>
     );

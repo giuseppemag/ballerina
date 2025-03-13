@@ -29,11 +29,13 @@ export const EnumMultiselectForm = <
   validation?: BasicFun<ValueRecord, Promise<FieldValidation>>,
 ) => {
   const Co = CoTypedFactory<
-    Context & Value<ValueRecord> & EnumFormState & { disabled: boolean },
+    Context &
+      Value<ValueRecord> &
+      EnumFormState & { disabled: boolean; visible: boolean },
     EnumFormState
   >();
   return Template.Default<
-    Context & Value<ValueRecord> & { disabled: boolean },
+    Context & Value<ValueRecord> & { disabled: boolean; visible: boolean },
     EnumFormState,
     ForeignMutationsExpected & {
       onChange: OnChange<ValueRecord>;
@@ -84,7 +86,7 @@ export const EnumMultiselectForm = <
     );
   }).any([
     ValidateRunner<
-      Context & { disabled: boolean },
+      Context & { disabled: boolean; visible: boolean },
       EnumFormState,
       ForeignMutationsExpected,
       ValueRecord

@@ -64,7 +64,7 @@ export type SumFieldView<
         ForeignMutationsExpected & {
           onChange: OnChange<ValueSum>;
         }
-      > | (() => undefined)
+      >
     >;
     embeddedRightTemplate: BasicFun<
       void,
@@ -76,7 +76,7 @@ export type SumFieldView<
         ForeignMutationsExpected & {
           onChange: OnChange<ValueSum>;
         }
-      > | (() => undefined)
+      >
     >;
   }
 >;

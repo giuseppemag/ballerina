@@ -32,7 +32,9 @@ export type DateView<
   Context extends FormLabel,
   ForeignMutationsExpected,
 > = View<
-  Context & Value<Maybe<Date>> & DateFormState & { disabled: boolean },
+  Context &
+    Value<Maybe<Date>> &
+    DateFormState & { disabled: boolean; visible: boolean },
   DateFormState,
   ForeignMutationsExpected & {
     onChange: OnChange<Date>;

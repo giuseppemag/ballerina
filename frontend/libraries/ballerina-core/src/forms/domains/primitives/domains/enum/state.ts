@@ -37,6 +37,7 @@ export type EnumView<
     Value<ValueOption> &
     EnumFormState & {
       activeOptions: "loading" | Array<ValueRecord>;
+      visible: boolean;
     } & { disabled: boolean },
   EnumFormState,
   ForeignMutationsExpected & {

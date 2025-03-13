@@ -41,7 +41,7 @@ export const InfiniteMultiselectDropdownForm = <
   validation?: BasicFun<ValueRecord, Promise<FieldValidation>>,
 ) => {
   const Co = CoTypedFactory<
-    Context & Value<ValueRecord> & { disabled: boolean },
+    Context & Value<ValueRecord> & { disabled: boolean; visible: boolean },
     SearchableInfiniteStreamState
   >();
   const DebouncerCo = CoTypedFactory<
@@ -95,7 +95,7 @@ export const InfiniteMultiselectDropdownForm = <
   );
 
   return Template.Default<
-    Context & Value<ValueRecord> & { disabled: boolean },
+    Context & Value<ValueRecord> & { disabled: boolean; visible: boolean },
     SearchableInfiniteStreamState,
     ForeignMutationsExpected & {
       onChange: OnChange<ValueRecord>;
@@ -199,7 +199,7 @@ export const InfiniteMultiselectDropdownForm = <
         ),
     })),
     ValidateRunner<
-      Context & { disabled: boolean },
+      Context & { disabled: boolean; visible: boolean },
       SearchableInfiniteStreamState,
       ForeignMutationsExpected,
       ValueRecord

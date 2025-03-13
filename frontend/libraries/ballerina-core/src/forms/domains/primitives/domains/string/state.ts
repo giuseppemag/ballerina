@@ -12,7 +12,7 @@ export type StringView<
     Value<string> & {
       commonFormState: CommonFormState;
       customFormState: Unit;
-    } & { disabled: boolean },
+    } & { disabled: boolean; visible: boolean },
   { commonFormState: CommonFormState; customFormState: Unit },
   ForeignMutationsExpected & {
     onChange: OnChange<string>;

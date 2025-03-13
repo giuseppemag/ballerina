@@ -57,10 +57,8 @@ export const TupleForm = <
   validation?: BasicFun<ValueTuple, Promise<FieldValidation>>,
 ) => {
   const embeddedElementTemplates =
-    (visibilityPredicateExpression: TupleFieldPredicateEvaluation) =>
     (elementIndex: number) =>
-      visibilityPredicateExpression.elementValues[elementIndex].value == true
-        ? elementTemplates
+      elementTemplates
             .get(elementIndex)!
             .mapForeignMutationsFromProps<
               ForeignMutationsExpected & {
@@ -153,7 +151,6 @@ export const TupleForm = <
                   ) as unknown as BasicUpdater<ElementFormStates>,
                 ),
             )
-        : () => undefined;
   return Template.Default<
     Context & Value<ValueTuple> & { disabled: boolean },
     TupleFieldState<ElementFormStates>,
@@ -172,9 +169,7 @@ export const TupleForm = <
           foreignMutations={{
             ...props.foreignMutations,
           }}
-          embeddedElementTemplates={embeddedElementTemplates(
-            props.context.visibilities,
-          )}
+          embeddedElementTemplates={embeddedElementTemplates}
         />
       </>
     );
