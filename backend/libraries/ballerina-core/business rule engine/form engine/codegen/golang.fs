@@ -31,7 +31,13 @@ module Golang =
   type Writer =
     { Fields: Map<string, WriterField>
       Type: ExprType
-      Name: WriterName }
+      Name: WriterName
+      DeltaTypeName: string
+      Kind: WriterKind }
+
+  and WriterKind =
+    | Imported
+    | Generated
 
   and WriterField =
     | Primitive
@@ -64,8 +70,10 @@ module Golang =
 
             let w =
               { Name = writerName
+                DeltaTypeName = $"Delta{writerName.WriterName}"
                 Type = t
-                Fields = fields }
+                Fields = fields
+                Kind = WriterKind.Generated }
 
             do! state.SetState(Map.add w.Name w)
             return w
@@ -83,14 +91,37 @@ module Golang =
 
             let w =
               { Name = writerName
+                DeltaTypeName = $"Delta{writerName.WriterName}"
                 Type = t
-                Fields = fields }
+                Fields = fields
+                Kind = WriterKind.Generated }
 
             do! state.SetState(Map.add w.Name w)
             return w
-          // tuple should be treated like a record
-          // list and option should just recur in the child?
-          // map?
+          | ExprType.SumType(a, b) ->
+            let! wa = ExprType.ToWriter writerName a
+            let! wb = ExprType.ToWriter writerName b
+
+            let w =
+              { Name = { WriterName = $"ballerina.WriterSum[Delta, {wa.DeltaTypeName}, {wb.DeltaTypeName}]" }
+                DeltaTypeName = $"ballerina.DeltaWriterSum[Delta, {wa.DeltaTypeName}, {wb.DeltaTypeName}]"
+                Type = t
+                Fields = Map.empty
+                Kind = WriterKind.Imported }
+
+            do! state.SetState(Map.add w.Name w)
+            return w
+          | ExprType.PrimitiveType(p) ->
+            let w =
+              { Name = { WriterName = $"ballerina.Writer{p.ToString()}[Delta]" }
+                DeltaTypeName = $"ballerina.Delta{p.ToString()}[Delta]"
+                Type = t
+                Fields = Map.empty
+                Kind = WriterKind.Imported }
+
+            do! state.SetState(Map.add w.Name w)
+            return w
+
           | _ -> return! state.Throw(Errors.Singleton $"Error: cannot convert type {t} to a Writer.")
       }
 
@@ -276,7 +307,7 @@ module Golang =
             |> Set.union
             |> GoCodeGenState.Updaters.UsedImports
             |> state.SetState
-            
+
           return $"{config.Sum.GeneratedTypeName}[{l},{r}]"
         | _ -> return! error
       }
@@ -1053,36 +1084,39 @@ module Golang =
           | Right(err: Errors, _) -> return! state.Throw err
           | Left(_, newWritersState) ->
             // do System.Console.WriteLine(newWritersState.ToFSharpString)
+            let allWriters = newWritersState |> Option.defaultWith (fun () -> Map.empty)
 
             let writers =
               seq {
-                for w in newWritersState |> Option.toList do
-                  for w in w |> Map.values do
-                    yield StringBuilder.One $"type Delta{w.Name.WriterName} interface {{"
-                    yield StringBuilder.One "\n"
-                    yield StringBuilder.One $"}}"
-                    yield StringBuilder.One "\n"
+                for w in allWriters |> Map.values |> Seq.filter (fun w -> w.Kind.IsGenerated) do
+                  yield StringBuilder.One $"type {w.DeltaTypeName} interface {{"
+                  yield StringBuilder.One "\n"
+                  yield StringBuilder.One $"}}"
+                  yield StringBuilder.One "\n"
 
-                  for w in w |> Map.values do
-                    yield StringBuilder.One $"type Writer{w.Name.WriterName}[Delta any] interface {{"
-                    yield StringBuilder.One "\n"
+                for w in allWriters |> Map.values |> Seq.filter (fun w -> w.Kind.IsGenerated) do
+                  yield StringBuilder.One $"type Writer{w.Name.WriterName}[Delta any] interface {{"
+                  yield StringBuilder.One "\n"
 
-                    for wf in w.Fields do
-                      match wf.Value with
-                      | WriterField.Primitive ->
-                        yield StringBuilder.One $"  {wf.Key}(delta Delta) (Delta{w.Name.WriterName}, error)"
-                        yield StringBuilder.One "\n"
-                      | WriterField.Nested nw ->
+                  for wf in w.Fields do
+                    match wf.Value with
+                    | WriterField.Primitive ->
+                      yield StringBuilder.One $"  {wf.Key}(delta Delta) ({w.DeltaTypeName}, error)"
+                      yield StringBuilder.One "\n"
+                    | WriterField.Nested nwn ->
+                      match allWriters |> Map.tryFind nwn with
+                      | Some nw ->
                         yield
                           StringBuilder.One
-                            $"  {wf.Key}(nestedDelta Delta{nw.WriterName}, delta Delta) (Delta{w.Name.WriterName}, error)"
+                            $"  {wf.Key}(nestedDelta {nw.DeltaTypeName}, delta Delta) ({w.DeltaTypeName}, error)"
+                      | _ -> ()
 
-                        yield StringBuilder.One "\n"
+                      yield StringBuilder.One "\n"
 
-                    yield StringBuilder.One $"  Zero() (Delta{w.Name.WriterName}, error)"
-                    yield StringBuilder.One "\n"
-                    yield StringBuilder.One $"}}"
-                    yield StringBuilder.One "\n"
+                  yield StringBuilder.One $"  Zero() ({w.DeltaTypeName}, error)"
+                  yield StringBuilder.One "\n"
+                  yield StringBuilder.One $"}}"
+                  yield StringBuilder.One "\n"
               }
 
             return

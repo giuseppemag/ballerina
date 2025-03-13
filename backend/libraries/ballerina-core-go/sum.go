@@ -66,4 +66,7 @@ func MapLeft[a any, b any, a1 any](self Sum[a, b], f func(a) a1) (Sum[a1, b], er
 }
 
 type WriterSum[Delta any, DeltaA any, DeltaB any] interface {
+	Left(deltaA DeltaA, delta Delta) (DeltaWriterSum[Delta, DeltaA, DeltaB], error)
 }
+
+type DeltaWriterSum[Delta any, DeltaA any, DeltaB any] interface{}

@@ -11,27 +11,39 @@ module Model =
   open Ballerina.Errors
   open Ballerina.DSL.Expr.Model
 
-    type TypeVarBindings = Map<VarName, ExprType>
-    and TypeBinding = { TypeId:TypeId; Type:ExprType }
-    and TypeBindings = Map<TypeId, ExprType>
-    and TypeId = { TypeName:string; }
-    and ExprType = 
-      | UnitType
-      | VarType of VarName
-      | SchemaLookupType of EntityDescriptorId 
-      | LookupType of TypeId
-      | PrimitiveType of PrimitiveType 
-      | RecordType of Map<string,ExprType> 
-      | UnionType of Map<CaseName, UnionCase>
-      | MapType of ExprType * ExprType
-      | SumType of ExprType * ExprType
-      | TupleType of List<ExprType>
-      | OptionType of ExprType
-      | ListType of ExprType
-      | SetType of ExprType
-    and UnionCase = { CaseName:string; Fields:ExprType }
-    and CaseName = { CaseName:string }
-    and VarTypes = Map<VarName, ExprType>
+  type TypeVarBindings = Map<VarName, ExprType>
+  and TypeBinding = { TypeId: TypeId; Type: ExprType }
+  and TypeBindings = Map<TypeId, ExprType>
+  and TypeId = { TypeName: string }
+
+  and PrimitiveType =
+    | DateOnlyType
+    | DateTimeType
+    | IntType
+    | FloatType
+    | StringType
+    | BoolType
+    | GuidType
+    | RefType of EntityDescriptorId
+
+  and ExprType =
+    | UnitType
+    | VarType of VarName
+    | SchemaLookupType of EntityDescriptorId
+    | LookupType of TypeId
+    | PrimitiveType of PrimitiveType
+    | RecordType of Map<string, ExprType>
+    | UnionType of Map<CaseName, UnionCase>
+    | MapType of ExprType * ExprType
+    | SumType of ExprType * ExprType
+    | TupleType of List<ExprType>
+    | OptionType of ExprType
+    | ListType of ExprType
+    | SetType of ExprType
+
+  and UnionCase = { CaseName: string; Fields: ExprType }
+  and CaseName = { CaseName: string }
+  and VarTypes = Map<VarName, ExprType>
 
   type TypeBinding with
     static member Create(name, exprType) =
@@ -41,6 +53,18 @@ module Model =
   type TypeId with
     static member Create name = { TypeName = name }
 
+
+  type PrimitiveType with
+    override t.ToString() : string =
+      match t with
+      | PrimitiveType.BoolType -> "Bool"
+      | PrimitiveType.DateOnlyType -> "DateOnly"
+      | PrimitiveType.DateTimeType -> "DateTime"
+      | PrimitiveType.FloatType -> "Float"
+      | PrimitiveType.GuidType -> "Guid"
+      | PrimitiveType.IntType -> "Int"
+      | PrimitiveType.RefType e -> $"Ref<{e}>"
+      | PrimitiveType.StringType -> "String"
 
   type ExprType with
     override t.ToString() : string =

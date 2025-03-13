@@ -35,18 +35,24 @@
     ❌ entites visitors
       ❌ the `entityName` should be the API name, not the type
       ❌ entities PATCH - gets single value and path of change
+        ❌ why do codegen errors (related to the writers) show up twice?
+        ❌ `ballerina.DefaultSum` should be `ballerina.Left`, and take the first constructor parameters
         ✅ build sample with A, B, C (polymorphic), D, and E (excluded from the transitive closure)
         ✅ traverse the entity, generate the deltas recursively for any nested constructs, lookups refer to existing writers, and loops are prevented with a `visited` set
           ✅ the output of this is a map `TypeName -> Writer`
           ✅ `Writer = RecordWriter of Fields | CaseWriter of Casename x Fields`
         ✅ `writerA: { x:Delta -> DeltaA + error; B:DeltaB x Delta -> DeltaA + error; Zero:() -> DeltaA + error }`
         ✅ `writerB: { B1:DeltaB_B1 x Delta -> DeltaB + error; B2:DeltaB_B2 x Delta -> DeltaB + error }`
-        ❌ recurse on every single type case when building the writer, no unsupported types or shapes here
-          ❌ define generic writers such as `writerOption[DeltaE, Delta]`, `writerSum[DeltaL, DeltaR, Delta]`, etc,
-          ❌ define generic deltas such as `DeltaOption[DeltaE, Delta]`, `DeltaSum[DeltaL, DeltaR, Delta]`, etc,
-          ❌ move them to Ballerina and the go-config
+        ✅ recurse on every single type case when building the writer, no unsupported types or shapes here
+          ✅ define generic writers such as `writerOption[DeltaE, Delta]`, `writerSum[DeltaL, DeltaR, Delta]`, etc,
+          ✅ define generic deltas such as `DeltaOption[DeltaE, Delta]`, `DeltaSum[DeltaL, DeltaR, Delta]`, etc,
+          ✅ define generic writers such as `writerInt[Delta]`, `writerBool[Delta]`, etc,
+          ✅ define generic deltas such as `DeltaInt[Delta]`, `DeltaBool[Delta]`, etc,
         ❌ recursively traverse the path and match over entity names and field names
+          ❌ invoke primitive writers, which will need a method `Embed:Delta -> DeltaInt[Delta] + error`
           ❌ invoke recursively as long as possible, end with a `Zero` invocation
+        ❌ complete the kitchen sink sample with all primitives and all generics
+          ❌ move them to Ballerina and the go-config
     ✅ currying the arguments of `entityGET` and `entityPOST`
     ❌ take as input a list of specs, stitch them together, generate a single file - no `include` needed
     ❌ add paginated lists

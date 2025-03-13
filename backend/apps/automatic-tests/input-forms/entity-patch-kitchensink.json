@@ -46,7 +46,7 @@
     },
     "D": {
       "fields": {
-        "D1": "number",
+        "D1": { "fun": "Sum", "args": ["number", "string"] },
         "D2": "string"
       }
     },

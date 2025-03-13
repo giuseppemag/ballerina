@@ -28,16 +28,6 @@ module Model =
   and Var = EntityDescriptorId * EntityIdentifier
   and EntityIdentifier = One of Guid
 
-  and PrimitiveType =
-    | DateOnlyType
-    | DateTimeType
-    | IntType
-    | FloatType
-    | StringType
-    | BoolType
-    | GuidType
-    | RefType of EntityDescriptorId
-
   and Value =
     | ConstInt of int
     | ConstFloat of float
