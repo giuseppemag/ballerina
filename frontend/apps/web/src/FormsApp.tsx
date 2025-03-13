@@ -46,7 +46,7 @@ export const FormsApp = (props: {}) => {
   const [configFormsParser, setConfigFormsParser] = useState(
     FormsParserState.Default(),
   );
-  const [formToShow, setFormToShow] = useState(1);
+  const [formToShow, setFormToShow] = useState(2);
   const numForms = 3;
   const [personCreateFormState, setPersonCreateFormState] = useState(
     FormRunnerState.Default(),
@@ -153,10 +153,14 @@ export const FormsApp = (props: {}) => {
             configFormsParser.formsConfig.sync.kind == "loaded" &&
             configFormsParser.formsConfig.sync.value.kind == "l"
           ) {
+            console.debug("GETTING");
+            console.debug(raw);
             const parsed =
               configFormsParser.formsConfig.sync.value.value.passthrough.get(
                 "person-transparent",
               )!().parseGlobalConfiguration(raw);
+            console.debug("PARSED");
+            console.debug(parsed);
             if (parsed.kind == "errors") {
               console.error(parsed.errors);
             } else {
