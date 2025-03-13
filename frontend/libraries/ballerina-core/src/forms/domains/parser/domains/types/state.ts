@@ -148,7 +148,7 @@ export const RawFieldType = {
     "args" in _ &&
     Array.isArray(_.args) &&
     _.args.length == 1,
-    isUnit: <T>(_: RawFieldType<T>): _ is string => _ == 'unit',
+  isUnit: <T>(_: RawFieldType<T>): _ is string => _ == "unit",
 };
 
 export type PrimitiveTypeName<T> =
@@ -211,25 +211,27 @@ export const ParsedType = {
       fst.kind == "form" && snd.kind == "form"
         ? fst.value == snd.value
         : fst.kind == "lookup" && snd.kind == "lookup"
-        ? fst.name == snd.name
-        : fst.kind == "primitive" && snd.kind == "primitive"
-        ? fst.value == snd.value
-        : fst.kind == "application" && snd.kind == "application"
-        ? fst.value == snd.value &&
-          fst.args.length == snd.args.length &&
-          fst.args.every((v, i) => ParsedType.Operations.Equals(v, snd.args[i]))
-        : fst.kind == "option" && snd.kind == "option"
-        ? fst.value.kind == "option" &&
-          snd.value.kind == "option" &&
-          ParsedType.Operations.Equals(fst.value.value, snd.value.value)
-        : fst.kind == "union" && snd.kind == "union"
-        ? fst.args.size == snd.args.size &&
-          fst.args.every((v, i) =>
-            ParsedType.Operations.Equals(v, snd.args.get(i)!),
-          )
-        : fst.kind == "unionCase" && snd.kind == "unionCase"
-        ? fst.name == snd.name
-        : false,
+          ? fst.name == snd.name
+          : fst.kind == "primitive" && snd.kind == "primitive"
+            ? fst.value == snd.value
+            : fst.kind == "application" && snd.kind == "application"
+              ? fst.value == snd.value &&
+                fst.args.length == snd.args.length &&
+                fst.args.every((v, i) =>
+                  ParsedType.Operations.Equals(v, snd.args[i]),
+                )
+              : fst.kind == "option" && snd.kind == "option"
+                ? fst.value.kind == "option" &&
+                  snd.value.kind == "option" &&
+                  ParsedType.Operations.Equals(fst.value.value, snd.value.value)
+                : fst.kind == "union" && snd.kind == "union"
+                  ? fst.args.size == snd.args.size &&
+                    fst.args.every((v, i) =>
+                      ParsedType.Operations.Equals(v, snd.args.get(i)!),
+                    )
+                  : fst.kind == "unionCase" && snd.kind == "unionCase"
+                    ? fst.name == snd.name
+                    : false,
 
     ParseRawFieldType: <T>(
       fieldName: TypeName,
@@ -421,7 +423,9 @@ export const ParsedType = {
           ParsedType.Default.lookup(rawFieldType),
         );
       if (RawFieldType.isUnit(rawFieldType)) {
-        return ValueOrErrors.Default.return(ParsedType.Default.primitive('unit'));
+        return ValueOrErrors.Default.return(
+          ParsedType.Default.primitive("unit"),
+        );
       }
       return ValueOrErrors.Default.throw(
         List([

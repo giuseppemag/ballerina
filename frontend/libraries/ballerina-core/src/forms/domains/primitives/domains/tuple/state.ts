@@ -14,11 +14,19 @@ import { Value } from "../../../../../value/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import { OnChange, CommonFormState } from "../../../singleton/state";
 
-export type TupleFieldState<ElementFormStates extends List<{ commonFormState: { modifiedByUser: boolean } }>> = {
+export type TupleFieldState<
+  ElementFormStates extends List<{
+    commonFormState: { modifiedByUser: boolean };
+  }>,
+> = {
   commonFormState: CommonFormState;
   elementFormStates: ElementFormStates;
 };
-export const TupleFieldState = <ElementFormStates extends List<{ commonFormState: { modifiedByUser: boolean } }>>() => ({
+export const TupleFieldState = <
+  ElementFormStates extends List<{
+    commonFormState: { modifiedByUser: boolean };
+  }>,
+>() => ({
   Default: (
     elementFormStates: ElementFormStates,
   ): TupleFieldState<ElementFormStates> => ({
@@ -27,13 +35,17 @@ export const TupleFieldState = <ElementFormStates extends List<{ commonFormState
   }),
   Updaters: {
     Core: {
-      ...simpleUpdater<TupleFieldState<ElementFormStates>>()("elementFormStates"),
+      ...simpleUpdater<TupleFieldState<ElementFormStates>>()(
+        "elementFormStates",
+      ),
     },
     Template: {},
   },
 });
 export type TupleFieldView<
-  ElementFormStates extends List<{ commonFormState: { modifiedByUser: boolean } }>,
+  ElementFormStates extends List<{
+    commonFormState: { modifiedByUser: boolean };
+  }>,
   Context extends FormLabel,
   ForeignMutationsExpected,
 > = View<

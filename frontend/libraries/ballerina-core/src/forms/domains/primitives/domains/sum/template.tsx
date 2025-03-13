@@ -148,7 +148,7 @@ export const SumForm = <
           if (_.disabledFields.kind != "sum") return undefined;
           const rightFormState =
             _.customFormState.right || RightFormState.Default();
-            const rightContext: Context & Value<PredicateValue> & RightFormState =
+          const rightContext: Context & Value<PredicateValue> & RightFormState =
             {
               ..._,
               ...rightFormState,

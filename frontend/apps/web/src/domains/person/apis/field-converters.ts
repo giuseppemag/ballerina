@@ -66,7 +66,7 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
   List: {
     fromAPIRawValue: (_) => (_ == undefined ? List() : List(_)),
     toAPIRawValue: ([_, __]) => _.valueSeq().toArray(),
-  },  
+  },
   Map: {
     fromAPIRawValue: (_) =>
       _ == undefined

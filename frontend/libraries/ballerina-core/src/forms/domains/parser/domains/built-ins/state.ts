@@ -265,8 +265,7 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
             PredicateValue.Default.unit(),
           ),
         },
-      ] as [string, GenericBuiltIn]
-
+      ] as [string, GenericBuiltIn],
     ]),
     renderers: {
       unit: Set(),
@@ -314,7 +313,6 @@ export const defaultValue =
       if (injectedPrimitive != undefined) return injectedPrimitive.defaultValue;
     }
 
-    // TODO: Special case for Tuple
     if (t.kind == "application" && t.value == "Tuple") {
       return builtIns.generics
         .get("Tuple")!
@@ -961,9 +959,8 @@ export const toAPIRawValue =
                 builtIns,
                 converters,
                 injectedPrimitives,
-              )(value, formState.elementFormStates.get(index))
-            },
-            ),
+              )(value, formState.elementFormStates.get(index));
+            }),
           ),
         ).Then((values) =>
           ValueOrErrors.Default.return(

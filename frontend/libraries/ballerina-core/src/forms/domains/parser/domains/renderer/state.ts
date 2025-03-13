@@ -73,7 +73,7 @@ export type RawRenderer = {
 export type ParsedRenderer<T> = (
   | { kind: "primitive" }
   | { kind: "form" }
-  | { kind: "unit"}
+  | { kind: "unit" }
   | { kind: "enum"; options: string }
   | { kind: "stream"; stream: string }
   | { kind: "list"; elementRenderer: ParsedRenderer<T> }
@@ -269,7 +269,7 @@ export const ParsedRenderer = {
       disabled: any,
       label?: string,
       tooltip?: string,
-      details?: string, 
+      details?: string,
     ): ParsedRenderer<T> => ({
       kind: "unit",
       type,
@@ -528,8 +528,10 @@ export const ParsedRenderer = {
                         commonFormState: CommonFormState.Default(),
                       },
                     },
-                    visibilityPredicateExpression: FieldPredicateExpression.Default.unit(visibilityExpr),
-                    disabledPredicatedExpression: FieldPredicateExpression.Default.unit(disabledExpr),
+                    visibilityPredicateExpression:
+                      FieldPredicateExpression.Default.unit(visibilityExpr),
+                    disabledPredicatedExpression:
+                      FieldPredicateExpression.Default.unit(disabledExpr),
                   }),
               ),
           );
@@ -735,7 +737,7 @@ export const ParsedRenderer = {
                           parsedRenderer.type,
                         ),
                         initialState: TupleFieldState<any>().Default(
-                            itemRenderers.map((item) => item.form.initialState),
+                          itemRenderers.map((item) => item.form.initialState),
                         ),
                       },
                       visibilityPredicateExpression:
@@ -849,7 +851,7 @@ export const ParsedRenderer = {
       enumOptionsSources: EnumOptionsSources,
       injectedPrimitives?: InjectedPrimitives<T>,
     ): any => {
-      if (viewKind == 'unit') {
+      if (viewKind == "unit") {
         return UnitForm<any & FormLabel>()
           .withView(formViews[viewKind][viewName]())
           .mapContext<any & CommonFormState & Value<Unit>>((_) => ({

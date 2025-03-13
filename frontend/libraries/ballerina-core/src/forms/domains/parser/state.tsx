@@ -474,7 +474,7 @@ export const parseFormsToLaunchers =
                     visibilities: _.visibilities,
                     disabledFields: _.disabledFields,
                   })),
-              } as any),
+              }) as any,
           )
           .withViewFromProps((props) => props.context.submitButtonWrapper)
           .mapForeignMutationsFromProps(
@@ -672,7 +672,7 @@ export const parseFormsToLaunchers =
                       visibilities: _.visibilities,
                       disabledFields: _.disabledFields,
                     })),
-                } as any),
+                }) as any,
             )
             .withViewFromProps((props) => props.context.containerWrapper)
             .mapForeignMutationsFromProps(

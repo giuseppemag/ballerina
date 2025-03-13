@@ -113,8 +113,10 @@ export const MapForm = <
             KeyFormState: KeyFormState.Default(),
             ValueFormState: ValueFormState.Default(),
           };
-          const elementVisibility = _.visibilities.elementValues[elementIndex]?.key;
-          const elementDisabled = _.disabledFields.elementValues[elementIndex]?.key;
+          const elementVisibility =
+            _.visibilities.elementValues[elementIndex]?.key;
+          const elementDisabled =
+            _.disabledFields.elementValues[elementIndex]?.key;
           const elementContext: Context & Value<ValueTuple> & KeyFormState = {
             ..._,
             ...elementFormState.KeyFormState,
@@ -207,8 +209,10 @@ export const MapForm = <
             KeyFormState: KeyFormState.Default(),
             ValueFormState: ValueFormState.Default(),
           };
-          const elementVisibility = _.visibilities.elementValues[elementIndex]?.value;
-          const elementDisabled = _.disabledFields.elementValues[elementIndex]?.value;
+          const elementVisibility =
+            _.visibilities.elementValues[elementIndex]?.value;
+          const elementDisabled =
+            _.disabledFields.elementValues[elementIndex]?.value;
           const elementContext: Context & Value<ValueTuple> & ValueFormState = {
             ..._,
             ...elementFormState.ValueFormState,
