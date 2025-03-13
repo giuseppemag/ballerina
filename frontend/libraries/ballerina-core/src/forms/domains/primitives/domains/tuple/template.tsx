@@ -12,6 +12,9 @@ import {
   FormFieldPredicateEvaluation,
   ValueTuple,
   PredicateValue,
+  FieldPredicateExpression,
+  TuplePredicateExpression,
+  TupleFieldPredicateEvaluation,
 } from "../../../../../../main";
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
@@ -28,8 +31,10 @@ export const TupleForm = <
     commonFormState: { modifiedByUser: boolean };
   }>,
   Context extends FormLabel & {
-    visibilities: FormFieldPredicateEvaluation;
-    disabledFields: FormFieldPredicateEvaluation;
+    visibilities: TupleFieldPredicateEvaluation;
+    disabledFields: TupleFieldPredicateEvaluation;
+    disabled: boolean;
+    visible: boolean;
   },
   ForeignMutationsExpected,
 >(
@@ -37,98 +42,118 @@ export const TupleForm = <
     Default: () => { commonFormState: { modifiedByUser: boolean } };
   }>,
   elementTemplates: List<
-    Template<
-      Context &
-        Value<PredicateValue> & {
-          commonFormState: { modifiedByUser: boolean };
-        },
-      any,
-      ForeignMutationsExpected & {
-        onChange: OnChange<PredicateValue>;
-      }
-    >
+    | Template<
+        Context &
+          Value<PredicateValue> & {
+            commonFormState: { modifiedByUser: boolean };
+          },
+        any,
+        ForeignMutationsExpected & {
+          onChange: OnChange<PredicateValue>;
+        }
+      >
+    | undefined
   >,
   validation?: BasicFun<ValueTuple, Promise<FieldValidation>>,
 ) => {
-  const embeddedElementTemplates = (elementIndex: number) =>
-    elementTemplates
-      .get(elementIndex)!
-      .mapForeignMutationsFromProps<
-        ForeignMutationsExpected & {
-          onChange: OnChange<ValueTuple>;
-        }
-      >(
-        (
-          props,
-        ): ForeignMutationsExpected & {
-          onChange: OnChange<PredicateValue>;
-        } => ({
-          ...props.foreignMutations,
-          onChange: (elementUpdater, path) => {
-            props.foreignMutations.onChange(
-              Updater((tuple) =>
-                tuple.values.has(elementIndex)
-                  ? PredicateValue.Default.tuple(
-                      tuple.values.update(
-                        elementIndex,
-                        PredicateValue.Default.unit(),
-                        elementUpdater,
-                      ),
-                    )
-                  : tuple,
-              ),
-              List([elementIndex]).concat(path),
-            );
-            props.setState((_) => ({
-              ..._,
-              commonFormState: { ..._.commonFormState, modifiedByUser: true },
-            }));
-          },
-        }),
-      )
-      .mapContext(
-        (
-          _: Context & Value<ValueTuple> & TupleFieldState<ElementFormStates>,
-        ):
-          | (Context &
-              Value<ValueTuple> & {
-                commonFormState: { modifiedByUser: boolean };
-              })
-          | undefined => {
-          if (!_.value.values.has(elementIndex)) return undefined;
-          if (_.visibilities.kind != "tuple") return undefined;
-          if (_.disabledFields.kind != "tuple") return undefined;
-          const element = _.value.values.get(elementIndex);
-          const elementFormState =
-            _.elementFormStates.get(elementIndex) ||
-            ElementFormStates.get(elementIndex)!.Default();
-          const elementVisibility = _.visibilities.elementValues[elementIndex];
-          const elementDisabled = _.disabledFields.elementValues[elementIndex];
-          const elementContext: Context &
-            Value<ValueTuple> & {
-              commonFormState: { modifiedByUser: boolean };
-            } = {
-            ..._,
-            ...elementFormState,
-            value: element,
-            visibilities: elementVisibility,
-            disabledFields: elementDisabled,
-          };
-          return elementContext;
-        },
-      )
-      .mapState(
-        (
-          _: BasicUpdater<{ commonFormState: { modifiedByUser: boolean } }>,
-        ): Updater<TupleFieldState<ElementFormStates>> =>
-          TupleFieldState<ElementFormStates>().Updaters.Core.elementFormStates(
-            MapRepo.Updaters.upsert(
-              elementIndex,
-              () => ElementFormStates.get(elementIndex)!.Default(),
-              _,
-            ) as unknown as BasicUpdater<ElementFormStates>,
-          ),
-      );
+  const embeddedElementTemplates =
+    (visibilityPredicateExpression: TupleFieldPredicateEvaluation) =>
+    (elementIndex: number) =>
+      visibilityPredicateExpression.elementValues[elementIndex].value == true
+        ? elementTemplates
+            .get(elementIndex)!
+            .mapForeignMutationsFromProps<
+              ForeignMutationsExpected & {
+                onChange: OnChange<ValueTuple>;
+              }
+            >(
+              (
+                props,
+              ): ForeignMutationsExpected & {
+                onChange: OnChange<PredicateValue>;
+              } => ({
+                ...props.foreignMutations,
+                onChange: (elementUpdater, path) => {
+                  props.foreignMutations.onChange(
+                    Updater((tuple) =>
+                      tuple.values.has(elementIndex)
+                        ? PredicateValue.Default.tuple(
+                            tuple.values.update(
+                              elementIndex,
+                              PredicateValue.Default.unit(),
+                              elementUpdater,
+                            ),
+                          )
+                        : tuple,
+                    ),
+                    List([elementIndex]).concat(path),
+                  );
+                  props.setState((_) => ({
+                    ..._,
+                    commonFormState: {
+                      ..._.commonFormState,
+                      modifiedByUser: true,
+                    },
+                  }));
+                },
+              }),
+            )
+            .mapContext(
+              (
+                _: Context &
+                  Value<ValueTuple> &
+                  TupleFieldState<ElementFormStates>,
+              ):
+                | (Context &
+                    Value<ValueTuple> & {
+                      commonFormState: { modifiedByUser: boolean };
+                    })
+                | undefined => {
+                if (!_.value.values.has(elementIndex)) return undefined;
+                if (_.visibilities.kind != "tuple") return undefined;
+                if (_.disabledFields.kind != "tuple") return undefined;
+                const disabled =
+                  _.disabledFields.elementValues[elementIndex].value;
+                const visible =
+                  _.visibilities.elementValues[elementIndex].value;
+                const element = _.value.values.get(elementIndex);
+                const elementFormState =
+                  _.elementFormStates.get(elementIndex) ||
+                  ElementFormStates.get(elementIndex)!.Default();
+                const elementVisibility =
+                  _.visibilities.elementValues[elementIndex];
+                const elementDisabled =
+                  _.disabledFields.elementValues[elementIndex];
+                const elementContext: Context &
+                  Value<ValueTuple> & {
+                    commonFormState: { modifiedByUser: boolean };
+                  } = {
+                  ..._,
+                  ...elementFormState,
+                  disabled: disabled,
+                  visible: visible,
+                  value: element,
+                  visibilities: elementVisibility,
+                  disabledFields: elementDisabled,
+                };
+                return elementContext;
+              },
+            )
+            .mapState(
+              (
+                _: BasicUpdater<{
+                  commonFormState: { modifiedByUser: boolean };
+                }>,
+              ): Updater<TupleFieldState<ElementFormStates>> =>
+                TupleFieldState<ElementFormStates>().Updaters.Core.elementFormStates(
+                  MapRepo.Updaters.upsert(
+                    elementIndex,
+                    () => ElementFormStates.get(elementIndex)!.Default(),
+                    _,
+                  ) as unknown as BasicUpdater<ElementFormStates>,
+                ),
+            )
+        : () => undefined;
   return Template.Default<
     Context & Value<ValueTuple> & { disabled: boolean },
     TupleFieldState<ElementFormStates>,
@@ -147,7 +172,9 @@ export const TupleForm = <
           foreignMutations={{
             ...props.foreignMutations,
           }}
-          embeddedElementTemplates={embeddedElementTemplates}
+          embeddedElementTemplates={embeddedElementTemplates(
+            props.context.visibilities,
+          )}
         />
       </>
     );

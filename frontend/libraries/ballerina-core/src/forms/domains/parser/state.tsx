@@ -206,6 +206,8 @@ export const ParseForms =
           })
           .mapContext<Unit>((_) => {
             return {
+              visible: (_ as any).visible ?? true,
+              disabled: (_ as any).disabled ?? false,
               label: (_ as any).label,
               value: (_ as any).value,
               commonFormState: (_ as any).commonFormState,

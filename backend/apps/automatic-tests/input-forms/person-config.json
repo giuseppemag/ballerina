@@ -224,8 +224,10 @@
       "fields": {
         "plotInfo": "PlotInfo",
         "category": "injectedCategory",
-        "name": "string",
-        "surname": "string",
+        "fullName": {
+          "fun": "Tuple",
+          "args": ["string", "string"]
+        },
         "birthday": "Date",
         "job": "Job",
         "subscribeToNewsletter": "boolean",
@@ -238,9 +240,7 @@
           "args": [
             {
               "fun": "SingleSelection",
-              "args": [
-                "GenderRef"
-              ]
+              "args": ["GenderRef"]
             },
             "string"
           ]
@@ -573,14 +573,10 @@
           "label": "category",
           "renderer": "defaultCategory"
         },
-        "name": {
-          "label": "first name",
-          "tooltip": "Any name will do",
-          "renderer": "defaultString"
-        },
-        "surname": {
-          "label": "last name",
-          "renderer": "defaultString"
+        "fullName": {
+          "label": "full name",
+          "renderer": "defaultTuple2",
+          "itemRenderers": ["name", "surname"]
         },
         "job": {
           "renderer": "defaultUnionRenderer",
@@ -617,20 +613,73 @@
             "visible": true,
             "disabled": false
           },
-          "visible":{
-            "kind":"matchCase",
-            "operands":[
-              { "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"global" }, "ERP"] },
-              { "caseName":"ERP:SAP", "handler":{ "kind":"lambda", "parameter":"sapFields", "body":{
-                "kind":"matchCase",
-                "operands":[
-                  { "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"sapFields" }, "Value"] },
-                  { "caseName":"SAP:S2", "handler":{ "kind":"lambda", "parameter":"s2Fields", "body":{ 
-                    "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"s2Fields" }, "S2OnlyField"] } } },
-                  { "caseName":"SAP:S3", "handler":{ "kind":"lambda", "parameter":"s3Fields", "body":{ 
-                    "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"s3Fields" }, "S3OnlyField"] } } },
-                  { "caseName":"SAP:S4", "handler":{ "kind":"lambda", "parameter":"s4Fields", "body":{ 
-                    "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"s4Fields" }, "S4OnlyField"] } } }
+          "visible": {
+            "kind": "matchCase",
+            "operands": [
+              {
+                "kind": "fieldLookup",
+                "operands": [
+                  { "kind": "varLookup", "varName": "global" },
+                  "ERP"
+                ]
+              },
+              {
+                "caseName": "ERP:SAP",
+                "handler": {
+                  "kind": "lambda",
+                  "parameter": "sapFields",
+                  "body": {
+                    "kind": "matchCase",
+                    "operands": [
+                      {
+                        "kind": "fieldLookup",
+                        "operands": [
+                          { "kind": "varLookup", "varName": "sapFields" },
+                          "Value"
+                        ]
+                      },
+                      {
+                        "caseName": "SAP:S2",
+                        "handler": {
+                          "kind": "lambda",
+                          "parameter": "s2Fields",
+                          "body": {
+                            "kind": "fieldLookup",
+                            "operands": [
+                              { "kind": "varLookup", "varName": "s2Fields" },
+                              "S2OnlyField"
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "caseName": "SAP:S3",
+                        "handler": {
+                          "kind": "lambda",
+                          "parameter": "s3Fields",
+                          "body": {
+                            "kind": "fieldLookup",
+                            "operands": [
+                              { "kind": "varLookup", "varName": "s3Fields" },
+                              "S3OnlyField"
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "caseName": "SAP:S4",
+                        "handler": {
+                          "kind": "lambda",
+                          "parameter": "s4Fields",
+                          "body": {
+                            "kind": "fieldLookup",
+                            "operands": [
+                              { "kind": "varLookup", "varName": "s4Fields" },
+                              "S4OnlyField"
+                            ]
+                          }
+                        }
+                      }
                     ]
                   }
                 }
@@ -851,8 +900,7 @@
               "groups": {
                 "main": [
                   "category",
-                  "name",
-                  "surname",
+                  "fullName",
                   "birthday",
                   "gender",
                   "emails",

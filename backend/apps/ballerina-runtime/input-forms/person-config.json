@@ -6,19 +6,19 @@
         {
           "caseName": "SAP:S2",
           "fields": {
-            "S2OnlyField":"boolean"
+            "S2OnlyField": "boolean"
           }
         },
         {
           "caseName": "SAP:S3",
           "fields": {
-            "S3OnlyField":"boolean"
+            "S3OnlyField": "boolean"
           }
         },
         {
           "caseName": "SAP:S4",
           "fields": {
-            "S4OnlyField":"boolean"
+            "S4OnlyField": "boolean"
           }
         }
       ]
@@ -29,7 +29,7 @@
         {
           "caseName": "ERP:SAP",
           "fields": {
-            "Value":"SAPConfig"
+            "Value": "SAPConfig"
           }
         },
         {
@@ -57,9 +57,7 @@
       }
     },
     "CityRef": {
-      "extends": [
-        "CollectionReference"
-      ],
+      "extends": ["CollectionReference"],
       "fields": {}
     },
     "LandArea": {
@@ -185,24 +183,22 @@
       }
     },
     "DepartmentRef": {
-      "extends": [
-        "CollectionReference"
-      ],
+      "extends": ["CollectionReference"],
       "fields": {}
     },
     "Person": {
       "fields": {
         "plotInfo": "PlotInfo",
         "category": "injectedCategory",
-        "name": "string",
-        "surname": "string",
+        "fullName": {
+          "fun": "Tuple",
+          "args": ["string", "string"]
+        },
         "birthday": "Date",
         "subscribeToNewsletter": "boolean",
         "favoriteColor": {
           "fun": "SingleSelection",
-          "args": [
-            "ColorRef"
-          ]
+          "args": ["ColorRef"]
         },
         "gender": {
           "fun": "Sum",
@@ -210,49 +206,33 @@
             "unit",
             {
               "fun": "SingleSelection",
-              "args": [
-                "GenderRef"
-              ]
+              "args": ["GenderRef"]
             }
           ]
         },
         "dependants": {
           "fun": "Map",
-          "args": [
-            "string",
-            "injectedCategory"
-          ]
+          "args": ["string", "injectedCategory"]
         },
         "friendsByCategory": {
           "fun": "Map",
-          "args": [
-            "injectedCategory",
-            "string"
-          ]
+          "args": ["injectedCategory", "string"]
         },
         "relatives": {
           "fun": "List",
-          "args": [
-            "injectedCategory"
-          ]
+          "args": ["injectedCategory"]
         },
         "interests": {
           "fun": "MultiSelection",
-          "args": [
-            "InterestRef"
-          ]
+          "args": ["InterestRef"]
         },
         "departments": {
           "fun": "MultiSelection",
-          "args": [
-            "DepartmentRef"
-          ]
+          "args": ["DepartmentRef"]
         },
         "emails": {
           "fun": "List",
-          "args": [
-            "string"
-          ]
+          "args": ["string"]
         },
         "addressesAndAddressesWithLabel": {
           "fun": "Tuple",
@@ -272,26 +252,18 @@
           "args": [
             {
               "fun": "SingleSelection",
-              "args": [
-                "CityRef"
-              ]
+              "args": ["CityRef"]
             },
             "Address"
           ]
         },
         "mainAddress": {
           "fun": "Sum",
-          "args": [
-            "string",
-            "Address"
-          ]
+          "args": ["string", "Address"]
         },
         "importantDate": {
           "fun": "Sum",
-          "args": [
-            "string",
-            "Date"
-          ]
+          "args": ["string", "Date"]
         },
         "addressesBy": {
           "fun": "Sum",
@@ -301,19 +273,14 @@
               "args": [
                 {
                   "fun": "SingleSelection",
-                  "args": [
-                    "ColorRef"
-                  ]
+                  "args": ["ColorRef"]
                 },
                 "Address"
               ]
             },
             {
               "fun": "Map",
-              "args": [
-                "string",
-                "Address"
-              ]
+              "args": ["string", "Address"]
             }
           ]
         },
@@ -322,9 +289,7 @@
           "args": [
             {
               "fun": "SingleSelection",
-              "args": [
-                "ColorRef"
-              ]
+              "args": ["ColorRef"]
             },
             "Address"
           ]
@@ -334,9 +299,7 @@
           "args": [
             {
               "fun": "SingleSelection",
-              "args": [
-                "PermissionRef"
-              ]
+              "args": ["PermissionRef"]
             },
             "boolean"
           ]
@@ -346,36 +309,25 @@
           "args": [
             {
               "fun": "SingleSelection",
-              "args": [
-                "DepartmentRef"
-              ]
+              "args": ["DepartmentRef"]
             },
             {
               "fun": "SingleSelection",
-              "args": [
-                "CityRef"
-              ]
+              "args": ["CityRef"]
             }
           ]
         },
         "shoeColours": {
           "fun": "MultiSelection",
-          "args": [
-            "ColorRef"
-          ]
+          "args": ["ColorRef"]
         },
         "friendsBirthdays": {
           "fun": "Map",
-          "args": [
-            "string",
-            "Date"
-          ]
+          "args": ["string", "Date"]
         },
         "holidays": {
           "fun": "List",
-          "args": [
-            "Date"
-          ]
+          "args": ["Date"]
         },
         "unused": "unit"
       }
@@ -395,18 +347,11 @@
     "entities": {
       "person": {
         "type": "Person",
-        "methods": [
-          "create",
-          "get",
-          "update",
-          "default"
-        ]
+        "methods": ["create", "get", "update", "default"]
       },
       "globalConfiguration": {
         "type": "GlobalConfiguration",
-        "methods": [
-          "get"
-        ]
+        "methods": ["get"]
       }
     }
   },
@@ -435,7 +380,7 @@
         }
       }
     },
-    "plotInfo":{
+    "plotInfo": {
       "type": "PlotInfo",
       "fields": {
         "landArea": {
@@ -535,14 +480,19 @@
           "label": "category",
           "renderer": "defaultCategory"
         },
-        "name": {
-          "label": "first name",
-          "tooltip": "Any name will do",
-          "renderer": "defaultString"
-        },
-        "surname": {
-          "label": "last name",
-          "renderer": "defaultString"
+        "fullName": {
+          "label": "full name",
+          "renderer": "defaultTuple2",
+          "itemRenderers": [
+            {
+              "label": "name",
+              "renderer": "defaultString"
+            },
+            {
+              "label": "surname",
+              "renderer": "defaultString"
+            }
+          ]
         },
         "birthday": {
           "renderer": "defaultDate",
@@ -684,7 +634,7 @@
         "relatives": {
           "label": "relatives",
           "tooltip": "someone who you are related to",
-          "renderer":"defaultList",
+          "renderer": "defaultList",
           "elementRenderer": {
             "label": "one relative",
             "tooltip": "relative",
@@ -713,8 +663,7 @@
         "departments": {
           "label": "departments",
           "renderer": "defaultInfiniteStreamMultiselect",
-          "stream": "departments"
-          ,
+          "stream": "departments",
           "disabled": {
             "kind": "fieldLookup",
             "operands": [
@@ -757,7 +706,7 @@
             "keyRenderer": {
               "label": "address color",
               "renderer": "defaultEnum",
-              "options": "colors" 
+              "options": "colors"
             },
             "valueRenderer": {
               "label": "address",
@@ -796,19 +745,38 @@
           "renderer": "defaultList",
           "elementRenderer": {
             "label": "email",
-            "renderer": "defaultString"
+            "renderer": "defaultString",
+            "disabled": true
           }
         },
         "addressesAndAddressesWithLabel": {
           "label": "other addresses",
           "renderer": "defaultTuple2",
+          "disabled": false,
           "itemRenderers": [
             {
               "renderer": "defaultList",
               "elementRenderer": {
                 "label": "address",
-                "renderer": "address"
-              }
+                "renderer": "address",
+                "disabled": {
+                  "kind": "equals",
+                  "operands": [
+                    {
+                      "kind": "fieldLookup",
+                      "operands": [
+                        {
+                          "kind": "varLookup",
+                          "varName": "root"
+                        },
+                        "category"
+                      ]
+                    },
+                    "child"
+                  ]
+                }
+              },
+              "disabled": true
             },
             {
               "renderer": "defaultMap",
@@ -915,8 +883,7 @@
                 "main": [
                   "plotInfo",
                   "category",
-                  "name",
-                  "surname",
+                  "fullName",
                   "birthday",
                   "gender",
                   "emails",
@@ -932,11 +899,7 @@
             },
             "mailing": {
               "groups": {
-                "main": [
-                  "subscribeToNewsletter",
-                  "interests",
-                  "favoriteColor"
-                ]
+                "main": ["subscribeToNewsletter", "interests", "favoriteColor"]
               }
             },
             "addresses": {

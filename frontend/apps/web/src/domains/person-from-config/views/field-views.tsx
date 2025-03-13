@@ -59,38 +59,43 @@ export const PersonFieldViews = {
         Context,
         ForeignMutationsExpected
       > =>
-      (props) => (
-        <>
-          {props.context.label && <h3>{props.context.label}</h3>}
-          {props.context.tooltip && <p>{props.context.tooltip}</p>}
-          {props.context.details && (
-            <p>
-              <em>{props.context.details}</em>
-            </p>
-          )}
-          <button
-            style={props.context.value == "child" ? { borderColor: "red" } : {}}
-            onClick={(_) => props.foreignMutations.setNewValue("child")}
-          >
-            child
-          </button>
-          <button
-            style={props.context.value == "adult" ? { borderColor: "red" } : {}}
-            onClick={(_) => props.foreignMutations.setNewValue("adult")}
-          >
-            adult
-          </button>
-          <button
-            style={
-              props.context.value == "senior" ? { borderColor: "red" } : {}
-            }
-            onClick={(_) => props.foreignMutations.setNewValue("senior")}
-          >
-            senior
-          </button>
-          <MostUglyValidationDebugView {...props} />
-        </>
-      ),
+      (props) =>
+        (
+          <>
+            {props.context.label && <h3>{props.context.label}</h3>}
+            {props.context.tooltip && <p>{props.context.tooltip}</p>}
+            {props.context.details && (
+              <p>
+                <em>{props.context.details}</em>
+              </p>
+            )}
+            <button
+              style={
+                props.context.value == "child" ? { borderColor: "red" } : {}
+              }
+              onClick={(_) => props.foreignMutations.setNewValue("child")}
+            >
+              child
+            </button>
+            <button
+              style={
+                props.context.value == "adult" ? { borderColor: "red" } : {}
+              }
+              onClick={(_) => props.foreignMutations.setNewValue("adult")}
+            >
+              adult
+            </button>
+            <button
+              style={
+                props.context.value == "senior" ? { borderColor: "red" } : {}
+              }
+              onClick={(_) => props.foreignMutations.setNewValue("senior")}
+            >
+              senior
+            </button>
+            <MostUglyValidationDebugView {...props} />
+          </>
+        ),
   },
   boolean: {
     defaultBoolean:
@@ -98,49 +103,51 @@ export const PersonFieldViews = {
         Context,
         ForeignMutationsExpected
       > =>
-      (props) => (
-        <>
-          {props.context.label && <h3>{props.context.label}</h3>}
-          {props.context.details && (
-            <p>
-              <em>{props.context.details}</em>
-            </p>
-          )}
-          <input
-            disabled={props.context.disabled}
-            type="checkbox"
-            checked={props.context.value}
-            onChange={(e) =>
-              props.foreignMutations.setNewValue(e.currentTarget.checked)
-            }
-          />
-          <MostUglyValidationDebugView {...props} />
-        </>
-      ),
+      (props) =>
+        (
+          <>
+            {props.context.label && <h3>{props.context.label}</h3>}
+            {props.context.details && (
+              <p>
+                <em>{props.context.details}</em>
+              </p>
+            )}
+            <input
+              disabled={props.context.disabled}
+              type="checkbox"
+              checked={props.context.value}
+              onChange={(e) =>
+                props.foreignMutations.setNewValue(e.currentTarget.checked)
+              }
+            />
+            <MostUglyValidationDebugView {...props} />
+          </>
+        ),
     secondBoolean:
       <Context extends FormLabel, ForeignMutationsExpected>(): BooleanView<
         Context,
         ForeignMutationsExpected
       > =>
-      (props) => (
-        <>
-          {props.context.label && <h3>{props.context.label}</h3>}
-          {props.context.details && (
-            <p>
-              <em>{props.context.details}</em>
-            </p>
-          )}
-          <input
-            disabled={props.context.disabled}
-            type="checkbox"
-            checked={props.context.value}
-            onChange={(e) =>
-              props.foreignMutations.setNewValue(e.currentTarget.checked)
-            }
-          />
-          <MostUglyValidationDebugView {...props} />
-        </>
-      ),
+      (props) =>
+        (
+          <>
+            {props.context.label && <h3>{props.context.label}</h3>}
+            {props.context.details && (
+              <p>
+                <em>{props.context.details}</em>
+              </p>
+            )}
+            <input
+              disabled={props.context.disabled}
+              type="checkbox"
+              checked={props.context.value}
+              onChange={(e) =>
+                props.foreignMutations.setNewValue(e.currentTarget.checked)
+              }
+            />
+            <MostUglyValidationDebugView {...props} />
+          </>
+        ),
   },
   number: {
     defaultNumber:
@@ -148,27 +155,28 @@ export const PersonFieldViews = {
         Context,
         ForeignMutationsExpected
       > =>
-      (props) => (
-        <>
-          {props.context.label && <h3>{props.context.label}</h3>}
-          {props.context.details && (
-            <p>
-              <em>{props.context.details}</em>
-            </p>
-          )}
-          <input
-            disabled={props.context.disabled}
-            type="number"
-            value={props.context.value}
-            onChange={(e) =>
-              props.foreignMutations.setNewValue(
-                ~~parseInt(e.currentTarget.value),
-              )
-            }
-          />
-          <MostUglyValidationDebugView {...props} />
-        </>
-      ),
+      (props) =>
+        (
+          <>
+            {props.context.label && <h3>{props.context.label}</h3>}
+            {props.context.details && (
+              <p>
+                <em>{props.context.details}</em>
+              </p>
+            )}
+            <input
+              disabled={props.context.disabled}
+              type="number"
+              value={props.context.value}
+              onChange={(e) =>
+                props.foreignMutations.setNewValue(
+                  ~~parseInt(e.currentTarget.value),
+                )
+              }
+            />
+            <MostUglyValidationDebugView {...props} />
+          </>
+        ),
   },
   string: {
     defaultString:
@@ -176,25 +184,26 @@ export const PersonFieldViews = {
         Context,
         ForeignMutationsExpected
       > =>
-      (props) => (
-        <>
-          {props.context.label && <h3>{props.context.label}</h3>}
-          {props.context.tooltip && <p>{props.context.tooltip}</p>}
-          {props.context.details && (
-            <p>
-              <em>{props.context.details}</em>
-            </p>
-          )}
-          <input
-            disabled={props.context.disabled}
-            value={props.context.value}
-            onChange={(e) =>
-              props.foreignMutations.setNewValue(e.currentTarget.value)
-            }
-          />
-          <MostUglyValidationDebugView {...props} />
-        </>
-      ),
+      (props) =>
+        (
+          <>
+            {props.context.label && <h3>{props.context.label}</h3>}
+            {props.context.tooltip && <p>{props.context.tooltip}</p>}
+            {props.context.details && (
+              <p>
+                <em>{props.context.details}</em>
+              </p>
+            )}
+            <input
+              disabled={props.context.disabled}
+              value={props.context.value}
+              onChange={(e) =>
+                props.foreignMutations.setNewValue(e.currentTarget.value)
+              }
+            />
+            <MostUglyValidationDebugView {...props} />
+          </>
+        ),
   },
   date: {
     defaultDate:
@@ -280,41 +289,42 @@ export const PersonFieldViews = {
         Context extends FormLabel & BaseEnumContext,
         ForeignMutationsExpected,
       >(): EnumMultiselectView<Context, ForeignMutationsExpected> =>
-      (props) => (
-        <>
-          {props.context.label && <h3>{props.context.label}</h3>}
-          {props.context.details && (
-            <p>
-              <em>{props.context.details}</em>
-            </p>
-          )}
-          {props.context.activeOptions == "loading" ? (
-            "loading options"
-          ) : (
-            <select
-              multiple
-              value={props.context.selectedIds}
-              disabled={props.context.disabled}
-              onChange={(e) =>
-                props.foreignMutations.setNewValue(
-                  Array.from(e.currentTarget.options)
-                    .filter((_) => _.selected)
-                    .map((_) => _.value),
-                )
-              }
-            >
-              <>
-                {props.context.activeOptions.map((o) => (
-                  <option value={o.fields.get("Value")! as string}>
-                    {o.fields.get("Value") as string}
-                  </option>
-                ))}
-              </>
-            </select>
-          )}
-          <MostUglyValidationDebugView {...props} />
-        </>
-      ),
+      (props) =>
+        (
+          <>
+            {props.context.label && <h3>{props.context.label}</h3>}
+            {props.context.details && (
+              <p>
+                <em>{props.context.details}</em>
+              </p>
+            )}
+            {props.context.activeOptions == "loading" ? (
+              "loading options"
+            ) : (
+              <select
+                multiple
+                value={props.context.selectedIds}
+                disabled={props.context.disabled}
+                onChange={(e) =>
+                  props.foreignMutations.setNewValue(
+                    Array.from(e.currentTarget.options)
+                      .filter((_) => _.selected)
+                      .map((_) => _.value),
+                  )
+                }
+              >
+                <>
+                  {props.context.activeOptions.map((o) => (
+                    <option value={o.fields.get("Value")! as string}>
+                      {o.fields.get("Value") as string}
+                    </option>
+                  ))}
+                </>
+              </select>
+            )}
+            <MostUglyValidationDebugView {...props} />
+          </>
+        ),
   },
   streamSingleSelection: {
     defaultInfiniteStream:
@@ -322,83 +332,84 @@ export const PersonFieldViews = {
         Context extends FormLabel,
         ForeignMutationsExpected,
       >(): SearchableInfiniteStreamView<Context, ForeignMutationsExpected> =>
-      (props) => (
-        <>
-          {props.context.label && <h3>{props.context.label}</h3>}
-          {props.context.tooltip && <p>{props.context.tooltip}</p>}
-          {props.context.details && (
-            <p>
-              <em>{props.context.details}</em>
-            </p>
-          )}
-          <button
-            disabled={props.context.disabled}
-            onClick={() => props.foreignMutations.toggleOpen()}
-          >
-            {props.context.value.isSome &&
-              ((props.context.value.value as ValueRecord).fields.get(
-                "DisplayValue",
-              ) as string)}{" "}
-            {props.context.customFormState.status == "open" ? "➖" : "➕"}
-          </button>
-          <button
-            disabled={props.context.disabled}
-            onClick={() => props.foreignMutations.clearSelection()}
-          >
-            ❌
-          </button>
-          {props.context.customFormState.status == "closed" ? (
-            <></>
-          ) : (
-            <>
-              <input
-                disabled={props.context.disabled}
-                value={props.context.customFormState.searchText.value}
-                onChange={(e) =>
-                  props.foreignMutations.setSearchText(e.currentTarget.value)
-                }
-              />
-              <ul>
-                {props.context.customFormState.stream.loadedElements
-                  .valueSeq()
-                  .map((chunk) =>
-                    chunk.data.valueSeq().map((element) => (
-                      <li>
-                        <button
-                          disabled={props.context.disabled}
-                          onClick={() =>
-                            props.foreignMutations.select(
-                              PredicateValue.Default.option(
-                                true,
-                                ValueRecord.Default.fromJSON(element),
-                              ),
-                            )
-                          }
-                        >
-                          {element.DisplayValue}{" "}
-                          {props.context.value.isSome &&
-                          (props.context.value.value as ValueRecord).fields.get(
-                            "Id",
-                          ) == element.Id
-                            ? "✅"
-                            : ""}
-                        </button>
-                      </li>
-                    )),
-                  )}
-              </ul>
-            </>
-          )}
-          <MostUglyValidationDebugView {...props} />
-          <button
-            disabled={props.context.hasMoreValues == false}
-            onClick={() => props.foreignMutations.loadMore()}
-          >
-            ⋯
-          </button>
-          <button onClick={() => props.foreignMutations.reload()}>🔄</button>
-        </>
-      ),
+      (props) =>
+        (
+          <>
+            {props.context.label && <h3>{props.context.label}</h3>}
+            {props.context.tooltip && <p>{props.context.tooltip}</p>}
+            {props.context.details && (
+              <p>
+                <em>{props.context.details}</em>
+              </p>
+            )}
+            <button
+              disabled={props.context.disabled}
+              onClick={() => props.foreignMutations.toggleOpen()}
+            >
+              {props.context.value.isSome &&
+                ((props.context.value.value as ValueRecord).fields.get(
+                  "DisplayValue",
+                ) as string)}{" "}
+              {props.context.customFormState.status == "open" ? "➖" : "➕"}
+            </button>
+            <button
+              disabled={props.context.disabled}
+              onClick={() => props.foreignMutations.clearSelection()}
+            >
+              ❌
+            </button>
+            {props.context.customFormState.status == "closed" ? (
+              <></>
+            ) : (
+              <>
+                <input
+                  disabled={props.context.disabled}
+                  value={props.context.customFormState.searchText.value}
+                  onChange={(e) =>
+                    props.foreignMutations.setSearchText(e.currentTarget.value)
+                  }
+                />
+                <ul>
+                  {props.context.customFormState.stream.loadedElements
+                    .valueSeq()
+                    .map((chunk) =>
+                      chunk.data.valueSeq().map((element) => (
+                        <li>
+                          <button
+                            disabled={props.context.disabled}
+                            onClick={() =>
+                              props.foreignMutations.select(
+                                PredicateValue.Default.option(
+                                  true,
+                                  ValueRecord.Default.fromJSON(element),
+                                ),
+                              )
+                            }
+                          >
+                            {element.DisplayValue}{" "}
+                            {props.context.value.isSome &&
+                            (
+                              props.context.value.value as ValueRecord
+                            ).fields.get("Id") == element.Id
+                              ? "✅"
+                              : ""}
+                          </button>
+                        </li>
+                      )),
+                    )}
+                </ul>
+              </>
+            )}
+            <MostUglyValidationDebugView {...props} />
+            <button
+              disabled={props.context.hasMoreValues == false}
+              onClick={() => props.foreignMutations.loadMore()}
+            >
+              ⋯
+            </button>
+            <button onClick={() => props.foreignMutations.reload()}>🔄</button>
+          </>
+        ),
   },
   streamMultiSelection: {
     defaultInfiniteStreamMultiselect:
@@ -490,7 +501,7 @@ export const PersonFieldViews = {
     defaultList:
       <
         ElementFormState,
-        Context extends FormLabel,
+        Context extends FormLabel & { disabled: boolean },
         ForeignMutationsExpected,
       >(): ListFieldView<ElementFormState, Context, ForeignMutationsExpected> =>
       (props) => {
@@ -522,6 +533,7 @@ export const PersonFieldViews = {
                         onClick={() =>
                           props.foreignMutations.remove(elementIndex)
                         }
+                        disabled={props.context.disabled}
                       >
                         ❌
                       </button>
@@ -532,6 +544,7 @@ export const PersonFieldViews = {
                             elementIndex - 1,
                           )
                         }
+                        disabled={props.context.disabled}
                       >
                         ⬆️
                       </button>
@@ -542,6 +555,7 @@ export const PersonFieldViews = {
                             elementIndex + 1,
                           )
                         }
+                        disabled={props.context.disabled}
                       >
                         ⬇️
                       </button>
@@ -549,6 +563,7 @@ export const PersonFieldViews = {
                         onClick={() =>
                           props.foreignMutations.duplicate(elementIndex)
                         }
+                        disabled={props.context.disabled}
                       >
                         📑
                       </button>
@@ -556,6 +571,7 @@ export const PersonFieldViews = {
                         onClick={() =>
                           props.foreignMutations.insert(elementIndex + 1)
                         }
+                        disabled={props.context.disabled}
                       >
                         ➕
                       </button>
@@ -568,6 +584,7 @@ export const PersonFieldViews = {
               onClick={() => {
                 props.foreignMutations.add(unit);
               }}
+              disabled={props.context.disabled}
             >
               ➕
             </button>
@@ -581,23 +598,24 @@ export const PersonFieldViews = {
         Context,
         ForeignMutationsExpected
       > =>
-      (props) => (
-        <>
-          {props.context.label && <h3>{props.context.label}</h3>}
-          {props.context.details && (
-            <p>
-              <em>{props.context.details}</em>
-            </p>
-          )}
-          <input
-            type="text"
-            value={props.context.value}
-            onChange={(e) =>
-              props.foreignMutations.setNewValue(e.currentTarget.value)
-            }
-          />
-        </>
-      ),
+      (props) =>
+        (
+          <>
+            {props.context.label && <h3>{props.context.label}</h3>}
+            {props.context.details && (
+              <p>
+                <em>{props.context.details}</em>
+              </p>
+            )}
+            <input
+              type="text"
+              value={props.context.value}
+              onChange={(e) =>
+                props.foreignMutations.setNewValue(e.currentTarget.value)
+              }
+            />
+          </>
+        ),
   },
   secret: {
     defaultSecret:
@@ -605,23 +623,24 @@ export const PersonFieldViews = {
         Context,
         ForeignMutationsExpected
       > =>
-      (props) => (
-        <>
-          {props.context.label && <h3>{props.context.label}</h3>}
-          {props.context.details && (
-            <p>
-              <em>{props.context.details}</em>
-            </p>
-          )}
-          <input
-            type="password"
-            value={props.context.value}
-            onChange={(e) =>
-              props.foreignMutations.setNewValue(e.currentTarget.value)
-            }
-          />
-        </>
-      ),
+      (props) =>
+        (
+          <>
+            {props.context.label && <h3>{props.context.label}</h3>}
+            {props.context.details && (
+              <p>
+                <em>{props.context.details}</em>
+              </p>
+            )}
+            <input
+              type="password"
+              value={props.context.value}
+              onChange={(e) =>
+                props.foreignMutations.setNewValue(e.currentTarget.value)
+              }
+            />
+          </>
+        ),
   },
   map: {
     defaultMap:
@@ -636,45 +655,48 @@ export const PersonFieldViews = {
         Context,
         ForeignMutationsExpected
       > =>
-      (props) => (
-        <>
-          {props.context.label && <h3>{props.context.label}</h3>}
-          {props.context.tooltip && <p>{props.context.tooltip}</p>}
-          {props.context.details && (
-            <p>
-              <em>{props.context.details}</em>
-            </p>
-          )}
-          <ul>
-            {props.context.value.values.map((_, elementIndex) => {
-              return (
-                <li>
-                  <button
-                    onClick={() => props.foreignMutations.remove(elementIndex)}
-                  >
-                    ❌
-                  </button>
-                  {props.embeddedKeyTemplate(elementIndex)({
-                    ...props,
-                    view: unit,
-                  })}
-                  {props.embeddedValueTemplate(elementIndex)({
-                    ...props,
-                    view: unit,
-                  })}
-                </li>
-              );
-            })}
-          </ul>
-          <button
-            onClick={() => {
-              props.foreignMutations.add(unit);
-            }}
-          >
-            ➕
-          </button>
-        </>
-      ),
+      (props) =>
+        (
+          <>
+            {props.context.label && <h3>{props.context.label}</h3>}
+            {props.context.tooltip && <p>{props.context.tooltip}</p>}
+            {props.context.details && (
+              <p>
+                <em>{props.context.details}</em>
+              </p>
+            )}
+            <ul>
+              {props.context.value.values.map((_, elementIndex) => {
+                return (
+                  <li>
+                    <button
+                      onClick={() =>
+                        props.foreignMutations.remove(elementIndex)
+                      }
+                    >
+                      ❌
+                    </button>
+                    {props.embeddedKeyTemplate(elementIndex)({
+                      ...props,
+                      view: unit,
+                    })}
+                    {props.embeddedValueTemplate(elementIndex)({
+                      ...props,
+                      view: unit,
+                    })}
+                  </li>
+                );
+              })}
+            </ul>
+            <button
+              onClick={() => {
+                props.foreignMutations.add(unit);
+              }}
+            >
+              ➕
+            </button>
+          </>
+        ),
   },
   tuple: {
     defaultTuple2:
@@ -685,21 +707,24 @@ export const PersonFieldViews = {
         Context extends FormLabel,
         ForeignMutationsExpected,
       >(): TupleFieldView<FormState, Context, ForeignMutationsExpected> =>
-      (props) => (
-        <>
-          {props.context.label && <h3>{props.context.label}</h3>}
-          {props.context.value.values.map((_, elementIndex) => {
-            return (
-              <div>
-                {props.embeddedElementTemplates(elementIndex)({
-                  ...props,
-                  view: unit,
-                })}
-              </div>
-            );
-          })}
-        </>
-      ),
+      (props) =>
+        (
+          <>
+            {props.context.label && <h3>{props.context.label}</h3>}
+            <div>
+              {props.context.value.values.map((_, elementIndex) => {
+                return (
+                  <>
+                    {props.embeddedElementTemplates(elementIndex)({
+                      ...props,
+                      view: unit,
+                    })}
+                  </>
+                );
+              })}
+            </div>
+          </>
+        ),
     defaultTuple3:
       <
         FormState extends List<{
@@ -708,21 +733,29 @@ export const PersonFieldViews = {
         Context extends FormLabel,
         ForeignMutationsExpected,
       >(): TupleFieldView<FormState, Context, ForeignMutationsExpected> =>
-      (props) => (
-        <>
-          {props.context.label && <h3>{props.context.label}</h3>}
-          {props.context.value.values.map((_, elementIndex) => {
-            return (
-              <div>
-                {props.embeddedElementTemplates(elementIndex)({
-                  ...props,
-                  view: unit,
-                })}
-              </div>
-            );
-          })}
-        </>
-      ),
+      (props) => {
+        return (
+          <>
+            {props.context.label && <h3>{props.context.label}</h3>}
+            <div>
+              {props.embeddedElementTemplates(0)({
+                ...props,
+                view: unit,
+              })}
+              {props.embeddedElementTemplates(1)({
+                ...props,
+                view: unit,
+              })}
+            </div>
+            <div>
+              {props.embeddedElementTemplates(2)({
+                ...props,
+                view: unit,
+              })}
+            </div>
+          </>
+        );
+      },
   },
   sum: {
     defaultSum: <

@@ -100,8 +100,10 @@ const entityApis: EntityApis = {
             category: ["child", "adult", "senior"][
               Math.round(Math.random() * 10) % 3
             ],
-            name: faker.person.firstName(),
-            surname: faker.person.lastName(),
+            fullName: [
+              faker.person.firstName(),
+              faker.person.lastName(),
+            ],
             birthday: new Date(
               Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45,
             ).toISOString(),
@@ -369,8 +371,7 @@ const entityApis: EntityApis = {
                 },
               },
               category: "",
-              name: "",
-              surname: "",
+              fullName: [],
               birthday: "01/01/2000",
               favoriteColor: { Value: { Value: null }, IsSome: false },
               gender: {

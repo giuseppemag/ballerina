@@ -74,6 +74,10 @@ export const FormsApp = (props: {}) => {
       "entity",
       personCreateFormState.form.value.entity.sync.value.fields.toJS(),
     );
+    console.log(
+      "visibilities",
+      personCreateFormState.form.value.customFormState.predicateEvaluations.value.visiblityPredicateEvaluations.toJS(),
+    );
   }
 
   if (
@@ -83,6 +87,10 @@ export const FormsApp = (props: {}) => {
     console.log(
       "entity",
       personEditFormState.form.value.entity.sync.value.fields.toJS(),
+    );
+    console.log(
+      "visibilities",
+      personEditFormState.form.value.customFormState.predicateEvaluations.value.visiblityPredicateEvaluations.fields.toJS(),
     );
   }
 

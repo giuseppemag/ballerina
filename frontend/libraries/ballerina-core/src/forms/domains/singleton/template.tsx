@@ -45,7 +45,7 @@ export const Form = <
       Context & {
         customFormState: State["formFieldStates"][f]["customFormState"];
         commonFormState: State["formFieldStates"][f]["commonFormState"];
-      } & Value<f> & { disabled: boolean },
+      } & Value<f> & { disabled: boolean, visible: boolean },
       {
         customFormState: State["formFieldStates"][f]["customFormState"];
         commonFormState: State["formFieldStates"][f]["commonFormState"];
@@ -84,7 +84,7 @@ export const Form = <
                 FieldStates,
                 Context,
                 ForeignMutationsExpected
-              > & { disabled: boolean }
+              > & { disabled: boolean, visible: boolean }
             >((_) => {
               // disabled flag is passed in from the wrapping container when mapping over fields
               const visibilitiesFromParent =
@@ -102,6 +102,7 @@ export const Form = <
                 value: (_.value as ValueRecord).fields.get(field as string),
                 extraContext: _.extraContext,
                 disabled: _.disabled,
+                visible: _.visible,
                 commonFormState: _.formFieldStates[field].commonFormState,
                 customFormState: _.formFieldStates[field].customFormState,
                 formFieldStates: _.formFieldStates[field].formFieldStates,
@@ -222,6 +223,7 @@ export const Form = <
           const visibleFieldKeys: OrderedSet<FieldName> = (() => {
             if (
               props.context.visibilities == undefined ||
+              props.context.visible == false ||
               props.context.visibilities.kind != "form"
             )
               return OrderedSet();
@@ -235,9 +237,10 @@ export const Form = <
           const disabledFieldKeys: OrderedSet<FieldName> = (() => {
             if (
               props.context.disabledFields == undefined ||
+              props.context.disabled ||
               props.context.disabledFields.kind != "form"
             )
-              return OrderedSet(Object.keys(props.context.value as object));
+              return OrderedSet(Object.keys(props.context.value.fields.toJS() as object));
 
             return props.context.disabledFields.fields
               .filter((_) => _.value == true)

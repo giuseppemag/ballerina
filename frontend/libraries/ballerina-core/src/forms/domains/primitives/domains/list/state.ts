@@ -60,7 +60,7 @@ export type ListFieldView<
           duplicate: SimpleCallback<number>;
           insert: SimpleCallback<number>;
         }
-      >
+      > | (() => undefined)
     >;
   }
 >;
