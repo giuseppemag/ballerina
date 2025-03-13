@@ -115,6 +115,7 @@ module Golang =
         let! (cfg: CodeGenConfig) = state.GetContext()
 
         match t with
+        | ExprType.UnitType -> return cfg.Unit.DefaultConstructor
         | ExprType.PrimitiveType p ->
           match p with
           | PrimitiveType.BoolType -> return cfg.Bool.DefaultValue
@@ -132,6 +133,10 @@ module Golang =
           let! k = k |> ExprType.ToGolangTypeAnnotation
           let! v = v |> ExprType.ToGolangTypeAnnotation
           return $"{cfg.Map.DefaultConstructor}[{k}, {v}]()"
+        | ExprType.SumType(l, r) ->
+          let! l = l |> ExprType.ToGolangTypeAnnotation
+          let! r = r |> ExprType.ToGolangTypeAnnotation
+          return $"{cfg.Sum.DefaultConstructor}[{l}, {r}]()"
         | ExprType.OptionType(e) ->
           let! e = e |> ExprType.ToGolangTypeAnnotation
           return $"{cfg.Option.DefaultConstructor}[{e}]()"
@@ -180,6 +185,7 @@ module Golang =
         let! config = state.GetContext()
 
         match t with
+        | ExprType.UnitType -> return config.Unit.GeneratedTypeName
         | ExprType.LookupType t -> return t.TypeName
         | ExprType.PrimitiveType p ->
           match p with
@@ -259,6 +265,19 @@ module Golang =
             |> state.SetState
 
           return $"{config.Map.GeneratedTypeName}[{k},{v}]"
+        | ExprType.SumType(l, r) ->
+          let! l = !l
+          let! r = !r
+
+          do!
+            config.Sum.RequiredImport
+            |> Option.toList
+            |> Set.ofList
+            |> Set.union
+            |> GoCodeGenState.Updaters.UsedImports
+            |> state.SetState
+            
+          return $"{config.Sum.GeneratedTypeName}[{l},{r}]"
         | _ -> return! error
       }
 

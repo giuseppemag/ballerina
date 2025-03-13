@@ -24,14 +24,14 @@ const streamApis: InfiniteStreamSources = (streamName: string) =>
   streamName == "departments"
     ? PersonApi.getDepartments()
     : streamName == "cities"
-      ? AddressApi.getCities()
-      : (_: any) => (_: any) => {
-          alert(`Cannot find stream API ${streamName}`);
-          return Promise.resolve({
-            hasMoreValues: false,
-            data: OrderedMap(),
-          });
-        };
+    ? AddressApi.getCities()
+    : (_: any) => (_: any) => {
+        alert(`Cannot find stream API ${streamName}`);
+        return Promise.resolve({
+          hasMoreValues: false,
+          data: OrderedMap(),
+        });
+      };
 const enumApis: EnumOptionsSources = (enumName: string) =>
   enumName == "colors"
     ? () =>
@@ -39,37 +39,37 @@ const enumApis: EnumOptionsSources = (enumName: string) =>
           () => colors.map((_) => ({ Value: _ })),
           undefined,
           1,
-          0,
+          0
         )
     : enumName == "permissions"
-      ? () =>
-          PromiseRepo.Default.mock(
-            () => permissions.map((_) => ({ Value: _ })),
-            undefined,
-            1,
-            0,
-          )
-      : enumName == "genders"
-        ? () =>
-            PromiseRepo.Default.mock(
-              () => genders.map((_) => ({ Value: _ })),
-              undefined,
-              1,
-              0,
-            )
-        : enumName == "interests"
-          ? () =>
-              PromiseRepo.Default.mock(
-                () => interests.map((_) => ({ Value: _ })),
-                undefined,
-                1,
-                0,
-              )
-          : () =>
-              PromiseRepo.Default.mock(() => {
-                alert(`Cannot find enum API ${enumName}`);
-                return [];
-              });
+    ? () =>
+        PromiseRepo.Default.mock(
+          () => permissions.map((_) => ({ Value: _ })),
+          undefined,
+          1,
+          0
+        )
+    : enumName == "genders"
+    ? () =>
+        PromiseRepo.Default.mock(
+          () => genders.map((_) => ({ Value: _ })),
+          undefined,
+          1,
+          0
+        )
+    : enumName == "interests"
+    ? () =>
+        PromiseRepo.Default.mock(
+          () => interests.map((_) => ({ Value: _ })),
+          undefined,
+          1,
+          0
+        )
+    : () =>
+        PromiseRepo.Default.mock(() => {
+          alert(`Cannot find enum API ${enumName}`);
+          return [];
+        });
 const entityApis: EntityApis = {
   create: (apiName: string) =>
     apiName == "person"
@@ -77,7 +77,7 @@ const entityApis: EntityApis = {
           PromiseRepo.Default.mock(() => {
             console.log(
               "person create api post body",
-              JSON.stringify(e, undefined, 2),
+              JSON.stringify(e, undefined, 2)
             );
             return unit;
           })
@@ -103,14 +103,17 @@ const entityApis: EntityApis = {
             name: faker.person.firstName(),
             surname: faker.person.lastName(),
             birthday: new Date(
-              Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45,
+              Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45
             ).toISOString(),
             subscribeToNewsletter: Math.random() > 0.5,
             favoriteColor: {
               Value: { Value: colors[Math.round(Math.random() * 10) % 3] },
               IsSome: true,
             },
-            gender: { IsSome: false, Value: { Value: "" } },
+            gender: {
+              Kind: "r",
+              Value: { IsSome: true, Value: { Value: "M" } },
+            },
             dependants: [
               { key: "Steve", value: "adult" },
               { key: "Alice", value: "senior" },
@@ -127,15 +130,35 @@ const entityApis: EntityApis = {
               { Id: v4(), DisplayValue: "Department 2" },
             ],
             mainAddress: {
-              street: faker.location.street(),
-              number: Math.floor(Math.random() * 500),
-              city:
-                Math.random() > 0.5
-                  ? { IsSome: false, Value: { Value: "" } }
-                  : {
-                      Value: { ...City.Default(v4(), faker.location.city()) },
-                      IsSome: true,
-                    },
+              Kind: "l",
+              Value: "",
+            },
+            addressesBy: {
+              Kind: "r",
+              Value: [
+                {
+                  key: "home",
+                  value: {
+                    street: faker.location.street(),
+                    number: Math.floor(Math.random() * 500),
+                    city:
+                      Math.random() > 0.5
+                        ? { IsSome: false, Value: { Value: "" } }
+                        : {
+                            Value: {
+                              ...City.Default(v4(), faker.location.city()),
+                            },
+                            IsSome: true,
+                          },
+                  },
+                },
+              ],
+            },
+            importantDate: {
+              Kind: "r",
+              Value: new Date(
+                Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45
+              ).toISOString(),
             },
             addresses: [
               {
@@ -296,18 +319,28 @@ const entityApis: EntityApis = {
               birthday: "01/01/2000",
               subscribeToNewsletter: false,
               favoriteColor: { Value: { Value: null }, IsSome: false },
-              gender: { IsSome: false, Value: { Value: null } },
+              gender: {
+                Kind: "r",
+                Value: { IsSome: true, Value: { Value: "M" } },
+              },
               dependants: [],
               friendsByCategory: [],
               relatives: [],
               interests: [],
               departments: [],
               mainAddress: {
-                street: "",
-                number: 0,
-                city: { IsSome: false, Value: { Value: null } },
+                Kind: "l",
+                Value: "",
               },
               addresses: [],
+              addressesBy: {
+                Kind: "r",
+                Value: [],
+              },
+              importantDate: {
+                Kind: "l",
+                Value: "",
+              },
               emails: [],
               addressesWithLabel: [],
               addressesByCity: [],

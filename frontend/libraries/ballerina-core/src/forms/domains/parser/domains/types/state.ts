@@ -101,6 +101,10 @@ export const RawFieldType = {
     _: RawFieldType<T>,
   ): _ is { fun: "Map"; args: Array<RawFieldType<T>> } =>
     RawFieldType.isApplication(_) && _.fun == "Map" && _.args.length == 2,
+  isSum: <T>(
+    _: RawFieldType<T>,
+  ): _ is { fun: "Sum"; args: Array<RawFieldType<T>> } =>
+    RawFieldType.isApplication(_) && _.fun == "Sum" && _.args.length == 2,
   isSingleSelection: <T>(
     _: RawFieldType<T>,
   ): _ is { fun: "SingleSelection"; args: Array<RawFieldType<T>> } =>
@@ -289,6 +293,24 @@ export const ParsedType = {
           ).Then((parsedArgs1) =>
             ValueOrErrors.Default.return(
               ParsedType.Default.application("Map", [parsedArgs0, parsedArgs1]),
+            ),
+          ),
+        );
+      if (RawFieldType.isSum(rawFieldType))
+        return ParsedType.Operations.ParseRawFieldType(
+          fieldName,
+          rawFieldType.args[0],
+          types,
+          injectedPrimitives,
+        ).Then((parsedArgs0) =>
+          ParsedType.Operations.ParseRawFieldType(
+            fieldName,
+            rawFieldType.args[1],
+            types,
+            injectedPrimitives,
+          ).Then((parsedArgs1) =>
+            ValueOrErrors.Default.return(
+              ParsedType.Default.application("Sum", [parsedArgs0, parsedArgs1]),
             ),
           ),
         );
