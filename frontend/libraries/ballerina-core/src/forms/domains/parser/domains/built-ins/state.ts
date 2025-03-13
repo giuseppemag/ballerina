@@ -13,7 +13,6 @@ import {
   Sum,
   TypeName,
   unit,
-  ValueRecord,
   ValueTuple,
 } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
@@ -157,13 +156,6 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
   const builtins: BuiltIns = {
     primitives: Map<string, PrimitiveBuiltIn>([
       [
-        "unit",
-        {
-          renderers: Set(["unit"]),
-          defaultValue: PredicateValue.Default.unit(),
-        },
-      ] as [string, PrimitiveBuiltIn],
-      [
         "string",
         {
           renderers: Set(["string"]),
@@ -256,6 +248,13 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
           ),
         },
       ] as [string, GenericBuiltIn],
+      [
+        "unit",
+        {
+          defaultValue: PredicateValue.Default.unit(),
+        },
+      ] as [string, GenericBuiltIn],
+
     ]),
     renderers: {
       unit: Set(),
@@ -307,6 +306,11 @@ export const defaultValue =
       if (generic) return generic.defaultValue;
     }
 
+    if (t.kind == "unit") {
+      const generic = builtIns.generics.get("unit");
+      if (generic) return generic.defaultValue;
+    }
+
     if (t.kind == "lookup")
       return defaultValue(
         types,
@@ -345,6 +349,9 @@ export const fromAPIRawValue =
       );
     }
 
+    if (t.kind == "unit") {
+      return ValueOrErrors.Default.return(PredicateValue.Default.unit());
+    }
     if (t.kind == "primitive") {
       if (!PredicateValue.Operations.IsPrimitive(raw)) {
         return ValueOrErrors.Default.throwOne(

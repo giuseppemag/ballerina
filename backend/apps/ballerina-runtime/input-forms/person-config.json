@@ -204,7 +204,7 @@
         "gender": {
           "fun": "Sum",
           "args": [
-            "string",
+            "unit",
             {
               "fun": "SingleSelection",
               "args": [
@@ -546,7 +546,7 @@
           "renderer": "defaultSum",
           "leftRenderer": {
             "label": "left",
-            "renderer": "defaultString"
+            "renderer": "defaultUnit"
           },
           "rightRenderer": {
             "label": "right",
