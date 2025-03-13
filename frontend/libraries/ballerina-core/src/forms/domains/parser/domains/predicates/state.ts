@@ -12,6 +12,7 @@ import {
 } from "../../../../../../main";
 
 export type FieldPredicateExpression =
+  | { kind: "unit"; value: Expr }
   | { kind: "primitive"; value: Expr }
   | { kind: "form"; value: Expr; fields: FieldPredicateExpressions }
   | { kind: "list"; value: Expr; elementExpression: FieldPredicateExpression }
@@ -52,6 +53,7 @@ const calculateVisibility = (
 
 export const FieldPredicateExpression = {
   Default: {
+    unit: (value: Expr): FieldPredicateExpression => ({ kind: "unit", value }),
     primitive: (value: Expr): FieldPredicateExpression => ({
       kind: "primitive",
       value,
@@ -102,6 +104,7 @@ export type FieldPredicateExpressions = Map<
 
 export type FormFieldPredicateEvaluation =
   | { kind: "primitive"; value: boolean }
+  | { kind: "unit", value: boolean }
   | { kind: "form"; value: boolean; fields: FormFieldPredicateEvaluations }
   | {
       kind: "list";
@@ -129,6 +132,10 @@ export type FormFieldPredicateEvaluation =
 
 export const FormFieldPredicateEvaluation = {
   Default: {
+    unit: (value: boolean): FormFieldPredicateEvaluation => ({
+      kind: "unit",
+      value,
+    }),
     primitive: (value: boolean): FormFieldPredicateEvaluation => ({
       kind: "primitive",
       value,
@@ -958,7 +965,8 @@ export const Expr = {
           PredicateValue.Operations.IsUnit(e) ||
           PredicateValue.Operations.IsRecord(e) ||
           PredicateValue.Operations.IsTuple(e) ||
-          PredicateValue.Operations.IsUnionCase(e)
+          PredicateValue.Operations.IsUnionCase(e) ||
+          PredicateValue.Operations.IsUnit(e)
           ? ValueOrErrors.Default.return(e)
           : PredicateValue.Operations.IsVarLookup(e)
           ? MapRepo.Operations.tryFindWithError(
@@ -1292,6 +1300,14 @@ export const evaluatePredicates = <T>(
         return ValueOrErrors.Default.throwOne(
           `Error: parsing expected sum, got ${JSON.stringify(raw)}`,
         );
+      });
+    }
+    if (predicate.kind == "unit") {
+      return calculateVisibility(predicate.value, bindings).Then((result) => {
+        return ValueOrErrors.Default.return({
+          kind: "unit",
+          value: result,
+        });
       });
     }
     return ValueOrErrors.Default.throwOne(

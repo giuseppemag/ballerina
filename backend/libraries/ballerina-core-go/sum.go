@@ -64,3 +64,6 @@ func MapLeft[a any, b any, a1 any](self Sum[a, b], f func(a) a1) (Sum[a1, b], er
 		return res, fmt.Errorf("%s is not a valid sum instance", self)
 	}
 }
+
+type WriterSum[Delta any, DeltaA any, DeltaB any] interface {
+}

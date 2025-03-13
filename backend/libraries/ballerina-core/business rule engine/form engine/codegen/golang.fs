@@ -28,7 +28,86 @@ module Golang =
               { s with
                   UsedImports = u (s.UsedImports) } |}
 
-  type ExprType with
+  type Writer =
+    { Fields: Map<string, WriterField>
+      Type: ExprType
+      Name: WriterName }
+
+  and WriterField =
+    | Primitive
+    | Nested of WriterName
+
+  and WriterName = { WriterName: string }
+
+
+  and ExprType with
+    static member ToWriter (writerName: WriterName) (t: ExprType) =
+      state {
+        let! (ctx: ParsedFormsContext) = state.GetContext()
+        let! st = state.GetState()
+
+        match st |> Map.tryFind writerName with
+        | Some w -> return w
+        | None ->
+          match t with
+          | ExprType.RecordType fields ->
+            let! fields =
+              fields
+              |> Seq.map (fun field ->
+                state {
+                  let! wf = ExprType.ToWriterField writerName field.Key field.Value
+                  return field.Key, wf
+                })
+              |> state.All
+
+            let fields = fields |> Map.ofSeq
+
+            let w =
+              { Name = writerName
+                Type = t
+                Fields = fields }
+
+            do! state.SetState(Map.add w.Name w)
+            return w
+          | ExprType.UnionType cases ->
+            let! cases =
+              cases
+              |> Seq.map (fun case ->
+                state {
+                  let! wf = ExprType.ToWriterField writerName case.Key.CaseName case.Value.Fields
+                  return case.Key.CaseName, wf
+                })
+              |> state.All
+
+            let fields = cases |> Map.ofSeq
+
+            let w =
+              { Name = writerName
+                Type = t
+                Fields = fields }
+
+            do! state.SetState(Map.add w.Name w)
+            return w
+          // tuple should be treated like a record
+          // list and option should just recur in the child?
+          // map?
+          | _ -> return! state.Throw(Errors.Singleton $"Error: cannot convert type {t} to a Writer.")
+      }
+
+    static member ToWriterField (parentName: WriterName) (fieldName: string) (t: ExprType) =
+      state {
+        match t with
+        | ExprType.PrimitiveType _ -> return WriterField.Primitive
+        | ExprType.LookupType tn ->
+          let! ctx = state.GetContext()
+          let! t = ctx.Types |> Map.tryFindWithError tn.TypeName "types" "types" |> state.OfSum
+          let! w = ExprType.ToWriter { WriterName = tn.TypeName } t.Type
+          return WriterField.Nested w.Name
+        | _ ->
+          let! w = ExprType.ToWriter { WriterName = parentName.WriterName + "_" + fieldName } t
+          return WriterField.Nested w.Name
+      }
+
     static member ToGolangDefaultValue(t: ExprType) =
       let (!) = ExprType.ToGolangDefaultValue
 
@@ -952,28 +1031,83 @@ module Golang =
               |> List.ofSeq
             )
 
-          return
-            StringBuilder.Many(
+
+          let entityAPIsWithUPDATE =
+            ctx.Apis.Entities
+            |> Map.values
+            |> Seq.filter (snd >> Set.contains CrudMethod.Update)
+            |> Seq.map fst
+
+          let writersBuilder =
+            state {
+              for e in entityAPIsWithUPDATE do
+                let! t =
+                  ctx.Types
+                  |> Map.tryFindWithError e.TypeId.TypeName "types" "types"
+                  |> state.OfSum
+
+                do! ExprType.ToWriter { WriterName = e.EntityName } t.Type |> state.Map ignore
+            }
+
+          match writersBuilder.run (ctx, Map.empty) with
+          | Right(err: Errors, _) -> return! state.Throw err
+          | Left(_, newWritersState) ->
+            // do System.Console.WriteLine(newWritersState.ToFSharpString)
+
+            let writers =
               seq {
-                yield! entityGETters
-                yield! entityDEFAULTers
-                yield! entityPOSTers
-                yield! enumCasesGETters
-                yield! enumCasesPOSTters
-                yield! streamGETters
-                yield! streamPOSTters
-                // yield! entitiesOPSelector "GET" CrudMethod.Get
-                // yield! entitiesOPEnum "GET" CrudMethod.Get
-                // yield! entitiesOPSelector "POST" CrudMethod.Create
-                // yield! entitiesOPEnum "POST" CrudMethod.Create
-                // yield! entitiesOPSelector "PATCH" CrudMethod.Update
-                // yield! entitiesOPEnum "PATCH" CrudMethod.Update
-                // yield! entitiesOPSelector "DEFAULT" CrudMethod.Default
-                // yield! entitiesOPEnum "DEFAULT" CrudMethod.Default
-                yield! generatedTypes
-                yield! customTypes
+                for w in newWritersState |> Option.toList do
+                  for w in w |> Map.values do
+                    yield StringBuilder.One $"type Delta{w.Name.WriterName} interface {{"
+                    yield StringBuilder.One "\n"
+                    yield StringBuilder.One $"}}"
+                    yield StringBuilder.One "\n"
+
+                  for w in w |> Map.values do
+                    yield StringBuilder.One $"type Writer{w.Name.WriterName}[Delta any] interface {{"
+                    yield StringBuilder.One "\n"
+
+                    for wf in w.Fields do
+                      match wf.Value with
+                      | WriterField.Primitive ->
+                        yield StringBuilder.One $"  {wf.Key}(delta Delta) (Delta{w.Name.WriterName}, error)"
+                        yield StringBuilder.One "\n"
+                      | WriterField.Nested nw ->
+                        yield
+                          StringBuilder.One
+                            $"  {wf.Key}(nestedDelta Delta{nw.WriterName}, delta Delta) (Delta{w.Name.WriterName}, error)"
+
+                        yield StringBuilder.One "\n"
+
+                    yield StringBuilder.One $"  Zero() (Delta{w.Name.WriterName}, error)"
+                    yield StringBuilder.One "\n"
+                    yield StringBuilder.One $"}}"
+                    yield StringBuilder.One "\n"
               }
-            )
+
+            return
+              StringBuilder.Many(
+                seq {
+                  yield! writers
+                  yield! entityGETters
+                  yield! entityDEFAULTers
+                  yield! entityPOSTers
+                  yield! enumCasesGETters
+                  yield! enumCasesPOSTters
+                  yield! streamGETters
+                  yield! streamPOSTters
+                  // yield! entitiesOPSelector "GET" CrudMethod.Get
+                  // yield! entitiesOPEnum "GET" CrudMethod.Get
+                  // yield! entitiesOPSelector "POST" CrudMethod.Create
+                  // yield! entitiesOPEnum "POST" CrudMethod.Create
+                  // yield! entitiesOPSelector "PATCH" CrudMethod.Update
+                  // yield! entitiesOPEnum "PATCH" CrudMethod.Update
+                  // yield! entitiesOPSelector "DEFAULT" CrudMethod.Default
+                  // yield! entitiesOPEnum "DEFAULT" CrudMethod.Default
+                  yield! generatedTypes
+                  yield! customTypes
+                }
+              )
         }
 
       let result = result |> state.WithErrorContext $"...when generating Go code"

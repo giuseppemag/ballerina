@@ -6,7 +6,6 @@ import {
   NumberView,
   StringView,
   DateView,
-  CollectionReference,
   EnumView,
   EnumMultiselectView,
   SearchableInfiniteStreamView,
@@ -21,6 +20,7 @@ import {
   ValueRecord,
   TupleFieldView,
   SumFieldView,
+  UnitFieldView,
 } from "ballerina-core";
 import { CategoryView } from "../injected-forms/category";
 import { List } from "node_modules/immutable/dist/immutable";
@@ -783,4 +783,17 @@ export const PersonFieldViews = {
       };
     },
   },
+  unit: {
+    defaultUnit: <Context extends FormLabel>(): UnitFieldView<Context> => {
+      return (props) => {
+        return (
+          <>
+            {props.context.label && <h3>{props.context.label}</h3>}
+            Unit field
+            <MostUglyValidationDebugView {...props} />
+          </>
+        );
+      };
+    } 
+  }
 };

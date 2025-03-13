@@ -33,11 +33,22 @@
           ❌ wrong use of `Sum`
     ✅ turn union cases into maps - makes lookups more robust and ensures uniqueness
     ❌ entites visitors
+      ❌ the `entityName` should be the API name, not the type
       ❌ entities PATCH - gets single value and path of change
-        ❌ `writerA: { x:Delta -> DeltaA + error; B:DeltaB x Delta -> DeltaA + error; Zero:() -> DeltaA + error }`
-        ❌ `writerB: { B1:DeltaB_B1 x Delta -> DeltaB + error; B2:DeltaB_B2 x Delta -> DeltaB + error }`
-        ❌ in short, traverse the entity, generate the deltas recursively for any nested constructs, lookups refer to existing writers, and loops are prevented with a `visited` set
+        ✅ build sample with A, B, C (polymorphic), D, and E (excluded from the transitive closure)
+        ✅ traverse the entity, generate the deltas recursively for any nested constructs, lookups refer to existing writers, and loops are prevented with a `visited` set
+          ✅ the output of this is a map `TypeName -> Writer`
+          ✅ `Writer = RecordWriter of Fields | CaseWriter of Casename x Fields`
+        ✅ `writerA: { x:Delta -> DeltaA + error; B:DeltaB x Delta -> DeltaA + error; Zero:() -> DeltaA + error }`
+        ✅ `writerB: { B1:DeltaB_B1 x Delta -> DeltaB + error; B2:DeltaB_B2 x Delta -> DeltaB + error }`
+        ❌ recurse on every single type case when building the writer, no unsupported types or shapes here
+          ❌ define generic writers such as `writerOption[DeltaE, Delta]`, `writerSum[DeltaL, DeltaR, Delta]`, etc,
+          ❌ define generic deltas such as `DeltaOption[DeltaE, Delta]`, `DeltaSum[DeltaL, DeltaR, Delta]`, etc,
+          ❌ move them to Ballerina and the go-config
+        ❌ recursively traverse the path and match over entity names and field names
+          ❌ invoke recursively as long as possible, end with a `Zero` invocation
     ✅ currying the arguments of `entityGET` and `entityPOST`
+    ❌ take as input a list of specs, stitch them together, generate a single file - no `include` needed
     ❌ add paginated lists
     ❌ add lazy fields
     ❌ add union renderers
@@ -60,7 +71,6 @@
       ❌ preprocessor plugins
         ❌ injected at specific times
         ❌ language generation as parameters
-      ❌ define `include` command
       ❌ add homomorphic forms
       ❌ add homomorphic+config forms
     ❌ disallow unsupported keywords (`visibIle` wasted me a good chunk of time)

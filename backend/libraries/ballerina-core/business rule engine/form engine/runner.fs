@@ -160,7 +160,7 @@ module Runner =
 
 
 (* Example invocation:
-dotnet run -- forms -input ./input-forms/blp/unions-error.json -output ./generated-output/models -validate -codegen golang -codegen_config ./input-forms/go-config.json
+dotnet run -- forms -input ../automatic-tests/input-forms/entity-patch-kitchensink.json -output ./generated-output/models -validate -codegen golang -codegen_config ../automatic-tests/input-forms/go-config.json
 
 dotnet run -- forms -input ../automatic-tests/input-forms/person-config.json -output ./generated-output/models -validate -codegen golang -codegen_config ../automatic-tests/input-forms/go-config.json
 
