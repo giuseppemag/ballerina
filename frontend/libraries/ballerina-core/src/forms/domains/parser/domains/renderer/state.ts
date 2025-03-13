@@ -40,6 +40,7 @@ import {
   Template,
   unit,
   Unit,
+  UnitForm,
   Value,
   ValueOption,
   ValueRecord,
@@ -69,6 +70,7 @@ export type RawRenderer = {
 export type ParsedRenderer<T> = (
   | { kind: "primitive" }
   | { kind: "form" }
+  | { kind: "unit"}
   | { kind: "enum"; options: string }
   | { kind: "stream"; stream: string }
   | { kind: "list"; elementRenderer: ParsedRenderer<T> }
@@ -232,6 +234,24 @@ export const ParsedRenderer = {
       disabled: disabled != undefined ? disabled : false,
       leftRenderer,
       rightRenderer,
+    }),
+    unit: <T>(
+      type: ParsedType<T>,
+      renderer: string,
+      visible: any,
+      disabled: any,
+      label?: string,
+      tooltip?: string,
+      details?: string, 
+    ): ParsedRenderer<T> => ({
+      kind: "unit",
+      type,
+      renderer,
+      label,
+      tooltip,
+      details,
+      visible,
+      disabled: disabled != undefined ? disabled : false,
     }),
   },
   Operations: {
@@ -435,6 +455,37 @@ export const ParsedRenderer = {
                 }),
               );
             },
+          );
+        case "unit":
+          return Expr.Operations.parse(parsedRenderer.visible ?? true).Then(
+            (visibilityExpr) =>
+              Expr.Operations.parse(parsedRenderer.disabled ?? false).Then(
+                (disabledExpr) =>
+                  ValueOrErrors.Default.return({
+                    form: {
+                      renderer: UnitForm<any & FormLabel>()
+                        .withView(
+                          parsingContext.formViews[viewKind][
+                            parsedRenderer.renderer
+                          ]() as any,
+                        )
+                        .mapContext<any>((_) => ({
+                          ..._,
+                          label: parsedRenderer.label,
+                          tooltip: parsedRenderer.tooltip,
+                          details: parsedRenderer.details,
+                        })),
+                      initialValue: parsingContext.defaultValue(
+                        parsedRenderer.type,
+                      ),
+                      initialState: {
+                        commonFormState: CommonFormState.Default(),
+                      },
+                    },
+                    visibilityPredicateExpression: FieldPredicateExpression.Default.unit(visibilityExpr),
+                    disabledPredicatedExpression: FieldPredicateExpression.Default.unit(disabledExpr),
+                  }),
+              ),
           );
         case "form":
           return Expr.Operations.parse(parsedRenderer.visible ?? true).Then(
@@ -691,6 +742,16 @@ export const ParsedRenderer = {
       enumOptionsSources: EnumOptionsSources,
       injectedPrimitives?: InjectedPrimitives<T>,
     ): any => {
+      if (viewKind == 'unit') {
+        return UnitForm<any & FormLabel>()
+          .withView(formViews[viewKind][viewName]())
+          .mapContext<any & CommonFormState & Value<Unit>>((_) => ({
+            ..._,
+            label,
+            tooltip,
+            details,
+          }));
+      }
       if (viewKind == "boolean")
         return BooleanForm<any & FormLabel, Unit>()
           .withView(formViews[viewKind][viewName]())
@@ -833,6 +894,7 @@ export const ParsedRenderer = {
       injectedPrimitives?: InjectedPrimitives<T>,
     ): any => {
       if (
+        viewType == "unit" ||
         viewType == "boolean" ||
         viewType == "number" ||
         viewType == "string" ||

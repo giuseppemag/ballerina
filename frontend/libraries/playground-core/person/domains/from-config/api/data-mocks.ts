@@ -261,6 +261,7 @@ const entityApis: EntityApis = {
             shoeColours: [],
             friendsBirthdays: [],
             holidays: [],
+            unused: {},
           });
         };
       case "globalConfiguration":
@@ -350,6 +351,7 @@ const entityApis: EntityApis = {
               shoeColours: [],
               friendsBirthdays: [],
               holidays: [],
+              unused: {} // undefined is valid too
             };
           })
       : (_) => {

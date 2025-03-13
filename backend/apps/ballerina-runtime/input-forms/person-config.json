@@ -204,7 +204,7 @@
         "gender": {
           "fun": "Sum",
           "args": [
-            "string",
+            "unit",
             {
               "fun": "SingleSelection",
               "args": [
@@ -373,7 +373,8 @@
           "args": [
             "Date"
           ]
-        }
+        },
+        "unused": "unit"
       }
     }
   },
@@ -545,7 +546,7 @@
           "renderer": "defaultSum",
           "leftRenderer": {
             "label": "left",
-            "renderer": "defaultString"
+            "renderer": "defaultUnit"
           },
           "rightRenderer": {
             "label": "right",
@@ -885,6 +886,10 @@
             "label": "holiday",
             "renderer": "defaultDate"
           }
+        },
+        "unused": {
+          "label": "unused field",
+          "renderer": "defaultUnit"
         }
       },
       "tabs": {
@@ -905,7 +910,8 @@
                   "relatives",
                   "friendsBirthdays",
                   "shoeColours",
-                  "importantDate"
+                  "importantDate",
+                  "unused"
                 ]
               }
             },
