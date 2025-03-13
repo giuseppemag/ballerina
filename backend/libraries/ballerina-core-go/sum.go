@@ -14,11 +14,21 @@ func DefaultSet[a comparable]() Set[a] {
 	return make([]a, 0)
 }
 
+type WriterSet[Delta any, DeltaA any] interface {
+}
+
+type DeltaSet[Delta any, DeltaA any] interface{}
+
 type Map[a comparable, b any] []KeyValue[a, b]
 
 func DefaultMap[a comparable, b any]() Map[a, b] {
 	return make([]KeyValue[a, b], 0)
 }
+
+type WriterMap[Delta any, DeltaK any, DeltaV any] interface {
+}
+
+type DeltaMap[Delta any, DeltaK any, DeltaV any] interface{}
 
 type Sum[a any, b any] interface{}
 type left[a any, b any] struct {

@@ -36,7 +36,7 @@
       ❌ the `entityName` should be the API name, not the type
       ❌ entities PATCH - gets single value and path of change
         ❌ why do codegen errors (related to the writers) show up twice?
-        ❌ `ballerina.DefaultSum` should be `ballerina.Left`, and take the first constructor parameters
+        ✅ `ballerina.DefaultSum` should be `ballerina.Left`, and take the first constructor parameters
         ✅ build sample with A, B, C (polymorphic), D, and E (excluded from the transitive closure)
         ✅ traverse the entity, generate the deltas recursively for any nested constructs, lookups refer to existing writers, and loops are prevented with a `visited` set
           ✅ the output of this is a map `TypeName -> Writer`
@@ -51,15 +51,19 @@
         ❌ recursively traverse the path and match over entity names and field names
           ❌ invoke primitive writers, which will need a method `Embed:Delta -> DeltaInt[Delta] + error`
           ❌ invoke recursively as long as possible, end with a `Zero` invocation
-        ❌ complete the kitchen sink sample with all primitives and all generics
-          ❌ move them to Ballerina and the go-config
+        ✅ complete the kitchen sink sample with all generics
+          ❌ move the configurations (names of deltas and writers) to ballerina/core.go and the go-config
+          ❌ add a few more tuples - up to 7
+        ❌ complete the kitchen sink sample with all primitives
+          ❌ move the configurations (names of deltas and writers) to ballerina/core.go and the go-config
+        ❌ split map, set from sum.go into their respective files
     ✅ currying the arguments of `entityGET` and `entityPOST`
+    ✅ add tuple renderers
+    ✅ add proper Sum
     ❌ take as input a list of specs, stitch them together, generate a single file - no `include` needed
     ❌ add paginated lists
     ❌ add lazy fields
     ❌ add union renderers
-    ❌ add tuple renderers
-    ❌ add proper Sum
     ❌ add `extends` statement to unions
     ❌ add documentation (Confluence)
     ❌ the validator is now mature
@@ -91,6 +95,7 @@
         ❌ parser
         ❌ validator
     ❌ add state.TryFindX for enum, form, stream, and so on like for `state.TryFindType`
+      ❌ use it in the codegen
       ❌ why can't we use state.TryFindType in the validators?
       ❌ Validate passes the context as a parameter instead of using GetContext - ugly
     ❌ remove all the nonsense `Guid`s from id types, the wrapped name is enough
@@ -105,11 +110,11 @@
         ❌ with enums and streams (defined in F#) based on the available types ATM
     ❌ release ballerina to nuget
     ✅ accept empty `apis` blocks
-    ❌ discard unsupported field names
     ✅ add `extends` keyword for forms
     ❌ add lots of operators to lists, sets, maps, etc.
     ❌ the tool is now complete
     ❌ the codegen to Golang needs to be improved
+      ❌ define intermediate structure
       ❌ split up in files
       ❌ as well as the `SeqState` monad
     ❌ the core library needs more structural cleanup: Queries, Range, etc. should go into `webapi` or a similar domain
@@ -117,7 +122,7 @@
     ❌ expr and expr type parsing and validation must go to their respective meta-modules
     ❌ generate Typescript and C# code from forms-config
     ❌ extensibility of primitives as existentially-typed algebras
-    ❌ improve the syntax of types and expressions with fslex and fsyacc
+    ❌ improve the syntax of the form config with fslex and fsyacc
     ❌ codegen the `import` command with some sort of linking strategy for shared files
     ✅ allow union types (needs adjustment in frontend too)
 

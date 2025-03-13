@@ -25,3 +25,18 @@ func NewTuple3[a any, b any, c any](item1 a, item2 b, item3 c) Tuple3[a, b, c] {
 	p.Item3 = item3
 	return p
 }
+
+type WriterTuple2[Delta any, DeltaA any, DeltaB any] interface {
+}
+
+type DeltaTuple2[Delta any, DeltaA any, DeltaB any] interface{}
+
+type WriterTuple3[Delta any, DeltaA any, DeltaB any, DeltaC any] interface {
+}
+
+type DeltaTuple3[Delta any, DeltaA any, DeltaB any, DeltaC any] interface{}
+
+type WriterTuple4[Delta any, DeltaA any, DeltaB any, DeltaC any, DeltaD any] interface {
+}
+
+type DeltaTuple4[Delta any, DeltaA any, DeltaB any, DeltaC any, DeltaD any] interface{}

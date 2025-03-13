@@ -40,7 +40,7 @@ module Golang =
     | Generated
 
   and WriterField =
-    | Primitive
+    | Primitive of {| DeltaTypeName: string |}
     | Nested of WriterName
 
   and WriterName = { WriterName: string }
@@ -121,14 +121,59 @@ module Golang =
 
             do! state.SetState(Map.add w.Name w)
             return w
+          | ExprType.ListType(e) ->
+            let! we = ExprType.ToWriter writerName e
 
+            let w =
+              { Name = { WriterName = $"ballerina.WriterArray[Delta, {we.DeltaTypeName}]" }
+                DeltaTypeName = $"ballerina.DeltaArray[Delta, {we.DeltaTypeName}]"
+                Type = t
+                Fields = Map.empty
+                Kind = WriterKind.Imported }
+
+            do! state.SetState(Map.add w.Name w)
+            return w
+          | ExprType.MapType(k, v) ->
+            let! wk = ExprType.ToWriter writerName k
+            let! wv = ExprType.ToWriter writerName v
+
+            let w =
+              { Name = { WriterName = $"ballerina.WriterMap[Delta, {wk.DeltaTypeName}, {wv.DeltaTypeName}]" }
+                DeltaTypeName = $"ballerina.DeltaMap[Delta, {wk.DeltaTypeName}, {wv.DeltaTypeName}]"
+                Type = t
+                Fields = Map.empty
+                Kind = WriterKind.Imported }
+
+            do! state.SetState(Map.add w.Name w)
+            return w
+          | ExprType.TupleType fields ->
+            let! fields = fields |> Seq.map (fun field -> ExprType.ToWriter writerName field) |> state.All
+            let fields = fields |> Seq.map (fun field -> field.DeltaTypeName) |> Seq.toList
+            let fieldDeltaTypeNames = System.String.Join(',', fields)
+
+            let w =
+              { Name = { WriterName = $"ballerina.WriterTuple{fields.Length}[Delta, {fieldDeltaTypeNames}]" }
+                DeltaTypeName = $"ballerina.DeltaTuple{fields.Length}[Delta, {fieldDeltaTypeNames}]"
+                Type = t
+                Fields = Map.empty
+                Kind = WriterKind.Imported }
+
+            do! state.SetState(Map.add w.Name w)
+            return w
+          | ExprType.LookupType tn ->
+            let! ctx = state.GetContext()
+            let! t = ctx.Types |> Map.tryFindWithError tn.TypeName "types" "types" |> state.OfSum
+            let! w = ExprType.ToWriter { WriterName = tn.TypeName } t.Type
+            do! state.SetState(Map.add w.Name w)
+            return w
           | _ -> return! state.Throw(Errors.Singleton $"Error: cannot convert type {t} to a Writer.")
       }
 
     static member ToWriterField (parentName: WriterName) (fieldName: string) (t: ExprType) =
       state {
         match t with
-        | ExprType.PrimitiveType _ -> return WriterField.Primitive
+        | ExprType.PrimitiveType p ->
+          return WriterField.Primitive({| DeltaTypeName = $"ballerina.Delta{p.ToString()}[Delta]" |})
         | ExprType.LookupType tn ->
           let! ctx = state.GetContext()
           let! t = ctx.Types |> Map.tryFindWithError tn.TypeName "types" "types" |> state.OfSum
@@ -164,10 +209,11 @@ module Golang =
           let! k = k |> ExprType.ToGolangTypeAnnotation
           let! v = v |> ExprType.ToGolangTypeAnnotation
           return $"{cfg.Map.DefaultConstructor}[{k}, {v}]()"
-        | ExprType.SumType(l, r) ->
-          let! l = l |> ExprType.ToGolangTypeAnnotation
-          let! r = r |> ExprType.ToGolangTypeAnnotation
-          return $"{cfg.Sum.DefaultConstructor}[{l}, {r}]()"
+        | ExprType.SumType(lt, rt) ->
+          let! l = lt |> ExprType.ToGolangTypeAnnotation
+          let! r = rt |> ExprType.ToGolangTypeAnnotation
+          let! ldef = ExprType.ToGolangDefaultValue(lt)
+          return $"{cfg.Sum.LeftConstructor}[{l}, {r}]({ldef})"
         | ExprType.OptionType(e) ->
           let! e = e |> ExprType.ToGolangTypeAnnotation
           return $"{cfg.Option.DefaultConstructor}[{e}]()"
@@ -1092,7 +1138,7 @@ module Golang =
                   yield StringBuilder.One $"type {w.DeltaTypeName} interface {{"
                   yield StringBuilder.One "\n"
                   yield StringBuilder.One $"}}"
-                  yield StringBuilder.One "\n"
+                  yield StringBuilder.One "\n\n"
 
                 for w in allWriters |> Map.values |> Seq.filter (fun w -> w.Kind.IsGenerated) do
                   yield StringBuilder.One $"type Writer{w.Name.WriterName}[Delta any] interface {{"
@@ -1100,8 +1146,8 @@ module Golang =
 
                   for wf in w.Fields do
                     match wf.Value with
-                    | WriterField.Primitive ->
-                      yield StringBuilder.One $"  {wf.Key}(delta Delta) ({w.DeltaTypeName}, error)"
+                    | WriterField.Primitive d ->
+                      yield StringBuilder.One $"  {wf.Key}(delta {d.DeltaTypeName}) ({w.DeltaTypeName}, error)"
                       yield StringBuilder.One "\n"
                     | WriterField.Nested nwn ->
                       match allWriters |> Map.tryFind nwn with
@@ -1116,7 +1162,7 @@ module Golang =
                   yield StringBuilder.One $"  Zero() ({w.DeltaTypeName}, error)"
                   yield StringBuilder.One "\n"
                   yield StringBuilder.One $"}}"
-                  yield StringBuilder.One "\n"
+                  yield StringBuilder.One "\n\n"
               }
 
             return

@@ -68,7 +68,8 @@ module Model =
   and CodegenConfigSumDef =
     { GeneratedTypeName: string
       RequiredImport: Option<string>
-      DefaultConstructor: string
+      LeftConstructor: string
+      RightConstructor: string
       SupportedRenderers: Set<string> }
 
   and CodegenConfigTypeDef =

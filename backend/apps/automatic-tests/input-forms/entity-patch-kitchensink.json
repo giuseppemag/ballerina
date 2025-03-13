@@ -47,10 +47,20 @@
     "D": {
       "fields": {
         "D1": { "fun": "Sum", "args": ["number", "string"] },
-        "D2": "string"
+        "D2": "string",
+        "D3": { "fun": "List", "args": ["E"] },
+        "D4": { "fun": "Map", "args": ["string", "E"] },
+        "D5": { "fun": "Tuple", "args": ["string", { "fun": "List", "args": ["E"] }, "E"] }
       }
     },
     "E": {
+      "fields": {
+        "E1": "number",
+        "E2": "string",
+        "E3": "boolean"
+      }
+    },
+    "F": {
       "fields": {
         "E1": "number",
         "E2": "string",

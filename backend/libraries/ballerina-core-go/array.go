@@ -16,3 +16,8 @@ func DefaultArray[T any]() Array[T] {
 	res.Values = make([]T, 0)
 	return res
 }
+
+type WriterArray[Delta any, DeltaE any] interface {
+}
+
+type DeltaArray[Delta any, DeltaE any] interface{}
