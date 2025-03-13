@@ -528,12 +528,14 @@ module Parser =
                  Value = valueRenderer
                  Children = children |}
         elif config.Sum.SupportedRenderers |> Set.contains s then
-          let! (leftRendererJson, rightRendererJson) = 
+          let! (leftRendererJson, rightRendererJson) =
             state.All2
-              (parentJsonFields  |> state.TryFindField "leftRenderer")
-              (parentJsonFields  |> state.TryFindField "rightRenderer")
+              (parentJsonFields |> state.TryFindField "leftRenderer")
+              (parentJsonFields |> state.TryFindField "rightRenderer")
+
           let! leftRenderer = NestedRenderer.Parse leftRendererJson
           let! rightRenderer = NestedRenderer.Parse rightRendererJson
+
           return
             SumRenderer
               {| Sum =
@@ -1031,16 +1033,15 @@ module Parser =
           state.Any(
             NonEmptyList.OfList(
               state {
-                  do!
-                    json
-                    |> JsonValue.AsEnum(Set.singleton "unit")
-                    |> state.OfSum
-                    |> state.Map ignore
+                do!
+                  json
+                  |> JsonValue.AsEnum(Set.singleton "unit")
+                  |> state.OfSum
+                  |> state.Map ignore
 
-                  return ExprType.UnitType
-                },
-              [ 
-                state {
+                return ExprType.UnitType
+              },
+              [ state {
                   do!
                     json
                     |> JsonValue.AsEnum(Set.singleton "guid")
@@ -1183,14 +1184,21 @@ module Parser =
                               }
                               |> state.MapError(Errors.WithPriority ErrorPriority.High)
                           }
-                          state{
-                            do! funJson |> JsonValue.AsEnum (Set.singleton "Sum") |> state.OfSum |> state.Map (ignore)
-                            return! state{
-                              let! argsJson = (fields |> state.TryFindField "args")
-                              let! leftJson, rightJson = JsonValue.AsPair argsJson |> state.OfSum
-                              let! left, right = state.All2 !leftJson !rightJson
-                              return ExprType.SumType(left, right)
-                            } |> state.MapError(Errors.WithPriority ErrorPriority.High)
+                          state {
+                            do!
+                              funJson
+                              |> JsonValue.AsEnum(Set.singleton "Sum")
+                              |> state.OfSum
+                              |> state.Map(ignore)
+
+                            return!
+                              state {
+                                let! argsJson = (fields |> state.TryFindField "args")
+                                let! leftJson, rightJson = JsonValue.AsPair argsJson |> state.OfSum
+                                let! left, right = state.All2 !leftJson !rightJson
+                                return ExprType.SumType(left, right)
+                              }
+                              |> state.MapError(Errors.WithPriority ErrorPriority.High)
                           }
                           state {
                             do!
