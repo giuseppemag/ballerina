@@ -66,18 +66,18 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
   List: {
     fromAPIRawValue: (_) => (_ == undefined ? List() : List(_)),
     toAPIRawValue: ([_, __]) => _.valueSeq().toArray(),
-  },
+  },  
   Map: {
     fromAPIRawValue: (_) =>
       _ == undefined
         ? List()
-        : List(_.map((_: { key: any; value: any }) => [_.key, _.value])),
+        : List(_.map((_: { Key: any; Value: any }) => [_.Key, _.Value])),
     toAPIRawValue: ([_, __]) =>
       _.valueSeq()
         .toArray()
         .map((_: any) => ({
-          key: _[0],
-          value: _[1],
+          Key: _[0],
+          Value: _[1],
         })),
   },
   Tuple: {

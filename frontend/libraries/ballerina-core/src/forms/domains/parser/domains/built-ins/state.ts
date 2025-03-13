@@ -277,7 +277,6 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
     },
   };
   Object.keys(builtins.renderers).forEach((_categoryName) => {
-    console.debug(_categoryName);
     const categoryName = _categoryName as keyof BuiltIns["renderers"];
     if (categoryName in fieldViews) {
       Object.keys(fieldViews[categoryName]).forEach((viewName) => {
@@ -286,7 +285,6 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
       });
     }
   });
-  console.debug(builtins.renderers);
   return builtins;
 };
 
@@ -514,7 +512,7 @@ export const fromAPIRawValue =
 
         if (
           raw.some(
-            (_) => typeof _ != "object" || !("key" in _) || !("value" in _),
+            (_) => typeof _ != "object" || !("Key" in _) || !("Value" in _),
           )
         ) {
           return ValueOrErrors.Default.throwOne(
@@ -557,7 +555,15 @@ export const fromAPIRawValue =
       }
 
       if (t.value == "Tuple") {
-        // TODO checks
+        if (!Array.isArray(raw))
+          return ValueOrErrors.Default.throwOne(
+            `Array expected but got ${JSON.stringify(raw)}`,
+          );
+        if (raw.length != t.args.length)
+          return ValueOrErrors.Default.throwOne(
+            `Array length mismatch expected tuple length: ${t.args.length} expected but got ${raw.length}`,
+          );
+
         const result = converters[t.value].fromAPIRawValue(raw);
         return ValueOrErrors.Operations.All(
           List<ValueOrErrors<PredicateValue, string>>(
@@ -673,7 +679,7 @@ export const toAPIRawValue =
       return ValueOrErrors.Operations.Return(
         converters[t.value as string | keyof T].toAPIRawValue([
           raw,
-          formState.modifiedByUser,
+          formState.commonFormState.modifiedByUser,
         ]),
       );
     }
@@ -697,7 +703,7 @@ export const toAPIRawValue =
       return ValueOrErrors.Operations.Return(
         converters[t.kind].toAPIRawValue([
           { caseName: raw.caseName, fields: raw.fields },
-          formState.modifiedByUser,
+          formState.commonFormState.modifiedByUser,
         ]),
       );
     }
@@ -728,14 +734,14 @@ export const toAPIRawValue =
           return ValueOrErrors.Operations.Return(
             converters[t.value].toAPIRawValue([
               Sum.Default.left(rawValue),
-              formState.modifiedByUser,
+              formState.commonFormState.modifiedByUser,
             ]),
           );
         } else {
           return ValueOrErrors.Operations.Return(
             converters[t.value].toAPIRawValue([
               Sum.Default.right("no selection"),
-              formState.modifiedByUser,
+              formState.commonFormState.modifiedByUser,
             ]),
           );
         }
@@ -790,7 +796,7 @@ export const toAPIRawValue =
                     })
                     .toArray(),
                 ),
-                formState.modifiedByUser,
+                formState.commonFormState.modifiedByUser,
               ]),
             ),
         );
@@ -817,7 +823,7 @@ export const toAPIRawValue =
           ValueOrErrors.Default.return(
             converters["List"].toAPIRawValue([
               values,
-              formState.modifiedByUser,
+              formState.commonFormState.modifiedByUser,
             ]),
           ),
         );
@@ -832,7 +838,7 @@ export const toAPIRawValue =
             injectedPrimitives,
           )(
             (keyValue as ValueTuple).values.get(0)!,
-            formState.elementFormStates.get(index).KeyFormState.commonFormState,
+            formState.elementFormStates.get(index).KeyFormState,
           )
             .Then((possiblyUndefinedKey) => {
               if (
@@ -862,8 +868,7 @@ export const toAPIRawValue =
                 injectedPrimitives,
               )(
                 (keyValue as ValueTuple).values.get(1)!,
-                formState.elementFormStates.get(index).ValueFormState
-                  .commonFormState,
+                formState.elementFormStates.get(index).ValueFormState,
               ).Then((value) =>
                 ValueOrErrors.Default.return([key, value] as [any, any]),
               ),
@@ -919,6 +924,35 @@ export const toAPIRawValue =
           ValueOrErrors.Default.return(
             converters["Sum"].toAPIRawValue([
               Sum.Default.right(value),
+              formState.commonFormState.modifiedByUser,
+            ]),
+          ),
+        );
+      }
+
+      if (t.value == "Tuple") {
+        if (!PredicateValue.Operations.IsTuple(raw)) {
+          return ValueOrErrors.Default.throwOne(
+            `Tuple expected but got ${JSON.stringify(raw)}`,
+          );
+        }
+        return ValueOrErrors.Operations.All(
+          List(
+            raw.values.map((value, index) => {
+              return toAPIRawValue(
+                t.args[index],
+                types,
+                builtIns,
+                converters,
+                injectedPrimitives,
+              )(value, formState.elementFormStates.get(index))
+            },
+            ),
+          ),
+        ).Then((values) =>
+          ValueOrErrors.Default.return(
+            converters["Tuple"].toAPIRawValue([
+              values,
               formState.commonFormState.modifiedByUser,
             ]),
           ),

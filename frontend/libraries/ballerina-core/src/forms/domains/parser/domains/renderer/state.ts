@@ -549,7 +549,6 @@ export const ParsedRenderer = {
                             ]() as any,
                           )
                           .mapContext<any>((_) => {
-                            console.debug(parsedRenderer.label, _);
                             return {
                               ..._,
                               label: parsedRenderer.label,
@@ -685,9 +684,7 @@ export const ParsedRenderer = {
                           parsedRenderer.type,
                         ),
                         initialState: TupleFieldState<any>().Default(
-                          List(
                             itemRenderers.map((item) => item.form.initialState),
-                          ),
                         ),
                       },
                       visibilityPredicateExpression:

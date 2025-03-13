@@ -219,10 +219,6 @@ export const Form = <
           >,
           EntityFormView<Fields, FieldStates, Context, ForeignMutationsExpected>
         >((props) => {
-          console.debug(
-            "visibilities",
-            JSON.stringify(props.context.visibilities, null, 2),
-          );
           const visibleFieldKeys: OrderedSet<FieldName> = (() => {
             if (
               props.context.visibilities == undefined ||
@@ -235,8 +231,6 @@ export const Form = <
               .keySeq()
               .toOrderedSet();
           })();
-
-          console.debug("visibleFieldKeys", visibleFieldKeys.toJS());
 
           const disabledFieldKeys: OrderedSet<FieldName> = (() => {
             if (

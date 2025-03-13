@@ -383,8 +383,6 @@ export const parseFormsToLaunchers =
 
     const parsedForms = parsedFormsResult.value;
 
-    console.debug("parsedForms", parsedForms);
-
     formsConfig.launchers.edit.forEach((launcher, launcherName) => {
       const parsedForm = parsedForms.get(launcher.form)!;
       const form = parsedForm.form;
