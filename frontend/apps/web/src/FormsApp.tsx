@@ -30,7 +30,9 @@ import {
   CategoryState,
   PersonFormInjectedTypes,
 } from "./domains/person-from-config/injected-forms/category";
-import PersonConfig from "../../../../backend/apps/ballerina-runtime/input-forms/person-config.json";
+import DemoPersonConfig from "../../../../backend/apps/ballerina-runtime/input-forms/person-config.json";
+import AutomaticTestsPersonConfig from "../../../../backend/apps/automatic-tests/input-forms/person-config.json";
+import AutomaticTestsFormConfigConfig from "../../../../backend/apps/automatic-tests/input-forms/form-config-config.json";
 import { PassthroughFormContainerWrapper } from "./domains/passthrough-forms/views/wrappers";
 
 const ShowFormsParsingErrors = (parsedFormsConfig: FormParsingResult) => (
@@ -38,6 +40,20 @@ const ShowFormsParsingErrors = (parsedFormsConfig: FormParsingResult) => (
     {parsedFormsConfig.kind == "r" && JSON.stringify(parsedFormsConfig.value)}
   </div>
 );
+
+const getFormsConfig =
+  (kind: "demo-person" | "auto-tests-person" | "auto-tests-form-config") =>
+  () =>
+    PromiseRepo.Default.mock(() => {
+      switch (kind) {
+        case "demo-person":
+          return DemoPersonConfig;
+        case "auto-tests-person":
+          return AutomaticTestsPersonConfig;
+        case "auto-tests-form-config":
+          return AutomaticTestsFormConfigConfig;
+      }
+    });
 
 const InstantiedPersonFormsParserTemplate =
   FormsParserTemplate<PersonFormInjectedTypes>();
@@ -224,8 +240,7 @@ export const FormsApp = (props: {}) => {
                     infiniteStreamSources: PersonFromConfigApis.streamApis,
                     enumOptionsSources: PersonFromConfigApis.enumApis,
                     entityApis: PersonFromConfigApis.entityApis,
-                    getFormsConfig: () =>
-                      PromiseRepo.Default.mock(() => PersonConfig),
+                    getFormsConfig: getFormsConfig('auto-tests-form-config'),
                     injectedPrimitives: Map([
                       [
                         "injectedCategory",

@@ -89,6 +89,17 @@
       ]
     }
   },
+  "apis": {
+    "enumOptions": {},
+    "searchableStreams": {},
+    "entities": {
+      "globalConfiguration": {
+        "type": "GlobalConfiguration",
+        "methods": ["get"]
+      }
+    },
+    "globalConfiguration": {}
+  },
   "forms": {
     "primitiveValue": {
       "type": "PrimitiveValue",

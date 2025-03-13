@@ -125,6 +125,11 @@ export type FormFieldPredicateEvaluation =
       elementValues: FormFieldPredicateEvaluation[];
     }
   | {
+      kind: "union";
+      value: boolean;
+      elementValue: FormFieldPredicateEvaluation;
+    }
+  | {
       kind: "sum";
       value: boolean;
       innerValue: FormFieldPredicateEvaluation;
@@ -162,6 +167,14 @@ export const FormFieldPredicateEvaluation = {
       kind: "tuple",
       value,
       elementValues,
+    }),
+    union: (
+      value: boolean,
+      elementValue: FormFieldPredicateEvaluation,
+    ): FormFieldPredicateEvaluation => ({
+      kind: "union",
+      value,
+      elementValue,
     }),
     sum: (
       value: boolean,
