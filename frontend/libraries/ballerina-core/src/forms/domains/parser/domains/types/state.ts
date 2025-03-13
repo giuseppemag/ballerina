@@ -133,6 +133,10 @@ export const RawFieldType = {
     _.args.every(
       (__) => typeof __ == "object" && "caseName" in __ && "fields" in __,
     ),
+  isTuple: <T>(
+    _: RawFieldType<T>,
+  ): _ is { fun: "Tuple"; args: Array<RawFieldType<T>> } =>
+    RawFieldType.isApplication(_) && _.fun == "Tuple",
   isForm: <T>(_: RawFieldType<T>): _ is { fields: Object } =>
     typeof _ == "object" && "fields" in _ && isObject(_.fields),
   isOption: <T>(
@@ -144,7 +148,7 @@ export const RawFieldType = {
     "args" in _ &&
     Array.isArray(_.args) &&
     _.args.length == 1,
-    isUnit: <T>(_: RawFieldType<T>): _ is string => _ == 'unit',
+  isUnit: <T>(_: RawFieldType<T>): _ is string => _ == "unit",
 };
 
 export type PrimitiveTypeName<T> =
@@ -213,7 +217,9 @@ export const ParsedType = {
             : fst.kind == "application" && snd.kind == "application"
               ? fst.value == snd.value &&
                 fst.args.length == snd.args.length &&
-                fst.args.every((v, i) => v == snd.args[i])
+                fst.args.every((v, i) =>
+                  ParsedType.Operations.Equals(v, snd.args[i]),
+                )
               : fst.kind == "option" && snd.kind == "option"
                 ? fst.value.kind == "option" &&
                   snd.value.kind == "option" &&
@@ -272,6 +278,24 @@ export const ParsedType = {
             ParsedType.Default.application("List", [parsedArgs]),
           ),
         );
+      if (RawFieldType.isTuple(rawFieldType))
+        return ValueOrErrors.Operations.All(
+          List(
+            rawFieldType.args.map((arg) =>
+              ParsedType.Operations.ParseRawFieldType(
+                fieldName,
+                arg,
+                types,
+                injectedPrimitives,
+              ),
+            ),
+          ),
+        ).Then((parsedArgs) =>
+          ValueOrErrors.Default.return(
+            ParsedType.Default.application("Tuple", parsedArgs.toArray()),
+          ),
+        );
+
       if (RawFieldType.isOption(rawFieldType))
         return ParsedType.Operations.ParseRawFieldType(
           fieldName,
@@ -399,7 +423,9 @@ export const ParsedType = {
           ParsedType.Default.lookup(rawFieldType),
         );
       if (RawFieldType.isUnit(rawFieldType)) {
-        return ValueOrErrors.Default.return(ParsedType.Default.primitive('unit'));
+        return ValueOrErrors.Default.return(
+          ParsedType.Default.primitive("unit"),
+        );
       }
       return ValueOrErrors.Default.throw(
         List([

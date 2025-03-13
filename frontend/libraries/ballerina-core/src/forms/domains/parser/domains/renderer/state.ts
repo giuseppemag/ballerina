@@ -38,6 +38,8 @@ import {
   SumFieldState,
   SumForm,
   Template,
+  TupleFieldState,
+  TupleForm,
   unit,
   Unit,
   UnitForm,
@@ -63,6 +65,7 @@ export type RawRenderer = {
   elementRenderer?: any;
   keyRenderer?: any;
   valueRenderer?: any;
+  itemRenderers?: Array<any>;
   leftRenderer?: any;
   rightRenderer?: any;
   details?: any;
@@ -70,7 +73,7 @@ export type RawRenderer = {
 export type ParsedRenderer<T> = (
   | { kind: "primitive" }
   | { kind: "form" }
-  | { kind: "unit"}
+  | { kind: "unit" }
   | { kind: "enum"; options: string }
   | { kind: "stream"; stream: string }
   | { kind: "list"; elementRenderer: ParsedRenderer<T> }
@@ -78,6 +81,10 @@ export type ParsedRenderer<T> = (
       kind: "map";
       keyRenderer: ParsedRenderer<T>;
       valueRenderer: ParsedRenderer<T>;
+    }
+  | {
+      kind: "tuple";
+      itemRenderers: Array<ParsedRenderer<T>>;
     }
   | {
       kind: "sum";
@@ -213,6 +220,26 @@ export const ParsedRenderer = {
       keyRenderer,
       valueRenderer,
     }),
+    tuple: <T>(
+      type: ParsedType<T>,
+      renderer: string,
+      visible: any,
+      disabled: any,
+      itemRenderers: Array<ParsedRenderer<T>>,
+      label?: string,
+      tooltip?: string,
+      details?: string,
+    ): ParsedRenderer<T> => ({
+      kind: "tuple",
+      type,
+      renderer,
+      label,
+      tooltip,
+      details,
+      visible,
+      disabled: disabled != undefined ? disabled : false,
+      itemRenderers,
+    }),
     sum: <T>(
       type: ParsedType<T>,
       renderer: string,
@@ -242,7 +269,7 @@ export const ParsedRenderer = {
       disabled: any,
       label?: string,
       tooltip?: string,
-      details?: string, 
+      details?: string,
     ): ParsedRenderer<T> => ({
       kind: "unit",
       type,
@@ -337,6 +364,25 @@ export const ParsedRenderer = {
           field.tooltip,
           field.details,
         );
+
+      if (fieldType.kind == "application" && fieldType.value == "Tuple")
+        return ParsedRenderer.Default.tuple(
+          fieldType,
+          field.renderer,
+          field.visible,
+          field.disabled,
+          field.itemRenderers?.map((item, i) =>
+            ParsedRenderer.Operations.ParseRenderer(
+              fieldType.args[i],
+              item,
+              types,
+            ),
+          ) ?? [],
+          field.label,
+          field.tooltip,
+          field.details,
+        );
+
       if (fieldType.kind == "application" && fieldType.value == "Sum")
         return ParsedRenderer.Default.sum(
           fieldType,
@@ -482,8 +528,10 @@ export const ParsedRenderer = {
                         commonFormState: CommonFormState.Default(),
                       },
                     },
-                    visibilityPredicateExpression: FieldPredicateExpression.Default.unit(visibilityExpr),
-                    disabledPredicatedExpression: FieldPredicateExpression.Default.unit(disabledExpr),
+                    visibilityPredicateExpression:
+                      FieldPredicateExpression.Default.unit(visibilityExpr),
+                    disabledPredicatedExpression:
+                      FieldPredicateExpression.Default.unit(disabledExpr),
                   }),
               ),
           );
@@ -553,12 +601,14 @@ export const ParsedRenderer = {
                               parsedRenderer.renderer
                             ]() as any,
                           )
-                          .mapContext<any>((_) => ({
-                            ..._,
-                            label: parsedRenderer.label,
-                            tooltip: parsedRenderer.tooltip,
-                            details: parsedRenderer.details,
-                          })),
+                          .mapContext<any>((_) => {
+                            return {
+                              ..._,
+                              label: parsedRenderer.label,
+                              tooltip: parsedRenderer.tooltip,
+                              details: parsedRenderer.details,
+                            };
+                          }),
                         initialValue: parsingContext.defaultValue(
                           parsedRenderer.type,
                         ),
@@ -648,6 +698,65 @@ export const ParsedRenderer = {
                       }),
                     ),
                   ),
+              ),
+          );
+        case "tuple":
+          return Expr.Operations.parse(parsedRenderer.visible ?? true).Then(
+            (visibilityExpr) =>
+              Expr.Operations.parse(parsedRenderer.disabled ?? false).Then(
+                (disabledExpr) => {
+                  return ValueOrErrors.Operations.All(
+                    List(
+                      parsedRenderer.itemRenderers.map((item) =>
+                        ParsedRenderer.Operations.RendererToForm(
+                          fieldName,
+                          parsingContext,
+                          item,
+                        ),
+                      ),
+                    ),
+                  ).Then((itemRenderers) =>
+                    ValueOrErrors.Default.return({
+                      form: {
+                        renderer: TupleForm<any, any & FormLabel, Unit>(
+                          itemRenderers.map((item) => item.form.initialState),
+                          itemRenderers.map((item) => item.form.renderer),
+                        )
+                          .withView(
+                            parsingContext.formViews[viewKind][
+                              parsedRenderer.renderer
+                            ]() as any,
+                          )
+                          .mapContext<any>((_) => ({
+                            ..._,
+                            label: parsedRenderer.label,
+                            tooltip: parsedRenderer.tooltip,
+                            details: parsedRenderer.details,
+                          })),
+                        initialValue: parsingContext.defaultValue(
+                          parsedRenderer.type,
+                        ),
+                        initialState: TupleFieldState<any>().Default(
+                          itemRenderers.map((item) => item.form.initialState),
+                        ),
+                      },
+                      visibilityPredicateExpression:
+                        FieldPredicateExpression.Default.tuple(
+                          visibilityExpr,
+                          itemRenderers
+                            .map((item) => item.visibilityPredicateExpression)
+                            .toArray(),
+                        ),
+                      disabledPredicatedExpression:
+                        FieldPredicateExpression.Default.tuple(
+                          disabledExpr,
+                          itemRenderers
+                            .map((item) => item.disabledPredicatedExpression)
+                            .toArray(),
+                        ),
+                    }),
+                  );
+                },
               ),
           );
         case "sum":
@@ -742,7 +851,7 @@ export const ParsedRenderer = {
       enumOptionsSources: EnumOptionsSources,
       injectedPrimitives?: InjectedPrimitives<T>,
     ): any => {
-      if (viewKind == 'unit') {
+      if (viewKind == "unit") {
         return UnitForm<any & FormLabel>()
           .withView(formViews[viewKind][viewName]())
           .mapContext<any & CommonFormState & Value<Unit>>((_) => ({

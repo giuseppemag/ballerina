@@ -254,7 +254,6 @@ export const FormsConfig = {
           );
           parsedTypes = parsedTypes.set(rawTypeName, parsedType);
         });
-
         let enums: Map<string, TypeName> = Map();
         Object.entries(formsConfig.apis.enumOptions).forEach(
           ([enumOptionName, enumOption]) =>

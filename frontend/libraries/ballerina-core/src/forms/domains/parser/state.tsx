@@ -87,8 +87,10 @@ export const ParseForm = <T,>(
       },
       formDef.fields.get(fieldName)!,
     );
-    if (parsedFormConfig.kind == "errors")
+    if (parsedFormConfig.kind == "errors") {
+      console.error(parsedFormConfig.errors.toJS());
       throw Error(`Error parsing form ${fieldsViewsConfig[fieldName]}`);
+    }
     formConfig[fieldName] = parsedFormConfig.value.form.renderer;
     visibilityPredicateExpressions = visibilityPredicateExpressions.set(
       fieldName,
@@ -656,39 +658,11 @@ export const parseFormsToLaunchers =
                   types: formsConfig.types,
                   formType: formType,
                   onEntityChange: parentContext.onEntityChange,
-                  parseGlobalConfiguration: (raw: any) =>
-                    fromAPIRawValue(
-                      globalConfigurationType,
-                      formsConfig.types,
-                      builtIns,
-                      apiConverters,
-                      injectedPrimitives,
-                    )(raw),
-                  fromApiParser: (value: any) =>
-                    fromAPIRawValue(
-                      formType,
-                      formsConfig.types,
-                      builtIns,
-                      apiConverters,
-                      injectedPrimitives,
-                    )(value),
-                  toApiParser: (value: any, formState: any) =>
-                    toAPIRawValue(
-                      formType,
-                      formsConfig.types,
-                      builtIns,
-                      apiConverters,
-                      injectedPrimitives,
-                    )(value, formState),
                   actualForm: form
                     .withView(containerFormView)
                     .mapContext((_: any) => ({
                       value: _.value,
                       entity: _.entity,
-                      toApiParser: parentContext.toApiParser,
-                      fromApiParser: parentContext.fromApiParser,
-                      parseGlobalConfiguration:
-                        parentContext.parseGlobalConfiguration,
                       formFieldStates: parentContext.formFieldStates,
                       rootValue: _.value,
                       extraContext: parentContext.extraContext,
@@ -725,11 +699,13 @@ export const parseFormsToLaunchers =
               injectedPrimitives,
             )(value, formState),
           parseGlobalConfiguration: (raw: any) =>
-            PredicateValue.Operations.parse(
-              raw,
+            fromAPIRawValue(
               globalConfigurationType,
               formsConfig.types,
-            ),
+              builtIns,
+              apiConverters,
+              injectedPrimitives,
+            )(raw),
         }),
       );
     });
