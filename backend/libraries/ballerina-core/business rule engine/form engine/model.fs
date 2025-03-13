@@ -271,9 +271,9 @@ module Model =
          Element: NestedRenderer
          Children: RendererChildren |}
     | SumRenderer of
-      {| Sum:Renderer
-         Left:NestedRenderer
-         Right:NestedRenderer
+      {| Sum: Renderer
+         Left: NestedRenderer
+         Right: NestedRenderer
          Children: RendererChildren |}
     | EnumRenderer of EnumApiId * Renderer
     | StreamRenderer of StreamApiId * Renderer

@@ -11,27 +11,29 @@ module Model =
   open Ballerina.Errors
   open Ballerina.DSL.Expr.Model
 
-    type TypeVarBindings = Map<VarName, ExprType>
-    and TypeBinding = { TypeId:TypeId; Type:ExprType }
-    and TypeBindings = Map<TypeId, ExprType>
-    and TypeId = { TypeName:string; }
-    and ExprType = 
-      | UnitType
-      | VarType of VarName
-      | SchemaLookupType of EntityDescriptorId 
-      | LookupType of TypeId
-      | PrimitiveType of PrimitiveType 
-      | RecordType of Map<string,ExprType> 
-      | UnionType of Map<CaseName, UnionCase>
-      | MapType of ExprType * ExprType
-      | SumType of ExprType * ExprType
-      | TupleType of List<ExprType>
-      | OptionType of ExprType
-      | ListType of ExprType
-      | SetType of ExprType
-    and UnionCase = { CaseName:string; Fields:ExprType }
-    and CaseName = { CaseName:string }
-    and VarTypes = Map<VarName, ExprType>
+  type TypeVarBindings = Map<VarName, ExprType>
+  and TypeBinding = { TypeId: TypeId; Type: ExprType }
+  and TypeBindings = Map<TypeId, ExprType>
+  and TypeId = { TypeName: string }
+
+  and ExprType =
+    | UnitType
+    | VarType of VarName
+    | SchemaLookupType of EntityDescriptorId
+    | LookupType of TypeId
+    | PrimitiveType of PrimitiveType
+    | RecordType of Map<string, ExprType>
+    | UnionType of Map<CaseName, UnionCase>
+    | MapType of ExprType * ExprType
+    | SumType of ExprType * ExprType
+    | TupleType of List<ExprType>
+    | OptionType of ExprType
+    | ListType of ExprType
+    | SetType of ExprType
+
+  and UnionCase = { CaseName: string; Fields: ExprType }
+  and CaseName = { CaseName: string }
+  and VarTypes = Map<VarName, ExprType>
 
   type TypeBinding with
     static member Create(name, exprType) =

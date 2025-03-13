@@ -276,7 +276,7 @@ module Golang =
             |> Set.union
             |> GoCodeGenState.Updaters.UsedImports
             |> state.SetState
-            
+
           return $"{config.Sum.GeneratedTypeName}[{l},{r}]"
         | _ -> return! error
       }
