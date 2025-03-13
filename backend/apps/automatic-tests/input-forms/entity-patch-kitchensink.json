@@ -1,0 +1,69 @@
+{
+  "types": {
+    "GlobalConfiguration": {
+      "fields": {}
+    },
+    "A": {
+      "fields": {
+        "A1": "number",
+        "A2": "B",
+        "A3": "C"
+      }
+    },
+    "B": {
+      "fields": {
+        "B1": "number",
+        "B2": "C"
+      }
+    },
+    "C": {
+      "fun": "Union",
+      "args": [
+        {
+          "caseName": "C1",
+          "fields": {
+            "C11": "number"
+          }
+        },
+        {
+          "caseName": "C2",
+          "fields": {
+            "C21": "string",
+            "C22": "string"
+          }
+        },
+        {
+          "caseName": "C3",
+          "fields": {
+            "C31": "D"
+          }
+        },
+        {
+          "caseName": "C4",
+          "fields": "D"
+        }
+      ]
+    },
+    "D": {
+      "fields": {
+        "D1": "number",
+        "D2": "string"
+      }
+    },
+    "E": {
+      "fields": {
+        "E1": "number",
+        "E2": "string",
+        "E3": "boolean"
+      }
+    }
+  },
+  "apis": {
+    "entities": {
+      "A": {
+        "type": "A",
+        "methods": ["update", "get"]
+      }
+    }
+  }
+}
