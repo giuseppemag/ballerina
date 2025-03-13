@@ -351,7 +351,7 @@ const entityApis: EntityApis = {
               shoeColours: [],
               friendsBirthdays: [],
               holidays: [],
-              unused: {}
+              unused: {} // undefined is valid too
             };
           })
       : (_) => {

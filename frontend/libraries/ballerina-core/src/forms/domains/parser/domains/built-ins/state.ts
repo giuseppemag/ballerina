@@ -31,6 +31,7 @@ const simpleMapKeyToIdentifer = (key: any): string => {
 };
 
 export const PrimitiveTypes = [
+  "unit",
   "guid", //resolves to string
   "string",
   "number",
@@ -156,6 +157,13 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
   const builtins: BuiltIns = {
     primitives: Map<string, PrimitiveBuiltIn>([
       [
+        "unit",
+        {
+          renderers: Set(["unit"]),
+          defaultValue: PredicateValue.Default.unit(),
+        },
+      ] as [string, PrimitiveBuiltIn],
+      [
         "string",
         {
           renderers: Set(["string"]),
@@ -247,13 +255,7 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
             PredicateValue.Default.unit(),
           ),
         },
-      ] as [string, GenericBuiltIn],
-      [
-        "unit",
-        {
-          defaultValue: PredicateValue.Default.unit(),
-        },
-      ] as [string, GenericBuiltIn],
+      ] as [string, GenericBuiltIn]
 
     ]),
     renderers: {
@@ -306,11 +308,6 @@ export const defaultValue =
       if (generic) return generic.defaultValue;
     }
 
-    if (t.kind == "unit") {
-      const generic = builtIns.generics.get("unit");
-      if (generic) return generic.defaultValue;
-    }
-
     if (t.kind == "lookup")
       return defaultValue(
         types,
@@ -343,16 +340,19 @@ export const fromAPIRawValue =
     injectedPrimitives?: InjectedPrimitives<T>,
   ) =>
   (raw: any): ValueOrErrors<PredicateValue, string> => {
-    if (raw == undefined) {
+    // allow undefined for unit
+    if (raw == undefined && (t.kind !== "primitive" || t.value != "unit")) {
       return ValueOrErrors.Default.throwOne(
         `raw value is undefined for type ${JSON.stringify(t)}`,
       );
     }
 
-    if (t.kind == "unit") {
-      return ValueOrErrors.Default.return(PredicateValue.Default.unit());
-    }
     if (t.kind == "primitive") {
+      // unit is a special kind of primitive
+      if (t.value == "unit") {
+        return ValueOrErrors.Default.return(PredicateValue.Default.unit());
+      }
+
       if (!PredicateValue.Operations.IsPrimitive(raw)) {
         return ValueOrErrors.Default.throwOne(
           `primitive expected but got ${JSON.stringify(raw)}`,

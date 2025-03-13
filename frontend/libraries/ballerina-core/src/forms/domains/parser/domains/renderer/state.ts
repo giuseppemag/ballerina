@@ -364,17 +364,6 @@ export const ParsedRenderer = {
           types,
         );
       }
-      if (fieldType.kind == 'unit') {
-        return ParsedRenderer.Default.unit(
-          fieldType,
-          field.renderer,
-          field.visible,
-          field.disabled,
-          field.label,
-          field.tooltip,
-          field.details,
-        )
-      }
       console.error(
         `Invalid field type ${JSON.stringify(
           fieldType,

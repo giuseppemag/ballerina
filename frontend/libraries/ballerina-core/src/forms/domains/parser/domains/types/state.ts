@@ -148,6 +148,7 @@ export const RawFieldType = {
 };
 
 export type PrimitiveTypeName<T> =
+  | "unit"
   | "string"
   | "number"
   | "maybeBoolean"
@@ -165,7 +166,6 @@ export type ParsedUnionCase<T> = {
 };
 export type ParsedType<T> =
   | ParsedUnionCase<T>
-  | { kind: "unit"}
   | { kind: "option"; value: ParsedType<T> }
   | { kind: "form"; value: TypeName; fields: FormFields<T> }
   | { kind: "lookup"; name: TypeName }
@@ -175,7 +175,6 @@ export type ParsedType<T> =
 
 export const ParsedType = {
   Default: {
-    unit: (): ParsedType<unknown> => ({ kind: "unit" }),
     unionCase: <T>(
       name: CaseName,
       fields: ParsedType<T>,
@@ -400,7 +399,7 @@ export const ParsedType = {
           ParsedType.Default.lookup(rawFieldType),
         );
       if (RawFieldType.isUnit(rawFieldType)) {
-        return ValueOrErrors.Default.return(ParsedType.Default.unit());
+        return ValueOrErrors.Default.return(ParsedType.Default.primitive('unit'));
       }
       return ValueOrErrors.Default.throw(
         List([

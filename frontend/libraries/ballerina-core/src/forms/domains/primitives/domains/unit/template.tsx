@@ -6,12 +6,7 @@ import {
 import { Template } from "../../../../../template/state";
 import { UnitFieldState, UnitFieldView } from "./state";
 
-export const UnitForm = <
-  Context extends FormLabel & {
-    elementVisibilities: FormFieldPredicateEvaluation;
-    elementDisabled: FormFieldPredicateEvaluation;
-  },
->() =>
+export const UnitForm = <Context extends FormLabel>() =>
   Template.Default<
     Context & { disabled: boolean },
     UnitFieldState,
