@@ -26,6 +26,7 @@ export const RawForm = {
   hasFields: (_: any): _ is { fields: any } => isObject(_) && "fields" in _,
   hasTabs: (_: any): _ is { tabs: any } => isObject(_) && "tabs" in _,
   hasHeader: (_: any): _ is { header: any } => isObject(_) && "header" in _,
+  hasCases: (_: any): _ is { cases: object } => isObject(_) && "cases" in _,
 };
 export type ParsedFormConfig<T> = {
   name: string;
@@ -285,7 +286,15 @@ export const FormsConfig = {
         );
 
         let forms: Map<string, ParsedFormConfig<T>> = Map();
-        Object.entries(formsConfig.forms).forEach(
+        const f = Object.entries(formsConfig.forms)
+          // put the cases of union types into the top level
+          .flatMap(([formName, form]: [formName: string, form: RawForm]): [string, RawForm][] => {
+            return RawForm.hasCases(form)
+              ? Object.entries(form.cases)
+                .map(([n, f]) => ([n, { type: form.type, ...f }]))
+              : [[formName, form]];
+          })
+        f.forEach(
           ([formName, form]: [formName: string, form: RawForm]) => {
             if (
               !RawForm.hasType(form) ||
@@ -297,7 +306,27 @@ export const FormsConfig = {
               );
               return;
             }
-            const formType = parsedTypes.get(form.type)!;
+
+            let formType = parsedTypes.get(form.type);
+            if (!formType) {
+              errors = errors.push(
+                `form ${formName} references non-existing type ${form.type}`,
+              );
+              return;
+            }
+
+            // if we have a union form we need to get the actual form type from its cases
+            if (formType.kind == "union") {
+              formType = formType.args.get(formName);
+              if (!formType) {
+                errors = errors.push(
+                  `form ${formName} references non-existing union case ${formName}`,
+                );
+                return;
+              }
+              formType = formType.fields;
+            }
+
             if (formType.kind != "form") {
               errors = errors.push(
                 `form ${formName} references non-form type ${form.type}`,

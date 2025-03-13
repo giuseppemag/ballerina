@@ -40,14 +40,15 @@ import {
   Template,
   TupleFieldState,
   TupleForm,
+  UnionForm,
   unit,
   Unit,
   UnitForm,
   Value,
   ValueOption,
+  ValueOrErrors,
   ValueRecord,
 } from "../../../../../../main";
-import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 
 type Form = {
   renderer: Template<any, any, any, any>;
@@ -85,6 +86,10 @@ export type ParsedRenderer<T> = (
   | {
       kind: "tuple";
       itemRenderers: Array<ParsedRenderer<T>>;
+    }
+  | {
+      kind: "union";
+      caseRenderers: Map<string, ParsedRenderer<T>>;
     }
   | {
       kind: "sum";
@@ -240,6 +245,26 @@ export const ParsedRenderer = {
       disabled: disabled != undefined ? disabled : false,
       itemRenderers,
     }),
+    union: <T>(
+      type: ParsedType<T>,
+      renderer: string,
+      visible: any,
+      disabled: any,
+      caseRenderers: Map<string, ParsedRenderer<T>>,
+      label?: string,
+      tooltip?: string,
+      details?: string,
+    ): ParsedRenderer<T> => ({
+      kind: "union",
+      type,
+      renderer,
+      label,
+      tooltip,
+      details,
+      visible,
+      disabled: disabled != undefined ? disabled : false,
+      caseRenderers,
+    }),
     sum: <T>(
       type: ParsedType<T>,
       renderer: string,
@@ -303,6 +328,25 @@ export const ParsedRenderer = {
           field.renderer,
           field.visible,
           field.disabled,
+          field.label,
+          field.tooltip,
+          field.details,
+        );
+
+
+      if (fieldType.kind == "union")
+        return ParsedRenderer.Default.union(
+          fieldType,
+          field.renderer,
+          field.visible,
+          field.disabled,
+          Map(field.itemRenderers?.map((item, i) =>
+            [`${i}`, ParsedRenderer.Operations.ParseRenderer(
+              fieldType.args.valueSeq().toArray()[i],
+              item,
+              types,
+            )],
+          ) ?? []),
           field.label,
           field.tooltip,
           field.details,
@@ -759,6 +803,71 @@ export const ParsedRenderer = {
                 },
               ),
           );
+        // case "union":
+        //   return Expr.Operations.parse(parsedRenderer.visible ?? true).Then(
+        //     (visibilityExpr) =>
+        //       Expr.Operations.parse(parsedRenderer.disabled ?? false).Then(
+        //         (disabledExpr) => {
+        //           return ValueOrErrors.Operations.All(
+        //             List(
+        //               parsedRenderer.caseRenderers.entrySeq().map(([caseName, item]) => {
+        //                 const parsedForm = ParsedRenderer.Operations.RendererToForm(
+        //                   fieldName,
+        //                   parsingContext,
+        //                   item,
+        //                 )
+
+        //                 return {
+        //                   ...parsedForm,
+        //                   caseName,
+        //                 }
+        //               }
+        //               ),
+        //             ),
+        //           ).Then((itemRenderers) =>
+        //             ValueOrErrors.Default.return({
+        //               form: {
+        //                 renderer: UnionForm<string, any, any & FormLabel, Unit>(
+        //                   Map(itemRenderers.map((it, idx) => [`${idx}`, it.form.initialState])),
+        //                   Map(itemRenderers.map((it, idx) => [`${idx}`, it.form.renderer])),
+        //                 )
+        //                   .withView(
+        //                     parsingContext.formViews[viewKind][
+        //                       parsedRenderer.renderer
+        //                     ]() as any,
+        //                   )
+        //                   .mapContext<any>((_) => ({
+        //                     ..._,
+        //                     label: parsedRenderer.label,
+        //                     tooltip: parsedRenderer.tooltip,
+        //                     details: parsedRenderer.details,
+        //                   })),
+        //                 initialValue: parsingContext.defaultValue(
+        //                   parsedRenderer.type,
+        //                 ),
+        //                 initialState: TupleFieldState<any>().Default(
+        //                   itemRenderers.map((item) => item.form.initialState),
+        //                 ),
+        //               },
+        //               visibilityPredicateExpression:
+        //                 FieldPredicateExpression.Default.tuple(
+        //                   visibilityExpr,
+        //                   itemRenderers
+        //                     .map((item) => item.visibilityPredicateExpression)
+        //                     .toArray(),
+        //                 ),
+        //               disabledPredicatedExpression:
+        //                 FieldPredicateExpression.Default.tuple(
+        //                   disabledExpr,
+        //                   itemRenderers
+        //                     .map((item) => item.disabledPredicatedExpression)
+        //                     .toArray(),
+        //                 ),
+        //             }),
+        //           );
+        //         },
+        //       ),
+        //   );
         case "sum":
           return Expr.Operations.parse(parsedRenderer.visible ?? true).Then(
             (visibilityExpr) =>

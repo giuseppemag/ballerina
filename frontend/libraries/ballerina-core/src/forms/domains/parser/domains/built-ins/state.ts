@@ -13,6 +13,7 @@ import {
   Sum,
   TypeName,
   unit,
+  ValueRecord,
   ValueTuple,
 } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
@@ -152,6 +153,7 @@ export type BuiltIns = {
     list: Set<string>;
     map: Set<string>;
     tuple: Set<string>;
+    union: Set<string>;
     sum: Set<string>;
   };
 };
@@ -246,6 +248,13 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
         },
       ] as [string, GenericBuiltIn],
       [
+        "Union",
+        {
+          defaultValue: (caseName: string, fields: ValueRecord) =>
+            PredicateValue.Default.unionCase(caseName, fields),
+        },
+      ] as [string, GenericBuiltIn],
+      [
         "Sum",
         {
           defaultValue: PredicateValue.Default.sum(
@@ -279,6 +288,7 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
       string: Set(),
       list: Set(),
       tuple: Set(),
+      union: Set(),
       base64File: Set(),
       secret: Set(),
       map: Set(),
