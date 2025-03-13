@@ -471,7 +471,44 @@
               "renderer": "defaultInfiniteStream",
               "stream": "cities"
             }
-          ]
+          ],
+          "visible": {
+            "kind": "or",
+            "operands": [
+              {
+                "kind": "fieldLookup",
+                "operands": [
+                  {
+                    "kind": "varLookup",
+                    "varName": "root"
+                  },
+                  "subscribeToNewsletter"
+                ]
+              },
+              {
+                "kind": "equals",
+                "operands": [
+                  {
+                    "kind": "itemLookup",
+                    "operands": [
+                      {
+                        "kind": "fieldLookup",
+                        "operands": [
+                          {
+                            "kind": "varLookup",
+                            "varName": "local"
+                          },
+                          "streetNumberAndCity"
+                        ]
+                      },
+                      1
+                    ]
+                  },
+                  10
+                ]
+              }
+            ]
+          }
         }
       },
       "tabs": {

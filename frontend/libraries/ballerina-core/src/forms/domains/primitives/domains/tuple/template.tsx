@@ -95,7 +95,6 @@ export const TupleForm = <
                 commonFormState: { modifiedByUser: boolean };
               })
           | undefined => {
-        //   console.debug("element map context", _);
           if (!_.value.values.has(elementIndex)) return undefined;
           if (_.visibilities.kind != "tuple") return undefined;
           if (_.disabledFields.kind != "tuple") return undefined;

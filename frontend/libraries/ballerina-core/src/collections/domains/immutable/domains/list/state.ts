@@ -1,6 +1,9 @@
 import { List } from "immutable";
 import { Updater } from "../../../../../fun/domains/updater/state";
 import { BasicFun } from "../../../../../fun/state";
+import { unit } from "../../../../../fun/domains/unit/state";
+import { Option, Sum } from "../../../sum/state";
+import { ValueOrErrors } from "../../../valueOrErrors/state";
 
 export const ListRepo = {
   Default: {},
@@ -32,5 +35,19 @@ export const ListRepo = {
       });
     },
   },
-  Operations: {},
+  Operations: {
+    tryFind: <V>(elementIndex: number, list: List<V>): Option<V> =>
+      list.has(elementIndex)
+        ? Sum.Default.right(list.get(elementIndex)!)
+        : Sum.Default.left(unit),
+    tryFindWithError: <v, e>(
+      i: number,
+      m: List<v>,
+      e: () => e,
+    ): ValueOrErrors<v, e> =>
+      ValueOrErrors.Default.ofOption(
+        m.has(i) ? Sum.Default.right(m.get(i)!) : Sum.Default.left(unit),
+        e,
+      ),
+  },
 };

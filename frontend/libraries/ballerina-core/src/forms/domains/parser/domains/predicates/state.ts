@@ -8,6 +8,7 @@ import {
   simpleUpdater,
   replaceWith,
   Sum,
+  ListRepo,
 } from "../../../../../../main";
 
 export type FieldPredicateExpression =
@@ -241,6 +242,7 @@ export type ExprCase = {
   caseName: string;
   handler: ExprLambda;
 };
+export type ExprItemLookup = { kind: "itemLookup"; operands: [Expr, number] };
 export type ExprFieldLookup = { kind: "fieldLookup"; operands: [Expr, string] };
 export type ExprIsCase = { kind: "isCase"; operands: [Expr, string] };
 export type ExprBinaryOperator = {
@@ -250,6 +252,7 @@ export type ExprBinaryOperator = {
 
 export type Expr =
   | PredicateValue
+  | ExprItemLookup
   | ExprFieldLookup
   | ExprIsCase
   | ExprBinaryOperator
@@ -683,6 +686,7 @@ export const PredicateValue = {
                   v1,
                 )} and ${JSON.stringify(v2)}.`,
               )
+            // : ValueOrErrors.Default.return(false)
           : PredicateValue.Operations.IsDate(v1) &&
             PredicateValue.Operations.IsDate(v2)
           ? v1.getTime() == v2.getTime()
@@ -736,6 +740,10 @@ export const PredicateValue = {
 
 export const Expr = {
   Default: {
+    itemLookup: (e: Expr, i: number): Expr => ({
+      kind: "itemLookup",
+      operands: [e, i],
+    }),
     fieldLookup: (e: Expr, f: string): Expr => ({
       kind: "fieldLookup",
       operands: [e, f],
@@ -764,6 +772,13 @@ export const Expr = {
     }),
   },
   Operations: {
+    IsItemLookup: (e: Expr): e is ExprItemLookup => {
+      return (
+        typeof e == "object" &&
+        !PredicateValue.Operations.IsDate(e) &&
+        e.kind == "itemLookup"
+      );
+    },
     IsFieldLookup: (e: Expr): e is ExprFieldLookup => {
       return (
         typeof e == "object" &&
@@ -817,6 +832,12 @@ export const Expr = {
       );
       if (asValue.kind == "value") return asValue;
 
+      if (Expr.Operations.IsItemLookup(json)) {
+        const [first, second]: Array<any> = json["operands"];
+        return Expr.Operations.parse(first).Then((first) =>
+          ValueOrErrors.Default.return(Expr.Default.itemLookup(first, second)),
+        );
+      }
       if (Expr.Operations.IsFieldLookup(json)) {
         const [first, second]: Array<any> = json["operands"];
         return Expr.Operations.parse(first).Then((first) =>
@@ -876,6 +897,14 @@ export const Expr = {
         `Error: cannot parse ${JSON.stringify(json)} to Expr.`,
       );
     },
+    EvaluateAsTuple:
+      (vars: Bindings) =>
+      (e: Expr): ValueOrErrors<ValueTuple, string> =>
+        !PredicateValue.Operations.IsTuple(e)
+          ? ValueOrErrors.Default.throwOne(
+              `Error: expected tuple, got ${JSON.stringify(e)}`,
+            )
+          : ValueOrErrors.Default.return(e),
     EvaluateAsRecord:
       (vars: Bindings) =>
       (e: Expr): ValueOrErrors<ValueRecord, string> =>
@@ -936,6 +965,22 @@ export const Expr = {
               e.varName,
               vars,
               () => `Error: cannot find variable ${JSON.stringify(e.varName)}`,
+            )
+          
+          : Expr.Operations.IsItemLookup(e)
+          ? Expr.Operations.Evaluate(vars)(e.operands[0]).Then(
+              (maybeTuple: PredicateValue) =>
+                Expr.Operations.EvaluateAsTuple(vars)(maybeTuple).Then(
+                  (tuple: ValueTuple) =>
+                    ListRepo.Operations.tryFindWithError(
+                      e.operands[1],
+                      tuple.values,
+                      () =>
+                        `Error: cannot find element of index ${
+                          e.operands[1]
+                        } in tuple ${JSON.stringify(tuple)}`,
+                    ),
+                ),
             )
           : Expr.Operations.IsFieldLookup(e)
           ? Expr.Operations.Evaluate(vars)(e.operands[0]).Then(
