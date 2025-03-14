@@ -93,8 +93,8 @@ export const SumForm = <
           const leftContext: Context & Value<PredicateValue> & LeftFormState = {
             ..._,
             ...leftFormState,
-            disabled: _.disabledFields.innerValue.value || _.disabled,
-            visible: _.visibilities.innerValue.value || _.visible,
+            disabled: _.disabledFields.innerValue.value ?? true,
+            visible: _.visibilities.innerValue.value ?? false,
             value: _.value.value.value,
             visibilities: _.visibilities.innerValue,
             disabledFields: _.disabledFields.innerValue,

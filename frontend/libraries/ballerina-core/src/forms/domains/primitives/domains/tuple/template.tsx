@@ -111,10 +111,10 @@ export const TupleForm = <
                 if (_.visibilities.kind != "tuple") return undefined;
                 if (_.disabledFields.kind != "tuple") return undefined;
                 const disabled =
-                  _.disabledFields.elementValues[elementIndex].value;
+                  _.disabledFields.elementValues[elementIndex].value ?? true;
                 const visible =
-                  _.visibilities.elementValues[elementIndex].value;
-                const element = _.value.values.get(elementIndex);
+                  _.visibilities.elementValues[elementIndex].value ?? false;
+                const element = _.value.values.get(elementIndex) ;
                 const elementFormState =
                   _.elementFormStates.get(elementIndex) ||
                   ElementFormStates.get(elementIndex)!.Default();

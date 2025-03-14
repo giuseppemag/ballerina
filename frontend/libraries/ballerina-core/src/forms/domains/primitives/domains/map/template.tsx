@@ -115,9 +115,9 @@ export const MapForm = <
                 if (_.visibilities.kind != "map") return undefined;
                 if (_.disabledFields.kind != "map") return undefined;
                 const disabled =
-                  _.disabledFields.elementValues[elementIndex].key.value;
+                  _.disabledFields.elementValues[elementIndex].key.value ?? true;
                 const visible =
-                  _.visibilities.elementValues[elementIndex].key.value;
+                  _.visibilities.elementValues[elementIndex].key.value ?? false;
                 const elementFormState = _.elementFormStates.get(
                   elementIndex,
                 ) || {
@@ -225,9 +225,9 @@ export const MapForm = <
                 if (_.visibilities.kind != "map") return undefined;
                 if (_.disabledFields.kind != "map") return undefined;
                 const disabled =
-                  _.disabledFields.elementValues[elementIndex].value.value;
+                  _.disabledFields.elementValues[elementIndex].value.value ?? true;
                 const visible =
-                  _.visibilities.elementValues[elementIndex].value.value;
+                  _.visibilities.elementValues[elementIndex].value.value ?? false;
                 const elementFormState = _.elementFormStates.get(
                   elementIndex,
                 ) || {
