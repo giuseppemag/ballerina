@@ -87,6 +87,8 @@ export type EntityFormContext<
   ForeignMutationsExpected,
 > = Context &
   EntityFormState<Fields, FieldStates, Context, ForeignMutationsExpected> & {
+    disabled: boolean;
+    visible: boolean;
     elementVisibilities: FormFieldPredicateEvaluation[] | undefined;
     elementDisabledFields: FormFieldPredicateEvaluation | undefined;
     extraContext: any;

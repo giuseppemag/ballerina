@@ -15,6 +15,7 @@ export type EnumMultiselectView<
       selectedIds: Array<Guid>;
       activeOptions: "loading" | Array<ValueRecord>;
       disabled: boolean;
+      visible: boolean;
     },
   EnumFormState,
   ForeignMutationsExpected & {

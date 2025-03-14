@@ -46,7 +46,7 @@ export const FormsApp = (props: {}) => {
   const [configFormsParser, setConfigFormsParser] = useState(
     FormsParserState.Default(),
   );
-  const [formToShow, setFormToShow] = useState(1);
+  const [formToShow, setFormToShow] = useState(0);
   const numForms = 3;
   const [personCreateFormState, setPersonCreateFormState] = useState(
     FormRunnerState.Default(),
@@ -74,6 +74,10 @@ export const FormsApp = (props: {}) => {
       "entity",
       personCreateFormState.form.value.entity.sync.value.fields.toJS(),
     );
+    console.log(
+      "visibilities",
+      personCreateFormState.form.value.customFormState.predicateEvaluations.value.visiblityPredicateEvaluations.fields.toJS(),
+    );
   }
 
   if (
@@ -83,6 +87,10 @@ export const FormsApp = (props: {}) => {
     console.log(
       "entity",
       personEditFormState.form.value.entity.sync.value.fields.toJS(),
+    );
+    console.log(
+      "visibilities",
+      personEditFormState.form.value.customFormState.predicateEvaluations.value.visiblityPredicateEvaluations.fields.toJS(),
     );
   }
 

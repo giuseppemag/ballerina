@@ -11,6 +11,7 @@ export type NumberView<
   Context &
     Value<number> & { commonFormState: CommonFormState } & {
       disabled: boolean;
+      visible: boolean;
     },
   { commonFormState: CommonFormState },
   ForeignMutationsExpected & {

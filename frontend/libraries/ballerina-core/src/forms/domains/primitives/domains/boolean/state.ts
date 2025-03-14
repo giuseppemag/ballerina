@@ -11,6 +11,7 @@ export type BooleanView<
   Context &
     Value<boolean> & { commonFormState: CommonFormState } & {
       disabled: boolean;
+      visible: boolean;
     },
   { commonFormState: CommonFormState },
   ForeignMutationsExpected & {

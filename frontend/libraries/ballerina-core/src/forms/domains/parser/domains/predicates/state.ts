@@ -11,6 +11,12 @@ import {
   ListRepo,
 } from "../../../../../../main";
 
+export type TuplePredicateExpression = {
+  kind: "tuple";
+  value: Expr;
+  elementExpressions: FieldPredicateExpression[];
+};
+
 export type FieldPredicateExpression =
   | { kind: "unit"; value: Expr }
   | { kind: "primitive"; value: Expr }
@@ -22,11 +28,7 @@ export type FieldPredicateExpression =
       keyExpression: FieldPredicateExpression;
       valueExpression: FieldPredicateExpression;
     }
-  | {
-      kind: "tuple";
-      value: Expr;
-      elementExpressions: FieldPredicateExpression[];
-    }
+  | TuplePredicateExpression
   | {
       kind: "sum";
       value: Expr;
@@ -102,33 +104,47 @@ export type FieldPredicateExpressions = Map<
   FieldPredicateExpression
 >;
 
+export type TupleFieldPredicateEvaluation = {
+  kind: "tuple";
+  value: boolean;
+  elementValues: FormFieldPredicateEvaluation[];
+};
+
+export type ListFieldPredicateEvaluation = {
+  kind: "list";
+  value: boolean;
+  elementValues: FormFieldPredicateEvaluation[];
+};
+
+export type MapFieldPredicateEvaluation = {
+  kind: "map";
+  value: boolean;
+  elementValues: {
+    key: FormFieldPredicateEvaluation;
+    value: FormFieldPredicateEvaluation;
+  }[];
+};
+
+export type SumFieldPredicateEvaluation = {
+  kind: "sum";
+  value: boolean;
+  innerValue: FormFieldPredicateEvaluation;
+};
+
+export type FormsFieldPredicateEvaluation = {
+  kind: "form";
+  value: boolean;
+  fields: FormFieldPredicateEvaluations;
+};
+
 export type FormFieldPredicateEvaluation =
   | { kind: "primitive"; value: boolean }
   | { kind: "unit"; value: boolean }
-  | { kind: "form"; value: boolean; fields: FormFieldPredicateEvaluations }
-  | {
-      kind: "list";
-      value: boolean;
-      elementValues: FormFieldPredicateEvaluation[];
-    }
-  | {
-      kind: "map";
-      value: boolean;
-      elementValues: {
-        key: FormFieldPredicateEvaluation;
-        value: FormFieldPredicateEvaluation;
-      }[];
-    }
-  | {
-      kind: "tuple";
-      value: boolean;
-      elementValues: FormFieldPredicateEvaluation[];
-    }
-  | {
-      kind: "sum";
-      value: boolean;
-      innerValue: FormFieldPredicateEvaluation;
-    };
+  | FormsFieldPredicateEvaluation
+  | ListFieldPredicateEvaluation
+  | MapFieldPredicateEvaluation
+  | TupleFieldPredicateEvaluation
+  | SumFieldPredicateEvaluation;
 
 export const FormFieldPredicateEvaluation = {
   Default: {
@@ -147,7 +163,11 @@ export const FormFieldPredicateEvaluation = {
     list: (
       value: boolean,
       elementValues: FormFieldPredicateEvaluation[],
-    ): FormFieldPredicateEvaluation => ({ kind: "list", value, elementValues }),
+    ): FormFieldPredicateEvaluation => ({
+      kind: "list",
+      value,
+      elementValues,
+    }),
     map: (
       value: boolean,
       elementValues: {

@@ -176,25 +176,27 @@ export const PersonFieldViews = {
         Context,
         ForeignMutationsExpected
       > =>
-      (props) => (
-        <>
-          {props.context.label && <h3>{props.context.label}</h3>}
-          {props.context.tooltip && <p>{props.context.tooltip}</p>}
-          {props.context.details && (
-            <p>
-              <em>{props.context.details}</em>
-            </p>
-          )}
-          <input
-            disabled={props.context.disabled}
-            value={props.context.value}
-            onChange={(e) =>
-              props.foreignMutations.setNewValue(e.currentTarget.value)
-            }
-          />
-          <MostUglyValidationDebugView {...props} />
-        </>
-      ),
+      (props) => {
+        return (
+          <>
+            {props.context.label && <h3>{props.context.label}</h3>}
+            {props.context.tooltip && <p>{props.context.tooltip}</p>}
+            {props.context.details && (
+              <p>
+                <em>{props.context.details}</em>
+              </p>
+            )}
+            <input
+              disabled={props.context.disabled}
+              value={props.context.value}
+              onChange={(e) =>
+                props.foreignMutations.setNewValue(e.currentTarget.value)
+              }
+            />
+            <MostUglyValidationDebugView {...props} />
+          </>
+        );
+      },
   },
   date: {
     defaultDate:
@@ -490,7 +492,7 @@ export const PersonFieldViews = {
     defaultList:
       <
         ElementFormState,
-        Context extends FormLabel,
+        Context extends FormLabel & { disabled: boolean },
         ForeignMutationsExpected,
       >(): ListFieldView<ElementFormState, Context, ForeignMutationsExpected> =>
       (props) => {
@@ -522,6 +524,7 @@ export const PersonFieldViews = {
                         onClick={() =>
                           props.foreignMutations.remove(elementIndex)
                         }
+                        disabled={props.context.disabled}
                       >
                         ❌
                       </button>
@@ -532,6 +535,7 @@ export const PersonFieldViews = {
                             elementIndex - 1,
                           )
                         }
+                        disabled={props.context.disabled}
                       >
                         ⬆️
                       </button>
@@ -542,6 +546,7 @@ export const PersonFieldViews = {
                             elementIndex + 1,
                           )
                         }
+                        disabled={props.context.disabled}
                       >
                         ⬇️
                       </button>
@@ -549,6 +554,7 @@ export const PersonFieldViews = {
                         onClick={() =>
                           props.foreignMutations.duplicate(elementIndex)
                         }
+                        disabled={props.context.disabled}
                       >
                         📑
                       </button>
@@ -556,6 +562,7 @@ export const PersonFieldViews = {
                         onClick={() =>
                           props.foreignMutations.insert(elementIndex + 1)
                         }
+                        disabled={props.context.disabled}
                       >
                         ➕
                       </button>
@@ -568,6 +575,7 @@ export const PersonFieldViews = {
               onClick={() => {
                 props.foreignMutations.add(unit);
               }}
+              disabled={props.context.disabled}
             >
               ➕
             </button>
@@ -688,16 +696,18 @@ export const PersonFieldViews = {
       (props) => (
         <>
           {props.context.label && <h3>{props.context.label}</h3>}
-          {props.context.value.values.map((_, elementIndex) => {
-            return (
-              <div>
-                {props.embeddedElementTemplates(elementIndex)({
-                  ...props,
-                  view: unit,
-                })}
-              </div>
-            );
-          })}
+          <div>
+            {props.context.value.values.map((_, elementIndex) => {
+              return (
+                <>
+                  {props.embeddedElementTemplates(elementIndex)({
+                    ...props,
+                    view: unit,
+                  })}
+                </>
+              );
+            })}
+          </div>
         </>
       ),
     defaultTuple3:
@@ -708,21 +718,29 @@ export const PersonFieldViews = {
         Context extends FormLabel,
         ForeignMutationsExpected,
       >(): TupleFieldView<FormState, Context, ForeignMutationsExpected> =>
-      (props) => (
-        <>
-          {props.context.label && <h3>{props.context.label}</h3>}
-          {props.context.value.values.map((_, elementIndex) => {
-            return (
-              <div>
-                {props.embeddedElementTemplates(elementIndex)({
-                  ...props,
-                  view: unit,
-                })}
-              </div>
-            );
-          })}
-        </>
-      ),
+      (props) => {
+        return (
+          <>
+            {props.context.label && <h3>{props.context.label}</h3>}
+            <div>
+              {props.embeddedElementTemplates(0)({
+                ...props,
+                view: unit,
+              })}
+              {props.embeddedElementTemplates(1)({
+                ...props,
+                view: unit,
+              })}
+            </div>
+            <div>
+              {props.embeddedElementTemplates(2)({
+                ...props,
+                view: unit,
+              })}
+            </div>
+          </>
+        );
+      },
   },
   sum: {
     defaultSum: <

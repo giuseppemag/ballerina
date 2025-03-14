@@ -573,10 +573,12 @@ export const fromAPIRawValue =
           return ValueOrErrors.Default.throwOne(
             `Array expected but got ${JSON.stringify(raw)}`,
           );
-        if (raw.length != t.args.length)
+        if (raw.length != t.args.length) {
+          console.debug("tuple", t, raw);
           return ValueOrErrors.Default.throwOne(
             `Array length mismatch expected tuple length: ${t.args.length} expected but got ${raw.length}`,
           );
+        }
 
         const result = converters[t.value].fromAPIRawValue(raw);
         return ValueOrErrors.Operations.All(
@@ -690,6 +692,9 @@ export const toAPIRawValue =
   ) =>
   (raw: PredicateValue, formState: any): ValueOrErrors<any, string> => {
     if (t.kind == "primitive") {
+      if (t.value == "unit") {
+        return ValueOrErrors.Default.return(unit);
+      }
       return ValueOrErrors.Operations.Return(
         converters[t.value as string | keyof T].toAPIRawValue([
           raw,

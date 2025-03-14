@@ -2,9 +2,9 @@ import { List } from "immutable";
 import {
   BasicFun,
   BasicUpdater,
-  FormFieldPredicateEvaluation,
   PredicateValue,
   Sum,
+  SumFieldPredicateEvaluation,
   Updater,
   ValidateRunner,
   Value,
@@ -25,8 +25,10 @@ export const SumForm = <
   LeftFormState,
   RightFormState,
   Context extends FormLabel & {
-    visibilities: FormFieldPredicateEvaluation;
-    disabledFields: FormFieldPredicateEvaluation;
+    visibilities: SumFieldPredicateEvaluation;
+    disabledFields: SumFieldPredicateEvaluation;
+    disabled: boolean;
+    visible: boolean;
   },
   ForeignMutationsExpected,
 >(
@@ -91,6 +93,8 @@ export const SumForm = <
           const leftContext: Context & Value<PredicateValue> & LeftFormState = {
             ..._,
             ...leftFormState,
+            disabled: _.disabledFields.innerValue.value ?? true,
+            visible: _.visibilities.innerValue.value ?? false,
             value: _.value.value.value,
             visibilities: _.visibilities.innerValue,
             disabledFields: _.disabledFields.innerValue,
@@ -152,6 +156,8 @@ export const SumForm = <
             {
               ..._,
               ...rightFormState,
+              disabled: _.disabledFields.innerValue.value,
+              visible: _.visibilities.innerValue.value,
               value: _.value.value.value,
               visibilities: _.visibilities.innerValue,
               disabledFields: _.disabledFields.innerValue,
@@ -183,32 +189,34 @@ export const SumForm = <
       Context,
       ForeignMutationsExpected
     >
-  >((props) => (
-    <>
-      <props.view
-        {...props}
-        context={{ ...props.context }}
-        foreignMutations={{
-          ...props.foreignMutations,
-          onSwitch: () => {
-            props.foreignMutations.onChange(
-              (_) =>
-                _.value.kind === "l"
-                  ? PredicateValue.Default.sum(
-                      Sum.Default.right(Right.Default()),
-                    )
-                  : PredicateValue.Default.sum(
-                      Sum.Default.left(Left.Default()),
-                    ),
-              List(["switch"]),
-            );
-          },
-        }}
-        embeddedLeftTemplate={embeddedLeftTemplate}
-        embeddedRightTemplate={embeddedRightTemplate}
-      />
-    </>
-  )).any([
+  >((props) => {
+    return (
+      <>
+        <props.view
+          {...props}
+          context={{ ...props.context }}
+          foreignMutations={{
+            ...props.foreignMutations,
+            onSwitch: () => {
+              props.foreignMutations.onChange(
+                (_) =>
+                  _.value.kind === "l"
+                    ? PredicateValue.Default.sum(
+                        Sum.Default.right(Right.Default()),
+                      )
+                    : PredicateValue.Default.sum(
+                        Sum.Default.left(Left.Default()),
+                      ),
+                List(["switch"]),
+              );
+            },
+          }}
+          embeddedLeftTemplate={embeddedLeftTemplate}
+          embeddedRightTemplate={embeddedRightTemplate}
+        />
+      </>
+    );
+  }).any([
     ValidateRunner<
       Context & { disabled: boolean },
       SumFieldState<LeftFormState, RightFormState>,

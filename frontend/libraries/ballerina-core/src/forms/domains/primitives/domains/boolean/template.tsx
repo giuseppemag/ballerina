@@ -22,7 +22,7 @@ export const BooleanForm = <
   validation?: BasicFun<boolean, Promise<FieldValidation>>,
 ) => {
   return Template.Default<
-    Context & Value<boolean> & { disabled: boolean },
+    Context & Value<boolean> & { disabled: boolean; visible: boolean },
     { commonFormState: CommonFormState },
     ForeignMutationsExpected & { onChange: OnChange<boolean> },
     BooleanView<Context, ForeignMutationsExpected>
@@ -39,7 +39,7 @@ export const BooleanForm = <
     </>
   )).any([
     ValidateRunner<
-      Context & { disabled: boolean },
+      Context & { disabled: boolean; visible: boolean },
       { commonFormState: CommonFormState },
       ForeignMutationsExpected,
       boolean

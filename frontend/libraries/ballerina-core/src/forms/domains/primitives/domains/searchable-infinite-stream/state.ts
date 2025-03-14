@@ -81,6 +81,7 @@ export type SearchableInfiniteStreamView<
     SearchableInfiniteStreamState & {
       hasMoreValues: boolean;
       disabled: boolean;
+      visible: boolean;
     },
   SearchableInfiniteStreamState,
   ForeignMutationsExpected & {

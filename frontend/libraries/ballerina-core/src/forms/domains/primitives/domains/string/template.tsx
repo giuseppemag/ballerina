@@ -26,7 +26,7 @@ export const StringForm = <Context extends FormLabel, ForeignMutationsExpected>(
   validation?: BasicFun<string, Promise<FieldValidation>>,
 ) => {
   return Template.Default<
-    Context & Value<string> & { disabled: boolean },
+    Context & Value<string> & { disabled: boolean; visible: boolean },
     { commonFormState: CommonFormState; customFormState: Unit },
     ForeignMutationsExpected & { onChange: OnChange<string> },
     StringView<Context, ForeignMutationsExpected>
@@ -43,7 +43,7 @@ export const StringForm = <Context extends FormLabel, ForeignMutationsExpected>(
     </>
   )).any([
     ValidateRunner<
-      Context & { disabled: boolean },
+      Context & { disabled: boolean; visible: boolean },
       { commonFormState: CommonFormState; customFormState: Unit },
       ForeignMutationsExpected,
       string

@@ -222,10 +222,11 @@
     },
     "Person": {
       "fields": {
-        "plotInfo": "PlotInfo",
         "category": "injectedCategory",
-        "name": "string",
-        "surname": "string",
+        "fullName": {
+          "fun": "Tuple",
+          "args": ["string", "string"]
+        },
         "birthday": "Date",
         "job": "Job",
         "subscribeToNewsletter": "boolean",
@@ -236,13 +237,11 @@
         "gender": {
           "fun": "Sum",
           "args": [
+            "unit",
             {
               "fun": "SingleSelection",
-              "args": [
-                "GenderRef"
-              ]
-            },
-            "string"
+              "args": ["GenderRef"]
+            }
           ]
         },
         "dependants": {
@@ -269,7 +268,13 @@
           "fun": "List",
           "args": ["string"]
         },
-        "mainAddress": "Address",
+        "mainAddress": {
+          "fun": "Sum",
+          "args": ["string", {
+            "fun": "Tuple",
+            "args": ["Address", "PlotInfo"]
+          }]
+        },
         "addressesAndAddressesWithLabel": {
           "fun": "Tuple",
           "args": [
@@ -291,6 +296,29 @@
               "args": ["CityRef"]
             },
             "Address"
+          ]
+        },
+        "importantDate": {
+          "fun": "Sum",
+          "args": ["string", "Date"]
+        },
+        "addressesBy": {
+          "fun": "Sum",
+          "args": [
+            {
+              "fun": "Map",
+              "args": [
+                {
+                  "fun": "SingleSelection",
+                  "args": ["ColorRef"]
+                },
+                "Address"
+              ]
+            },
+            {
+              "fun": "Map",
+              "args": ["string", "Address"]
+            }
           ]
         },
         "addressesWithColorLabel": {
@@ -337,8 +365,7 @@
         "holidays": {
           "fun": "List",
           "args": ["Date"]
-        },
-        "unused": "unit"
+        }
       }
     }
   },
@@ -502,6 +529,7 @@
       "type": "Address",
       "fields": {
         "streetNumberAndCity": {
+          "label": "street number and city",
           "renderer": "defaultTuple3",
           "itemRenderers": [
             {
@@ -573,14 +601,13 @@
           "label": "category",
           "renderer": "defaultCategory"
         },
-        "name": {
-          "label": "first name",
-          "tooltip": "Any name will do",
-          "renderer": "defaultString"
-        },
-        "surname": {
-          "label": "last name",
-          "renderer": "defaultString"
+        "fullName": {
+          "label": "full name",
+          "renderer": "defaultTuple2",
+          "itemRenderers": [
+            { "renderer": "defaultString" },
+            { "renderer": "defaultString" }
+          ]
         },
         "job": {
           "renderer": "defaultUnionRenderer",
@@ -606,31 +633,80 @@
           "renderer": "defaultSum",
           "leftRenderer": {
             "label": "left",
-            "renderer": "defaultEnum",
-            "options": "genders",
-            "visible": true,
-            "disabled": false
+            "renderer": "defaultUnit"
           },
           "rightRenderer": {
             "label": "right",
-            "renderer": "defaultString",
-            "visible": true,
-            "disabled": false
+            "renderer": "defaultEnum",
+            "options": "genders"
           },
-          "visible":{
-            "kind":"matchCase",
-            "operands":[
-              { "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"global" }, "ERP"] },
-              { "caseName":"ERP:SAP", "handler":{ "kind":"lambda", "parameter":"sapFields", "body":{
-                "kind":"matchCase",
-                "operands":[
-                  { "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"sapFields" }, "Value"] },
-                  { "caseName":"SAP:S2", "handler":{ "kind":"lambda", "parameter":"s2Fields", "body":{ 
-                    "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"s2Fields" }, "S2OnlyField"] } } },
-                  { "caseName":"SAP:S3", "handler":{ "kind":"lambda", "parameter":"s3Fields", "body":{ 
-                    "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"s3Fields" }, "S3OnlyField"] } } },
-                  { "caseName":"SAP:S4", "handler":{ "kind":"lambda", "parameter":"s4Fields", "body":{ 
-                    "kind":"fieldLookup", "operands":[ {"kind":"varLookup", "varName":"s4Fields" }, "S4OnlyField"] } } }
+          "visible": {
+            "kind": "matchCase",
+            "operands": [
+              {
+                "kind": "fieldLookup",
+                "operands": [
+                  { "kind": "varLookup", "varName": "global" },
+                  "ERP"
+                ]
+              },
+              {
+                "caseName": "ERP:SAP",
+                "handler": {
+                  "kind": "lambda",
+                  "parameter": "sapFields",
+                  "body": {
+                    "kind": "matchCase",
+                    "operands": [
+                      {
+                        "kind": "fieldLookup",
+                        "operands": [
+                          { "kind": "varLookup", "varName": "sapFields" },
+                          "Value"
+                        ]
+                      },
+                      {
+                        "caseName": "SAP:S2",
+                        "handler": {
+                          "kind": "lambda",
+                          "parameter": "s2Fields",
+                          "body": {
+                            "kind": "fieldLookup",
+                            "operands": [
+                              { "kind": "varLookup", "varName": "s2Fields" },
+                              "S2OnlyField"
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "caseName": "SAP:S3",
+                        "handler": {
+                          "kind": "lambda",
+                          "parameter": "s3Fields",
+                          "body": {
+                            "kind": "fieldLookup",
+                            "operands": [
+                              { "kind": "varLookup", "varName": "s3Fields" },
+                              "S3OnlyField"
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "caseName": "SAP:S4",
+                        "handler": {
+                          "kind": "lambda",
+                          "parameter": "s4Fields",
+                          "body": {
+                            "kind": "fieldLookup",
+                            "operands": [
+                              { "kind": "varLookup", "varName": "s4Fields" },
+                              "S4OnlyField"
+                            ]
+                          }
+                        }
+                      }
                     ]
                   }
                 }
@@ -721,12 +797,76 @@
         },
         "mainAddress": {
           "label": "main address",
-          "renderer": "address",
-          "children": {
-            "plotInfo": {
-              "renderer": "plotInfo"
+          "renderer": "defaultSum",
+          "leftRenderer": {
+            "label": "as string",
+            "renderer": "defaultString"
+          },
+          "rightRenderer": {
+            "label": "as address",
+            "renderer": "defaultTuple2",
+            "itemRenderers": [
+              {
+                "renderer": "address"
+              },
+              {
+                "renderer": "plotInfo"
+              }
+            ]
+          },
+          "visible": {
+            "kind": "fieldLookup",
+            "operands": [
+              {
+                "kind": "varLookup",
+                "varName": "local"
+              },
+              "subscribeToNewsletter"
+            ]
+          }
+        },
+        "addressesBy": {
+          "label": "addresses by",
+          "renderer": "defaultSum",
+          "leftRenderer": {
+            "label": "by color",
+            "renderer": "defaultMap",
+            "keyRenderer": {
+              "label": "address color",
+              "renderer": "defaultEnum",
+              "options": "colors"
+            },
+            "valueRenderer": {
+              "label": "address",
+              "renderer": "address"
+            }
+          },
+          "rightRenderer": {
+            "label": "by label",
+            "renderer": "defaultMap",
+            "keyRenderer": {
+              "label": "address label",
+              "renderer": "defaultString"
+            },
+            "valueRenderer": {
+              "label": "address",
+              "renderer": "address"
             }
           }
+        },
+        "importantDate": {
+          "label": "important date",
+          "renderer": "defaultSum",
+          "leftRenderer": {
+            "label": "no date",
+            "renderer": "defaultString"
+          },
+          "rightRenderer": {
+            "label": "date",
+            "renderer": "defaultDate"
+          },
+          "visible": true,
+          "disabled": false
         },
         "emails": {
           "label": "emails",
@@ -744,7 +884,23 @@
               "renderer": "defaultList",
               "elementRenderer": {
                 "label": "address",
-                "renderer": "address"
+                "renderer": "address",
+                "disabled": {
+                  "kind": "equals",
+                  "operands": [
+                    {
+                      "kind": "fieldLookup",
+                      "operands": [
+                        {
+                          "kind": "varLookup",
+                          "varName": "root"
+                        },
+                        "category"
+                      ]
+                    },
+                    "child"
+                  ]
+                }
               }
             },
             {
@@ -838,10 +994,6 @@
             "label": "holiday",
             "renderer": "defaultDate"
           }
-        },
-        "unused": {
-          "label": "unused field",
-          "renderer": "defaultUnit"
         }
       },
       "tabs": {
@@ -851,8 +1003,7 @@
               "groups": {
                 "main": [
                   "category",
-                  "name",
-                  "surname",
+                  "fullName",
                   "birthday",
                   "gender",
                   "emails",
@@ -860,9 +1011,7 @@
                   "friendsByCategory",
                   "relatives",
                   "friendsBirthdays",
-                  "shoeColours",
-                  "unused"
-                ]
+                  "shoeColours"                ]
               }
             },
             "mailing": {

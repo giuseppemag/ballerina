@@ -8,9 +8,9 @@ import {
   BasicUpdater,
   MapRepo,
   ListRepo,
-  FormFieldPredicateEvaluation,
   ValueTuple,
   PredicateValue,
+  ListFieldPredicateEvaluation,
 } from "../../../../../../main";
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
@@ -25,8 +25,8 @@ import { ListFieldState, ListFieldView } from "./state";
 export const ListForm = <
   ElementFormState extends { commonFormState: { modifiedByUser: boolean } },
   Context extends FormLabel & {
-    visibilities: FormFieldPredicateEvaluation;
-    disabledFields: FormFieldPredicateEvaluation;
+    visibilities: ListFieldPredicateEvaluation;
+    disabledFields: ListFieldPredicateEvaluation;
   },
   ForeignMutationsExpected,
 >(
@@ -76,7 +76,10 @@ export const ListForm = <
             );
             props.setState((_) => ({
               ..._,
-              commonFormState: { ..._.commonFormState, modifiedByUser: true },
+              commonFormState: {
+                ..._.commonFormState,
+                modifiedByUser: true,
+              },
             }));
           },
           add: () => {},
@@ -93,6 +96,10 @@ export const ListForm = <
           if (!_.value.values.has(elementIndex)) return undefined;
           if (_.visibilities.kind != "list") return undefined;
           if (_.disabledFields.kind != "list") return undefined;
+          const disabled =
+            _.disabledFields.elementValues[elementIndex]?.value ?? true;
+          const visible =
+            _.visibilities.elementValues[elementIndex]?.value ?? false;
           const element = _.value.values.get(elementIndex);
           const elementFormState =
             _.elementFormStates.get(elementIndex) || ElementFormState.Default();
@@ -105,6 +112,8 @@ export const ListForm = <
               value: element,
               visibilities: elementVisibility,
               disabledFields: elementDisabled,
+              disabled: disabled,
+              visible: visible,
             };
           return elementContext;
         },

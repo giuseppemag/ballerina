@@ -12,6 +12,9 @@ import {
   FormFieldPredicateEvaluation,
   ValueTuple,
   PredicateValue,
+  FieldPredicateExpression,
+  TuplePredicateExpression,
+  TupleFieldPredicateEvaluation,
 } from "../../../../../../main";
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
@@ -28,8 +31,10 @@ export const TupleForm = <
     commonFormState: { modifiedByUser: boolean };
   }>,
   Context extends FormLabel & {
-    visibilities: FormFieldPredicateEvaluation;
-    disabledFields: FormFieldPredicateEvaluation;
+    visibilities: TupleFieldPredicateEvaluation;
+    disabledFields: TupleFieldPredicateEvaluation;
+    disabled: boolean;
+    visible: boolean;
   },
   ForeignMutationsExpected,
 >(
@@ -37,16 +42,17 @@ export const TupleForm = <
     Default: () => { commonFormState: { modifiedByUser: boolean } };
   }>,
   elementTemplates: List<
-    Template<
-      Context &
-        Value<PredicateValue> & {
-          commonFormState: { modifiedByUser: boolean };
-        },
-      any,
-      ForeignMutationsExpected & {
-        onChange: OnChange<PredicateValue>;
-      }
-    >
+    | Template<
+        Context &
+          Value<PredicateValue> & {
+            commonFormState: { modifiedByUser: boolean };
+          },
+        any,
+        ForeignMutationsExpected & {
+          onChange: OnChange<PredicateValue>;
+        }
+      >
+    | undefined
   >,
   validation?: BasicFun<ValueTuple, Promise<FieldValidation>>,
 ) => {
@@ -81,7 +87,10 @@ export const TupleForm = <
             );
             props.setState((_) => ({
               ..._,
-              commonFormState: { ..._.commonFormState, modifiedByUser: true },
+              commonFormState: {
+                ..._.commonFormState,
+                modifiedByUser: true,
+              },
             }));
           },
         }),
@@ -98,6 +107,10 @@ export const TupleForm = <
           if (!_.value.values.has(elementIndex)) return undefined;
           if (_.visibilities.kind != "tuple") return undefined;
           if (_.disabledFields.kind != "tuple") return undefined;
+          const disabled =
+            _.disabledFields.elementValues[elementIndex].value ?? true;
+          const visible =
+            _.visibilities.elementValues[elementIndex].value ?? false;
           const element = _.value.values.get(elementIndex);
           const elementFormState =
             _.elementFormStates.get(elementIndex) ||
@@ -110,6 +123,8 @@ export const TupleForm = <
             } = {
             ..._,
             ...elementFormState,
+            disabled: disabled,
+            visible: visible,
             value: element,
             visibilities: elementVisibility,
             disabledFields: elementDisabled,
@@ -119,7 +134,9 @@ export const TupleForm = <
       )
       .mapState(
         (
-          _: BasicUpdater<{ commonFormState: { modifiedByUser: boolean } }>,
+          _: BasicUpdater<{
+            commonFormState: { modifiedByUser: boolean };
+          }>,
         ): Updater<TupleFieldState<ElementFormStates>> =>
           TupleFieldState<ElementFormStates>().Updaters.Core.elementFormStates(
             MapRepo.Updaters.upsert(

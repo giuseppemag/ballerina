@@ -11,6 +11,7 @@ import {
   FormFieldPredicateEvaluation,
   PredicateValue,
   ValueTuple,
+  MapFieldPredicateEvaluation,
 } from "../../../../../../main";
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
@@ -27,8 +28,8 @@ export const MapForm = <
   KeyFormState extends { commonFormState: CommonFormState },
   ValueFormState extends { commonFormState: CommonFormState },
   Context extends FormLabel & {
-    visibilities: FormFieldPredicateEvaluation;
-    disabledFields: FormFieldPredicateEvaluation;
+    visibilities: MapFieldPredicateEvaluation;
+    disabledFields: MapFieldPredicateEvaluation;
   },
   ForeignMutationsExpected,
 >(
@@ -92,7 +93,10 @@ export const MapForm = <
             );
             props.setState((_) => ({
               ..._,
-              commonFormState: { ..._.commonFormState, modifiedByUser: true },
+              commonFormState: {
+                ..._.commonFormState,
+                modifiedByUser: true,
+              },
             }));
           },
           add: (newElement: ValueTuple) => {},
@@ -109,6 +113,10 @@ export const MapForm = <
           if (element == undefined) return undefined;
           if (_.visibilities.kind != "map") return undefined;
           if (_.disabledFields.kind != "map") return undefined;
+          const disabled =
+            _.disabledFields.elementValues[elementIndex].key.value ?? true;
+          const visible =
+            _.visibilities.elementValues[elementIndex].key.value ?? false;
           const elementFormState = _.elementFormStates.get(elementIndex) || {
             KeyFormState: KeyFormState.Default(),
             ValueFormState: ValueFormState.Default(),
@@ -123,6 +131,8 @@ export const MapForm = <
             value: element.values.get(0)!,
             visibilities: elementVisibility,
             disabledFields: elementDisabled,
+            disabled: disabled,
+            visible: visible,
           };
           return elementContext;
         },
@@ -188,7 +198,10 @@ export const MapForm = <
             );
             props.setState((_) => ({
               ..._,
-              commonFormState: { ..._.commonFormState, modifiedByUser: true },
+              commonFormState: {
+                ..._.commonFormState,
+                modifiedByUser: true,
+              },
             }));
           },
           add: (newElement: ValueTuple) => {},
@@ -205,6 +218,10 @@ export const MapForm = <
           if (element == undefined) return undefined;
           if (_.visibilities.kind != "map") return undefined;
           if (_.disabledFields.kind != "map") return undefined;
+          const disabled =
+            _.disabledFields.elementValues[elementIndex].value.value ?? true;
+          const visible =
+            _.visibilities.elementValues[elementIndex].value.value ?? false;
           const elementFormState = _.elementFormStates.get(elementIndex) || {
             KeyFormState: KeyFormState.Default(),
             ValueFormState: ValueFormState.Default(),
@@ -219,6 +236,8 @@ export const MapForm = <
             value: element.values.get(1)!,
             visibilities: elementVisibility,
             disabledFields: elementDisabled,
+            disabled: disabled,
+            visible: visible,
           };
           return elementContext;
         },
@@ -254,47 +273,49 @@ export const MapForm = <
       Context,
       ForeignMutationsExpected
     >
-  >((props) => (
-    <>
-      <props.view
-        {...props}
-        context={{
-          ...props.context,
-        }}
-        foreignMutations={{
-          ...props.foreignMutations,
-          add: (_) => {
-            props.foreignMutations.onChange(
-              Updater((list) =>
-                PredicateValue.Default.tuple(
-                  ListRepo.Updaters.push<ValueTuple>(
-                    PredicateValue.Default.tuple(
-                      List([Key.Default(), Value.Default()]),
-                    ),
-                  )(list.values as List<ValueTuple>),
-                ),
-              ),
-              List([{ kind: "add" }]),
-            );
-          },
-          remove: (_) => {
-            props.foreignMutations.onChange(
-              Updater((list) =>
-                PredicateValue.Default.tuple(
-                  ListRepo.Updaters.remove<ValueTuple>(_)(
-                    list.values as List<ValueTuple>,
+  >((props) => {
+    return (
+      <>
+        <props.view
+          {...props}
+          context={{
+            ...props.context,
+          }}
+          foreignMutations={{
+            ...props.foreignMutations,
+            add: (_) => {
+              props.foreignMutations.onChange(
+                Updater((list) =>
+                  PredicateValue.Default.tuple(
+                    ListRepo.Updaters.push<ValueTuple>(
+                      PredicateValue.Default.tuple(
+                        List([Key.Default(), Value.Default()]),
+                      ),
+                    )(list.values as List<ValueTuple>),
                   ),
                 ),
-              ),
-              List([_, { kind: "remove" }]),
-            );
-          },
-        }}
-        embeddedKeyTemplate={embeddedKeyTemplate}
-        embeddedValueTemplate={embeddedValueTemplate}
-      />
-    </>
-  )).any([
+                List([{ kind: "add" }]),
+              );
+            },
+            remove: (_) => {
+              props.foreignMutations.onChange(
+                Updater((list) =>
+                  PredicateValue.Default.tuple(
+                    ListRepo.Updaters.remove<ValueTuple>(_)(
+                      list.values as List<ValueTuple>,
+                    ),
+                  ),
+                ),
+                List([_, { kind: "remove" }]),
+              );
+            },
+          }}
+          embeddedKeyTemplate={embeddedKeyTemplate}
+          embeddedValueTemplate={embeddedValueTemplate}
+        />
+      </>
+    );
+  }).any([
     ValidateRunner<
       Context & { disabled: boolean },
       MapFieldState<KeyFormState, ValueFormState>,

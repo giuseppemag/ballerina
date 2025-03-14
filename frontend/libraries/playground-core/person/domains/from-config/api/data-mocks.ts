@@ -91,17 +91,10 @@ const entityApis: EntityApis = {
         return (id: Guid) => {
           console.log(`get person ${id}`);
           return Promise.resolve({
-            plotInfo: {
-              landArea: {
-                x: Math.floor(Math.random() * 100),
-                y: Math.floor(Math.random() * 100),
-              },
-            },
             category: ["child", "adult", "senior"][
               Math.round(Math.random() * 10) % 3
             ],
-            name: faker.person.firstName(),
-            surname: faker.person.lastName(),
+            fullName: [faker.person.firstName(), faker.person.lastName()],
             birthday: new Date(
               Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45,
             ).toISOString(),
@@ -131,20 +124,28 @@ const entityApis: EntityApis = {
             ],
             mainAddress: {
               Kind: "r",
-              Value: {
-                streetNumberAndCity: [
-                  faker.location.street(),
-                  Math.floor(Math.random() * 500),
-                  Math.random() > 0.5
-                    ? { IsSome: false, Value: { Value: "" } }
-                    : {
-                        IsSome: true,
-                        Value: {
-                          ...City.Default(v4(), faker.location.city()),
+              Value: [
+                {
+                  streetNumberAndCity: [
+                    faker.location.street(),
+                    Math.floor(Math.random() * 500),
+                    Math.random() > 0.5
+                      ? { IsSome: false, Value: { Value: "" } }
+                      : {
+                          IsSome: true,
+                          Value: {
+                            ...City.Default(v4(), faker.location.city()),
+                          },
                         },
-                      },
-                ],
-              },
+                  ],
+                },
+                {
+                  landArea: {
+                    x: Math.floor(Math.random() * 100),
+                    y: Math.floor(Math.random() * 100),
+                  },
+                },
+              ],
             },
             addressesBy: {
               Kind: "r",
@@ -315,7 +316,6 @@ const entityApis: EntityApis = {
             shoeColours: [],
             friendsBirthdays: [],
             holidays: [],
-            unused: {},
           });
         };
       case "globalConfiguration":
@@ -362,20 +362,13 @@ const entityApis: EntityApis = {
       ? (_) =>
           PromiseRepo.Default.mock(() => {
             return {
-              plotInfo: {
-                landArea: {
-                  x: 0,
-                  y: 0,
-                },
-              },
               category: "",
-              name: "",
-              surname: "",
+              fullName: ["", ""],
               birthday: "01/01/2000",
               favoriteColor: { Value: { Value: null }, IsSome: false },
               gender: {
-                Kind: "r",
-                Value: { IsSome: true, Value: { Value: "M" } },
+                Kind: "l",
+                Value: null,
               },
               dependants: [],
               friendsByCategory: [],
@@ -404,7 +397,6 @@ const entityApis: EntityApis = {
               shoeColours: [],
               friendsBirthdays: [],
               holidays: [],
-              unused: {}, // undefined is valid too
             };
           })
       : (_) => {
