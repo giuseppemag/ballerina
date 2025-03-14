@@ -94,8 +94,10 @@ export const ListForm = <
           _: Context & Value<ValueTuple> & ListFieldState<ElementFormState>,
         ): (Context & Value<ValueTuple> & ElementFormState) | undefined => {
           if (!_.value.values.has(elementIndex)) return undefined;
-          if (_.visibilities.kind != "list") return undefined;
-          if (_.disabledFields.kind != "list") return undefined;
+          if (_.visibilities == undefined || _.visibilities.kind != "list")
+            return undefined;
+          if (_.disabledFields == undefined || _.disabledFields.kind != "list")
+            return undefined;
           const disabled =
             _.disabledFields.elementValues[elementIndex]?.value ?? true;
           const visible =
