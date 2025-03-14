@@ -693,7 +693,7 @@ export const toAPIRawValue =
   (raw: PredicateValue, formState: any): ValueOrErrors<any, string> => {
     if (t.kind == "primitive") {
       if (t.value == "unit") {
-        return ValueOrErrors.Default.return(null);
+        return ValueOrErrors.Default.return(unit);
       }
       return ValueOrErrors.Operations.Return(
         converters[t.value as string | keyof T].toAPIRawValue([
