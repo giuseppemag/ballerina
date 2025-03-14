@@ -105,8 +105,10 @@ export const TupleForm = <
               })
           | undefined => {
           if (!_.value.values.has(elementIndex)) return undefined;
-          if (_.visibilities.kind != "tuple") return undefined;
-          if (_.disabledFields.kind != "tuple") return undefined;
+          if (_.visibilities == undefined || _.visibilities.kind != "tuple")
+            return undefined;
+          if (_.disabledFields == undefined || _.disabledFields.kind != "tuple")
+            return undefined;
           const disabled =
             _.disabledFields.elementValues[elementIndex].value ?? true;
           const visible =
