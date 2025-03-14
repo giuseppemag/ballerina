@@ -49,6 +49,39 @@
           ✅ define generic writers such as `writerInt[Delta]`, `writerBool[Delta]`, etc,
           ✅ define generic deltas such as `DeltaInt[Delta]`, `DeltaBool[Delta]`, etc,
         ❌ recursively traverse the path and match over entity names and field names
+          ```
+          func entityPATCHer[Delta, Result](writerA WriterA, writerB WriterB, ..., commitA:DeltaA -> Result) 
+            traverse = func(entityName string, path []ballerina.PATCHPathElement[Delta]) : DeltaBase
+              var ResultNil Result
+              switch entityName {
+                case "A":
+                  if (path.length == 0) return writerA.Zero()
+                  switch path[0].Kind {
+                    case "A1":
+                      var accumulator:DeltaInt[Delta],err = ballerina.writerInt.TryParse(path[0].Delta)
+                      if err == nil { return ResultNil,err }
+                      return writerA.A1(accumulator)
+                    case "A2":
+                      var accumulator:DeltaBase,err = traverse("B", path[1..])
+                      if err == nil { return ResultNil,err }
+                      if accumulator is not DeltaB { return ResultNil, NewWrongPATCHPathError(...)}
+                      return writerA.A2(accumulator, path[0].Delta)
+                    ...
+                  }
+                case "C":
+                  if (path.length == 0) return writerC.Zero()
+                  switch path[0].Kind {
+                    case "C1":
+                      var accumulator:DeltaBase,err = traverse("C_C1", path[1..])
+                      if err == nil { return ResultNil,err }
+                      if accumulator is not DeltaC_C1 { return ResultNil, NewWrongPATCHPathError(...)}
+                      return writerC.C1(accumulator, path[0].Delta)
+                    ...
+                  }
+                ...
+              }
+            return traverse
+          ```
           ❌ invoke primitive writers, which will need a method `Embed:Delta -> DeltaInt[Delta] + error`
           ❌ invoke recursively as long as possible, end with a `Zero` invocation
         ✅ complete the kitchen sink sample with all generics
