@@ -237,11 +237,11 @@
         "gender": {
           "fun": "Sum",
           "args": [
+            "unit",
             {
               "fun": "SingleSelection",
               "args": ["GenderRef"]
-            },
-            "string"
+            }
           ]
         },
         "dependants": {
@@ -270,7 +270,10 @@
         },
         "mainAddress": {
           "fun": "Sum",
-          "args": ["string", "Address"]
+          "args": ["string", {
+            "fun": "Tuple",
+            "args": ["Address", "PlotInfo"]
+          }]
         },
         "addressesAndAddressesWithLabel": {
           "fun": "Tuple",
@@ -526,6 +529,7 @@
       "type": "Address",
       "fields": {
         "streetNumberAndCity": {
+          "label": "street number and city",
           "renderer": "defaultTuple3",
           "itemRenderers": [
             {
@@ -600,7 +604,10 @@
         "fullName": {
           "label": "full name",
           "renderer": "defaultTuple2",
-          "itemRenderers": ["string", "string"]
+          "itemRenderers": [
+            { "renderer": "defaultString" },
+            { "renderer": "defaultString" }
+          ]
         },
         "job": {
           "renderer": "defaultUnionRenderer",
@@ -1004,9 +1011,7 @@
                   "friendsByCategory",
                   "relatives",
                   "friendsBirthdays",
-                  "shoeColours",
-                  "unused"
-                ]
+                  "shoeColours"                ]
               }
             },
             "mailing": {
