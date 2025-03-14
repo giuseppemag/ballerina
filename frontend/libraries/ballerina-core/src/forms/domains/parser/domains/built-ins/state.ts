@@ -372,7 +372,12 @@ export const fromAPIRawValue =
         return ValueOrErrors.Default.return(PredicateValue.Default.unit());
       }
 
-      if (!PredicateValue.Operations.IsPrimitive(raw)) {
+      if (
+        !PredicateValue.Operations.IsPrimitive(raw) &&
+        !injectedPrimitives?.injectedPrimitives
+          .keySeq()
+          .contains(t.value as keyof T)
+      ) {
         return ValueOrErrors.Default.throwOne(
           `primitive expected but got ${JSON.stringify(raw)}`,
         );
