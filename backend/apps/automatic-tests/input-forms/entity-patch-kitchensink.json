@@ -49,15 +49,19 @@
         "D1": { "fun": "Sum", "args": ["number", "string"] },
         "D2": "string",
         "D3": { "fun": "List", "args": ["E"] },
-        "D4": { "fun": "Map", "args": ["string", "E"] },
-        "D5": { "fun": "Tuple", "args": ["string", { "fun": "List", "args": ["E"] }, "E"] }
+        "D4": { "fun": "Map", "args": ["string", "InjectedType"] },
+        "D5": { "fun": "Tuple", "args": ["string", { "fun": "List", "args": ["E"] }, "E"] },
+        "D6": { "fun": "SingleSelection", "args": ["string"] },
+        "D7": { "fun": "MultiSelection", "args": ["string"] }
       }
     },
     "E": {
       "fields": {
         "E1": "number",
         "E2": "string",
-        "E3": "boolean"
+        "E3": "boolean",
+        "E4": "guid",
+        "E5": "Date"
       }
     },
     "F": {

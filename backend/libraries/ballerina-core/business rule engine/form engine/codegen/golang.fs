@@ -45,12 +45,24 @@ module Golang =
 
   and WriterName = { WriterName: string }
 
+  type PrimitiveType with
+    static member GetConfig (config: CodeGenConfig) (p: PrimitiveType) : CodegenConfigTypeDef =
+      match p with
+      | PrimitiveType.BoolType -> config.Bool
+      | PrimitiveType.DateOnlyType -> config.Date
+      | PrimitiveType.DateTimeType -> failwith "not implemented - add a CodeGenConfig for float"
+      | PrimitiveType.FloatType -> failwith "not implemented - add a CodeGenConfig for float"
+      | PrimitiveType.GuidType -> config.Guid
+      | PrimitiveType.IntType -> config.Int
+      | PrimitiveType.RefType _ -> config.Guid
+      | PrimitiveType.StringType -> config.String
 
-  and ExprType with
+  type ExprType with
     static member ToWriter (writerName: WriterName) (t: ExprType) =
       state {
-        let! (ctx: ParsedFormsContext) = state.GetContext()
+        let! ((ctx, codegenConfig): ParsedFormsContext * CodeGenConfig) = state.GetContext()
         let! st = state.GetState()
+        let customTypes = codegenConfig.Custom.Keys |> Set.ofSeq
 
         match st |> Map.tryFind writerName with
         | Some w -> return w
@@ -103,8 +115,33 @@ module Golang =
             let! wb = ExprType.ToWriter writerName b
 
             let w =
-              { Name = { WriterName = $"ballerina.WriterSum[Delta, {wa.DeltaTypeName}, {wb.DeltaTypeName}]" }
-                DeltaTypeName = $"ballerina.DeltaWriterSum[Delta, {wa.DeltaTypeName}, {wb.DeltaTypeName}]"
+              { Name =
+                  { WriterName = $"{codegenConfig.Sum.WriterTypeName}[Delta, {wa.DeltaTypeName}, {wb.DeltaTypeName}]" }
+                DeltaTypeName = $"{codegenConfig.Sum.DeltaTypeName}[Delta, {wa.DeltaTypeName}, {wb.DeltaTypeName}]"
+                Type = t
+                Fields = Map.empty
+                Kind = WriterKind.Imported }
+
+            do! state.SetState(Map.add w.Name w)
+            return w
+          | ExprType.OptionType(a) ->
+            let! wa = ExprType.ToWriter writerName a
+
+            let w =
+              { Name = { WriterName = $"{codegenConfig.Option.WriterTypeName}[Delta, {wa.DeltaTypeName}]" }
+                DeltaTypeName = $"{codegenConfig.Option.DeltaTypeName}[Delta, {wa.DeltaTypeName}]"
+                Type = t
+                Fields = Map.empty
+                Kind = WriterKind.Imported }
+
+            do! state.SetState(Map.add w.Name w)
+            return w
+          | ExprType.SetType(a) ->
+            let! wa = ExprType.ToWriter writerName a
+
+            let w =
+              { Name = { WriterName = $"{codegenConfig.Set.WriterTypeName}[Delta, {wa.DeltaTypeName}]" }
+                DeltaTypeName = $"{codegenConfig.Set.DeltaTypeName}[Delta, {wa.DeltaTypeName}]"
                 Type = t
                 Fields = Map.empty
                 Kind = WriterKind.Imported }
@@ -112,9 +149,11 @@ module Golang =
             do! state.SetState(Map.add w.Name w)
             return w
           | ExprType.PrimitiveType(p) ->
+            let config = PrimitiveType.GetConfig codegenConfig p
+
             let w =
-              { Name = { WriterName = $"ballerina.Writer{p.ToString()}[Delta]" }
-                DeltaTypeName = $"ballerina.Delta{p.ToString()}[Delta]"
+              { Name = { WriterName = $"{config.WriterTypeName}[Delta]" }
+                DeltaTypeName = $"{config.DeltaTypeName}[Delta]"
                 Type = t
                 Fields = Map.empty
                 Kind = WriterKind.Imported }
@@ -125,8 +164,8 @@ module Golang =
             let! we = ExprType.ToWriter writerName e
 
             let w =
-              { Name = { WriterName = $"ballerina.WriterArray[Delta, {we.DeltaTypeName}]" }
-                DeltaTypeName = $"ballerina.DeltaArray[Delta, {we.DeltaTypeName}]"
+              { Name = { WriterName = $"{codegenConfig.List.WriterTypeName}[Delta, {we.DeltaTypeName}]" }
+                DeltaTypeName = $"{codegenConfig.List.DeltaTypeName}[Delta, {we.DeltaTypeName}]"
                 Type = t
                 Fields = Map.empty
                 Kind = WriterKind.Imported }
@@ -138,8 +177,9 @@ module Golang =
             let! wv = ExprType.ToWriter writerName v
 
             let w =
-              { Name = { WriterName = $"ballerina.WriterMap[Delta, {wk.DeltaTypeName}, {wv.DeltaTypeName}]" }
-                DeltaTypeName = $"ballerina.DeltaMap[Delta, {wk.DeltaTypeName}, {wv.DeltaTypeName}]"
+              { Name =
+                  { WriterName = $"{codegenConfig.Map.WriterTypeName}[Delta, {wk.DeltaTypeName}, {wv.DeltaTypeName}]" }
+                DeltaTypeName = $"{codegenConfig.Map.DeltaTypeName}[Delta, {wk.DeltaTypeName}, {wv.DeltaTypeName}]"
                 Type = t
                 Fields = Map.empty
                 Kind = WriterKind.Imported }
@@ -151,31 +191,51 @@ module Golang =
             let fields = fields |> Seq.map (fun field -> field.DeltaTypeName) |> Seq.toList
             let fieldDeltaTypeNames = System.String.Join(',', fields)
 
+            let! tupleConfig =
+              codegenConfig.Tuple
+              |> Seq.tryFind (fun tc -> tc.Ariety = fields.Length)
+              |> Sum.fromOption (fun () -> Errors.Singleton $"Error: missing tuple config for ariety {fields.Length}")
+              |> state.OfSum
+
             let w =
-              { Name = { WriterName = $"ballerina.WriterTuple{fields.Length}[Delta, {fieldDeltaTypeNames}]" }
-                DeltaTypeName = $"ballerina.DeltaTuple{fields.Length}[Delta, {fieldDeltaTypeNames}]"
+              { Name = { WriterName = $"{tupleConfig.WriterTypeName}[Delta, {fieldDeltaTypeNames}]" }
+                DeltaTypeName = $"{tupleConfig.DeltaTypeName}[Delta, {fieldDeltaTypeNames}]"
                 Type = t
                 Fields = Map.empty
                 Kind = WriterKind.Imported }
 
             do! state.SetState(Map.add w.Name w)
             return w
-          | ExprType.LookupType tn ->
-            let! ctx = state.GetContext()
+          | ExprType.LookupType tn as lt ->
             let! t = ctx.Types |> Map.tryFindWithError tn.TypeName "types" "types" |> state.OfSum
-            let! w = ExprType.ToWriter { WriterName = tn.TypeName } t.Type
-            do! state.SetState(Map.add w.Name w)
-            return w
+
+            match codegenConfig.Custom |> Map.tryFind tn.TypeName with
+            | Some customType ->
+              let w =
+                { Name = { WriterName = customType.WriterTypeName }
+                  DeltaTypeName = $"{customType.DeltaTypeName}[Delta]"
+                  Type = lt
+                  Fields = Map.empty
+                  Kind = WriterKind.Imported }
+
+              do! state.SetState(Map.add w.Name w)
+              return w
+            | _ ->
+              let! w = ExprType.ToWriter { WriterName = tn.TypeName } t.Type
+              do! state.SetState(Map.add w.Name w)
+              return w
           | _ -> return! state.Throw(Errors.Singleton $"Error: cannot convert type {t} to a Writer.")
       }
 
     static member ToWriterField (parentName: WriterName) (fieldName: string) (t: ExprType) =
       state {
+        let! ((ctx, codegenConfig): ParsedFormsContext * CodeGenConfig) = state.GetContext()
+
         match t with
         | ExprType.PrimitiveType p ->
-          return WriterField.Primitive({| DeltaTypeName = $"ballerina.Delta{p.ToString()}[Delta]" |})
+          let config = PrimitiveType.GetConfig codegenConfig p
+          return WriterField.Primitive({| DeltaTypeName = $"{config.DeltaTypeName}[Delta]" |})
         | ExprType.LookupType tn ->
-          let! ctx = state.GetContext()
           let! t = ctx.Types |> Map.tryFindWithError tn.TypeName "types" "types" |> state.OfSum
           let! w = ExprType.ToWriter { WriterName = tn.TypeName } t.Type
           return WriterField.Nested w.Name
@@ -1126,7 +1186,7 @@ module Golang =
                 do! ExprType.ToWriter { WriterName = e.EntityName } t.Type |> state.Map ignore
             }
 
-          match writersBuilder.run (ctx, Map.empty) with
+          match writersBuilder.run ((ctx, codegenConfig), Map.empty) with
           | Right(err: Errors, _) -> return! state.Throw err
           | Left(_, newWritersState) ->
             // do System.Console.WriteLine(newWritersState.ToFSharpString)

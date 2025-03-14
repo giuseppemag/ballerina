@@ -40,6 +40,8 @@ module Model =
   and TupleCodegenConfigTypeDef =
     { Ariety: int
       GeneratedTypeName: string
+      WriterTypeName: string
+      DeltaTypeName: string
       SupportedRenderers: Set<string>
       Constructor: string
       RequiredImport: Option<string> }
@@ -48,6 +50,8 @@ module Model =
 
   and CodegenConfigUnitDef =
     { GeneratedTypeName: string
+      WriterTypeName: string
+      DeltaTypeName: string
       RequiredImport: Option<string>
       DefaultConstructor: string
       SupportedRenderers: Set<string> }
@@ -55,6 +59,8 @@ module Model =
   and CodegenConfigListDef =
     { GeneratedTypeName: string
       RequiredImport: Option<string>
+      WriterTypeName: string
+      DeltaTypeName: string
       SupportedRenderers: Set<string>
       DefaultConstructor: string
       MappingFunction: string }
@@ -62,18 +68,24 @@ module Model =
   and CodegenConfigMapDef =
     { GeneratedTypeName: string
       RequiredImport: Option<string>
+      WriterTypeName: string
+      DeltaTypeName: string
       DefaultConstructor: string
       SupportedRenderers: Set<string> }
 
   and CodegenConfigSumDef =
     { GeneratedTypeName: string
       RequiredImport: Option<string>
+      WriterTypeName: string
+      DeltaTypeName: string
       LeftConstructor: string
       RightConstructor: string
       SupportedRenderers: Set<string> }
 
   and CodegenConfigTypeDef =
     { GeneratedTypeName: string
+      WriterTypeName: string
+      DeltaTypeName: string
       DefaultValue: string
       RequiredImport: Option<string>
       SupportedRenderers: Set<string> }
@@ -81,6 +93,8 @@ module Model =
   and CodegenConfigCustomDef =
     { GeneratedTypeName: string
       DefaultConstructor: string
+      WriterTypeName: string
+      DeltaTypeName: string
       RequiredImport: Option<string>
       SupportedRenderers: Set<string> }
 
@@ -88,6 +102,8 @@ module Model =
     { GeneratedTypeName: string
       RequiredImport: Option<string>
       DefaultConstructor: string
+      WriterTypeName: string
+      DeltaTypeName: string
       SupportedRenderers:
         {| Enum: Set<string>
            Stream: Set<string> |} }
@@ -96,6 +112,8 @@ module Model =
     { GeneratedTypeName: string
       RequiredImport: Option<string>
       DefaultConstructor: string
+      WriterTypeName: string
+      DeltaTypeName: string
       SupportedRenderers:
         {| Enum: Set<string>
            Stream: Set<string> |} }

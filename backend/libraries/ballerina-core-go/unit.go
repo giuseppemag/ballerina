@@ -1,7 +1,5 @@
 package ballerina
 
-import ()
-
 type Unit struct {
 }
 
@@ -11,3 +9,6 @@ func NewUnit() Unit {
 }
 
 var DefaultUnit Unit = NewUnit()
+
+type WriterUnit[Delta any] interface{}
+type DeltaUnit[Delta any] interface{}

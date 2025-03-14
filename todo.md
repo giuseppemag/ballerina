@@ -52,14 +52,17 @@
           ❌ invoke primitive writers, which will need a method `Embed:Delta -> DeltaInt[Delta] + error`
           ❌ invoke recursively as long as possible, end with a `Zero` invocation
         ✅ complete the kitchen sink sample with all generics
-          ❌ move the configurations (names of deltas and writers) to ballerina/core.go and the go-config
-          ❌ add a few more tuples - up to 7
-        ❌ complete the kitchen sink sample with all primitives
-          ❌ move the configurations (names of deltas and writers) to ballerina/core.go and the go-config
-        ❌ split map, set from sum.go into their respective files
+          ✅ add a few more tuples - up to 5
+          ✅ add all possible generic types - including single and multi selects
+          ✅ move the configurations (names of deltas and writers) to ballerina/core.go and the go-config
+        ✅ complete the kitchen sink sample with all primitives
+          ✅ move the configurations (names of deltas and writers) to ballerina/core.go and the go-config
+        ✅ support imported types
+        ✅ split map, set from sum.go into their respective files
     ✅ currying the arguments of `entityGET` and `entityPOST`
     ✅ add tuple renderers
     ✅ add proper Sum
+    ❌ logo of customer before logging in
     ❌ take as input a list of specs, stitch them together, generate a single file - no `include` needed
     ❌ add paginated lists
     ❌ add lazy fields
@@ -67,6 +70,7 @@
     ❌ add `extends` statement to unions
     ❌ add documentation (Confluence)
     ❌ the validator is now mature
+    ❌ add configuration for float and datetime
     ❌ define live webservice variant
       ❌ in separate repo
         ❌ move the Golang codegen there after extracting the intermediate representation for the codegen

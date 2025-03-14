@@ -17,3 +17,14 @@ type WriterBool[Delta any] interface {
 }
 
 type DeltaBool[Delta any] interface{}
+type WriterGuid[Delta any] interface {
+	Value(delta Delta) (DeltaBool[Delta], error)
+}
+
+type DeltaGuid[Delta any] interface{}
+
+type WriterTime[Delta any] interface {
+	Value(delta Delta) (DeltaBool[Delta], error)
+}
+
+type DeltaTime[Delta any] interface{}

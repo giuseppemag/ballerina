@@ -1,26 +1,194 @@
 {
-  "String":{ "GeneratedTypeName": "string", "RequiredImport": null, "SupportedRenderers": ["defaultString"], "DefaultValue":"\"\""  },
-  "Int":{ "GeneratedTypeName": "int", "RequiredImport": null, "SupportedRenderers": ["defaultNumber"], "DefaultValue":"0" },
-  "Bool":{ "GeneratedTypeName": "bool", "RequiredImport": null, "SupportedRenderers": ["defaultBoolean"], "DefaultValue":"false" },
-  "Date":{ "GeneratedTypeName": "time.Time", "RequiredImport": "time", "SupportedRenderers": ["defaultDate"], "DefaultValue":"time.Now()" },
-  "Guid":{ "GeneratedTypeName": "uuid.UUID", "RequiredImport": "github.com/google/uuid", "SupportedRenderers": [], "DefaultValue":"uuid.Nil" },
-  "Unit":{ "GeneratedTypeName": "ballerina.Unit", "RequiredImport": "ballerina.com/core", "SupportedRenderers": ["defaultUnit"], "DefaultConstructor":"ballerina.DefaultUnit" },
-  "Option":{ "GeneratedTypeName": "ballerina.Option", "RequiredImport": "ballerina.com/core", "SupportedRenderers": { "Enum":["defaultEnum"], "Stream":["defaultInfiniteStream"] }, "DefaultConstructor":"ballerina.None" },
-  "Set":{ "GeneratedTypeName": "ballerina.Set", "RequiredImport": "ballerina.com/core", "SupportedRenderers": { "Enum":["defaultEnumMultiselect"], "Stream":["defaultInfiniteStreamMultiselect"] }, "DefaultConstructor":"ballerina.DefaultSet" },
-  "List":{ "GeneratedTypeName": "ballerina.Array", "RequiredImport": "ballerina.com/core", "SupportedRenderers": ["defaultList"], "MappingFunction":"ballerina.MapArray", "DefaultConstructor":"ballerina.DefaultArray" },
-  "Map":{ "GeneratedTypeName": "ballerina.Map", "RequiredImport": "ballerina.com/core", "SupportedRenderers": ["defaultMap"], "DefaultConstructor":"ballerina.DefaultMap" },
-  "Sum":{ "GeneratedTypeName": "ballerina.Sum", "RequiredImport": "ballerina.com/core", "SupportedRenderers": ["defaultSum"], "LeftConstructor":"ballerina.Left", "RightConstructor":"ballerina.Right" },
-  "Tuple":[
-    {"Ariety" :2, "GeneratedTypeName": "ballerina.Tuple2", "RequiredImport": "ballerina.com/core", "SupportedRenderers": ["defaultTuple2"], "Constructor":"ballerina.NewTuple2" },
-    {"Ariety" :3, "GeneratedTypeName": "ballerina.Tuple3", "RequiredImport": "ballerina.com/core", "SupportedRenderers": ["defaultTuple3"], "Constructor":"ballerina.NewTuple3" }
+  "String": {
+    "GeneratedTypeName": "string",
+    "WriterTypeName": "ballerina.WriterString",
+    "DeltaTypeName": "ballerina.DeltaString",
+    "RequiredImport": null,
+    "SupportedRenderers": [
+      "defaultString"
+    ],
+    "DefaultValue": "\"\""
+  },
+  "Int": {
+    "GeneratedTypeName": "int",
+    "WriterTypeName": "ballerina.WriterInt",
+    "DeltaTypeName": "ballerina.DeltaInt",
+    "RequiredImport": null,
+    "SupportedRenderers": [
+      "defaultNumber"
+    ],
+    "DefaultValue": "0"
+  },
+  "Bool": {
+    "GeneratedTypeName": "bool",
+    "WriterTypeName": "ballerina.WriterBool",
+    "DeltaTypeName": "ballerina.DeltaBool",
+    "RequiredImport": null,
+    "SupportedRenderers": [
+      "defaultBoolean"
+    ],
+    "DefaultValue": "false"
+  },
+  "Date": {
+    "GeneratedTypeName": "time.Time",
+    "WriterTypeName": "ballerina.WriterTime",
+    "DeltaTypeName": "ballerina.DeltaTime",
+    "RequiredImport": "time",
+    "SupportedRenderers": [
+      "defaultDate"
+    ],
+    "DefaultValue": "time.Now()"
+  },
+  "Guid": {
+    "GeneratedTypeName": "uuid.UUID",
+    "WriterTypeName": "ballerina.WriterGuid",
+    "DeltaTypeName": "ballerina.DeltaGuid",
+    "RequiredImport": "github.com/google/uuid",
+    "SupportedRenderers": [],
+    "DefaultValue": "uuid.Nil"
+  },
+  "Unit": {
+    "GeneratedTypeName": "ballerina.Unit",
+    "WriterTypeName": "ballerina.WriterUnit",
+    "DeltaTypeName": "ballerina.DeltaUnit",
+    "RequiredImport": "ballerina.com/core",
+    "SupportedRenderers": [
+      "defaultUnit"
+    ],
+    "DefaultConstructor": "ballerina.DefaultUnit"
+  },
+  "Option": {
+    "GeneratedTypeName": "ballerina.Option",
+    "WriterTypeName": "ballerina.WriterOption",
+    "DeltaTypeName": "ballerina.DeltaOption",
+    "RequiredImport": "ballerina.com/core",
+    "SupportedRenderers": {
+      "Enum": [
+        "defaultEnum"
+      ],
+      "Stream": [
+        "defaultInfiniteStream"
+      ]
+    },
+    "DefaultConstructor": "ballerina.None"
+  },
+  "Set": {
+    "GeneratedTypeName": "ballerina.Set",
+    "WriterTypeName": "ballerina.WriterSet",
+    "DeltaTypeName": "ballerina.DeltaSet",
+    "RequiredImport": "ballerina.com/core",
+    "SupportedRenderers": {
+      "Enum": [
+        "defaultEnumMultiselect"
+      ],
+      "Stream": [
+        "defaultInfiniteStreamMultiselect"
+      ]
+    },
+    "DefaultConstructor": "ballerina.DefaultSet"
+  },
+  "List": {
+    "GeneratedTypeName": "ballerina.Array",
+    "WriterTypeName": "ballerina.WriterArray",
+    "DeltaTypeName": "ballerina.DeltaArray",
+    "RequiredImport": "ballerina.com/core",
+    "SupportedRenderers": [
+      "defaultList"
+    ],
+    "MappingFunction": "ballerina.MapArray",
+    "DefaultConstructor": "ballerina.DefaultArray"
+  },
+  "Map": {
+    "GeneratedTypeName": "ballerina.Map",
+    "WriterTypeName": "ballerina.WriterMap",
+    "DeltaTypeName": "ballerina.DeltaMap",
+    "RequiredImport": "ballerina.com/core",
+    "SupportedRenderers": [
+      "defaultMap"
+    ],
+    "DefaultConstructor": "ballerina.DefaultMap"
+  },
+  "Sum": {
+    "GeneratedTypeName": "ballerina.Sum",
+    "WriterTypeName": "ballerina.WriterSum",
+    "DeltaTypeName": "ballerina.DeltaSum",
+    "RequiredImport": "ballerina.com/core",
+    "SupportedRenderers": [
+      "defaultSum"
+    ],
+    "LeftConstructor": "ballerina.Left",
+    "RightConstructor": "ballerina.Right"
+  },
+  "Tuple": [
+    {
+      "Ariety": 2,
+      "GeneratedTypeName": "ballerina.Tuple2",
+      "WriterTypeName": "ballerina.WriterTuple2",
+      "DeltaTypeName": "ballerina.DeltaTuple2",
+        "RequiredImport": "ballerina.com/core",
+      "SupportedRenderers": [
+        "defaultTuple2"
+      ],
+      "Constructor": "ballerina.NewTuple2"
+    },
+    {
+      "Ariety": 3,
+      "GeneratedTypeName": "ballerina.Tuple3",
+      "WriterTypeName": "ballerina.WriterTuple3",
+      "DeltaTypeName": "ballerina.DeltaTuple3",
+      "RequiredImport": "ballerina.com/core",
+      "SupportedRenderers": [
+        "defaultTuple3"
+      ],
+      "Constructor": "ballerina.NewTuple3"
+    }
   ],
-  "Union":{ "SupportedRenderers": ["defaultUnionRenderer"] },
+  "Union": {
+    "SupportedRenderers": [
+      "defaultUnionRenderer"
+    ]
+  },
   "Custom": {
-    "injectedCategory": { "GeneratedTypeName": "ballerina.Unit", "RequiredImport": "ballerina.com/core", "SupportedRenderers": [ "defaultCategory" ], "DefaultConstructor":"ballerina.NewUnit" }
+    "InjectedType": {
+      "GeneratedTypeName": "ballerina.Unit",
+      "RequiredImport": "ballerina.com/core",
+      "SupportedRenderers": [
+        "defaultCategory"
+      ],
+      "DefaultConstructor": "ballerina.NewUnit",
+      "WriterTypeName": "ballerina.WriterUnit",
+      "DeltaTypeName": "ballerina.DeltaUnit"
+    },
+    "injectedCategory": {
+      "GeneratedTypeName": "ballerina.Unit",
+      "RequiredImport": "ballerina.com/core",
+      "SupportedRenderers": [
+        "defaultCategory"
+      ],
+      "DefaultConstructor": "ballerina.NewUnit",
+      "WriterTypeName": "ballerina.WriterUnit",
+      "DeltaTypeName": "ballerina.DeltaUnit"
+    }
   },
   "IdentifierAllowedRegex": "[^a-zA-Z0-9/-]+",
-  "EntityNotFoundError":{ "GeneratedTypeName": "ballerina.EntityNotFoundError", "RequiredImport":"ballerina.com/core", "Constructor":"ballerina.NewEntityNotFoundError" },
-  "StreamNotFoundError":{ "GeneratedTypeName": "ballerina.StreamNotFoundError", "RequiredImport":"ballerina.com/core", "Constructor":"ballerina.NewStreamNotFoundError" },
-  "EnumNotFoundError":{ "GeneratedTypeName": "ballerina.EnumNotFoundError", "RequiredImport":"ballerina.com/core", "Constructor":"ballerina.NewEnumNotFoundError" },
-  "InvalidEnumValueCombinationError":{ "GeneratedTypeName": "ballerina.InvalidEnumValueCombinationError", "RequiredImport":"ballerina.com/core", "Constructor":"ballerina.NewInvalidEnumValueCombinationError" }
+  "EntityNotFoundError": {
+    "GeneratedTypeName": "ballerina.EntityNotFoundError",
+    "RequiredImport": "ballerina.com/core",
+    "Constructor": "ballerina.NewEntityNotFoundError"
+  },
+  "StreamNotFoundError": {
+    "GeneratedTypeName": "ballerina.StreamNotFoundError",
+    "RequiredImport": "ballerina.com/core",
+    "Constructor": "ballerina.NewStreamNotFoundError"
+  },
+  "EnumNotFoundError": {
+    "GeneratedTypeName": "ballerina.EnumNotFoundError",
+    "RequiredImport": "ballerina.com/core",
+    "Constructor": "ballerina.NewEnumNotFoundError"
+  },
+  "InvalidEnumValueCombinationError": {
+    "GeneratedTypeName": "ballerina.InvalidEnumValueCombinationError",
+    "RequiredImport": "ballerina.com/core",
+    "Constructor": "ballerina.NewInvalidEnumValueCombinationError"
+  }
 }

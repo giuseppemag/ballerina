@@ -4,32 +4,6 @@ import (
 	"fmt"
 )
 
-type KeyValue[k comparable, v any] struct {
-	Key   k
-	Value v
-}
-type Set[a comparable] []a
-
-func DefaultSet[a comparable]() Set[a] {
-	return make([]a, 0)
-}
-
-type WriterSet[Delta any, DeltaA any] interface {
-}
-
-type DeltaSet[Delta any, DeltaA any] interface{}
-
-type Map[a comparable, b any] []KeyValue[a, b]
-
-func DefaultMap[a comparable, b any]() Map[a, b] {
-	return make([]KeyValue[a, b], 0)
-}
-
-type WriterMap[Delta any, DeltaK any, DeltaV any] interface {
-}
-
-type DeltaMap[Delta any, DeltaK any, DeltaV any] interface{}
-
 type Sum[a any, b any] interface{}
 type left[a any, b any] struct {
 	Sum[a, b]
@@ -76,7 +50,7 @@ func MapLeft[a any, b any, a1 any](self Sum[a, b], f func(a) a1) (Sum[a1, b], er
 }
 
 type WriterSum[Delta any, DeltaA any, DeltaB any] interface {
-	Left(deltaA DeltaA, delta Delta) (DeltaWriterSum[Delta, DeltaA, DeltaB], error)
+	Left(deltaA DeltaA, delta Delta) (DeltaSum[Delta, DeltaA, DeltaB], error)
 }
 
-type DeltaWriterSum[Delta any, DeltaA any, DeltaB any] interface{}
+type DeltaSum[Delta any, DeltaA any, DeltaB any] interface{}
