@@ -111,8 +111,10 @@ export const MapForm = <
         ): (Context & Value<ValueTuple> & KeyFormState) | undefined => {
           const element = _.value.values.get(elementIndex) as ValueTuple;
           if (element == undefined) return undefined;
-          if (_.visibilities.kind != "map") return undefined;
-          if (_.disabledFields.kind != "map") return undefined;
+          if (_.visibilities == undefined || _.visibilities.kind != "map")
+            return undefined;
+          if (_.disabledFields == undefined || _.disabledFields.kind != "map")
+            return undefined;
           const disabled =
             _.disabledFields.elementValues[elementIndex].key.value ?? true;
           const visible =
@@ -216,8 +218,10 @@ export const MapForm = <
         ): (Context & Value<ValueTuple> & ValueFormState) | undefined => {
           const element = _.value.values.get(elementIndex) as ValueTuple;
           if (element == undefined) return undefined;
-          if (_.visibilities.kind != "map") return undefined;
-          if (_.disabledFields.kind != "map") return undefined;
+          if (_.visibilities == undefined || _.visibilities.kind != "map")
+            return undefined;
+          if (_.disabledFields == undefined || _.disabledFields.kind != "map")
+            return undefined;
           const disabled =
             _.disabledFields.elementValues[elementIndex].value.value ?? true;
           const visible =

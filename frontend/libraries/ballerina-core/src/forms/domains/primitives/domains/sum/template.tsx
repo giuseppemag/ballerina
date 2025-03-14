@@ -86,8 +86,10 @@ export const SumForm = <
             SumFieldState<LeftFormState, RightFormState>,
         ): (Context & Value<PredicateValue> & LeftFormState) | undefined => {
           if (_.value.value.kind != "l") return undefined;
-          if (_.visibilities.kind != "sum") return undefined;
-          if (_.disabledFields.kind != "sum") return undefined;
+          if (_.visibilities == undefined || _.visibilities.kind != "sum")
+            return undefined;
+          if (_.disabledFields == undefined || _.disabledFields.kind != "sum")
+            return undefined;
           const leftFormState =
             _.customFormState.left || LeftFormState.Default();
           const leftContext: Context & Value<PredicateValue> & LeftFormState = {
@@ -148,8 +150,10 @@ export const SumForm = <
             SumFieldState<LeftFormState, RightFormState>,
         ): (Context & Value<PredicateValue> & RightFormState) | undefined => {
           if (_.value.value.kind != "r") return undefined;
-          if (_.visibilities.kind != "sum") return undefined;
-          if (_.disabledFields.kind != "sum") return undefined;
+          if (_.visibilities == undefined || _.visibilities.kind != "sum")
+            return undefined;
+          if (_.disabledFields == undefined || _.disabledFields.kind != "sum")
+            return undefined;
           const rightFormState =
             _.customFormState.right || RightFormState.Default();
           const rightContext: Context & Value<PredicateValue> & RightFormState =
