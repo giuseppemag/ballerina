@@ -129,19 +129,21 @@ export const ParseForms =
     let formProcessingOrder = OrderedSet<string>();
 
     let parsedForms: ParsedForms<T> = Map();
-    const traverse = (formDef: ParsedFormConfig<T>) => {
-      if (formProcessingOrder.has(formDef.name)) {
+    const traverse = (formDef: ParsedFormConfig<T> & { formKey?: string }) => {
+      // unions are indexed by a combination of union name and case name
+      const formId = !formDef.formKey || formDef.type.kind !== "union" ? formDef.name : formDef.formKey;
+      if (formProcessingOrder.has(formId)) {
         return;
       }
-      if (seen.has(formDef.name)) {
+      if (seen.has(formId)) {
         errors.push(
           `aborting: cycle detected when parsing forms: ${JSON.stringify(
             formProcessingOrder.reverse().toArray(),
-          )} -> ${formDef.name}`,
+          )} -> ${formId}`,
         );
         return;
       }
-      seen = seen.add(formDef.name);
+      seen = seen.add(formId);
       formDef.fields.forEach((field, fieldName) => {
         if (field.type.kind == "lookup" || field.type.kind == "form") {
           traverse(formsConfig.forms.get(field.renderer)!);
@@ -168,17 +170,20 @@ export const ParseForms =
               traverse(formsConfig.forms.get(valueRenderer.renderer)!);
             }
           }
+          if (field.kind == "union") {
+            // should we iterate over all the cases and traverse all of the renderes inside them?
+          }
         } catch (error: any) {
           console.error(`error parsing field :${fieldName}:: `, error);
           errors.push(error.message ?? error);
         }
       });
-      formProcessingOrder = formProcessingOrder.add(formDef.name);
+      formProcessingOrder = formProcessingOrder.add(formId);
     };
-    const allForms = formsConfig.forms.valueSeq().toArray();
-    allForms.forEach((form) => {
+    const allForms = formsConfig.forms.entrySeq().toArray();
+    allForms.forEach(([formKey, form]) => {
       seen = seen.clear();
-      traverse(form);
+      traverse({ ...form, formKey });
     });
 
     formProcessingOrder.forEach((formName) => {
@@ -474,7 +479,7 @@ export const parseFormsToLaunchers =
                     visibilities: _.visibilities,
                     disabledFields: _.disabledFields,
                   })),
-              }) as any,
+              } as any),
           )
           .withViewFromProps((props) => props.context.submitButtonWrapper)
           .mapForeignMutationsFromProps(
@@ -672,7 +677,7 @@ export const parseFormsToLaunchers =
                       visibilities: _.visibilities,
                       disabledFields: _.disabledFields,
                     })),
-                }) as any,
+                } as any),
             )
             .withViewFromProps((props) => props.context.containerWrapper)
             .mapForeignMutationsFromProps(

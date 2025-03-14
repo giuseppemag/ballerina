@@ -22,11 +22,11 @@ export type RawForm = {
   header?: any;
 };
 export const RawForm = {
-  hasType: (_: any): _ is { type: any } => isObject(_) && "type" in _,
-  hasFields: (_: any): _ is { fields: any } => isObject(_) && "fields" in _,
-  hasTabs: (_: any): _ is { tabs: any } => isObject(_) && "tabs" in _,
-  hasHeader: (_: any): _ is { header: any } => isObject(_) && "header" in _,
-  hasCases: (_: any): _ is { cases: object } => isObject(_) && "cases" in _,
+  hasType: <form>(_: form): _ is form & { type: any } => isObject(_) && "type" in _,
+  hasFields: <form>(_: form): _ is form & { fields: any } => isObject(_) && "fields" in _,
+  hasTabs: <form>(_: form): _ is form & { tabs: any } => isObject(_) && "tabs" in _,
+  hasHeader: <form>(_: form): _ is form & { header: any } => isObject(_) && "header" in _,
+  hasCases: <form>(_: form): _ is form & { cases: object } => isObject(_) && "cases" in _,
 };
 export type ParsedFormConfig<T> = {
   name: string;
@@ -288,14 +288,14 @@ export const FormsConfig = {
         let forms: Map<string, ParsedFormConfig<T>> = Map();
         const f = Object.entries(formsConfig.forms)
           // put the cases of union types into the top level
-          .flatMap(([formName, form]: [formName: string, form: RawForm]): [string, RawForm][] => {
+          .flatMap(([formName, form]: [formName: string, form: RawForm]): [string, RawForm & { parentUnionName?: string }][] => {
             return RawForm.hasCases(form)
               ? Object.entries(form.cases)
-                .map(([n, f]) => ([n, { type: form.type, ...f }]))
-              : [[formName, form]];
+                .map(([n, f]) => ([n, { type: form.type, ...f, parentUnionName: formName }]))
+              : [[formName, { ...form, parentUnionName: undefined }]];
           })
         f.forEach(
-          ([formName, form]: [formName: string, form: RawForm]) => {
+          ([formName, form]: [formName: string, form: RawForm & { parentUnionName?: string }]) => {
             if (
               !RawForm.hasType(form) ||
               !RawForm.hasFields(form) ||
@@ -398,7 +398,7 @@ export const FormsConfig = {
               },
             );
             parsedForm.tabs = tabs;
-            forms = forms.set(formName, parsedForm);
+            forms = forms.set( form.parentUnionName + '.' + formName, parsedForm);
           },
         );
 

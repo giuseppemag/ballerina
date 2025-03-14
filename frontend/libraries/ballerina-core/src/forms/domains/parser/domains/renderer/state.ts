@@ -332,14 +332,13 @@ export const ParsedRenderer = {
           field.tooltip,
           field.details,
         );
-
-
       if (fieldType.kind == "union")
         return ParsedRenderer.Default.union(
           fieldType,
           field.renderer,
           field.visible,
           field.disabled,
+          // TODO: item renderers doesn't make sense because we don't have anything like that coming from the config (?)
           Map(field.itemRenderers?.map((item, i) =>
             [`${i}`, ParsedRenderer.Operations.ParseRenderer(
               fieldType.args.valueSeq().toArray()[i],
