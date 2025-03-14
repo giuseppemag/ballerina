@@ -53,226 +53,216 @@ export const MapForm = <
   >,
   validation?: BasicFun<ValueTuple, Promise<FieldValidation>>,
 ) => {
-  const embeddedKeyTemplate =
-    (elementIndex: number) =>
-      keyTemplate
-            .mapForeignMutationsFromProps<
-              ForeignMutationsExpected & {
-                onChange: OnChange<ValueTuple>;
-                add: SimpleCallback<Unit>;
-                remove: SimpleCallback<number>;
-              }
-            >(
-              (
-                props,
-              ): ForeignMutationsExpected & {
-                onChange: OnChange<PredicateValue>;
-              } => ({
-                ...props.foreignMutations,
-                onChange: (elementUpdater, path) => {
-                  props.foreignMutations.onChange(
-                    Updater((elements: ValueTuple) =>
-                      PredicateValue.Default.tuple(
-                        elements.values.update(
-                          elementIndex,
-                          PredicateValue.Default.unit(),
-                          (_) =>
-                            _ == undefined
-                              ? _
-                              : !PredicateValue.Operations.IsTuple(_)
-                              ? _
-                              : PredicateValue.Default.tuple(
-                                  List([
-                                    elementUpdater(_.values.get(0)!),
-                                    _.values.get(1)!,
-                                  ]),
-                                ),
-                        ),
-                      ),
-                    ),
-                    List([elementIndex.toString(), "key"]).concat(path),
-                  );
-                  props.setState((_) => ({
-                    ..._,
-                    commonFormState: {
-                      ..._.commonFormState,
-                      modifiedByUser: true,
-                    },
-                  }));
-                },
-                add: (newElement: ValueTuple) => {},
-                remove: (elementIndex: number) => {},
-              }),
-            )
-            .mapContext(
-              (
-                _: Context &
-                  Value<ValueTuple> &
-                  MapFieldState<KeyFormState, ValueFormState>,
-              ): (Context & Value<ValueTuple> & KeyFormState) | undefined => {
-                const element = _.value.values.get(elementIndex) as ValueTuple;
-                if (element == undefined) return undefined;
-                if (_.visibilities.kind != "map") return undefined;
-                if (_.disabledFields.kind != "map") return undefined;
-                const disabled =
-                  _.disabledFields.elementValues[elementIndex].key.value ?? true;
-                const visible =
-                  _.visibilities.elementValues[elementIndex].key.value ?? false;
-                const elementFormState = _.elementFormStates.get(
-                  elementIndex,
-                ) || {
-                  KeyFormState: KeyFormState.Default(),
-                  ValueFormState: ValueFormState.Default(),
-                };
-                const elementVisibility =
-                  _.visibilities.elementValues[elementIndex]?.key;
-                const elementDisabled =
-                  _.disabledFields.elementValues[elementIndex]?.key;
-                const elementContext: Context &
-                  Value<ValueTuple> &
-                  KeyFormState = {
-                  ..._,
-                  ...elementFormState.KeyFormState,
-                  value: element.values.get(0)!,
-                  visibilities: elementVisibility,
-                  disabledFields: elementDisabled,
-                  disabled: disabled,
-                  visible: visible,
-                };
-                return elementContext;
-              },
-            )
-            .mapState(
-              (
-                _: BasicUpdater<KeyFormState>,
-              ): Updater<MapFieldState<KeyFormState, ValueFormState>> =>
-                MapFieldState<
-                  KeyFormState,
-                  ValueFormState
-                >().Updaters.Core.elementFormStates(
-                  MapRepo.Updaters.upsert(
+  const embeddedKeyTemplate = (elementIndex: number) =>
+    keyTemplate
+      .mapForeignMutationsFromProps<
+        ForeignMutationsExpected & {
+          onChange: OnChange<ValueTuple>;
+          add: SimpleCallback<Unit>;
+          remove: SimpleCallback<number>;
+        }
+      >(
+        (
+          props,
+        ): ForeignMutationsExpected & {
+          onChange: OnChange<PredicateValue>;
+        } => ({
+          ...props.foreignMutations,
+          onChange: (elementUpdater, path) => {
+            props.foreignMutations.onChange(
+              Updater((elements: ValueTuple) =>
+                PredicateValue.Default.tuple(
+                  elements.values.update(
                     elementIndex,
-                    () => ({
-                      KeyFormState: KeyFormState.Default(),
-                      ValueFormState: ValueFormState.Default(),
-                    }),
-                    (current) => ({
-                      ...current,
-                      KeyFormState: _(current.KeyFormState),
-                    }),
+                    PredicateValue.Default.unit(),
+                    (_) =>
+                      _ == undefined
+                        ? _
+                        : !PredicateValue.Operations.IsTuple(_)
+                          ? _
+                          : PredicateValue.Default.tuple(
+                              List([
+                                elementUpdater(_.values.get(0)!),
+                                _.values.get(1)!,
+                              ]),
+                            ),
                   ),
                 ),
-            )
-  const embeddedValueTemplate =
-    (elementIndex: number) =>
-      valueTemplate
-        .mapForeignMutationsFromProps<
-              ForeignMutationsExpected & {
-                onChange: OnChange<ValueTuple>;
-                add: SimpleCallback<Unit>;
-                remove: SimpleCallback<number>;
-              }
-            >(
-              (
-                props,
-              ): ForeignMutationsExpected & {
-                onChange: OnChange<PredicateValue>;
-              } => ({
-                ...props.foreignMutations,
-                onChange: (elementUpdater, path) => {
-                  props.foreignMutations.onChange(
-                    Updater((elements: ValueTuple) =>
-                      PredicateValue.Default.tuple(
-                        elements.values.update(
-                          elementIndex,
-                          PredicateValue.Default.unit(),
-                          (_) =>
-                            _ == undefined
-                              ? _
-                              : !PredicateValue.Operations.IsTuple(_)
-                              ? _
-                              : PredicateValue.Default.tuple(
-                                  List([
-                                    _.values.get(0)!,
-                                    elementUpdater(_.values.get(1)!),
-                                  ]),
-                                ),
-                        ),
-                      ),
-                    ),
-                    List([elementIndex.toString(), "value"]).concat(path),
-                  );
-                  props.setState((_) => ({
-                    ..._,
-                    commonFormState: {
-                      ..._.commonFormState,
-                      modifiedByUser: true,
-                    },
-                  }));
-                },
-                add: (newElement: ValueTuple) => {},
-                remove: (elementIndex: number) => {},
-              }),
-            )
-            .mapContext(
-              (
-                _: Context &
-                  Value<ValueTuple> &
-                  MapFieldState<KeyFormState, ValueFormState>,
-              ): (Context & Value<ValueTuple> & ValueFormState) | undefined => {
-                const element = _.value.values.get(elementIndex) as ValueTuple;
-                if (element == undefined) return undefined;
-                if (_.visibilities.kind != "map") return undefined;
-                if (_.disabledFields.kind != "map") return undefined;
-                const disabled =
-                  _.disabledFields.elementValues[elementIndex].value.value ?? true;
-                const visible =
-                  _.visibilities.elementValues[elementIndex].value.value ?? false;
-                const elementFormState = _.elementFormStates.get(
-                  elementIndex,
-                ) || {
-                  KeyFormState: KeyFormState.Default(),
-                  ValueFormState: ValueFormState.Default(),
-                };
-                const elementVisibility =
-                  _.visibilities.elementValues[elementIndex]?.value;
-                const elementDisabled =
-                  _.disabledFields.elementValues[elementIndex]?.value;
-                const elementContext: Context &
-                  Value<ValueTuple> &
-                  ValueFormState = {
-                  ..._,
-                  ...elementFormState.ValueFormState,
-                  value: element.values.get(1)!,
-                  visibilities: elementVisibility,
-                  disabledFields: elementDisabled,
-                  disabled: disabled,
-                  visible: visible,
-                };
-                return elementContext;
+              ),
+              List([elementIndex.toString(), "key"]).concat(path),
+            );
+            props.setState((_) => ({
+              ..._,
+              commonFormState: {
+                ..._.commonFormState,
+                modifiedByUser: true,
               },
-            )
-            .mapState(
-              (
-                _: BasicUpdater<ValueFormState>,
-              ): Updater<MapFieldState<KeyFormState, ValueFormState>> =>
-                MapFieldState<
-                  KeyFormState,
-                  ValueFormState
-                >().Updaters.Core.elementFormStates(
-                  MapRepo.Updaters.upsert(
+            }));
+          },
+          add: (newElement: ValueTuple) => {},
+          remove: (elementIndex: number) => {},
+        }),
+      )
+      .mapContext(
+        (
+          _: Context &
+            Value<ValueTuple> &
+            MapFieldState<KeyFormState, ValueFormState>,
+        ): (Context & Value<ValueTuple> & KeyFormState) | undefined => {
+          const element = _.value.values.get(elementIndex) as ValueTuple;
+          if (element == undefined) return undefined;
+          if (_.visibilities.kind != "map") return undefined;
+          if (_.disabledFields.kind != "map") return undefined;
+          const disabled =
+            _.disabledFields.elementValues[elementIndex].key.value ?? true;
+          const visible =
+            _.visibilities.elementValues[elementIndex].key.value ?? false;
+          const elementFormState = _.elementFormStates.get(elementIndex) || {
+            KeyFormState: KeyFormState.Default(),
+            ValueFormState: ValueFormState.Default(),
+          };
+          const elementVisibility =
+            _.visibilities.elementValues[elementIndex]?.key;
+          const elementDisabled =
+            _.disabledFields.elementValues[elementIndex]?.key;
+          const elementContext: Context & Value<ValueTuple> & KeyFormState = {
+            ..._,
+            ...elementFormState.KeyFormState,
+            value: element.values.get(0)!,
+            visibilities: elementVisibility,
+            disabledFields: elementDisabled,
+            disabled: disabled,
+            visible: visible,
+          };
+          return elementContext;
+        },
+      )
+      .mapState(
+        (
+          _: BasicUpdater<KeyFormState>,
+        ): Updater<MapFieldState<KeyFormState, ValueFormState>> =>
+          MapFieldState<
+            KeyFormState,
+            ValueFormState
+          >().Updaters.Core.elementFormStates(
+            MapRepo.Updaters.upsert(
+              elementIndex,
+              () => ({
+                KeyFormState: KeyFormState.Default(),
+                ValueFormState: ValueFormState.Default(),
+              }),
+              (current) => ({
+                ...current,
+                KeyFormState: _(current.KeyFormState),
+              }),
+            ),
+          ),
+      );
+  const embeddedValueTemplate = (elementIndex: number) =>
+    valueTemplate
+      .mapForeignMutationsFromProps<
+        ForeignMutationsExpected & {
+          onChange: OnChange<ValueTuple>;
+          add: SimpleCallback<Unit>;
+          remove: SimpleCallback<number>;
+        }
+      >(
+        (
+          props,
+        ): ForeignMutationsExpected & {
+          onChange: OnChange<PredicateValue>;
+        } => ({
+          ...props.foreignMutations,
+          onChange: (elementUpdater, path) => {
+            props.foreignMutations.onChange(
+              Updater((elements: ValueTuple) =>
+                PredicateValue.Default.tuple(
+                  elements.values.update(
                     elementIndex,
-                    () => ({
-                      KeyFormState: KeyFormState.Default(),
-                      ValueFormState: ValueFormState.Default(),
-                    }),
-                    (current) => ({
-                      ...current,
-                      ValueFormState: _(current.ValueFormState),
-                    }),
+                    PredicateValue.Default.unit(),
+                    (_) =>
+                      _ == undefined
+                        ? _
+                        : !PredicateValue.Operations.IsTuple(_)
+                          ? _
+                          : PredicateValue.Default.tuple(
+                              List([
+                                _.values.get(0)!,
+                                elementUpdater(_.values.get(1)!),
+                              ]),
+                            ),
                   ),
                 ),
-            )
+              ),
+              List([elementIndex.toString(), "value"]).concat(path),
+            );
+            props.setState((_) => ({
+              ..._,
+              commonFormState: {
+                ..._.commonFormState,
+                modifiedByUser: true,
+              },
+            }));
+          },
+          add: (newElement: ValueTuple) => {},
+          remove: (elementIndex: number) => {},
+        }),
+      )
+      .mapContext(
+        (
+          _: Context &
+            Value<ValueTuple> &
+            MapFieldState<KeyFormState, ValueFormState>,
+        ): (Context & Value<ValueTuple> & ValueFormState) | undefined => {
+          const element = _.value.values.get(elementIndex) as ValueTuple;
+          if (element == undefined) return undefined;
+          if (_.visibilities.kind != "map") return undefined;
+          if (_.disabledFields.kind != "map") return undefined;
+          const disabled =
+            _.disabledFields.elementValues[elementIndex].value.value ?? true;
+          const visible =
+            _.visibilities.elementValues[elementIndex].value.value ?? false;
+          const elementFormState = _.elementFormStates.get(elementIndex) || {
+            KeyFormState: KeyFormState.Default(),
+            ValueFormState: ValueFormState.Default(),
+          };
+          const elementVisibility =
+            _.visibilities.elementValues[elementIndex]?.value;
+          const elementDisabled =
+            _.disabledFields.elementValues[elementIndex]?.value;
+          const elementContext: Context & Value<ValueTuple> & ValueFormState = {
+            ..._,
+            ...elementFormState.ValueFormState,
+            value: element.values.get(1)!,
+            visibilities: elementVisibility,
+            disabledFields: elementDisabled,
+            disabled: disabled,
+            visible: visible,
+          };
+          return elementContext;
+        },
+      )
+      .mapState(
+        (
+          _: BasicUpdater<ValueFormState>,
+        ): Updater<MapFieldState<KeyFormState, ValueFormState>> =>
+          MapFieldState<
+            KeyFormState,
+            ValueFormState
+          >().Updaters.Core.elementFormStates(
+            MapRepo.Updaters.upsert(
+              elementIndex,
+              () => ({
+                KeyFormState: KeyFormState.Default(),
+                ValueFormState: ValueFormState.Default(),
+              }),
+              (current) => ({
+                ...current,
+                ValueFormState: _(current.ValueFormState),
+              }),
+            ),
+          ),
+      );
   return Template.Default<
     Context & Value<ValueTuple> & { disabled: boolean },
     MapFieldState<KeyFormState, ValueFormState>,

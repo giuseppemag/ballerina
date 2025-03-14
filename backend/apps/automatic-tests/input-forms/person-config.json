@@ -600,7 +600,7 @@
         "fullName": {
           "label": "full name",
           "renderer": "defaultTuple2",
-          "itemRenderers": ["name", "surname"]
+          "itemRenderers": ["string", "string"]
         },
         "job": {
           "renderer": "defaultUnionRenderer",

@@ -45,7 +45,7 @@ export const Form = <
       Context & {
         customFormState: State["formFieldStates"][f]["customFormState"];
         commonFormState: State["formFieldStates"][f]["commonFormState"];
-      } & Value<f> & { disabled: boolean, visible: boolean },
+      } & Value<f> & { disabled: boolean; visible: boolean },
       {
         customFormState: State["formFieldStates"][f]["customFormState"];
         commonFormState: State["formFieldStates"][f]["commonFormState"];
@@ -84,7 +84,7 @@ export const Form = <
                 FieldStates,
                 Context,
                 ForeignMutationsExpected
-              > & { disabled: boolean, visible: boolean }
+              > & { disabled: boolean; visible: boolean }
             >((_) => {
               // disabled flag is passed in from the wrapping container when mapping over fields
               const visibilitiesFromParent =
@@ -240,7 +240,9 @@ export const Form = <
               props.context.disabled ||
               props.context.disabledFields.kind != "form"
             )
-              return OrderedSet(Object.keys(props.context.value.fields.toJS() as object));
+              return OrderedSet(
+                Object.keys(props.context.value.fields.toJS() as object),
+              );
 
             return props.context.disabledFields.fields
               .filter((_) => _.value == true)
