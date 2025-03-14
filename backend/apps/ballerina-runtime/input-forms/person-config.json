@@ -188,7 +188,6 @@
     },
     "Person": {
       "fields": {
-        "plotInfo": "PlotInfo",
         "category": "injectedCategory",
         "fullName": {
           "fun": "Tuple",
@@ -234,6 +233,13 @@
           "fun": "List",
           "args": ["string"]
         },
+        "mainAddress": {
+          "fun": "Sum",
+          "args": ["string", {
+            "fun": "Tuple",
+            "args": ["Address", "PlotInfo"]
+          }]
+        },
         "addressesAndAddressesWithLabel": {
           "fun": "Tuple",
           "args": [
@@ -256,10 +262,6 @@
             },
             "Address"
           ]
-        },
-        "mainAddress": {
-          "fun": "Sum",
-          "args": ["string", "Address"]
         },
         "importantDate": {
           "fun": "Sum",
@@ -471,10 +473,6 @@
     "person": {
       "type": "Person",
       "fields": {
-        "plotInfo": {
-          "renderer": "plotInfo",
-          "visible": true
-        },
         "category": {
           "label": "category",
           "renderer": "defaultCategory"
@@ -511,9 +509,7 @@
           "rightRenderer": {
             "label": "right",
             "renderer": "defaultEnum",
-            "options": "genders",
-            "visible": true,
-            "disabled": false
+            "options": "genders"
           },
           "visible": {
             "kind": "matchCase",
@@ -683,7 +679,15 @@
           },
           "rightRenderer": {
             "label": "as address",
-            "renderer": "address"
+            "renderer": "defaultTuple2",
+            "itemRenderers": [
+              {
+                "renderer": "address"
+              },
+              {
+                "renderer": "plotInfo"
+              }
+            ]
           },
           "visible": {
             "kind": "fieldLookup",
@@ -751,7 +755,6 @@
         "addressesAndAddressesWithLabel": {
           "label": "other addresses",
           "renderer": "defaultTuple2",
-          "disabled": false,
           "itemRenderers": [
             {
               "renderer": "defaultList",
@@ -774,8 +777,7 @@
                     "child"
                   ]
                 }
-              },
-              "disabled": true
+              }
             },
             {
               "renderer": "defaultMap",

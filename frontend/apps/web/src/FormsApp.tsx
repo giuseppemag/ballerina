@@ -46,7 +46,7 @@ export const FormsApp = (props: {}) => {
   const [configFormsParser, setConfigFormsParser] = useState(
     FormsParserState.Default(),
   );
-  const [formToShow, setFormToShow] = useState(1);
+  const [formToShow, setFormToShow] = useState(0);
   const numForms = 3;
   const [personCreateFormState, setPersonCreateFormState] = useState(
     FormRunnerState.Default(),
@@ -76,7 +76,7 @@ export const FormsApp = (props: {}) => {
     );
     console.log(
       "visibilities",
-      personCreateFormState.form.value.customFormState.predicateEvaluations.value.visiblityPredicateEvaluations.toJS(),
+      personCreateFormState.form.value.customFormState.predicateEvaluations.value.visiblityPredicateEvaluations.fields.toJS(),
     );
   }
 
