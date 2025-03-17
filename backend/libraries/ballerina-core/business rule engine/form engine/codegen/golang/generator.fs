@@ -224,6 +224,16 @@ module Generator =
               let! w = ExprType.ToWriter { WriterName = tn.TypeName } t.Type
               do! state.SetState(Map.add w.Name w)
               return w
+          | ExprType.UnitType ->
+            let w =
+              { Name = { WriterName = $"{codegenConfig.Unit.WriterTypeName}[Delta]" }
+                DeltaTypeName = $"{codegenConfig.Unit.DeltaTypeName}[Delta]"
+                Type = t
+                Fields = Map.empty
+                Kind = WriterKind.Imported }
+
+            do! state.SetState(Map.add w.Name w)
+            return w
           | _ -> return! state.Throw(Errors.Singleton $"Error: cannot convert type {t} to a Writer.")
       }
 
