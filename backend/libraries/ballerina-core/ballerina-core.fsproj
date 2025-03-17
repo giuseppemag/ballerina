@@ -42,7 +42,8 @@
     <Compile Include="business rule engine/form engine/model.fs" />
     <Compile Include="business rule engine/form engine/parser.fs" />
     <Compile Include="business rule engine/form engine/validator.fs" />
-    <Compile Include="business rule engine/form engine/codegen/golang.fs" />
+    <Compile Include="business rule engine/form engine/codegen/golang/language constructs.fs" />
+    <Compile Include="business rule engine/form engine/codegen/golang/generator.fs" />
     <Compile Include="business rule engine/form engine/runner.fs" />
   </ItemGroup>
 

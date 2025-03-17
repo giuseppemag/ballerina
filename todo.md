@@ -48,6 +48,12 @@
           ✅ define generic deltas such as `DeltaOption[DeltaE, Delta]`, `DeltaSum[DeltaL, DeltaR, Delta]`, etc,
           ✅ define generic writers such as `writerInt[Delta]`, `writerBool[Delta]`, etc,
           ✅ define generic deltas such as `DeltaInt[Delta]`, `DeltaBool[Delta]`, etc,
+        ❌ define methods for codegen'ing
+          ❌ a record
+          ❌ an enum
+          ❌ a discriminated union
+          ❌ move them to another file, group the golang codegen under a folder
+        ❌ define the model.fs for the golang codegen
         ❌ recursively traverse the path and match over entity names and field names
           ```
           func entityPATCHer[Delta, Result](writerA WriterA, writerB WriterB, ..., commitA:DeltaA -> Result) 

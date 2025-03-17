@@ -60,6 +60,26 @@ func NewTuple5[a any, b any, c any, d any, e any](item1 a, item2 b, item3 c, ite
 	return p
 }
 
+type Tuple6[a any, b any, c any, d any, e any, f any] struct {
+	Item1 a
+	Item2 b
+	Item3 c
+	Item4 d
+	Item5 e
+	Item6 f
+}
+
+func NewTuple6[a any, b any, c any, d any, e any, f any](item1 a, item2 b, item3 c, item4 d, item5 e, item6 f) Tuple6[a, b, c, d, e, f] {
+	var p Tuple6[a, b, c, d, e, f]
+	p.Item1 = item1
+	p.Item2 = item2
+	p.Item3 = item3
+	p.Item4 = item4
+	p.Item5 = item5
+	p.Item6 = item6
+	return p
+}
+
 type WriterTuple2[Delta any, DeltaA any, DeltaB any] interface {
 }
 
@@ -79,3 +99,8 @@ type WriterTuple5[Delta any, DeltaA any, DeltaB any, DeltaC any, DeltaD any, Del
 }
 
 type DeltaTuple5[Delta any, DeltaA any, DeltaB any, DeltaC any, DeltaD any, DeltaE any] interface{}
+
+type WriterTuple6[Delta any, DeltaA any, DeltaB any, DeltaC any, DeltaD any, DeltaE any, DeltaF any] interface {
+}
+
+type DeltaTuple6[Delta any, DeltaA any, DeltaB any, DeltaC any, DeltaD any, DeltaE any, DeltaF any] interface{}

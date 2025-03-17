@@ -1,6 +1,6 @@
-namespace Ballerina.DSL.FormEngine.Codegen
+namespace Ballerina.DSL.FormEngine.Codegen.Golang
 
-module Golang =
+module Generator =
 
   open Ballerina.DSL.Expr.Model
   open Ballerina.DSL.Expr.Types.Model

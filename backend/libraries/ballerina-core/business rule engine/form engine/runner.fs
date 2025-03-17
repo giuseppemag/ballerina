@@ -18,7 +18,7 @@ module Runner =
   open Ballerina.DSL.FormEngine.Model
   open Ballerina.DSL.FormEngine.Parser
   open Ballerina.DSL.FormEngine.Validator
-  open Ballerina.DSL.FormEngine.Codegen.Golang
+  open Ballerina.DSL.FormEngine.Codegen.Golang.Generator
   open System.Text.RegularExpressions
 
   type FormsGenTarget =
