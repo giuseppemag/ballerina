@@ -17,12 +17,15 @@ export type RawForm = {
   fields?: any;
   tabs?: any;
   header?: any;
+  extends?: any;
 };
 export const RawForm = {
   hasType: (_: any): _ is { type: any } => isObject(_) && "type" in _,
   hasFields: (_: any): _ is { fields: any } => isObject(_) && "fields" in _,
   hasTabs: (_: any): _ is { tabs: any } => isObject(_) && "tabs" in _,
   hasHeader: (_: any): _ is { header: any } => isObject(_) && "header" in _,
+  hasExtends: (_: any): _ is { extends: any } =>
+    isObject(_) && "extends" in _ && Array.isArray(_.extends),
 };
 export type ParsedFormConfig<T> = {
   name: string;
@@ -272,7 +275,64 @@ export const FormsConfig = {
 
             Object.entries(form.fields).forEach(
               ([fieldName, field]: [fieldName: string, field: any]) => {
+                if (RawForm.hasExtends(form) && form.extends.length > 0) {
+                  // defer extended forms until after all other forms have been parsed
+                  return;
+                }
                 const fieldType = formType.fields.get(fieldName)!;
+
+                const bwcompatiblefield =
+                  fieldType.kind == "application" &&
+                  fieldType.value == "List" &&
+                  typeof field.elementRenderer == "string"
+                    ? {
+                        renderer: field.renderer,
+                        label: field?.label,
+                        visible: field.visible,
+                        disabled: field?.disabled,
+                        description: field?.description,
+                        elementRenderer: {
+                          renderer: field.elementRenderer,
+                          label: field?.elementLabel,
+                          tooltip: field?.elementTooltip,
+                          visible: field.visible,
+                        },
+                      }
+                    : field;
+
+                return (parsedForm.fields = parsedForm.fields.set(
+                  fieldName,
+                  ParsedRenderer.Operations.ParseRenderer(
+                    fieldType,
+                    bwcompatiblefield,
+                    parsedTypes,
+                  ),
+                ));
+              },
+            );
+
+            Object.entries(form.fields).forEach(
+              ([fieldName, field]: [fieldName: string, field: any]) => {
+                if (!RawForm.hasExtends(form) || form.extends.length <= 0) {
+                  // Not extended forms already parsed
+                  return;
+                }
+                const fieldType = formType.fields.get(fieldName);
+
+                if (fieldType == undefined) {
+                  const parsedField = forms.get(form.extends[0])?.fields.get(fieldName);
+                  if(parsedField == undefined) {
+                    errors = errors.push(
+                      `form ${formName} references non-existent extended form field ${fieldName}`,
+                    );
+                    return;
+                  }
+
+                  return (parsedForm.fields = parsedForm.fields.set(
+                    fieldName,
+                    parsedField,
+                  ))
+                }
 
                 const bwcompatiblefield =
                   fieldType.kind == "application" &&
@@ -370,7 +430,6 @@ export const FormsConfig = {
           return ValueOrErrors.Default.throw(errors);
         }
 
-        console.debug("parsedTypes", parsedTypes.toJS());
         return ValueOrErrors.Default.return({
           types: parsedTypes,
           forms,
