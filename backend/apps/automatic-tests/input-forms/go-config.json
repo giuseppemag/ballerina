@@ -153,7 +153,7 @@
       "GeneratedTypeName": "ballerina.Unit",
       "RequiredImport": "ballerina.com/core",
       "SupportedRenderers": [
-        "defaultCategory"
+        "defaultInjectedType"
       ],
       "DefaultConstructor": "ballerina.NewUnit",
       "WriterTypeName": "ballerina.WriterUnit",

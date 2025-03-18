@@ -80,7 +80,7 @@ module Validator =
 
           do!
             r.Cases
-            |> Seq.map (fun c -> !c.Value.Renderer |> Sum.map ignore)
+            |> Seq.map (fun c -> !c.Value |> Sum.map ignore)
             |> sum.All
             |> Sum.map ignore
 
@@ -173,23 +173,24 @@ module Validator =
           do!
             cs.Cases
             |> Seq.map (fun e -> e.Value)
-            |> Seq.map (NestedRenderer.ValidatePredicates ctx globalType rootType localType)
+            |> Seq.map (fun c -> Renderer.ValidatePredicates ctx globalType rootType c.Type c)
             |> state.All
             |> state.Map ignore
-        | Renderer.UnitRenderer e -> do! !!e
+        | Renderer.UnitRenderer e -> 
+          do! !!e
       }
 
   and FieldConfig with
     static member Validate (ctx: ParsedFormsContext) (formType: ExprType) (fc: FieldConfig) : Sum<Unit, Errors> =
       sum {
+        let! rendererType =
+          Renderer.Validate ctx formType fc.Renderer
+          |> sum.WithErrorContext $"...when validating renderer"
+
         match formType with
         | RecordType fields ->
           match fields |> Map.tryFind fc.FieldName with
           | Some fieldType ->
-            let! rendererType =
-              Renderer.Validate ctx formType fc.Renderer
-              |> sum.WithErrorContext $"...when validating renderer"
-
             do!
               ExprType.Unify
                 Map.empty

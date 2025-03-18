@@ -301,7 +301,7 @@ module Model =
     | FormRenderer of FormConfigId * ExprType * RendererChildren
     | UnionRenderer of
       {| Union: Renderer
-         Cases: Map<CaseName, NestedRenderer>
+         Cases: Map<CaseName, Renderer>
          Children: RendererChildren |}
     | UnitRenderer of NestedRenderer
 
