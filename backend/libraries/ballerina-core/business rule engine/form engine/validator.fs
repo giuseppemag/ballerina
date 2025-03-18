@@ -265,7 +265,6 @@ module Validator =
       }
       |> state.WithErrorContext $"...when validating field predicates for {fc.FieldName}"
 
-
   and FormFields with
     static member ValidatePredicates
       (ctx: ParsedFormsContext)
@@ -290,17 +289,15 @@ module Validator =
       )
       |> Sum.map ignore
 
-  and FormConfig with
-    static member Validate (ctx: ParsedFormsContext) (formConfig: FormConfig) : Sum<Unit, Errors> =
+  and FormBody with
+    static member Validate (ctx: ParsedFormsContext) (localType: ExprType) (body: FormBody) : Sum<Unit, Errors> =
       sum {
-        let! formType = ctx.TryFindType formConfig.TypeId.TypeName
-
-        match formType.Type, formConfig.Body with
+        match localType, body with
         | ExprType.UnionType typeCases, FormBody.Cases formCases ->
           let typeCaseNames =
             typeCases |> Map.values |> Seq.map (fun c -> c.CaseName) |> Set.ofSeq
 
-          let formCaseNames = formCases |> Map.keys |> Set.ofSeq
+          let formCaseNames = formCases.Cases |> Map.keys |> Set.ofSeq
 
           let missingTypeCases = typeCaseNames - formCaseNames
           let missingFormCases = formCaseNames - typeCaseNames
@@ -313,10 +310,10 @@ module Validator =
             do!
               typeCases
               |> Seq.map (fun typeCase ->
-                match formCases |> Map.tryFind typeCase.Key.CaseName with
+                match formCases.Cases |> Map.tryFind typeCase.Key.CaseName with
                 | None ->
                   sum.Throw(Errors.Singleton $"Error: cannot find form case for type case {typeCase.Key.CaseName}")
-                | Some formCase -> FormFields.Validate ctx typeCase.Value.Fields formCase)
+                | Some formCase -> Renderer.Validate ctx typeCase.Value.Fields formCase)
               |> sum.All
               |> Sum.map ignore
         | ExprType.UnionType typeCases, _ ->
@@ -324,9 +321,38 @@ module Validator =
             sum.Throw(
               Errors.Singleton $"Error: the form type is a union, expected cases in the body but found fields instead."
             )
-        | _, FormBody.Fields body -> do! FormFields.Validate ctx formType.Type body
+        | _, FormBody.Fields body -> do! FormFields.Validate ctx localType body
         | _ -> return! sum.Throw(Errors.Singleton $"Error: mismatched form type and form body")
+      }
+    static member ValidatePredicates
+      (ctx: ParsedFormsContext)
+      (globalType: TypeBinding)
+      (rootType: TypeBinding)
+      (localType: ExprType)
+      (body: FormBody)
+      : State<Unit, Unit, ValidationState, Errors> = 
+      state {
+          match body with
+          | FormBody.Fields fields -> do! FormFields.ValidatePredicates ctx globalType rootType localType fields
+          | FormBody.Cases cases ->
+            let! typeCases = localType |> ExprType.AsUnion |> state.OfSum
 
+            for case in cases.Cases do
+              let! typeCase =
+                typeCases
+                |> Map.tryFind ({ CaseName = case.Key })
+                |> Sum.fromOption (fun () -> Errors.Singleton $"Error: cannot find type case {case.Key}")
+                |> state.OfSum
+
+              do! Renderer.ValidatePredicates ctx globalType rootType typeCase.Fields case.Value
+      }
+
+  and FormConfig with
+    static member Validate (ctx: ParsedFormsContext) (formConfig: FormConfig) : Sum<Unit, Errors> =
+      sum {
+        let! formType = ctx.TryFindType formConfig.TypeId.TypeName
+
+        do! FormBody.Validate ctx formType.Type formConfig.Body
 
       }
       |> sum.WithErrorContext $"...when validating form config {formConfig.FormName}"
@@ -349,19 +375,7 @@ module Validator =
           do! state.SetState(ValidationState.Updaters.PredicateValidationHistory(Set.add processedForm))
           let! formType = ctx.TryFindType formConfig.TypeId.TypeName |> state.OfSum
 
-          match formConfig.Body with
-          | FormBody.Fields body -> do! FormFields.ValidatePredicates ctx globalType rootType formType.Type body
-          | FormBody.Cases cases ->
-            let! typeCases = formType.Type |> ExprType.AsUnion |> state.OfSum
 
-            for case in cases do
-              let! typeCase =
-                typeCases
-                |> Map.tryFind ({ CaseName = case.Key })
-                |> Sum.fromOption (fun () -> Errors.Singleton $"Error: cannot find type case {case.Key}")
-                |> state.OfSum
-
-              do! FormFields.ValidatePredicates ctx globalType rootType typeCase.Fields case.Value
 
           return ()
         else

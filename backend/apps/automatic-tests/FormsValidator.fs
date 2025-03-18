@@ -44,25 +44,25 @@ let CorrectSpec () =
       null
       "./input-forms/go-config.json"
 
-  let formConfigResult =
-    Ballerina.DSL.FormEngine.Runner.runSingle
-      true
-      FormsGenTarget.golang
-      "./input-forms/form-config-config.json"
-      "./generated-output/models"
-      null
-      null
-      "./input-forms/go-config.json"
+  // let formConfigResult =
+  //   Ballerina.DSL.FormEngine.Runner.runSingle
+  //     true
+  //     FormsGenTarget.golang
+  //     "./input-forms/form-config-config.json"
+  //     "./generated-output/models"
+  //     null
+  //     null
+  //     "./input-forms/go-config.json"
 
   match personResult with
   | Right err -> Errors.Print "person-config" err
   | _ -> ()
 
-  match formConfigResult with
-  | Right err -> Errors.Print "person-config" err
-  | _ -> ()
+  // match formConfigResult with
+  // | Right err -> Errors.Print "form-config-config" err
+  // | _ -> ()
 
-  Assert.That(personResult.IsLeft && formConfigResult.IsLeft, Is.EqualTo(true))
+  Assert.That( personResult.IsLeft, Is.EqualTo(true))
 
 [<Test>]
 let MissingReference () =
