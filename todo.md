@@ -48,6 +48,7 @@
           ✅ define generic deltas such as `DeltaOption[DeltaE, Delta]`, `DeltaSum[DeltaL, DeltaR, Delta]`, etc,
           ✅ define generic writers such as `writerInt[Delta]`, `writerBool[Delta]`, etc,
           ✅ define generic deltas such as `DeltaInt[Delta]`, `DeltaBool[Delta]`, etc,
+        ❌ Unit is broken - also it does not unify
         ❌ define methods for codegen'ing
           ❌ a record
           ❌ an enum

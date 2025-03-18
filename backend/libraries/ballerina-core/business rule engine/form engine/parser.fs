@@ -569,7 +569,7 @@ module Parser =
             casesJson
             |> Seq.map (fun (caseName, caseJson) ->
               state {
-                let! caseRenderer = NestedRenderer.Parse caseJson
+                let! caseRenderer = Renderer.Parse [||] caseJson
                 return caseName, caseRenderer
               })
             |> state.All
@@ -822,7 +822,7 @@ module Parser =
             state {
               let! casesJson = casesJson |> JsonValue.AsRecord |> state.OfSum
               let! rendererJson = fields |> state.TryFindField "renderer"
-              let! renderer = Renderer.Parse [||] rendererJson
+              let! renderer = Renderer.Parse fields rendererJson
               let! cases =
                 casesJson
                 |> Seq.map (fun (caseName, caseJson) ->
