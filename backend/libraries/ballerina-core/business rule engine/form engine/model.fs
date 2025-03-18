@@ -242,7 +242,9 @@ module Model =
 
   and FormBody =
     | Fields of FormFields
-    | Cases of Map<string, FormFields>
+    | Cases of
+      {| Renderer: Renderer
+         Cases: Map<string, Renderer> |}
 
   and FormFields =
     { Fields: Map<string, FieldConfig>

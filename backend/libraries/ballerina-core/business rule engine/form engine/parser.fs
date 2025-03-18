@@ -821,20 +821,21 @@ module Parser =
           return!
             state {
               let! casesJson = casesJson |> JsonValue.AsRecord |> state.OfSum
-
+              let! rendererJson = fields |> state.TryFindField "renderer"
+              let! renderer = Renderer.Parse [||] rendererJson
               let! cases =
                 casesJson
                 |> Seq.map (fun (caseName, caseJson) ->
                   state {
-                    let! caseJson = caseJson |> JsonValue.AsRecord |> state.OfSum
-                    let! caseBody = FormFields.Parse caseJson
+                    // let! caseJson = caseJson |> JsonValue.AsRecord |> state.OfSum
+                    let! caseBody = Renderer.Parse [||] caseJson
                     return caseName, caseBody
                   }
                   |> state.MapError(Errors.Map(String.appendNewline $"\n...when parsing form case {caseName}")))
                 |> state.All
                 |> state.Map(Map.ofSeq)
 
-              return FormBody.Cases cases
+              return {| Cases = cases; Renderer = renderer |} |> FormBody.Cases
             }
             |> state.MapError(Errors.WithPriority ErrorPriority.High)
         })
@@ -978,7 +979,6 @@ module Parser =
         let! (s: ParsedFormsContext) = state.GetState()
         let! typeBinding = s.TryFindType typeName |> state.OfSum
         let! body = FormBody.Parse fields
-
         return
           {| TypeId = typeBinding.TypeId
              Body = body |}
@@ -1563,7 +1563,7 @@ module Parser =
               ParsedFormsContext.Updaters.Forms(
                 Map.add
                   formName
-                  { Body = FormBody.Cases Map.empty
+                  { Body = FormBody.Cases {| Renderer = Renderer.PrimitiveRenderer { PrimitiveRendererName = ""; PrimitiveRendererId = Guid.CreateVersion7(); Type = ExprType.UnitType; Children = { Fields = Map.empty } }; Cases = Map.empty |}
                     FormConfig.TypeId = formType.TypeId
                     FormId = Guid.CreateVersion7()
                     FormName = formName }

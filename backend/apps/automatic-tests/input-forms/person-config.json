@@ -594,6 +594,14 @@
         }
       }
     },
+    "job": {
+      "type": "Job",
+      "renderer": "defaultUnionRenderer",
+      "cases": {
+        "Barista": "baristaJob",
+        "Waiter": "waiterJob"
+      }
+    },
     "person": {
       "type": "Person",
       "fields": {
@@ -610,15 +618,7 @@
           ]
         },
         "job": {
-          "renderer": "defaultUnionRenderer",
-          "cases": {
-            "Barista": {
-              "renderer": "baristaJob"
-            },
-            "Waiter": {
-              "renderer": "waiterJob"
-            }
-          }
+          "renderer": "job"
         },
         "birthday": {
           "renderer": "defaultDate",
