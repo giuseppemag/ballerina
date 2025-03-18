@@ -160,7 +160,6 @@ module Parser =
             { CaseName = cn.CaseName
               Fields = c.Type })
         )
-      | UnitRenderer r -> r.Type
 
   type Expr with
     static member ParseMatchCase

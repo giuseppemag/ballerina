@@ -303,7 +303,6 @@ module Model =
       {| Union: Renderer
          Cases: Map<CaseName, Renderer>
          Children: RendererChildren |}
-    | UnitRenderer of NestedRenderer
 
   and NestedRenderer =
     { Label: Option<string>
