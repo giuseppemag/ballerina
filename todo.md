@@ -51,6 +51,7 @@
         ❌ Unit renderer looks weird
         ✅ Unit does not unify
         ✅ improve union cases renderer
+        ❌ make sure tests and person-config all work properly
         ❌ define methods for codegen'ing
           ❌ a record
           ❌ an enum

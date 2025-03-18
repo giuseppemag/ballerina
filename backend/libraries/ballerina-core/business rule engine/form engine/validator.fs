@@ -322,7 +322,8 @@ module Validator =
             sum.Throw(
               Errors.Singleton $"Error: the form type is a union, expected cases in the body but found fields instead."
             )
-        | _, FormBody.Fields body -> do! FormFields.Validate ctx localType body
+        | _, FormBody.Fields fields -> 
+          do! FormFields.Validate ctx localType fields
         | _ -> return! sum.Throw(Errors.Singleton $"Error: mismatched form type and form body")
       }
     static member ValidatePredicates
@@ -334,7 +335,8 @@ module Validator =
       : State<Unit, Unit, ValidationState, Errors> = 
       state {
           match body with
-          | FormBody.Fields fields -> do! FormFields.ValidatePredicates ctx globalType rootType localType fields
+          | FormBody.Fields fields -> 
+            do! FormFields.ValidatePredicates ctx globalType rootType localType fields
           | FormBody.Cases cases ->
             let! typeCases = localType |> ExprType.AsUnion |> state.OfSum
 
@@ -376,7 +378,7 @@ module Validator =
           do! state.SetState(ValidationState.Updaters.PredicateValidationHistory(Set.add processedForm))
           let! formType = ctx.TryFindType formConfig.TypeId.TypeName |> state.OfSum
 
-
+          do! FormBody.ValidatePredicates ctx globalType rootType formType.Type formConfig.Body
 
           return ()
         else

@@ -741,7 +741,7 @@ module Parser =
 
         let! disabled = disabledJson |> Sum.toOption |> Option.map (Expr.Parse) |> state.RunOption
 
-        return
+        let fc =
           { FieldName = fieldName
             FieldId = Guid.CreateVersion7()
             Label = label
@@ -750,6 +750,7 @@ module Parser =
             Renderer = renderer
             Visible = visible
             Disabled = disabled }
+        return fc
       }
       |> state.WithErrorContext $"...when parsing field {fieldName}"
 
