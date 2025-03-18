@@ -297,7 +297,7 @@ export const ParsedRenderer = {
           field.tooltip,
           field.details,
         );
-      if (fieldType.kind == "form")
+      if (fieldType.kind == "record")
         return ParsedRenderer.Default.form(
           fieldType,
           field.renderer,

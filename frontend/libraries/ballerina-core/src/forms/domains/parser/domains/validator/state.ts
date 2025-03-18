@@ -6,10 +6,7 @@ import {
   FormsConfigMerger,
   InjectedPrimitives,
   isObject,
-  isString,
   ParsedType,
-  RawFieldType,
-  RawType,
   TypeName,
 } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
@@ -158,7 +155,7 @@ export const FormsConfig = {
           );
         }
 
-        // This error check must stay in the frontend, as it depends on injected types
+        // This error check must stay in the frontend, as it depends on injected api converters that the form config is unaware of
         if (
           injectedPrimitives?.injectedPrimitives
             .keySeq()
@@ -179,81 +176,41 @@ export const FormsConfig = {
         let parsedTypes: Map<TypeName, ParsedType<T>> = Map();
         const rawTypesFromConfig = formsConfig.types;
         const rawTypeNames = Set(Object.keys(rawTypesFromConfig));
-        Object.entries(rawTypesFromConfig).forEach(([rawTypeName, rawType]) => {
-          if (RawType.isExtendedType<T>(rawType)) {
-            parsedTypes = parsedTypes.set(
-              rawTypeName,
-              ParsedType.Default.lookup(rawType.extends[0]),
-            );
-            return;
-          }
 
-          if (RawFieldType.isUnion(rawType)) {
-            const parsingResult = ParsedType.Operations.ParseRawFieldType(
-              rawTypeName,
-              rawType,
-              rawTypeNames,
-              injectedPrimitives,
-            );
-            if (parsingResult.kind == "errors") {
-              errors = errors.concat(parsingResult.errors.toArray());
-              return;
-            }
-            parsedTypes = parsedTypes.set(rawTypeName, parsingResult.value);
-            return;
-          }
-
-          if (!RawType.hasFields(rawType)) {
-            errors = errors.push(
-              `missing 'fields' in type ${rawTypeName}: expected object`,
-            );
-            return;
-          }
-
-          const parsedType: ParsedType<T> = {
-            kind: "form",
-            value: rawTypeName,
-            fields: Map(),
-          };
-          Object.entries(rawType.fields).forEach(
-            ([rawFieldName, rawFieldType]: [
-              rawFieldName: any,
-              rawFieldType: any,
-            ]) => {
-              if (
-                RawFieldType.isMaybeLookup(rawFieldType) &&
-                !RawFieldType.isPrimitive(rawFieldType, injectedPrimitives) &&
-                (injectedPrimitives?.injectedPrimitives.has(
-                  rawFieldType as keyof T,
-                ) ||
-                  builtIns.primitives.has(rawFieldType))
-              ) {
-                // This validation must be done at runtime, as we need to know the injectedPrimitives and field names
-                errors = errors.push(
-                  `field ${rawFieldName} in type ${rawTypeName}: fields, injectedPrimitive and builtIns cannot have the same name`,
-                );
-                return;
-              }
-
-              const parsedFieldType = ParsedType.Operations.ParseRawFieldType(
-                rawFieldName,
-                rawFieldType,
+        const parsedTypesVoE: ValueOrErrors<
+          Map<TypeName, ParsedType<T>>,
+          FormValidationError
+        > = ValueOrErrors.Operations.All(
+          List<ValueOrErrors<ParsedType<T>, FormValidationError>>(
+            Object.entries(rawTypesFromConfig).map(([rawTypeName, rawType]) =>
+              ParsedType.Operations.ParseRawType(
+                rawTypeName,
+                rawType,
                 rawTypeNames,
                 injectedPrimitives,
-              );
-              if (parsedFieldType.kind == "errors") {
-                errors = errors.concat(parsedFieldType.errors.toArray());
-                return;
-              }
-
-              parsedType.fields = parsedType.fields.set(
-                rawFieldName,
-                parsedFieldType.value,
-              );
-            },
-          );
-          parsedTypes = parsedTypes.set(rawTypeName, parsedType);
+              ),
+            ),
+          ),
+        ).Then((parsedTypes) => {
+          const parsedTypesMap = parsedTypes.reduce((acc, parsedType) => {
+            return acc.set(parsedType.typeName, parsedType);
+          }, Map<TypeName, ParsedType<T>>());
+          return ValueOrErrors.Default.return(parsedTypesMap);
         });
+
+        if (parsedTypesVoE.kind == "errors") {
+          errors = errors.concat(parsedTypesVoE.errors);
+        }
+
+        if (parsedTypesVoE.kind == "value") {
+          const extendedTypesVoE = ParsedType.Operations.ExtendParsedTypes(
+            parsedTypesVoE.value,
+          );
+          extendedTypesVoE.kind == "value"
+            ? (parsedTypes = extendedTypesVoE.value)
+            : (errors = errors.concat(extendedTypesVoE.errors));
+        }
+
         let enums: Map<string, TypeName> = Map();
         Object.entries(formsConfig.apis.enumOptions).forEach(
           ([enumOptionName, enumOption]) =>
@@ -298,9 +255,9 @@ export const FormsConfig = {
               return;
             }
             const formType = parsedTypes.get(form.type)!;
-            if (formType.kind != "form") {
+            if (formType.kind != "record") {
               errors = errors.push(
-                `form ${formName} references non-form type ${form.type}`,
+                `form ${formName} references non-record type ${form.type}`,
               );
               return;
             }
@@ -413,6 +370,7 @@ export const FormsConfig = {
           return ValueOrErrors.Default.throw(errors);
         }
 
+        console.debug("parsedTypes", parsedTypes.toJS());
         return ValueOrErrors.Default.return({
           types: parsedTypes,
           forms,

@@ -8,6 +8,7 @@ import { BasicFun } from "../../../../../fun/state";
 import {
   InjectedPrimitives,
   Maybe,
+  ParsedRecord,
   ParsedType,
   PredicateValue,
   Sum,
@@ -334,7 +335,7 @@ export const defaultValue =
         injectedPrimitives,
       )(types.get(t.name)!);
 
-    if (t.kind == "form") {
+    if (t.kind == "record") {
       let res = {} as Record<string, PredicateValue>;
       t.fields.forEach((field, fieldName) => {
         res[fieldName] = defaultValue(
@@ -414,11 +415,13 @@ export const fromAPIRawValue =
       }
       const result = converters[t.kind].fromAPIRawValue(raw);
       return fromAPIRawValue(
-        t.fields == unit
+        Object.keys(t.fields).length <= 0
           ? {
-              kind: "form",
+              kind: "record",
               value: "unionCase",
               fields: Map<string, ParsedType<T>>(),
+              typeName: t.typeName,
+              extendedTypes: t.extendedTypes,
             }
           : t.fields,
         types,
@@ -651,7 +654,7 @@ export const fromAPIRawValue =
         injectedPrimitives,
       )(raw);
 
-    if (t.kind == "form") {
+    if (t.kind == "record") {
       if (typeof raw != "object") {
         return ValueOrErrors.Default.throwOne(
           `object expected but got ${JSON.stringify(raw)}`,
@@ -710,7 +713,7 @@ export const toAPIRawValue =
 
     if (t.kind == "union") {
       return toAPIRawValue(
-        { kind: "unionCase", name: "", fields: {} as ParsedType<T> },
+        { kind: "unionCase", name: "", fields: {} as ParsedRecord<T>, typeName: "", extendedTypes: [] },
         types,
         builtIns,
         converters,
@@ -992,7 +995,7 @@ export const toAPIRawValue =
         injectedPrimitives,
       )(raw, formState);
 
-    if (t.kind == "form") {
+    if (t.kind == "record") {
       if (!PredicateValue.Operations.IsRecord(raw)) {
         return ValueOrErrors.Default.throwOne(
           `Record expected but got ${JSON.stringify(raw)}`,
