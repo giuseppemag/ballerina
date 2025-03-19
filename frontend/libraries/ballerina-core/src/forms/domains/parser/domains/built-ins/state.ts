@@ -606,22 +606,22 @@ export const fromAPIRawValue =
       }
 
       if (t.value === "Sum" && t.args.length === 2) {
-        if (!RawSum.Operations.IsRawSum(raw)) {
-          return ValueOrErrors.Default.throwOne(
-            `Sum expected but got ${JSON.stringify(raw)}`,
-          );
-        }
+        // if (!RawSum.Operations.IsRawSum(raw)) {
+        //   return ValueOrErrors.Default.throwOne(
+        //     `Sum expected but got ${JSON.stringify(raw)}`,
+        //   );
+        // }
 
-        const result = converters[t.value].fromAPIRawValue(raw);
+        // const result = converters[t.value].fromAPIRawValue(raw);
 
-        if (raw.Kind === "l") {
+        if (raw.IsLeft) {
           return fromAPIRawValue(
             t.args[0],
             types,
             builtIns,
             converters,
             injectedPrimitives,
-          )(result.value).Then((value) =>
+          )(raw.Left).Then((value) =>
             ValueOrErrors.Default.return(
               PredicateValue.Default.sum(Sum.Default.left(value)),
             ),
@@ -634,7 +634,7 @@ export const fromAPIRawValue =
           builtIns,
           converters,
           injectedPrimitives,
-        )(result.value).Then((value) =>
+        )(raw.Right).Then((value) =>
           ValueOrErrors.Default.return(
             PredicateValue.Default.sum(Sum.Default.right(value)),
           ),
