@@ -1,0 +1,173 @@
+{
+    "types": {
+      "GlobalConfiguration": {
+        "extends": [],
+        "fields": {}
+      },
+      "IdentityProviderEntraIDAuthentication": {
+        "fields": {
+          "ClientID": "string",
+          "ClientSecret": "string",
+          "TenantID": "string"
+        }
+      },
+      "IdentityProviderOrganizationToUserGroupMapping": {
+        "fields": {
+          "UserGroupID": "string"
+        }
+      },
+      "IdentityProviderEntraID": {
+        "fields": {
+          "Authentication": "IdentityProviderEntraIDAuthentication",
+          "OrganizationToUserGroupMapping": {
+            "fun": "Map",
+            "args": ["string", {
+              "fun": "List",
+              "args": ["IdentityProviderOrganizationToUserGroupMapping"]
+            }]
+          },
+          "SynchronizeGuestUsers": "boolean"
+        }
+      }
+    },
+    "apis": {
+      "enumOptions": {},
+      "searchableStreams": {},
+      "entities": {
+        "customForm": {
+          "type": "IdentityProviderEntraID",
+          "methods": ["get", "update"]
+        },
+        "globalConfiguration": {
+          "type": "GlobalConfiguration",
+          "methods": ["get"]
+        }
+      }
+    },
+    "forms": {
+      "IdentityProviderEntraIDAuthentication": {
+        "type": "IdentityProviderEntraIDAuthentication",
+        "fields": {
+          "ClientID": {
+            "renderer": "defaultString",
+            "visible": true,
+            "details": "TranslationNamespaceSetupGuide:IDENTITY_PROVIDER_ENTRAID.fields.Authentication.ClientIDDetails"
+          },
+          "ClientSecret": {
+            "renderer": "defaultString",
+            "visible": true,
+            "details": "TranslationNamespaceSetupGuide:IDENTITY_PROVIDER_ENTRAID.fields.Authentication.ClientSecretDetails"
+          },
+          "TenantID": {
+            "renderer": "defaultString",
+            "visible": true,
+            "details": "TranslationNamespaceSetupGuide:IDENTITY_PROVIDER_ENTRAID.fields.Authentication.TenantIDDetails"
+          }
+        },
+        "tabs": {
+          "TranslationNamespaceSetupGuide:IDENTITY_PROVIDER_ENTRAID.tabs.Authentication": {
+            "columns": {
+              "TranslationNamespaceSetupGuide:IDENTITY_PROVIDER_ENTRAID.columns.Authentication.ClientID": {
+                "groups": {
+                  "main": ["ClientID", "ClientSecret", "TenantID"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "IdentityProviderOrganizationToUserGroupMapping": {
+        "type": "IdentityProviderOrganizationToUserGroupMapping",
+        "fields": {
+          "UserGroupID": {
+            "renderer": "defaultString"
+          }
+        },
+        "tabs": {
+          "TranslationNamespaceSetupGuide:IDENTITY_PROVIDER_ENTRAID.tabs.Authentication": {
+            "columns": {
+              "TranslationNamespaceSetupGuide:IDENTITY_PROVIDER_ENTRAID.columns.Authentication.ClientID": {
+                "groups": {
+                  "main": ["UserGroupID"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "CustomFormIdentityProviderOrganizationToUserGroupKeyValue": {
+        "type": "CustomFormIdentityProviderOrganizationToUserGroupKeyValue",
+        "fields": {
+          "Key": {
+            "renderer": "defaultString",
+            "visible": true,
+            "details": ""
+          },
+          "Value": {
+            "renderer": "defaultList",
+            "elementRenderer": {
+              "renderer": "IdentityProviderOrganizationToUserGroupMapping",
+              "visible": true
+            },
+            "visible": true,
+            "details": "TranslationNamespaceSetupGuide:IDENTITY_PROVIDER_ENTRAID.fields.OrganizationToUserGroupMappingDetails"
+          }
+        },
+        "tabs": {
+          "TranslationNamespaceSetupGuide:IDENTITY_PROVIDER_ENTRAID.tabs.Authentication": {
+            "columns": {
+              "TranslationNamespaceSetupGuide:IDENTITY_PROVIDER_ENTRAID.columns.Authentication.ClientID": {
+                "groups": {
+                  "main": ["Key", "Value"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "customFormIdentityProvider": {
+        "type": "IdentityProviderEntraID",
+        "fields": {
+          "Authentication": {
+            "renderer": "IdentityProviderEntraIDAuthentication",
+            "visible": true,
+            "details": "TranslationNamespaceSetupGuide:IDENTITY_PROVIDER_ENTRAID.fields.OrganizationToUserGroupMappingDetails"
+          },
+          "OrganizationToUserGroupMapping": {
+            "renderer": "defaultMap",
+            "keyRenderer": {
+              "renderer": "defaultString"
+            },
+            "valueRenderer": {
+              "renderer": "defaultList",
+              "elementRenderer": {
+                "renderer": "IdentityProviderOrganizationToUserGroupMapping"
+              }
+            },
+            "visible": true,
+            "details": "TranslationNamespaceSetupGuide:IDENTITY_PROVIDER_ENTRAID.fields.OrganizationToUserGroupMappingDetails"
+          }
+        },
+        "tabs": {
+          "TranslationNamespaceSetupGuide:IDENTITY_PROVIDER_ENTRAID.tabs.SynchronizeGuestUsers": {
+            "columns": {
+              "TranslationNamespaceSetupGuide:IDENTITY_PROVIDER_ENTRAID.columns.SynchronizeGuestUsers": {
+                "groups": {
+                  "main": ["Authentication", "OrganizationToUserGroupMapping"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "launchers": {
+      "IDENTITY_PROVIDER_ENTRAAD": {
+        "kind": "edit",
+        "form": "customFormIdentityProvider",
+        "api": "customForm",
+        "configApi": "globalConfiguration"
+      }
+    }
+  }
+  

@@ -30,7 +30,7 @@ import {
   CategoryState,
   PersonFormInjectedTypes,
 } from "./domains/person-from-config/injected-forms/category";
-import PersonConfig from "../../../../backend/apps/ballerina-runtime/input-forms/person-config.json";
+import PersonConfig from "../../../../backend/apps/ballerina-runtime/input-forms/simple-union-example-lookups.json";
 import { PassthroughFormContainerWrapper } from "./domains/passthrough-forms/views/wrappers";
 
 const ShowFormsParsingErrors = (parsedFormsConfig: FormParsingResult) => (

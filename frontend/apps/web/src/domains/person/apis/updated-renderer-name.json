@@ -1,0 +1,504 @@
+{
+    "types": {
+        "GlobalConfiguration": {
+            "extends": [],
+            "fields": {}
+        },
+        "CollectionReference": {
+            "extends": [],
+            "fields": {
+                "DisplayValue": "string",
+                "Id": "guid"
+            }
+        },
+        "ValueRef": {
+            "extends": [
+                "CollectionReference"
+            ],
+            "fields": {}
+        },
+        "InternalEmployeeReferenceWithMetadata": {
+            "fields": {
+                "Value": {
+                    "fun": "Tuple",
+                    "args": [
+                        {
+                            "fun": "SingleSelection",
+                            "args": [
+                                "ValueRef"
+                            ]
+                        },
+                        "Approval",
+                        "Evidence",
+                        "FailingChecks",
+                        "FailingFilterGroupChecks",
+                        "Automation"
+                    ]
+                }
+            }
+        },
+        "DateWithMetaData": {
+            "fields": {
+                "Value": {
+                    "fun": "Tuple",
+                    "args": [
+                        {
+                            "fun": "Sum",
+                            "args": [
+                                "unit",
+                                "Date"
+                            ]
+                        },
+                        "Approval",
+                        "FailingChecks",
+                        "FailingFilterGroupChecks",
+                        "Automation",
+                        "CustomAIOutput"
+                    ]
+                }
+            }
+        },
+        "StringValueWithEvidence": {
+            "fields": {
+                "Value": {
+                    "fun": "Tuple",
+                    "args": [
+                        "string",
+                        "Evidence"
+                    ]
+                }
+            }
+        },
+        "StringValueWithApproval": {
+            "fields": {
+                "Value": {
+                    "fun": "Tuple",
+                    "args": [
+                        "string",
+                        "Approval"
+                    ]
+                }
+            }
+        },
+        "InvoiceTypeEnum": {
+            "fun": "Union",
+            "args": [
+                {
+                    "caseName": "UNSPECIFIED",
+                    "fields": {}
+                },
+                {
+                    "caseName": "MM",
+                    "fields": {}
+                },
+                {
+                    "caseName": "FI",
+                    "fields": {}
+                },
+                {
+                    "caseName": "TRANSIT",
+                    "fields": {}
+                },
+                {
+                    "caseName": "SUBSEQUENT_DEBIT",
+                    "fields": {}
+                },
+                {
+                    "caseName": "DOWNPAYMENT",
+                    "fields": {}
+                },
+                {
+                    "caseName": "ASSET",
+                    "fields": {}
+                }
+            ]
+        },
+        "InvoiceTypeRef": {
+            "fields": {
+                "Value": "InvoiceTypeEnum"
+            }
+        },
+        "DocumentTypeEnum": {
+            "fun": "Union",
+            "args": [
+                {
+                    "caseName": "UNKNOWN_DOCUMENT_TYPE",
+                    "fields": {}
+                },
+                {
+                    "caseName": "INVOICE",
+                    "fields": {}
+                },
+                {
+                    "caseName": "DELIVERY_SLIP",
+                    "fields": {}
+                },
+                {
+                    "caseName": "BATCH",
+                    "fields": {}
+                },
+                {
+                    "caseName": "PURCHASE_ORDER",
+                    "fields": {}
+                },
+                {
+                    "caseName": "ORDER_CONFIRMATION",
+                    "fields": {}
+                },
+                {
+                    "caseName": "CREDIT_VOUCHER",
+                    "fields": {}
+                },
+                {
+                    "caseName": "PAYMENT_SLIP",
+                    "fields": {}
+                },
+                {
+                    "caseName": "RECEIPT",
+                    "fields": {}
+                },
+                {
+                    "caseName": "COST_SUMMARY",
+                    "fields": {}
+                },
+                {
+                    "caseName": "PROFORMA_INVOICE",
+                    "fields": {}
+                },
+                {
+                    "caseName": "INVOICE_CORRECTION",
+                    "fields": {}
+                },
+                {
+                    "caseName": "DOWN_PAYMENT",
+                    "fields": {}
+                },
+                {
+                    "caseName": "REMINDER",
+                    "fields": {}
+                },
+                {
+                    "caseName": "ORDER_SLIP",
+                    "fields": {}
+                },
+                {
+                    "caseName": "BLANKET_SALES_ORDER",
+                    "fields": {}
+                },
+                {
+                    "caseName": "SALES_OFFER",
+                    "fields": {}
+                },
+                {
+                    "caseName": "TRANSIT_INVOICE",
+                    "fields": {}
+                },
+                {
+                    "caseName": "ROCHE_CERTIFICATE_OF_COMPLIANCE",
+                    "fields": {}
+                },
+                {
+                    "caseName": "PURCHASE_REQUISITION",
+                    "fields": {}
+                },
+                {
+                    "caseName": "CUSTOMER_INVOICE",
+                    "fields": {}
+                },
+                {
+                    "caseName": "PAYMENT_ADVICE",
+                    "fields": {}
+                },
+                {
+                    "caseName": "SUPPLIER_PURCHASE_ORDER",
+                    "fields": {}
+                },
+                {
+                    "caseName": "DEBIT_NOTE",
+                    "fields": {}
+                }
+            ]
+        },
+        "DocumentTypeRef": {
+            "fields": {
+                "Value": "DocumentTypeEnum"
+            }
+        },
+        "Invoice": {
+            "fields": {
+                "WritebackIndex": "number",
+                "Errors": {
+                    "fun": "List",
+                    "args": [
+                        "string"
+                    ]
+                },
+                "DocumentNumber": "StringValueWithApproval",
+                "BaseDate": "DateWithMetaData",
+                "PostingDate": "DateWithMetaData",
+                "VatDate": "DateWithMetaData",
+                "InternalEmployee": "InternalEmployeeReferenceWithMetadata",
+                "InternalEmployee2": "InternalEmployeeReferenceWithMetadata",
+                "DocumentType": {
+                    "fun": "SingleSelection",
+                    "args": [
+                        "DocumentTypeRef"
+                    ]
+                },
+                "InvoiceType": {
+                    "fun": "SingleSelection",
+                    "args": [
+                        "InvoiceTypeRef"
+                    ]
+                }
+            }
+        }
+    },
+    "apis": {
+        "enumOptions": {
+            "invoiceTypes": "InvoiceTypeRef",
+            "documentTypes": "DocumentTypeRef"
+        },
+        "searchableStreams": {
+            "internalEmployee": "ValueRef"
+        },
+        "entities": {
+            "invoiceApi": {
+                "type": "Invoice",
+                "methods": [
+                    "get",
+                    "update"
+                ]
+            },
+            "globalConfiguration": {
+                "type": "GlobalConfiguration",
+                "methods": [
+                    "get"
+                ]
+            }
+        },
+        "globalConfigType": "GlobalConfiguration"
+    },
+    "forms": {
+        "stringValueWithApproval": {
+            "type": "StringValueWithApproval",
+            "fields": {
+                "Value": {
+                    "renderer": "defaultTuple2",
+                    "label": "Document Number",
+                    "itemRenderers": [
+                        {
+                            "renderer": "defaultString",
+                            "label": "Value"
+                        },
+                        {
+                            "renderer": "defaultApproval",
+                            "label": "Approval"
+                        }
+                    ]
+                }
+            },
+            "tabs": {
+                "main": {
+                    "columns": {
+                        "main": {
+                            "groups": {
+                                "main": [
+                                    "Value"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "internalEmployeeReferenceWithMetadata": {
+            "type": "InternalEmployeeReferenceWithMetadata",
+            "fields": {
+                "Value": {
+                    "renderer": "defaultTuple6",
+                    "label": "Employee Reference",
+                    "itemRenderers": [
+                        {
+                            "renderer": "defaultInfiniteStream",
+                            "stream": "internalEmployee",
+                            "label": "Employee"
+                        },
+                        {
+                            "renderer": "defaultApproval",
+                            "label": "Approval"
+                        },
+                        {
+                            "renderer": "defaultEvidence",
+                            "label": "Evidence"
+                        },
+                        {
+                            "renderer": "defaultFailingChecks",
+                            "label": "Failing Checks"
+                        },
+                        {
+                            "renderer": "defaultFailingFilterGroupChecks",
+                            "label": "Failing Filter Group Checks"
+                        },
+                        {
+                            "renderer": "defaultAutomation",
+                            "label": "Automation"
+                        }
+                    ]
+                }
+            },
+            "tabs": {
+                "main": {
+                    "columns": {
+                        "main": {
+                            "groups": {
+                                "main": [
+                                    "Value"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "dateWithMetaData": {
+            "type": "DateWithMetaData",
+            "fields": {
+                "Value": {
+                    "renderer": "defaultTupleMetaData",
+                    "label": "Date Comparison with MetaData",
+                    "itemRenderers": [
+                        {
+                            "renderer": "defaultSum",
+                            "label": "Date",
+                            "leftRenderer": {
+                                "renderer": "defaultUnit"
+                            },
+                            "rightRenderer": {
+                                "renderer": "defaultDate"
+                            }
+                        },
+                        {
+                            "renderer": "defaultApproval",
+                            "label": "Approval"
+                        },
+                        {
+                            "renderer": "defaultFailingChecks",
+                            "label": "Failing Checks"
+                        },
+                        {
+                            "renderer": "defaultFailingFilterGroupChecks",
+                            "label": "Failing Filter Group Checks"
+                        },
+                        {
+                            "renderer": "defaultAutomation",
+                            "label": "Automation"
+                        },
+                        {
+                            "renderer": "defaultCustomAIOutput",
+                            "label": "Custom AI Output"
+                        }
+                    ]
+                }
+            },
+            "tabs": {
+                "main": {
+                    "columns": {
+                        "main": {
+                            "groups": {
+                                "main": [
+                                    "Value"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "invoice": {
+            "type": "Invoice",
+            "fields": {
+                "WritebackIndex": {
+                    "renderer": "defaultNumber",
+                    "label": "Writeback Index"
+                },
+                "Errors": {
+                    "renderer": "defaultList",
+                    "label": "Errors",
+                    "elementRenderer": {
+                        "renderer": "defaultString",
+                        "label": "Error"
+                    }
+                },
+                "DocumentNumber": {
+                    "renderer": "stringValueWithApproval"
+                },
+                "BaseDate": {
+                    "renderer": "dateWithMetaData",
+                    "label": "Base Date"
+                },
+                "InternalEmployee": {
+                    "renderer": "internalEmployeeReferenceWithMetadata",
+                    "label": "Internal Employee"
+                },
+                "InternalEmployee2": {
+                    "renderer": "internalEmployeeReferenceWithMetadata",
+                    "label": "Second Internal Employee"
+                },
+                "PostingDate": {
+                    "renderer": "dateWithMetaData",
+                    "label": "Posting Date"
+                },
+                "VatDate": {
+                    "renderer": "dateWithMetaData",
+                    "label": "VAT Date"
+                },
+                "DocumentType": {
+                    "renderer": "defaultEnum",
+                    "label": "Document Type",
+                    "options": "documentTypes"
+                },
+                "InvoiceType": {
+                    "renderer": "defaultEnum",
+                    "label": "Invoice Type",
+                    "options": "invoiceTypes"
+                }
+            },
+            "tabs": {
+                "main": {
+                    "columns": {
+                        "main": {
+                            "groups": {
+                                "main": [
+                                    "WritebackIndex",
+                                    "Errors",
+                                    "DocumentNumber",
+                                    "BaseDate",
+                                    "InternalEmployee",
+                                    "InternalEmployee2",
+                                    "PostingDate",
+                                    "VatDate",
+                                    "DocumentType",
+                                    "InvoiceType"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "launchers": {
+        "information-card-transparent": {
+            "kind": "passthrough",
+            "form": "invoice",
+            "configType": "GlobalConfiguration"
+        },
+        "information-card-edit": {
+            "kind": "edit",
+            "form": "invoice",
+            "api": "invoiceApi",
+            "configApi": "globalConfiguration"
+        }
+    }
+}

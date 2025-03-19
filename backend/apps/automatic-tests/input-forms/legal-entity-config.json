@@ -58,9 +58,7 @@
     },
     "CityRef": {
       "extends": ["CollectionReference"],
-      "fields": {
-        "Test": "string"
-      }
+      "fields": {}
     },
     "LandArea": {
       "fields": {
@@ -188,7 +186,40 @@
       "extends": ["CollectionReference"],
       "fields": {}
     },
+    "BaseLegalEntity": {
+      "fields": {
+        "mainAddress": {
+          "fun": "Sum",
+          "args": [
+            "string",
+            {
+              "fun": "Tuple",
+              "args": ["Address", "PlotInfo"]
+            }
+          ]
+        },
+        "departments": {
+          "fun": "MultiSelection",
+          "args": ["DepartmentRef"]
+        },
+        "addressesWithColorLabel": {
+          "fun": "Map",
+          "args": [
+            {
+              "fun": "SingleSelection",
+              "args": ["ColorRef"]
+            },
+            "Address"
+          ]
+        },
+        "emails": {
+          "fun": "List",
+          "args": ["string"]
+        }
+      }
+    },
     "Person": {
+      "extends": ["BaseLegalEntity"],
       "fields": {
         "category": "injectedCategory",
         "fullName": {
@@ -226,24 +257,6 @@
         "interests": {
           "fun": "MultiSelection",
           "args": ["InterestRef"]
-        },
-        "departments": {
-          "fun": "MultiSelection",
-          "args": ["DepartmentRef"]
-        },
-        "emails": {
-          "fun": "List",
-          "args": ["string"]
-        },
-        "mainAddress": {
-          "fun": "Sum",
-          "args": [
-            "string",
-            {
-              "fun": "Tuple",
-              "args": ["Address", "PlotInfo"]
-            }
-          ]
         },
         "addressesAndAddressesWithLabel": {
           "fun": "Tuple",
@@ -291,16 +304,6 @@
             }
           ]
         },
-        "addressesWithColorLabel": {
-          "fun": "Map",
-          "args": [
-            {
-              "fun": "SingleSelection",
-              "args": ["ColorRef"]
-            },
-            "Address"
-          ]
-        },
         "permissions": {
           "fun": "Map",
           "args": [
@@ -337,6 +340,23 @@
           "args": ["Date"]
         }
       }
+    },
+    "Company": {
+      "extends": ["BaseLegalEntity"],
+      "fields": {}
+    },
+    "LegalEntity": {
+      "fun": "Union",
+      "args": [
+        {
+          "caseName": "Person",
+          "fields": "Person"
+        },
+        {
+          "caseName": "Company",
+          "fields": "Company"
+        }
+      ]
     }
   },
   "apis": {
@@ -351,8 +371,8 @@
       "departments": "DepartmentRef"
     },
     "entities": {
-      "person": {
-        "type": "Person",
+      "legalEntity": {
+        "type": "LegalEntity",
         "methods": ["create", "get", "update", "default"]
       },
       "globalConfiguration": {
@@ -475,8 +495,82 @@
         }
       }
     },
+    "baseLegalEntity": {
+      "type": "BaseLegalEntity",
+      "fields": {
+        "departments": {
+          "label": "departments",
+          "renderer": "defaultInfiniteStreamMultiselect",
+          "stream": "departments",
+          "disabled": {
+            "kind": "fieldLookup",
+            "operands": [
+              {
+                "kind": "varLookup",
+                "varName": "local"
+              },
+              "subscribeToNewsletter"
+            ]
+          }
+        },
+        "mainAddress": {
+          "label": "main address",
+          "renderer": "defaultSum",
+          "leftRenderer": {
+            "label": "as string",
+            "renderer": "defaultString"
+          },
+          "rightRenderer": {
+            "label": "as address",
+            "renderer": "defaultTuple2",
+            "itemRenderers": [
+              {
+                "renderer": "address"
+              },
+              {
+                "renderer": "plotInfo"
+              }
+            ]
+          },
+          "visible": {
+            "kind": "fieldLookup",
+            "operands": [
+              {
+                "kind": "varLookup",
+                "varName": "local"
+              },
+              "subscribeToNewsletter"
+            ]
+          }
+        },
+        "emails": {
+          "label": "emails",
+          "renderer": "defaultList",
+          "elementRenderer": {
+            "label": "email",
+            "renderer": "defaultString",
+            "disabled": true
+          }
+        },
+        "addressesWithColorLabel": {
+          "renderer": "defaultMap",
+          "label": "addresses with color label",
+          "keyRenderer": {
+            "label": "color",
+            "renderer": "defaultEnum",
+            "options": "colors"
+          },
+          "valueRenderer": {
+            "label": "address",
+            "renderer": "address"
+          }
+        }
+      },
+      "tabs": {}
+    },
     "person": {
       "type": "Person",
+      "extends": ["baseLegalEntity"],
       "fields": {
         "category": {
           "label": "category",
@@ -551,7 +645,10 @@
                           "body": {
                             "kind": "fieldLookup",
                             "operands": [
-                              { "kind": "varLookup", "varName": "s2Fields" },
+                              {
+                                "kind": "varLookup",
+                                "varName": "s2Fields"
+                              },
                               "S2OnlyField"
                             ]
                           }
@@ -566,7 +663,10 @@
                           "body": {
                             "kind": "fieldLookup",
                             "operands": [
-                              { "kind": "varLookup", "varName": "s3Fields" },
+                              {
+                                "kind": "varLookup",
+                                "varName": "s3Fields"
+                              },
                               "S3OnlyField"
                             ]
                           }
@@ -581,7 +681,10 @@
                           "body": {
                             "kind": "fieldLookup",
                             "operands": [
-                              { "kind": "varLookup", "varName": "s4Fields" },
+                              {
+                                "kind": "varLookup",
+                                "varName": "s4Fields"
+                              },
                               "S4OnlyField"
                             ]
                           }
@@ -594,12 +697,20 @@
               {
                 "kind": "caseName",
                 "caseName": "ERP:BC",
-                "handler": { "kind": "lambda", "parameter": "_", "body": false }
+                "handler": {
+                  "kind": "lambda",
+                  "parameter": "_",
+                  "body": false
+                }
               },
               {
                 "kind": "caseName",
                 "caseName": "ERP:FAndO",
-                "handler": { "kind": "lambda", "parameter": "_", "body": false }
+                "handler": {
+                  "kind": "lambda",
+                  "parameter": "_",
+                  "body": false
+                }
               }
             ]
           }
@@ -660,51 +771,6 @@
             ]
           }
         },
-        "departments": {
-          "label": "departments",
-          "renderer": "defaultInfiniteStreamMultiselect",
-          "stream": "departments",
-          "disabled": {
-            "kind": "fieldLookup",
-            "operands": [
-              {
-                "kind": "varLookup",
-                "varName": "local"
-              },
-              "subscribeToNewsletter"
-            ]
-          }
-        },
-        "mainAddress": {
-          "label": "main address",
-          "renderer": "defaultSum",
-          "leftRenderer": {
-            "label": "as string",
-            "renderer": "defaultString"
-          },
-          "rightRenderer": {
-            "label": "as address",
-            "renderer": "defaultTuple2",
-            "itemRenderers": [
-              {
-                "renderer": "address"
-              },
-              {
-                "renderer": "plotInfo"
-              }
-            ]
-          },
-          "visible": {
-            "kind": "fieldLookup",
-            "operands": [
-              {
-                "kind": "varLookup",
-                "varName": "local"
-              },
-              "subscribeToNewsletter"
-            ]
-          }
-        },
         "addressesBy": {
           "label": "addresses by",
           "renderer": "defaultSum",
@@ -747,15 +813,6 @@
           },
           "visible": true,
           "disabled": false
-        },
-        "emails": {
-          "label": "emails",
-          "renderer": "defaultList",
-          "elementRenderer": {
-            "label": "email",
-            "renderer": "defaultString",
-            "disabled": true
-          }
         },
         "addressesAndAddressesWithLabel": {
           "label": "other addresses",
@@ -805,19 +862,6 @@
             "tooltip": "a nice place to live",
             "renderer": "defaultInfiniteStream",
             "stream": "cities"
-          },
-          "valueRenderer": {
-            "label": "address",
-            "renderer": "address"
-          }
-        },
-        "addressesWithColorLabel": {
-          "renderer": "defaultMap",
-          "label": "addresses with color label",
-          "keyRenderer": {
-            "label": "color",
-            "renderer": "defaultEnum",
-            "options": "colors"
           },
           "valueRenderer": {
             "label": "address",
@@ -883,7 +927,6 @@
             "demographics": {
               "groups": {
                 "main": [
-                  "plotInfo",
                   "category",
                   "fullName",
                   "birthday",
@@ -921,24 +964,56 @@
           }
         }
       }
+    },
+    "company": {
+      "type": "Company",
+      "extends": ["baseLegalEntity"],
+      "fields": {},
+      "tabs": {
+        "main": {
+          "columns": {
+            "main": {
+              "groups": {
+                "main": [
+                  "mainAddress",
+                  "departments",
+                  "addressesWithColorLabel",
+                  "emails"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "legalEntity": {
+      "type": "LegalEntity",
+      "cases": {
+        "Person": {
+          "renderer": "person"
+        },
+        "Company": {
+          "renderer": "company"
+        }
+      }
     }
   },
   "launchers": {
-    "create-person": {
+    "create-legalEntity": {
       "kind": "create",
-      "form": "person",
-      "api": "person",
+      "form": "legalEntity",
+      "api": "legalEntity",
       "configApi": "globalConfiguration"
     },
-    "edit-person": {
+    "edit-legalEntity": {
       "kind": "edit",
-      "form": "person",
-      "api": "person",
+      "form": "legalEntity",
+      "api": "legalEntity",
       "configApi": "globalConfiguration"
     },
-    "person-transparent": {
+    "legalEntity-transparent": {
       "kind": "passthrough",
-      "form": "person",
+      "form": "legalEntity",
       "configType": "GlobalConfiguration"
     }
   }
