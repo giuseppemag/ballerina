@@ -27,12 +27,12 @@ func TestLeftShouldSerializeCorrectly(t *testing.T) {
 func TestRightShouldSerializeCorrectly(t *testing.T) {
 	t.Parallel()
 
-	right := ballerina.Left[int, string](4)
+	right := ballerina.Right[int, string]("hello")
 
 	data, err := json.Marshal(right)
 	require.NoError(t, err)
 
-	require.Equal(t, "{\"IsLeft\":true,\"Left\":4,\"Right\":\"\"}", string(data))
+	require.Equal(t, "{\"IsLeft\":false,\"Left\":0,\"Right\":\"hello\"}", string(data))
 }
 
 func TestLeftShouldSerializeAndDeserializeCorrectly(t *testing.T) {
