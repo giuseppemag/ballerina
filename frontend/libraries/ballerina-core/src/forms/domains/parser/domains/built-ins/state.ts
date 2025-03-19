@@ -574,16 +574,16 @@ export const fromAPIRawValue =
       }
 
       if (t.value == "Tuple") {
-        if (!Array.isArray(raw))
-          return ValueOrErrors.Default.throwOne(
-            `Array expected but got ${JSON.stringify(raw)}`,
-          );
-        if (raw.length != t.args.length) {
-          console.debug("tuple", t, raw);
-          return ValueOrErrors.Default.throwOne(
-            `Array length mismatch expected tuple length: ${t.args.length} expected but got ${raw.length}`,
-          );
-        }
+        // if (!Array.isArray(raw))
+        //   return ValueOrErrors.Default.throwOne(
+        //     `Array expected but got ${JSON.stringify(raw)}`,
+        //   );
+        // if (raw.length != t.args.length) {
+        //   console.debug("tuple", t, raw);
+        //   return ValueOrErrors.Default.throwOne(
+        //     `Array length mismatch expected tuple length: ${t.args.length} expected but got ${raw.length}`,
+        //   );
+        // }
 
         const result = converters[t.value].fromAPIRawValue(raw);
         return ValueOrErrors.Operations.All(
