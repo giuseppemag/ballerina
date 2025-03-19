@@ -2,95 +2,65 @@ package ballerina
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
-type Sum[a any, b any] interface{}
-type left[a any, b any] struct {
-	Sum[a, b]
-	value a
+type Sum[a any, b any] struct {
+	// NOTE: Important: all of these attributes must be private.
+	// Getting values out of Sum can only be done through Fold
+	isLeft bool
+
+	left  a
+	right b
 }
 
-type leftForSerialization[a any, b any] struct {
-	Sum[a, b]
-	Value a `json:"Value,omitempty"`
-}
-
-func (l left[a, b]) MarshalJSON() ([]byte, error) {
-	return json.Marshal(leftForSerialization[a, b]{
-		Value: l.value,
-	})
-}
-
-func (l *left[a, b]) UnmarshalJSON(data []byte) error {
-	target := leftForSerialization[a, b]{}
-	if err := json.Unmarshal(data, &target); err != nil {
-		return err
-	}
-	l.value = target.Value
-	l.Sum = target.Sum
-	return nil
-}
-
-func Left[a any, b any](value a) Sum[a, b] {
-	p := new(left[a, b])
-	p.value = value
-	return p
-}
-
-type right[a any, b any] struct {
-	Sum[a, b]
-	value b
-}
-
-type rightForSerialization[a any, b any] struct {
-	Sum[a, b]
-	Value b `json:"Value,omitempty"`
-}
-
-func (l right[a, b]) MarshalJSON() ([]byte, error) {
-	return json.Marshal(rightForSerialization[a, b]{
-		Value: l.value,
-	})
-}
-
-func (l *right[a, b]) UnmarshalJSON(data []byte) error {
-	target := rightForSerialization[a, b]{}
-	if err := json.Unmarshal(data, &target); err != nil {
-		return err
-	}
-	l.value = target.Value
-	l.Sum = target.Sum
-	return nil
-}
-
-func Right[a any, b any](value b) Sum[a, b] {
-	p := new(right[a, b])
-	p.value = value
-	return p
-}
-
-func MatchSum[a any, b any, c any](self Sum[a, b], onLeft func(a) c, onRight func(b) c) (c, error) {
-	switch v := self.(type) {
-	case left[a, b]:
-		return onLeft(v.value), nil
-	case right[a, b]:
-		return onRight(v.value), nil
-	default:
-		var res c
-		return res, fmt.Errorf("%s is not a valid sum instance", self)
+func Left[L any, R any](value L) Sum[L, R] {
+	return Sum[L, R]{
+		isLeft: true,
+		left:   value,
 	}
 }
-func MapLeft[a any, b any, a1 any](self Sum[a, b], f func(a) a1) (Sum[a1, b], error) {
-	switch v := self.(type) {
-	case left[a, b]:
-		return Left[a1, b](f(v.value)), nil
-	case right[a, b]:
-		return Right[a1](v.value), nil
-	default:
-		var res Sum[a1, b]
-		return res, fmt.Errorf("%s is not a valid sum instance", self)
+
+func Right[L any, R any](value R) Sum[L, R] {
+	return Sum[L, R]{
+		isLeft: false,
+		right:  value,
 	}
+}
+
+func BiMap[L any, R any, LO any, RO any](e Sum[L, R], leftMap func(L) LO, rightMap func(R) RO) Sum[LO, RO] {
+	if e.isLeft {
+		return Left[LO, RO](leftMap(e.left))
+	}
+	return Right[LO, RO](rightMap(e.right))
+}
+
+func BiMapWithError[L any, R any, LO any, RO any](e Sum[L, R], leftMap func(L) (LO, error), rightMap func(R) (RO, error)) (Sum[LO, RO], error) {
+	if e.isLeft {
+		output, err := leftMap(e.left)
+		if err != nil {
+			return Sum[LO, RO]{}, err
+		}
+		return Left[LO, RO](output), nil
+	}
+	output, err := rightMap(e.right)
+	if err != nil {
+		return Sum[LO, RO]{}, err
+	}
+	return Right[LO, RO](output), nil
+}
+
+func Fold[L any, R any, O any](e Sum[L, R], leftMap func(L) O, rightMap func(R) O) O {
+	if e.isLeft {
+		return leftMap(e.left)
+	}
+	return rightMap(e.right)
+}
+
+func FoldWithError[L any, R any, O any](e Sum[L, R], leftMap func(L) (O, error), rightMap func(R) (O, error)) (O, error) {
+	if e.isLeft {
+		return leftMap(e.left)
+	}
+	return rightMap(e.right)
 }
 
 type WriterSum[Delta any, DeltaA any, DeltaB any] interface {
@@ -98,3 +68,31 @@ type WriterSum[Delta any, DeltaA any, DeltaB any] interface {
 }
 
 type DeltaSum[Delta any, DeltaA any, DeltaB any] interface{}
+
+// Serialization
+
+type sumForSerialization[a any, b any] struct {
+	IsLeft bool
+
+	Left  a
+	Right b
+}
+
+func (s Sum[a, b]) MarshalJSON() ([]byte, error) {
+	return json.Marshal(sumForSerialization[a, b]{
+		IsLeft: s.isLeft,
+		Left:   s.left,
+		Right:  s.right,
+	})
+}
+
+func (s *Sum[a, b]) UnmarshalJSON(data []byte) error {
+	target := sumForSerialization[a, b]{}
+	if err := json.Unmarshal(data, &target); err != nil {
+		return err
+	}
+	s.isLeft = target.IsLeft
+	s.left = target.Left
+	s.right = target.Right
+	return nil
+}
