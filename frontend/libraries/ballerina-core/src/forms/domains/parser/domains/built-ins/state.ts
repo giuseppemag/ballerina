@@ -614,29 +614,17 @@ export const fromAPIRawValue =
 
         // const result = converters[t.value].fromAPIRawValue(raw);
 
-        if (raw.IsLeft) {
-          return fromAPIRawValue(
-            t.args[0],
-            types,
-            builtIns,
-            converters,
-            injectedPrimitives,
-          )(raw.Left).Then((value) =>
-            ValueOrErrors.Default.return(
-              PredicateValue.Default.sum(Sum.Default.left(value)),
-            ),
-          );
-        }
-
         return fromAPIRawValue(
-          t.args[1],
+          t.args[0],
           types,
           builtIns,
           converters,
           injectedPrimitives,
-        )(raw.Right).Then((value) =>
+        )(raw.Value).Then((value) =>
           ValueOrErrors.Default.return(
-            PredicateValue.Default.sum(Sum.Default.right(value)),
+            PredicateValue.Default.sum(
+              (raw.IsLeft ? Sum.Default.left : Sum.Default.right)(value),
+            ),
           ),
         );
       }

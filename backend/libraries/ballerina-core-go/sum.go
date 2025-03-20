@@ -71,28 +71,54 @@ type DeltaSum[Delta any, DeltaA any, DeltaB any] interface{}
 
 // Serialization
 
-type sumForSerialization[a any, b any] struct {
+type sumForSerialization[a any] struct {
 	IsLeft bool
-
-	Left  a
-	Right b
+	Value  a
 }
 
 func (s Sum[a, b]) MarshalJSON() ([]byte, error) {
-	return json.Marshal(sumForSerialization[a, b]{
-		IsLeft: s.isLeft,
-		Left:   s.left,
-		Right:  s.right,
-	})
+	return FoldWithError(
+		s,
+		func(left a) ([]byte, error) {
+			return json.Marshal(sumForSerialization[a]{
+				IsLeft: true,
+				Value:  left,
+			})
+		},
+		func(right b) ([]byte, error) {
+			return json.Marshal(sumForSerialization[b]{
+				IsLeft: false,
+				Value:  right,
+			})
+		},
+	)
+}
+
+type inspectIsLeft struct {
+	IsLeft bool
 }
 
 func (s *Sum[a, b]) UnmarshalJSON(data []byte) error {
-	target := sumForSerialization[a, b]{}
-	if err := json.Unmarshal(data, &target); err != nil {
+	var i inspectIsLeft
+	err := json.Unmarshal(data, &i)
+	if err != nil {
 		return err
 	}
-	s.isLeft = target.IsLeft
-	s.left = target.Left
-	s.right = target.Right
+	s.isLeft = i.IsLeft
+	if s.isLeft {
+		var left sumForSerialization[a]
+		err = json.Unmarshal(data, &left)
+		if err != nil {
+			return err
+		}
+		s.left = left.Value
+	} else {
+		var right sumForSerialization[b]
+		err = json.Unmarshal(data, &right)
+		if err != nil {
+			return err
+		}
+		s.right = right.Value
+	}
 	return nil
 }
