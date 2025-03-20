@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	ballerina "ballerina.com/core"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -30,6 +31,14 @@ func TestNoneShouldSerializeCorrectly(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, "{\"IsRight\":false,\"Value\":{}}", string(data))
+}
+
+func TestZerovalueShouldBeNone(t *testing.T) {
+	t.Parallel()
+
+	var zero ballerina.Option[int]
+
+	assert.Equal(t, ballerina.None[int](), zero)
 }
 
 func TestSomeShouldSerializeAndDeserializeCorrectly(t *testing.T) {

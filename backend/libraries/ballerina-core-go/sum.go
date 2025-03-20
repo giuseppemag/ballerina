@@ -16,14 +16,14 @@ type Sum[a any, b any] struct {
 func Left[L any, R any](value L) Sum[L, R] {
 	return Sum[L, R]{
 		isRight: false,
-		left:   value,
+		left:    value,
 	}
 }
 
 func Right[L any, R any](value R) Sum[L, R] {
 	return Sum[L, R]{
 		isRight: true,
-		right:  value,
+		right:   value,
 	}
 }
 
@@ -73,7 +73,7 @@ type DeltaSum[Delta any, DeltaA any, DeltaB any] interface{}
 
 type sumForSerialization[a any] struct {
 	IsRight bool
-	Value  a
+	Value   a
 }
 
 func (s Sum[a, b]) MarshalJSON() ([]byte, error) {
@@ -82,13 +82,13 @@ func (s Sum[a, b]) MarshalJSON() ([]byte, error) {
 		func(left a) ([]byte, error) {
 			return json.Marshal(sumForSerialization[a]{
 				IsRight: false,
-				Value:  left,
+				Value:   left,
 			})
 		},
 		func(right b) ([]byte, error) {
 			return json.Marshal(sumForSerialization[b]{
 				IsRight: true,
-				Value:  right,
+				Value:   right,
 			})
 		},
 	)
@@ -112,7 +112,7 @@ func (s *Sum[a, b]) UnmarshalJSON(data []byte) error {
 			return err
 		}
 		s.right = right.Value
-		} else {
+	} else {
 		var left sumForSerialization[a]
 		err = json.Unmarshal(data, &left)
 		if err != nil {
