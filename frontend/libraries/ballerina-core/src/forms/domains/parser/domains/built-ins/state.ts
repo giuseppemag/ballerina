@@ -7,9 +7,9 @@ import { CollectionSelection } from "../../../collection/domains/selection/state
 import { BasicFun } from "../../../../../fun/state";
 import {
   InjectedPrimitives,
-  Maybe,
   ParsedType,
   PredicateValue,
+  replaceWith,
   Sum,
   TypeName,
   unit,
@@ -96,15 +96,6 @@ export const RawOption = {
         "Value" in value &&
         typeof value.Value == "object"
       );
-    },
-  },
-};
-
-export type RawSum = { Kind: "l" | "r"; Value: any };
-export const RawSum = {
-  Operations: {
-    IsRawSum: (value: any): value is RawSum => {
-      return typeof value == "object" && "Kind" in value && "Value" in value;
     },
   },
 };
@@ -359,7 +350,7 @@ export const fromAPIRawValue =
     injectedPrimitives?: InjectedPrimitives<T>,
   ) =>
   (raw: any): ValueOrErrors<PredicateValue, string> => {
-    // allow undefined for unit
+    // allow undefined for unit renderer
     if (raw == undefined && (t.kind !== "primitive" || t.value != "unit")) {
       return ValueOrErrors.Default.throwOne(
         `raw value is undefined for type ${JSON.stringify(t)}`,
@@ -496,50 +487,22 @@ export const fromAPIRawValue =
         );
       }
       if (t.value == "List") {
-        if (!Array.isArray(raw)) {
-          return ValueOrErrors.Default.throwOne(
-            `Array expected but got ${JSON.stringify(raw)}`,
-          );
-        }
-
+        const result = converters[t.value].fromAPIRawValue(raw);
         return ValueOrErrors.Operations.All(
-          List<ValueOrErrors<PredicateValue, string>>(
-            raw.map((_) =>
-              fromAPIRawValue(
-                t.args[0],
-                types,
-                builtIns,
-                converters,
-                injectedPrimitives,
-              )(_),
-            ),
+          result.map((_) =>
+            fromAPIRawValue(
+              t.args[0],
+              types,
+              builtIns,
+              converters,
+              injectedPrimitives,
+            )(_),
           ),
         ).Then((values) =>
-          ValueOrErrors.Default.return(
-            PredicateValue.Default.tuple(
-              converters["List"].fromAPIRawValue(values.toArray()),
-            ),
-          ),
+          ValueOrErrors.Default.return(PredicateValue.Default.tuple(values)),
         );
       }
       if (t.value == "Map" && t.args.length == 2) {
-        if (!Array.isArray(raw)) {
-          return ValueOrErrors.Default.throwOne(
-            `Array expected array but got ${JSON.stringify(raw)}`,
-          );
-        }
-
-        if (
-          raw.some(
-            (_) => typeof _ != "object" || !("Key" in _) || !("Value" in _),
-          )
-        ) {
-          return ValueOrErrors.Default.throwOne(
-            `Array expected array of objects with key and value but got ${JSON.stringify(
-              raw,
-            )}`,
-          );
-        }
         const result = converters[t.value].fromAPIRawValue(raw);
 
         return ValueOrErrors.Operations.All(
@@ -574,17 +537,6 @@ export const fromAPIRawValue =
       }
 
       if (t.value == "Tuple") {
-        // if (!Array.isArray(raw))
-        //   return ValueOrErrors.Default.throwOne(
-        //     `Array expected but got ${JSON.stringify(raw)}`,
-        //   );
-        // if (raw.length != t.args.length) {
-        //   console.debug("tuple", t, raw);
-        //   return ValueOrErrors.Default.throwOne(
-        //     `Array length mismatch expected tuple length: ${t.args.length} expected but got ${raw.length}`,
-        //   );
-        // }
-
         const result = converters[t.value].fromAPIRawValue(raw);
         return ValueOrErrors.Operations.All(
           List<ValueOrErrors<PredicateValue, string>>(
@@ -606,24 +558,18 @@ export const fromAPIRawValue =
       }
 
       if (t.value === "Sum" && t.args.length === 2) {
-        // if (!RawSum.Operations.IsRawSum(raw)) {
-        //   return ValueOrErrors.Default.throwOne(
-        //     `Sum expected but got ${JSON.stringify(raw)}`,
-        //   );
-        // }
-
-        // const result = converters[t.value].fromAPIRawValue(raw);
+        const result = converters[t.value].fromAPIRawValue(raw);
 
         return fromAPIRawValue(
-          t.args[0],
+          result.kind == "l" ? t.args[0] : t.args[1],
           types,
           builtIns,
           converters,
           injectedPrimitives,
-        )(raw.Value).Then((value) =>
+        )(result.value).Then((value) =>
           ValueOrErrors.Default.return(
             PredicateValue.Default.sum(
-              (raw.IsLeft ? Sum.Default.left : Sum.Default.right)(value),
+              Sum.Updaters.map2(replaceWith(value), replaceWith(value))(result),
             ),
           ),
         );

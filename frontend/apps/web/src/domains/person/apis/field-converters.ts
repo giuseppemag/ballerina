@@ -2,7 +2,6 @@ import {
   ApiConverters,
   CollectionSelection,
   fromAPIRawValue,
-  RawSum,
   Sum,
   toAPIRawValue,
 } from "ballerina-core";
@@ -85,14 +84,12 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
     toAPIRawValue: ([_, __]) => _.valueSeq().toArray(),
   },
   Sum: {
-    fromAPIRawValue: (_: RawSum) =>
-      _ === undefined
-        ? Sum.Default.right(null)
-        : _.Kind === "l"
-          ? Sum.Default.left(_.Value)
-          : Sum.Default.right(_.Value),
+    fromAPIRawValue: (_: any) =>
+      _.IsRight
+        ? Sum.Default.right(_.Value)
+        : Sum.Default.left(_.Value),
     toAPIRawValue: ([_, __]) => ({
-      Kind: _.kind,
+      IsRight: _.kind == "r",
       Value: _.value,
     }),
   },
