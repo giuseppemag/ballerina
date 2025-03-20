@@ -1,8 +1,6 @@
 package ballerina
 
-type Array[T any] struct {
-	Values []T
-}
+type Array[T any] []T
 
 func MapArray[T, U any](ts []T, f func(T) U) []U {
 	us := make([]U, len(ts))
@@ -12,8 +10,7 @@ func MapArray[T, U any](ts []T, f func(T) U) []U {
 	return us
 }
 func DefaultArray[T any]() Array[T] {
-	var res Array[T]
-	res.Values = make([]T, 0)
+	var res Array[T] = make([]T, 0)
 	return res
 }
 
