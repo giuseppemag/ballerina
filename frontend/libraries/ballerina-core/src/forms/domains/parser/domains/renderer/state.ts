@@ -120,7 +120,7 @@ export const ParsedRenderer = {
       visible,
       disabled: disabled != undefined ? disabled : false,
     }),
-    form: <T>(
+    record: <T>(
       type: ParsedType<T>,
       renderer: string,
       visible: any,
@@ -297,8 +297,8 @@ export const ParsedRenderer = {
           field.tooltip,
           field.details,
         );
-      if (fieldType.kind == "form")
-        return ParsedRenderer.Default.form(
+      if (fieldType.kind == "record")
+        return ParsedRenderer.Default.record(
           fieldType,
           field.renderer,
           field.visible,
@@ -559,13 +559,13 @@ export const ParsedRenderer = {
                       )!.initialFormState,
                     },
                     visibilityPredicateExpression:
-                      FieldPredicateExpression.Default.form(
+                      FieldPredicateExpression.Default.record(
                         visibilityExpr,
                         parsingContext.forms.get(parsedRenderer.renderer)!
                           .visibilityPredicateExpressions,
                       ),
                     disabledPredicatedExpression:
-                      FieldPredicateExpression.Default.form(
+                      FieldPredicateExpression.Default.record(
                         disabledExpr,
                         parsingContext.forms.get(parsedRenderer.renderer)!
                           .disabledPredicatedExpressions,

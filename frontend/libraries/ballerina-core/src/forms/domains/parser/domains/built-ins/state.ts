@@ -13,6 +13,7 @@ import {
   Sum,
   TypeName,
   unit,
+  ValueRecord,
   ValueTuple,
 } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
@@ -62,42 +63,9 @@ export type ApiConverters<
   T extends { [key in keyof T]: { type: any; state: any } },
 > = { [key in keyof T]: ApiConverter<T[key]["type"]> } & BuiltInApiConverters;
 
-export type VerifiedRawUnionCase = {
+export type UnionCase = {
   caseName: string;
   fields: Record<string, any>;
-};
-
-export const VerifiedRawUnionCase = {
-  Operations: {
-    IsVerifiedRawUnionCase: (value: any): value is VerifiedRawUnionCase => {
-      return (
-        typeof value == "object" &&
-        "caseName" in value &&
-        typeof value.caseName == "string" &&
-        "fields" in value &&
-        typeof value.fields == "object"
-      );
-    },
-  },
-};
-
-export type RawOption = {
-  isSome: boolean;
-  value: Record<string, any>;
-};
-
-export const RawOption = {
-  Operations: {
-    IsRawOption: (value: any): value is RawOption => {
-      return (
-        typeof value == "object" &&
-        "IsSome" in value &&
-        typeof value.IsSome == "boolean" &&
-        "Value" in value &&
-        typeof value.Value == "object"
-      );
-    },
-  },
 };
 
 export type BuiltInApiConverters = {
@@ -107,7 +75,7 @@ export type BuiltInApiConverters = {
   base64File: ApiConverter<string>;
   secret: ApiConverter<string>;
   Date: ApiConverter<Date>;
-  unionCase: ApiConverter<VerifiedRawUnionCase>;
+  union: ApiConverter<UnionCase>;
   SingleSelection: ApiConverter<
     CollectionSelection<CollectionReference | EnumReference>
   >;
@@ -325,7 +293,7 @@ export const defaultValue =
         injectedPrimitives,
       )(types.get(t.name)!);
 
-    if (t.kind == "form") {
+    if (t.kind == "record") {
       let res = {} as Record<string, PredicateValue>;
       t.fields.forEach((field, fieldName) => {
         res[fieldName] = defaultValue(
@@ -378,108 +346,44 @@ export const fromAPIRawValue =
       );
     }
     if (t.kind == "union") {
-      if (!VerifiedRawUnionCase.Operations.IsVerifiedRawUnionCase(raw)) {
-        return ValueOrErrors.Default.throwOne(
-          `union expected but got ${JSON.stringify(raw)}`,
-        );
-      }
-      const caseType = t.args.get(raw.caseName);
-      if (caseType == undefined) {
-        return ValueOrErrors.Default.throwOne(
-          `union case ${raw.caseName} not found in type ${JSON.stringify(t)}`,
-        );
-      }
-      return fromAPIRawValue(
-        caseType,
-        types,
-        builtIns,
-        converters,
-        injectedPrimitives,
-      )(raw);
-    }
-    if (t.kind == "unionCase") {
-      if (!VerifiedRawUnionCase.Operations.IsVerifiedRawUnionCase(raw)) {
-        return ValueOrErrors.Default.throwOne(
-          `unionCase expected but got ${JSON.stringify(raw)}`,
-        );
-      }
       const result = converters[t.kind].fromAPIRawValue(raw);
+      const caseType = t.args.get(result.caseName);
+      if (caseType == undefined)
+        return ValueOrErrors.Default.throwOne(
+          `union case ${result.caseName} not found in type ${JSON.stringify(
+            t,
+          )}`,
+        );
+
       return fromAPIRawValue(
-        t.fields == unit
-          ? {
-              kind: "form",
-              value: "unionCase",
-              fields: Map<string, ParsedType<T>>(),
-            }
-          : t.fields,
+        caseType.fields,
         types,
         builtIns,
         converters,
         injectedPrimitives,
       )(result.fields).Then((fields) => {
-        if (!PredicateValue.Operations.IsRecord(fields)) {
-          return ValueOrErrors.Default.throwOne(
-            `record expected but got ${JSON.stringify(fields)}`,
-          );
-        }
         return ValueOrErrors.Default.return(
-          PredicateValue.Default.unionCase(result.caseName, fields),
+          PredicateValue.Default.unionCase(
+            result.caseName,
+            fields as ValueRecord,
+          ),
         );
       });
     }
+
     if (t.kind == "application") {
       if (t.value == "SingleSelection") {
-        if (!RawOption.Operations.IsRawOption(raw)) {
-          return ValueOrErrors.Default.throwOne(
-            `Option expected but got ${JSON.stringify(raw)}`,
-          );
-        }
         const result = converters[t.value].fromAPIRawValue(raw);
-        if (result.kind == "r") {
-          return ValueOrErrors.Default.return(
-            PredicateValue.Default.option(false, PredicateValue.Default.unit()),
-          );
-        }
-
-        if (result.kind == "l") {
-          if (
-            !EnumReference.Operations.IsEnumReference(result.value) &&
-            !CollectionReference.Operations.IsCollectionReference(result.value)
-          ) {
-            return ValueOrErrors.Default.throwOne(
-              `CollectionReference or EnumReference expected but got ${JSON.stringify(
-                result.value,
-              )}`,
-            );
-          }
-        }
+        const isSome = result.kind == "l";
+        const value = isSome
+          ? PredicateValue.Default.record(Map(result.value))
+          : PredicateValue.Default.unit();
 
         return ValueOrErrors.Default.return(
-          PredicateValue.Default.option(
-            true,
-            PredicateValue.Default.record(Map(result.value)),
-          ),
+          PredicateValue.Default.option(isSome, value),
         );
       }
       if (t.value == "MultiSelection") {
-        if (!Array.isArray(raw)) {
-          return ValueOrErrors.Default.throwOne(
-            `Array expected but got ${JSON.stringify(raw)}`,
-          );
-        }
-        if (
-          raw.some(
-            (_) =>
-              !CollectionReference.Operations.IsCollectionReference(_) &&
-              !EnumReference.Operations.IsEnumReference(_),
-          )
-        ) {
-          return ValueOrErrors.Default.throwOne(
-            `CollectionReference or EnumReference for multi selection items expected but got ${JSON.stringify(
-              raw,
-            )}`,
-          );
-        }
         const result = converters[t.value].fromAPIRawValue(raw);
         const values = result.map((_) => PredicateValue.Default.record(Map(_)));
         return ValueOrErrors.Default.return(
@@ -585,7 +489,7 @@ export const fromAPIRawValue =
         injectedPrimitives,
       )(raw);
 
-    if (t.kind == "form") {
+    if (t.kind == "record") {
       if (typeof raw != "object") {
         return ValueOrErrors.Default.throwOne(
           `object expected but got ${JSON.stringify(raw)}`,
@@ -643,24 +547,33 @@ export const toAPIRawValue =
     }
 
     if (t.kind == "union") {
-      return toAPIRawValue(
-        { kind: "unionCase", name: "", fields: {} as ParsedType<T> },
-        types,
-        builtIns,
-        converters,
-        injectedPrimitives,
-      )(raw, formState);
-    }
-
-    if (t.kind == "unionCase") {
-      if (!PredicateValue.Operations.IsUnionCase(raw)) {
+      if (!PredicateValue.Operations.IsRecord(raw)) {
         return ValueOrErrors.Default.throwOne(
-          `UnionCase expected but got ${JSON.stringify(raw)}`,
+          `Option expected but got ${JSON.stringify(raw)}`,
         );
       }
+      const caseName = raw.fields.get("caseName");
+      if (
+        caseName == undefined ||
+        !PredicateValue.Operations.IsString(caseName)
+      ) {
+        return ValueOrErrors.Default.throwOne(
+          `caseName expected but got ${JSON.stringify(raw)}`,
+        );
+      }
+      const fields = raw.fields.get("fields");
+      if (fields == undefined || !PredicateValue.Operations.IsRecord(fields)) {
+        return ValueOrErrors.Default.throwOne(
+          `fields expected but got ${JSON.stringify(raw)}`,
+        );
+      }
+      const rawUnionCase = {
+        caseName,
+        fields: fields.fields.toJS(),
+      };
       return ValueOrErrors.Operations.Return(
-        converters[t.kind].toAPIRawValue([
-          { caseName: raw.caseName, fields: raw.fields },
+        converters["union"].toAPIRawValue([
+          rawUnionCase,
           formState.commonFormState.modifiedByUser,
         ]),
       );
@@ -855,33 +768,23 @@ export const toAPIRawValue =
           );
         }
 
-        if (raw.value.kind === "l") {
-          return toAPIRawValue(
-            t.args[0],
-            types,
-            builtIns,
-            converters,
-            injectedPrimitives,
-          )(raw.value.value, formState.customFormState.left).Then((value) =>
-            ValueOrErrors.Default.return(
-              converters["Sum"].toAPIRawValue([
-                Sum.Default.left(value),
-                formState.commonFormState.modifiedByUser,
-              ]),
-            ),
-          );
-        }
-
         return toAPIRawValue(
-          t.args[1],
+          raw.value.kind == "l" ? t.args[0] : t.args[1],
           types,
           builtIns,
           converters,
           injectedPrimitives,
-        )(raw.value.value, formState.customFormState.right).Then((value) =>
+        )(
+          raw.value.value,
+          raw.value.kind == "l"
+            ? formState.customFormState.left
+            : formState.customFormState.right,
+        ).Then((value) =>
           ValueOrErrors.Default.return(
             converters["Sum"].toAPIRawValue([
-              Sum.Default.right(value),
+              raw.value.kind == "l"
+                ? Sum.Default.left(value)
+                : Sum.Default.right(value),
               formState.commonFormState.modifiedByUser,
             ]),
           ),
@@ -926,7 +829,7 @@ export const toAPIRawValue =
         injectedPrimitives,
       )(raw, formState);
 
-    if (t.kind == "form") {
+    if (t.kind == "record") {
       if (!PredicateValue.Operations.IsRecord(raw)) {
         return ValueOrErrors.Default.throwOne(
           `Record expected but got ${JSON.stringify(raw)}`,

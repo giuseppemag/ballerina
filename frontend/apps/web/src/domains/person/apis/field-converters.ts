@@ -38,11 +38,11 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
       typeof _ == "string"
         ? new Date(Date.parse(_))
         : typeof _ == "number"
-          ? new Date(_)
-          : new Date(Date.now()),
+        ? new Date(_)
+        : new Date(Date.now()),
     toAPIRawValue: ([_, __]) => _,
   },
-  unionCase: { fromAPIRawValue: (_) => _, toAPIRawValue: ([_, __]) => _ },
+  union: { fromAPIRawValue: (_) => _, toAPIRawValue: ([_, __]) => _ },
   SingleSelection: {
     fromAPIRawValue: (_) =>
       _.IsSome == false
@@ -80,14 +80,33 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
         })),
   },
   Tuple: {
-    fromAPIRawValue: (_) => (_ == undefined ? List() : List(_)),
-    toAPIRawValue: ([_, __]) => _.valueSeq().toArray(),
+    fromAPIRawValue: (_) => {
+      if (_ == undefined) {
+        return List();
+      }
+      const prefix = "Item";
+      let index = 1;
+      const result: any[] = [];
+      for (const __ in Object.keys(_)) {
+        const key = `${prefix}${index}`;
+        if (key in _) {
+          result.push(_[key]);
+        }
+        index++;
+      }
+      return List(result);
+    },
+    toAPIRawValue: ([_, __]) =>
+      _.valueSeq()
+        .toArray()
+        .reduce((acc, value, index) => ({
+          ...acc,
+          [`Item${index + 1}`]: value,
+        }), {}),
   },
   Sum: {
     fromAPIRawValue: (_: any) =>
-      _.IsRight
-        ? Sum.Default.right(_.Value)
-        : Sum.Default.left(_.Value),
+      _.IsRight ? Sum.Default.right(_.Value) : Sum.Default.left(_.Value),
     toAPIRawValue: ([_, __]) => ({
       IsRight: _.kind == "r",
       Value: _.value,
