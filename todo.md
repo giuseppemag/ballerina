@@ -111,7 +111,6 @@
     ✅ currying the arguments of `entityGET` and `entityPOST`
     ✅ add tuple renderers
     ✅ add proper Sum
-    ❌ logo of customer before logging in
     ❌ take as input a list of specs, stitch them together, generate a single file - no `include` needed
     ❌ add paginated lists
     ❌ add lazy fields
@@ -152,7 +151,6 @@
       ❌ why can't we use state.TryFindType in the validators?
       ❌ Validate passes the context as a parameter instead of using GetContext - ugly
     ❌ remove all the nonsense `Guid`s from id types, the wrapped name is enough
-    ❌ union cases support `fields: "number"` but the renderer cases do not, because they always expect `fields` - extend
     ❌ create gui editor as an instance of a form itself
       ❌ form specification
       ❌ generated F# files with type definitions
@@ -167,6 +165,7 @@
     ❌ add lots of operators to lists, sets, maps, etc.
     ❌ the tool is now complete
     ❌ the codegen to Golang needs to be improved
+      ❌ ballerina-core-go should be split into further packages, one per data structure. `MapOption` should just be `Option.Map`
       ❌ define intermediate structure
       ❌ split up in files
       ❌ as well as the `SeqState` monad

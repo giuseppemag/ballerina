@@ -21,7 +21,7 @@ func TestLeftShouldSerializeCorrectly(t *testing.T) {
 	data, err := json.Marshal(left)
 	require.NoError(t, err)
 
-	require.Equal(t, "{\"IsLeft\":true,\"Value\":4}", string(data))
+	require.Equal(t, "{\"IsRight\":false,\"Value\":4}", string(data))
 }
 
 func TestRightShouldSerializeCorrectly(t *testing.T) {
@@ -32,7 +32,7 @@ func TestRightShouldSerializeCorrectly(t *testing.T) {
 	data, err := json.Marshal(right)
 	require.NoError(t, err)
 
-	require.Equal(t, "{\"IsLeft\":false,\"Value\":\"hello\"}", string(data))
+	require.Equal(t, "{\"IsRight\":true,\"Value\":\"hello\"}", string(data))
 }
 
 func TestLeftShouldSerializeAndDeserializeCorrectly(t *testing.T) {

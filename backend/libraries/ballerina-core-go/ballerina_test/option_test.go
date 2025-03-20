@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// run with go test ./...
+
 func TestSomeShouldSerializeCorrectly(t *testing.T) {
 	t.Parallel()
 
@@ -16,7 +18,7 @@ func TestSomeShouldSerializeCorrectly(t *testing.T) {
 	data, err := json.Marshal(some)
 	require.NoError(t, err)
 
-	require.Equal(t, "{\"Value\":4,\"IsSome\":true}", string(data))
+	require.Equal(t, "{\"IsRight\":true,\"Value\":4}", string(data))
 }
 
 func TestNoneShouldSerializeCorrectly(t *testing.T) {
@@ -27,7 +29,7 @@ func TestNoneShouldSerializeCorrectly(t *testing.T) {
 	data, err := json.Marshal(some)
 	require.NoError(t, err)
 
-	require.Equal(t, "{\"Value\":0,\"IsSome\":false}", string(data))
+	require.Equal(t, "{\"IsRight\":false,\"Value\":{}}", string(data))
 }
 
 func TestSomeShouldSerializeAndDeserializeCorrectly(t *testing.T) {
