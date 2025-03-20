@@ -13,11 +13,9 @@ func Some[a any](value a) Option[a] {
 func None[a any]() Option[a] {
 	return Option[a]{Left[Unit, a](DefaultUnit)}
 }
-
 func MatchOption[a any, c any](self Option[a], onSome func(a) c, onNone func() c) c {
 	return Fold(self.Sum, func(_ Unit) c { return onNone() }, onSome)
 }
-
 func MapOption[a any, b any](self Option[a], f func(a) b) Option[b] {
 	return Option[b]{BiMap(self.Sum, id, f)}
 }
