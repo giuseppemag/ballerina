@@ -211,7 +211,7 @@ export const FormsConfig = {
           }
 
           const parsedType: ParsedType<T> = {
-            kind: "form",
+            kind: "record",
             value: rawTypeName,
             fields: Map(),
           };
@@ -298,9 +298,9 @@ export const FormsConfig = {
               return;
             }
             const formType = parsedTypes.get(form.type)!;
-            if (formType.kind != "form") {
+            if (formType.kind != "record") {
               errors = errors.push(
-                `form ${formName} references non-form type ${form.type}`,
+                `form ${formName} references non-record type ${form.type}`,
               );
               return;
             }

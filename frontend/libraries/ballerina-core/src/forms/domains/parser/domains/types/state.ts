@@ -64,7 +64,7 @@ export type RawOptionType = {
   args?: Array<RawFieldType<any>>;
 };
 
-export type RawFormType = { fields?: object };
+export type RawRecordType = { fields?: object };
 
 export type RawFieldType<T> =
   | RawApplicationType<T>
@@ -72,7 +72,7 @@ export type RawFieldType<T> =
   | Unit
   | PrimitiveTypeName<T>
   | RawUnionType
-  | RawFormType
+  | RawRecordType
   | RawUnionCase
   | RawOptionType;
 
@@ -137,7 +137,7 @@ export const RawFieldType = {
     _: RawFieldType<T>,
   ): _ is { fun: "Tuple"; args: Array<RawFieldType<T>> } =>
     RawFieldType.isApplication(_) && _.fun == "Tuple",
-  isForm: <T>(_: RawFieldType<T>): _ is { fields: Object } =>
+  isRecord: <T>(_: RawFieldType<T>): _ is { fields: Object } =>
     typeof _ == "object" && "fields" in _ && isObject(_.fields),
   isOption: <T>(
     _: RawFieldType<T>,
@@ -162,7 +162,7 @@ export type PrimitiveTypeName<T> =
   | "secret"
   | keyof T
   | "guid";
-export type FormFields<T> = Map<FieldName, ParsedType<T>>;
+export type RecordFields<T> = Map<FieldName, ParsedType<T>>;
 export type ParsedUnionCase<T> = {
   kind: "unionCase";
   name: CaseName;
@@ -171,7 +171,7 @@ export type ParsedUnionCase<T> = {
 export type ParsedType<T> =
   | ParsedUnionCase<T>
   | { kind: "option"; value: ParsedType<T> }
-  | { kind: "form"; value: TypeName; fields: FormFields<T> }
+  | { kind: "record"; value: TypeName; fields: RecordFields<T> }
   | { kind: "lookup"; name: TypeName }
   | { kind: "primitive"; value: PrimitiveTypeName<T> }
   | { kind: "application"; value: GenericType; args: Array<ParsedType<T>> }
@@ -187,8 +187,8 @@ export const ParsedType = {
       kind: "option",
       value,
     }),
-    form: <T>(value: TypeName, fields: FormFields<T>): ParsedType<T> => ({
-      kind: "form",
+    record: <T>(value: TypeName, fields: RecordFields<T>): ParsedType<T> => ({
+      kind: "record",
       value,
       fields,
     }),
@@ -208,7 +208,7 @@ export const ParsedType = {
   },
   Operations: {
     Equals: <T>(fst: ParsedType<T>, snd: ParsedType<T>): boolean =>
-      fst.kind == "form" && snd.kind == "form"
+      fst.kind == "record" && snd.kind == "record"
         ? fst.value == snd.value
         : fst.kind == "lookup" && snd.kind == "lookup"
           ? fst.name == snd.name
@@ -341,7 +341,7 @@ export const ParsedType = {
             ),
           ),
         );
-      if (RawFieldType.isForm(rawFieldType)) {
+      if (RawFieldType.isRecord(rawFieldType)) {
         return ValueOrErrors.Operations.All(
           List(
             Object.entries(rawFieldType.fields).map(([fieldName, fieldType]) =>
@@ -368,7 +368,7 @@ export const ParsedType = {
           )
           .Then((parsedField) =>
             ValueOrErrors.Default.return<ParsedType<T>, string>(
-              ParsedType.Default.form(fieldName, parsedField),
+              ParsedType.Default.record(fieldName, parsedField),
             ),
           );
       }
