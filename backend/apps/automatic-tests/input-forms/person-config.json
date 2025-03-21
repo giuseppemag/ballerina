@@ -49,16 +49,22 @@
       }
     },
     "BaristaJob": {
-      "extends": ["JobBase"],
+      "extends": [
+        "JobBase"
+      ],
       "fields": {
         "Drinks": {
           "fun": "List",
-          "args": ["string"]
+          "args": [
+            "string"
+          ]
         }
       }
     },
     "WaiterJob": {
-      "extends": ["JobBase"],
+      "extends": [
+        "JobBase"
+      ],
       "fields": {
         "Patience": "number"
       }
@@ -91,7 +97,9 @@
       }
     },
     "CityRef": {
-      "extends": ["CollectionReference"],
+      "extends": [
+        "CollectionReference"
+      ],
       "fields": {}
     },
     "LandArea": {
@@ -114,7 +122,9 @@
             "number",
             {
               "fun": "SingleSelection",
-              "args": ["CityRef"]
+              "args": [
+                "CityRef"
+              ]
             }
           ]
         }
@@ -217,7 +227,9 @@
       }
     },
     "DepartmentRef": {
-      "extends": ["CollectionReference"],
+      "extends": [
+        "CollectionReference"
+      ],
       "fields": {}
     },
     "Person": {
@@ -225,66 +237,92 @@
         "category": "injectedCategory",
         "fullName": {
           "fun": "Tuple",
-          "args": ["string", "string"]
+          "args": [
+            "string",
+            "string"
+          ]
         },
         "birthday": "Date",
         "job": "Job",
         "subscribeToNewsletter": "boolean",
         "favoriteColor": {
           "fun": "SingleSelection",
-          "args": ["ColorRef"]
+          "args": [
+            "ColorRef"
+          ]
         },
         "gender": {
-          "fun": "Sum",
+          "fun": "SingleSelection",
           "args": [
-            "unit",
-            {
-              "fun": "SingleSelection",
-              "args": ["GenderRef"]
-            }
+            "GenderRef"
           ]
         },
         "dependants": {
           "fun": "Map",
-          "args": ["string", "injectedCategory"]
+          "args": [
+            "string",
+            "injectedCategory"
+          ]
         },
         "friendsByCategory": {
           "fun": "Map",
-          "args": ["injectedCategory", "string"]
+          "args": [
+            "injectedCategory",
+            "string"
+          ]
         },
         "relatives": {
           "fun": "List",
-          "args": ["injectedCategory"]
+          "args": [
+            "injectedCategory"
+          ]
         },
         "interests": {
           "fun": "MultiSelection",
-          "args": ["InterestRef"]
+          "args": [
+            "InterestRef"
+          ]
         },
         "departments": {
           "fun": "MultiSelection",
-          "args": ["DepartmentRef"]
+          "args": [
+            "DepartmentRef"
+          ]
         },
         "emails": {
           "fun": "List",
-          "args": ["string"]
+          "args": [
+            "string"
+          ]
         },
         "mainAddress": {
           "fun": "Sum",
-          "args": ["string", {
-            "fun": "Tuple",
-            "args": ["Address", "PlotInfo"]
-          }]
+          "args": [
+            "string",
+            {
+              "fun": "Tuple",
+              "args": [
+                "Address",
+                "PlotInfo"
+              ]
+            }
+          ]
         },
         "addressesAndAddressesWithLabel": {
           "fun": "Tuple",
           "args": [
             {
               "fun": "List",
-              "args": ["Address"]
+              "args": [
+                "Address"
+              ]
             },
             {
               "fun": "Map",
-              "args": ["string", "Address"]
+              "args": [
+                "string",
+                "Address"
+              ]
             }
           ]
         },
@@ -293,14 +331,19 @@
           "args": [
             {
               "fun": "SingleSelection",
-              "args": ["CityRef"]
+              "args": [
+                "CityRef"
+              ]
             },
             "Address"
           ]
         },
         "importantDate": {
           "fun": "Sum",
-          "args": ["string", "Date"]
+          "args": [
+            "unit",
+            "Date"
+          ]
         },
         "addressesBy": {
           "fun": "Sum",
@@ -310,14 +353,19 @@
               "args": [
                 {
                   "fun": "SingleSelection",
-                  "args": ["ColorRef"]
+                  "args": [
+                    "ColorRef"
+                  ]
                 },
                 "Address"
               ]
             },
             {
               "fun": "Map",
-              "args": ["string", "Address"]
+              "args": [
+                "string",
+                "Address"
+              ]
             }
           ]
         },
@@ -326,7 +374,9 @@
           "args": [
             {
               "fun": "SingleSelection",
-              "args": ["ColorRef"]
+              "args": [
+                "ColorRef"
+              ]
             },
             "Address"
           ]
@@ -336,7 +386,9 @@
           "args": [
             {
               "fun": "SingleSelection",
-              "args": ["PermissionRef"]
+              "args": [
+                "PermissionRef"
+              ]
             },
             "boolean"
           ]
@@ -346,25 +398,36 @@
           "args": [
             {
               "fun": "SingleSelection",
-              "args": ["DepartmentRef"]
+              "args": [
+                "DepartmentRef"
+              ]
             },
             {
               "fun": "SingleSelection",
-              "args": ["CityRef"]
+              "args": [
+                "CityRef"
+              ]
             }
           ]
         },
         "shoeColours": {
           "fun": "MultiSelection",
-          "args": ["ColorRef"]
+          "args": [
+            "ColorRef"
+          ]
         },
         "friendsBirthdays": {
           "fun": "Map",
-          "args": ["string", "Date"]
+          "args": [
+            "string",
+            "Date"
+          ]
         },
         "holidays": {
           "fun": "List",
-          "args": ["Date"]
+          "args": [
+            "Date"
+          ]
         }
       }
     }
@@ -383,11 +446,18 @@
     "entities": {
       "person": {
         "type": "Person",
-        "methods": ["create", "get", "update", "default"]
+        "methods": [
+          "create",
+          "get",
+          "update",
+          "default"
+        ]
       },
       "globalConfiguration": {
         "type": "GlobalConfiguration",
-        "methods": ["get"]
+        "methods": [
+          "get"
+        ]
       }
     }
   },
@@ -406,7 +476,9 @@
     },
     "baristaJob": {
       "type": "BaristaJob",
-      "extends": ["jobBase"],
+      "extends": [
+        "jobBase"
+      ],
       "fields": {
         "Salary": {
           "renderer": "defaultNumber"
@@ -423,7 +495,11 @@
           "columns": {
             "main": {
               "groups": {
-                "main": ["Name", "Salary", "Drinks"]
+                "main": [
+                  "Name",
+                  "Salary",
+                  "Drinks"
+                ]
               }
             }
           }
@@ -432,7 +508,9 @@
     },
     "waiterJob": {
       "type": "WaiterJob",
-      "extends": ["jobBase"],
+      "extends": [
+        "jobBase"
+      ],
       "fields": {
         "Salary": {
           "renderer": "defaultNumber",
@@ -477,7 +555,11 @@
           "columns": {
             "main": {
               "groups": {
-                "main": ["Name", "Salary", "Patience"]
+                "main": [
+                  "Name",
+                  "Salary",
+                  "Patience"
+                ]
               }
             }
           }
@@ -499,7 +581,10 @@
           "columns": {
             "main": {
               "groups": {
-                "main": ["x", "y"]
+                "main": [
+                  "x",
+                  "y"
+                ]
               }
             }
           }
@@ -518,7 +603,9 @@
           "columns": {
             "main": {
               "groups": {
-                "main": ["landArea"]
+                "main": [
+                  "landArea"
+                ]
               }
             }
           }
@@ -587,7 +674,9 @@
           "columns": {
             "main": {
               "groups": {
-                "main": ["streetNumberAndCity"]
+                "main": [
+                  "streetNumberAndCity"
+                ]
               }
             }
           }
@@ -613,8 +702,12 @@
           "label": "full name",
           "renderer": "defaultTuple2",
           "itemRenderers": [
-            { "renderer": "defaultString" },
-            { "renderer": "defaultString" }
+            {
+              "renderer": "defaultString"
+            },
+            {
+              "renderer": "defaultString"
+            }
           ]
         },
         "job": {
@@ -630,23 +723,18 @@
         },
         "gender": {
           "label": "gender",
-          "renderer": "defaultSum",
-          "leftRenderer": {
-            "label": "left",
-            "renderer": "defaultUnit"
-          },
-          "rightRenderer": {
-            "label": "right",
-            "renderer": "defaultEnum",
-            "options": "genders"
-          },
+          "renderer": "defaultEnum",
+          "options": "genders",
           "visible": {
             "kind": "matchCase",
             "operands": [
               {
                 "kind": "fieldLookup",
                 "operands": [
-                  { "kind": "varLookup", "varName": "global" },
+                  {
+                    "kind": "varLookup",
+                    "varName": "global"
+                  },
                   "ERP"
                 ]
               },
@@ -661,7 +749,10 @@
                       {
                         "kind": "fieldLookup",
                         "operands": [
-                          { "kind": "varLookup", "varName": "sapFields" },
+                          {
+                            "kind": "varLookup",
+                            "varName": "sapFields"
+                          },
                           "Value"
                         ]
                       },
@@ -673,7 +764,10 @@
                           "body": {
                             "kind": "fieldLookup",
                             "operands": [
-                              { "kind": "varLookup", "varName": "s2Fields" },
+                              {
+                                "kind": "varLookup",
+                                "varName": "s2Fields"
+                              },
                               "S2OnlyField"
                             ]
                           }
@@ -687,7 +781,10 @@
                           "body": {
                             "kind": "fieldLookup",
                             "operands": [
-                              { "kind": "varLookup", "varName": "s3Fields" },
+                              {
+                                "kind": "varLookup",
+                                "varName": "s3Fields"
+                              },
                               "S3OnlyField"
                             ]
                           }
@@ -701,7 +798,10 @@
                           "body": {
                             "kind": "fieldLookup",
                             "operands": [
-                              { "kind": "varLookup", "varName": "s4Fields" },
+                              {
+                                "kind": "varLookup",
+                                "varName": "s4Fields"
+                              },
                               "S4OnlyField"
                             ]
                           }
@@ -714,12 +814,20 @@
               {
                 "kind": "caseName",
                 "caseName": "ERP:BC",
-                "handler": { "kind": "lambda", "parameter": "_", "body": false }
+                "handler": {
+                  "kind": "lambda",
+                  "parameter": "_",
+                  "body": false
+                }
               },
               {
                 "kind": "caseName",
                 "caseName": "ERP:FAndO",
-                "handler": { "kind": "lambda", "parameter": "_", "body": false }
+                "handler": {
+                  "kind": "lambda",
+                  "parameter": "_",
+                  "body": false
+                }
               }
             ]
           }
@@ -856,15 +964,7 @@
         },
         "importantDate": {
           "label": "important date",
-          "renderer": "defaultSum",
-          "leftRenderer": {
-            "label": "no date",
-            "renderer": "defaultString"
-          },
-          "rightRenderer": {
-            "label": "date",
-            "renderer": "defaultDate"
-          },
+          "renderer": "maybeDate",
           "visible": true,
           "disabled": false
         },
@@ -1011,12 +1111,17 @@
                   "friendsByCategory",
                   "relatives",
                   "friendsBirthdays",
-                  "shoeColours"                ]
+                  "shoeColours"
+                ]
               }
             },
             "mailing": {
               "groups": {
-                "main": ["subscribeToNewsletter", "interests", "favoriteColor"]
+                "main": [
+                  "subscribeToNewsletter",
+                  "interests",
+                  "favoriteColor"
+                ]
               }
             },
             "addresses": {
