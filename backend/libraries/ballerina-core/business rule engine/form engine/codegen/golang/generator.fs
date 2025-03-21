@@ -17,6 +17,7 @@ module Generator =
   open Ballerina.Fun
   open Ballerina.Collections
   open Ballerina.Collections.NonEmptyList
+  open Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs
 
   type GoCodeGenState =
     { UsedImports: Set<string> }
@@ -440,28 +441,17 @@ module Generator =
           let identifierAllowedRegex = Regex codegenConfig.IdentifierAllowedRegex
           let (!) (s: string) = identifierAllowedRegex.Replace(s, "_")
 
+          let entitiesEnum:GolangEnum = 
+            { Name = $"{formName}EntitiesEnum"; 
+              Cases = 
+                ctx.Apis.Entities |> Map.values |> Seq.map fst
+                |> Seq.map (fun entityApi -> {| Name = $"{entityApi.TypeId.TypeName}Entity"; Value = $"{entityApi.TypeId.TypeName}" |})
+                |> Seq.toList
+            }
+
           let entityGETters =
             seq {
-              yield StringBuilder.One $"type {formName}EntitiesEnum string"
-              yield StringBuilder.One "\n"
-              yield StringBuilder.One "const ("
-              yield StringBuilder.One "\n"
-
-              for entityApi in ctx.Apis.Entities |> Map.values |> Seq.map fst do
-                yield
-                  StringBuilder.One
-                    $$"""  {{entityApi.TypeId.TypeName}}Entity {{formName}}EntitiesEnum = "{{entityApi.TypeId.TypeName}}" """
-
-                yield StringBuilder.One "\n"
-
-              yield StringBuilder.One ")"
-              yield StringBuilder.One "\n"
-              yield StringBuilder.One $$"""var All{{formName}}EntitiesEnum = [...]{{formName}}EntitiesEnum{ """
-
-              for entityApi in ctx.Apis.Entities |> Map.values |> Seq.map fst do
-                yield StringBuilder.One $$"""{{entityApi.TypeId.TypeName}}Entity, """
-
-              yield StringBuilder.One "}\n\n"
+              yield LanguageConstructs.GolangEnum.ToGolang  { Indentation="" } entitiesEnum
 
               yield StringBuilder.One $"func {formName}EntityGETter[id any, result any]("
 
@@ -622,31 +612,6 @@ module Generator =
 
           let enumCasesGETters =
             seq {
-              // yield StringBuilder.One $"func {formName}EnumAutoGETter(enumName string) "
-              // yield StringBuilder.One " ([]string,error) {\n"
-              // yield StringBuilder.One "  switch enumName {\n"
-
-              // yield!
-              //   ctx.Apis.Enums
-              //   |> Map.values
-              //   |> Seq.map (fun e ->
-              //     StringBuilder.Many(
-              //       seq {
-              //         yield
-              //           StringBuilder.One
-              //             $$"""    case "{{e.EnumName}}": return {{codegenConfig.List.MappingFunction}}(All{{e.UnderlyingEnum.TypeName}}Cases[:], func (c {{e.UnderlyingEnum.TypeName}}) string { return string(c) }), nil"""
-
-              //         yield StringBuilder.One "\n"
-              //       }
-              //     ))
-
-              // yield StringBuilder.One "  }\n"
-              // yield StringBuilder.One "  var res []string\n"
-
-              // yield StringBuilder.One $$"""  return res, {{codegenConfig.EnumNotFoundError.Constructor}}(enumName)"""
-
-              // yield StringBuilder.One "\n}\n\n"
-
               yield StringBuilder.One $"func {formName}EnumGETter[result any](enumName string, "
 
               yield!
@@ -851,31 +816,19 @@ module Generator =
                     cases |> Map.values |> Seq.forall (fun case -> case.Fields.IsUnitType)
                     && cases |> Map.isEmpty |> not
                     ->
-                    let enumCases = cases |> Map.values |> Seq.map (fun case -> case.CaseName)
+                    let enum:GolangEnum = { 
+                        Name = $"{t.Key}"; 
+                        Cases = 
+                          cases |> Map.values 
+                          |> Seq.map (fun case -> case.CaseName) 
+                          |> Seq.map (fun enumCase -> {| Name = $"{t.Key}{!enumCase}"; Value = $"{enumCase}"|}) 
+                          |> Seq.toList
+                      }
 
                     return
                       StringBuilder.Many(
                         seq {
-                          yield StringBuilder.One "\n"
-                          yield StringBuilder.One $$"""type {{t.Key}} string"""
-                          yield StringBuilder.One "\n"
-                          yield StringBuilder.One "const ("
-                          yield StringBuilder.One "\n"
-
-                          for enumCase in enumCases do
-                            yield StringBuilder.One $$"""  {{t.Key}}{{!enumCase}} {{t.Key}} = "{{enumCase}}" """
-                            yield StringBuilder.One "\n"
-
-                          yield StringBuilder.One ")"
-                          yield StringBuilder.One "\n"
-                          yield StringBuilder.One $$"""var All{{t.Key}}Cases = [...]{{t.Key}}{ """
-
-                          for enumCase in enumCases do
-                            yield StringBuilder.One $$"""{{t.Key}}{{!enumCase}}, """
-
-                          yield StringBuilder.One "}\n"
-                          yield StringBuilder.One "\n"
-                          yield StringBuilder.One $"func Default{t.Key}() {t.Key} {{ return All{t.Key}Cases[0]; }}"
+                          yield GolangEnum.ToGolang { Indentation="" } enum
                         }
                       )
                   | ExprType.UnionType cases when cases |> Map.isEmpty |> not ->
@@ -887,7 +840,7 @@ module Generator =
                           state {
                             let! fields = case.Fields |> ExprType.ResolveLookup ctx |> state.OfSum
 
-                            let! fields =
+                            let! (fields:Map<string,ExprType>) =
                               state.Any(
                                 NonEmptyList.OfList(
                                   fields |> ExprType.AsRecord |> state.OfSum,
@@ -900,180 +853,29 @@ module Generator =
                               fields
                               |> Seq.map (fun f ->
                                 state {
-                                  // do System.Console.WriteLine(f.Value.ToFSharpString)
-                                  // do System.Console.ReadLine() |> ignore
-                                  let! field = f.Value |> ExprType.ToGolangTypeAnnotation
-                                  let! fieldDefault = f.Value |> ExprType.ToGolangDefaultValue
+                                  let! (field:string) = f.Value |> ExprType.ToGolangTypeAnnotation
+                                  let! (fieldDefaultValue:string) = f.Value |> ExprType.ToGolangDefaultValue
 
                                   return
                                     {| FieldName = f.Key
                                        FieldType = field
-                                       FieldDefault = fieldDefault |}
+                                       FieldDefaultValue = fieldDefaultValue |}
                                 })
                               |> state.All
 
-                            return case.CaseName, fields
+                            return {| CaseName = !case.CaseName; Fields = fields |}
                           })
                         |> List.ofSeq
                       )
 
-                    let caseValues = caseValues |> Map.ofList
+                    let! caseValues = caseValues |> NonEmptyList.TryOfList |> Sum.fromOption (fun () -> Errors.Singleton "Error: expected non-empty list of cases.") |> state.OfSum
 
-                    let! firstUnionCaseName =
-                      caseValues.Keys
-                      |> Seq.tryHead
-                      |> Sum.fromOption (fun () -> Errors.Singleton $"Error: union case must have at least one case.")
-                      |> state.OfSum
+                    let (union:GolangUnion) = {
+                      Name = t.Key
+                      Cases = caseValues
+                    }
 
-                    return
-                      StringBuilder.Many(
-                        seq {
-                          yield StringBuilder.One "\n"
-
-                          for case in cases |> Map.values do
-                            yield StringBuilder.One $"type {t.Key}{!case.CaseName}Value struct {{\n"
-
-                            match caseValues |> Map.tryFind case.CaseName with
-                            | Some caseValue ->
-                              for field in caseValue do
-                                yield StringBuilder.One $"  {field.FieldName} {field.FieldType}; \n"
-                            | None -> ()
-
-                            yield StringBuilder.One $"}}\n"
-
-                            yield StringBuilder.One $"func New{t.Key}{!case.CaseName}Value("
-
-                            match caseValues |> Map.tryFind case.CaseName with
-                            | Some caseValue ->
-                              for field in caseValue do
-                                yield StringBuilder.One $"{field.FieldName} {field.FieldType}, "
-                            | None -> ()
-
-                            yield StringBuilder.One $") {t.Key}{!case.CaseName}Value {{\n"
-
-                            yield StringBuilder.One $"  var res {t.Key}{!case.CaseName}Value;\n"
-
-                            match caseValues |> Map.tryFind case.CaseName with
-                            | Some caseValue ->
-                              for field in caseValue do
-                                yield StringBuilder.One $"  res.{field.FieldName} = {field.FieldName}; \n"
-                            | None -> ()
-
-                            yield StringBuilder.One $"  return res;\n"
-                            yield StringBuilder.One $"}}\n"
-
-                            yield
-                              StringBuilder.One
-                                $"func Default{t.Key}{!case.CaseName}Value() {t.Key}{!case.CaseName}Value {{"
-
-                            yield StringBuilder.One "\n"
-
-                            yield StringBuilder.One $" return New{t.Key}{!case.CaseName}Value("
-
-                            match caseValues |> Map.tryFind case.CaseName with
-                            | Some caseValue ->
-                              for field in caseValue do
-                                yield StringBuilder.One $"{field.FieldDefault}, "
-                            | None -> ()
-
-                            yield StringBuilder.One $");"
-                            yield StringBuilder.One "\n"
-
-                            yield StringBuilder.One $"}}\n"
-
-
-                          yield StringBuilder.One "\n"
-                          yield StringBuilder.One $$"""type {{t.Key}}Cases string"""
-                          yield StringBuilder.One "\n"
-                          yield StringBuilder.One "const ("
-                          yield StringBuilder.One "\n"
-
-                          for case in cases |> Map.values do
-                            yield
-                              StringBuilder.One
-                                $$"""  {{t.Key}}{{!case.CaseName}} {{t.Key}}Cases = "{{case.CaseName}}"; """
-
-                            yield StringBuilder.One "\n"
-
-                          yield StringBuilder.One ")"
-                          yield StringBuilder.One "\n"
-                          yield StringBuilder.One "\n"
-                          yield StringBuilder.One $$"""type {{t.Key}} struct {"""
-                          yield StringBuilder.One "\n"
-                          yield StringBuilder.One $"  Discriminator {t.Key}Cases\n"
-
-                          for case in cases |> Map.values do
-                            yield StringBuilder.One $"  {t.Key}{!case.CaseName} {t.Key}{!case.CaseName}Value; "
-
-                            yield StringBuilder.One "\n"
-
-                          yield StringBuilder.One "}"
-                          yield StringBuilder.One "\n"
-
-                          yield StringBuilder.One $"func Default{t.Key}() {t.Key} {{"
-                          yield StringBuilder.One "\n"
-
-                          yield
-                            StringBuilder.One
-                              $"  return New{t.Key}{!firstUnionCaseName}(Default{t.Key}{!firstUnionCaseName}Value());"
-
-                          yield StringBuilder.One "\n"
-                          yield StringBuilder.One "}"
-                          yield StringBuilder.One "\n"
-
-                          // func Default{UnionName}() {UnionName} {
-                          // 	return New{FirstUnionCaseName}(Default{FirstUnionCaseName}Value());
-                          // }
-
-                          for case in cases |> Map.values do
-                            yield StringBuilder.One $$"""func New{{t.Key}}{{!case.CaseName}}( """
-
-                            yield StringBuilder.One $"value {t.Key}{!case.CaseName}Value, "
-                            yield StringBuilder.One $") {t.Key} {{\n"
-                            yield StringBuilder.One $"  var res {t.Key};\n"
-
-                            yield StringBuilder.One $$"""  res.Discriminator = {{t.Key}}{{!case.CaseName}};"""
-
-                            yield StringBuilder.One $"\n"
-
-                            yield StringBuilder.One $$"""  res.{{t.Key}}{{!case.CaseName}} = value;"""
-
-                            yield StringBuilder.One $"\n"
-                            yield StringBuilder.One $"  return res;\n"
-                            yield StringBuilder.One $"}}\n"
-
-                          yield StringBuilder.One "\n"
-
-                          yield StringBuilder.One $"func Match{t.Key}[result any](value {t.Key}, "
-
-                          // BUILD HERE THE DEFAULTING BASED ON THE INVOCATION OF THE CONSTRUCTOR OF THE FIRST CASE
-
-                          for case in cases |> Map.values do
-                            yield
-                              StringBuilder.One
-                                $"on{t.Key}{!case.CaseName} func({t.Key}{!case.CaseName}Value) (result,error), "
-
-                          yield StringBuilder.One $") (result,error) {{\n"
-                          yield StringBuilder.One $"  switch value.Discriminator {{\n"
-
-                          for case in cases |> Map.values do
-                            yield StringBuilder.One $"    case {t.Key}{!case.CaseName}: \n"
-
-                            yield
-                              StringBuilder.One
-                                $"      return on{t.Key}{!case.CaseName}(value.{t.Key}{!case.CaseName}) \n"
-
-                          yield StringBuilder.One $"  }}\n"
-                          yield StringBuilder.One "  var res result\n"
-
-                          yield
-                            StringBuilder.One
-                              """  return res, fmt.Errorf("%s is not a valid discriminator value", value.Discriminator );"""
-
-                          yield StringBuilder.One $"\n"
-                          yield StringBuilder.One $"}}\n"
-                        }
-                      )
+                    return GolangUnion.ToGolang { Indentation = "" } union
                   | _ ->
                     let! fields = ExprType.GetFields t.Value.Type |> state.OfSum
 

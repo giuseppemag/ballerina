@@ -59,14 +59,22 @@
         ❌ allow Types and Forms which can extend, to only extend 1 other type/form (array length == 1 in extends)
         ❌ make sure that the failing tests fail for the right reason
         ❌ define methods for codegen'ing
-          ❌ a record
-          ❌ an enum
-          ❌ a discriminated union
-          ❌ move them to another file, group the golang codegen under a folder
-        ❌ define the model.fs for the golang codegen
+          ❌ move each to a separate file, not all dumped under LanguageConstructs
+            ❌ namespace LanguageConstructs module X, where X = 
+              ❌ Enum
+                ✅ data structure generation
+                ❌ including GET and POST
+              ❌ Stream GET and POST
+              ✅ Union
+              ❌ Record
+              ❌ EntityGET
+              ❌ EntityGETDefault
+              ❌ EntityGETDefault
+              ❌ EntityPOST
+              ❌ EntityPATCH
         ❌ recursively traverse the path and match over entity names and field names
           ```
-          func entityPATCHer[Delta, Result](writerA WriterA, writerB WriterB, ..., commitA:DeltaA -> Result) 
+          func entityPATCHer[Delta, Result](writerA WriterA, writerB WriterB, ..., commitA:DeltaA -> Result)
             traverse = func(entityName string, path []ballerina.PATCHPathElement[Delta]) : DeltaBase
               var ResultNil Result
               switch entityName {
