@@ -70,18 +70,22 @@
         ❌ define methods for codegen'ing
           ❌ move each to a separate file, not all dumped under LanguageConstructs
             ❌ namespace LanguageConstructs module X, where X =
-              ❌ Enum
+              ✅ Enum
                 ✅ data structure generation
-                ❌ including GET and POST
-              ❌ Stream GET and POST
+                ✅ including GET and POST
+              ✅ Stream GET and POST
               ✅ Union
               ✅ Record
               ✅ EntityGET
-              ❌ EntityGETDefault
-              ❌ EntityGETDefault
-              ❌ EntityPOST
+                ✅ improve the separation through a proper intermediate object
+              ✅ EntityGETDefault
+              ✅ EntityPOST
               ❌ EntityPATCH
+              ❌ writers and deltas
+              ❌ imports
+              ❌ type extensions (each to a separate file)
               ❌ ToGolang in the typename and method name is redundant, remove it
+              ❌ generate more than one golang file
         ❌ recursively traverse the path and match over entity names and field names
           ```
           func entityPATCHer[Delta, Result](writerA WriterA, writerB WriterB, ..., commitA:DeltaA -> Result)

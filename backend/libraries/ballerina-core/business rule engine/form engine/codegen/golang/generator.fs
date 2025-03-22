@@ -1,6 +1,6 @@
-namespace Ballerina.DSL.FormEngine.Codegen.Golang
+namespace Ballerina.DSL.FormEngine.Codegen.Golang.Generator
 
-module Generator =
+module Main =
 
   open Ballerina.DSL.Expr.Model
   open Ballerina.DSL.Expr.Types.Model
@@ -17,39 +17,15 @@ module Generator =
   open Ballerina.Fun
   open Ballerina.Collections
   open Ballerina.Collections.NonEmptyList
+  open Ballerina.DSL.FormEngine.Codegen.Golang.Generator.Model
   open Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs
   open Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs.Enum
   open Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs.Union
   open Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs.Record
   open Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs.EnumGETters
   open Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs.EnumPOSTers
-
-  type GoCodeGenState =
-    { UsedImports: Set<string> }
-
-    static member Updaters =
-      {| UsedImports =
-          fun u ->
-            fun s ->
-              { s with
-                  UsedImports = u (s.UsedImports) } |}
-
-  type Writer =
-    { Fields: Map<string, WriterField>
-      Type: ExprType
-      Name: WriterName
-      DeltaTypeName: string
-      Kind: WriterKind }
-
-  and WriterKind =
-    | Imported
-    | Generated
-
-  and WriterField =
-    | Primitive of {| DeltaTypeName: string |}
-    | Nested of WriterName
-
-  and WriterName = { WriterName: string }
+  open Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs.StreamGETters
+  open Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs.StreamPOSTers
 
   type PrimitiveType with
     static member GetConfig (config: CodeGenConfig) (p: PrimitiveType) : CodegenConfigTypeDef =
@@ -454,121 +430,48 @@ module Generator =
                 |> Seq.toList
             }
 
-          let entityAPIsWithGET:List<EntityApi> =
-            ctx.Apis.Entities
-            |> Map.values
-            |> Seq.filter (snd >> Set.contains CrudMethod.Get)
-            |> Seq.map fst
-            |> List.ofSeq
-
           let entitiesEnum = GolangEnum.ToGolang  () entitiesEnum
 
-          let entityGETters = GolangEntityGETters.ToGolang () { FunctionName= $"{formName}EntityGETter"; EntityNotFoundErrorConstructor= codegenConfig.EntityNotFoundError.Constructor;  Entities=entityAPIsWithGET }            
+          let entityGETters = GolangEntityGETters.ToGolang () { 
+            FunctionName= $"{formName}EntityGETter"
+            EntityNotFoundErrorConstructor= codegenConfig.EntityNotFoundError.Constructor
+            Entities=
+              ctx.Apis.Entities
+              |> Map.values
+              |> Seq.filter (snd >> Set.contains CrudMethod.Get)
+              |> Seq.map fst
+              |> Seq.map (fun e -> {| EntityName = e.EntityName; EntityType = e.TypeId.TypeName  |})
+              |> List.ofSeq
+            }            
 
           let entityDEFAULTers =
-            seq {
-              yield StringBuilder.One $"func {formName}EntityDEFAULTer[result any]("
-
-              let entityAPIsWithDEFAULT =
-                ctx.Apis.Entities
-                |> Map.values
-                |> Seq.filter (snd >> Set.contains CrudMethod.Default)
-                |> Seq.map fst
-
-              yield!
-                entityAPIsWithDEFAULT
-                |> Seq.map (fun e ->
-                  StringBuilder.Many(
-                    seq {
-                      yield
-                        StringBuilder.One(
-                          $$"""serialize{{e.EntityName}} func ({{e.TypeId.TypeName}}) (result,error), """
-                        )
-                    }
-                  ))
-
-
-              yield
-                StringBuilder.One ") func(string) (result, error) { return func(entityName string) (result, error) {\n"
-
-              yield StringBuilder.One "    var resultNil result;\n"
-              yield StringBuilder.One "    switch entityName {\n"
-
-              for entityApi in entityAPIsWithDEFAULT do
-                yield StringBuilder.One $$"""      case "{{entityApi.TypeId.TypeName}}Entity":  """
-                yield StringBuilder.One "\n"
-
-                yield
-                  StringBuilder.One
-                    $$"""        return serialize{{entityApi.EntityName}}(Default{{entityApi.TypeId.TypeName}}()); """
-
-                yield StringBuilder.One "\n"
-
-              yield StringBuilder.One "    }\n"
-
-              yield
-                StringBuilder.One
-                  $"    return resultNil, {codegenConfig.EntityNotFoundError.Constructor}(entityName);\n"
-
-              yield StringBuilder.One "  }\n"
-              yield StringBuilder.One "}\n\n"
-            }
+            let entities = 
+              {
+                GolangEntityGETDEFAULTers.FunctionName = $"{formName}EntityDEFAULTer"
+                Entities = 
+                  ctx.Apis.Entities
+                  |> Map.values
+                  |> Seq.filter (snd >> Set.contains CrudMethod.Default)
+                  |> Seq.map fst
+                  |> Seq.map (fun e -> {| EntityName=e.EntityName; EntityType=e.TypeId.TypeName |})
+                  |> List.ofSeq
+                EntityNotFoundErrorConstructor = codegenConfig.EntityNotFoundError.Constructor
+              }
+            GolangEntityGETDEFAULTers.ToGolang () entities
 
           let entityPOSTers =
-            seq {
-              yield StringBuilder.One $"func {formName}EntityPOSTer[id any, payload any]("
-
-              let entityAPIsWithPOST =
+            let entities = {
+              GolangEntityPOSTers.FunctionName = $"{formName}EntityPOSTer"
+              Entities = 
                 ctx.Apis.Entities
                 |> Map.values
                 |> Seq.filter (snd >> Set.contains CrudMethod.Create)
                 |> Seq.map fst
-
-              yield!
-                entityAPIsWithPOST
-                |> Seq.map (fun e ->
-                  StringBuilder.Many(
-                    seq {
-                      yield
-                        StringBuilder.One(
-                          $$"""deserialize{{e.EntityName}} func (id, payload) ({{e.TypeId.TypeName}},error), """
-                        )
-
-                      yield StringBuilder.One($$"""process{{e.EntityName}} func (id, {{e.TypeId.TypeName}}) error, """)
-                    }
-                  ))
-
-
-              yield
-                StringBuilder.One
-                  ") func (string, id, payload) error { return func(entityName string, entityId id, entityValue payload) error {\n"
-
-              yield StringBuilder.One "    switch entityName {\n"
-
-              for entityApi in entityAPIsWithPOST do
-                yield StringBuilder.One $$"""      case "{{entityApi.TypeId.TypeName}}Entity":  """
-                yield StringBuilder.One "\n"
-
-                yield
-                  StringBuilder.One
-                    $$"""        var res, err = deserialize{{entityApi.EntityName}}(entityId, entityValue);  """
-
-                yield StringBuilder.One "\n"
-
-                yield StringBuilder.One $$"""        if err != nil { return err; }  """
-
-                yield StringBuilder.One "\n"
-                yield StringBuilder.One $$"""        return process{{entityApi.EntityName}}(entityId, res);  """
-
-                yield StringBuilder.One "\n"
-
-              yield StringBuilder.One "    }\n"
-
-              yield StringBuilder.One $"    return {codegenConfig.EntityNotFoundError.Constructor}(entityName);\n"
-
-              yield StringBuilder.One "  }\n"
-              yield StringBuilder.One "}\n"
+                |> Seq.map (fun e -> {| EntityName = e.EntityName; EntityType = e.TypeId.TypeName |})
+                |> List.ofSeq
+              EntityNotFoundErrorConstructor = codegenConfig.EntityNotFoundError.Constructor
             }
+            GolangEntityPOSTers.ToGolang () entities
 
           let enumCasesGETters =
             let getters = { 
@@ -592,92 +495,29 @@ module Generator =
             GolangEnumPOSTers.ToGolang () posters                
 
           let streamGETters =
-            seq {
-              yield
-                StringBuilder.One
-                  $"func {formName}StreamGETter[searchParams any, serializedResult any](streamName string, searchArgs searchParams, "
-
-              yield!
+            let getters = { 
+              GolangStreamGETters.FunctionName = $"{formName}StreamGETter"
+              Streams = 
                 ctx.Apis.Streams
                 |> Map.values
-                |> Seq.map (fun e ->
-                  StringBuilder.One(
-                    $$"""get{{e.StreamName}} func(searchParams) ([]{{e.TypeId.TypeName}}, error), serialize{{e.StreamName}} func(searchParams, []{{e.TypeId.TypeName}}) (serializedResult, error), """
-                  ))
-
-              yield StringBuilder.One ") (serializedResult,error) {\n"
-              yield StringBuilder.One "  var result serializedResult\n"
-              yield StringBuilder.One "  switch streamName {\n"
-
-              yield!
-                ctx.Apis.Streams
-                |> Map.values
-                |> Seq.map (fun e ->
-                  StringBuilder.Many(
-                    seq {
-                      StringBuilder.One $$"""  case "{{e.StreamName}}":"""
-                      StringBuilder.One "\n"
-                      StringBuilder.One $$"""   var res,err = get{{e.StreamName}}(searchArgs)"""
-                      StringBuilder.One "\n"
-                      StringBuilder.One $$"""   if err != nil { return result,err }"""
-                      StringBuilder.One "\n"
-
-                      StringBuilder.One $$"""   return serialize{{e.StreamName}}(searchArgs, res)"""
-
-                      StringBuilder.One "\n"
-                    }
-                  ))
-
-              yield StringBuilder.One "  }\n"
-
-              yield
-                StringBuilder.One $$"""  return result, {{codegenConfig.StreamNotFoundError.Constructor}}(streamName)"""
-
-              yield StringBuilder.One "\n}\n\n"
+                |> Seq.map (fun e -> {| StreamName = e.StreamName; StreamType = e.TypeId.TypeName |})
+                |> List.ofSeq              
+              StreamNotFoundErrorConstructor = codegenConfig.StreamNotFoundError.Constructor
             }
+            GolangStreamGETters.ToGolang () getters
 
           let streamPOSTters =
-            seq {
-              yield
-                StringBuilder.One
-                  $"func {formName}StreamPOSTter[serializedResult any](streamName string, id {codegenConfig.Guid.GeneratedTypeName}, "
-
-              yield!
+            let posters:GolangStreamPOSTers = { 
+              GolangStreamPOSTers.FunctionName = $"{formName}StreamPOSTter"
+              Streams = 
                 ctx.Apis.Streams
                 |> Map.values
-                |> Seq.map (fun e ->
-                  StringBuilder.One(
-                    $$"""get{{e.StreamName}} func({{codegenConfig.Guid.GeneratedTypeName}}) ({{e.TypeId.TypeName}}, error), serialize{{e.StreamName}} func({{e.TypeId.TypeName}}) (serializedResult, error), """
-                  ))
-
-              yield StringBuilder.One ") (serializedResult,error) {\n"
-              yield StringBuilder.One "  var result serializedResult\n"
-              yield StringBuilder.One "  switch streamName {\n"
-
-              yield!
-                ctx.Apis.Streams
-                |> Map.values
-                |> Seq.map (fun e ->
-                  StringBuilder.Many(
-                    seq {
-                      StringBuilder.One $$"""  case "{{e.StreamName}}":"""
-                      StringBuilder.One "\n"
-                      StringBuilder.One $$"""   var res,err = get{{e.StreamName}}(id)"""
-                      StringBuilder.One "\n"
-                      StringBuilder.One $$"""   if err != nil { return result,err }"""
-                      StringBuilder.One "\n"
-                      StringBuilder.One $$"""   return serialize{{e.StreamName}}(res)"""
-                      StringBuilder.One "\n"
-                    }
-                  ))
-
-              yield StringBuilder.One "  }\n"
-
-              yield
-                StringBuilder.One $$"""  return result, {{codegenConfig.StreamNotFoundError.Constructor}}(streamName)"""
-
-              yield StringBuilder.One "\n}\n\n"
+                |> Seq.map (fun e -> {| StreamName = e.StreamName; StreamType = e.TypeId.TypeName |})
+                |> List.ofSeq
+              GuidType = codegenConfig.Guid.GeneratedTypeName
+              StreamNotFoundErrorConstructor = codegenConfig.StreamNotFoundError.Constructor
             }
+            GolangStreamPOSTers.ToGolang () posters
 
           let customTypes = codegenConfig.Custom.Keys |> Set.ofSeq
 
@@ -849,12 +689,12 @@ module Generator =
                 seq {
                   yield! writers
                   yield entityGETters
-                  yield! entityDEFAULTers
-                  yield! entityPOSTers
+                  yield entityDEFAULTers
+                  yield entityPOSTers
                   yield enumCasesGETters
                   yield enumCasesPOSTters
-                  yield! streamGETters
-                  yield! streamPOSTters
+                  yield streamGETters
+                  yield streamPOSTters
                   yield! generatedTypes
                   yield! customTypes
                 }
