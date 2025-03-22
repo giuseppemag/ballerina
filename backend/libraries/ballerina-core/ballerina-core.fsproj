@@ -42,7 +42,13 @@
     <Compile Include="business rule engine/form engine/model.fs" />
     <Compile Include="business rule engine/form engine/parser.fs" />
     <Compile Include="business rule engine/form engine/validator.fs" />
-    <Compile Include="business rule engine/form engine/codegen/golang/language constructs.fs" />
+    <Compile Include="business rule engine/form engine/codegen/golang/language constructs/context.fs" />
+    <Compile Include="business rule engine/form engine/codegen/golang/language constructs/union.fs" />
+    <Compile Include="business rule engine/form engine/codegen/golang/language constructs/enum.fs" />
+    <Compile Include="business rule engine/form engine/codegen/golang/language constructs/record.fs" />
+    <Compile Include="business rule engine/form engine/codegen/golang/language constructs/entityGETters.fs" />
+    <Compile Include="business rule engine/form engine/codegen/golang/language constructs/enumGETters.fs" />
+    <Compile Include="business rule engine/form engine/codegen/golang/language constructs/enumPOSTers.fs" />
     <Compile Include="business rule engine/form engine/codegen/golang/generator.fs" />
     <Compile Include="business rule engine/form engine/runner.fs" />
   </ItemGroup>

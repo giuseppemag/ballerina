@@ -1,6 +1,7 @@
-namespace Ballerina.DSL.FormEngine.Codegen.Golang
+namespace Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs
+open Ballerina.DSL.Expr.Types.Model
 
-module LanguageConstructs =
+module Union =
 
   open Ballerina.DSL.Expr.Model
   open Ballerina.DSL.Expr.Types.Model
@@ -17,40 +18,6 @@ module LanguageConstructs =
   open Ballerina.Fun
   open Ballerina.Collections
   open Ballerina.Collections.NonEmptyList
-
-  type GolangContext =
-    { Indentation: string }
-
-  type GolangEnum =
-    { Name: string
-      Cases: List<{| Name:string; Value:string |}> }
-
-    static member ToGolang (ctx: GolangContext) (enum: GolangEnum) =
-      seq {
-        yield StringBuilder.One $"type {enum.Name} string"
-        yield StringBuilder.One "\n"
-        yield StringBuilder.One "const ("
-        yield StringBuilder.One "\n"
-
-        for case in enum.Cases do
-          yield
-            StringBuilder.One
-              $$"""  {{case.Name}} {{enum.Name}} = "{{case.Value}}" """
-
-          yield StringBuilder.One "\n"
-
-        yield StringBuilder.One ")"
-        yield StringBuilder.One "\n"
-        yield StringBuilder.One $$"""var All{{enum.Name}}Cases = [...]{{enum.Name}}{ """
-
-        for case in enum.Cases do
-          yield StringBuilder.One $$"""{{case.Name}}, """
-
-        yield StringBuilder.One "}\n\n"
-        yield StringBuilder.One $"func Default{enum.Name}() {enum.Name} {{ return All{enum.Name}Cases[0]; }}"
-        yield StringBuilder.One "\n\n"
-      }
-      |> StringBuilder.Many
 
   type GolangUnion =
     { Name: string

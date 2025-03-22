@@ -964,7 +964,13 @@
         },
         "importantDate": {
           "label": "important date",
-          "renderer": "maybeDate",
+          "renderer": "defaultSum",
+          "leftRenderer": {
+            "renderer":"defaultUnit"
+          },
+          "rightRenderer": {
+            "renderer":"defaultDate"
+          },
           "visible": true,
           "disabled": false
         },

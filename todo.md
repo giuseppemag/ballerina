@@ -54,24 +54,34 @@
         ✅ make sure tests and person-config all work properly
         ✅ fix array type in ballerina/Go
         ✅ fix sum type in ballerina/Go
+        ❌ support generic type renderers over specific types
+        ```
+        "importantDate": {
+          "label": "important date",
+          "renderer": "sumRenderer",
+          "visible": true,
+          "disabled": false
+        },
+        ```
         ❌ add a renderer decorator to forms
         ❌ ensure Types and Forms can only extend other types and forms which are not extending anything
         ❌ allow Types and Forms which can extend, to only extend 1 other type/form (array length == 1 in extends)
         ❌ make sure that the failing tests fail for the right reason
         ❌ define methods for codegen'ing
           ❌ move each to a separate file, not all dumped under LanguageConstructs
-            ❌ namespace LanguageConstructs module X, where X = 
+            ❌ namespace LanguageConstructs module X, where X =
               ❌ Enum
                 ✅ data structure generation
                 ❌ including GET and POST
               ❌ Stream GET and POST
               ✅ Union
-              ❌ Record
-              ❌ EntityGET
+              ✅ Record
+              ✅ EntityGET
               ❌ EntityGETDefault
               ❌ EntityGETDefault
               ❌ EntityPOST
               ❌ EntityPATCH
+              ❌ ToGolang in the typename and method name is redundant, remove it
         ❌ recursively traverse the path and match over entity names and field names
           ```
           func entityPATCHer[Delta, Result](writerA WriterA, writerB WriterB, ..., commitA:DeltaA -> Result)

@@ -18,6 +18,11 @@ module Generator =
   open Ballerina.Collections
   open Ballerina.Collections.NonEmptyList
   open Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs
+  open Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs.Enum
+  open Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs.Union
+  open Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs.Record
+  open Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs.EnumGETters
+  open Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs.EnumPOSTers
 
   type GoCodeGenState =
     { UsedImports: Set<string> }
@@ -449,61 +454,16 @@ module Generator =
                 |> Seq.toList
             }
 
-          let entityGETters =
-            seq {
-              yield LanguageConstructs.GolangEnum.ToGolang  { Indentation="" } entitiesEnum
+          let entityAPIsWithGET:List<EntityApi> =
+            ctx.Apis.Entities
+            |> Map.values
+            |> Seq.filter (snd >> Set.contains CrudMethod.Get)
+            |> Seq.map fst
+            |> List.ofSeq
 
-              yield StringBuilder.One $"func {formName}EntityGETter[id any, result any]("
+          let entitiesEnum = GolangEnum.ToGolang  () entitiesEnum
 
-              let entityAPIsWithGET =
-                ctx.Apis.Entities
-                |> Map.values
-                |> Seq.filter (snd >> Set.contains CrudMethod.Get)
-                |> Seq.map fst
-
-              yield!
-                entityAPIsWithGET
-                |> Seq.map (fun e ->
-                  StringBuilder.Many(
-                    seq {
-                      yield StringBuilder.One($$"""get{{e.EntityName}} func (id) ({{e.TypeId.TypeName}},error), """)
-
-                      yield
-                        StringBuilder.One(
-                          $$"""serialize{{e.EntityName}} func ({{e.TypeId.TypeName}}) (result,error), """
-                        )
-                    }
-                  ))
-
-
-              yield
-                StringBuilder.One
-                  ") func (string, id) (result,error) { return func (entityName string, entityId id) (result,error) {\n"
-
-              yield StringBuilder.One "    var resultNil result;\n"
-              yield StringBuilder.One "    switch entityName {\n"
-
-              for entityApi in entityAPIsWithGET do
-                yield StringBuilder.One $$"""      case "{{entityApi.TypeId.TypeName}}Entity":  """
-                yield StringBuilder.One "\n"
-                yield StringBuilder.One $$"""        var res, err = get{{entityApi.EntityName}}(entityId);  """
-                yield StringBuilder.One "\n"
-
-                yield StringBuilder.One $$"""        if err != nil { return resultNil, err }  """
-                yield StringBuilder.One "\n"
-                yield StringBuilder.One $$"""        return serialize{{entityApi.EntityName}}(res); """
-
-                yield StringBuilder.One "\n"
-
-              yield StringBuilder.One "    }\n"
-
-              yield
-                StringBuilder.One
-                  $"    return resultNil, {codegenConfig.EntityNotFoundError.Constructor}(entityName);\n"
-
-              yield StringBuilder.One "  }\n"
-              yield StringBuilder.One "}\n\n"
-            }
+          let entityGETters = GolangEntityGETters.ToGolang () { FunctionName= $"{formName}EntityGETter"; EntityNotFoundErrorConstructor= codegenConfig.EntityNotFoundError.Constructor;  Entities=entityAPIsWithGET }            
 
           let entityDEFAULTers =
             seq {
@@ -611,90 +571,25 @@ module Generator =
             }
 
           let enumCasesGETters =
-            seq {
-              yield StringBuilder.One $"func {formName}EnumGETter[result any](enumName string, "
-
-              yield!
-                ctx.Apis.Enums
+            let getters = { 
+              GolangEnumGETters.FunctionName= $"{formName}EnumGETter"; 
+              EnumNotFoundErrorConstructor=codegenConfig.EnumNotFoundError.Constructor; 
+              Enums=ctx.Apis.Enums
                 |> Map.values
-                |> Seq.map (fun e ->
-                  StringBuilder.One($$"""on{{e.EnumName}} func ([]{{e.UnderlyingEnum.TypeName}}) (result,error), """))
-
-              yield StringBuilder.One ") (result,error) {\n"
-              yield StringBuilder.One "  switch enumName {\n"
-
-              yield!
-                ctx.Apis.Enums
-                |> Map.values
-                |> Seq.map (fun e ->
-                  StringBuilder.Many(
-                    seq {
-                      yield
-                        StringBuilder.One(
-                          $$"""    case "{{e.EnumName}}": return on{{e.EnumName}}(All{{e.UnderlyingEnum.TypeName}}Cases[:])"""
-                        )
-
-                      yield StringBuilder.One "\n"
-                    }
-                  ))
-
-              yield StringBuilder.One "  }\n"
-              yield StringBuilder.One "  var res result\n"
-              yield StringBuilder.One $$"""  return res, {{codegenConfig.EnumNotFoundError.Constructor}}(enumName)"""
-              yield StringBuilder.One "\n}\n\n"
-            }
+                |> Seq.map (fun e -> {| EnumName=e.EnumName; EnumType=e.UnderlyingEnum.TypeName |})
+                |> List.ofSeq }
+            GolangEnumGETters.ToGolang () getters
 
           let enumCasesPOSTters =
-            seq {
-              yield StringBuilder.One $"func {formName}EnumPOSTter(enumName string, enumValue string, "
-
-              yield!
-                ctx.Apis.Enums
+            let posters = { 
+              GolangEnumPOSTers.FunctionName= $"{formName}EnumPOSTter"; 
+              InvalidEnumValueCombinationError=codegenConfig.InvalidEnumValueCombinationError.Constructor; 
+              UnitType=codegenConfig.Unit.GeneratedTypeName;
+              Enums=ctx.Apis.Enums
                 |> Map.values
-                |> Seq.map (fun e ->
-                  StringBuilder.One(
-                    $$"""on{{e.EnumName}} func ({{e.UnderlyingEnum.TypeName}}) ({{codegenConfig.Unit.GeneratedTypeName}},error), """
-                  ))
-
-              yield StringBuilder.One $$""") ({{codegenConfig.Unit.GeneratedTypeName}},error) {"""
-              yield StringBuilder.One "\n"
-              yield StringBuilder.One "  switch enumName {\n"
-
-              yield!
-                ctx.Apis.Enums
-                |> Map.values
-                |> Seq.map (fun e ->
-                  StringBuilder.Many(
-                    seq {
-                      yield StringBuilder.One(sprintf "  case \"%s\":\n" e.EnumName)
-
-                      yield
-                        StringBuilder.One(
-                          $$"""    if slices.Contains(All{{e.UnderlyingEnum.TypeName}}Cases[:], {{e.UnderlyingEnum.TypeName}}(enumValue)) {"""
-                        )
-
-                      yield StringBuilder.One("\n")
-
-                      yield
-                        StringBuilder.One(
-                          $$"""      return on{{e.EnumName}}({{e.UnderlyingEnum.TypeName}}(enumValue))"""
-                        )
-
-                      yield StringBuilder.One("\n")
-                      yield StringBuilder.One("    }\n")
-                    }
-                  ))
-
-              yield StringBuilder.One "  }\n"
-              yield StringBuilder.One $$"""  var result {{codegenConfig.Unit.GeneratedTypeName}}"""
-              yield StringBuilder.One "\n"
-
-              yield
-                StringBuilder.One
-                  $$"""  return result, {{codegenConfig.InvalidEnumValueCombinationError.Constructor}}(enumName, enumValue )"""
-
-              yield StringBuilder.One "\n}\n\n"
-            }
+                |> Seq.map (fun e -> {| EnumName=e.EnumName; EnumType=e.UnderlyingEnum.TypeName |})
+                |> List.ofSeq }
+            GolangEnumPOSTers.ToGolang () posters                
 
           let streamGETters =
             seq {
@@ -828,7 +723,7 @@ module Generator =
                     return
                       StringBuilder.Many(
                         seq {
-                          yield GolangEnum.ToGolang { Indentation="" } enum
+                          yield GolangEnum.ToGolang () enum
                         }
                       )
                   | ExprType.UnionType cases when cases |> Map.isEmpty |> not ->
@@ -875,106 +770,18 @@ module Generator =
                       Cases = caseValues
                     }
 
-                    return GolangUnion.ToGolang { Indentation = "" } union
+                    return GolangUnion.ToGolang () union
                   | _ ->
                     let! fields = ExprType.GetFields t.Value.Type |> state.OfSum
+                    let! fields =
+                      state.All(fields |> Seq.map (fun (fieldName,field) -> state{
+                        let! fieldType = field |> ExprType.ToGolangTypeAnnotation
+                        let! fieldDefaultValue = field |> ExprType.ToGolangDefaultValue
+                        return {| FieldName = fieldName; FieldType=fieldType; FieldDefaultValue=fieldDefaultValue |}
+                    }) |> List.ofSeq)
 
-                    let typeStart =
-                      $$"""type {{t.Value.TypeId.TypeName}} struct {
-"""
-
-                    let! fieldTypes =
-                      state.All(fields |> Seq.map (snd >> ExprType.ToGolangTypeAnnotation) |> List.ofSeq)
-
-                    let fieldDeclarations =
-                      StringBuilder.Many(
-                        seq {
-                          for fieldType, fieldName in fields |> Seq.map fst |> Seq.zip fieldTypes do
-                            yield StringBuilder.One "  "
-                            yield StringBuilder.One fieldName.ToFirstUpper
-                            yield StringBuilder.One " "
-                            yield StringBuilder.One fieldType
-                            yield StringBuilder.One "\n"
-                        }
-                      )
-
-                    let typeEnd =
-                      $$"""}
-"""
-
-                    let consStart = $$"""func New{{t.Value.TypeId.TypeName}}("""
-
-                    let consParams =
-                      StringBuilder.Many(
-                        seq {
-                          for fieldType, fieldName in fields |> Seq.map fst |> Seq.zip fieldTypes do
-                            yield StringBuilder.One fieldName
-                            yield StringBuilder.One " "
-                            yield StringBuilder.One fieldType
-                            yield StringBuilder.One ", "
-                        }
-                      )
-
-                    let consDeclEnd =
-                      $$""") {{t.Value.TypeId.TypeName}} {
-  var res {{t.Value.TypeId.TypeName}}
-"""
-
-                    let consBodyEnd =
-                      $$"""  return res
-}
-
-"""
-
-                    let consFieldInits =
-                      StringBuilder.Many(
-                        seq {
-                          for fieldType, fieldName in fields |> Seq.map fst |> Seq.zip fieldTypes do
-                            yield StringBuilder.One "  res."
-                            yield StringBuilder.One fieldName.ToFirstUpper
-                            yield StringBuilder.One " = "
-                            yield StringBuilder.One fieldName
-                            yield StringBuilder.One ";\n"
-                        }
-                      )
-
-                    let! fieldDefaults = fields |> Seq.map snd |> Seq.map ExprType.ToGolangDefaultValue |> state.All
-
-                    let defaultValue: StringBuilder =
-                      StringBuilder.Many(
-                        seq {
-                          yield
-                            StringBuilder.One $"func Default{t.Value.TypeId.TypeName}() {t.Value.TypeId.TypeName} {{"
-
-                          yield StringBuilder.One "\n"
-                          yield StringBuilder.One $"  return New{t.Value.TypeId.TypeName}("
-
-                          for fieldDefault in fieldDefaults do
-                            yield StringBuilder.One(fieldDefault)
-                            yield StringBuilder.One ", "
-
-                          yield StringBuilder.One ");"
-                          yield StringBuilder.One "\n}\n"
-                          yield StringBuilder.One "\n"
-                        }
-                      )
-
-                    return
-                      StringBuilder.Many(
-                        seq {
-                          yield StringBuilder.One "\n"
-                          yield StringBuilder.One typeStart
-                          yield fieldDeclarations
-                          yield StringBuilder.One typeEnd
-                          yield StringBuilder.One "\n"
-                          yield StringBuilder.One consStart
-                          yield consParams
-                          yield StringBuilder.One consDeclEnd
-                          yield consFieldInits
-                          yield StringBuilder.One consBodyEnd
-                          yield defaultValue
-                        }
-                      )
+                    let record = { Name = t.Value.TypeId.TypeName; Fields = fields }
+                    return GolangRecord.ToGolang () record
                 }
                 |> state.WithErrorContext $"...when generating type {t.Value.TypeId.TypeName}")
               |> List.ofSeq
@@ -1041,21 +848,13 @@ module Generator =
               StringBuilder.Many(
                 seq {
                   yield! writers
-                  yield! entityGETters
+                  yield entityGETters
                   yield! entityDEFAULTers
                   yield! entityPOSTers
-                  yield! enumCasesGETters
-                  yield! enumCasesPOSTters
+                  yield enumCasesGETters
+                  yield enumCasesPOSTters
                   yield! streamGETters
                   yield! streamPOSTters
-                  // yield! entitiesOPSelector "GET" CrudMethod.Get
-                  // yield! entitiesOPEnum "GET" CrudMethod.Get
-                  // yield! entitiesOPSelector "POST" CrudMethod.Create
-                  // yield! entitiesOPEnum "POST" CrudMethod.Create
-                  // yield! entitiesOPSelector "PATCH" CrudMethod.Update
-                  // yield! entitiesOPEnum "PATCH" CrudMethod.Update
-                  // yield! entitiesOPSelector "DEFAULT" CrudMethod.Default
-                  // yield! entitiesOPEnum "DEFAULT" CrudMethod.Default
                   yield! generatedTypes
                   yield! customTypes
                 }
