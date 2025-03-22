@@ -55,6 +55,9 @@
     <Compile Include="business rule engine/form engine/codegen/golang/language constructs/enumPOSTers.fs" />
     <Compile Include="business rule engine/form engine/codegen/golang/language constructs/streamGETters.fs" />
     <Compile Include="business rule engine/form engine/codegen/golang/language constructs/streamPOSTers.fs" />
+    <Compile Include="business rule engine/form engine/codegen/golang/language constructs/ExprTypeToWriter.fs" />
+    <Compile Include="business rule engine/form engine/codegen/golang/language constructs/ExprTypeToAnnotation.fs" />
+    <Compile Include="business rule engine/form engine/codegen/golang/language constructs/ExprTypeDefaultValue.fs" />
     <Compile Include="business rule engine/form engine/codegen/golang/generator.fs" />
     <Compile Include="business rule engine/form engine/runner.fs" />
   </ItemGroup>

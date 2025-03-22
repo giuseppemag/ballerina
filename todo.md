@@ -80,10 +80,11 @@
                 ✅ improve the separation through a proper intermediate object
               ✅ EntityGETDefault
               ✅ EntityPOST
-              ❌ EntityPATCH
+              ✅ type extensions (each to a separate file)
               ❌ writers and deltas
+              ❌ EntityPATCH
               ❌ imports
-              ❌ type extensions (each to a separate file)
+              ❌ `generated types`
               ❌ ToGolang in the typename and method name is redundant, remove it
               ❌ generate more than one golang file
         ❌ recursively traverse the path and match over entity names and field names

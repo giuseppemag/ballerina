@@ -3,6 +3,7 @@ namespace Ballerina.DSL.FormEngine.Codegen.Golang.Generator
 module Model =
 
   open Ballerina.DSL.Expr.Types.Model
+  open Ballerina.DSL.FormEngine.Model
 
   type GoCodeGenState =
     { UsedImports: Set<string> }
@@ -30,3 +31,15 @@ module Model =
     | Nested of WriterName
 
   and WriterName = { WriterName: string }
+
+  type PrimitiveType with
+    static member GetConfig (config: CodeGenConfig) (p: PrimitiveType) : CodegenConfigTypeDef =
+      match p with
+      | PrimitiveType.BoolType -> config.Bool
+      | PrimitiveType.DateOnlyType -> config.Date
+      | PrimitiveType.DateTimeType -> failwith "not implemented - add a CodeGenConfig for float"
+      | PrimitiveType.FloatType -> failwith "not implemented - add a CodeGenConfig for float"
+      | PrimitiveType.GuidType -> config.Guid
+      | PrimitiveType.IntType -> config.Int
+      | PrimitiveType.RefType _ -> config.Guid
+      | PrimitiveType.StringType -> config.String
