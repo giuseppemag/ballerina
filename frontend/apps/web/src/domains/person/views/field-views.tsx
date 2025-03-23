@@ -4,7 +4,7 @@ import {
   DateView,
   EnumView,
   EnumMultiselectView,
-  StringView,
+  StringFormView,
   NumberView,
   BooleanView,
   SearchableInfiniteStreamView,
@@ -91,7 +91,7 @@ export const PersonFieldViews = {
     <
       Context extends FormLabel & { showAllErrors: boolean },
       ForeignMutationsExpected,
-    >(): StringView<Context, ForeignMutationsExpected> =>
+    >(): StringFormView<Context, ForeignMutationsExpected> =>
     (props) => (
       <>
         {props.context.label && <h3>{props.context.label}</h3>}

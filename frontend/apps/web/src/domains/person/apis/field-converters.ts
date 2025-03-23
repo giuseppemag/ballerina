@@ -38,8 +38,8 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
       typeof _ == "string"
         ? new Date(Date.parse(_))
         : typeof _ == "number"
-        ? new Date(_)
-        : new Date(Date.now()),
+          ? new Date(_)
+          : new Date(Date.now()),
     toAPIRawValue: ([_, __]) => _,
   },
   union: { fromAPIRawValue: (_) => _, toAPIRawValue: ([_, __]) => _ },
@@ -99,10 +99,13 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
     toAPIRawValue: ([_, __]) =>
       _.valueSeq()
         .toArray()
-        .reduce((acc, value, index) => ({
-          ...acc,
-          [`Item${index + 1}`]: value,
-        }), {}),
+        .reduce(
+          (acc, value, index) => ({
+            ...acc,
+            [`Item${index + 1}`]: value,
+          }),
+          {},
+        ),
   },
   Sum: {
     fromAPIRawValue: (_: any) =>

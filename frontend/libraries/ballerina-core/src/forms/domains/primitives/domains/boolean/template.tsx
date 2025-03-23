@@ -4,6 +4,7 @@ import {
   BooleanView,
   replaceWith,
   ValidateRunner,
+  BooleanFormState,
 } from "../../../../../../main";
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
@@ -12,7 +13,6 @@ import {
   FieldValidation,
   FieldValidationWithPath,
   OnChange,
-  CommonFormState,
 } from "../../../singleton/state";
 
 export const BooleanForm = <
@@ -23,7 +23,7 @@ export const BooleanForm = <
 ) => {
   return Template.Default<
     Context & Value<boolean> & { disabled: boolean; visible: boolean },
-    { commonFormState: CommonFormState },
+    BooleanFormState,
     ForeignMutationsExpected & { onChange: OnChange<boolean> },
     BooleanView<Context, ForeignMutationsExpected>
   >((props) => (
@@ -40,7 +40,7 @@ export const BooleanForm = <
   )).any([
     ValidateRunner<
       Context & { disabled: boolean; visible: boolean },
-      { commonFormState: CommonFormState },
+      BooleanFormState,
       ForeignMutationsExpected,
       boolean
     >(

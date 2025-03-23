@@ -22,6 +22,10 @@ export type MapFieldState<KeyFormState, ValueFormState> = {
   >;
 };
 export const MapFieldState = <KeyFormState, ValueFormState>() => ({
+  zero: () => ({
+    commonFormState: CommonFormState.Default(),
+    elementFormStates: Map(),
+  }),
   Default: (
     elementFormStates: MapFieldState<
       KeyFormState,

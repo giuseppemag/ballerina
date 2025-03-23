@@ -317,32 +317,31 @@ module Validator =
             sum.Throw(
               Errors.Singleton $"Error: the form type is a union, expected cases in the body but found fields instead."
             )
-        | _, FormBody.Fields fields -> 
-          do! FormFields.Validate ctx localType fields
+        | _, FormBody.Fields fields -> do! FormFields.Validate ctx localType fields
         | _ -> return! sum.Throw(Errors.Singleton $"Error: mismatched form type and form body")
       }
+
     static member ValidatePredicates
       (ctx: ParsedFormsContext)
       (globalType: TypeBinding)
       (rootType: TypeBinding)
       (localType: ExprType)
       (body: FormBody)
-      : State<Unit, Unit, ValidationState, Errors> = 
+      : State<Unit, Unit, ValidationState, Errors> =
       state {
-          match body with
-          | FormBody.Fields fields -> 
-            do! FormFields.ValidatePredicates ctx globalType rootType localType fields
-          | FormBody.Cases cases ->
-            let! typeCases = localType |> ExprType.AsUnion |> state.OfSum
+        match body with
+        | FormBody.Fields fields -> do! FormFields.ValidatePredicates ctx globalType rootType localType fields
+        | FormBody.Cases cases ->
+          let! typeCases = localType |> ExprType.AsUnion |> state.OfSum
 
-            for case in cases.Cases do
-              let! typeCase =
-                typeCases
-                |> Map.tryFind ({ CaseName = case.Key })
-                |> Sum.fromOption (fun () -> Errors.Singleton $"Error: cannot find type case {case.Key}")
-                |> state.OfSum
+          for case in cases.Cases do
+            let! typeCase =
+              typeCases
+              |> Map.tryFind ({ CaseName = case.Key })
+              |> Sum.fromOption (fun () -> Errors.Singleton $"Error: cannot find type case {case.Key}")
+              |> state.OfSum
 
-              do! Renderer.ValidatePredicates ctx globalType rootType typeCase.Fields case.Value
+            do! Renderer.ValidatePredicates ctx globalType rootType typeCase.Fields case.Value
       }
 
   and FormConfig with

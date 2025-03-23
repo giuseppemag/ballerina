@@ -1,4 +1,5 @@
 namespace Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs
+
 open Ballerina.DSL.Expr.Types.Model
 
 module Enum =
@@ -21,7 +22,7 @@ module Enum =
 
   type GolangEnum =
     { Name: string
-      Cases: List<{| Name:string; Value:string |}> }
+      Cases: List<{| Name: string; Value: string |}> }
 
     static member ToGolang (ctx: GolangContext) (enum: GolangEnum) =
       seq {
@@ -31,9 +32,7 @@ module Enum =
         yield StringBuilder.One "\n"
 
         for case in enum.Cases do
-          yield
-            StringBuilder.One
-              $$"""  {{case.Name}} {{enum.Name}} = "{{case.Value}}" """
+          yield StringBuilder.One $$"""  {{case.Name}} {{enum.Name}} = "{{case.Value}}" """
 
           yield StringBuilder.One "\n"
 

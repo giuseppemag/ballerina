@@ -4,9 +4,8 @@ import {
   FormLabel,
   BooleanView,
   NumberView,
-  StringView,
+  StringFormView,
   DateView,
-  CollectionReference,
   EnumView,
   EnumMultiselectView,
   SearchableInfiniteStreamView,
@@ -14,8 +13,6 @@ import {
   BaseEnumContext,
   ListFieldView,
   unit,
-  Value,
-  EnumReference,
   PredicateValue,
   ValueRecord,
 } from "ballerina-core";
@@ -113,7 +110,7 @@ export const PersonFieldViews = {
   },
   string: {
     defaultString:
-      <Context extends FormLabel, ForeignMutationsExpected>(): StringView<
+      <Context extends FormLabel, ForeignMutationsExpected>(): StringFormView<
         Context,
         ForeignMutationsExpected
       > =>

@@ -1,20 +1,12 @@
-import { List, Map } from "immutable";
-import {
-  simpleUpdater,
-  Updater,
-  SimpleCallback,
-  Unit,
-  PredicateValue,
-  ValueTuple,
-  ListFieldState,
-} from "../../../../../../main";
+import { List } from "immutable";
+import { simpleUpdater, ValueTuple } from "../../../../../../main";
 import { BasicFun } from "../../../../../fun/state";
 import { Template, View } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import { OnChange, CommonFormState } from "../../../singleton/state";
 
-export type TupleFieldState<
+export type TupleFormState<
   ElementFormStates extends List<{
     commonFormState: { modifiedByUser: boolean };
   }>,
@@ -22,35 +14,35 @@ export type TupleFieldState<
   commonFormState: CommonFormState;
   elementFormStates: ElementFormStates;
 };
-export const TupleFieldState = <
+export const TupleFormState = <
   ElementFormStates extends List<{
     commonFormState: { modifiedByUser: boolean };
   }>,
 >() => ({
   Default: (
     elementFormStates: ElementFormStates,
-  ): TupleFieldState<ElementFormStates> => ({
+  ): TupleFormState<ElementFormStates> => ({
     commonFormState: CommonFormState.Default(),
     elementFormStates,
   }),
   Updaters: {
     Core: {
-      ...simpleUpdater<TupleFieldState<ElementFormStates>>()(
+      ...simpleUpdater<TupleFormState<ElementFormStates>>()(
         "elementFormStates",
       ),
     },
     Template: {},
   },
 });
-export type TupleFieldView<
+export type TupleFormView<
   ElementFormStates extends List<{
     commonFormState: { modifiedByUser: boolean };
   }>,
   Context extends FormLabel,
   ForeignMutationsExpected,
 > = View<
-  Context & Value<ValueTuple> & TupleFieldState<ElementFormStates>,
-  TupleFieldState<ElementFormStates>,
+  Context & Value<ValueTuple> & TupleFormState<ElementFormStates>,
+  TupleFormState<ElementFormStates>,
   ForeignMutationsExpected & {
     onChange: OnChange<ValueTuple>;
   },
@@ -58,8 +50,8 @@ export type TupleFieldView<
     embeddedElementTemplates: BasicFun<
       number,
       Template<
-        Context & Value<ValueTuple> & TupleFieldState<ElementFormStates>,
-        TupleFieldState<ElementFormStates>,
+        Context & Value<ValueTuple> & TupleFormState<ElementFormStates>,
+        TupleFormState<ElementFormStates>,
         ForeignMutationsExpected & {
           onChange: OnChange<ValueTuple>;
         }

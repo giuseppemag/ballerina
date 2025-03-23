@@ -19,7 +19,7 @@ module Model =
     { Fields: Map<string, WriterField>
       Type: ExprType
       Name: WriterName
-      Path:List<string>
+      Path: List<string>
       DeltaTypeName: string
       Kind: WriterKind }
 

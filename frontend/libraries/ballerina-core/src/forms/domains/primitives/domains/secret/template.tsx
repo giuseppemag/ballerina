@@ -7,18 +7,17 @@ import {
   FieldValidation,
   FieldValidationWithPath,
   OnChange,
-  CommonFormState,
 } from "../../../singleton/state";
-import { SecretView } from "./state";
+import { SecretFormState, SecretFormView } from "./state";
 
 export const SecretForm = <Context extends FormLabel, ForeignMutationsExpected>(
   validation?: BasicFun<string, Promise<FieldValidation>>,
 ) => {
   return Template.Default<
     Context & Value<string> & { disabled: boolean; visible: boolean },
-    { commonFormState: CommonFormState },
+    SecretFormState,
     ForeignMutationsExpected & { onChange: OnChange<string> },
-    SecretView<Context, ForeignMutationsExpected>
+    SecretFormView<Context, ForeignMutationsExpected>
   >((props) => (
     <>
       <props.view
@@ -33,7 +32,7 @@ export const SecretForm = <Context extends FormLabel, ForeignMutationsExpected>(
   )).any([
     ValidateRunner<
       Context & { disabled: boolean; visible: boolean },
-      { commonFormState: CommonFormState },
+      SecretFormState,
       ForeignMutationsExpected,
       string
     >(

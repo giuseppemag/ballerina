@@ -4,7 +4,7 @@ import {
   FormLabel,
   BooleanView,
   NumberView,
-  StringView,
+  StringFormView,
   DateView,
   EnumView,
   EnumMultiselectView,
@@ -14,16 +14,24 @@ import {
   ListFieldView,
   unit,
   MapFieldView,
-  Base64FileView,
-  SecretView,
+  Base64FileFormView,
+  SecretFormView,
   PredicateValue,
   ValueRecord,
-  TupleFieldView,
-  SumFieldView,
-  UnitFieldView,
+  TupleFormView,
+  SumFormView,
+  UnitFormView,
+  DateFormState,
+  UnitFormState,
+  replaceWith,
+  Maybe,
+  SumFormState,
+  id,
+  Sum,
+  DateForm,
 } from "ballerina-core";
 import { CategoryView } from "../injected-forms/category";
-import { List } from "node_modules/immutable/dist/immutable";
+import { List } from "immutable";
 
 export const MostUglyValidationDebugView = (props: {
   context: { commonFormState: CommonFormState };
@@ -172,7 +180,7 @@ export const PersonFieldViews = {
   },
   string: {
     defaultString:
-      <Context extends FormLabel, ForeignMutationsExpected>(): StringView<
+      <Context extends FormLabel, ForeignMutationsExpected>(): StringFormView<
         Context,
         ForeignMutationsExpected
       > =>
@@ -220,6 +228,7 @@ export const PersonFieldViews = {
             )}
             <input
               disabled={props.context.disabled}
+              type="date"
               value={displayValue}
               onChange={(e) =>
                 props.foreignMutations.setNewValue(e.currentTarget.value)
@@ -585,10 +594,10 @@ export const PersonFieldViews = {
   },
   base64File: {
     defaultBase64File:
-      <Context extends FormLabel, ForeignMutationsExpected>(): Base64FileView<
-        Context,
-        ForeignMutationsExpected
-      > =>
+      <
+        Context extends FormLabel,
+        ForeignMutationsExpected,
+      >(): Base64FileFormView<Context, ForeignMutationsExpected> =>
       (props) => (
         <>
           {props.context.label && <h3>{props.context.label}</h3>}
@@ -609,7 +618,7 @@ export const PersonFieldViews = {
   },
   secret: {
     defaultSecret:
-      <Context extends FormLabel, ForeignMutationsExpected>(): SecretView<
+      <Context extends FormLabel, ForeignMutationsExpected>(): SecretFormView<
         Context,
         ForeignMutationsExpected
       > =>
@@ -692,7 +701,7 @@ export const PersonFieldViews = {
         }>,
         Context extends FormLabel,
         ForeignMutationsExpected,
-      >(): TupleFieldView<FormState, Context, ForeignMutationsExpected> =>
+      >(): TupleFormView<FormState, Context, ForeignMutationsExpected> =>
       (props) => (
         <>
           {props.context.label && <h3>{props.context.label}</h3>}
@@ -717,7 +726,7 @@ export const PersonFieldViews = {
         }>,
         Context extends FormLabel,
         ForeignMutationsExpected,
-      >(): TupleFieldView<FormState, Context, ForeignMutationsExpected> =>
+      >(): TupleFormView<FormState, Context, ForeignMutationsExpected> =>
       (props) => {
         return (
           <>
@@ -748,27 +757,24 @@ export const PersonFieldViews = {
       RightFormState,
       Context extends FormLabel,
       ForeignMutationsExpected,
-    >(): SumFieldView<
+    >(): SumFormView<
       LeftFormState,
       RightFormState,
       Context,
       ForeignMutationsExpected
     > => {
       return (props) => {
-        const checkboxId =
-          "sum-switch-" + props.context.label?.replaceAll(" ", "-");
+        if (
+          props.embeddedLeftTemplate == undefined ||
+          props.embeddedRightTemplate == undefined
+        ) {
+          console.error(
+            "embeddedLeftTemplate or embeddedRightTemplate is undefined, but both are expected in defaultSum",
+          );
+          return <></>;
+        }
         return (
           <>
-            {props.context.label && <h3>{props.context.label}</h3>}
-            <input
-              id={checkboxId}
-              type="checkbox"
-              checked={props.context.value.value.kind === "l"}
-              onChange={(e) => props.foreignMutations.onSwitch()}
-            />
-            <label htmlFor={checkboxId}>
-              current: {props.context.value.value.kind.toUpperCase()}
-            </label>
             {props.embeddedLeftTemplate()({
               ...props,
               view: unit,
@@ -782,9 +788,104 @@ export const PersonFieldViews = {
         );
       };
     },
+    maybeDate: <
+      Context extends FormLabel & { disabled: boolean },
+      ForeignMutationsExpected,
+    >(): SumFormView<
+      UnitFormState,
+      DateFormState,
+      Context,
+      ForeignMutationsExpected
+    > => {
+      return (props) => {
+        const displayValue =
+          props.context.value.value.kind == "l"
+            ? ""
+            : props.context.customFormState.right.commonFormState.modifiedByUser
+              ? props.context.customFormState.right.customFormState
+                  .possiblyInvalidInput
+              : (props.context.value.value.value as Date)
+                  .toISOString()
+                  .slice(0, 10);
+
+        const setNewValue = (_: Maybe<string>) => {
+          props.setState(
+            SumFormState<
+              UnitFormState,
+              DateFormState
+            >().Updaters.Core.customFormState((__) => ({
+              ...__,
+              right: DateFormState.Updaters.Core.customFormState.children
+                .possiblyInvalidInput(replaceWith(_))
+                .then(
+                  DateFormState.Updaters.Core.commonFormState((___) => ({
+                    ...___,
+                    modifiedByUser: true,
+                  })),
+                )(__.right),
+            })),
+          );
+          const newValue = _ == undefined ? _ : new Date(_);
+          setTimeout(() => {
+            props.foreignMutations.onChange(
+              newValue == undefined || isNaN(newValue.getTime())
+                ? id
+                : replaceWith(
+                    PredicateValue.Default.sum(Sum.Default.right(newValue)),
+                  ),
+              List(),
+            );
+          }, 0);
+        };
+
+        const clearValue = () => {
+          props.setState(
+            SumFormState<
+              UnitFormState,
+              DateFormState
+            >().Updaters.Core.customFormState((__) => ({
+              ...__,
+              left: UnitFormState.Updaters.Core.commonFormState((___) => ({
+                ...___,
+                modifiedByUser: true,
+              }))(__.left),
+            })),
+          );
+          setTimeout(() => {
+            props.foreignMutations.onChange(
+              replaceWith(
+                PredicateValue.Default.sum(
+                  Sum.Default.left(PredicateValue.Default.unit()),
+                ),
+              ),
+              List(),
+            );
+          }, 0);
+        };
+
+        return (
+          <>
+            {props.context.label && <h3>{props.context.label}</h3>}
+            <input
+              disabled={props.context.disabled}
+              value={displayValue}
+              type="date"
+              onChange={(e) => {
+                if (e.currentTarget.value == "") {
+                  clearValue();
+                } else {
+                  setNewValue(e.currentTarget.value);
+                }
+              }}
+            />
+            <MostUglyValidationDebugView {...props} />
+          </>
+        );
+      };
+    },
   },
   unit: {
-    defaultUnit: <Context extends FormLabel>(): UnitFieldView<Context> => {
+    defaultUnit: <Context extends FormLabel>(): UnitFormView<Context> => {
       return (props) => {
         return (
           <>
