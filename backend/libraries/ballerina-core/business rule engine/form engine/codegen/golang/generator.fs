@@ -262,7 +262,7 @@ module Main =
                   |> Map.tryFindWithError e.TypeId.TypeName "types" "types"
                   |> state.OfSum
 
-                do! ExprType.ToWriter { WriterName = e.EntityName } t.Type |> state.Map ignore
+                do! ExprType.ToWriter [e.TypeId.TypeName] { WriterName = e.TypeId.TypeName } t.Type |> state.Map ignore
             }
 
           match writersBuilder.run ((ctx, codegenConfig), Map.empty) with
@@ -270,6 +270,10 @@ module Main =
           | Left(_, newWritersState) ->
             // do System.Console.WriteLine(newWritersState.ToFSharpString)
             let allWriters = newWritersState |> Option.defaultWith (fun () -> Map.empty)
+            let! (allCommittables:List<Writer>) = 
+              entityAPIsWithUPDATE 
+                |> Seq.map (fun e -> allWriters |> Map.tryFindWithError { WriterName = e.TypeId.TypeName } "writer" e.TypeId.TypeName |> state.OfSum)
+                |> state.All
 
             let writers =
               seq {
@@ -302,15 +306,34 @@ module Main =
                   yield StringBuilder.One "\n"
                   yield StringBuilder.One $"}}"
                   yield StringBuilder.One "\n\n"
+              } |> StringBuilder.Many
+                
+            let entityPATCHers = 
+              let entities = {
+                GolangEntityPATCHers.FunctionName = $"{formName}EntityPATCHer"
+                Entities = 
+                  ctx.Apis.Entities
+                  |> Map.values
+                  |> Seq.filter (snd >> Set.contains CrudMethod.Update)
+                  |> Seq.map fst
+                  |> Seq.map (fun e ->
+                    {| EntityName = e.EntityName; EntityType = e.TypeId.TypeName; EntityWriter = e.EntityName; EntityDelta = 
+                     $"Delta{e.EntityName}" |})
+                  |> List.ofSeq
+                Writers = allWriters
+                CommittableWriters = allCommittables
+                EntityNotFoundErrorConstructor = codegenConfig.EntityNotFoundError.Constructor
               }
+              GolangEntityPATCHers.ToGolang () entities
 
             return
               StringBuilder.Many(
                 seq {
-                  yield! writers
+                  yield writers
                   yield entityGETters
                   yield entityDEFAULTers
                   yield entityPOSTers
+                  yield entityPATCHers
                   yield enumCasesGETters
                   yield enumCasesPOSTters
                   yield streamGETters

@@ -81,8 +81,16 @@
               ✅ EntityGETDefault
               ✅ EntityPOST
               ✅ type extensions (each to a separate file)
-              ❌ writers and deltas
+              ✅ writers and deltas
               ❌ EntityPATCH
+                ✅ we have two series of writer arguments
+                  ✅ generated
+                  ✅ imported
+                ✅ get the commit methods as parameters
+                ❌ define the recursive traversal function
+                ❌ generate the switch by entity name
+                  ❌ return entity not found error as a failure case
+                ❌ generate the switch by field
               ❌ imports
               ❌ `generated types`
               ❌ ToGolang in the typename and method name is redundant, remove it
@@ -90,32 +98,35 @@
         ❌ recursively traverse the path and match over entity names and field names
           ```
           func entityPATCHer[Delta, Result](writerA WriterA, writerB WriterB, ..., commitA:DeltaA -> Result)
-            traverse = func(entityName string, path []ballerina.PATCHPathElement[Delta]) : DeltaBase
+            traverse = func(entityName string, path []Delta) : DeltaBase
               var ResultNil Result
               switch entityName {
                 case "A":
                   if (path.length == 0) return writerA.Zero()
-                  switch path[0].Kind {
-                    case "A1":
-                      var accumulator:DeltaInt[Delta],err = ballerina.writerInt.TryParse(path[0].Delta)
-                      if err == nil { return ResultNil,err }
-                      return writerA.A1(accumulator)
-                    case "A2":
-                      var accumulator:DeltaBase,err = traverse("B", path[1..])
-                      if err == nil { return ResultNil,err }
-                      if accumulator is not DeltaB { return ResultNil, NewWrongPATCHPathError(...)}
-                      return writerA.A2(accumulator, path[0].Delta)
-                    ...
-                  }
+                  if path[0] is Record r
+                    switch r.EntityName {
+                      case "A1":
+                        var accumulator:DeltaInt[Delta],err = ballerina.writerInt.TryParse(path[0].Delta)
+                        if err == nil { return ResultNil,err }
+                        return writerA.A1(accumulator)
+                      case "A2":
+                        var accumulator:DeltaBase,err = traverse("B", path[1..])
+                        if err == nil { return ResultNil,err }
+                        if accumulator is not DeltaB { return ResultNil, NewWrongPATCHPathError(...)}
+                        return writerA.A2(accumulator, path[0].Delta)
+                      ...
+                    }
                 case "C":
                   if (path.length == 0) return writerC.Zero()
-                  switch path[0].Kind {
-                    case "C1":
-                      var accumulator:DeltaBase,err = traverse("C_C1", path[1..])
-                      if err == nil { return ResultNil,err }
-                      if accumulator is not DeltaC_C1 { return ResultNil, NewWrongPATCHPathError(...)}
-                      return writerC.C1(accumulator, path[0].Delta)
-                    ...
+                  if path[0] is UnionCase c
+                    switch c.Discriminator {
+                      case "C1":
+                        var accumulator:DeltaBase,err = traverse("C_C1", path[1..])
+                        if err == nil { return ResultNil,err }
+                        if accumulator is not DeltaC_C1 { return ResultNil, NewWrongPATCHPathError(...)}
+                        return writerC.C1(accumulator, path[0].Delta)
+                      ...
+                    }
                   }
                 ...
               }
