@@ -311,15 +311,6 @@ module Main =
             let entityPATCHers = 
               let entities = {
                 GolangEntityPATCHers.FunctionName = $"{formName}EntityPATCHer"
-                Entities = 
-                  ctx.Apis.Entities
-                  |> Map.values
-                  |> Seq.filter (snd >> Set.contains CrudMethod.Update)
-                  |> Seq.map fst
-                  |> Seq.map (fun e ->
-                    {| EntityName = e.EntityName; EntityType = e.TypeId.TypeName; EntityWriter = e.EntityName; EntityDelta = 
-                     $"Delta{e.EntityName}" |})
-                  |> List.ofSeq
                 Writers = allWriters
                 CommittableWriters = allCommittables
                 EntityNotFoundErrorConstructor = codegenConfig.EntityNotFoundError.Constructor

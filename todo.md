@@ -87,10 +87,18 @@
                   ✅ generated
                   ✅ imported
                 ✅ get the commit methods as parameters
-                ❌ define the recursive traversal function
-                ❌ generate the switch by entity name
-                  ❌ return entity not found error as a failure case
-                ❌ generate the switch by field
+                ✅ define the recursive traversal function
+                ✅ generate the switch by entity name
+                  ✅ what is the domain? what do we iterate?
+                  ✅ return entity not found error as a faiure case
+                ❌ generate the switch by field/case by looking at the instance type of Delta
+                  ❌ define a DeltaRecord
+                  ❌ define a DeltaUnion
+                ❌ fallback case for any other type, also for failed matches on the previous concrete types
+                ❌ invoke the right committer based on the runtime type of the `DeltaBase` and the initial `entityName`
+                ❌ `DeltaX -> EffectX` to disambiguate
+                ❌ generate standard implementations for the record and union writers of the given entities
+                ❌ write standard implementations for the unit, int, array, map, option, etc. writers
               ❌ imports
               ❌ `generated types`
               ❌ ToGolang in the typename and method name is redundant, remove it
