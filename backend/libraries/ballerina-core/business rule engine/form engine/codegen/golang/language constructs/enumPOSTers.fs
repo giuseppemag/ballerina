@@ -1,4 +1,5 @@
 namespace Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs
+
 open Ballerina.DSL.Expr.Types.Model
 
 module EnumPOSTers =
@@ -21,49 +22,48 @@ module EnumPOSTers =
 
   type GolangEnumPOSTers =
     { FunctionName: string
-      Enums:List<{| EnumName:string; EnumType:string |}>
-      UnitType:string
-      InvalidEnumValueCombinationError:string }
+      Enums: List<{| EnumName: string; EnumType: string |}>
+      UnitType: string
+      InvalidEnumValueCombinationError: string }
 
     static member ToGolang (ctx: GolangContext) (posters: GolangEnumPOSTers) =
       StringBuilder.Many(
         seq {
           yield StringBuilder.One $"func {posters.FunctionName}(enumName string, enumValue string, "
 
-          yield StringBuilder.Many(
-            posters.Enums
-            |> Seq.map (fun e ->
-              StringBuilder.One(
-                $$"""on{{e.EnumName}} func ({{e.EnumType}}) ({{posters.UnitType}},error), """
-              )))
+          yield
+            StringBuilder.Many(
+              posters.Enums
+              |> Seq.map (fun e ->
+                StringBuilder.One($$"""on{{e.EnumName}} func ({{e.EnumType}}) ({{posters.UnitType}},error), """))
+            )
 
           yield StringBuilder.One $$""") ({{posters.UnitType}},error) {"""
           yield StringBuilder.One "\n"
           yield StringBuilder.One "  switch enumName {\n"
 
-          yield StringBuilder.Many(
-            posters.Enums
-            |> Seq.map (fun e ->
-              StringBuilder.Many(
-                seq {
-                  yield StringBuilder.One(sprintf "  case \"%s\":\n" e.EnumName)
+          yield
+            StringBuilder.Many(
+              posters.Enums
+              |> Seq.map (fun e ->
+                StringBuilder.Many(
+                  seq {
+                    yield StringBuilder.One(sprintf "  case \"%s\":\n" e.EnumName)
 
-                  yield
-                    StringBuilder.One(
-                      $$"""    if slices.Contains(All{{e.EnumType}}Cases[:], {{e.EnumType}}(enumValue)) {"""
-                    )
+                    yield
+                      StringBuilder.One(
+                        $$"""    if slices.Contains(All{{e.EnumType}}Cases[:], {{e.EnumType}}(enumValue)) {"""
+                      )
 
-                  yield StringBuilder.One("\n")
+                    yield StringBuilder.One("\n")
 
-                  yield
-                    StringBuilder.One(
-                      $$"""      return on{{e.EnumName}}({{e.EnumType}}(enumValue))"""
-                    )
+                    yield StringBuilder.One($$"""      return on{{e.EnumName}}({{e.EnumType}}(enumValue))""")
 
-                  yield StringBuilder.One("\n")
-                  yield StringBuilder.One("    }\n")
-                }
-              )))
+                    yield StringBuilder.One("\n")
+                    yield StringBuilder.One("    }\n")
+                  }
+                ))
+            )
 
           yield StringBuilder.One "  }\n"
           yield StringBuilder.One $$"""  var result {{posters.UnitType}}"""

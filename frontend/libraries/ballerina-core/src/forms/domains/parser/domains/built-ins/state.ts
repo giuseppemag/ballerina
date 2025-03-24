@@ -6,15 +6,27 @@ import {
 import { CollectionSelection } from "../../../collection/domains/selection/state";
 import { BasicFun } from "../../../../../fun/state";
 import {
+  BooleanFormState,
+  CommonFormState,
+  DateFormState,
   InjectedPrimitives,
+  NumberFormState,
   ParsedType,
   PredicateValue,
   replaceWith,
+  StringFormState,
   Sum,
   TypeName,
   unit,
+  UnitFormState,
   ValueRecord,
   ValueTuple,
+  Base64FileFormState,
+  SecretFormState,
+  ListFieldState,
+  MapFieldState,
+  TupleFormState,
+  SumFormState,
 } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 
@@ -91,8 +103,12 @@ export type BuiltInApiConverters = {
 export type PrimitiveBuiltIn = {
   renderers: Set<keyof BuiltIns["renderers"]>;
   defaultValue: PredicateValue;
+  defaultState: {
+    commonFormState: CommonFormState;
+    customFormState: object;
+  };
 };
-export type GenericBuiltIn = { defaultValue: any };
+export type GenericBuiltIn = { defaultValue: any; defaultState?: any };
 export type BuiltIns = {
   primitives: Map<string, PrimitiveBuiltIn>;
   generics: Map<string, GenericBuiltIn>;
@@ -123,6 +139,7 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
         {
           renderers: Set(["unit"]),
           defaultValue: PredicateValue.Default.unit(),
+          defaultState: UnitFormState.Default(),
         },
       ] as [string, PrimitiveBuiltIn],
       [
@@ -130,6 +147,7 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
         {
           renderers: Set(["string"]),
           defaultValue: PredicateValue.Default.string(),
+          defaultState: StringFormState.Default(),
         },
       ] as [string, PrimitiveBuiltIn],
       [
@@ -137,6 +155,7 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
         {
           renderers: Set(["number"]),
           defaultValue: PredicateValue.Default.number(),
+          defaultState: NumberFormState.Default(),
         },
       ] as [string, PrimitiveBuiltIn],
       [
@@ -144,6 +163,7 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
         {
           renderers: Set(["boolean"]),
           defaultValue: PredicateValue.Default.boolean(),
+          defaultState: BooleanFormState.Default(),
         },
       ] as [string, PrimitiveBuiltIn],
       [
@@ -151,6 +171,7 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
         {
           renderers: Set(["date"]),
           defaultValue: PredicateValue.Default.date(),
+          defaultState: DateFormState.Default(),
         },
       ] as [string, PrimitiveBuiltIn],
       [
@@ -158,6 +179,7 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
         {
           renderers: Set(["date"]),
           defaultValue: PredicateValue.Default.date(),
+          defaultState: DateFormState.Default(),
         },
       ] as [string, PrimitiveBuiltIn],
       [
@@ -165,6 +187,7 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
         {
           renderers: Set(["base64File"]),
           defaultValue: PredicateValue.Default.string(),
+          defaultState: Base64FileFormState.Default(),
         },
       ] as [string, PrimitiveBuiltIn],
       [
@@ -172,10 +195,11 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
         {
           renderers: Set(["secret"]),
           defaultValue: PredicateValue.Default.string(),
+          defaultState: SecretFormState.Default(),
         },
       ] as [string, PrimitiveBuiltIn],
     ]),
-    generics: Map([
+    generics: Map<string, GenericBuiltIn>([
       [
         "SingleSelection",
         {
@@ -184,47 +208,55 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
             PredicateValue.Default.unit(),
           ),
         },
-      ] as [string, GenericBuiltIn],
+      ],
       [
         "MultiSelection",
         { defaultValue: PredicateValue.Default.record(Map()) },
-      ] as [string, GenericBuiltIn],
-      ["List", { defaultValue: PredicateValue.Default.tuple(List()) }] as [
-        string,
-        GenericBuiltIn,
       ],
-      ["Map", { defaultValue: PredicateValue.Default.tuple(List()) }] as [
-        string,
-        GenericBuiltIn,
+      [
+        "List",
+        {
+          defaultValue: PredicateValue.Default.tuple(List()),
+          defaultState: ListFieldState().zero(),
+        },
+      ],
+      [
+        "Map",
+        {
+          defaultValue: PredicateValue.Default.tuple(List()),
+          defaultState: MapFieldState().zero(),
+        },
       ],
       [
         "Tuple",
         {
           defaultValue: (values: PredicateValue[]) =>
             PredicateValue.Default.tuple(List(values)),
+          defaultState: (argStates: List<any>) =>
+            TupleFormState().Default(argStates),
         },
-      ] as [string, GenericBuiltIn],
+      ],
       [
         "Sum",
         {
-          defaultValue: PredicateValue.Default.sum(
-            Sum.Default.right(PredicateValue.Default.unit()),
-          ),
+          defaultValue: (kind: "l" | "r", value: PredicateValue) =>
+            PredicateValue.Default.sum(
+              kind == "l" ? Sum.Default.left(value) : Sum.Default.right(value),
+            ),
+          defaultState: (left: any, right: any) =>
+            SumFormState().Default({ left, right }),
         },
-      ],
-      ["Union", { defaultValue: PredicateValue.Default.record(Map()) }] as [
-        string,
-        GenericBuiltIn,
       ],
       [
-        "Option",
+        "Union",
         {
-          defaultValue: PredicateValue.Default.option(
-            false,
-            PredicateValue.Default.unit(),
-          ),
+          defaultValue: (fields: Map<string, PredicateValue>) =>
+            PredicateValue.Default.record(fields),
+          // TODO : Union Renderer form
+          // defaultState: (fields: Map<string, any>) =>
+          //   UnionFormState().Default(fields),
         },
-      ] as [string, GenericBuiltIn],
+      ],
     ]),
     renderers: {
       unit: Set(),
@@ -256,6 +288,80 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
   return builtins;
 };
 
+export const defaultState =
+  <T>(
+    types: Map<TypeName, ParsedType<T>>,
+    builtIns: BuiltIns,
+    injectedPrimitives?: InjectedPrimitives<T>,
+  ) =>
+  (
+    t: ParsedType<T>,
+  ): {
+    commonFormState: CommonFormState;
+    customFormState: object;
+  } => {
+    if (
+      t.kind == "union" ||
+      t.kind == "unionCase" ||
+      (t.kind == "application" &&
+        (t.value == "SingleSelection" || t.value == "MultiSelection"))
+    ) {
+      throw Error(
+        `t.kind: ${t.kind} ${
+          t.kind == "application" ? ` t.value: ${t.value}` : ""
+        } not currently supported by the defaultState function`,
+      );
+    }
+
+    if (t.kind == "primitive") {
+      const primitive = builtIns.primitives.get(t.value as string);
+      const injectedPrimitive = injectedPrimitives?.injectedPrimitives.get(
+        t.value as keyof T,
+      );
+      if (primitive != undefined) return primitive.defaultState;
+      if (injectedPrimitive != undefined)
+        return {
+          commonFormState: CommonFormState.Default(),
+          customFormState: injectedPrimitive.defaultState,
+        };
+    }
+
+    if (t.kind == "application" && t.value == "Tuple") {
+      return builtIns.generics
+        .get("Tuple")!
+        .defaultState(
+          t.args.map((_) =>
+            defaultState(types, builtIns, injectedPrimitives)(_),
+          ),
+        );
+    }
+
+    if (t.kind == "application" && t.value == "Sum") {
+      return builtIns.generics
+        .get("Sum")!
+        .defaultState(
+          defaultState(types, builtIns, injectedPrimitives)(t.args[0]),
+          defaultState(types, builtIns, injectedPrimitives)(t.args[1]),
+        );
+    }
+
+    if (t.kind == "application") {
+      const generic = builtIns.generics.get(t.value);
+      if (generic) return generic.defaultState;
+    }
+
+    if (t.kind == "lookup")
+      return defaultState(
+        types,
+        builtIns,
+        injectedPrimitives,
+      )(types.get(t.name)!);
+
+    throw Error(
+      `cannot find type ${JSON.stringify(t)} when resolving defaultValue`,
+    );
+  };
+
 export const defaultValue =
   <T>(
     types: Map<TypeName, ParsedType<T>>,
@@ -279,6 +385,14 @@ export const defaultValue =
           t.args.map((_) =>
             defaultValue(types, builtIns, injectedPrimitives)(_),
           ),
+        );
+    }
+    if (t.kind == "application" && t.value == "Sum") {
+      return builtIns.generics
+        .get("Sum")!
+        .defaultValue(
+          defaultValue(types, builtIns, injectedPrimitives)(t.args[0]),
+          defaultValue(types, builtIns, injectedPrimitives)(t.args[1]),
         );
     }
     if (t.kind == "application") {

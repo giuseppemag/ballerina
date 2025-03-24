@@ -749,6 +749,7 @@ module Parser =
             Renderer = renderer
             Visible = visible
             Disabled = disabled }
+
         return fc
       }
       |> state.WithErrorContext $"...when parsing field {fieldName}"
@@ -823,6 +824,7 @@ module Parser =
               let! casesJson = casesJson |> JsonValue.AsRecord |> state.OfSum
               let! rendererJson = fields |> state.TryFindField "renderer"
               let! renderer = Renderer.Parse fields rendererJson
+
               let! cases =
                 casesJson
                 |> Seq.map (fun (caseName, caseJson) ->
@@ -979,6 +981,7 @@ module Parser =
         let! (s: ParsedFormsContext) = state.GetState()
         let! typeBinding = s.TryFindType typeName |> state.OfSum
         let! body = FormBody.Parse fields
+
         return
           {| TypeId = typeBinding.TypeId
              Body = body |}
@@ -1563,7 +1566,15 @@ module Parser =
               ParsedFormsContext.Updaters.Forms(
                 Map.add
                   formName
-                  { Body = FormBody.Cases {| Renderer = Renderer.PrimitiveRenderer { PrimitiveRendererName = ""; PrimitiveRendererId = Guid.CreateVersion7(); Type = ExprType.UnitType; Children = { Fields = Map.empty } }; Cases = Map.empty |}
+                  { Body =
+                      FormBody.Cases
+                        {| Renderer =
+                            Renderer.PrimitiveRenderer
+                              { PrimitiveRendererName = ""
+                                PrimitiveRendererId = Guid.CreateVersion7()
+                                Type = ExprType.UnitType
+                                Children = { Fields = Map.empty } }
+                           Cases = Map.empty |}
                     FormConfig.TypeId = formType.TypeId
                     FormId = Guid.CreateVersion7()
                     FormName = formName }

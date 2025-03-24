@@ -4,6 +4,7 @@ import {
   NumberView,
   replaceWith,
   ValidateRunner,
+  NumberFormState,
 } from "../../../../../../main";
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
@@ -20,7 +21,7 @@ export const NumberForm = <Context extends FormLabel, ForeignMutationsExpected>(
 ) => {
   return Template.Default<
     Context & Value<number> & { disabled: boolean; visible: boolean },
-    { commonFormState: CommonFormState },
+    NumberFormState,
     ForeignMutationsExpected & { onChange: OnChange<number> },
     NumberView<Context, ForeignMutationsExpected>
   >((props) => (
@@ -37,7 +38,7 @@ export const NumberForm = <Context extends FormLabel, ForeignMutationsExpected>(
   )).any([
     ValidateRunner<
       Context & { disabled: boolean; visible: boolean },
-      { commonFormState: CommonFormState },
+      NumberFormState,
       ForeignMutationsExpected,
       number
     >(

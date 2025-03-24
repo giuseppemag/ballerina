@@ -24,14 +24,14 @@ const streamApis: InfiniteStreamSources = (streamName: string) =>
   streamName == "departments"
     ? PersonApi.getDepartments()
     : streamName == "cities"
-    ? AddressApi.getCities()
-    : (_: any) => (_: any) => {
-        alert(`Cannot find stream API ${streamName}`);
-        return Promise.resolve({
-          hasMoreValues: false,
-          data: OrderedMap(),
-        });
-      };
+      ? AddressApi.getCities()
+      : (_: any) => (_: any) => {
+          alert(`Cannot find stream API ${streamName}`);
+          return Promise.resolve({
+            hasMoreValues: false,
+            data: OrderedMap(),
+          });
+        };
 const enumApis: EnumOptionsSources = (enumName: string) =>
   enumName == "colors"
     ? () =>
@@ -42,34 +42,34 @@ const enumApis: EnumOptionsSources = (enumName: string) =>
           0,
         )
     : enumName == "permissions"
-    ? () =>
-        PromiseRepo.Default.mock(
-          () => permissions.map((_) => ({ Value: _ })),
-          undefined,
-          1,
-          0,
-        )
-    : enumName == "genders"
-    ? () =>
-        PromiseRepo.Default.mock(
-          () => genders.map((_) => ({ Value: _ })),
-          undefined,
-          1,
-          0,
-        )
-    : enumName == "interests"
-    ? () =>
-        PromiseRepo.Default.mock(
-          () => interests.map((_) => ({ Value: _ })),
-          undefined,
-          1,
-          0,
-        )
-    : () =>
-        PromiseRepo.Default.mock(() => {
-          alert(`Cannot find enum API ${enumName}`);
-          return [];
-        });
+      ? () =>
+          PromiseRepo.Default.mock(
+            () => permissions.map((_) => ({ Value: _ })),
+            undefined,
+            1,
+            0,
+          )
+      : enumName == "genders"
+        ? () =>
+            PromiseRepo.Default.mock(
+              () => genders.map((_) => ({ Value: _ })),
+              undefined,
+              1,
+              0,
+            )
+        : enumName == "interests"
+          ? () =>
+              PromiseRepo.Default.mock(
+                () => interests.map((_) => ({ Value: _ })),
+                undefined,
+                1,
+                0,
+              )
+          : () =>
+              PromiseRepo.Default.mock(() => {
+                alert(`Cannot find enum API ${enumName}`);
+                return [];
+              });
 const entityApis: EntityApis = {
   create: (apiName: string) =>
     apiName == "person"
@@ -251,11 +251,23 @@ const entityApis: EntityApis = {
               },
             ],
             importantDate: {
-              IsRight: true,
-              Value: new Date(
-                Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45,
-              ).toISOString(),
+              IsRight: false,
+              Value: {},
             },
+            cutOffDates: [
+              {
+                IsRight: true,
+                Value: new Date(
+                  Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45,
+                ).toISOString(),
+              },
+              {
+                IsRight: true,
+                Value: new Date(
+                  Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45,
+                ).toISOString(),
+              },
+            ],
             addressesBy: {
               IsRight: true,
               Value: [
@@ -291,13 +303,13 @@ const entityApis: EntityApis = {
                     Item2: Math.floor(Math.random() * 500),
                     Item3:
                       Math.random() > 0.5
-                      ? { IsSome: false, Value: { Value: "" } }
-                      : {
-                          IsSome: true,
-                          Value: {
-                            ...City.Default(v4(), faker.location.city()),
+                        ? { IsSome: false, Value: { Value: "" } }
+                        : {
+                            IsSome: true,
+                            Value: {
+                              ...City.Default(v4(), faker.location.city()),
+                            },
                           },
-                        },
                   },
                 },
               },
@@ -312,13 +324,13 @@ const entityApis: EntityApis = {
                     Item2: Math.floor(Math.random() * 500),
                     Item3:
                       Math.random() > 0.5
-                      ? { IsSome: false, Value: { Value: "" } }
-                      : {
-                          IsSome: true,
-                          Value: {
-                            ...City.Default(v4(), faker.location.city()),
+                        ? { IsSome: false, Value: { Value: "" } }
+                        : {
+                            IsSome: true,
+                            Value: {
+                              ...City.Default(v4(), faker.location.city()),
+                            },
                           },
-                        },
                   },
                 },
               },
@@ -405,6 +417,7 @@ const entityApis: EntityApis = {
                 IsRight: false,
                 Value: "",
               },
+              cutOffDates: [],
               addressesBy: {
                 IsRight: false,
                 Value: [],

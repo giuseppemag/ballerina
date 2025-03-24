@@ -168,13 +168,19 @@ export type ParsedUnionCase<T> = {
   name: CaseName;
   fields: ParsedType<T>;
 };
+
+export type ParsedApplicationType<T> = {
+  kind: "application";
+  value: GenericType;
+  args: Array<ParsedType<T>>;
+};
 export type ParsedType<T> =
   | ParsedUnionCase<T>
   | { kind: "option"; value: ParsedType<T> }
   | { kind: "record"; value: TypeName; fields: RecordFields<T> }
   | { kind: "lookup"; name: TypeName }
   | { kind: "primitive"; value: PrimitiveTypeName<T> }
-  | { kind: "application"; value: GenericType; args: Array<ParsedType<T>> }
+  | ParsedApplicationType<T>
   | { kind: "union"; args: Map<CaseName, ParsedUnionCase<T>> };
 
 export const ParsedType = {

@@ -1,4 +1,5 @@
 namespace Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs
+
 open Ballerina.DSL.Expr.Types.Model
 
 module Record =
@@ -19,92 +20,100 @@ module Record =
   open Ballerina.Collections
   open Ballerina.Collections.NonEmptyList
 
-  type GolangRecord = { Name:string; Fields:List<{| FieldName:string; FieldType:string; FieldDefaultValue:string |}> } with
-    static member ToGolang (ctx:GolangContext) (record:GolangRecord) =
-      StringBuilder.Many(seq{
-        let typeStart =
-          $$"""type {{record.Name}} struct {""" + "\n"
+  type GolangRecord =
+    { Name: string
+      Fields:
+        List<
+          {| FieldName: string
+             FieldType: string
+             FieldDefaultValue: string |}
+         > }
 
-        let fieldDeclarations =
-          StringBuilder.Many(
-            seq {
-              for field in record.Fields do
-                yield StringBuilder.One "  "
-                yield StringBuilder.One field.FieldName.ToFirstUpper
-                yield StringBuilder.One " "
-                yield StringBuilder.One field.FieldType
-                yield StringBuilder.One "\n"
-            }
-          )
+    static member ToGolang (ctx: GolangContext) (record: GolangRecord) =
+      StringBuilder.Many(
+        seq {
+          let typeStart = $$"""type {{record.Name}} struct {""" + "\n"
 
-        let typeEnd =
-          $$"""}
+          let fieldDeclarations =
+            StringBuilder.Many(
+              seq {
+                for field in record.Fields do
+                  yield StringBuilder.One "  "
+                  yield StringBuilder.One field.FieldName.ToFirstUpper
+                  yield StringBuilder.One " "
+                  yield StringBuilder.One field.FieldType
+                  yield StringBuilder.One "\n"
+              }
+            )
+
+          let typeEnd =
+            $$"""}
   """
 
-        let consStart = $$"""func New{{record.Name}}("""
+          let consStart = $$"""func New{{record.Name}}("""
 
-        let consParams =
-          StringBuilder.Many(
-            seq {
-              for field in record.Fields do
-                yield StringBuilder.One field.FieldName
-                yield StringBuilder.One " "
-                yield StringBuilder.One field.FieldType
-                yield StringBuilder.One ", "
-            }
-          )
+          let consParams =
+            StringBuilder.Many(
+              seq {
+                for field in record.Fields do
+                  yield StringBuilder.One field.FieldName
+                  yield StringBuilder.One " "
+                  yield StringBuilder.One field.FieldType
+                  yield StringBuilder.One ", "
+              }
+            )
 
-        let consDeclEnd =
-          $$""") {{record.Name}} {
+          let consDeclEnd =
+            $$""") {{record.Name}} {
   var res {{record.Name}}
   """
 
-        let consBodyEnd =
-          $$"""  return res
+          let consBodyEnd =
+            $$"""  return res
 }
 
 """
 
-        let consFieldInits =
-          StringBuilder.Many(
-            seq {
-              for field in record.Fields do
-                yield StringBuilder.One "  res."
-                yield StringBuilder.One field.FieldName.ToFirstUpper
-                yield StringBuilder.One " = "
-                yield StringBuilder.One field.FieldName
-                yield StringBuilder.One ";\n"
-            }
-          )
+          let consFieldInits =
+            StringBuilder.Many(
+              seq {
+                for field in record.Fields do
+                  yield StringBuilder.One "  res."
+                  yield StringBuilder.One field.FieldName.ToFirstUpper
+                  yield StringBuilder.One " = "
+                  yield StringBuilder.One field.FieldName
+                  yield StringBuilder.One ";\n"
+              }
+            )
 
-        let defaultValue: StringBuilder =
-          StringBuilder.Many(
-            seq {
-              yield
-                StringBuilder.One $"func Default{record.Name}() {record.Name} {{"
+          let defaultValue: StringBuilder =
+            StringBuilder.Many(
+              seq {
+                yield StringBuilder.One $"func Default{record.Name}() {record.Name} {{"
 
-              yield StringBuilder.One "\n"
-              yield StringBuilder.One $"  return New{record.Name}("
+                yield StringBuilder.One "\n"
+                yield StringBuilder.One $"  return New{record.Name}("
 
-              for field in record.Fields do
-                yield StringBuilder.One(field.FieldDefaultValue)
-                yield StringBuilder.One ", "
+                for field in record.Fields do
+                  yield StringBuilder.One(field.FieldDefaultValue)
+                  yield StringBuilder.One ", "
 
-              yield StringBuilder.One ");"
-              yield StringBuilder.One "\n}\n"
-              yield StringBuilder.One "\n"
-            }
-          )
+                yield StringBuilder.One ");"
+                yield StringBuilder.One "\n}\n"
+                yield StringBuilder.One "\n"
+              }
+            )
 
-        yield StringBuilder.One "\n"
-        yield StringBuilder.One typeStart
-        yield fieldDeclarations
-        yield StringBuilder.One typeEnd
-        yield StringBuilder.One "\n"
-        yield StringBuilder.One consStart
-        yield consParams
-        yield StringBuilder.One consDeclEnd
-        yield consFieldInits
-        yield StringBuilder.One consBodyEnd
-        yield defaultValue
-      })
+          yield StringBuilder.One "\n"
+          yield StringBuilder.One typeStart
+          yield fieldDeclarations
+          yield StringBuilder.One typeEnd
+          yield StringBuilder.One "\n"
+          yield StringBuilder.One consStart
+          yield consParams
+          yield StringBuilder.One consDeclEnd
+          yield consFieldInits
+          yield StringBuilder.One consBodyEnd
+          yield defaultValue
+        }
+      )

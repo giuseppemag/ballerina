@@ -4,12 +4,12 @@ import {
   Unit,
 } from "../../../../../../main";
 import { Template } from "../../../../../template/state";
-import { UnitFieldState, UnitFieldView } from "./state";
+import { UnitFormState, UnitFormView } from "./state";
 
 export const UnitForm = <Context extends FormLabel>() =>
   Template.Default<
     Context & { disabled: boolean },
-    UnitFieldState,
+    UnitFormState,
     Unit,
-    UnitFieldView<Context>
+    UnitFormView<Context>
   >((props) => <props.view {...props} />);

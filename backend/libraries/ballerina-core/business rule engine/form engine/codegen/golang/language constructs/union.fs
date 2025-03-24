@@ -1,4 +1,5 @@
 namespace Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs
+
 open Ballerina.DSL.Expr.Types.Model
 
 module Union =
@@ -21,8 +22,18 @@ module Union =
 
   type GolangUnion =
     { Name: string
-      Cases: NonEmptyList<{| CaseName:string; Fields:List<{| FieldName:string; FieldType:string; FieldDefaultValue:string |}> |}> }
-    static member ToGolang (ctx:GolangContext) (union:GolangUnion) = 
+      Cases:
+        NonEmptyList<
+          {| CaseName: string
+             Fields:
+               List<
+                 {| FieldName: string
+                    FieldType: string
+                    FieldDefaultValue: string |}
+                > |}
+         > }
+
+    static member ToGolang (ctx: GolangContext) (union: GolangUnion) =
       let cases = union.Cases
       let firstUnionCaseName = union.Cases.Head.CaseName
 
@@ -55,8 +66,7 @@ module Union =
             yield StringBuilder.One $"}}\n"
 
             yield
-              StringBuilder.One
-                $"func Default{union.Name}{case.CaseName}Value() {union.Name}{case.CaseName}Value {{"
+              StringBuilder.One $"func Default{union.Name}{case.CaseName}Value() {union.Name}{case.CaseName}Value {{"
 
             yield StringBuilder.One "\n"
 
@@ -79,8 +89,7 @@ module Union =
 
           for case in cases do
             yield
-              StringBuilder.One
-                $$"""  {{union.Name}}{{case.CaseName}} {{union.Name}}Cases = "{{case.CaseName}}"; """
+              StringBuilder.One $$"""  {{union.Name}}{{case.CaseName}} {{union.Name}}Cases = "{{case.CaseName}}"; """
 
             yield StringBuilder.One "\n"
 
@@ -139,8 +148,7 @@ module Union =
 
           for case in cases do
             yield
-              StringBuilder.One
-                $"on{union.Name}{case.CaseName} func({union.Name}{case.CaseName}Value) (result,error), "
+              StringBuilder.One $"on{union.Name}{case.CaseName} func({union.Name}{case.CaseName}Value) (result,error), "
 
           yield StringBuilder.One $") (result,error) {{\n"
           yield StringBuilder.One $"  switch value.Discriminator {{\n"
@@ -148,9 +156,7 @@ module Union =
           for case in cases do
             yield StringBuilder.One $"    case {union.Name}{case.CaseName}: \n"
 
-            yield
-              StringBuilder.One
-                $"      return on{union.Name}{case.CaseName}(value.{union.Name}{case.CaseName}) \n"
+            yield StringBuilder.One $"      return on{union.Name}{case.CaseName}(value.{union.Name}{case.CaseName}) \n"
 
           yield StringBuilder.One $"  }}\n"
           yield StringBuilder.One "  var res result\n"

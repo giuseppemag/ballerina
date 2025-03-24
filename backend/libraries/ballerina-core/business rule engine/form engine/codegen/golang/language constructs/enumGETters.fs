@@ -1,4 +1,5 @@
 namespace Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs
+
 open Ballerina.DSL.Expr.Types.Model
 
 module EnumGETters =
@@ -21,24 +22,27 @@ module EnumGETters =
 
   type GolangEnumGETters =
     { FunctionName: string
-      Enums:List<{| EnumName:string; EnumType:string |}>
-      EnumNotFoundErrorConstructor:string }
+      Enums: List<{| EnumName: string; EnumType: string |}>
+      EnumNotFoundErrorConstructor: string }
 
     static member ToGolang (ctx: GolangContext) (getters: GolangEnumGETters) =
       StringBuilder.Many(
-          seq {
-            yield StringBuilder.One $"func {getters.FunctionName}[result any](enumName string, "
+        seq {
+          yield StringBuilder.One $"func {getters.FunctionName}[result any](enumName string, "
 
-            yield StringBuilder.Many(
-              getters.Enums |> Seq.map (fun e ->
-                StringBuilder.One($$"""on{{e.EnumName}} func ([]{{e.EnumType}}) (result,error), """))
-              )
+          yield
+            StringBuilder.Many(
+              getters.Enums
+              |> Seq.map (fun e -> StringBuilder.One($$"""on{{e.EnumName}} func ([]{{e.EnumType}}) (result,error), """))
+            )
 
-            yield StringBuilder.One ") (result,error) {\n"
-            yield StringBuilder.One "  switch enumName {\n"
+          yield StringBuilder.One ") (result,error) {\n"
+          yield StringBuilder.One "  switch enumName {\n"
 
-            yield StringBuilder.Many(
-              getters.Enums |> Seq.map (fun e ->
+          yield
+            StringBuilder.Many(
+              getters.Enums
+              |> Seq.map (fun e ->
                 StringBuilder.Many(
                   seq {
                     yield
@@ -48,10 +52,12 @@ module EnumGETters =
 
                     yield StringBuilder.One "\n"
                   }
-                )))
+                ))
+            )
 
-            yield StringBuilder.One "  }\n"
-            yield StringBuilder.One "  var res result\n"
-            yield StringBuilder.One $$"""  return res, {{getters.EnumNotFoundErrorConstructor}}(enumName)"""
-            yield StringBuilder.One "\n}\n\n"
-          })
+          yield StringBuilder.One "  }\n"
+          yield StringBuilder.One "  var res result\n"
+          yield StringBuilder.One $$"""  return res, {{getters.EnumNotFoundErrorConstructor}}(enumName)"""
+          yield StringBuilder.One "\n}\n\n"
+        }
+      )

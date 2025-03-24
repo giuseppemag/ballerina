@@ -6,7 +6,7 @@ module String =
   open System.Text.RegularExpressions
 
   // let private join (c:string) (s:string seq) = String.Join(c,s)
-  let private join' (c:char) (s:string seq) = String.Join(c,s)
+  let private join' (c: char) (s: string seq) = String.Join(c, s)
 
   type String with
     member self.ReasonablyClamped =
@@ -29,4 +29,4 @@ module String =
 
     static member ToFirstUpper(self: String) = self.ToFirstUpper
     // static member Join (separator:string) (self: string seq) = join separator self
-    static member JoinSeq (separator:char) (self: string seq) = join' separator self
+    static member JoinSeq (separator: char) (self: string seq) = join' separator self

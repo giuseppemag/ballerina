@@ -1,46 +1,49 @@
 namespace Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs
+
 open Ballerina.DSL.FormEngine.Model
 open Ballerina.Core
 open Enum
 
-  type GolangEntityGETDEFAULTers = { FunctionName:string; EntityNotFoundErrorConstructor:string; Entities:List<{| EntityName:string; EntityType:string |}> } with
-    static member ToGolang (_:GolangContext) (entities:GolangEntityGETDEFAULTers) = 
-      StringBuilder.Many(
-        seq {
-          yield StringBuilder.One $"func {entities.FunctionName}[result any]("
+type GolangEntityGETDEFAULTers =
+  { FunctionName: string
+    EntityNotFoundErrorConstructor: string
+    Entities:
+      List<
+        {| EntityName: string
+           EntityType: string |}
+       > }
 
-          for e in entities.Entities do
-            yield StringBuilder.Many(
-                seq {
-                  yield
-                    StringBuilder.One(
-                      $$"""serialize{{e.EntityName}} func ({{e.EntityType}}) (result,error), """
-                    )
-                }
-              )
+  static member ToGolang (_: GolangContext) (entities: GolangEntityGETDEFAULTers) =
+    StringBuilder.Many(
+      seq {
+        yield StringBuilder.One $"func {entities.FunctionName}[result any]("
 
+        for e in entities.Entities do
           yield
-            StringBuilder.One ") func(string) (result, error) { return func(entityName string) (result, error) {\n"
+            StringBuilder.Many(
+              seq {
+                yield StringBuilder.One($$"""serialize{{e.EntityName}} func ({{e.EntityType}}) (result,error), """)
+              }
+            )
 
-          yield StringBuilder.One "    var resultNil result;\n"
-          yield StringBuilder.One "    switch entityName {\n"
+        yield StringBuilder.One ") func(string) (result, error) { return func(entityName string) (result, error) {\n"
 
-          for e in entities.Entities do
-            yield StringBuilder.One $$"""      case "{{e.EntityType}}Entity":  """
-            yield StringBuilder.One "\n"
+        yield StringBuilder.One "    var resultNil result;\n"
+        yield StringBuilder.One "    switch entityName {\n"
 
-            yield
-              StringBuilder.One
-                $$"""        return serialize{{e.EntityName}}(Default{{e.EntityType}}()); """
+        for e in entities.Entities do
+          yield StringBuilder.One $$"""      case "{{e.EntityType}}Entity":  """
+          yield StringBuilder.One "\n"
 
-            yield StringBuilder.One "\n"
+          yield StringBuilder.One $$"""        return serialize{{e.EntityName}}(Default{{e.EntityType}}()); """
 
-          yield StringBuilder.One "    }\n"
+          yield StringBuilder.One "\n"
 
-          yield
-            StringBuilder.One
-              $"    return resultNil, {entities.EntityNotFoundErrorConstructor}(entityName);\n"
+        yield StringBuilder.One "    }\n"
 
-          yield StringBuilder.One "  }\n"
-          yield StringBuilder.One "}\n\n"
-        })
+        yield StringBuilder.One $"    return resultNil, {entities.EntityNotFoundErrorConstructor}(entityName);\n"
+
+        yield StringBuilder.One "  }\n"
+        yield StringBuilder.One "}\n\n"
+      }
+    )

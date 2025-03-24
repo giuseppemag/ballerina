@@ -13,7 +13,7 @@ import {
 } from "../../../../../../main";
 import { CommonFormState } from "../../../singleton/state";
 
-export type SumFieldState<LeftFormState, RightFormState> = {
+export type SumFormState<LeftFormState, RightFormState> = {
   commonFormState: CommonFormState;
 } & {
   customFormState: {
@@ -22,57 +22,52 @@ export type SumFieldState<LeftFormState, RightFormState> = {
   };
 };
 
-export const SumFieldState = <LeftFormState, RightFormState>() => ({
+export const SumFormState = <LeftFormState, RightFormState>() => ({
   Default: (
-    customFormState: SumFieldState<
+    customFormState: SumFormState<
       LeftFormState,
       RightFormState
     >["customFormState"],
-  ): SumFieldState<LeftFormState, RightFormState> => ({
+  ): SumFormState<LeftFormState, RightFormState> => ({
     commonFormState: CommonFormState.Default(),
     customFormState,
   }),
   Updaters: {
     Core: {
-      ...simpleUpdater<SumFieldState<LeftFormState, RightFormState>>()(
+      ...simpleUpdater<SumFormState<LeftFormState, RightFormState>>()(
         "customFormState",
       ),
     },
     Template: {},
   },
 });
-export type SumFieldView<
+export type SumFormView<
   LeftFormState,
   RightFormState,
   Context extends FormLabel,
   ForeignMutationsExpected,
 > = View<
-  Context & Value<ValueSum> & SumFieldState<LeftFormState, RightFormState>,
-  SumFieldState<LeftFormState, RightFormState>,
+  Context & Value<ValueSum> & SumFormState<LeftFormState, RightFormState>,
+  SumFormState<LeftFormState, RightFormState>,
   ForeignMutationsExpected & {
     onChange: OnChange<ValueSum>;
-    onSwitch: SimpleCallback;
   },
   {
-    embeddedLeftTemplate: BasicFun<
+    embeddedLeftTemplate?: BasicFun<
       void,
       Template<
-        Context &
-          Value<ValueSum> &
-          SumFieldState<LeftFormState, RightFormState>,
-        SumFieldState<LeftFormState, RightFormState>,
+        Context & Value<ValueSum> & SumFormState<LeftFormState, RightFormState>,
+        SumFormState<LeftFormState, RightFormState>,
         ForeignMutationsExpected & {
           onChange: OnChange<ValueSum>;
         }
       >
     >;
-    embeddedRightTemplate: BasicFun<
+    embeddedRightTemplate?: BasicFun<
       void,
       Template<
-        Context &
-          Value<ValueSum> &
-          SumFieldState<LeftFormState, RightFormState>,
-        SumFieldState<LeftFormState, RightFormState>,
+        Context & Value<ValueSum> & SumFormState<LeftFormState, RightFormState>,
+        SumFormState<LeftFormState, RightFormState>,
         ForeignMutationsExpected & {
           onChange: OnChange<ValueSum>;
         }

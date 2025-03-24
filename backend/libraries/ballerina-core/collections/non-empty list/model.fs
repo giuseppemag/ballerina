@@ -53,7 +53,7 @@ module NonEmptyList =
       | [] -> One head
       | x :: xs -> Many(head, NonEmptyList.OfList(x, xs))
 
-    static member TryOfList(l:List<'e>) =
+    static member TryOfList(l: List<'e>) =
       match l with
-      | x :: xs ->  NonEmptyList.OfList(x, xs) |> Some
+      | x :: xs -> NonEmptyList.OfList(x, xs) |> Some
       | _ -> None

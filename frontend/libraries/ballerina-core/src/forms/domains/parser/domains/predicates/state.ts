@@ -88,13 +88,15 @@ export const FieldPredicateExpression = {
     }),
     sum: (
       value: Expr,
-      leftExpression: FieldPredicateExpression,
-      rightExpression: FieldPredicateExpression,
+      leftExpression?: FieldPredicateExpression,
+      rightExpression?: FieldPredicateExpression,
     ): FieldPredicateExpression => ({
       kind: "sum",
       value,
-      leftExpression,
-      rightExpression,
+      leftExpression:
+        leftExpression ?? FieldPredicateExpression.Default.unit(false),
+      rightExpression:
+        rightExpression ?? FieldPredicateExpression.Default.unit(false),
     }),
   },
 };

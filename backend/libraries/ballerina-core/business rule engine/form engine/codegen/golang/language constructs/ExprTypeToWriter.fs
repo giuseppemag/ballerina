@@ -10,7 +10,7 @@ module WritersAndDeltas =
   open Ballerina.DSL.FormEngine.Codegen.Golang.Generator.Model
 
   type ExprType with
-    static member ToWriter (path:List<string>) (writerName: WriterName) (t: ExprType) =
+    static member ToWriter (path: List<string>) (writerName: WriterName) (t: ExprType) =
       state {
         let! ((ctx, codegenConfig): ParsedFormsContext * CodeGenConfig) = state.GetContext()
         let! st = state.GetState()
@@ -47,7 +47,7 @@ module WritersAndDeltas =
               cases
               |> Seq.map (fun case ->
                 state {
-                  let! wf = ExprType.ToWriterField (case.Key.CaseName::path) case.Value.Fields
+                  let! wf = ExprType.ToWriterField (case.Key.CaseName :: path) case.Value.Fields
                   return case.Key.CaseName, wf
                 })
               |> state.All
@@ -65,8 +65,8 @@ module WritersAndDeltas =
             do! state.SetState(Map.add w.Name w)
             return w
           | ExprType.SumType(a, b) ->
-            let! wa = ExprType.ToWriter ("left"::path) writerName a
-            let! wb = ExprType.ToWriter ("right"::path) writerName b
+            let! wa = ExprType.ToWriter ("left" :: path) writerName a
+            let! wb = ExprType.ToWriter ("right" :: path) writerName b
 
             let w =
               { Name =
@@ -80,7 +80,7 @@ module WritersAndDeltas =
             do! state.SetState(Map.add w.Name w)
             return w
           | ExprType.OptionType(a) ->
-            let! wa = ExprType.ToWriter ("value"::path) writerName a
+            let! wa = ExprType.ToWriter ("value" :: path) writerName a
 
             let w =
               { Name = { WriterName = $"{codegenConfig.Option.WriterTypeName}[Delta, {wa.DeltaTypeName}]" }
@@ -93,7 +93,7 @@ module WritersAndDeltas =
             do! state.SetState(Map.add w.Name w)
             return w
           | ExprType.SetType(a) ->
-            let! wa = ExprType.ToWriter ("element"::path) writerName a
+            let! wa = ExprType.ToWriter ("element" :: path) writerName a
 
             let w =
               { Name = { WriterName = $"{codegenConfig.Set.WriterTypeName}[Delta, {wa.DeltaTypeName}]" }
@@ -119,7 +119,7 @@ module WritersAndDeltas =
             do! state.SetState(Map.add w.Name w)
             return w
           | ExprType.ListType(e) ->
-            let! we = ExprType.ToWriter ("element"::path) writerName e
+            let! we = ExprType.ToWriter ("element" :: path) writerName e
 
             let w =
               { Name = { WriterName = $"{codegenConfig.List.WriterTypeName}[Delta, {we.DeltaTypeName}]" }
@@ -132,8 +132,8 @@ module WritersAndDeltas =
             do! state.SetState(Map.add w.Name w)
             return w
           | ExprType.MapType(k, v) ->
-            let! wk = ExprType.ToWriter ("key"::path) writerName k
-            let! wv = ExprType.ToWriter ("value"::path) writerName v
+            let! wk = ExprType.ToWriter ("key" :: path) writerName k
+            let! wv = ExprType.ToWriter ("value" :: path) writerName v
 
             let w =
               { Name =
@@ -147,7 +147,11 @@ module WritersAndDeltas =
             do! state.SetState(Map.add w.Name w)
             return w
           | ExprType.TupleType fields ->
-            let! fields = fields |> Seq.mapi (fun index field -> ExprType.ToWriter ($"Item{index+1}"::path) writerName field) |> state.All
+            let! fields =
+              fields
+              |> Seq.mapi (fun index field -> ExprType.ToWriter ($"Item{index + 1}" :: path) writerName field)
+              |> state.All
+
             let fields = fields |> Seq.map (fun field -> field.DeltaTypeName) |> Seq.toList
             let fieldDeltaTypeNames = System.String.Join(',', fields)
 
@@ -183,7 +187,7 @@ module WritersAndDeltas =
               do! state.SetState(Map.add w.Name w)
               return w
             | _ ->
-              let! w = ExprType.ToWriter (tn.TypeName::path) { WriterName = tn.TypeName } t.Type
+              let! w = ExprType.ToWriter (tn.TypeName :: path) { WriterName = tn.TypeName } t.Type
               do! state.SetState(Map.add w.Name w)
               return w
           | ExprType.UnitType ->
@@ -200,7 +204,7 @@ module WritersAndDeltas =
           | _ -> return! state.Throw(Errors.Singleton $"Error: cannot convert type {t} to a Writer.")
       }
 
-    static member ToWriterField (path:List<string>) (t: ExprType) =
+    static member ToWriterField (path: List<string>) (t: ExprType) =
       state {
         let! ((ctx, codegenConfig): ParsedFormsContext * CodeGenConfig) = state.GetContext()
 

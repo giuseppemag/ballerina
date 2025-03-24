@@ -7,9 +7,8 @@ import {
   FieldValidation,
   FieldValidationWithPath,
   OnChange,
-  CommonFormState,
 } from "../../../singleton/state";
-import { Base64FileView } from "./state";
+import { Base64FileFormState, Base64FileFormView } from "./state";
 
 export const Base64FileForm = <
   Context extends FormLabel,
@@ -19,9 +18,9 @@ export const Base64FileForm = <
 ) => {
   return Template.Default<
     Context & Value<string> & { disabled: boolean; visible: boolean },
-    { commonFormState: CommonFormState },
+    Base64FileFormState,
     ForeignMutationsExpected & { onChange: OnChange<string> },
-    Base64FileView<Context, ForeignMutationsExpected>
+    Base64FileFormView<Context, ForeignMutationsExpected>
   >((props) => (
     <>
       <props.view
@@ -36,7 +35,7 @@ export const Base64FileForm = <
   )).any([
     ValidateRunner<
       Context & { disabled: boolean; visible: boolean },
-      { commonFormState: CommonFormState },
+      Base64FileFormState,
       ForeignMutationsExpected,
       string
     >(
