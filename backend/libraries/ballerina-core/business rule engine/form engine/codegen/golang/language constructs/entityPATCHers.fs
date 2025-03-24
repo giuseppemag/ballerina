@@ -42,7 +42,7 @@ type GolangEntityPATCHers =
 
         for w in entities.CommittableWriters do
           yield
-            StringBuilder.Many(seq { yield StringBuilder.One($"  commit{w.Name.WriterName} {w.DeltaTypeName}, \n") })
+            StringBuilder.Many(seq { yield StringBuilder.One($"  commit{w.Name.WriterName} func({w.DeltaTypeName}) (Result, error), \n") })
 
         yield StringBuilder.One ") func(string, []Delta) (Result, error) { "
         // var traverse func (entityName string, path []Delta) (Result, error)

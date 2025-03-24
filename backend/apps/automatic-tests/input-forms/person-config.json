@@ -905,7 +905,7 @@
         },
         "mainAddress": {
           "label": "main address",
-          "renderer": "maybeDate",
+          "renderer": "defaultSum",
           "leftRenderer": {
             "label": "as string",
             "renderer": "defaultString"
