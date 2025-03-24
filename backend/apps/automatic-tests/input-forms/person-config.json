@@ -905,7 +905,7 @@
         },
         "mainAddress": {
           "label": "main address",
-          "renderer": "defaultSum",
+          "renderer": "maybeDate",
           "leftRenderer": {
             "label": "as string",
             "renderer": "defaultString"
@@ -964,13 +964,7 @@
         },
         "importantDate": {
           "label": "important date",
-          "renderer": "defaultSum",
-          "leftRenderer": {
-            "renderer":"defaultUnit"
-          },
-          "rightRenderer": {
-            "renderer":"defaultDate"
-          },
+          "renderer": "maybeDate",
           "visible": true,
           "disabled": false
         },

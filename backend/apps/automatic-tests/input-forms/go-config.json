@@ -172,13 +172,7 @@
   },
   "Generic": [
     {
-      "Type": {
-        "fun": "Sum",
-        "args": [
-          "unit",
-          "Date"
-        ]
-      },
+      "Type": "{ \"fun\": \"Sum\",  \"args\": [ \"unit\", \"Date\" ] }",
       "SupportedRenderers": [
         "maybeDate"
       ]

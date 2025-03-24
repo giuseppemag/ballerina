@@ -55,14 +55,6 @@
         ✅ fix array type in ballerina/Go
         ✅ fix sum type in ballerina/Go
         ❌ support generic type renderers over specific types
-        ```
-        "importantDate": {
-          "label": "important date",
-          "renderer": "sumRenderer",
-          "visible": true,
-          "disabled": false
-        },
-        ```
         ❌ add a renderer decorator to forms
         ❌ ensure Types and Forms can only extend other types and forms which are not extending anything
         ❌ allow Types and Forms which can extend, to only extend 1 other type/form (array length == 1 in extends)

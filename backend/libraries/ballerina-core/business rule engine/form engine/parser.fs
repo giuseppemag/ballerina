@@ -5,6 +5,7 @@ module Parser =
   open Ballerina.DSL.FormEngine.Model
   open Ballerina.DSL.Expr.Model
   open Ballerina.DSL.Expr.Types.Model
+  open Ballerina.DSL.Expr.Types.Unification
   open System
   open Ballerina.Collections.Sum
   open Ballerina.Collections.Map
@@ -608,7 +609,32 @@ module Parser =
                         Type = t.Type
                         Children = children }
                 },
-                [ state {
+                [ 
+                  state {
+                    let! { GenericRenderers = genericRenderers } = state.GetState()
+                    
+                    match genericRenderers with
+                    | [] -> return! state.Throw(Errors.Singleton $"Error: cannot match empty generic renderers")
+                    | g::gs ->
+                      let genericRenderers = NonEmptyList.OfList(g, gs)
+                      return!
+                        genericRenderers |> 
+                          NonEmptyList.map (fun g -> 
+                          state{
+                            if g.SupportedRenderers |> Set.contains s then
+                              return 
+                                PrimitiveRenderer
+                                  { PrimitiveRendererName = s
+                                    PrimitiveRendererId = Guid.CreateVersion7()
+                                    Type = g.Type
+                                    Children = children }
+
+                            else 
+                              return! state.Throw(Errors.Singleton $"Error: generic renderer does not match")
+                          })
+                          |> state.Any
+                  }
+                  state {
                     let! tupleConfig =
                       config.Tuple
                       |> List.tryFind (fun t -> t.SupportedRenderers.Contains s)
@@ -1632,6 +1658,13 @@ module Parser =
             (launchersJson |> JsonValue.AsRecord |> state.OfSum)
 
         do! ParsedFormsContext.ParseTypes typesJson
+        let! c = state.GetContext()
+        for g in c.Generic do
+          let tstring = g.Type
+          let! tjson = JsonValue.TryParse tstring |> Sum.fromOption (fun () -> Errors.Singleton $"Error: cannot parse generic type {tstring}") |> state.OfSum
+          let! t = ExprType.Parse tjson
+          do! state.SetState(ParsedFormsContext.Updaters.GenericRenderers (fun l -> {| Type=t; SupportedRenderers=g.SupportedRenderers |} :: l))
+        let! s = state.GetState()
         do! ParsedFormsContext.ParseApis generatedLanguageSpecificConfig.EnumValueFieldName apisJson
         do! ParsedFormsContext.ParseForms formsJson
         do! ParsedFormsContext.ParseLaunchers launchersJson

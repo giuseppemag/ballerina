@@ -4,6 +4,7 @@ module Model =
   open Ballerina.DSL.Expr.Model
   open Ballerina.DSL.Expr.Types.Model
   open System
+  open FSharp.Data
 
   type CodeGenConfig =
     { Int: CodegenConfigTypeDef
@@ -20,6 +21,7 @@ module Model =
       Tuple: List<TupleCodegenConfigTypeDef>
       Union: CodegenConfigUnionDef
       Custom: Map<string, CodegenConfigCustomDef>
+      Generic: List<GenericTypeDef>
       IdentifierAllowedRegex: string
       EntityNotFoundError: CodegenConfigErrorDef
       EnumNotFoundError: CodegenConfigErrorDef
@@ -31,6 +33,8 @@ module Model =
     | List
     | Set
     | Map
+
+  and GenericTypeDef = {| Type:string; SupportedRenderers: Set<string> |}
 
   and CodegenConfigErrorDef =
     { GeneratedTypeName: string
@@ -348,13 +352,15 @@ module Model =
   type ParsedFormsContext =
     { Types: Map<string, TypeBinding>
       Apis: FormApis
-      Forms: Map<string, FormConfig>
+      Forms: Map<string, FormConfig>      
+      GenericRenderers: List<{| Type:ExprType; SupportedRenderers:Set<string> |}>
       Launchers: Map<string, FormLauncher> }
 
     static member Empty: ParsedFormsContext =
       { Types = Map.empty
         Apis = FormApis.Empty
         Forms = Map.empty
+        GenericRenderers = []
         Launchers = Map.empty }
 
     static member Updaters =
@@ -373,6 +379,11 @@ module Model =
             fun s ->
               { s with
                   ParsedFormsContext.Forms = u (s.Forms) }
+         GenericRenderers =
+          fun u ->
+            fun s ->
+              { s with
+                  ParsedFormsContext.GenericRenderers = u (s.GenericRenderers) }
          Launchers =
           fun u ->
             fun s ->
