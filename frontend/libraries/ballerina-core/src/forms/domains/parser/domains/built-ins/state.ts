@@ -6,15 +6,29 @@ import {
 import { CollectionSelection } from "../../../collection/domains/selection/state";
 import { BasicFun } from "../../../../../fun/state";
 import {
+  BooleanFormState,
+  CommonFormState,
+  DateFormState,
   InjectedPrimitives,
   Maybe,
   ParsedRecord,
+  NumberFormState,
   ParsedType,
   PredicateValue,
+  replaceWith,
+  StringFormState,
   Sum,
   TypeName,
   unit,
+  UnitFormState,
+  ValueRecord,
   ValueTuple,
+  Base64FileFormState,
+  SecretFormState,
+  ListFieldState,
+  MapFieldState,
+  TupleFormState,
+  SumFormState,
 } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 
@@ -63,51 +77,9 @@ export type ApiConverters<
   T extends { [key in keyof T]: { type: any; state: any } },
 > = { [key in keyof T]: ApiConverter<T[key]["type"]> } & BuiltInApiConverters;
 
-export type VerifiedRawUnionCase = {
+export type UnionCase = {
   caseName: string;
   fields: Record<string, any>;
-};
-
-export const VerifiedRawUnionCase = {
-  Operations: {
-    IsVerifiedRawUnionCase: (value: any): value is VerifiedRawUnionCase => {
-      return (
-        typeof value == "object" &&
-        "caseName" in value &&
-        typeof value.caseName == "string" &&
-        "fields" in value &&
-        typeof value.fields == "object"
-      );
-    },
-  },
-};
-
-export type RawOption = {
-  isSome: boolean;
-  value: Record<string, any>;
-};
-
-export const RawOption = {
-  Operations: {
-    IsRawOption: (value: any): value is RawOption => {
-      return (
-        typeof value == "object" &&
-        "IsSome" in value &&
-        typeof value.IsSome == "boolean" &&
-        "Value" in value &&
-        typeof value.Value == "object"
-      );
-    },
-  },
-};
-
-export type RawSum = { Kind: "l" | "r"; Value: any };
-export const RawSum = {
-  Operations: {
-    IsRawSum: (value: any): value is RawSum => {
-      return typeof value == "object" && "Kind" in value && "Value" in value;
-    },
-  },
 };
 
 export type BuiltInApiConverters = {
@@ -117,7 +89,7 @@ export type BuiltInApiConverters = {
   base64File: ApiConverter<string>;
   secret: ApiConverter<string>;
   Date: ApiConverter<Date>;
-  unionCase: ApiConverter<VerifiedRawUnionCase>;
+  union: ApiConverter<UnionCase>;
   SingleSelection: ApiConverter<
     CollectionSelection<CollectionReference | EnumReference>
   >;
@@ -133,8 +105,12 @@ export type BuiltInApiConverters = {
 export type PrimitiveBuiltIn = {
   renderers: Set<keyof BuiltIns["renderers"]>;
   defaultValue: PredicateValue;
+  defaultState: {
+    commonFormState: CommonFormState;
+    customFormState: object;
+  };
 };
-export type GenericBuiltIn = { defaultValue: any };
+export type GenericBuiltIn = { defaultValue: any; defaultState?: any };
 export type BuiltIns = {
   primitives: Map<string, PrimitiveBuiltIn>;
   generics: Map<string, GenericBuiltIn>;
@@ -165,6 +141,7 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
         {
           renderers: Set(["unit"]),
           defaultValue: PredicateValue.Default.unit(),
+          defaultState: UnitFormState.Default(),
         },
       ] as [string, PrimitiveBuiltIn],
       [
@@ -172,6 +149,7 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
         {
           renderers: Set(["string"]),
           defaultValue: PredicateValue.Default.string(),
+          defaultState: StringFormState.Default(),
         },
       ] as [string, PrimitiveBuiltIn],
       [
@@ -179,6 +157,7 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
         {
           renderers: Set(["number"]),
           defaultValue: PredicateValue.Default.number(),
+          defaultState: NumberFormState.Default(),
         },
       ] as [string, PrimitiveBuiltIn],
       [
@@ -186,6 +165,7 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
         {
           renderers: Set(["boolean"]),
           defaultValue: PredicateValue.Default.boolean(),
+          defaultState: BooleanFormState.Default(),
         },
       ] as [string, PrimitiveBuiltIn],
       [
@@ -193,6 +173,7 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
         {
           renderers: Set(["date"]),
           defaultValue: PredicateValue.Default.date(),
+          defaultState: DateFormState.Default(),
         },
       ] as [string, PrimitiveBuiltIn],
       [
@@ -200,6 +181,7 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
         {
           renderers: Set(["date"]),
           defaultValue: PredicateValue.Default.date(),
+          defaultState: DateFormState.Default(),
         },
       ] as [string, PrimitiveBuiltIn],
       [
@@ -207,6 +189,7 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
         {
           renderers: Set(["base64File"]),
           defaultValue: PredicateValue.Default.string(),
+          defaultState: Base64FileFormState.Default(),
         },
       ] as [string, PrimitiveBuiltIn],
       [
@@ -214,10 +197,11 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
         {
           renderers: Set(["secret"]),
           defaultValue: PredicateValue.Default.string(),
+          defaultState: SecretFormState.Default(),
         },
       ] as [string, PrimitiveBuiltIn],
     ]),
-    generics: Map([
+    generics: Map<string, GenericBuiltIn>([
       [
         "SingleSelection",
         {
@@ -226,47 +210,55 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
             PredicateValue.Default.unit(),
           ),
         },
-      ] as [string, GenericBuiltIn],
+      ],
       [
         "MultiSelection",
         { defaultValue: PredicateValue.Default.record(Map()) },
-      ] as [string, GenericBuiltIn],
-      ["List", { defaultValue: PredicateValue.Default.tuple(List()) }] as [
-        string,
-        GenericBuiltIn,
       ],
-      ["Map", { defaultValue: PredicateValue.Default.tuple(List()) }] as [
-        string,
-        GenericBuiltIn,
+      [
+        "List",
+        {
+          defaultValue: PredicateValue.Default.tuple(List()),
+          defaultState: ListFieldState().zero(),
+        },
+      ],
+      [
+        "Map",
+        {
+          defaultValue: PredicateValue.Default.tuple(List()),
+          defaultState: MapFieldState().zero(),
+        },
       ],
       [
         "Tuple",
         {
           defaultValue: (values: PredicateValue[]) =>
             PredicateValue.Default.tuple(List(values)),
+          defaultState: (argStates: List<any>) =>
+            TupleFormState().Default(argStates),
         },
-      ] as [string, GenericBuiltIn],
+      ],
       [
         "Sum",
         {
-          defaultValue: PredicateValue.Default.sum(
-            Sum.Default.right(PredicateValue.Default.unit()),
-          ),
+          defaultValue: (kind: "l" | "r", value: PredicateValue) =>
+            PredicateValue.Default.sum(
+              kind == "l" ? Sum.Default.left(value) : Sum.Default.right(value),
+            ),
+          defaultState: (left: any, right: any) =>
+            SumFormState().Default({ left, right }),
         },
-      ],
-      ["Union", { defaultValue: PredicateValue.Default.record(Map()) }] as [
-        string,
-        GenericBuiltIn,
       ],
       [
-        "Option",
+        "Union",
         {
-          defaultValue: PredicateValue.Default.option(
-            false,
-            PredicateValue.Default.unit(),
-          ),
+          defaultValue: (fields: Map<string, PredicateValue>) =>
+            PredicateValue.Default.record(fields),
+          // TODO : Union Renderer form
+          // defaultState: (fields: Map<string, any>) =>
+          //   UnionFormState().Default(fields),
         },
-      ] as [string, GenericBuiltIn],
+      ],
     ]),
     renderers: {
       unit: Set(),
@@ -298,6 +290,80 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
   return builtins;
 };
 
+export const defaultState =
+  <T>(
+    types: Map<TypeName, ParsedType<T>>,
+    builtIns: BuiltIns,
+    injectedPrimitives?: InjectedPrimitives<T>,
+  ) =>
+  (
+    t: ParsedType<T>,
+  ): {
+    commonFormState: CommonFormState;
+    customFormState: object;
+  } => {
+    if (
+      t.kind == "union" ||
+      t.kind == "unionCase" ||
+      (t.kind == "application" &&
+        (t.value == "SingleSelection" || t.value == "MultiSelection"))
+    ) {
+      throw Error(
+        `t.kind: ${t.kind} ${
+          t.kind == "application" ? ` t.value: ${t.value}` : ""
+        } not currently supported by the defaultState function`,
+      );
+    }
+
+    if (t.kind == "primitive") {
+      const primitive = builtIns.primitives.get(t.value as string);
+      const injectedPrimitive = injectedPrimitives?.injectedPrimitives.get(
+        t.value as keyof T,
+      );
+      if (primitive != undefined) return primitive.defaultState;
+      if (injectedPrimitive != undefined)
+        return {
+          commonFormState: CommonFormState.Default(),
+          customFormState: injectedPrimitive.defaultState,
+        };
+    }
+
+    if (t.kind == "application" && t.value == "Tuple") {
+      return builtIns.generics
+        .get("Tuple")!
+        .defaultState(
+          t.args.map((_) =>
+            defaultState(types, builtIns, injectedPrimitives)(_),
+          ),
+        );
+    }
+
+    if (t.kind == "application" && t.value == "Sum") {
+      return builtIns.generics
+        .get("Sum")!
+        .defaultState(
+          defaultState(types, builtIns, injectedPrimitives)(t.args[0]),
+          defaultState(types, builtIns, injectedPrimitives)(t.args[1]),
+        );
+    }
+
+    if (t.kind == "application") {
+      const generic = builtIns.generics.get(t.value);
+      if (generic) return generic.defaultState;
+    }
+
+    if (t.kind == "lookup")
+      return defaultState(
+        types,
+        builtIns,
+        injectedPrimitives,
+      )(types.get(t.name)!);
+
+    throw Error(
+      `cannot find type ${JSON.stringify(t)} when resolving defaultValue`,
+    );
+  };
+
 export const defaultValue =
   <T>(
     types: Map<TypeName, ParsedType<T>>,
@@ -321,6 +387,14 @@ export const defaultValue =
           t.args.map((_) =>
             defaultValue(types, builtIns, injectedPrimitives)(_),
           ),
+        );
+    }
+    if (t.kind == "application" && t.value == "Sum") {
+      return builtIns.generics
+        .get("Sum")!
+        .defaultValue(
+          defaultValue(types, builtIns, injectedPrimitives)(t.args[0]),
+          defaultValue(types, builtIns, injectedPrimitives)(t.args[1]),
         );
     }
     if (t.kind == "application") {
@@ -360,7 +434,7 @@ export const fromAPIRawValue =
     injectedPrimitives?: InjectedPrimitives<T>,
   ) =>
   (raw: any): ValueOrErrors<PredicateValue, string> => {
-    // allow undefined for unit
+    // allow undefined for unit renderer
     if (raw == undefined && (t.kind !== "primitive" || t.value != "unit")) {
       return ValueOrErrors.Default.throwOne(
         `raw value is undefined for type ${JSON.stringify(t)}`,
@@ -388,110 +462,44 @@ export const fromAPIRawValue =
       );
     }
     if (t.kind == "union") {
-      if (!VerifiedRawUnionCase.Operations.IsVerifiedRawUnionCase(raw)) {
-        return ValueOrErrors.Default.throwOne(
-          `union expected but got ${JSON.stringify(raw)}`,
-        );
-      }
-      const caseType = t.args.get(raw.caseName);
-      if (caseType == undefined) {
-        return ValueOrErrors.Default.throwOne(
-          `union case ${raw.caseName} not found in type ${JSON.stringify(t)}`,
-        );
-      }
-      return fromAPIRawValue(
-        caseType,
-        types,
-        builtIns,
-        converters,
-        injectedPrimitives,
-      )(raw);
-    }
-    if (t.kind == "unionCase") {
-      if (!VerifiedRawUnionCase.Operations.IsVerifiedRawUnionCase(raw)) {
-        return ValueOrErrors.Default.throwOne(
-          `unionCase expected but got ${JSON.stringify(raw)}`,
-        );
-      }
       const result = converters[t.kind].fromAPIRawValue(raw);
+      const caseType = t.args.get(result.caseName);
+      if (caseType == undefined)
+        return ValueOrErrors.Default.throwOne(
+          `union case ${result.caseName} not found in type ${JSON.stringify(
+            t,
+          )}`,
+        );
+
       return fromAPIRawValue(
-        Object.keys(t.fields).length <= 0
-          ? {
-              kind: "record",
-              value: "unionCase",
-              fields: Map<string, ParsedType<T>>(),
-              typeName: t.typeName,
-              extendedTypes: t.extendedTypes,
-            }
-          : t.fields,
+        caseType.fields,
         types,
         builtIns,
         converters,
         injectedPrimitives,
       )(result.fields).Then((fields) => {
-        if (!PredicateValue.Operations.IsRecord(fields)) {
-          return ValueOrErrors.Default.throwOne(
-            `record expected but got ${JSON.stringify(fields)}`,
-          );
-        }
         return ValueOrErrors.Default.return(
-          PredicateValue.Default.unionCase(result.caseName, fields),
+          PredicateValue.Default.unionCase(
+            result.caseName,
+            fields as ValueRecord,
+          ),
         );
       });
     }
+
     if (t.kind == "application") {
       if (t.value == "SingleSelection") {
-        if (!RawOption.Operations.IsRawOption(raw)) {
-          return ValueOrErrors.Default.throwOne(
-            `Option expected but got ${JSON.stringify(raw)}`,
-          );
-        }
         const result = converters[t.value].fromAPIRawValue(raw);
-        if (result.kind == "r") {
-          return ValueOrErrors.Default.return(
-            PredicateValue.Default.option(false, PredicateValue.Default.unit()),
-          );
-        }
-
-        if (result.kind == "l") {
-          if (
-            !EnumReference.Operations.IsEnumReference(result.value) &&
-            !CollectionReference.Operations.IsCollectionReference(result.value)
-          ) {
-            return ValueOrErrors.Default.throwOne(
-              `CollectionReference or EnumReference expected but got ${JSON.stringify(
-                result.value,
-              )}`,
-            );
-          }
-        }
+        const isSome = result.kind == "l";
+        const value = isSome
+          ? PredicateValue.Default.record(Map(result.value))
+          : PredicateValue.Default.unit();
 
         return ValueOrErrors.Default.return(
-          PredicateValue.Default.option(
-            true,
-            PredicateValue.Default.record(Map(result.value)),
-          ),
+          PredicateValue.Default.option(isSome, value),
         );
       }
       if (t.value == "MultiSelection") {
-        if (!Array.isArray(raw)) {
-          return ValueOrErrors.Default.throwOne(
-            `Array expected but got ${JSON.stringify(raw)}`,
-          );
-        }
-        if (
-          raw.some(
-            (_) =>
-              !CollectionReference.Operations.IsCollectionReference(_) &&
-              !EnumReference.Operations.IsEnumReference(_),
-          )
-        ) {
-          return ValueOrErrors.Default.throwOne(
-            `CollectionReference or EnumReference for multi selection items expected but got ${JSON.stringify(
-              raw,
-            )}`,
-          );
-        }
         const result = converters[t.value].fromAPIRawValue(raw);
         const values = result.map((_) => PredicateValue.Default.record(Map(_)));
         return ValueOrErrors.Default.return(
@@ -499,50 +507,22 @@ export const fromAPIRawValue =
         );
       }
       if (t.value == "List") {
-        if (!Array.isArray(raw)) {
-          return ValueOrErrors.Default.throwOne(
-            `Array expected but got ${JSON.stringify(raw)}`,
-          );
-        }
-
+        const result = converters[t.value].fromAPIRawValue(raw);
         return ValueOrErrors.Operations.All(
-          List<ValueOrErrors<PredicateValue, string>>(
-            raw.map((_) =>
-              fromAPIRawValue(
-                t.args[0],
-                types,
-                builtIns,
-                converters,
-                injectedPrimitives,
-              )(_),
-            ),
+          result.map((_) =>
+            fromAPIRawValue(
+              t.args[0],
+              types,
+              builtIns,
+              converters,
+              injectedPrimitives,
+            )(_),
           ),
         ).Then((values) =>
-          ValueOrErrors.Default.return(
-            PredicateValue.Default.tuple(
-              converters["List"].fromAPIRawValue(values.toArray()),
-            ),
-          ),
+          ValueOrErrors.Default.return(PredicateValue.Default.tuple(values)),
         );
       }
       if (t.value == "Map" && t.args.length == 2) {
-        if (!Array.isArray(raw)) {
-          return ValueOrErrors.Default.throwOne(
-            `Array expected array but got ${JSON.stringify(raw)}`,
-          );
-        }
-
-        if (
-          raw.some(
-            (_) => typeof _ != "object" || !("Key" in _) || !("Value" in _),
-          )
-        ) {
-          return ValueOrErrors.Default.throwOne(
-            `Array expected array of objects with key and value but got ${JSON.stringify(
-              raw,
-            )}`,
-          );
-        }
         const result = converters[t.value].fromAPIRawValue(raw);
 
         return ValueOrErrors.Operations.All(
@@ -577,17 +557,6 @@ export const fromAPIRawValue =
       }
 
       if (t.value == "Tuple") {
-        if (!Array.isArray(raw))
-          return ValueOrErrors.Default.throwOne(
-            `Array expected but got ${JSON.stringify(raw)}`,
-          );
-        if (raw.length != t.args.length) {
-          console.debug("tuple", t, raw);
-          return ValueOrErrors.Default.throwOne(
-            `Array length mismatch expected tuple length: ${t.args.length} expected but got ${raw.length}`,
-          );
-        }
-
         const result = converters[t.value].fromAPIRawValue(raw);
         return ValueOrErrors.Operations.All(
           List<ValueOrErrors<PredicateValue, string>>(
@@ -609,37 +578,19 @@ export const fromAPIRawValue =
       }
 
       if (t.value === "Sum" && t.args.length === 2) {
-        if (!RawSum.Operations.IsRawSum(raw)) {
-          return ValueOrErrors.Default.throwOne(
-            `Sum expected but got ${JSON.stringify(raw)}`,
-          );
-        }
-
         const result = converters[t.value].fromAPIRawValue(raw);
 
-        if (raw.Kind === "l") {
-          return fromAPIRawValue(
-            t.args[0],
-            types,
-            builtIns,
-            converters,
-            injectedPrimitives,
-          )(result.value).Then((value) =>
-            ValueOrErrors.Default.return(
-              PredicateValue.Default.sum(Sum.Default.left(value)),
-            ),
-          );
-        }
-
         return fromAPIRawValue(
-          t.args[1],
+          result.kind == "l" ? t.args[0] : t.args[1],
           types,
           builtIns,
           converters,
           injectedPrimitives,
         )(result.value).Then((value) =>
           ValueOrErrors.Default.return(
-            PredicateValue.Default.sum(Sum.Default.right(value)),
+            PredicateValue.Default.sum(
+              Sum.Updaters.map2(replaceWith(value), replaceWith(value))(result),
+            ),
           ),
         );
       }
@@ -712,24 +663,33 @@ export const toAPIRawValue =
     }
 
     if (t.kind == "union") {
-      return toAPIRawValue(
-        { kind: "unionCase", name: "", fields: {} as ParsedRecord<T>, typeName: "", extendedTypes: [] },
-        types,
-        builtIns,
-        converters,
-        injectedPrimitives,
-      )(raw, formState);
-    }
-
-    if (t.kind == "unionCase") {
-      if (!PredicateValue.Operations.IsUnionCase(raw)) {
+      if (!PredicateValue.Operations.IsRecord(raw)) {
         return ValueOrErrors.Default.throwOne(
-          `UnionCase expected but got ${JSON.stringify(raw)}`,
+          `Option expected but got ${JSON.stringify(raw)}`,
         );
       }
+      const caseName = raw.fields.get("caseName");
+      if (
+        caseName == undefined ||
+        !PredicateValue.Operations.IsString(caseName)
+      ) {
+        return ValueOrErrors.Default.throwOne(
+          `caseName expected but got ${JSON.stringify(raw)}`,
+        );
+      }
+      const fields = raw.fields.get("fields");
+      if (fields == undefined || !PredicateValue.Operations.IsRecord(fields)) {
+        return ValueOrErrors.Default.throwOne(
+          `fields expected but got ${JSON.stringify(raw)}`,
+        );
+      }
+      const rawUnionCase = {
+        caseName,
+        fields: fields.fields.toJS(),
+      };
       return ValueOrErrors.Operations.Return(
-        converters[t.kind].toAPIRawValue([
-          { caseName: raw.caseName, fields: raw.fields },
+        converters["union"].toAPIRawValue([
+          rawUnionCase,
           formState.commonFormState.modifiedByUser,
         ]),
       );
@@ -924,33 +884,23 @@ export const toAPIRawValue =
           );
         }
 
-        if (raw.value.kind === "l") {
-          return toAPIRawValue(
-            t.args[0],
-            types,
-            builtIns,
-            converters,
-            injectedPrimitives,
-          )(raw.value.value, formState.customFormState.left).Then((value) =>
-            ValueOrErrors.Default.return(
-              converters["Sum"].toAPIRawValue([
-                Sum.Default.left(value),
-                formState.commonFormState.modifiedByUser,
-              ]),
-            ),
-          );
-        }
-
         return toAPIRawValue(
-          t.args[1],
+          raw.value.kind == "l" ? t.args[0] : t.args[1],
           types,
           builtIns,
           converters,
           injectedPrimitives,
-        )(raw.value.value, formState.customFormState.right).Then((value) =>
+        )(
+          raw.value.value,
+          raw.value.kind == "l"
+            ? formState.customFormState.left
+            : formState.customFormState.right,
+        ).Then((value) =>
           ValueOrErrors.Default.return(
             converters["Sum"].toAPIRawValue([
-              Sum.Default.right(value),
+              raw.value.kind == "l"
+                ? Sum.Default.left(value)
+                : Sum.Default.right(value),
               formState.commonFormState.modifiedByUser,
             ]),
           ),

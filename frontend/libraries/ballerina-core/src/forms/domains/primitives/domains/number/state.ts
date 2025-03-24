@@ -1,8 +1,20 @@
-import { SimpleCallback, CommonFormState } from "../../../../../../main";
+import { SimpleCallback, CommonFormState, Unit } from "../../../../../../main";
 import { View } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import { OnChange } from "../../../singleton/state";
+
+export type NumberFormState = {
+  commonFormState: CommonFormState;
+  customFormState: Unit;
+};
+
+export const NumberFormState = {
+  Default: (): NumberFormState => ({
+    commonFormState: CommonFormState.Default(),
+    customFormState: {},
+  }),
+};
 
 export type NumberView<
   Context extends FormLabel,
@@ -13,7 +25,7 @@ export type NumberView<
       disabled: boolean;
       visible: boolean;
     },
-  { commonFormState: CommonFormState },
+  NumberFormState,
   ForeignMutationsExpected & {
     onChange: OnChange<number>;
     setNewValue: SimpleCallback<number>;

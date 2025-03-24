@@ -1,52 +1,66 @@
 package ballerina
 
 import (
-	"fmt"
+	"encoding/json"
 )
 
-type Sum[a any, b any] interface{}
-type left[a any, b any] struct {
-	Sum[a, b]
-	value a
+type Sum[a any, b any] struct {
+	// NOTE: Important: all of these attributes must be private.
+	// Getting values out of Sum can only be done through Fold
+	isRight bool
+
+	left  a
+	right b
 }
 
-func Left[a any, b any](value a) Sum[a, b] {
-	p := new(left[a, b])
-	p.value = value
-	return p
-}
-
-type right[a any, b any] struct {
-	Sum[a, b]
-	value b
-}
-
-func Right[a any, b any](value b) Sum[a, b] {
-	p := new(right[a, b])
-	p.value = value
-	return p
-}
-func MatchSum[a any, b any, c any](self Sum[a, b], onLeft func(a) c, onRight func(b) c) (c, error) {
-	switch v := self.(type) {
-	case left[a, b]:
-		return onLeft(v.value), nil
-	case right[a, b]:
-		return onRight(v.value), nil
-	default:
-		var res c
-		return res, fmt.Errorf("%s is not a valid sum instance", self)
+func Left[L any, R any](value L) Sum[L, R] {
+	return Sum[L, R]{
+		isRight: false,
+		left:    value,
 	}
 }
-func MapLeft[a any, b any, a1 any](self Sum[a, b], f func(a) a1) (Sum[a1, b], error) {
-	switch v := self.(type) {
-	case left[a, b]:
-		return Left[a1, b](f(v.value)), nil
-	case right[a, b]:
-		return Right[a1](v.value), nil
-	default:
-		var res Sum[a1, b]
-		return res, fmt.Errorf("%s is not a valid sum instance", self)
+
+func Right[L any, R any](value R) Sum[L, R] {
+	return Sum[L, R]{
+		isRight: true,
+		right:   value,
 	}
+}
+
+func BiMap[L any, R any, LO any, RO any](e Sum[L, R], leftMap func(L) LO, rightMap func(R) RO) Sum[LO, RO] {
+	if e.isRight {
+		return Right[LO, RO](rightMap(e.right))
+	}
+	return Left[LO, RO](leftMap(e.left))
+}
+
+func BiMapWithError[L any, R any, LO any, RO any](e Sum[L, R], leftMap func(L) (LO, error), rightMap func(R) (RO, error)) (Sum[LO, RO], error) {
+	if e.isRight {
+		output, err := rightMap(e.right)
+		if err != nil {
+			return Sum[LO, RO]{}, err
+		}
+		return Right[LO, RO](output), nil
+	}
+	output, err := leftMap(e.left)
+	if err != nil {
+		return Sum[LO, RO]{}, err
+	}
+	return Left[LO, RO](output), nil
+}
+
+func Fold[L any, R any, O any](e Sum[L, R], leftMap func(L) O, rightMap func(R) O) O {
+	if e.isRight {
+		return rightMap(e.right)
+	}
+	return leftMap(e.left)
+}
+
+func FoldWithError[L any, R any, O any](e Sum[L, R], leftMap func(L) (O, error), rightMap func(R) (O, error)) (O, error) {
+	if e.isRight {
+		return rightMap(e.right)
+	}
+	return leftMap(e.left)
 }
 
 type WriterSum[Delta any, DeltaA any, DeltaB any] interface {
@@ -54,3 +68,57 @@ type WriterSum[Delta any, DeltaA any, DeltaB any] interface {
 }
 
 type DeltaSum[Delta any, DeltaA any, DeltaB any] interface{}
+
+// Serialization
+
+type sumForSerialization[a any] struct {
+	IsRight bool
+	Value   a
+}
+
+func (s Sum[a, b]) MarshalJSON() ([]byte, error) {
+	return FoldWithError(
+		s,
+		func(left a) ([]byte, error) {
+			return json.Marshal(sumForSerialization[a]{
+				IsRight: false,
+				Value:   left,
+			})
+		},
+		func(right b) ([]byte, error) {
+			return json.Marshal(sumForSerialization[b]{
+				IsRight: true,
+				Value:   right,
+			})
+		},
+	)
+}
+
+type inspectIsRight struct {
+	IsRight bool
+}
+
+func (s *Sum[a, b]) UnmarshalJSON(data []byte) error {
+	var i inspectIsRight
+	err := json.Unmarshal(data, &i)
+	if err != nil {
+		return err
+	}
+	s.isRight = i.IsRight
+	if s.isRight {
+		var right sumForSerialization[b]
+		err = json.Unmarshal(data, &right)
+		if err != nil {
+			return err
+		}
+		s.right = right.Value
+	} else {
+		var left sumForSerialization[a]
+		err = json.Unmarshal(data, &left)
+		if err != nil {
+			return err
+		}
+		s.left = left.Value
+	}
+	return nil
+}

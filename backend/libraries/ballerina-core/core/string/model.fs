@@ -5,6 +5,9 @@ module String =
   open System
   open System.Text.RegularExpressions
 
+  // let private join (c:string) (s:string seq) = String.Join(c,s)
+  let private join' (c: char) (s: string seq) = String.Join(c, s)
+
   type String with
     member self.ReasonablyClamped =
       Regex.Replace(self.Substring(0, min self.Length 50).ReplaceLineEndings(" "), " +", " ")
@@ -25,3 +28,5 @@ module String =
         String.Concat(self[0].ToString().ToUpper(), self.AsSpan(1))
 
     static member ToFirstUpper(self: String) = self.ToFirstUpper
+    // static member Join (separator:string) (self: string seq) = join separator self
+    static member JoinSeq (separator: char) (self: string seq) = join' separator self

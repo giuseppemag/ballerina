@@ -1,39 +1,25 @@
 package ballerina
 
 type Option[a any] struct {
-	Value  a
-	IsSome bool
+	Sum[Unit, a] // NOTE: struct embedding is needed to be able to access Sum's JSON methods
 }
 
 // type some[a any] struct { Option[a]; Value a; Kind string }
 func Some[a any](value a) Option[a] {
-	p := Option[a]{
-		Value:  value,
-		IsSome: true,
-	}
-	return p
+	return Option[a]{Right[Unit](value)}
 }
 
 // type none[a any] struct { Option[a]; Kind string }
 func None[a any]() Option[a] {
-	p := Option[a]{
-		IsSome: false,
-	}
-	return p
+	return Option[a]{Left[Unit, a](DefaultUnit)}
 }
+
 func MatchOption[a any, c any](self Option[a], onSome func(a) c, onNone func() c) c {
-	if self.IsSome {
-		return onSome(self.Value)
-	} else {
-		return onNone()
-	}
+	return Fold(self.Sum, func(_ Unit) c { return onNone() }, onSome)
 }
+
 func MapOption[a any, b any](self Option[a], f func(a) b) Option[b] {
-	if self.IsSome {
-		return Some(f(self.Value))
-	} else {
-		return None[b]()
-	}
+	return Option[b]{BiMap(self.Sum, id, f)}
 }
 
 type WriterOption[Delta any, DeltaA any] interface {

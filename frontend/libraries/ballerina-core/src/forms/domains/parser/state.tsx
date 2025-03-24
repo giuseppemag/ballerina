@@ -37,6 +37,7 @@ import {
   PassthroughFormState,
   PassthroughFormContext,
   PassthroughFormTemplate,
+  defaultState,
 } from "../../../../main";
 import { EnumReference } from "../collection/domains/reference/state";
 import { SearchableInfiniteStreamState } from "../primitives/domains/searchable-infinite-stream/state";
@@ -61,6 +62,7 @@ export const ParseForm = <T,>(
   infiniteStreamSources: any,
   enumOptionsSources: EnumOptionsSources,
   defaultValue: BasicFun<ParsedType<T>, any>,
+  defaultState: BasicFun<ParsedType<T>, any>,
   injectedPrimitives?: InjectedPrimitives<T>,
 ): ParsedForm<T> => {
   const formConfig: any = {};
@@ -81,6 +83,7 @@ export const ParseForm = <T,>(
         forms,
         nestedContainerFormView,
         defaultValue,
+        defaultState,
         enumOptionsSources,
         infiniteStreamSources,
         injectedPrimitives,
@@ -143,7 +146,7 @@ export const ParseForms =
       }
       seen = seen.add(formDef.name);
       formDef.fields.forEach((field, fieldName) => {
-        if (field.type.kind == "lookup" || field.type.kind == "form") {
+        if (field.type.kind == "lookup" || field.type.kind == "record") {
           traverse(formsConfig.forms.get(field.renderer)!);
         }
         try {
@@ -197,6 +200,7 @@ export const ParseForms =
           infiniteStreamSources,
           enumOptionsSources,
           defaultValue(formsConfig.types, builtIns, injectedPrimitives),
+          defaultState(formsConfig.types, builtIns, injectedPrimitives),
           injectedPrimitives,
         );
         const formBuilder = Form<any, any, any>().Default<any>();

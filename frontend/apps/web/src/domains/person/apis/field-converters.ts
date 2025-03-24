@@ -2,7 +2,6 @@ import {
   ApiConverters,
   CollectionSelection,
   fromAPIRawValue,
-  RawSum,
   Sum,
   toAPIRawValue,
 } from "ballerina-core";
@@ -43,7 +42,7 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
           : new Date(Date.now()),
     toAPIRawValue: ([_, __]) => _,
   },
-  unionCase: { fromAPIRawValue: (_) => _, toAPIRawValue: ([_, __]) => _ },
+  union: { fromAPIRawValue: (_) => _, toAPIRawValue: ([_, __]) => _ },
   SingleSelection: {
     fromAPIRawValue: (_) =>
       _.IsSome == false
@@ -82,7 +81,6 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
   },
   Tuple: {
     fromAPIRawValue: (_) => {
-      console.debug("Tuple", _);
       if (_ == undefined) {
         return List();
       }
@@ -98,17 +96,22 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
       }
       return List(result);
     },
-    toAPIRawValue: ([_, __]) => _.valueSeq().toArray(),
+    toAPIRawValue: ([_, __]) =>
+      _.valueSeq()
+        .toArray()
+        .reduce(
+          (acc, value, index) => ({
+            ...acc,
+            [`Item${index + 1}`]: value,
+          }),
+          {},
+        ),
   },
   Sum: {
-    fromAPIRawValue: (_: RawSum) =>
-      _ === undefined
-        ? Sum.Default.right(null)
-        : _.Kind === "l"
-          ? Sum.Default.left(_.Value)
-          : Sum.Default.right(_.Value),
+    fromAPIRawValue: (_: any) =>
+      _.IsRight ? Sum.Default.right(_.Value) : Sum.Default.left(_.Value),
     toAPIRawValue: ([_, __]) => ({
-      Kind: _.kind,
+      IsRight: _.kind == "r",
       Value: _.value,
     }),
   },

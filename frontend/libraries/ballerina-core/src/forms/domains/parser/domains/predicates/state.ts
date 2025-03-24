@@ -20,7 +20,7 @@ export type TuplePredicateExpression = {
 export type FieldPredicateExpression =
   | { kind: "unit"; value: Expr }
   | { kind: "primitive"; value: Expr }
-  | { kind: "form"; value: Expr; fields: FieldPredicateExpressions }
+  | { kind: "record"; value: Expr; fields: FieldPredicateExpressions }
   | { kind: "list"; value: Expr; elementExpression: FieldPredicateExpression }
   | {
       kind: "map";
@@ -60,10 +60,10 @@ export const FieldPredicateExpression = {
       kind: "primitive",
       value,
     }),
-    form: (
+    record: (
       value: Expr,
       fields: FieldPredicateExpressions,
-    ): FieldPredicateExpression => ({ kind: "form", value, fields }),
+    ): FieldPredicateExpression => ({ kind: "record", value, fields }),
     list: (
       value: Expr,
       elementExpression: FieldPredicateExpression,
@@ -88,13 +88,15 @@ export const FieldPredicateExpression = {
     }),
     sum: (
       value: Expr,
-      leftExpression: FieldPredicateExpression,
-      rightExpression: FieldPredicateExpression,
+      leftExpression?: FieldPredicateExpression,
+      rightExpression?: FieldPredicateExpression,
     ): FieldPredicateExpression => ({
       kind: "sum",
       value,
-      leftExpression,
-      rightExpression,
+      leftExpression:
+        leftExpression ?? FieldPredicateExpression.Default.unit(false),
+      rightExpression:
+        rightExpression ?? FieldPredicateExpression.Default.unit(false),
     }),
   },
 };
@@ -651,7 +653,7 @@ export const PredicateValue = {
           ValueOrErrors.Default.return(PredicateValue.Default.tuple(values)),
         );
       }
-      if (type.kind == "form") {
+      if (type.kind == "record") {
         return ValueOrErrors.Operations.All(
           List<ValueOrErrors<[string, PredicateValue], string>>(
             Object.entries(json).map(([fieldName, fieldValue]) => {
@@ -1128,7 +1130,7 @@ export const evaluatePredicates = <T>(
         });
       });
     }
-    if (predicate.kind == "form") {
+    if (predicate.kind == "record") {
       if (typeof raw != "object" || !("kind" in raw) || raw.kind != "record") {
         return ValueOrErrors.Default.throwOne(
           `Error: parsing expected record in raw, got ${JSON.stringify(raw)}`,
@@ -1152,7 +1154,7 @@ export const evaluatePredicates = <T>(
                   );
                 }
 
-                if (fieldPredicate.kind == "form") {
+                if (fieldPredicate.kind == "record") {
                   const localBindings = bindings.get("local")! as ValueRecord;
                   const fieldLocal = localBindings.fields.get(fieldName);
                   if (fieldLocal == undefined) {
@@ -1358,7 +1360,7 @@ export const evaluatePredicates = <T>(
   const res = traverse(
     bindings,
     {
-      kind: "form",
+      kind: "record",
       value: true,
       fields: context.visibilityPredicateExpressions,
     },
@@ -1367,7 +1369,7 @@ export const evaluatePredicates = <T>(
     return traverse(
       bindings,
       {
-        kind: "form",
+        kind: "record",
         value: true,
         fields: context.disabledPredicatedExpressions,
       },

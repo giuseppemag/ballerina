@@ -18,7 +18,7 @@ module Runner =
   open Ballerina.DSL.FormEngine.Model
   open Ballerina.DSL.FormEngine.Parser
   open Ballerina.DSL.FormEngine.Validator
-  open Ballerina.DSL.FormEngine.Codegen.Golang.Generator
+  open Ballerina.DSL.FormEngine.Codegen.Golang.Generator.Main
   open System.Text.RegularExpressions
 
   type FormsGenTarget =
@@ -160,6 +160,8 @@ module Runner =
 
 
 (* Example invocation:
+dotnet run -- forms -input ../automatic-tests/input-forms/simple-union-example-lookups.json -output ./generated-output/models -validate -codegen golang -codegen_config ../automatic-tests/input-forms/go-config.json
+
 dotnet run -- forms -input ../automatic-tests/input-forms/entity-patch-kitchensink.json -output ./generated-output/models -validate -codegen golang -codegen_config ../automatic-tests/input-forms/go-config.json
 
 dotnet run -- forms -input ../automatic-tests/input-forms/person-config.json -output ./generated-output/models -validate -codegen golang -codegen_config ../automatic-tests/input-forms/go-config.json

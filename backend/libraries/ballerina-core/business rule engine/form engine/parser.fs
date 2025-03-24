@@ -5,6 +5,7 @@ module Parser =
   open Ballerina.DSL.FormEngine.Model
   open Ballerina.DSL.Expr.Model
   open Ballerina.DSL.Expr.Types.Model
+  open Ballerina.DSL.Expr.Types.Unification
   open System
   open Ballerina.Collections.Sum
   open Ballerina.Collections.Map
@@ -160,7 +161,6 @@ module Parser =
             { CaseName = cn.CaseName
               Fields = c.Type })
         )
-      | UnitRenderer r -> r.Type
 
   type Expr with
     static member ParseMatchCase
@@ -569,7 +569,7 @@ module Parser =
             casesJson
             |> Seq.map (fun (caseName, caseJson) ->
               state {
-                let! caseRenderer = NestedRenderer.Parse caseJson
+                let! caseRenderer = Renderer.Parse [||] caseJson
                 return caseName, caseRenderer
               })
             |> state.All
@@ -609,7 +609,32 @@ module Parser =
                         Type = t.Type
                         Children = children }
                 },
-                [ state {
+                [ 
+                  state {
+                    let! { GenericRenderers = genericRenderers } = state.GetState()
+                    
+                    match genericRenderers with
+                    | [] -> return! state.Throw(Errors.Singleton $"Error: cannot match empty generic renderers")
+                    | g::gs ->
+                      let genericRenderers = NonEmptyList.OfList(g, gs)
+                      return!
+                        genericRenderers |> 
+                          NonEmptyList.map (fun g -> 
+                          state{
+                            if g.SupportedRenderers |> Set.contains s then
+                              return 
+                                PrimitiveRenderer
+                                  { PrimitiveRendererName = s
+                                    PrimitiveRendererId = Guid.CreateVersion7()
+                                    Type = g.Type
+                                    Children = children }
+
+                            else 
+                              return! state.Throw(Errors.Singleton $"Error: generic renderer does not match")
+                          })
+                          |> state.Any
+                  }
+                  state {
                     let! tupleConfig =
                       config.Tuple
                       |> List.tryFind (fun t -> t.SupportedRenderers.Contains s)
@@ -741,7 +766,7 @@ module Parser =
 
         let! disabled = disabledJson |> Sum.toOption |> Option.map (Expr.Parse) |> state.RunOption
 
-        return
+        let fc =
           { FieldName = fieldName
             FieldId = Guid.CreateVersion7()
             Label = label
@@ -750,6 +775,8 @@ module Parser =
             Renderer = renderer
             Visible = visible
             Disabled = disabled }
+
+        return fc
       }
       |> state.WithErrorContext $"...when parsing field {fieldName}"
 
@@ -822,7 +849,8 @@ module Parser =
             state {
               let! casesJson = casesJson |> JsonValue.AsRecord |> state.OfSum
               let! rendererJson = fields |> state.TryFindField "renderer"
-              let! renderer = Renderer.Parse [||] rendererJson
+              let! renderer = Renderer.Parse fields rendererJson
+
               let! cases =
                 casesJson
                 |> Seq.map (fun (caseName, caseJson) ->
@@ -979,6 +1007,7 @@ module Parser =
         let! (s: ParsedFormsContext) = state.GetState()
         let! typeBinding = s.TryFindType typeName |> state.OfSum
         let! body = FormBody.Parse fields
+
         return
           {| TypeId = typeBinding.TypeId
              Body = body |}
@@ -1563,7 +1592,15 @@ module Parser =
               ParsedFormsContext.Updaters.Forms(
                 Map.add
                   formName
-                  { Body = FormBody.Cases {| Renderer = Renderer.PrimitiveRenderer { PrimitiveRendererName = ""; PrimitiveRendererId = Guid.CreateVersion7(); Type = ExprType.UnitType; Children = { Fields = Map.empty } }; Cases = Map.empty |}
+                  { Body =
+                      FormBody.Cases
+                        {| Renderer =
+                            Renderer.PrimitiveRenderer
+                              { PrimitiveRendererName = ""
+                                PrimitiveRendererId = Guid.CreateVersion7()
+                                Type = ExprType.UnitType
+                                Children = { Fields = Map.empty } }
+                           Cases = Map.empty |}
                     FormConfig.TypeId = formType.TypeId
                     FormId = Guid.CreateVersion7()
                     FormName = formName }
@@ -1621,6 +1658,13 @@ module Parser =
             (launchersJson |> JsonValue.AsRecord |> state.OfSum)
 
         do! ParsedFormsContext.ParseTypes typesJson
+        let! c = state.GetContext()
+        for g in c.Generic do
+          let tstring = g.Type
+          let! tjson = JsonValue.TryParse tstring |> Sum.fromOption (fun () -> Errors.Singleton $"Error: cannot parse generic type {tstring}") |> state.OfSum
+          let! t = ExprType.Parse tjson
+          do! state.SetState(ParsedFormsContext.Updaters.GenericRenderers (fun l -> {| Type=t; SupportedRenderers=g.SupportedRenderers |} :: l))
+        let! s = state.GetState()
         do! ParsedFormsContext.ParseApis generatedLanguageSpecificConfig.EnumValueFieldName apisJson
         do! ParsedFormsContext.ParseForms formsJson
         do! ParsedFormsContext.ParseLaunchers launchersJson

@@ -80,13 +80,10 @@ module Validator =
 
           do!
             r.Cases
-            |> Seq.map (fun c -> !c.Value.Renderer |> Sum.map ignore)
+            |> Seq.map (fun c -> !c.Value |> Sum.map ignore)
             |> sum.All
             |> Sum.map ignore
 
-          return fr.Type
-        | Renderer.UnitRenderer nr ->
-          do! !nr.Renderer |> Sum.map ignore
           return fr.Type
       }
 
@@ -173,23 +170,22 @@ module Validator =
           do!
             cs.Cases
             |> Seq.map (fun e -> e.Value)
-            |> Seq.map (NestedRenderer.ValidatePredicates ctx globalType rootType localType)
+            |> Seq.map (fun c -> Renderer.ValidatePredicates ctx globalType rootType c.Type c)
             |> state.All
             |> state.Map ignore
-        | Renderer.UnitRenderer e -> do! !!e
       }
 
   and FieldConfig with
     static member Validate (ctx: ParsedFormsContext) (formType: ExprType) (fc: FieldConfig) : Sum<Unit, Errors> =
       sum {
+        let! rendererType =
+          Renderer.Validate ctx formType fc.Renderer
+          |> sum.WithErrorContext $"...when validating renderer"
+
         match formType with
         | RecordType fields ->
           match fields |> Map.tryFind fc.FieldName with
           | Some fieldType ->
-            let! rendererType =
-              Renderer.Validate ctx formType fc.Renderer
-              |> sum.WithErrorContext $"...when validating renderer"
-
             do!
               ExprType.Unify
                 Map.empty
@@ -321,30 +317,31 @@ module Validator =
             sum.Throw(
               Errors.Singleton $"Error: the form type is a union, expected cases in the body but found fields instead."
             )
-        | _, FormBody.Fields body -> do! FormFields.Validate ctx localType body
+        | _, FormBody.Fields fields -> do! FormFields.Validate ctx localType fields
         | _ -> return! sum.Throw(Errors.Singleton $"Error: mismatched form type and form body")
       }
+
     static member ValidatePredicates
       (ctx: ParsedFormsContext)
       (globalType: TypeBinding)
       (rootType: TypeBinding)
       (localType: ExprType)
       (body: FormBody)
-      : State<Unit, Unit, ValidationState, Errors> = 
+      : State<Unit, Unit, ValidationState, Errors> =
       state {
-          match body with
-          | FormBody.Fields fields -> do! FormFields.ValidatePredicates ctx globalType rootType localType fields
-          | FormBody.Cases cases ->
-            let! typeCases = localType |> ExprType.AsUnion |> state.OfSum
+        match body with
+        | FormBody.Fields fields -> do! FormFields.ValidatePredicates ctx globalType rootType localType fields
+        | FormBody.Cases cases ->
+          let! typeCases = localType |> ExprType.AsUnion |> state.OfSum
 
-            for case in cases.Cases do
-              let! typeCase =
-                typeCases
-                |> Map.tryFind ({ CaseName = case.Key })
-                |> Sum.fromOption (fun () -> Errors.Singleton $"Error: cannot find type case {case.Key}")
-                |> state.OfSum
+          for case in cases.Cases do
+            let! typeCase =
+              typeCases
+              |> Map.tryFind ({ CaseName = case.Key })
+              |> Sum.fromOption (fun () -> Errors.Singleton $"Error: cannot find type case {case.Key}")
+              |> state.OfSum
 
-              do! Renderer.ValidatePredicates ctx globalType rootType typeCase.Fields case.Value
+            do! Renderer.ValidatePredicates ctx globalType rootType typeCase.Fields case.Value
       }
 
   and FormConfig with
@@ -375,7 +372,7 @@ module Validator =
           do! state.SetState(ValidationState.Updaters.PredicateValidationHistory(Set.add processedForm))
           let! formType = ctx.TryFindType formConfig.TypeId.TypeName |> state.OfSum
 
-
+          do! FormBody.ValidatePredicates ctx globalType rootType formType.Type formConfig.Body
 
           return ()
         else

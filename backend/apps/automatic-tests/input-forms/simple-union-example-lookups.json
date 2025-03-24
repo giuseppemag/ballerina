@@ -24,7 +24,11 @@
     "Company": {
       "extends": ["BaseLegalEntity"],
       "fields": {
-        "CompanyName": "string"
+        "CompanyName": "string",
+        "Verified": {
+          "fun": "Sum",
+          "args": ["unit", "InjectedType"]
+        }
       }
     },
     "LegalEntity": {
@@ -105,6 +109,16 @@
       "fields": {
         "CompanyName": {
           "renderer": "defaultString"
+        },
+        "Verified": {
+          "renderer": "defaultSum",
+          "label": "Verified",
+          "leftRenderer": {
+            "renderer": "defaultUnit"
+          },
+          "rightRenderer": {
+            "renderer": "defaultInjectedType"
+          }
         }
       },
       "tabs": {
@@ -112,7 +126,7 @@
           "columns": {
             "main": {
               "groups": {
-                "main": ["CompanyName", "Emails"]
+                "main": ["CompanyName", "Verified"]
               }
             }
           }

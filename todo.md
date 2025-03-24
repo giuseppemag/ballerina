@@ -48,41 +48,85 @@
           ✅ define generic deltas such as `DeltaOption[DeltaE, Delta]`, `DeltaSum[DeltaL, DeltaR, Delta]`, etc,
           ✅ define generic writers such as `writerInt[Delta]`, `writerBool[Delta]`, etc,
           ✅ define generic deltas such as `DeltaInt[Delta]`, `DeltaBool[Delta]`, etc,
+        ✅ Unit renderer looks weird
+        ✅ Unit does not unify
+        ✅ improve union cases renderer
+        ✅ make sure tests and person-config all work properly
+        ✅ fix array type in ballerina/Go
+        ✅ fix sum type in ballerina/Go
+        ✅ support generic type renderers over specific types
+        ❌ add a renderer decorator to forms
+        ❌ ensure Types and Forms can only extend other types and forms which are not extending anything
+        ❌ allow Types and Forms which can extend, to only extend 1 other type/form (array length == 1 in extends)
+        ❌ make sure that the failing tests fail for the right reason
         ❌ define methods for codegen'ing
-          ❌ a record
-          ❌ an enum
-          ❌ a discriminated union
-          ❌ move them to another file, group the golang codegen under a folder
-        ❌ define the model.fs for the golang codegen
+          ❌ move each to a separate file, not all dumped under LanguageConstructs
+            ❌ namespace LanguageConstructs module X, where X =
+              ✅ Enum
+                ✅ data structure generation
+                ✅ including GET and POST
+              ✅ Stream GET and POST
+              ✅ Union
+              ✅ Record
+              ✅ EntityGET
+                ✅ improve the separation through a proper intermediate object
+              ✅ EntityGETDefault
+              ✅ EntityPOST
+              ✅ type extensions (each to a separate file)
+              ✅ writers and deltas
+              ❌ EntityPATCH
+                ✅ we have two series of writer arguments
+                  ✅ generated
+                  ✅ imported
+                ✅ get the commit methods as parameters
+                ✅ define the recursive traversal function
+                ✅ generate the switch by entity name
+                  ✅ what is the domain? what do we iterate?
+                  ✅ return entity not found error as a faiure case
+                ❌ generate the switch by field/case by looking at the instance type of Delta
+                  ❌ define a DeltaRecord
+                  ❌ define a DeltaUnion
+                ❌ fallback case for any other type, also for failed matches on the previous concrete types
+                ❌ invoke the right committer based on the runtime type of the `DeltaBase` and the initial `entityName`
+                ❌ `DeltaX -> EffectX` to disambiguate
+                ❌ generate standard implementations for the record and union writers of the given entities
+                ❌ write standard implementations for the unit, int, array, map, option, etc. writers
+              ❌ imports
+              ❌ `generated types`
+              ❌ ToGolang in the typename and method name is redundant, remove it
+              ❌ generate more than one golang file
         ❌ recursively traverse the path and match over entity names and field names
           ```
-          func entityPATCHer[Delta, Result](writerA WriterA, writerB WriterB, ..., commitA:DeltaA -> Result) 
-            traverse = func(entityName string, path []ballerina.PATCHPathElement[Delta]) : DeltaBase
+          func entityPATCHer[Delta, Result](writerA WriterA, writerB WriterB, ..., commitA:DeltaA -> Result)
+            traverse = func(entityName string, path []Delta) : DeltaBase
               var ResultNil Result
               switch entityName {
                 case "A":
                   if (path.length == 0) return writerA.Zero()
-                  switch path[0].Kind {
-                    case "A1":
-                      var accumulator:DeltaInt[Delta],err = ballerina.writerInt.TryParse(path[0].Delta)
-                      if err == nil { return ResultNil,err }
-                      return writerA.A1(accumulator)
-                    case "A2":
-                      var accumulator:DeltaBase,err = traverse("B", path[1..])
-                      if err == nil { return ResultNil,err }
-                      if accumulator is not DeltaB { return ResultNil, NewWrongPATCHPathError(...)}
-                      return writerA.A2(accumulator, path[0].Delta)
-                    ...
-                  }
+                  if path[0] is Record r
+                    switch r.EntityName {
+                      case "A1":
+                        var accumulator:DeltaInt[Delta],err = ballerina.writerInt.TryParse(path[0].Delta)
+                        if err == nil { return ResultNil,err }
+                        return writerA.A1(accumulator)
+                      case "A2":
+                        var accumulator:DeltaBase,err = traverse("B", path[1..])
+                        if err == nil { return ResultNil,err }
+                        if accumulator is not DeltaB { return ResultNil, NewWrongPATCHPathError(...)}
+                        return writerA.A2(accumulator, path[0].Delta)
+                      ...
+                    }
                 case "C":
                   if (path.length == 0) return writerC.Zero()
-                  switch path[0].Kind {
-                    case "C1":
-                      var accumulator:DeltaBase,err = traverse("C_C1", path[1..])
-                      if err == nil { return ResultNil,err }
-                      if accumulator is not DeltaC_C1 { return ResultNil, NewWrongPATCHPathError(...)}
-                      return writerC.C1(accumulator, path[0].Delta)
-                    ...
+                  if path[0] is UnionCase c
+                    switch c.Discriminator {
+                      case "C1":
+                        var accumulator:DeltaBase,err = traverse("C_C1", path[1..])
+                        if err == nil { return ResultNil,err }
+                        if accumulator is not DeltaC_C1 { return ResultNil, NewWrongPATCHPathError(...)}
+                        return writerC.C1(accumulator, path[0].Delta)
+                      ...
+                    }
                   }
                 ...
               }
@@ -101,7 +145,6 @@
     ✅ currying the arguments of `entityGET` and `entityPOST`
     ✅ add tuple renderers
     ✅ add proper Sum
-    ❌ logo of customer before logging in
     ❌ take as input a list of specs, stitch them together, generate a single file - no `include` needed
     ❌ add paginated lists
     ❌ add lazy fields
@@ -142,7 +185,6 @@
       ❌ why can't we use state.TryFindType in the validators?
       ❌ Validate passes the context as a parameter instead of using GetContext - ugly
     ❌ remove all the nonsense `Guid`s from id types, the wrapped name is enough
-    ❌ union cases support `fields: "number"` but the renderer cases do not, because they always expect `fields` - extend
     ❌ create gui editor as an instance of a form itself
       ❌ form specification
       ❌ generated F# files with type definitions
@@ -157,6 +199,7 @@
     ❌ add lots of operators to lists, sets, maps, etc.
     ❌ the tool is now complete
     ❌ the codegen to Golang needs to be improved
+      ❌ ballerina-core-go should be split into further packages, one per data structure. `MapOption` should just be `Option.Map`
       ❌ define intermediate structure
       ❌ split up in files
       ❌ as well as the `SeqState` monad

@@ -20,6 +20,7 @@ export const DateFormState = {
   }),
   Updaters: {
     Core: {
+      ...simpleUpdater<DateFormState>()("commonFormState"),
       ...simpleUpdaterWithChildren<DateFormState>()({
         ...simpleUpdater<DateFormState["customFormState"]>()(
           "possiblyInvalidInput",

@@ -62,7 +62,7 @@ let CorrectSpec () =
   // | Right err -> Errors.Print "form-config-config" err
   // | _ -> ()
 
-  Assert.That( personResult.IsLeft, Is.EqualTo(true))
+  Assert.That(personResult.IsLeft, Is.EqualTo(true))
 
 [<Test>]
 let MissingReference () =

@@ -35,10 +35,10 @@ import {
   SecretForm,
   StringForm,
   Sum,
-  SumFieldState,
+  SumFormState,
   SumForm,
   Template,
-  TupleFieldState,
+  TupleFormState,
   TupleForm,
   unit,
   Unit,
@@ -46,6 +46,7 @@ import {
   Value,
   ValueOption,
   ValueRecord,
+  ParsedApplicationType,
 } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 
@@ -72,7 +73,7 @@ export type RawRenderer = {
 };
 export type ParsedRenderer<T> = (
   | { kind: "primitive" }
-  | { kind: "form" }
+  | { kind: "record" }
   | { kind: "unit" }
   | { kind: "enum"; options: string }
   | { kind: "stream"; stream: string }
@@ -88,8 +89,8 @@ export type ParsedRenderer<T> = (
     }
   | {
       kind: "sum";
-      leftRenderer: ParsedRenderer<T>;
-      rightRenderer: ParsedRenderer<T>;
+      leftRenderer?: ParsedRenderer<T>;
+      rightRenderer?: ParsedRenderer<T>;
     }
 ) & {
   renderer: string;
@@ -120,7 +121,7 @@ export const ParsedRenderer = {
       visible,
       disabled: disabled != undefined ? disabled : false,
     }),
-    form: <T>(
+    record: <T>(
       type: ParsedType<T>,
       renderer: string,
       visible: any,
@@ -129,7 +130,7 @@ export const ParsedRenderer = {
       tooltip?: string,
       details?: string,
     ): ParsedRenderer<T> => ({
-      kind: "form",
+      kind: "record",
       type,
       renderer,
       label,
@@ -245,8 +246,8 @@ export const ParsedRenderer = {
       renderer: string,
       visible: any,
       disabled: any,
-      leftRenderer: ParsedRenderer<T>,
-      rightRenderer: ParsedRenderer<T>,
+      leftRenderer?: ParsedRenderer<T>,
+      rightRenderer?: ParsedRenderer<T>,
       label?: string,
       tooltip?: string,
       details?: string,
@@ -298,7 +299,7 @@ export const ParsedRenderer = {
           field.details,
         );
       if (fieldType.kind == "record")
-        return ParsedRenderer.Default.form(
+        return ParsedRenderer.Default.record(
           fieldType,
           field.renderer,
           field.visible,
@@ -389,16 +390,20 @@ export const ParsedRenderer = {
           field.renderer,
           field.visible,
           field.disabled,
-          ParsedRenderer.Operations.ParseRenderer(
-            fieldType.args[0],
-            field.leftRenderer,
-            types,
-          ),
-          ParsedRenderer.Operations.ParseRenderer(
-            fieldType.args[1],
-            field.rightRenderer,
-            types,
-          ),
+          field.leftRenderer != undefined
+            ? ParsedRenderer.Operations.ParseRenderer(
+                fieldType.args[0],
+                field.leftRenderer,
+                types,
+              )
+            : undefined,
+          field.rightRenderer != undefined
+            ? ParsedRenderer.Operations.ParseRenderer(
+                fieldType.args[1],
+                field.rightRenderer,
+                types,
+              )
+            : undefined,
           field.label,
           field.tooltip,
           field.details,
@@ -443,6 +448,7 @@ export const ParsedRenderer = {
         forms: ParsedForms<T>;
         nestedContainerFormView: any;
         defaultValue: BasicFun<ParsedType<T>, any>;
+        defaultState: BasicFun<ParsedType<T>, any>;
         enumOptionsSources: EnumOptionsSources;
         infiniteStreamSources: any;
         injectedPrimitives?: InjectedPrimitives<T>;
@@ -487,11 +493,13 @@ export const ParsedRenderer = {
                       parsedRenderer.type,
                     ),
                     initialState: ParsedRenderer.Operations.FormStates(
-                      parsedRenderer,
                       viewKind,
                       parsedRenderer.renderer,
                       parsingContext.infiniteStreamSources,
                       parsingContext.injectedPrimitives,
+                      parsedRenderer.kind == "stream"
+                        ? parsedRenderer.stream
+                        : undefined,
                     ),
                   },
                   visibilityPredicateExpression:
@@ -535,7 +543,7 @@ export const ParsedRenderer = {
                   }),
               ),
           );
-        case "form":
+        case "record":
           return Expr.Operations.parse(parsedRenderer.visible ?? true).Then(
             (visibilityExpr) =>
               Expr.Operations.parse(parsedRenderer.disabled ?? false).Then(
@@ -559,13 +567,13 @@ export const ParsedRenderer = {
                       )!.initialFormState,
                     },
                     visibilityPredicateExpression:
-                      FieldPredicateExpression.Default.form(
+                      FieldPredicateExpression.Default.record(
                         visibilityExpr,
                         parsingContext.forms.get(parsedRenderer.renderer)!
                           .visibilityPredicateExpressions,
                       ),
                     disabledPredicatedExpression:
-                      FieldPredicateExpression.Default.form(
+                      FieldPredicateExpression.Default.record(
                         disabledExpr,
                         parsingContext.forms.get(parsedRenderer.renderer)!
                           .disabledPredicatedExpressions,
@@ -736,7 +744,7 @@ export const ParsedRenderer = {
                         initialValue: parsingContext.defaultValue(
                           parsedRenderer.type,
                         ),
-                        initialState: TupleFieldState<any>().Default(
+                        initialState: TupleFormState<any>().Default(
                           itemRenderers.map((item) => item.form.initialState),
                         ),
                       },
@@ -763,73 +771,112 @@ export const ParsedRenderer = {
           return Expr.Operations.parse(parsedRenderer.visible ?? true).Then(
             (visibilityExpr) =>
               Expr.Operations.parse(parsedRenderer.disabled ?? false).Then(
-                (disabledExpr) =>
-                  ParsedRenderer.Operations.RendererToForm(
-                    fieldName,
-                    parsingContext,
-                    parsedRenderer.leftRenderer,
-                  ).Then((parsedLeftRenderer) =>
-                    ParsedRenderer.Operations.RendererToForm(
-                      fieldName,
-                      parsingContext,
-                      parsedRenderer.rightRenderer,
-                    ).Then((parsedRightRenderer) =>
-                      ValueOrErrors.Default.return({
-                        form: {
-                          renderer: SumForm<any, any, any & FormLabel, Unit>(
-                            {
-                              Default: () =>
-                                parsedLeftRenderer.form.initialState,
-                            },
-                            {
-                              Default: () =>
-                                parsedRightRenderer.form.initialState,
-                            },
-                            {
-                              Default: () =>
-                                parsedLeftRenderer.form.initialValue,
-                            },
-                            {
-                              Default: () =>
-                                parsedRightRenderer.form.initialValue,
-                            },
-                            parsedLeftRenderer.form.renderer,
-                            parsedRightRenderer.form.renderer,
-                          )
-                            .withView(
-                              parsingContext.formViews[viewKind][
-                                parsedRenderer.renderer
-                              ]() as any,
-                            )
-                            .mapContext<any>((_) => ({
-                              ..._,
-                              label: parsedRenderer.label,
-                              tooltip: parsedRenderer.tooltip,
-                              details: parsedRenderer.details,
-                            })),
-                          initialValue: parsingContext.defaultValue(
-                            parsedRenderer.type,
-                          ),
-                          initialState: SumFieldState<any, any>().Default({
-                            left: parsedLeftRenderer.form.initialState,
-                            right: parsedRightRenderer.form.initialState,
-                          }),
-                        },
-                        visibilityPredicateExpression:
-                          FieldPredicateExpression.Default.sum(
-                            visibilityExpr,
-                            parsedLeftRenderer.visibilityPredicateExpression,
-                            parsedRightRenderer.visibilityPredicateExpression,
-                          ),
-                        disabledPredicatedExpression:
-                          FieldPredicateExpression.Default.sum(
-                            disabledExpr,
-                            parsedLeftRenderer.disabledPredicatedExpression,
-                            parsedRightRenderer.disabledPredicatedExpression,
-                          ),
+                (disabledExpr) => {
+                  // Sums may be generic, they may not have a left or right renderer when
+                  // control to switch between left and right is needed by the parent.
+                  const parsedLeftRenderer =
+                    parsedRenderer.leftRenderer != undefined
+                      ? ParsedRenderer.Operations.RendererToForm(
+                          fieldName,
+                          parsingContext,
+                          parsedRenderer.leftRenderer,
+                        )
+                      : undefined;
+                  const parsedRightRenderer =
+                    parsedRenderer.rightRenderer != undefined
+                      ? ParsedRenderer.Operations.RendererToForm(
+                          fieldName,
+                          parsingContext,
+                          parsedRenderer.rightRenderer,
+                        )
+                      : undefined;
+
+                  if (
+                    parsedLeftRenderer != undefined &&
+                    parsedLeftRenderer.kind == "errors" &&
+                    parsedRightRenderer != undefined &&
+                    parsedRightRenderer.kind == "errors"
+                  ) {
+                    return ValueOrErrors.Default.throw(
+                      parsedLeftRenderer.errors.concat(
+                        parsedRightRenderer.errors,
+                      ),
+                    );
+                  }
+                  if (
+                    parsedLeftRenderer != undefined &&
+                    parsedLeftRenderer.kind == "errors"
+                  ) {
+                    return parsedLeftRenderer;
+                  }
+                  if (
+                    parsedRightRenderer != undefined &&
+                    parsedRightRenderer.kind == "errors"
+                  ) {
+                    return parsedRightRenderer;
+                  }
+
+                  const leftFormState =
+                    parsedLeftRenderer != undefined
+                      ? parsedLeftRenderer.value.form.initialState
+                      : parsingContext.defaultState(
+                          (parsedRenderer.type as ParsedApplicationType<T>)
+                            .args[0],
+                        );
+                  const rightFormState =
+                    parsedRightRenderer != undefined
+                      ? parsedRightRenderer.value.form.initialState
+                      : parsingContext.defaultState(
+                          (parsedRenderer.type as ParsedApplicationType<T>)
+                            .args[1],
+                        );
+
+                  return ValueOrErrors.Default.return({
+                    form: {
+                      renderer: SumForm<any, any, any & FormLabel, Unit>(
+                        leftFormState,
+                        rightFormState,
+                        parsedLeftRenderer?.value.form.renderer,
+                        parsedRightRenderer?.value.form.renderer,
+                      )
+                        .withView(
+                          parsingContext.formViews[viewKind][
+                            parsedRenderer.renderer
+                          ]() as any,
+                        )
+                        .mapContext<any>((_) => ({
+                          ..._,
+                          label: parsedRenderer.label,
+                          tooltip: parsedRenderer.tooltip,
+                          details: parsedRenderer.details,
+                        })),
+                      initialValue: parsingContext.defaultValue(
+                        parsedRenderer.type,
+                      ),
+                      initialState: SumFormState<any, any>().Default({
+                        left:
+                          parsedLeftRenderer?.value.form.initialState ??
+                          leftFormState,
+                        right:
+                          parsedRightRenderer?.value.form.initialState ??
+                          rightFormState,
                       }),
-                    ),
-                  ),
+                    },
+                    visibilityPredicateExpression:
+                      FieldPredicateExpression.Default.sum(
+                        visibilityExpr,
+                        parsedLeftRenderer?.value.visibilityPredicateExpression,
+                        parsedRightRenderer?.value
+                          .visibilityPredicateExpression,
+                      ),
+                    disabledPredicatedExpression:
+                      FieldPredicateExpression.Default.sum(
+                        disabledExpr,
+                        parsedLeftRenderer?.value.disabledPredicatedExpression,
+                        parsedRightRenderer?.value.disabledPredicatedExpression,
+                      ),
+                  });
+                },
               ),
           );
         default:
@@ -996,11 +1043,11 @@ export const ParsedRenderer = {
       } cannot be found`;
     },
     FormStates: <T>(
-      renderer: ParsedRenderer<T>,
       viewType: any,
       viewName: any,
       InfiniteStreamSources: any,
       injectedPrimitives?: InjectedPrimitives<T>,
+      stream?: string,
     ): any => {
       if (
         viewType == "unit" ||
@@ -1027,11 +1074,11 @@ export const ParsedRenderer = {
       if (
         (viewType == "streamSingleSelection" ||
           viewType == "streamMultiSelection") &&
-        renderer.kind == "stream"
+        stream != undefined
       ) {
         return SearchableInfiniteStreamState().Default(
           "",
-          (InfiniteStreamSources as any)(renderer.stream),
+          (InfiniteStreamSources as any)(stream),
         );
       }
       return `error: the view for ${viewType as string}::${

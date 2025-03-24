@@ -18,6 +18,10 @@ export type ListFieldState<ElementFormState> = {
   elementFormStates: Map<number, ElementFormState>;
 };
 export const ListFieldState = <ElementFormState>() => ({
+  zero: () => ({
+    commonFormState: CommonFormState.Default(),
+    elementFormStates: Map(),
+  }),
   Default: (
     elementFormStates: Map<number, ElementFormState>,
   ): ListFieldState<ElementFormState> => ({

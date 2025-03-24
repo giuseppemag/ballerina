@@ -24,7 +24,7 @@ import {
   FieldValidationWithPath,
   OnChange,
 } from "../../../singleton/state";
-import { TupleFieldState, TupleFieldView } from "./state";
+import { TupleFormState, TupleFormView } from "./state";
 
 export const TupleForm = <
   ElementFormStates extends List<{
@@ -97,7 +97,7 @@ export const TupleForm = <
       )
       .mapContext(
         (
-          _: Context & Value<ValueTuple> & TupleFieldState<ElementFormStates>,
+          _: Context & Value<ValueTuple> & TupleFormState<ElementFormStates>,
         ):
           | (Context &
               Value<ValueTuple> & {
@@ -139,8 +139,8 @@ export const TupleForm = <
           _: BasicUpdater<{
             commonFormState: { modifiedByUser: boolean };
           }>,
-        ): Updater<TupleFieldState<ElementFormStates>> =>
-          TupleFieldState<ElementFormStates>().Updaters.Core.elementFormStates(
+        ): Updater<TupleFormState<ElementFormStates>> =>
+          TupleFormState<ElementFormStates>().Updaters.Core.elementFormStates(
             MapRepo.Updaters.upsert(
               elementIndex,
               () => ElementFormStates.get(elementIndex)!.Default(),
@@ -150,11 +150,11 @@ export const TupleForm = <
       );
   return Template.Default<
     Context & Value<ValueTuple> & { disabled: boolean },
-    TupleFieldState<ElementFormStates>,
+    TupleFormState<ElementFormStates>,
     ForeignMutationsExpected & {
       onChange: OnChange<ValueTuple>;
     },
-    TupleFieldView<ElementFormStates, Context, ForeignMutationsExpected>
+    TupleFormView<ElementFormStates, Context, ForeignMutationsExpected>
   >((props) => {
     return (
       <>
@@ -173,7 +173,7 @@ export const TupleForm = <
   }).any([
     ValidateRunner<
       Context & { disabled: boolean },
-      TupleFieldState<ElementFormStates>,
+      TupleFormState<ElementFormStates>,
       ForeignMutationsExpected,
       ValueTuple
     >(

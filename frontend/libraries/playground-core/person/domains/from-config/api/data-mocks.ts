@@ -94,16 +94,20 @@ const entityApis: EntityApis = {
             category: ["child", "adult", "senior"][
               Math.round(Math.random() * 10) % 3
             ],
-            fullName: [faker.person.firstName(), faker.person.lastName()],
+            fullName: {
+              Item1: faker.person.firstName(),
+              Item2: faker.person.lastName(),
+            },
             birthday: new Date(
               Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45,
             ).toISOString(),
+            subscribeToNewsletter: Math.random() > 0.5,
             favoriteColor: {
               Value: { Value: colors[Math.round(Math.random() * 10) % 3] },
               IsSome: true,
             },
             gender: {
-              Kind: "r",
+              IsRight: true,
               Value: { IsSome: true, Value: { Value: "M" } },
             },
             dependants: [
@@ -116,46 +120,45 @@ const entityApis: EntityApis = {
               ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3],
               ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3],
             ],
-            subscribeToNewsletter: Math.random() > 0.5,
             interests: [{ Value: interests[1] }, { Value: interests[2] }],
             departments: [
               { Id: v4(), DisplayValue: "Department 1" },
               { Id: v4(), DisplayValue: "Department 2" },
             ],
+            emails: ["john@doe.it", "johnthedon@doe.com"],
             mainAddress: {
-              Kind: "r",
-              Value: [
-                {
-                  streetNumberAndCity: [
-                    faker.location.street(),
-                    Math.floor(Math.random() * 500),
-                    Math.random() > 0.5
-                      ? { IsSome: false, Value: { Value: "" } }
-                      : {
-                          IsSome: true,
-                          Value: {
-                            ...City.Default(v4(), faker.location.city()),
+              IsRight: true,
+              Value: {
+                Item1: {
+                  streetNumberAndCity: {
+                    Item1: faker.location.street(),
+                    Item2: Math.floor(Math.random() * 500),
+                    Item3:
+                      Math.random() > 0.5
+                        ? { IsSome: false, Value: { Value: "" } }
+                        : {
+                            IsSome: true,
+                            Value: {
+                              ...City.Default(v4(), faker.location.city()),
+                            },
                           },
-                        },
-                  ],
+                  },
                 },
-                {
+                Item2: {
                   landArea: {
                     x: Math.floor(Math.random() * 100),
                     y: Math.floor(Math.random() * 100),
                   },
                 },
-              ],
+              },
             },
-            addressesBy: {
-              Kind: "r",
-              Value: [
+            addressesAndAddressesWithLabel: {
+              Item1: [
                 {
-                  Key: "home",
-                  Value: {
-                    streetNumberAndCity: [
-                      faker.location.street(),
-                      Math.floor(Math.random() * 500),
+                  streetNumberAndCity: {
+                    Item1: faker.location.street(),
+                    Item2: Math.floor(Math.random() * 500),
+                    Item3:
                       Math.random() > 0.5
                         ? { IsSome: false, Value: { Value: "" } }
                         : {
@@ -164,69 +167,45 @@ const entityApis: EntityApis = {
                               ...City.Default(v4(), faker.location.city()),
                             },
                           },
-                    ],
+                  },
+                },
+                {
+                  streetNumberAndCity: {
+                    Item1: faker.location.street(),
+                    Item2: Math.floor(Math.random() * 500),
+                    Item3:
+                      Math.random() > 0.5
+                        ? { IsSome: false, Value: { Value: "" } }
+                        : {
+                            IsSome: true,
+                            Value: {
+                              ...City.Default(v4(), faker.location.city()),
+                            },
+                          },
                   },
                 },
               ],
-            },
-            importantDate: {
-              Kind: "r",
-              Value: new Date(
-                Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45,
-              ).toISOString(),
-            },
-            emails: ["john@doe.it", "johnthedon@doe.com"],
-            addressesAndAddressesWithLabel: [
-              [
-                {
-                  streetNumberAndCity: [
-                    faker.location.street(),
-                    Math.floor(Math.random() * 500),
-                    Math.random() > 0.5
-                      ? { IsSome: false, Value: { Value: "" } }
-                      : {
-                          IsSome: true,
-                          Value: {
-                            ...City.Default(v4(), faker.location.city()),
-                          },
-                        },
-                  ],
-                },
-                {
-                  streetNumberAndCity: [
-                    faker.location.street(),
-                    Math.floor(Math.random() * 500),
-                    Math.random() > 0.5
-                      ? { IsSome: false, Value: { Value: "" } }
-                      : {
-                          IsSome: true,
-                          Value: {
-                            ...City.Default(v4(), faker.location.city()),
-                          },
-                        },
-                  ],
-                },
-              ],
-              [
+              Item2: [
                 {
                   Key: "my house",
                   Value: {
-                    streetNumberAndCity: [
-                      faker.location.street(),
-                      Math.floor(Math.random() * 500),
-                      Math.random() > 0.5
-                        ? { IsSome: false, Value: { Value: "" } }
-                        : {
-                            IsSome: true,
-                            Value: {
-                              ...City.Default(v4(), faker.location.city()),
+                    streetNumberAndCity: {
+                      Item1: faker.location.street(),
+                      Item2: Math.floor(Math.random() * 500),
+                      Item3:
+                        Math.random() > 0.5
+                          ? { IsSome: false, Value: { Value: "" } }
+                          : {
+                              IsSome: true,
+                              Value: {
+                                ...City.Default(v4(), faker.location.city()),
+                              },
                             },
-                          },
-                    ],
+                    },
                   },
                 },
               ],
-            ],
+            },
             addressesByCity: [
               {
                 Key: {
@@ -234,18 +213,19 @@ const entityApis: EntityApis = {
                   Value: { ...City.Default(v4(), faker.location.city()) },
                 },
                 Value: {
-                  streetNumberAndCity: [
-                    faker.location.street(),
-                    Math.floor(Math.random() * 500),
-                    Math.random() > 0.5
-                      ? { IsSome: false, Value: { Value: "" } }
-                      : {
-                          IsSome: true,
-                          Value: {
-                            ...City.Default(v4(), faker.location.city()),
+                  streetNumberAndCity: {
+                    Item1: faker.location.street(),
+                    Item2: Math.floor(Math.random() * 500),
+                    Item3:
+                      Math.random() > 0.5
+                        ? { IsSome: false, Value: { Value: "" } }
+                        : {
+                            IsSome: true,
+                            Value: {
+                              ...City.Default(v4(), faker.location.city()),
+                            },
                           },
-                        },
-                  ],
+                  },
                 },
               },
               {
@@ -254,21 +234,63 @@ const entityApis: EntityApis = {
                   Value: { ...City.Default(v4(), faker.location.city()) },
                 },
                 Value: {
-                  streetNumberAndCity: [
-                    faker.location.street(),
-                    Math.floor(Math.random() * 500),
-                    Math.random() > 0.5
-                      ? { IsSome: false, Value: { Value: "" } }
-                      : {
-                          IsSome: true,
-                          Value: {
-                            ...City.Default(v4(), faker.location.city()),
+                  streetNumberAndCity: {
+                    Item1: faker.location.street(),
+                    Item2: Math.floor(Math.random() * 500),
+                    Item3:
+                      Math.random() > 0.5
+                        ? { IsSome: false, Value: { Value: "" } }
+                        : {
+                            IsSome: true,
+                            Value: {
+                              ...City.Default(v4(), faker.location.city()),
+                            },
                           },
-                        },
-                  ],
+                  },
                 },
               },
             ],
+            importantDate: {
+              IsRight: false,
+              Value: {},
+            },
+            cutOffDates: [
+              {
+                IsRight: true,
+                Value: new Date(
+                  Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45,
+                ).toISOString(),
+              },
+              {
+                IsRight: true,
+                Value: new Date(
+                  Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365 * 45,
+                ).toISOString(),
+              },
+            ],
+            addressesBy: {
+              IsRight: true,
+              Value: [
+                {
+                  Key: "home",
+                  Value: {
+                    streetNumberAndCity: {
+                      Item1: faker.location.street(),
+                      Item2: Math.floor(Math.random() * 500),
+                      Item3:
+                        Math.random() > 0.5
+                          ? { IsSome: false, Value: { Value: "" } }
+                          : {
+                              IsSome: true,
+                              Value: {
+                                ...City.Default(v4(), faker.location.city()),
+                              },
+                            },
+                    },
+                  },
+                },
+              ],
+            },
             addressesWithColorLabel: [
               {
                 Key: {
@@ -276,18 +298,19 @@ const entityApis: EntityApis = {
                   Value: { Value: colors[Math.round(Math.random() * 10) % 3] },
                 },
                 Value: {
-                  streetNumberAndCity: [
-                    faker.location.street(),
-                    Math.floor(Math.random() * 500),
-                    Math.random() > 0.5
-                      ? { IsSome: false, Value: { Value: "" } }
-                      : {
-                          IsSome: true,
-                          Value: {
-                            ...City.Default(v4(), faker.location.city()),
+                  streetNumberAndCity: {
+                    Item1: faker.location.street(),
+                    Item2: Math.floor(Math.random() * 500),
+                    Item3:
+                      Math.random() > 0.5
+                        ? { IsSome: false, Value: { Value: "" } }
+                        : {
+                            IsSome: true,
+                            Value: {
+                              ...City.Default(v4(), faker.location.city()),
+                            },
                           },
-                        },
-                  ],
+                  },
                 },
               },
               {
@@ -296,18 +319,19 @@ const entityApis: EntityApis = {
                   Value: { Value: colors[Math.round(Math.random() * 10) % 3] },
                 },
                 Value: {
-                  streetNumberAndCity: [
-                    faker.location.street(),
-                    Math.floor(Math.random() * 500),
-                    Math.random() > 0.5
-                      ? { IsSome: false, Value: { Value: "" } }
-                      : {
-                          IsSome: true,
-                          Value: {
-                            ...City.Default(v4(), faker.location.city()),
+                  streetNumberAndCity: {
+                    Item1: faker.location.street(),
+                    Item2: Math.floor(Math.random() * 500),
+                    Item3:
+                      Math.random() > 0.5
+                        ? { IsSome: false, Value: { Value: "" } }
+                        : {
+                            IsSome: true,
+                            Value: {
+                              ...City.Default(v4(), faker.location.city()),
+                            },
                           },
-                        },
-                  ],
+                  },
                 },
               },
             ],
@@ -363,34 +387,41 @@ const entityApis: EntityApis = {
           PromiseRepo.Default.mock(() => {
             return {
               category: "",
-              fullName: ["", ""],
+              fullName: {
+                Item1: "",
+                Item2: "",
+              },
               birthday: "01/01/2000",
+              subscribeToNewsletter: false,
               favoriteColor: { Value: { Value: null }, IsSome: false },
               gender: {
-                Kind: "l",
-                Value: null,
+                IsRight: false,
+                Value: {},
               },
               dependants: [],
               friendsByCategory: [],
               relatives: [],
-              subscribeToNewsletter: false,
               interests: [],
               departments: [],
+              emails: [],
               mainAddress: {
-                Kind: "l",
+                IsRight: false,
                 Value: "",
               },
+              addressesAndAddressesWithLabel: {
+                Item1: [],
+                Item2: [],
+              },
+              addressesByCity: [],
+              importantDate: {
+                IsRight: false,
+                Value: "",
+              },
+              cutOffDates: [],
               addressesBy: {
-                Kind: "r",
+                IsRight: false,
                 Value: [],
               },
-              importantDate: {
-                Kind: "l",
-                Value: "",
-              },
-              emails: [],
-              addressesAndAddressesWithLabel: [[], []],
-              addressesByCity: [],
               addressesWithColorLabel: [],
               permissions: [],
               cityByDepartment: [],

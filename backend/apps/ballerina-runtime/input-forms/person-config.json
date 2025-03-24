@@ -270,7 +270,14 @@
         },
         "importantDate": {
           "fun": "Sum",
-          "args": ["string", "Date"]
+          "args": ["unit", "Date"]
+        },
+        "cutOffDates": {
+          "fun": "List",
+          "args": [{
+            "fun": "Sum",
+            "args": ["unit", "Date"]
+          }]
         },
         "addressesBy": {
           "fun": "Sum",
@@ -736,17 +743,17 @@
         },
         "importantDate": {
           "label": "important date",
-          "renderer": "defaultSum",
-          "leftRenderer": {
-            "label": "no date",
-            "renderer": "defaultString"
-          },
-          "rightRenderer": {
-            "label": "date",
-            "renderer": "defaultDate"
-          },
+          "renderer": "maybeDate",
           "visible": true,
           "disabled": false
+        },
+        "cutOffDates": {
+          "label": "cut off dates",
+          "renderer": "defaultList",
+          "elementRenderer": {
+            "label": "cut off date",
+            "renderer": "maybeDate"
+          }
         },
         "emails": {
           "label": "emails",
@@ -894,7 +901,8 @@
                   "relatives",
                   "friendsBirthdays",
                   "shoeColours",
-                  "importantDate"
+                  "importantDate",
+                  "cutOffDates"
                 ]
               }
             },

@@ -125,7 +125,7 @@
       "GeneratedTypeName": "ballerina.Tuple2",
       "WriterTypeName": "ballerina.WriterTuple2",
       "DeltaTypeName": "ballerina.DeltaTuple2",
-        "RequiredImport": "ballerina.com/core",
+      "RequiredImport": "ballerina.com/core",
       "SupportedRenderers": [
         "defaultTuple2"
       ],
@@ -153,7 +153,7 @@
       "GeneratedTypeName": "ballerina.Unit",
       "RequiredImport": "ballerina.com/core",
       "SupportedRenderers": [
-        "defaultCategory"
+        "defaultInjectedType"
       ],
       "DefaultConstructor": "ballerina.NewUnit",
       "WriterTypeName": "ballerina.WriterUnit",
@@ -170,6 +170,14 @@
       "DeltaTypeName": "ballerina.DeltaUnit"
     }
   },
+  "Generic": [
+    {
+      "Type": "{ \"fun\": \"Sum\",  \"args\": [ \"unit\", \"Date\" ] }",
+      "SupportedRenderers": [
+        "maybeDate"
+      ]
+    }
+  ],
   "IdentifierAllowedRegex": "[^a-zA-Z0-9/-]+",
   "EntityNotFoundError": {
     "GeneratedTypeName": "ballerina.EntityNotFoundError",
