@@ -86,14 +86,30 @@
                 ✅ rename Field to Component in the Writers
                 ✅ generate the switch by imported renderer
                 ✅ generate the switch by field/case
-                ❌ why are there duplicates in the generated writers? 
-                  ❌ split the set of writers into two maps: generated and imported
+                ❌ switch on the right path element
+                  ❌ easiest: `Delta` implements an interface method like `GetComponentName`
+                  ❌ harder: `Delta` is runtime checked to be a `DeltaRecord` or `DeltaUnion`, which both have a `ComponentName`
+                  ❌ medium: `Delta` is runtime checked to be a `DeltaComponent`, which has a `ComponentName`
+                ❌ fallback case for any other type, also for failed matches on the previous concrete types
+                  ❌ how does a `Sum` or `Union` switch of case work?
+                    D1(nestedDelta ballerina.DeltaSum[Delta, ballerina.DeltaInt[Delta], ballerina.DeltaString[Delta]], delta Delta) (DeltaD, error)
+                    the first argument comes from writerSum.Zero() because the path is further empty
+                    the second contains the replaceWith operation
+                  ❌ how does a `List` or `Map` `add/move/remove` work?
+                    D5(nestedDelta ballerina.DeltaTuple3[Delta, ballerina.DeltaString[Delta],ballerina.DeltaArray[Delta, DeltaE],DeltaE], delta Delta) (DeltaD, error)
+                    the first argument comes from writerTuple.Zero() because the path is further empty
+                    the second contains the `updateTuple . replaceWith` operation
+                ✅ generate the right writers
+                  ✅ add more instances of the same generic types - Sum, Option, List
+                  ✅ components should have WriterName x ExprType
+                    ✅ also fix the ugly lookup in generator.fs
+                ❌ `RawDeltaBase` and `DeltaBase` should come from the go-configuration
+                ❌ split the set of writers into two maps: generated and imported
                   ❌ generated:Map<WriterName, Writer>
                   ❌ imported:Map<Path, Writer>
-                ❌ fallback case for any other type, also for failed matches on the previous concrete types
-                ❌ switch on the right path element
                 ❌ invoke the right committer based on the runtime type of the `DeltaBase` and the initial `entityName`
                 ❌ `DeltaX -> EffectX` to disambiguate
+                ❌ `WriterX -> ParserX` to disambiguate
                 ❌ generate standard implementations for the record and union writers of the given entities
                   ❌ define a DeltaRecord
                   ❌ define a DeltaUnion
@@ -104,45 +120,6 @@
               ❌ `generated types`
               ❌ ToGolang in the typename and method name is redundant, remove it
               ❌ generate more than one golang file
-        ❌ recursively traverse the path and match over entity names and field names
-          ```
-          func entityPATCHer[Delta, Result](writerA WriterA, writerB WriterB, ..., commitA:DeltaA -> Result)
-            traverse = func(entityName string, path []Delta) : DeltaBase
-              var ResultNil Result
-              switch entityName {
-                case "A":
-                  if (path.length == 0) return writerA.Zero()
-                  if path[0] is Record r
-                    switch r.EntityName {
-                      case "A1":
-                        var accumulator:DeltaInt[Delta],err = ballerina.writerInt.TryParse(path[0].Delta)
-                        if err == nil { return ResultNil,err }
-                        return writerA.A1(accumulator)
-                      case "A2":
-                        var accumulator:DeltaBase,err = traverse("B", path[1..])
-                        if err == nil { return ResultNil,err }
-                        if accumulator is not DeltaB { return ResultNil, NewWrongPATCHPathError(...)}
-                        return writerA.A2(accumulator, path[0].Delta)
-                      ...
-                    }
-                case "C":
-                  if (path.length == 0) return writerC.Zero()
-                  if path[0] is UnionCase c
-                    switch c.Discriminator {
-                      case "C1":
-                        var accumulator:DeltaBase,err = traverse("C_C1", path[1..])
-                        if err == nil { return ResultNil,err }
-                        if accumulator is not DeltaC_C1 { return ResultNil, NewWrongPATCHPathError(...)}
-                        return writerC.C1(accumulator, path[0].Delta)
-                      ...
-                    }
-                  }
-                ...
-              }
-            return traverse
-          ```
-          ❌ invoke primitive writers, which will need a method `Embed:Delta -> DeltaInt[Delta] + error`
-          ❌ invoke recursively as long as possible, end with a `Zero` invocation
         ✅ complete the kitchen sink sample with all generics
           ✅ add a few more tuples - up to 5
           ✅ add all possible generic types - including single and multi selects

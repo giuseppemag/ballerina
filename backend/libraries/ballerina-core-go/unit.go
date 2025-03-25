@@ -10,7 +10,9 @@ func NewUnit() Unit {
 
 var DefaultUnit Unit = NewUnit()
 
-type WriterUnit[Delta any] interface{}
+type WriterUnit[Delta any] interface{
+	Zero() DeltaUnit[Delta]
+}
 type DeltaUnit[Delta any] interface{
-	DeltaBase[Delta]
+	DeltaBase
 }

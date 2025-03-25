@@ -24,8 +24,9 @@ func MapOption[a any, b any](self Option[a], f func(a) b) Option[b] {
 
 type WriterOption[Delta any, DeltaA any] interface {
 	Value(deltaA DeltaA, delta Delta) (DeltaOption[Delta, DeltaA], error)
+	Zero() DeltaOption[Delta, DeltaA]
 }
 
 type DeltaOption[Delta any, DeltaA any] interface{
-	DeltaBase[Delta]
+	DeltaBase
 }

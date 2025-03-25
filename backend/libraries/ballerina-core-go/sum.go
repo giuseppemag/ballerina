@@ -65,10 +65,12 @@ func FoldWithError[L any, R any, O any](e Sum[L, R], leftMap func(L) (O, error),
 
 type WriterSum[Delta any, DeltaA any, DeltaB any] interface {
 	Left(deltaA DeltaA, delta Delta) (DeltaSum[Delta, DeltaA, DeltaB], error)
+	Right(deltaB DeltaB, delta Delta) (DeltaSum[Delta, DeltaA, DeltaB], error)
+	Zero() DeltaSum[Delta, DeltaA, DeltaB]
 }
 
 type DeltaSum[Delta any, DeltaA any, DeltaB any] interface{
-	DeltaBase[Delta]
+	DeltaBase
 }
 
 // Serialization

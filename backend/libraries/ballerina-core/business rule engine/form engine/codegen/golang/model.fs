@@ -16,10 +16,9 @@ module Model =
                   UsedImports = u (s.UsedImports) } |}
 
   type Writer =
-    { Components: Map<string, WriterName>
+    { Components: Map<string, WriterName * ExprType>
       Type: ExprType
       Name: WriterName
-      Path: List<string>
       DeltaTypeName: string
       Kind: WriterKind }
 

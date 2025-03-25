@@ -1,4 +1,8 @@
 package ballerina
 
-type DeltaBase[Delta any] interface {
+type DeltaBase interface {
+}
+
+type RawDeltaBase interface {
+	GetComponent() string
 }

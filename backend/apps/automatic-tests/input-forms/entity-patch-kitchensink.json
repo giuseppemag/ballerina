@@ -10,6 +10,13 @@
         "A3": "C"
       }
     },
+    "APrime": {
+      "fields": {
+        "A1": "number",
+        "A2": "B",
+        "A3": "C"
+      }
+    },
     "B": {
       "fields": {
         "B1": "number",
@@ -77,7 +84,11 @@
       "A": {
         "type": "A",
         "methods": ["update", "get"]
-      }
+      },
+      "APrime": {
+        "type": "APrime",
+        "methods": ["update", "get"]
+      }      
     }
   }
 }
