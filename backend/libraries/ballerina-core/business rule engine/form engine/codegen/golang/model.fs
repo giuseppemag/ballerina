@@ -16,7 +16,7 @@ module Model =
                   UsedImports = u (s.UsedImports) } |}
 
   type Writer =
-    { Components: Map<string, WriterField>
+    { Components: Map<string, WriterName>
       Type: ExprType
       Name: WriterName
       Path: List<string>
@@ -26,10 +26,6 @@ module Model =
   and WriterKind =
     | Imported
     | Generated
-
-  and WriterField =
-    | Primitive of {| DeltaTypeName: string |}
-    | Nested of WriterName
 
   and WriterName = { WriterName: string }
 

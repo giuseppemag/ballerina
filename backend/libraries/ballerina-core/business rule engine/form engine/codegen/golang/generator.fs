@@ -328,19 +328,14 @@ module Main =
                   yield StringBuilder.One "\n"
 
                   for wf in w.Components do
-                    match wf.Value with
-                    | WriterField.Primitive d ->
-                      yield StringBuilder.One $"  {wf.Key}(delta {d.DeltaTypeName}) ({w.DeltaTypeName}, error)"
-                      yield StringBuilder.One "\n"
-                    | WriterField.Nested nwn ->
-                      match allWriters |> Map.tryFind nwn with
-                      | Some nw ->
-                        yield
-                          StringBuilder.One
-                            $"  {wf.Key}(nestedDelta {nw.DeltaTypeName}, delta Delta) ({w.DeltaTypeName}, error)"
-                      | _ -> ()
+                    match allWriters |> Map.tryFind wf.Value with
+                    | Some nw ->
+                      yield
+                        StringBuilder.One
+                          $"  {wf.Key}(nestedDelta {nw.DeltaTypeName}, delta Delta) ({w.DeltaTypeName}, error)"
+                    | _ -> ()
 
-                      yield StringBuilder.One "\n"
+                    yield StringBuilder.One "\n"
 
                   yield StringBuilder.One $"  Zero() ({w.DeltaTypeName}, error)"
                   yield StringBuilder.One "\n"

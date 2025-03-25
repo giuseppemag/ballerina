@@ -209,14 +209,11 @@ module WritersAndDeltas =
         let! ((ctx, codegenConfig): ParsedFormsContext * CodeGenConfig) = state.GetContext()
 
         match t with
-        | ExprType.PrimitiveType p ->
-          let config = PrimitiveType.GetConfig codegenConfig p
-          return WriterField.Primitive({| DeltaTypeName = $"{config.DeltaTypeName}[Delta]" |})
         | ExprType.LookupType tn ->
           let! t = ctx.Types |> Map.tryFindWithError tn.TypeName "types" "types" |> state.OfSum
           let! w = ExprType.ToWriter path { WriterName = tn.TypeName } t.Type
-          return WriterField.Nested w.Name
+          return w.Name
         | _ ->
           let! w = ExprType.ToWriter path { WriterName = System.String.Join("_", path |> List.rev) } t
-          return WriterField.Nested w.Name
+          return w.Name
       }
