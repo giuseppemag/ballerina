@@ -17,4 +17,6 @@ func DefaultArray[T any]() Array[T] {
 type WriterArray[Delta any, DeltaE any] interface {
 }
 
-type DeltaArray[Delta any, DeltaE any] interface{}
+type DeltaArray[Delta any, DeltaE any] interface{
+	DeltaBase[Delta]
+}

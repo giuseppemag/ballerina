@@ -14,4 +14,6 @@ func DefaultMap[a comparable, b any]() Map[a, b] {
 type WriterMap[Delta any, DeltaK any, DeltaV any] interface {
 }
 
-type DeltaMap[Delta any, DeltaK any, DeltaV any] interface{}
+type DeltaMap[Delta any, DeltaK any, DeltaV any] interface{
+	DeltaBase[Delta]
+}

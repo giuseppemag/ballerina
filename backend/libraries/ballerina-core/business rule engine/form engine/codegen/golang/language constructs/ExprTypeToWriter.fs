@@ -37,7 +37,7 @@ module WritersAndDeltas =
                 DeltaTypeName = $"Delta{writerName.WriterName}"
                 Path = path
                 Type = t
-                Fields = fields
+                Components = fields
                 Kind = WriterKind.Generated }
 
             do! state.SetState(Map.add w.Name w)
@@ -59,7 +59,7 @@ module WritersAndDeltas =
                 DeltaTypeName = $"Delta{writerName.WriterName}"
                 Path = path
                 Type = t
-                Fields = fields
+                Components = fields
                 Kind = WriterKind.Generated }
 
             do! state.SetState(Map.add w.Name w)
@@ -74,7 +74,7 @@ module WritersAndDeltas =
                 DeltaTypeName = $"{codegenConfig.Sum.DeltaTypeName}[Delta, {wa.DeltaTypeName}, {wb.DeltaTypeName}]"
                 Path = path
                 Type = t
-                Fields = Map.empty
+                Components = Map.empty
                 Kind = WriterKind.Imported }
 
             do! state.SetState(Map.add w.Name w)
@@ -87,7 +87,7 @@ module WritersAndDeltas =
                 Path = path
                 DeltaTypeName = $"{codegenConfig.Option.DeltaTypeName}[Delta, {wa.DeltaTypeName}]"
                 Type = t
-                Fields = Map.empty
+                Components = Map.empty
                 Kind = WriterKind.Imported }
 
             do! state.SetState(Map.add w.Name w)
@@ -100,7 +100,7 @@ module WritersAndDeltas =
                 Path = path
                 DeltaTypeName = $"{codegenConfig.Set.DeltaTypeName}[Delta, {wa.DeltaTypeName}]"
                 Type = t
-                Fields = Map.empty
+                Components = Map.empty
                 Kind = WriterKind.Imported }
 
             do! state.SetState(Map.add w.Name w)
@@ -113,7 +113,7 @@ module WritersAndDeltas =
                 Path = path
                 DeltaTypeName = $"{config.DeltaTypeName}[Delta]"
                 Type = t
-                Fields = Map.empty
+                Components = Map.empty
                 Kind = WriterKind.Imported }
 
             do! state.SetState(Map.add w.Name w)
@@ -126,7 +126,7 @@ module WritersAndDeltas =
                 Path = path
                 DeltaTypeName = $"{codegenConfig.List.DeltaTypeName}[Delta, {we.DeltaTypeName}]"
                 Type = t
-                Fields = Map.empty
+                Components = Map.empty
                 Kind = WriterKind.Imported }
 
             do! state.SetState(Map.add w.Name w)
@@ -141,7 +141,7 @@ module WritersAndDeltas =
                 Path = path
                 DeltaTypeName = $"{codegenConfig.Map.DeltaTypeName}[Delta, {wk.DeltaTypeName}, {wv.DeltaTypeName}]"
                 Type = t
-                Fields = Map.empty
+                Components = Map.empty
                 Kind = WriterKind.Imported }
 
             do! state.SetState(Map.add w.Name w)
@@ -166,7 +166,7 @@ module WritersAndDeltas =
                 Path = path
                 DeltaTypeName = $"{tupleConfig.DeltaTypeName}[Delta, {fieldDeltaTypeNames}]"
                 Type = t
-                Fields = Map.empty
+                Components = Map.empty
                 Kind = WriterKind.Imported }
 
             do! state.SetState(Map.add w.Name w)
@@ -181,7 +181,7 @@ module WritersAndDeltas =
                   Path = path
                   DeltaTypeName = $"{customType.DeltaTypeName}[Delta]"
                   Type = lt
-                  Fields = Map.empty
+                  Components = Map.empty
                   Kind = WriterKind.Imported }
 
               do! state.SetState(Map.add w.Name w)
@@ -196,7 +196,7 @@ module WritersAndDeltas =
                 Path = path
                 DeltaTypeName = $"{codegenConfig.Unit.DeltaTypeName}[Delta]"
                 Type = t
-                Fields = Map.empty
+                Components = Map.empty
                 Kind = WriterKind.Imported }
 
             do! state.SetState(Map.add w.Name w)

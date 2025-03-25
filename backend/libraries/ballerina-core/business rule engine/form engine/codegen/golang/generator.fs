@@ -327,7 +327,7 @@ module Main =
                   yield StringBuilder.One $"type Writer{w.Name.WriterName}[Delta any] interface {{"
                   yield StringBuilder.One "\n"
 
-                  for wf in w.Fields do
+                  for wf in w.Components do
                     match wf.Value with
                     | WriterField.Primitive d ->
                       yield StringBuilder.One $"  {wf.Key}(delta {d.DeltaTypeName}) ({w.DeltaTypeName}, error)"

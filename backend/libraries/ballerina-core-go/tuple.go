@@ -83,24 +83,34 @@ func NewTuple6[a any, b any, c any, d any, e any, f any](item1 a, item2 b, item3
 type WriterTuple2[Delta any, DeltaA any, DeltaB any] interface {
 }
 
-type DeltaTuple2[Delta any, DeltaA any, DeltaB any] interface{}
+type DeltaTuple2[Delta any, DeltaA any, DeltaB any] interface{
+	DeltaBase[Delta]
+}
 
 type WriterTuple3[Delta any, DeltaA any, DeltaB any, DeltaC any] interface {
 }
 
-type DeltaTuple3[Delta any, DeltaA any, DeltaB any, DeltaC any] interface{}
+type DeltaTuple3[Delta any, DeltaA any, DeltaB any, DeltaC any] interface{
+	DeltaBase[Delta]
+}
 
 type WriterTuple4[Delta any, DeltaA any, DeltaB any, DeltaC any, DeltaD any] interface {
 }
 
-type DeltaTuple4[Delta any, DeltaA any, DeltaB any, DeltaC any, DeltaD any] interface{}
+type DeltaTuple4[Delta any, DeltaA any, DeltaB any, DeltaC any, DeltaD any] interface{
+	DeltaBase[Delta]
+}
 
 type WriterTuple5[Delta any, DeltaA any, DeltaB any, DeltaC any, DeltaD any, DeltaE any] interface {
 }
 
-type DeltaTuple5[Delta any, DeltaA any, DeltaB any, DeltaC any, DeltaD any, DeltaE any] interface{}
+type DeltaTuple5[Delta any, DeltaA any, DeltaB any, DeltaC any, DeltaD any, DeltaE any] interface{
+	DeltaBase[Delta]
+}
 
 type WriterTuple6[Delta any, DeltaA any, DeltaB any, DeltaC any, DeltaD any, DeltaE any, DeltaF any] interface {
 }
 
-type DeltaTuple6[Delta any, DeltaA any, DeltaB any, DeltaC any, DeltaD any, DeltaE any, DeltaF any] interface{}
+type DeltaTuple6[Delta any, DeltaA any, DeltaB any, DeltaC any, DeltaD any, DeltaE any, DeltaF any] interface{
+	DeltaBase[Delta]
+}

@@ -67,7 +67,9 @@ type WriterSum[Delta any, DeltaA any, DeltaB any] interface {
 	Left(deltaA DeltaA, delta Delta) (DeltaSum[Delta, DeltaA, DeltaB], error)
 }
 
-type DeltaSum[Delta any, DeltaA any, DeltaB any] interface{}
+type DeltaSum[Delta any, DeltaA any, DeltaB any] interface{
+	DeltaBase[Delta]
+}
 
 // Serialization
 

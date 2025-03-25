@@ -44,20 +44,29 @@ type GolangEntityPATCHers =
           yield
             StringBuilder.Many(seq { yield StringBuilder.One($"  commit{w.Name.WriterName} func({w.DeltaTypeName}) (Result, error), \n") })
 
-        yield StringBuilder.One ") func(string, []Delta) (Result, error) { "
-        // var traverse func (entityName string, path []Delta) (Result, error)
-        // traverse = func (entityName string, path []Delta) (Result, error) {
+        yield StringBuilder.One ") func(string, []Delta) (Result, error) { \n"
 
-        yield StringBuilder.One "  var traverse func (entityName string, path []Delta) (Result, error)\n"
-        yield StringBuilder.One "  traverse = func (entityName string, path []Delta) (Result, error) {\n"
+        yield StringBuilder.One "  var traverse func (entityName string, path []Delta) (ballerina.DeltaBase[Delta], error)\n"
+        yield StringBuilder.One "  traverse = func (entityName string, path []Delta) (ballerina.DeltaBase[Delta], error) {\n"
 
-        yield StringBuilder.One "    var resultNil Result;\n"
+        yield StringBuilder.One "    var deltaBaseNil ballerina.DeltaBase[Delta];\n"
 
         yield StringBuilder.One $"    switch entityName {{"
         yield StringBuilder.One "\n"
 
-        for w in generatedWriters do
-          yield StringBuilder.One $"      case \"{w.Name.WriterName}\":"
+        for w in entities.Writers |> Map.values do
+          match w.Kind with
+          | WriterKind.Generated ->
+            yield StringBuilder.One $"      case \"{w.Name.WriterName}\":"
+          | WriterKind.Imported -> 
+            yield StringBuilder.One $"      case \"{w.Path |> List.rev |> System.String.JoinSeq '_'}\":"
+          yield StringBuilder.One "\n"
+          yield StringBuilder.One $"        switch \"\" {{"
+          yield StringBuilder.One "\n"
+          for c in w.Components do
+            yield StringBuilder.One $"          case \"{c.Key}\":"
+            yield StringBuilder.One "\n"
+          yield StringBuilder.One $"        }}"
           yield StringBuilder.One "\n"
 
         yield StringBuilder.One $"    }}"
@@ -76,10 +85,15 @@ type GolangEntityPATCHers =
 
         // yield StringBuilder.One "    }\n"
 
-        yield StringBuilder.One $"    return resultNil, {entities.EntityNotFoundErrorConstructor}(entityName);\n"
+        yield StringBuilder.One $"    return deltaBaseNil, {entities.EntityNotFoundErrorConstructor}(entityName);\n"
 
         yield StringBuilder.One "  }\n"
-        yield StringBuilder.One "return traverse\n"
+
+        yield StringBuilder.One "  return func(entityName string, path []Delta) (Result, error) {\n"
+        yield StringBuilder.One $"    var resultNil Result;\n"
+        yield StringBuilder.One $"    print(traverse);\n"
+        yield StringBuilder.One $"    return resultNil, ballerina.NewEntityNotFoundError(entityName) \n"
+        yield StringBuilder.One "  }\n"
         yield StringBuilder.One "}\n\n"
       }
     )

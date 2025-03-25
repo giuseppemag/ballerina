@@ -26,4 +26,6 @@ type WriterOption[Delta any, DeltaA any] interface {
 	Value(deltaA DeltaA, delta Delta) (DeltaOption[Delta, DeltaA], error)
 }
 
-type DeltaOption[Delta any, DeltaA any] interface{}
+type DeltaOption[Delta any, DeltaA any] interface{
+	DeltaBase[Delta]
+}

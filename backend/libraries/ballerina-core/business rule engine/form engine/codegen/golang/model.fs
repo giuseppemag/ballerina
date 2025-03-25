@@ -16,7 +16,7 @@ module Model =
                   UsedImports = u (s.UsedImports) } |}
 
   type Writer =
-    { Fields: Map<string, WriterField>
+    { Components: Map<string, WriterField>
       Type: ExprType
       Name: WriterName
       Path: List<string>

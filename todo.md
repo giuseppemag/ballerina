@@ -83,13 +83,18 @@
                 ✅ generate the switch by entity name
                   ✅ what is the domain? what do we iterate?
                   ✅ return entity not found error as a faiure case
-                ❌ generate the switch by field/case by looking at the instance type of Delta
-                  ❌ define a DeltaRecord
-                  ❌ define a DeltaUnion
+                ✅ rename Field to Component in the Writers
+                ✅ generate the switch by imported renderer
+                ✅ generate the switch by field/case
                 ❌ fallback case for any other type, also for failed matches on the previous concrete types
+                ❌ switch on the right path element
                 ❌ invoke the right committer based on the runtime type of the `DeltaBase` and the initial `entityName`
                 ❌ `DeltaX -> EffectX` to disambiguate
                 ❌ generate standard implementations for the record and union writers of the given entities
+                  ❌ define a DeltaRecord
+                  ❌ define a DeltaUnion
+                  ❌ codegen the writers for records
+                  ❌ codegen the writers for unions
                 ❌ write standard implementations for the unit, int, array, map, option, etc. writers
               ❌ imports
               ❌ `generated types`

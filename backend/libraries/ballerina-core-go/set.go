@@ -9,4 +9,6 @@ func DefaultSet[a comparable]() Set[a] {
 type WriterSet[Delta any, DeltaA any] interface {
 }
 
-type DeltaSet[Delta any, DeltaA any] interface{}
+type DeltaSet[Delta any, DeltaA any] interface{
+	DeltaBase[Delta]
+}
