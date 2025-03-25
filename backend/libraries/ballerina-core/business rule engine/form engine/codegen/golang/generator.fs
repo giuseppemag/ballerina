@@ -13,6 +13,7 @@ module Main =
   open Ballerina.Core.String
   open Ballerina.Core.StringBuilder
   open Ballerina.Core.Json
+  open System
   open System.Text.RegularExpressions
   open Ballerina.Fun
   open Ballerina.Collections
@@ -301,34 +302,40 @@ module Main =
                   |> state.Map ignore
             }
 
-          match writersBuilder.run ((ctx, codegenConfig), Map.empty) with
+          match writersBuilder.run ((ctx, codegenConfig), []) with
           | Right(err: Errors, _) -> return! state.Throw err
           | Left(_, newWritersState) ->
             // do System.Console.WriteLine(newWritersState.ToFSharpString)
-            let allWriters = newWritersState |> Option.defaultWith (fun () -> Map.empty)
+            let allWriters = newWritersState |> Option.defaultWith (fun () -> [])
+            let generatedWriters, importedWriters =
+              allWriters
+              |> List.partition (fun w -> w.Kind = WriterKind.Generated)
+            let generatedWriters = generatedWriters |> List.groupBy (fun w -> w.Name.WriterName) |> Seq.map (fun (_,g) -> g.Head) |> Seq.toList
+            let allWriters = generatedWriters @ importedWriters
 
             let! (allCommittables: List<Writer>) =
               entityAPIsWithUPDATE
               |> Seq.map (fun e ->
                 allWriters
-                |> Map.tryFindWithError { WriterName = e.TypeId.TypeName } "writer" e.TypeId.TypeName
+                |> List.tryFind (fun w -> w.Name.WriterName = e.TypeId.TypeName)
+                |> Sum.fromOption (fun () -> Errors.Singleton $"Error: cannot find writer for type {e.TypeId.TypeName}")
                 |> state.OfSum)
               |> state.All
 
             let writers =
               seq {
-                for w in allWriters |> Map.values |> Seq.filter (fun w -> w.Kind.IsGenerated) do
+                for w in allWriters |> Seq.filter (fun w -> w.Kind.IsGenerated) do
                   yield StringBuilder.One $"type {w.DeltaTypeName} interface {{"
                   yield StringBuilder.One "\n"
                   yield StringBuilder.One $"}}"
                   yield StringBuilder.One "\n\n"
 
-                for w in allWriters |> Map.values |> Seq.filter (fun w -> w.Kind.IsGenerated) do
+                for w in allWriters |> Seq.filter (fun w -> w.Kind.IsGenerated) do
                   yield StringBuilder.One $"type Writer{w.Name.WriterName}[Delta any] interface {{"
                   yield StringBuilder.One "\n"
 
                   for wf in w.Components do
-                    match allWriters |> Map.tryFind wf.Value with
+                    match allWriters |> List.tryFind (fun w -> w.Name = wf.Value) with
                     | Some nw ->
                       yield
                         StringBuilder.One

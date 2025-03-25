@@ -86,6 +86,10 @@
                 ✅ rename Field to Component in the Writers
                 ✅ generate the switch by imported renderer
                 ✅ generate the switch by field/case
+                ❌ why are there duplicates in the generated writers? 
+                  ❌ split the set of writers into two maps: generated and imported
+                  ❌ generated:Map<WriterName, Writer>
+                  ❌ imported:Map<Path, Writer>
                 ❌ fallback case for any other type, also for failed matches on the previous concrete types
                 ❌ switch on the right path element
                 ❌ invoke the right committer based on the runtime type of the `DeltaBase` and the initial `entityName`

@@ -1,6 +1,8 @@
 namespace Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs
 
 module WritersAndDeltas =
+  open System
+  open Ballerina.Core.Object
   open Ballerina.DSL.Expr.Model
   open Ballerina.DSL.Expr.Types.Model
   open Ballerina.State.WithError
@@ -11,12 +13,13 @@ module WritersAndDeltas =
 
   type ExprType with
     static member ToWriter (path: List<string>) (writerName: WriterName) (t: ExprType) =
+      let listAdd x xs = x :: xs
       state {
         let! ((ctx, codegenConfig): ParsedFormsContext * CodeGenConfig) = state.GetContext()
         let! st = state.GetState()
         let customTypes = codegenConfig.Custom.Keys |> Set.ofSeq
 
-        match st |> Map.tryFind writerName with
+        match st |> List.tryFind (fun w -> w.Name = writerName) with
         | Some w -> return w
         | None ->
           match t with
@@ -40,7 +43,7 @@ module WritersAndDeltas =
                 Components = fields
                 Kind = WriterKind.Generated }
 
-            do! state.SetState(Map.add w.Name w)
+            do! state.SetState(w |> listAdd)
             return w
           | ExprType.UnionType cases ->
             let! cases =
@@ -62,7 +65,7 @@ module WritersAndDeltas =
                 Components = fields
                 Kind = WriterKind.Generated }
 
-            do! state.SetState(Map.add w.Name w)
+            do! state.SetState(listAdd w)
             return w
           | ExprType.SumType(a, b) ->
             let! wa = ExprType.ToWriter ("left" :: path) writerName a
@@ -77,7 +80,7 @@ module WritersAndDeltas =
                 Components = Map.empty
                 Kind = WriterKind.Imported }
 
-            do! state.SetState(Map.add w.Name w)
+            do! state.SetState(listAdd w)
             return w
           | ExprType.OptionType(a) ->
             let! wa = ExprType.ToWriter ("value" :: path) writerName a
@@ -90,7 +93,7 @@ module WritersAndDeltas =
                 Components = Map.empty
                 Kind = WriterKind.Imported }
 
-            do! state.SetState(Map.add w.Name w)
+            do! state.SetState(listAdd w)
             return w
           | ExprType.SetType(a) ->
             let! wa = ExprType.ToWriter ("element" :: path) writerName a
@@ -103,7 +106,7 @@ module WritersAndDeltas =
                 Components = Map.empty
                 Kind = WriterKind.Imported }
 
-            do! state.SetState(Map.add w.Name w)
+            do! state.SetState(listAdd w)
             return w
           | ExprType.PrimitiveType(p) ->
             let config = PrimitiveType.GetConfig codegenConfig p
@@ -116,7 +119,7 @@ module WritersAndDeltas =
                 Components = Map.empty
                 Kind = WriterKind.Imported }
 
-            do! state.SetState(Map.add w.Name w)
+            do! state.SetState(listAdd w)
             return w
           | ExprType.ListType(e) ->
             let! we = ExprType.ToWriter ("element" :: path) writerName e
@@ -129,7 +132,7 @@ module WritersAndDeltas =
                 Components = Map.empty
                 Kind = WriterKind.Imported }
 
-            do! state.SetState(Map.add w.Name w)
+            do! state.SetState(listAdd w)
             return w
           | ExprType.MapType(k, v) ->
             let! wk = ExprType.ToWriter ("key" :: path) writerName k
@@ -144,7 +147,7 @@ module WritersAndDeltas =
                 Components = Map.empty
                 Kind = WriterKind.Imported }
 
-            do! state.SetState(Map.add w.Name w)
+            do! state.SetState(listAdd w)
             return w
           | ExprType.TupleType fields ->
             let! fields =
@@ -169,7 +172,7 @@ module WritersAndDeltas =
                 Components = Map.empty
                 Kind = WriterKind.Imported }
 
-            do! state.SetState(Map.add w.Name w)
+            do! state.SetState(listAdd w)
             return w
           | ExprType.LookupType tn as lt ->
             let! t = ctx.Types |> Map.tryFindWithError tn.TypeName "types" "types" |> state.OfSum
@@ -184,11 +187,11 @@ module WritersAndDeltas =
                   Components = Map.empty
                   Kind = WriterKind.Imported }
 
-              do! state.SetState(Map.add w.Name w)
+              do! state.SetState(listAdd w)
               return w
             | _ ->
               let! w = ExprType.ToWriter (tn.TypeName :: path) { WriterName = tn.TypeName } t.Type
-              do! state.SetState(Map.add w.Name w)
+              do! state.SetState(listAdd w)
               return w
           | ExprType.UnitType ->
             let w =
@@ -199,7 +202,7 @@ module WritersAndDeltas =
                 Components = Map.empty
                 Kind = WriterKind.Imported }
 
-            do! state.SetState(Map.add w.Name w)
+            do! state.SetState(fun l -> w::l)
             return w
           | _ -> return! state.Throw(Errors.Singleton $"Error: cannot convert type {t} to a Writer.")
       }

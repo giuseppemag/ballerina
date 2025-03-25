@@ -9,14 +9,12 @@ open Ballerina.DSL.FormEngine.Codegen.Golang.Generator.Model
 type GolangEntityPATCHers =
   { FunctionName: string
     EntityNotFoundErrorConstructor: string
-    Writers: Map<WriterName, Writer>
+    Writers: List<Writer>
     CommittableWriters: List<Writer> }
 
   static member ToGolang (_: GolangContext) (entities: GolangEntityPATCHers) =
     let generatedWriters, importedWriters =
       entities.Writers
-      |> Map.values
-      |> List.ofSeq
       |> List.partition (fun w -> w.Kind = WriterKind.Generated)
 
     StringBuilder.Many(
@@ -54,7 +52,7 @@ type GolangEntityPATCHers =
         yield StringBuilder.One $"    switch entityName {{"
         yield StringBuilder.One "\n"
 
-        for w in entities.Writers |> Map.values do
+        for w in entities.Writers do
           match w.Kind with
           | WriterKind.Generated ->
             yield StringBuilder.One $"      case \"{w.Name.WriterName}\":"
