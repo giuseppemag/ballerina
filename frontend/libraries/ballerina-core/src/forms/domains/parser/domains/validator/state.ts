@@ -2,6 +2,7 @@ import { Set, Map, OrderedMap, List } from "immutable";
 import {
   ApiConverters,
   BuiltIns,
+  CaseName,
   FieldName,
   FormsConfigMerger,
   InjectedPrimitives,
@@ -14,26 +15,46 @@ import { ParsedRenderer } from "../renderer/state";
 
 export type RawForm = {
   type?: any;
+  renderer?: any;
   fields?: any;
+  cases?: any;
   tabs?: any;
   header?: any;
   extends?: any;
 };
 export const RawForm = {
   hasType: (_: any): _ is { type: any } => isObject(_) && "type" in _,
+  hasRenderer: (_: any): _ is { renderer: any } =>
+    isObject(_) && "renderer" in _,
+  hasCases: (_: any): _ is { cases: any } => isObject(_) && "cases" in _,
   hasFields: (_: any): _ is { fields: any } => isObject(_) && "fields" in _,
   hasTabs: (_: any): _ is { tabs: any } => isObject(_) && "tabs" in _,
   hasHeader: (_: any): _ is { header: any } => isObject(_) && "header" in _,
   hasExtends: (_: any): _ is { extends: any } =>
     isObject(_) && "extends" in _ && Array.isArray(_.extends),
 };
-export type ParsedFormConfig<T> = {
+
+export type ParsedRecordFormConfig<T> = {
+  kind: "recordForm";
   name: string;
   type: ParsedType<T>;
   fields: Map<FieldName, ParsedRenderer<T>>;
   tabs: FormLayout;
   header?: string;
 };
+
+export type ParsedUnionFormConfig<T> = {
+  kind: "unionForm";
+  name: string;
+  type: ParsedType<T>;
+  cases: Map<CaseName, ParsedRecordFormConfig<T>>;
+  renderer: ParsedRenderer<T>;
+  header?: string;
+};
+
+export type ParsedFormConfig<T> =
+  | ParsedRecordFormConfig<T>
+  | ParsedUnionFormConfig<T>;
 
 export type FormLayout = OrderedMap<string, TabLayout>;
 export type GroupLayout = Array<FieldName>;
@@ -244,149 +265,187 @@ export const FormsConfig = {
           },
         );
 
+
         let forms: Map<string, ParsedFormConfig<T>> = Map();
         Object.entries(formsConfig.forms).forEach(
           ([formName, form]: [formName: string, form: RawForm]) => {
-            if (
-              !RawForm.hasType(form) ||
-              !RawForm.hasFields(form) ||
-              !RawForm.hasTabs(form)
-            ) {
+            if (!RawForm.hasType(form)) {
               errors = errors.push(
-                `form ${formName} is missing the required type, fields or tabs attribute`,
+                `form ${formName} is missing the required type attribute`,
               );
               return;
             }
-            const formType = parsedTypes.get(form.type)!;
-            if (formType.kind != "record") {
+            const formType = parsedTypes.get(form.type);
+            if (formType == undefined) {
               errors = errors.push(
-                `form ${formName} references non-record type ${form.type}`,
+                `form ${formName} references non-existent type ${form.type}`,
               );
               return;
             }
 
-            const parsedForm: ParsedFormConfig<T> = {
-              name: formName,
-              fields: Map(),
-              tabs: Map(),
-              type: parsedTypes.get(form.type)!,
-              header: RawForm.hasHeader(form) ? form.header : undefined,
-            };
+            if (formType.kind == "record") {
+              if (!RawForm.hasFields(form) || !RawForm.hasTabs(form)) {
+                errors = errors.push(
+                  `form ${formName} is missing the required fields or tabs attribute`,
+                );
+                return;
+              }
+              const parsedForm: ParsedFormConfig<T> = {
+                kind: "recordForm",
+                name: formName,
+                fields: Map(),
+                tabs: Map(),
+                type: parsedTypes.get(form.type)!,
+                header: RawForm.hasHeader(form) ? form.header : undefined,
+              };
 
-            Object.entries(form.fields).forEach(
-              ([fieldName, field]: [fieldName: string, field: any]) => {
-                if (RawForm.hasExtends(form) && form.extends.length > 0) {
-                  // defer extended forms until after all other forms have been parsed
-                  return;
-                }
-                const fieldType = formType.fields.get(fieldName)!;
-
-                const bwcompatiblefield =
-                  fieldType.kind == "application" &&
-                  fieldType.value == "List" &&
-                  typeof field.elementRenderer == "string"
-                    ? {
-                        renderer: field.renderer,
-                        label: field?.label,
-                        visible: field.visible,
-                        disabled: field?.disabled,
-                        description: field?.description,
-                        elementRenderer: {
-                          renderer: field.elementRenderer,
-                          label: field?.elementLabel,
-                          tooltip: field?.elementTooltip,
-                          visible: field.visible,
-                        },
-                      }
-                    : field;
-
-                return (parsedForm.fields = parsedForm.fields.set(
-                  fieldName,
-                  ParsedRenderer.Operations.ParseRenderer(
-                    fieldType,
-                    bwcompatiblefield,
-                    parsedTypes,
-                  ),
-                ));
-              },
-            );
-
-            Object.entries(form.fields).forEach(
-              ([fieldName, field]: [fieldName: string, field: any]) => {
-                if (!RawForm.hasExtends(form) || form.extends.length <= 0) {
-                  // Not extended forms already parsed
-                  return;
-                }
-                const fieldType = formType.fields.get(fieldName);
-
-                if (fieldType == undefined) {
-                  const parsedField = forms.get(form.extends[0])?.fields.get(fieldName);
-                  if(parsedField == undefined) {
-                    errors = errors.push(
-                      `form ${formName} references non-existent extended form field ${fieldName}`,
-                    );
+              Object.entries(form.fields).forEach(
+                ([fieldName, field]: [fieldName: string, field: any]) => {
+                  if (RawForm.hasExtends(form) && form.extends.length > 0) {
+                    // defer extended forms until after all other forms have been parsed
                     return;
                   }
+                  const fieldType = formType.fields.get(fieldName)!;
+
+                  const bwcompatiblefield =
+                    fieldType.kind == "application" &&
+                    fieldType.value == "List" &&
+                    typeof field.elementRenderer == "string"
+                      ? {
+                          renderer: field.renderer,
+                          label: field?.label,
+                          visible: field.visible,
+                          disabled: field?.disabled,
+                          description: field?.description,
+                          elementRenderer: {
+                            renderer: field.elementRenderer,
+                            label: field?.elementLabel,
+                            tooltip: field?.elementTooltip,
+                            visible: field.visible,
+                          },
+                        }
+                      : field;
 
                   return (parsedForm.fields = parsedForm.fields.set(
                     fieldName,
-                    parsedField,
-                  ))
-                }
+                    ParsedRenderer.Operations.ParseRenderer(
+                      fieldType,
+                      bwcompatiblefield,
+                      parsedTypes,
+                    ),
+                  ));
+                },
+              );
 
-                const bwcompatiblefield =
-                  fieldType.kind == "application" &&
-                  fieldType.value == "List" &&
-                  typeof field.elementRenderer == "string"
-                    ? {
-                        renderer: field.renderer,
-                        label: field?.label,
-                        visible: field.visible,
-                        disabled: field?.disabled,
-                        description: field?.description,
-                        elementRenderer: {
-                          renderer: field.elementRenderer,
-                          label: field?.elementLabel,
-                          tooltip: field?.elementTooltip,
+              Object.entries(form.fields).forEach(
+                ([fieldName, field]: [fieldName: string, field: any]) => {
+                  if (!RawForm.hasExtends(form) || form.extends.length <= 0) {
+                    // Not extended forms already parsed
+                    return;
+                  }
+                  const fieldType = formType.fields.get(fieldName);
+
+                  if (fieldType == undefined) {
+                    const extendedForm = forms.get(form.extends[0]);
+                    if (extendedForm == undefined) {
+                      errors = errors.push(
+                        `form ${formName} references non-existent extended form ${form.extends[0]}`,
+                      );
+                      return;
+                    }
+                    if (extendedForm.kind != "recordForm") {
+                      errors = errors.push(
+                        `form ${formName} extends non-record form ${form.extends[0]}`,
+                      );
+                      return;
+                    }
+
+                    const parsedField = extendedForm.fields.get(fieldName);
+                    if (parsedField == undefined) {
+                      errors = errors.push(
+                        `form ${formName} references non-existent extended form field ${fieldName}`,
+                      );
+                      return;
+                    }
+
+                    return (parsedForm.fields = parsedForm.fields.set(
+                      fieldName,
+                      parsedField,
+                    ));
+                  }
+
+                  const bwcompatiblefield =
+                    fieldType.kind == "application" &&
+                    fieldType.value == "List" &&
+                    typeof field.elementRenderer == "string"
+                      ? {
+                          renderer: field.renderer,
+                          label: field?.label,
                           visible: field.visible,
-                        },
-                      }
-                    : field;
+                          disabled: field?.disabled,
+                          description: field?.description,
+                          elementRenderer: {
+                            renderer: field.elementRenderer,
+                            label: field?.elementLabel,
+                            tooltip: field?.elementTooltip,
+                            visible: field.visible,
+                          },
+                        }
+                      : field;
 
-                return (parsedForm.fields = parsedForm.fields.set(
-                  fieldName,
-                  ParsedRenderer.Operations.ParseRenderer(
-                    fieldType,
-                    bwcompatiblefield,
-                    parsedTypes,
-                  ),
-                ));
-              },
-            );
+                  return (parsedForm.fields = parsedForm.fields.set(
+                    fieldName,
+                    ParsedRenderer.Operations.ParseRenderer(
+                      fieldType,
+                      bwcompatiblefield,
+                      parsedTypes,
+                    ),
+                  ));
+                },
+              );
 
-            let tabs: FormLayout = OrderedMap();
-            Object.entries(form.tabs).forEach(
-              ([tabName, tab]: [tabName: string, tab: any]) => {
-                let cols: TabLayout = { columns: OrderedMap() };
-                tabs = tabs.set(tabName, cols);
-                Object.entries(tab.columns).forEach(
-                  ([colName, col]: [colName: string, col: any]) => {
-                    let column: ColumnLayout = { groups: OrderedMap() };
-                    cols.columns = cols.columns.set(colName, column);
-                    Object.keys(col.groups).forEach((groupName) => {
-                      const groupConfig = col.groups[groupName];
-                      let group: GroupLayout = [];
-                      column.groups = column.groups.set(groupName, group);
-                      groupConfig.forEach((fieldName: any) => {
-                        group.push(fieldName);
+              let tabs: FormLayout = OrderedMap();
+              Object.entries(form.tabs).forEach(
+                ([tabName, tab]: [tabName: string, tab: any]) => {
+                  let cols: TabLayout = { columns: OrderedMap() };
+                  tabs = tabs.set(tabName, cols);
+                  Object.entries(tab.columns).forEach(
+                    ([colName, col]: [colName: string, col: any]) => {
+                      let column: ColumnLayout = { groups: OrderedMap() };
+                      cols.columns = cols.columns.set(colName, column);
+                      Object.keys(col.groups).forEach((groupName) => {
+                        const groupConfig = col.groups[groupName];
+                        let group: GroupLayout = [];
+                        column.groups = column.groups.set(groupName, group);
+                        groupConfig.forEach((fieldName: any) => {
+                          group.push(fieldName);
+                        });
                       });
-                    });
-                  },
+                    },
+                  );
+                },
+              );
+              parsedForm.tabs = tabs;
+              forms = forms.set(formName, parsedForm);
+            }
+
+            if (formType.kind == "union") {
+              if (!RawForm.hasCases(form) || !RawForm.hasRenderer(form)) {
+                errors = errors.push(
+                  `form ${formName} is missing the required cases or renderer attribute`,
                 );
-              },
-            );
-            parsedForm.tabs = tabs;
-            forms = forms.set(formName, parsedForm);
+                return;
+              }
+              const parsedForm: ParsedFormConfig<T> = {
+                kind: "unionForm",
+                name: formName,
+                cases: form.cases,
+                renderer: form.renderer,
+                type: parsedTypes.get(form.type)!,
+                header: RawForm.hasHeader(form) ? form.header : undefined,
+              };
+              forms = forms.set(formName, parsedForm);
+            }
           },
         );
 
