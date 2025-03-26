@@ -374,6 +374,7 @@ module Main =
                   yield StringBuilder.One $"    switch delta.Discriminator {{\n"
                   for p in patterns do
                     yield StringBuilder.One $"      case \"{formName}{w.Name.WriterName}{p.Name}\":\n"
+                    yield StringBuilder.One $"        return on{p.Name}(delta.{p.Name})\n"
                   yield StringBuilder.One $"    }}\n"
                   yield StringBuilder.One $"    return result, nil\n"
                   yield StringBuilder.One $"  }}\n"

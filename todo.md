@@ -66,7 +66,7 @@
             ✅ generate the traversable polymorphic sequence of possible effects
               ✅ always add a case handler, `onReplace(T)`
               ✅ create a discriminator with N+1 cases, `onReplace` included when present
-              ✅ create DeltaX as a struct with private members
+\              ✅ create DeltaX as a struct with private members
               ✅ generate the union case concrete constructors (N+1, `onReplace`, when present)
               ✅ the generated deltas have the `MatchDeltaX` method which takes as input the callbacks over the deltas for the individual components
               ✅ make `MatchDeltaX` curried in the actual `DeltaX`
@@ -77,13 +77,16 @@
             ❌ define the polymorphic variants also for the `Sum`, etc.
               ❌ including `Match`
               ❌ including `replaceWith`
-            ❌ remove the writers, isolate the delta generation, cleanup the entityPATCHer
+            ❌ cleanup the entityPATCHer
+            ❌ remove the whole concept of imported writers
+            ❌ remove the writers from the go-configs as well
+            ❌ remove the writers from the ballerina.go library
             ❌ the delta generation should be moved to a separate .fs file in `LanguageConstructs`
             ❌ ballerina.DeltaBase should come from config
             ❌ ballerina.NewEntityNotFoundError should come from config in entityPATCHer
             ❌ ballerina.NewEntityNameAndDeltaTypeMismatch should come from config in entityPATCHer
             ❌ make it parseable - generate the clean vs the physical version, with marshall and unmarshall
-              ❌ use `_` as a prefix for the patterns
+              ❌ use `private_` as a prefix for the patterns
           ❌ imports
           ❌ `generated types`
           ❌ ToGolang in the typename and method name is redundant, remove it
