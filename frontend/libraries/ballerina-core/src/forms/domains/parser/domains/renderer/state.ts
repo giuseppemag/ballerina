@@ -47,6 +47,7 @@ import {
   ValueOption,
   ValueRecord,
   ParsedApplicationType,
+  UnionForm,
 } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 
@@ -70,7 +71,16 @@ export type RawRenderer = {
   leftRenderer?: any;
   rightRenderer?: any;
   details?: any;
+  cases?: Record<string, string>;
 };
+
+export type ParsedUnionRenderer<T> = {
+  kind: "union";
+  cases: Map<string, string>;
+  renderer: string;
+  type: ParsedType<T>;
+};
+
 export type ParsedRenderer<T> = (
   | { kind: "primitive" }
   | { kind: "record" }
@@ -92,6 +102,7 @@ export type ParsedRenderer<T> = (
       leftRenderer?: ParsedRenderer<T>;
       rightRenderer?: ParsedRenderer<T>;
     }
+  | ParsedUnionRenderer<T>
 ) & {
   renderer: string;
   type: ParsedType<T>;
@@ -281,6 +292,16 @@ export const ParsedRenderer = {
       visible,
       disabled: disabled != undefined ? disabled : false,
     }),
+    union: <T>(
+      type: ParsedType<T>,
+      renderer: string,
+      cases: Record<string, string>,
+    ): ParsedRenderer<T> => ({
+      kind: "union",
+      type,
+      renderer,
+      cases: Map(cases),
+    }),
   },
   Operations: {
     ParseRenderer: <T>(
@@ -408,6 +429,13 @@ export const ParsedRenderer = {
           field.tooltip,
           field.details,
         );
+      if (fieldType.kind == "union") {
+        return ParsedRenderer.Default.union(
+          fieldType,
+          field.renderer,
+          field.cases ?? {},
+        );
+      }
       if (fieldType.kind == "lookup") {
         return ParsedRenderer.Operations.ParseRenderer(
           types.get(fieldType.name)!,
@@ -578,6 +606,22 @@ export const ParsedRenderer = {
                         parsingContext.forms.get(parsedRenderer.renderer)!
                           .disabledPredicatedExpressions,
                       ),
+                  }),
+              ),
+          );
+        case "union":
+          return Expr.Operations.parse(parsedRenderer.visible ?? true).Then(
+            (visibilityExpr) =>
+              Expr.Operations.parse(parsedRenderer.disabled ?? false).Then(
+                (disabledExpr) =>
+                  ValueOrErrors.Default.return({
+                    form: {
+                      renderer: UnionForm<any & FormLabel, Unit>(
+                        parsedRenderer.cases.map((caseName) =>
+                          parsingContext.forms.get(caseName)!.form,
+                        ),
+                      ),
+                    },
                   }),
               ),
           );

@@ -11,7 +11,7 @@ import {
   TypeName,
 } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
-import { ParsedRenderer } from "../renderer/state";
+import { ParsedRenderer, ParsedUnionRenderer } from "../renderer/state";
 
 export type RawForm = {
   type?: any;
@@ -47,8 +47,7 @@ export type ParsedUnionFormConfig<T> = {
   kind: "unionForm";
   name: string;
   type: ParsedType<T>;
-  cases: Map<CaseName, ParsedRecordFormConfig<T>>;
-  renderer: ParsedRenderer<T>;
+  renderer: ParsedUnionRenderer<T>;
   header?: string;
 };
 
@@ -265,7 +264,6 @@ export const FormsConfig = {
           },
         );
 
-
         let forms: Map<string, ParsedFormConfig<T>> = Map();
         Object.entries(formsConfig.forms).forEach(
           ([formName, form]: [formName: string, form: RawForm]) => {
@@ -439,8 +437,14 @@ export const FormsConfig = {
               const parsedForm: ParsedFormConfig<T> = {
                 kind: "unionForm",
                 name: formName,
-                cases: form.cases,
-                renderer: form.renderer,
+                renderer: ParsedRenderer.Operations.ParseRenderer(
+                  formType,
+                  {
+                    renderer: form.renderer,
+                    cases: form.cases,
+                  },
+                  parsedTypes,
+                ),
                 type: parsedTypes.get(form.type)!,
                 header: RawForm.hasHeader(form) ? form.header : undefined,
               };
