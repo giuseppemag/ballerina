@@ -89,9 +89,9 @@ module Model =
       | ExprType.RecordType fs ->
         let printField (fieldName: string, fieldType: ExprType) = $"{fieldName}:{!fieldType}"
 
-        $"({fs
+        $"{{ {fs
             |> Seq.map ((fun kv -> kv.Key, kv.Value) >> printField)
-            |> fun s -> String.Join(';', s)})"
+            |> fun s -> String.Join(';', s)} }}"
 
     static member Extend t1 t2 =
       match t1, t2 with

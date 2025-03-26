@@ -1,45 +1,45 @@
 package ballerina
 
-type WriterInt[Delta any] interface {
-	Value(delta Delta) (DeltaInt[Delta], error)
-	Zero() DeltaInt[Delta]
-}
+// type WriterInt interface {
+// 	Value(delta Delta) (DeltaInt, error)
+// 	Zero() DeltaInt
+// }
 
-type DeltaInt[Delta any] interface{
+type DeltaInt interface{
 	DeltaBase
 }
 
-type WriterString[Delta any] interface {
-	Value(delta Delta) (DeltaString[Delta], error)
-	Zero() DeltaString[Delta]
-}
+// type WriterString interface {
+// 	Value(delta Delta) (DeltaString, error)
+// 	Zero() DeltaString
+// }
 
-type DeltaString[Delta any] interface{
+type DeltaString interface{
 	DeltaBase
 }
 
-type WriterBool[Delta any] interface {
-	Value(delta Delta) (DeltaBool[Delta], error)
-	Zero() DeltaBool[Delta]
-}
+// type WriterBool interface {
+// 	Value(delta Delta) (DeltaBool, error)
+// 	Zero() DeltaBool
+// }
 
-type DeltaBool[Delta any] interface{
+type DeltaBool interface{
 	DeltaBase
 }
-type WriterGuid[Delta any] interface {
-	Value(delta Delta) (DeltaBool[Delta], error)
-	Zero() DeltaGuid[Delta]
-}
+// type WriterGuid interface {
+// 	Value(delta Delta) (DeltaBool, error)
+// 	Zero() DeltaGuid
+// }
 
-type DeltaGuid[Delta any] interface{
+type DeltaGuid interface{
 	DeltaBase
 }
 
-type WriterTime[Delta any] interface {
-	Value(delta Delta) (DeltaTime[Delta], error)
-	Zero() DeltaTime[Delta]
-}
+// type WriterTime interface {
+// 	Value(delta Delta) (DeltaTime, error)
+// 	Zero() DeltaTime
+// }
 
-type DeltaTime[Delta any] interface{
+type DeltaTime interface{
 	DeltaBase
 }

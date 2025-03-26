@@ -52,3 +52,16 @@ func (err *InvalidEnumValueCombinationError) Error() string {
 func NewInvalidEnumValueCombinationError(enumName string, enumValue string) error {
 	return &InvalidEnumValueCombinationError{EnumName: enumName, EnumValue: enumValue}
 }
+
+type EntityNameAndDeltaTypeMismatch struct {
+	EntityName  string
+	Delta DeltaBase
+}
+
+func (err *EntityNameAndDeltaTypeMismatch) Error() string {
+	return fmt.Sprintf("%s/%A is not a valid entity name/delta combination", err.EntityName, err.Delta)
+}
+
+func NewEntityNameAndDeltaTypeMismatch(entityName string, delta DeltaBase)  error {
+	return &EntityNameAndDeltaTypeMismatch{EntityName: entityName, Delta: delta}
+}

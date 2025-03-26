@@ -10,6 +10,7 @@ module WritersAndDeltas =
   open Ballerina.Errors
   open Ballerina.Collections.Sum
   open Ballerina.DSL.FormEngine.Codegen.Golang.Generator.Model
+  open Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs
 
   type ExprType with
     static member ToWriter (writerName: WriterName) (t: ExprType) =
@@ -71,8 +72,8 @@ module WritersAndDeltas =
 
             let w =
               { Name =
-                  { WriterName = $"{codegenConfig.Sum.WriterTypeName}[Delta, {wa.DeltaTypeName}, {wb.DeltaTypeName}]" }
-                DeltaTypeName = $"{codegenConfig.Sum.DeltaTypeName}[Delta, {wa.DeltaTypeName}, {wb.DeltaTypeName}]"
+                  { WriterName = $"{codegenConfig.Sum.WriterTypeName}[{wa.DeltaTypeName}, {wb.DeltaTypeName}]" }
+                DeltaTypeName = $"{codegenConfig.Sum.DeltaTypeName}[{wa.DeltaTypeName}, {wb.DeltaTypeName}]"
                 Type = t
                 Components = Map.empty
                 Kind = WriterKind.Imported }
@@ -83,8 +84,8 @@ module WritersAndDeltas =
             let! wa = ExprType.ToWriter { WriterName = $"{writerName.WriterName}_Value" } a
 
             let w =
-              { Name = { WriterName = $"{codegenConfig.Option.WriterTypeName}[Delta, {wa.DeltaTypeName}]" }
-                DeltaTypeName = $"{codegenConfig.Option.DeltaTypeName}[Delta, {wa.DeltaTypeName}]"
+              { Name = { WriterName = $"{codegenConfig.Option.WriterTypeName}[{wa.DeltaTypeName}]" }
+                DeltaTypeName = $"{codegenConfig.Option.DeltaTypeName}[{wa.DeltaTypeName}]"
                 Type = t
                 Components = Map.empty
                 Kind = WriterKind.Imported }
@@ -95,8 +96,8 @@ module WritersAndDeltas =
             let! wa = ExprType.ToWriter { WriterName = $"{writerName.WriterName}_Element" } a
 
             let w =
-              { Name = { WriterName = $"{codegenConfig.Set.WriterTypeName}[Delta, {wa.DeltaTypeName}]" }
-                DeltaTypeName = $"{codegenConfig.Set.DeltaTypeName}[Delta, {wa.DeltaTypeName}]"
+              { Name = { WriterName = $"{codegenConfig.Set.WriterTypeName}[{wa.DeltaTypeName}]" }
+                DeltaTypeName = $"{codegenConfig.Set.DeltaTypeName}[{wa.DeltaTypeName}]"
                 Type = t
                 Components = Map.empty
                 Kind = WriterKind.Imported }
@@ -107,8 +108,8 @@ module WritersAndDeltas =
             let config = PrimitiveType.GetConfig codegenConfig p
 
             let w =
-              { Name = { WriterName = $"{config.WriterTypeName}[Delta]" }
-                DeltaTypeName = $"{config.DeltaTypeName}[Delta]"
+              { Name = { WriterName = $"{config.WriterTypeName}" }
+                DeltaTypeName = $"{config.DeltaTypeName}"
                 Type = t
                 Components = Map.empty
                 Kind = WriterKind.Imported }
@@ -119,8 +120,8 @@ module WritersAndDeltas =
             let! we = ExprType.ToWriter { WriterName = $"{writerName.WriterName}_Element" } e
 
             let w =
-              { Name = { WriterName = $"{codegenConfig.List.WriterTypeName}[Delta, {we.DeltaTypeName}]" }
-                DeltaTypeName = $"{codegenConfig.List.DeltaTypeName}[Delta, {we.DeltaTypeName}]"
+              { Name = { WriterName = $"{codegenConfig.List.WriterTypeName}[{we.DeltaTypeName}]" }
+                DeltaTypeName = $"{codegenConfig.List.DeltaTypeName}[{we.DeltaTypeName}]"
                 Type = t
                 Components = Map.empty
                 Kind = WriterKind.Imported }
@@ -133,8 +134,8 @@ module WritersAndDeltas =
 
             let w =
               { Name =
-                  { WriterName = $"{codegenConfig.Map.WriterTypeName}[Delta, {wk.DeltaTypeName}, {wv.DeltaTypeName}]" }
-                DeltaTypeName = $"{codegenConfig.Map.DeltaTypeName}[Delta, {wk.DeltaTypeName}, {wv.DeltaTypeName}]"
+                  { WriterName = $"{codegenConfig.Map.WriterTypeName}[{wk.DeltaTypeName}, {wv.DeltaTypeName}]" }
+                DeltaTypeName = $"{codegenConfig.Map.DeltaTypeName}[{wk.DeltaTypeName}, {wv.DeltaTypeName}]"
                 Type = t
                 Components = Map.empty
                 Kind = WriterKind.Imported }
@@ -157,8 +158,8 @@ module WritersAndDeltas =
               |> state.OfSum
 
             let w =
-              { Name = { WriterName = $"{tupleConfig.WriterTypeName}[Delta, {fieldDeltaTypeNames}]" }
-                DeltaTypeName = $"{tupleConfig.DeltaTypeName}[Delta, {fieldDeltaTypeNames}]"
+              { Name = { WriterName = $"{tupleConfig.WriterTypeName}[{fieldDeltaTypeNames}]" }
+                DeltaTypeName = $"{tupleConfig.DeltaTypeName}[{fieldDeltaTypeNames}]"
                 Type = t
                 Components = Map.empty
                 Kind = WriterKind.Imported }
@@ -171,8 +172,8 @@ module WritersAndDeltas =
             match codegenConfig.Custom |> Map.tryFind tn.TypeName with
             | Some customType ->
               let w =
-                { Name = { WriterName = $"{customType.WriterTypeName}[Delta]" }
-                  DeltaTypeName = $"{customType.DeltaTypeName}[Delta]"
+                { Name = { WriterName = $"{customType.WriterTypeName}" }
+                  DeltaTypeName = $"{customType.DeltaTypeName}"
                   Type = lt
                   Components = Map.empty
                   Kind = WriterKind.Imported }
@@ -183,8 +184,8 @@ module WritersAndDeltas =
               return! ExprType.ToWriter { WriterName = tn.TypeName } t.Type
           | ExprType.UnitType ->
             let w =
-              { Name = { WriterName = $"{codegenConfig.Unit.WriterTypeName}[Delta]" }
-                DeltaTypeName = $"{codegenConfig.Unit.DeltaTypeName}[Delta]"
+              { Name = { WriterName = $"{codegenConfig.Unit.WriterTypeName}" }
+                DeltaTypeName = $"{codegenConfig.Unit.DeltaTypeName}"
                 Type = t
                 Components = Map.empty
                 Kind = WriterKind.Imported }
@@ -202,7 +203,7 @@ module WritersAndDeltas =
         | ExprType.LookupType tn ->
           let! t = ctx.Types |> Map.tryFindWithError tn.TypeName "types" "types" |> state.OfSum
           let! w = ExprType.ToWriter { WriterName = tn.TypeName } t.Type
-          return w.Name, componentType
+          return w.Name, t.Type
         | _ ->
           let! w = ExprType.ToWriter { WriterName = $"{parentName.WriterName}_{componentName}" } componentType
           return w.Name, componentType

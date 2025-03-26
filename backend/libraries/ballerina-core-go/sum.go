@@ -63,13 +63,13 @@ func FoldWithError[L any, R any, O any](e Sum[L, R], leftMap func(L) (O, error),
 	return leftMap(e.left)
 }
 
-type WriterSum[Delta any, DeltaA any, DeltaB any] interface {
-	Left(deltaA DeltaA, delta Delta) (DeltaSum[Delta, DeltaA, DeltaB], error)
-	Right(deltaB DeltaB, delta Delta) (DeltaSum[Delta, DeltaA, DeltaB], error)
-	Zero() DeltaSum[Delta, DeltaA, DeltaB]
+type WriterSum[DeltaA any, DeltaB any] interface {
+	Left(deltaA DeltaA) (DeltaSum[DeltaA, DeltaB], error)
+	Right(deltaB DeltaB) (DeltaSum[DeltaA, DeltaB], error)
+	Zero() DeltaSum[DeltaA, DeltaB]
 }
 
-type DeltaSum[Delta any, DeltaA any, DeltaB any] interface{
+type DeltaSum[DeltaA any, DeltaB any] interface{
 	DeltaBase
 }
 

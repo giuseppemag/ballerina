@@ -46,8 +46,8 @@
         ✅ recurse on every single type case when building the writer, no unsupported types or shapes here
           ✅ define generic writers such as `writerOption[DeltaE, Delta]`, `writerSum[DeltaL, DeltaR, Delta]`, etc,
           ✅ define generic deltas such as `DeltaOption[DeltaE, Delta]`, `DeltaSum[DeltaL, DeltaR, Delta]`, etc,
-          ✅ define generic writers such as `writerInt[Delta]`, `writerBool[Delta]`, etc,
-          ✅ define generic deltas such as `DeltaInt[Delta]`, `DeltaBool[Delta]`, etc,
+          ✅ define generic writers such as `writerInt`, `writerBool`, etc,
+          ✅ define generic deltas such as `DeltaInt`, `DeltaBool`, etc,
         ✅ Unit renderer looks weird
         ✅ Unit does not unify
         ✅ improve union cases renderer
@@ -55,71 +55,40 @@
         ✅ fix array type in ballerina/Go
         ✅ fix sum type in ballerina/Go
         ✅ support generic type renderers over specific types
+        ❌ link multiple files
+          ❌ generate an enum of all the launchers
         ❌ add a renderer decorator to forms
         ❌ ensure Types and Forms can only extend other types and forms which are not extending anything
         ❌ allow Types and Forms which can extend, to only extend 1 other type/form (array length == 1 in extends)
         ❌ make sure that the failing tests fail for the right reason
         ❌ define methods for codegen'ing
-          ❌ move each to a separate file, not all dumped under LanguageConstructs
-            ❌ namespace LanguageConstructs module X, where X =
-              ✅ Enum
-                ✅ data structure generation
-                ✅ including GET and POST
-              ✅ Stream GET and POST
-              ✅ Union
-              ✅ Record
-              ✅ EntityGET
-                ✅ improve the separation through a proper intermediate object
-              ✅ EntityGETDefault
-              ✅ EntityPOST
-              ✅ type extensions (each to a separate file)
-              ✅ writers and deltas
-              ❌ EntityPATCH
-                ✅ we have two series of writer arguments
-                  ✅ generated
-                  ✅ imported
-                ✅ get the commit methods as parameters
-                ✅ define the recursive traversal function
-                ✅ generate the switch by entity name
-                  ✅ what is the domain? what do we iterate?
-                  ✅ return entity not found error as a faiure case
-                ✅ rename Field to Component in the Writers
-                ✅ generate the switch by imported renderer
-                ✅ generate the switch by field/case
-                ❌ switch on the right path element
-                  ❌ easiest: `Delta` implements an interface method like `GetComponentName`
-                  ❌ harder: `Delta` is runtime checked to be a `DeltaRecord` or `DeltaUnion`, which both have a `ComponentName`
-                  ❌ medium: `Delta` is runtime checked to be a `DeltaComponent`, which has a `ComponentName`
-                ❌ fallback case for any other type, also for failed matches on the previous concrete types
-                  ❌ how does a `Sum` or `Union` switch of case work?
-                    D1(nestedDelta ballerina.DeltaSum[Delta, ballerina.DeltaInt[Delta], ballerina.DeltaString[Delta]], delta Delta) (DeltaD, error)
-                    the first argument comes from writerSum.Zero() because the path is further empty
-                    the second contains the replaceWith operation
-                  ❌ how does a `List` or `Map` `add/move/remove` work?
-                    D5(nestedDelta ballerina.DeltaTuple3[Delta, ballerina.DeltaString[Delta],ballerina.DeltaArray[Delta, DeltaE],DeltaE], delta Delta) (DeltaD, error)
-                    the first argument comes from writerTuple.Zero() because the path is further empty
-                    the second contains the `updateTuple . replaceWith` operation
-                ✅ generate the right writers
-                  ✅ add more instances of the same generic types - Sum, Option, List
-                  ✅ components should have WriterName x ExprType
-                    ✅ also fix the ugly lookup in generator.fs
-                ❌ `RawDeltaBase` and `DeltaBase` should come from the go-configuration
-                ❌ split the set of writers into two maps: generated and imported
-                  ❌ generated:Map<WriterName, Writer>
-                  ❌ imported:Map<Path, Writer>
-                ❌ invoke the right committer based on the runtime type of the `DeltaBase` and the initial `entityName`
-                ❌ `DeltaX -> EffectX` to disambiguate
-                ❌ `WriterX -> ParserX` to disambiguate
-                ❌ generate standard implementations for the record and union writers of the given entities
-                  ❌ define a DeltaRecord
-                  ❌ define a DeltaUnion
-                  ❌ codegen the writers for records
-                  ❌ codegen the writers for unions
-                ❌ write standard implementations for the unit, int, array, map, option, etc. writers
-              ❌ imports
-              ❌ `generated types`
-              ❌ ToGolang in the typename and method name is redundant, remove it
-              ❌ generate more than one golang file
+          ❌ EntityPATCH
+            ✅ generate the traversable polymorphic sequence of possible effects
+              ✅ always add a case handler, `onReplace(T)`
+              ✅ create a discriminator with N+1 cases, `onReplace` included when present
+              ✅ create DeltaX as a struct with private members
+              ✅ generate the union case concrete constructors (N+1, `onReplace`, when present)
+              ✅ the generated deltas have the `MatchDeltaX` method which takes as input the callbacks over the deltas for the individual components
+              ✅ make `MatchDeltaX` curried in the actual `DeltaX`
+              ✅ implement the body of `MatchDeltaX`
+              ✅ `writerA` is missing the components `A2` and `A3`
+            ✅ `entityPATCHer` takes as input the parsed delta, the committers, checks the type of the parsed delta, and invokes the right committer
+              ✅ the `path` has the wrong placeholder type at the moment, use `DeltaBase`
+            ❌ define the polymorphic variants also for the `Sum`, etc.
+              ❌ including `Match`
+              ❌ including `replaceWith`
+            ❌ remove the writers, isolate the delta generation, cleanup the entityPATCHer
+            ❌ the delta generation should be moved to a separate .fs file in `LanguageConstructs`
+            ❌ ballerina.DeltaBase should come from config
+            ❌ ballerina.NewEntityNotFoundError should come from config in entityPATCHer
+            ❌ ballerina.NewEntityNameAndDeltaTypeMismatch should come from config in entityPATCHer
+            ❌ make it parseable - generate the clean vs the physical version, with marshall and unmarshall
+              ❌ use `_` as a prefix for the patterns
+          ❌ imports
+          ❌ `generated types`
+          ❌ ToGolang in the typename and method name is redundant, remove it
+          ❌ generate more than one golang file
+        ❌ generate constructors with the `new{ ... }` syntax, not the field-by-field assignment
         ✅ complete the kitchen sink sample with all generics
           ✅ add a few more tuples - up to 5
           ✅ add all possible generic types - including single and multi selects
