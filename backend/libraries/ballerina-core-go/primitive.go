@@ -37,6 +37,14 @@ func MatchDeltaInt[Result any](
   }
 }
 
+func DefaultString() string { 
+	return ""
+}
+
+func DefaultBool() bool { 
+	return false
+}
+
 func DefaultInt32() int { 
 	return 0
 }
