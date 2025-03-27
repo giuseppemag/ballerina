@@ -1,7 +1,6 @@
 {
   "String": {
     "GeneratedTypeName": "string",
-    
     "DeltaTypeName": "ballerina.DeltaString",
     "RequiredImport": null,
     "SupportedRenderers": [
@@ -11,7 +10,6 @@
   },
   "Int": {
     "GeneratedTypeName": "int",
-    
     "DeltaTypeName": "ballerina.DeltaInt",
     "RequiredImport": null,
     "SupportedRenderers": [
@@ -21,7 +19,6 @@
   },
   "Bool": {
     "GeneratedTypeName": "bool",
-    
     "DeltaTypeName": "ballerina.DeltaBool",
     "RequiredImport": null,
     "SupportedRenderers": [
@@ -31,7 +28,6 @@
   },
   "Date": {
     "GeneratedTypeName": "time.Time",
-    
     "DeltaTypeName": "ballerina.DeltaTime",
     "RequiredImport": "time",
     "SupportedRenderers": [
@@ -41,7 +37,6 @@
   },
   "Guid": {
     "GeneratedTypeName": "uuid.UUID",
-    
     "DeltaTypeName": "ballerina.DeltaGuid",
     "RequiredImport": "github.com/google/uuid",
     "SupportedRenderers": [],
@@ -49,7 +44,6 @@
   },
   "Unit": {
     "GeneratedTypeName": "ballerina.Unit",
-    
     "DeltaTypeName": "ballerina.DeltaUnit",
     "RequiredImport": "ballerina.com/core",
     "SupportedRenderers": [
@@ -59,7 +53,6 @@
   },
   "Option": {
     "GeneratedTypeName": "ballerina.Option",
-    
     "DeltaTypeName": "ballerina.DeltaOption",
     "RequiredImport": "ballerina.com/core",
     "SupportedRenderers": {
@@ -74,7 +67,6 @@
   },
   "Set": {
     "GeneratedTypeName": "ballerina.Set",
-    
     "DeltaTypeName": "ballerina.DeltaSet",
     "RequiredImport": "ballerina.com/core",
     "SupportedRenderers": {
@@ -89,7 +81,6 @@
   },
   "List": {
     "GeneratedTypeName": "ballerina.Array",
-    
     "DeltaTypeName": "ballerina.DeltaArray",
     "RequiredImport": "ballerina.com/core",
     "SupportedRenderers": [
@@ -100,7 +91,6 @@
   },
   "Map": {
     "GeneratedTypeName": "ballerina.Map",
-    
     "DeltaTypeName": "ballerina.DeltaMap",
     "RequiredImport": "ballerina.com/core",
     "SupportedRenderers": [
@@ -110,7 +100,6 @@
   },
   "Sum": {
     "GeneratedTypeName": "ballerina.Sum",
-    
     "DeltaTypeName": "ballerina.DeltaSum",
     "RequiredImport": "ballerina.com/core",
     "SupportedRenderers": [
@@ -123,7 +112,6 @@
     {
       "Ariety": 2,
       "GeneratedTypeName": "ballerina.Tuple2",
-      
       "DeltaTypeName": "ballerina.DeltaTuple2",
       "RequiredImport": "ballerina.com/core",
       "SupportedRenderers": [
@@ -134,7 +122,6 @@
     {
       "Ariety": 3,
       "GeneratedTypeName": "ballerina.Tuple3",
-      
       "DeltaTypeName": "ballerina.DeltaTuple3",
       "RequiredImport": "ballerina.com/core",
       "SupportedRenderers": [
@@ -156,7 +143,6 @@
         "defaultInjectedType"
       ],
       "DefaultConstructor": "ballerina.NewUnit",
-      
       "DeltaTypeName": "ballerina.DeltaUnit"
     },
     "injectedCategory": {
@@ -166,8 +152,25 @@
         "defaultCategory"
       ],
       "DefaultConstructor": "ballerina.NewUnit",
-      
       "DeltaTypeName": "ballerina.DeltaUnit"
+    },
+    "Int32": {
+      "GeneratedTypeName": "int32",
+      "RequiredImport": "",
+      "SupportedRenderers": [
+        "defaultInt32"
+      ],
+      "DefaultConstructor": "ballerina.DefaultInt32",
+      "DeltaTypeName": "ballerina.DeltaInt32"
+    },
+    "Float32": {
+      "GeneratedTypeName": "float32",
+      "RequiredImport": "",
+      "SupportedRenderers": [
+        "defaultFloat32"
+      ],
+      "DefaultConstructor": "ballerina.DefaultFloat32",
+      "DeltaTypeName": "ballerina.DeltaFloat32"
     }
   },
   "Generic": [

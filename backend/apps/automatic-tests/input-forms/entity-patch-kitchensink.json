@@ -68,7 +68,9 @@
         "E2": "string",
         "E3": "boolean",
         "E4": "guid",
-        "E5": "Date"
+        "E5": "Date",
+        "E6": "Int32",
+        "E7": "Float32"
       }
     },
     "F": {

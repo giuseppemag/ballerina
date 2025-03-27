@@ -81,12 +81,18 @@
             ✅ ballerina.DeltaBase should come from config
             ✅ ballerina.NewEntityNotFoundError should come from config in entityPATCHer
             ✅ ballerina.NewEntityNameAndDeltaTypeMismatch should come from config in entityPATCHer
-            ❌ define the polymorphic variants also for the `Sum`, etc.
-              ❌ including `Match`
-              ❌ including `replaceWith`
+            ❌ define the polymorphic variants (`Match`, `replaceWith`)
+              ✅ Primitive
+              ❌ Option
+              ❌ Sum
+              ❌ Set
+              ❌ List
+              ❌ Map
             ❌ make it parseable - generate the clean vs the physical version, with marshall and unmarshall
               ❌ use `private_` as a prefix for the patterns
-          ❌ imports
+              ❌ generated types
+              ❌ ballerina imports
+            ❌ imports
           ❌ `generated types`
           ❌ ToGolang in the typename and method name is redundant, remove it
           ❌ generate more than one golang file
