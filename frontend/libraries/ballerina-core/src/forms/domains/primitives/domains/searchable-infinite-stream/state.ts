@@ -87,7 +87,7 @@ export type SearchableInfiniteStreamView<
   ForeignMutationsExpected & {
     onChange: OnChange<ValueOption>;
     toggleOpen: SimpleCallback<void>;
-    clearSelection: SimpleCallback<void>;
+    clearSelection?: SimpleCallback<void>;
     setSearchText: SimpleCallback<string>;
     select: SimpleCallback<ValueOption>;
     loadMore: SimpleCallback<void>;
