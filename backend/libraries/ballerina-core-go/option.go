@@ -22,11 +22,6 @@ func MapOption[a any, b any](self Option[a], f func(a) b) Option[b] {
 	return Option[b]{BiMap(self.Sum, id, f)}
 }
 
-type WriterOption[DeltaA any] interface {
-	Value(deltaA DeltaA) (DeltaOption[DeltaA], error)
-	Zero() DeltaOption[DeltaA]
-}
-
 type DeltaOption[DeltaA any] interface{
 	DeltaBase
 }

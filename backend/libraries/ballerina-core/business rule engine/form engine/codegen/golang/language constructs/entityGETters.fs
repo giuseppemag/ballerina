@@ -36,7 +36,7 @@ type GolangEntityGETters =
         yield StringBuilder.One "    switch entityName {\n"
 
         for e in entities.Entities do
-          yield StringBuilder.One $$"""      case "{{e.EntityType}}Entity":  """
+          yield StringBuilder.One $$"""      case "{{e.EntityName}}":  """
           yield StringBuilder.One "\n"
           yield StringBuilder.One $$"""        var res, err = get{{e.EntityName}}(entityId);  """
           yield StringBuilder.One "\n"

@@ -80,40 +80,20 @@ func NewTuple6[a any, b any, c any, d any, e any, f any](item1 a, item2 b, item3
 	return p
 }
 
-type WriterTuple2[DeltaA any, DeltaB any] interface {
-	Zero() DeltaTuple2[DeltaA, DeltaB]
-}
-
 type DeltaTuple2[DeltaA any, DeltaB any] interface{
 	DeltaBase
-}
-
-type WriterTuple3[DeltaA any, DeltaB any, DeltaC any] interface {
-	Zero() DeltaTuple3[DeltaA, DeltaB, DeltaC]
 }
 
 type DeltaTuple3[DeltaA any, DeltaB any, DeltaC any] interface{
 	DeltaBase
 }
 
-type WriterTuple4[DeltaA any, DeltaB any, DeltaC any, DeltaD any] interface {
-	Zero() DeltaTuple4[DeltaA, DeltaB, DeltaC, DeltaD]
-}
-
 type DeltaTuple4[DeltaA any, DeltaB any, DeltaC any, DeltaD any] interface{
 	DeltaBase
 }
 
-type WriterTuple5[DeltaA any, DeltaB any, DeltaC any, DeltaD any, DeltaE any] interface {
-	Zero() DeltaTuple5[DeltaA, DeltaB, DeltaC, DeltaD, DeltaE]
-}
-
 type DeltaTuple5[DeltaA any, DeltaB any, DeltaC any, DeltaD any, DeltaE any] interface{
 	DeltaBase
-}
-
-type WriterTuple6[DeltaA any, DeltaB any, DeltaC any, DeltaD any, DeltaE any, DeltaF any] interface {
-	Zero() DeltaTuple6[DeltaA, DeltaB, DeltaC, DeltaD, DeltaE, DeltaF]
 }
 
 type DeltaTuple6[DeltaA any, DeltaB any, DeltaC any, DeltaD any, DeltaE any, DeltaF any] interface{

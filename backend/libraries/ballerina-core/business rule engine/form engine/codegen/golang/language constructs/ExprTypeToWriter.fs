@@ -72,7 +72,7 @@ module WritersAndDeltas =
 
             let w =
               { Name =
-                  { WriterName = $"{codegenConfig.Sum.WriterTypeName}[{wa.DeltaTypeName}, {wb.DeltaTypeName}]" }
+                  { WriterName = $"SumWriter[{wa.DeltaTypeName}, {wb.DeltaTypeName}]" }
                 DeltaTypeName = $"{codegenConfig.Sum.DeltaTypeName}[{wa.DeltaTypeName}, {wb.DeltaTypeName}]"
                 Type = t
                 Components = Map.empty
@@ -84,7 +84,7 @@ module WritersAndDeltas =
             let! wa = ExprType.ToWriter { WriterName = $"{writerName.WriterName}_Value" } a
 
             let w =
-              { Name = { WriterName = $"{codegenConfig.Option.WriterTypeName}[{wa.DeltaTypeName}]" }
+              { Name = { WriterName = $"OptionWriter[{wa.DeltaTypeName}]" }
                 DeltaTypeName = $"{codegenConfig.Option.DeltaTypeName}[{wa.DeltaTypeName}]"
                 Type = t
                 Components = Map.empty
@@ -96,7 +96,7 @@ module WritersAndDeltas =
             let! wa = ExprType.ToWriter { WriterName = $"{writerName.WriterName}_Element" } a
 
             let w =
-              { Name = { WriterName = $"{codegenConfig.Set.WriterTypeName}[{wa.DeltaTypeName}]" }
+              { Name = { WriterName = $"SetWriter[{wa.DeltaTypeName}]" }
                 DeltaTypeName = $"{codegenConfig.Set.DeltaTypeName}[{wa.DeltaTypeName}]"
                 Type = t
                 Components = Map.empty
@@ -108,7 +108,7 @@ module WritersAndDeltas =
             let config = PrimitiveType.GetConfig codegenConfig p
 
             let w =
-              { Name = { WriterName = $"{config.WriterTypeName}" }
+              { Name = { WriterName = $"{p.ToString()}Writer" }
                 DeltaTypeName = $"{config.DeltaTypeName}"
                 Type = t
                 Components = Map.empty
@@ -120,7 +120,7 @@ module WritersAndDeltas =
             let! we = ExprType.ToWriter { WriterName = $"{writerName.WriterName}_Element" } e
 
             let w =
-              { Name = { WriterName = $"{codegenConfig.List.WriterTypeName}[{we.DeltaTypeName}]" }
+              { Name = { WriterName = $"ListWriter[{we.DeltaTypeName}]" }
                 DeltaTypeName = $"{codegenConfig.List.DeltaTypeName}[{we.DeltaTypeName}]"
                 Type = t
                 Components = Map.empty
@@ -134,7 +134,7 @@ module WritersAndDeltas =
 
             let w =
               { Name =
-                  { WriterName = $"{codegenConfig.Map.WriterTypeName}[{wk.DeltaTypeName}, {wv.DeltaTypeName}]" }
+                  { WriterName = $"MapWriter[{wk.DeltaTypeName}, {wv.DeltaTypeName}]" }
                 DeltaTypeName = $"{codegenConfig.Map.DeltaTypeName}[{wk.DeltaTypeName}, {wv.DeltaTypeName}]"
                 Type = t
                 Components = Map.empty
@@ -158,7 +158,7 @@ module WritersAndDeltas =
               |> state.OfSum
 
             let w =
-              { Name = { WriterName = $"{tupleConfig.WriterTypeName}[{fieldDeltaTypeNames}]" }
+              { Name = { WriterName = $"TupleWriter[{fieldDeltaTypeNames}]" }
                 DeltaTypeName = $"{tupleConfig.DeltaTypeName}[{fieldDeltaTypeNames}]"
                 Type = t
                 Components = Map.empty
@@ -172,7 +172,7 @@ module WritersAndDeltas =
             match codegenConfig.Custom |> Map.tryFind tn.TypeName with
             | Some customType ->
               let w =
-                { Name = { WriterName = $"{customType.WriterTypeName}" }
+                { Name = { WriterName = $"CustomWriter[{tn.TypeName}]" }
                   DeltaTypeName = $"{customType.DeltaTypeName}"
                   Type = lt
                   Components = Map.empty
@@ -184,7 +184,7 @@ module WritersAndDeltas =
               return! ExprType.ToWriter { WriterName = tn.TypeName } t.Type
           | ExprType.UnitType ->
             let w =
-              { Name = { WriterName = $"{codegenConfig.Unit.WriterTypeName}" }
+              { Name = { WriterName = $"UnitWriter" }
                 DeltaTypeName = $"{codegenConfig.Unit.DeltaTypeName}"
                 Type = t
                 Components = Map.empty

@@ -33,7 +33,7 @@
           ❌ wrong use of `Sum`
     ✅ turn union cases into maps - makes lookups more robust and ensures uniqueness
     ❌ entites visitors
-      ❌ the `entityName` should be the API name, not the type
+      ✅ the `entityName` should be the API name, not the type
       ❌ entities PATCH - gets single value and path of change
         ❌ why do codegen errors (related to the writers) show up twice?
         ✅ `ballerina.DefaultSum` should be `ballerina.Left`, and take the first constructor parameters
@@ -66,7 +66,7 @@
             ✅ generate the traversable polymorphic sequence of possible effects
               ✅ always add a case handler, `onReplace(T)`
               ✅ create a discriminator with N+1 cases, `onReplace` included when present
-\              ✅ create DeltaX as a struct with private members
+              ✅ create DeltaX as a struct with private members
               ✅ generate the union case concrete constructors (N+1, `onReplace`, when present)
               ✅ the generated deltas have the `MatchDeltaX` method which takes as input the callbacks over the deltas for the individual components
               ✅ make `MatchDeltaX` curried in the actual `DeltaX`
@@ -74,17 +74,16 @@
               ✅ `writerA` is missing the components `A2` and `A3`
             ✅ `entityPATCHer` takes as input the parsed delta, the committers, checks the type of the parsed delta, and invokes the right committer
               ✅ the `path` has the wrong placeholder type at the moment, use `DeltaBase`
+            ✅ cleanup the entityPATCHer.fs
+            ✅ remove the writers from the go-configs as well
+            ✅ remove the writers from the ballerina.go library
+            ✅ the delta generation should be moved to a separate .fs file in `LanguageConstructs`
+            ✅ ballerina.DeltaBase should come from config
+            ✅ ballerina.NewEntityNotFoundError should come from config in entityPATCHer
+            ✅ ballerina.NewEntityNameAndDeltaTypeMismatch should come from config in entityPATCHer
             ❌ define the polymorphic variants also for the `Sum`, etc.
               ❌ including `Match`
               ❌ including `replaceWith`
-            ❌ cleanup the entityPATCHer
-            ❌ remove the whole concept of imported writers
-            ❌ remove the writers from the go-configs as well
-            ❌ remove the writers from the ballerina.go library
-            ❌ the delta generation should be moved to a separate .fs file in `LanguageConstructs`
-            ❌ ballerina.DeltaBase should come from config
-            ❌ ballerina.NewEntityNotFoundError should come from config in entityPATCHer
-            ❌ ballerina.NewEntityNameAndDeltaTypeMismatch should come from config in entityPATCHer
             ❌ make it parseable - generate the clean vs the physical version, with marshall and unmarshall
               ❌ use `private_` as a prefix for the patterns
           ❌ imports

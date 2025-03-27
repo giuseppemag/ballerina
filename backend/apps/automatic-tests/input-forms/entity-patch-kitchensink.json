@@ -81,11 +81,11 @@
   },
   "apis": {
     "entities": {
-      "A": {
+      "AApi": {
         "type": "A",
         "methods": ["update", "get"]
       },
-      "APrime": {
+      "APrimeApi": {
         "type": "APrime",
         "methods": ["update", "get"]
       }      

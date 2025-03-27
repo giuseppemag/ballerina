@@ -23,7 +23,9 @@ module Model =
       Custom: Map<string, CodegenConfigCustomDef>
       Generic: List<GenericTypeDef>
       IdentifierAllowedRegex: string
+      DeltaBase: CodegenConfigInterfaceDef
       EntityNotFoundError: CodegenConfigErrorDef
+      EntityNameAndDeltaTypeMismatchError: CodegenConfigErrorDef
       EnumNotFoundError: CodegenConfigErrorDef
       InvalidEnumValueCombinationError: CodegenConfigErrorDef
       StreamNotFoundError: CodegenConfigErrorDef }
@@ -34,7 +36,13 @@ module Model =
     | Set
     | Map
 
-  and GenericTypeDef = {| Type:string; SupportedRenderers: Set<string> |}
+  and GenericTypeDef =
+    {| Type: string
+       SupportedRenderers: Set<string> |}
+
+  and CodegenConfigInterfaceDef =
+    { GeneratedTypeName: string
+      RequiredImport: Option<string> }
 
   and CodegenConfigErrorDef =
     { GeneratedTypeName: string
@@ -44,7 +52,7 @@ module Model =
   and TupleCodegenConfigTypeDef =
     { Ariety: int
       GeneratedTypeName: string
-      WriterTypeName: string
+
       DeltaTypeName: string
       SupportedRenderers: Set<string>
       Constructor: string
@@ -54,7 +62,7 @@ module Model =
 
   and CodegenConfigUnitDef =
     { GeneratedTypeName: string
-      WriterTypeName: string
+
       DeltaTypeName: string
       RequiredImport: Option<string>
       DefaultConstructor: string
@@ -63,7 +71,7 @@ module Model =
   and CodegenConfigListDef =
     { GeneratedTypeName: string
       RequiredImport: Option<string>
-      WriterTypeName: string
+
       DeltaTypeName: string
       SupportedRenderers: Set<string>
       DefaultConstructor: string
@@ -72,7 +80,7 @@ module Model =
   and CodegenConfigMapDef =
     { GeneratedTypeName: string
       RequiredImport: Option<string>
-      WriterTypeName: string
+
       DeltaTypeName: string
       DefaultConstructor: string
       SupportedRenderers: Set<string> }
@@ -80,7 +88,7 @@ module Model =
   and CodegenConfigSumDef =
     { GeneratedTypeName: string
       RequiredImport: Option<string>
-      WriterTypeName: string
+
       DeltaTypeName: string
       LeftConstructor: string
       RightConstructor: string
@@ -88,7 +96,7 @@ module Model =
 
   and CodegenConfigTypeDef =
     { GeneratedTypeName: string
-      WriterTypeName: string
+
       DeltaTypeName: string
       DefaultValue: string
       RequiredImport: Option<string>
@@ -97,7 +105,7 @@ module Model =
   and CodegenConfigCustomDef =
     { GeneratedTypeName: string
       DefaultConstructor: string
-      WriterTypeName: string
+
       DeltaTypeName: string
       RequiredImport: Option<string>
       SupportedRenderers: Set<string> }
@@ -106,7 +114,6 @@ module Model =
     { GeneratedTypeName: string
       RequiredImport: Option<string>
       DefaultConstructor: string
-      WriterTypeName: string
       DeltaTypeName: string
       SupportedRenderers:
         {| Enum: Set<string>
@@ -116,7 +123,6 @@ module Model =
     { GeneratedTypeName: string
       RequiredImport: Option<string>
       DefaultConstructor: string
-      WriterTypeName: string
       DeltaTypeName: string
       SupportedRenderers:
         {| Enum: Set<string>
@@ -352,8 +358,12 @@ module Model =
   type ParsedFormsContext =
     { Types: Map<string, TypeBinding>
       Apis: FormApis
-      Forms: Map<string, FormConfig>      
-      GenericRenderers: List<{| Type:ExprType; SupportedRenderers:Set<string> |}>
+      Forms: Map<string, FormConfig>
+      GenericRenderers:
+        List<
+          {| Type: ExprType
+             SupportedRenderers: Set<string> |}
+         >
       Launchers: Map<string, FormLauncher> }
 
     static member Empty: ParsedFormsContext =

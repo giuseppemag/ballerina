@@ -292,9 +292,7 @@ module Main =
           let writersBuilder =
             state {
               for t in ctx.Types |> Map.values do
-                do!
-                  ExprType.ToWriter { WriterName = t.TypeId.TypeName } t.Type
-                  |> state.Map ignore
+                do! ExprType.ToWriter { WriterName = t.TypeId.TypeName } t.Type |> state.Map ignore
             }
 
           match writersBuilder.run ((ctx, codegenConfig), Map.empty) with
@@ -303,103 +301,26 @@ module Main =
             // do System.Console.WriteLine(newWritersState.ToFSharpString)
             let allWriters = newWritersState |> Option.defaultWith (fun () -> Map.empty)
 
-            let! (allCommittables: List<Writer>) =
+            let! allCommittables =
               entityAPIsWithUPDATE
               |> Seq.map (fun e ->
-                state{
-                  let! t = ctx.Types |> Map.tryFindWithError e.TypeId.TypeName "type" e.TypeId.TypeName |> state.OfSum
+                state {
+                  let! t =
+                    ctx.Types
+                    |> Map.tryFindWithError e.TypeId.TypeName "type" e.TypeId.TypeName
+                    |> state.OfSum
+
                   let t = t.Type
-                  return! allWriters
+
+                  return!
+                    allWriters
                     |> Map.tryFindWithError ({ WriterName = e.TypeId.TypeName }, t) "writer" e.TypeId.TypeName
+                    |> Sum.map (fun w ->
+                      {| Writer = w
+                         EntityApiName = e.EntityName |})
                     |> state.OfSum
                 })
               |> state.All
-
-            let writers =
-              seq {
-                for wkv in allWriters |> Seq.filter (fun w -> w.Value.Kind.IsGenerated) do
-                  let w = wkv.Value
-
-                  let patterns = 
-                    seq{
-                      for wf in w.Components do
-                        match allWriters |> Map.tryFind (wf.Value) with
-                        | Some nw ->
-                          yield {| Name=wf.Key; Type=nw.DeltaTypeName |}
-                        | _ -> ()
-                      if ctx.Types |> Map.containsKey (wkv.Key |> fst).WriterName then
-                        yield {| Name="Replace"; Type=(wkv.Key |> fst).WriterName |}
-                    }
-                  let casesEnum: GolangEnum =
-                    { Name = $"{formName}Delta{w.Name.WriterName}EffectsEnum"
-                      Cases =
-                        patterns 
-                        |> Seq.map (fun p -> {| Name = $"{formName}{w.Name.WriterName}{p.Name}"; Value = $"{formName}{w.Name.WriterName}{p.Name}" |})
-                        |> Seq.toList }
-                  yield GolangEnum.ToGolang () casesEnum
-
-                  yield StringBuilder.One $"type {w.DeltaTypeName} struct {{\n"
-                  yield StringBuilder.One "  ballerina.DeltaBase\n"
-                  yield StringBuilder.One $"  Discriminator {casesEnum.Name}\n"
-                  for p in patterns do
-                    yield StringBuilder.One $"  {p.Name} {p.Type}\n"
-                  yield StringBuilder.One $"}}"
-                  yield StringBuilder.One "\n"
-                  for p in patterns do
-                    yield StringBuilder.One $"func New{w.DeltaTypeName}{p.Name}(value {p.Type}) {w.DeltaTypeName} {{\n"
-                    yield StringBuilder.One $"  return {w.DeltaTypeName} {{\n"
-                    yield StringBuilder.One $"    Discriminator:{formName}{w.Name.WriterName}{p.Name},\n"
-                    yield StringBuilder.One $"    {p.Name}:value,\n"
-                    yield StringBuilder.One $" }}\n"
-                    yield StringBuilder.One $"}}\n"
-                  yield StringBuilder.One $"func Match{w.DeltaTypeName}[Result any](\n"
-                  for wf in w.Components do
-                    match allWriters |> Map.tryFind (wf.Value) with
-                    | Some nw ->
-                      yield
-                        StringBuilder.One
-                          $"  on{wf.Key} func({nw.DeltaTypeName}) (Result, error),\n"
-                    | _ -> 
-                      yield
-                        StringBuilder.One
-                          $"  // ERROR: cannot find writer {wf.Value} in {allWriters.ToFSharpString},\n"
-                  // { WriterName = t.TypeId.TypeName }
-                  if ctx.Types |> Map.containsKey (wkv.Key |> fst).WriterName then
-                    yield
-                      StringBuilder.One
-                        $"  onReplace func({(wkv.Key |> fst).WriterName}) (Result, error),\n"
-                  yield StringBuilder.One $") func ({w.DeltaTypeName}) (Result, error) {{\n"
-                  yield StringBuilder.One $"  return func (delta {w.DeltaTypeName}) (Result,error) {{\n"
-                  yield StringBuilder.One $"    var result Result\n"
-                  yield StringBuilder.One $"    switch delta.Discriminator {{\n"
-                  for p in patterns do
-                    yield StringBuilder.One $"      case \"{formName}{w.Name.WriterName}{p.Name}\":\n"
-                    yield StringBuilder.One $"        return on{p.Name}(delta.{p.Name})\n"
-                  yield StringBuilder.One $"    }}\n"
-                  yield StringBuilder.One $"    return result, nil\n"
-                  yield StringBuilder.One $"  }}\n"
-                  yield StringBuilder.One $"}}\n"
-
-                // for w in allWriters.Values |> Seq.filter (fun w -> w.Kind.IsGenerated) do
-                //   yield StringBuilder.One $"type Writer{w.Name.WriterName} interface {{"
-                //   yield StringBuilder.One "\n"
-
-                //   for wf in w.Components do
-                //     match allWriters |> Map.tryFind (wf.Value) with
-                //     | Some nw ->
-                //       yield
-                //         StringBuilder.One
-                //           $"  {wf.Key}(nestedDelta {nw.DeltaTypeName}) ({w.DeltaTypeName}, error)"
-                //     | _ -> ()
-
-                //     yield StringBuilder.One "\n"
-
-                //   yield StringBuilder.One $"  Zero() {w.DeltaTypeName}"
-                //   yield StringBuilder.One "\n"
-                //   yield StringBuilder.One $"}}"
-                //   yield StringBuilder.One "\n\n"
-              }
-              |> StringBuilder.Many
 
             let entityPATCHers =
               let entities =
@@ -408,12 +329,11 @@ module Main =
                   CommittableWriters = allCommittables
                   EntityNotFoundErrorConstructor = codegenConfig.EntityNotFoundError.Constructor }
 
-              GolangEntityPATCHers.ToGolang () entities
+              GolangEntityPATCHers.ToGolang (ctx, codegenConfig, formName) entities
 
             return
               StringBuilder.Many(
                 seq {
-                  yield writers
                   yield entityGETters
                   yield entityDEFAULTers
                   yield entityPOSTers
@@ -488,6 +408,8 @@ module Main =
           let heading =
             StringBuilder.One
               $$"""package {{packageName}}
+
+// Code generated by ballerina, DO NOT EDIT.
 
 import (
   "fmt"

@@ -1,7 +1,7 @@
 {
   "String": {
     "GeneratedTypeName": "string",
-    "WriterTypeName": "ballerina.WriterString",
+    
     "DeltaTypeName": "ballerina.DeltaString",
     "RequiredImport": null,
     "SupportedRenderers": [
@@ -11,7 +11,7 @@
   },
   "Int": {
     "GeneratedTypeName": "int",
-    "WriterTypeName": "ballerina.WriterInt",
+    
     "DeltaTypeName": "ballerina.DeltaInt",
     "RequiredImport": null,
     "SupportedRenderers": [
@@ -21,7 +21,7 @@
   },
   "Bool": {
     "GeneratedTypeName": "bool",
-    "WriterTypeName": "ballerina.WriterBool",
+    
     "DeltaTypeName": "ballerina.DeltaBool",
     "RequiredImport": null,
     "SupportedRenderers": [
@@ -31,7 +31,7 @@
   },
   "Date": {
     "GeneratedTypeName": "time.Time",
-    "WriterTypeName": "ballerina.WriterTime",
+    
     "DeltaTypeName": "ballerina.DeltaTime",
     "RequiredImport": "time",
     "SupportedRenderers": [
@@ -41,7 +41,7 @@
   },
   "Guid": {
     "GeneratedTypeName": "uuid.UUID",
-    "WriterTypeName": "ballerina.WriterGuid",
+    
     "DeltaTypeName": "ballerina.DeltaGuid",
     "RequiredImport": "github.com/google/uuid",
     "SupportedRenderers": [],
@@ -49,7 +49,7 @@
   },
   "Unit": {
     "GeneratedTypeName": "ballerina.Unit",
-    "WriterTypeName": "ballerina.WriterUnit",
+    
     "DeltaTypeName": "ballerina.DeltaUnit",
     "RequiredImport": "ballerina.com/core",
     "SupportedRenderers": [
@@ -59,7 +59,7 @@
   },
   "Option": {
     "GeneratedTypeName": "ballerina.Option",
-    "WriterTypeName": "ballerina.WriterOption",
+    
     "DeltaTypeName": "ballerina.DeltaOption",
     "RequiredImport": "ballerina.com/core",
     "SupportedRenderers": {
@@ -74,7 +74,7 @@
   },
   "Set": {
     "GeneratedTypeName": "ballerina.Set",
-    "WriterTypeName": "ballerina.WriterSet",
+    
     "DeltaTypeName": "ballerina.DeltaSet",
     "RequiredImport": "ballerina.com/core",
     "SupportedRenderers": {
@@ -89,7 +89,7 @@
   },
   "List": {
     "GeneratedTypeName": "ballerina.Array",
-    "WriterTypeName": "ballerina.WriterArray",
+    
     "DeltaTypeName": "ballerina.DeltaArray",
     "RequiredImport": "ballerina.com/core",
     "SupportedRenderers": [
@@ -100,7 +100,7 @@
   },
   "Map": {
     "GeneratedTypeName": "ballerina.Map",
-    "WriterTypeName": "ballerina.WriterMap",
+    
     "DeltaTypeName": "ballerina.DeltaMap",
     "RequiredImport": "ballerina.com/core",
     "SupportedRenderers": [
@@ -110,7 +110,7 @@
   },
   "Sum": {
     "GeneratedTypeName": "ballerina.Sum",
-    "WriterTypeName": "ballerina.WriterSum",
+    
     "DeltaTypeName": "ballerina.DeltaSum",
     "RequiredImport": "ballerina.com/core",
     "SupportedRenderers": [
@@ -123,7 +123,7 @@
     {
       "Ariety": 2,
       "GeneratedTypeName": "ballerina.Tuple2",
-      "WriterTypeName": "ballerina.WriterTuple2",
+      
       "DeltaTypeName": "ballerina.DeltaTuple2",
       "RequiredImport": "ballerina.com/core",
       "SupportedRenderers": [
@@ -134,7 +134,7 @@
     {
       "Ariety": 3,
       "GeneratedTypeName": "ballerina.Tuple3",
-      "WriterTypeName": "ballerina.WriterTuple3",
+      
       "DeltaTypeName": "ballerina.DeltaTuple3",
       "RequiredImport": "ballerina.com/core",
       "SupportedRenderers": [
@@ -156,7 +156,7 @@
         "defaultInjectedType"
       ],
       "DefaultConstructor": "ballerina.NewUnit",
-      "WriterTypeName": "ballerina.WriterUnit",
+      
       "DeltaTypeName": "ballerina.DeltaUnit"
     },
     "injectedCategory": {
@@ -166,7 +166,7 @@
         "defaultCategory"
       ],
       "DefaultConstructor": "ballerina.NewUnit",
-      "WriterTypeName": "ballerina.WriterUnit",
+      
       "DeltaTypeName": "ballerina.DeltaUnit"
     }
   },
@@ -179,10 +179,19 @@
     }
   ],
   "IdentifierAllowedRegex": "[^a-zA-Z0-9/-]+",
+  "DeltaBase": {
+    "GeneratedTypeName": "ballerina.DeltaBase",
+    "RequiredImport": "ballerina.com/core"
+  },
   "EntityNotFoundError": {
     "GeneratedTypeName": "ballerina.EntityNotFoundError",
     "RequiredImport": "ballerina.com/core",
     "Constructor": "ballerina.NewEntityNotFoundError"
+  },
+  "EntityNameAndDeltaTypeMismatchError": {
+    "GeneratedTypeName": "ballerina.EntityNameAndDeltaTypeMismatch",
+    "RequiredImport": "ballerina.com/core",
+    "Constructor": "ballerina.NewEntityNameAndDeltaTypeMismatch"
   },
   "StreamNotFoundError": {
     "GeneratedTypeName": "ballerina.StreamNotFoundError",
