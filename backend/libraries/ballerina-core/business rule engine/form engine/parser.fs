@@ -609,30 +609,30 @@ module Parser =
                         Type = t.Type
                         Children = children }
                 },
-                [ 
-                  state {
+                [ state {
                     let! { GenericRenderers = genericRenderers } = state.GetState()
-                    
+
                     match genericRenderers with
                     | [] -> return! state.Throw(Errors.Singleton $"Error: cannot match empty generic renderers")
-                    | g::gs ->
+                    | g :: gs ->
                       let genericRenderers = NonEmptyList.OfList(g, gs)
+
                       return!
-                        genericRenderers |> 
-                          NonEmptyList.map (fun g -> 
-                          state{
+                        genericRenderers
+                        |> NonEmptyList.map (fun g ->
+                          state {
                             if g.SupportedRenderers |> Set.contains s then
-                              return 
+                              return
                                 PrimitiveRenderer
                                   { PrimitiveRendererName = s
                                     PrimitiveRendererId = Guid.CreateVersion7()
                                     Type = g.Type
                                     Children = children }
 
-                            else 
+                            else
                               return! state.Throw(Errors.Singleton $"Error: generic renderer does not match")
                           })
-                          |> state.Any
+                        |> state.Any
                   }
                   state {
                     let! tupleConfig =
@@ -1659,11 +1659,25 @@ module Parser =
 
         do! ParsedFormsContext.ParseTypes typesJson
         let! c = state.GetContext()
+
         for g in c.Generic do
           let tstring = g.Type
-          let! tjson = JsonValue.TryParse tstring |> Sum.fromOption (fun () -> Errors.Singleton $"Error: cannot parse generic type {tstring}") |> state.OfSum
+
+          let! tjson =
+            JsonValue.TryParse tstring
+            |> Sum.fromOption (fun () -> Errors.Singleton $"Error: cannot parse generic type {tstring}")
+            |> state.OfSum
+
           let! t = ExprType.Parse tjson
-          do! state.SetState(ParsedFormsContext.Updaters.GenericRenderers (fun l -> {| Type=t; SupportedRenderers=g.SupportedRenderers |} :: l))
+
+          do!
+            state.SetState(
+              ParsedFormsContext.Updaters.GenericRenderers(fun l ->
+                {| Type = t
+                   SupportedRenderers = g.SupportedRenderers |}
+                :: l)
+            )
+
         let! s = state.GetState()
         do! ParsedFormsContext.ParseApis generatedLanguageSpecificConfig.EnumValueFieldName apisJson
         do! ParsedFormsContext.ParseForms formsJson

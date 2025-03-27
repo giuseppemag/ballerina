@@ -14,13 +14,14 @@ module WritersAndDeltas =
 
   type ExprType with
     static member ToWriter (writerName: WriterName) (t: ExprType) =
-      let add (w:Writer) = Map.add (w.Name,w.Type) w
+      let add (w: Writer) = Map.add (w.Name, w.Type) w
+
       state {
         let! ((ctx, codegenConfig): ParsedFormsContext * CodeGenConfig) = state.GetContext()
         let! st = state.GetState()
         let customTypes = codegenConfig.Custom.Keys |> Set.ofSeq
 
-        match st |> Map.tryFind (writerName,t) with
+        match st |> Map.tryFind (writerName, t) with
         | Some w -> return w
         | None ->
           match t with
@@ -71,8 +72,7 @@ module WritersAndDeltas =
             let! wb = ExprType.ToWriter { WriterName = $"{writerName.WriterName}_right" } b
 
             let w =
-              { Name =
-                  { WriterName = $"SumWriter[{wa.DeltaTypeName}, {wb.DeltaTypeName}]" }
+              { Name = { WriterName = $"SumWriter[{wa.DeltaTypeName}, {wb.DeltaTypeName}]" }
                 DeltaTypeName = $"{codegenConfig.Sum.DeltaTypeName}[{wa.DeltaTypeName}, {wb.DeltaTypeName}]"
                 Type = t
                 Components = Map.empty
@@ -133,8 +133,7 @@ module WritersAndDeltas =
             let! wv = ExprType.ToWriter { WriterName = $"{writerName.WriterName}_Value" } v
 
             let w =
-              { Name =
-                  { WriterName = $"MapWriter[{wk.DeltaTypeName}, {wv.DeltaTypeName}]" }
+              { Name = { WriterName = $"MapWriter[{wk.DeltaTypeName}, {wv.DeltaTypeName}]" }
                 DeltaTypeName = $"{codegenConfig.Map.DeltaTypeName}[{wk.DeltaTypeName}, {wv.DeltaTypeName}]"
                 Type = t
                 Components = Map.empty
@@ -145,7 +144,8 @@ module WritersAndDeltas =
           | ExprType.TupleType fields ->
             let! fields =
               fields
-              |> Seq.mapi (fun index field -> ExprType.ToWriter { WriterName = $"{writerName.WriterName}_Item{(index+1)}" } field)
+              |> Seq.mapi (fun index field ->
+                ExprType.ToWriter { WriterName = $"{writerName.WriterName}_Item{(index + 1)}" } field)
               |> state.All
 
             let fields = fields |> Seq.map (fun field -> field.DeltaTypeName) |> Seq.toList
@@ -180,8 +180,7 @@ module WritersAndDeltas =
 
               do! state.SetState(add w)
               return w
-            | _ ->
-              return! ExprType.ToWriter { WriterName = tn.TypeName } t.Type
+            | _ -> return! ExprType.ToWriter { WriterName = tn.TypeName } t.Type
           | ExprType.UnitType ->
             let w =
               { Name = { WriterName = $"UnitWriter" }
@@ -195,7 +194,7 @@ module WritersAndDeltas =
           | _ -> return! state.Throw(Errors.Singleton $"Error: cannot convert type {t} to a Writer.")
       }
 
-    static member ToWriterComponent (parentName:WriterName) (componentName:string) (componentType: ExprType) =
+    static member ToWriterComponent (parentName: WriterName) (componentName: string) (componentType: ExprType) =
       state {
         let! ((ctx, codegenConfig): ParsedFormsContext * CodeGenConfig) = state.GetContext()
 
