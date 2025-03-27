@@ -175,7 +175,7 @@ module Main =
                   yield StringBuilder.One $"type {t.Key} = {t.Value.GeneratedTypeName}"
                   yield StringBuilder.One "\n"
                   yield StringBuilder.One $"func Default{t.Key}() {t.Key} {{"
-                  yield StringBuilder.One $"  return {t.Value.DefaultConstructor}();"
+                  yield StringBuilder.One $"  return {t.Value.GeneratedTypeName}({t.Value.DefaultConstructor}());"
                   yield StringBuilder.One "\n"
                   yield StringBuilder.One "}"
                   yield StringBuilder.One "\n"
@@ -413,7 +413,10 @@ package {{packageName}}
 
 import (
   "fmt"
-{{imports |> Seq.map (sprintf "  \"%s\"\n") |> Seq.fold (+) ""}})
+{{imports
+  |> Seq.filter ((fun s -> String.IsNullOrEmpty s || String.IsNullOrWhiteSpace s) >> not)
+  |> Seq.map (sprintf "  \"%s\"\n")
+  |> Seq.fold (+) ""}})
 
 """
 
