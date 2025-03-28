@@ -852,7 +852,7 @@ export const Expr = {
         e.kind == "lambda"
       );
     },
-    parse: (json: any): ValueOrErrors<Expr, string> => {
+    parse: (json: any, path: List<string>): ValueOrErrors<Expr, string> => {
       const asValue = PredicateValue.Operations.parse(
         json,
         { kind: "expression" },
@@ -862,7 +862,7 @@ export const Expr = {
 
       if (Expr.Operations.IsItemLookup(json)) {
         const [first, second]: Array<any> = json["operands"];
-        return Expr.Operations.parse(first).Then((first) =>
+        return Expr.Operations.parse(first, path).Then((first) =>
           ValueOrErrors.Default.return(
             // Tuples are 1-indexed
             Expr.Default.itemLookup(first, second - 1),
@@ -871,13 +871,13 @@ export const Expr = {
       }
       if (Expr.Operations.IsFieldLookup(json)) {
         const [first, second]: Array<any> = json["operands"];
-        return Expr.Operations.parse(first).Then((first) =>
+        return Expr.Operations.parse(first, path).Then((first) =>
           ValueOrErrors.Default.return(Expr.Default.fieldLookup(first, second)),
         );
       }
       if (Expr.Operations.IsIsCase(json)) {
         const [first, second]: Array<any> = json["operands"];
-        return Expr.Operations.parse(first).Then((first) =>
+        return Expr.Operations.parse(first, path).Then((first) =>
           ValueOrErrors.Default.return(Expr.Default.isCase(first, second)),
         );
       }
@@ -885,8 +885,8 @@ export const Expr = {
       if (Expr.Operations.IsBinaryOperator(json)) {
         const [first, second]: Array<any> = json["operands"];
         if (BinaryOperatorsSet.contains(json["kind"] as BinaryOperator)) {
-          return Expr.Operations.parse(first).Then((first) =>
-            Expr.Operations.parse(second).Then((second) =>
+          return Expr.Operations.parse(first, path).Then((first) =>
+            Expr.Operations.parse(second, path).Then((second) =>
               ValueOrErrors.Default.return(
                 Expr.Default.binaryOperator(json["kind"], first, second),
               ),
@@ -898,7 +898,7 @@ export const Expr = {
       if (Expr.Operations.IsMatchCase(json)) {
         return ValueOrErrors.Operations.All(
           List<ValueOrErrors<Expr, string>>(
-            json["operands"].map((operand) => Expr.Operations.parse(operand)),
+            json["operands"].map((operand) => Expr.Operations.parse(operand, path)),
           ),
         ).Then((operands) =>
           ValueOrErrors.Default.return(
@@ -907,25 +907,25 @@ export const Expr = {
         );
       }
       if (Expr.Operations.IsLambda(json)) {
-        return Expr.Operations.parse(json["body"]).Then((body) =>
+        return Expr.Operations.parse(json["body"], path).Then((body) =>
           ValueOrErrors.Default.return(
             Expr.Default.lambda(json["parameter"], body),
           ),
         );
       }
       if (Expr.Operations.IsCase(json)) {
-        return Expr.Operations.parse(json["handler"]).Then((handler) =>
+        return Expr.Operations.parse(json["handler"], path).Then((handler) =>
           Expr.Operations.IsLambda(handler)
             ? ValueOrErrors.Default.return(
                 Expr.Default.case(json["caseName"], handler),
               )
             : ValueOrErrors.Default.throwOne(
-                `Error: expected lambda, got ${JSON.stringify(handler)}`,
+                `Error: while parsing ${path.join(".")}, expected lambda, got ${JSON.stringify(handler)}`,
               ),
         );
       }
       return ValueOrErrors.Default.throwOne(
-        `Error: cannot parse ${JSON.stringify(json)} to Expr.`,
+        `Error: while parsing ${path.join(".")}, cannot parse ${JSON.stringify(json)} to Expr.`,
       );
     },
     EvaluateAsTuple:

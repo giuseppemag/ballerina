@@ -1,8 +1,12 @@
 import { Set, List, Map, OrderedMap } from "immutable";
-import { GenericType, GenericTypes, PrimitiveTypes } from "../built-ins/state";
-import { InjectedPrimitives } from "../injectables/state";
-import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
-import { Unit, unit } from "../../../../../../main";
+import {
+  GenericType,
+  GenericTypes,
+  PrimitiveTypes,
+} from "../../../built-ins/state";
+import { InjectedPrimitives } from "../../../injectables/state";
+import { ValueOrErrors } from "../../../../../../../collections/domains/valueOrErrors/state";
+import { Unit } from "../../../../../../../../main";
 
 export const isString = (_: any): _ is string => typeof _ == "string";
 export const isObject = (_: any): _ is object => typeof _ == "object";
@@ -16,77 +20,56 @@ export type CaseName = string;
 export type FieldName = string;
 export type TypeName = string;
 
-export type RawApplicationType<T> = {
+export type SerializedApplicationType<T> = {
   fun?: GenericType;
-  args?: Array<RawType<T>>;
+  args?: Array<SerializedType<T>>;
 };
 
-export type RawUnionCase = {
+export type SerializedUnionCase = {
   case?: string;
   extends?: Array<TypeName>;
   fields?: Object;
 };
 
-export type RawUnionType = {
+export type SerializedUnionType = {
   fun?: "Union";
-  args?: Array<RawUnionCase>;
+  args?: Array<SerializedUnionCase>;
 };
 
-export type RawOptionType = {
+export type SerializedOptionType = {
   fun?: "Option";
-  args?: Array<RawType<any>>;
+  args?: Array<SerializedType<any>>;
 };
 
-export type RawRecordType = { extends?: Array<TypeName>; fields?: object };
+export type SerializedRecordType = {
+  extends?: Array<TypeName>;
+  fields?: object;
+};
 
-export type RawType<T> =
-  | RawApplicationType<T>
-  | string
+export type SerializedLookupType = string;
+
+export type SerializedType<T> =
   | Unit
   | PrimitiveTypeName<T>
-  | RawUnionType
-  | RawRecordType
-  | RawUnionCase
-  | RawOptionType;
-
-// export const RawType = {
-//   isMaybeExtendedType: <T>(
-//     type: RawType<T>,
-//   ): type is RawType<T> & { extends: unknown } =>
-//     "extends" in type &&
-//     Array.isArray(type.extends) &&
-//     type.extends.length == 1,
-//   isExtendedType: <T>(
-//     type: RawType<T>,
-//   ): type is RawType<T> & { extends: Array<TypeName> } =>
-//     "extends" in type &&
-//     Array.isArray(type.extends) &&
-//     type.extends.length == 1 &&
-//     isString(type.extends[0]),
-//   hasFields: <T>(type: RawType<T>): type is { fields: any } => "fields" in type,
-//   isMaybeUnion: (_: any): _ is RawUnionType =>
-//     isObject(_) &&
-//     "fun" in _ &&
-//     "args" in _ &&
-//     _.fun == "Union" &&
-//     Array.isArray(_["args"]) &&
-//     _["args"].every(
-//       (__) => typeof __ == "object" && "caseName" in __ && "fields" in __,
-//     ),
-// };
+  | SerializedApplicationType<T>
+  | SerializedLookupType
+  | SerializedUnionType
+  | SerializedRecordType
+  | SerializedUnionCase
+  | SerializedOptionType;
 
 export const RawType = {
   isExtendedType: <T>(
-    type: RawType<T>,
-  ): type is RawType<T> & { extends: Array<TypeName> } =>
+    type: SerializedType<T>,
+  ): type is SerializedType<T> & { extends: Array<TypeName> } =>
     typeof type == "object" &&
     "extends" in type &&
     Array.isArray(type.extends) &&
     type.extends.length == 1 &&
     isString(type.extends[0]),
-  hasFields: <T>(type: RawType<T>): type is { fields: any } =>
+  hasFields: <T>(type: SerializedType<T>): type is { fields: any } =>
     typeof type == "object" && "fields" in type,
-  isMaybeUnion: (_: any): _ is RawUnionType =>
+  isMaybeUnion: (_: any): _ is SerializedUnionType =>
     isObject(_) &&
     "fun" in _ &&
     "args" in _ &&
@@ -97,7 +80,7 @@ export const RawType = {
     ),
   isMaybePrimitive: (_: any) => isString(_),
   isPrimitive: <T>(
-    _: RawType<T>,
+    _: SerializedType<T>,
     injectedPrimitives: InjectedPrimitives<T> | undefined,
   ): _ is PrimitiveTypeName<T> =>
     Boolean(
@@ -106,34 +89,40 @@ export const RawType = {
     ),
   isMaybeApplication: (_: any): _ is Object => isObject(_),
   isApplication: <T>(
-    _: RawType<T>,
-  ): _ is { fun: GenericType; args: Array<RawType<T>> } =>
+    _: SerializedType<T>,
+  ): _ is { fun: GenericType; args: Array<SerializedType<T>> } =>
     hasFun(_) && isGenericType(_.fun) && hasArgs(_),
   isMaybeLookup: (_: any) => isString(_),
-  isLookup: <T>(_: RawType<T>, forms: Set<TypeName>): _ is TypeName =>
+  isLookup: <T>(_: SerializedType<T>, forms: Set<TypeName>): _ is TypeName =>
     isString(_) && forms.has(_),
-  isList: <T>(_: RawType<T>): _ is { fun: "List"; args: Array<RawType<T>> } =>
+  isList: <T>(
+    _: SerializedType<T>,
+  ): _ is { fun: "List"; args: Array<SerializedType<T>> } =>
     RawType.isApplication(_) && _.fun == "List" && _.args.length == 1,
-  isMap: <T>(_: RawType<T>): _ is { fun: "Map"; args: Array<RawType<T>> } =>
+  isMap: <T>(
+    _: SerializedType<T>,
+  ): _ is { fun: "Map"; args: Array<SerializedType<T>> } =>
     RawType.isApplication(_) && _.fun == "Map" && _.args.length == 2,
-  isSum: <T>(_: RawType<T>): _ is { fun: "Sum"; args: Array<RawType<T>> } =>
+  isSum: <T>(
+    _: SerializedType<T>,
+  ): _ is { fun: "Sum"; args: Array<SerializedType<T>> } =>
     RawType.isApplication(_) && _.fun == "Sum" && _.args.length == 2,
   isSingleSelection: <T>(
-    _: RawType<T>,
-  ): _ is { fun: "SingleSelection"; args: Array<RawType<T>> } =>
+    _: SerializedType<T>,
+  ): _ is { fun: "SingleSelection"; args: Array<SerializedType<T>> } =>
     RawType.isApplication(_) &&
     _.fun == "SingleSelection" &&
     _.args.length == 1,
   isMultiSelection: <T>(
-    _: RawType<T>,
-  ): _ is { fun: "MultiSelection"; args: Array<RawType<T>> } =>
+    _: SerializedType<T>,
+  ): _ is { fun: "MultiSelection"; args: Array<SerializedType<T>> } =>
     RawType.isApplication(_) && _.fun == "MultiSelection" && _.args.length == 1,
   isUnionCase: <T>(
-    _: RawType<T>,
+    _: SerializedType<T>,
   ): _ is { caseName: string; fields: object; extends?: Array<TypeName> } =>
     typeof _ == "object" && "caseName" in _ && "fields" in _,
   isUnion: <T>(
-    _: RawType<T>,
+    _: SerializedType<T>,
   ): _ is { fun: "Union"; args: Array<{ case: string; fields: object }> } =>
     hasFun(_) &&
     isGenericType(_.fun) &&
@@ -143,22 +132,24 @@ export const RawType = {
     _.args.every(
       (__) => typeof __ == "object" && "caseName" in __ && "fields" in __,
     ),
-  isTuple: <T>(_: RawType<T>): _ is { fun: "Tuple"; args: Array<RawType<T>> } =>
+  isTuple: <T>(
+    _: SerializedType<T>,
+  ): _ is { fun: "Tuple"; args: Array<SerializedType<T>> } =>
     RawType.isApplication(_) && _.fun == "Tuple",
   isRecord: <T>(
-    _: RawType<T>,
+    _: SerializedType<T>,
   ): _ is { fields: Object; extends?: Array<TypeName> } =>
     typeof _ == "object" && "fields" in _ && isObject(_.fields),
   isOption: <T>(
-    _: RawType<T>,
-  ): _ is { fun: "Option"; args: Array<RawType<T>> } =>
+    _: SerializedType<T>,
+  ): _ is { fun: "Option"; args: Array<SerializedType<T>> } =>
     typeof _ == "object" &&
     "fun" in _ &&
     _.fun == "Option" &&
     "args" in _ &&
     Array.isArray(_.args) &&
     _.args.length == 1,
-  isUnit: <T>(_: RawType<T>): _ is string => _ == "unit",
+  isUnit: <T>(_: SerializedType<T>): _ is string => _ == "unit",
 };
 
 export type PrimitiveTypeName<T> =
@@ -172,6 +163,13 @@ export type PrimitiveTypeName<T> =
   | "secret"
   | keyof T
   | "guid";
+
+export type ParsedUnion<T> = {
+  kind: "union";
+  args: Map<CaseName, ParsedUnionCase<T>>;
+  typeName: TypeName;
+};
+
 export type ParsedUnionCase<T> = {
   kind: "unionCase";
   name: CaseName;
@@ -201,7 +199,7 @@ export type ParsedType<T> = (
   | { kind: "lookup"; name: TypeName }
   | { kind: "primitive"; value: PrimitiveTypeName<T> }
   | ParsedApplicationType<T>
-  | { kind: "union"; args: Map<CaseName, ParsedUnionCase<T>> }
+  | ParsedUnion<T>
 ) & { typeName: TypeName };
 
 export const ParsedType = {
@@ -289,7 +287,7 @@ export const ParsedType = {
 
     ParseRawType: <T>(
       typeName: TypeName,
-      rawType: RawType<T>,
+      rawType: SerializedType<T>,
       typeNames: Set<TypeName>,
       injectedPrimitives?: InjectedPrimitives<T>,
     ): ValueOrErrors<ParsedType<T>, string> => {
@@ -424,7 +422,7 @@ export const ParsedType = {
             Object.entries(rawType.fields).map(([fieldName, fieldType]) =>
               ParsedType.Operations.ParseRawType(
                 fieldName,
-                fieldType as RawType<T>,
+                fieldType as SerializedType<T>,
                 typeNames,
                 injectedPrimitives,
               ).Then((parsedField) =>
@@ -622,7 +620,9 @@ export const ParsedType = {
                 );
               }
               return ValueOrErrors.Default.throwOne(
-                `Error: parsed type ${JSON.stringify(parsedType)} is not a valid parsed type`,
+                `Error: parsed type ${JSON.stringify(
+                  parsedType,
+                )} is not a valid parsed type`,
               );
             }),
         ),

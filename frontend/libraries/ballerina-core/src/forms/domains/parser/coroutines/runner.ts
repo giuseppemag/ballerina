@@ -5,7 +5,7 @@ import {
   Sum,
   Synchronize,
   Unit,
-  FormsConfig,
+  Specification,
 } from "../../../../../main";
 import { CoTypedFactory } from "../../../../coroutines/builder";
 import {
@@ -24,7 +24,7 @@ export const LoadValidateAndParseFormsConfig = <
     Co.GetState().then((current) =>
       Synchronize<Unit, FormParsingResult>(
         async () => {
-          const rawFormsConfig = await current.getFormsConfig();
+          const serializedSpecifications = await current.getFormsConfig();
           const builtIns = builtInsFromFieldViews(current.fieldViews);
           const injectedPrimitives = current.injectedPrimitives
             ? injectablesFromFieldViews(
@@ -32,14 +32,15 @@ export const LoadValidateAndParseFormsConfig = <
                 current.injectedPrimitives,
               )
             : undefined;
-          const validationResult =
-            FormsConfig.Default.validateAndParseFormConfig(
-              builtIns,
+          const deserializationResult =
+            Specification.Operations.Deserialize(
               current.fieldTypeConverters,
               injectedPrimitives,
-            )(rawFormsConfig);
-          if (validationResult.kind == "errors")
-            return Sum.Default.right(validationResult.errors);
+            )(serializedSpecifications);
+          if (deserializationResult.kind == "errors")
+            return Sum.Default.right(deserializationResult.errors);
+          console.debug("Deserialized specification");
+          console.debug(deserializationResult.value);
           return parseFormsToLaunchers(
             builtIns,
             injectedPrimitives,
@@ -50,7 +51,7 @@ export const LoadValidateAndParseFormsConfig = <
             current.infiniteStreamSources,
             current.enumOptionsSources,
             current.entityApis,
-          )(validationResult.value);
+          )(deserializationResult.value);
         },
         (_) => "transient failure",
         5,

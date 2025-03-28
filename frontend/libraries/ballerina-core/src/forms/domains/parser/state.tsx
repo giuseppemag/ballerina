@@ -2,7 +2,7 @@ import { List, Map, OrderedSet, Set } from "immutable";
 import {
   Unit,
   Guid,
-  ParsedFormJSON,
+  Specification,
   BuiltIns,
   Sum,
   BasicFun,
@@ -29,10 +29,8 @@ import {
   ApiConverters,
   ApiResponseChecker,
   Debounced,
-  ParsedFormConfig,
   PredicateValue,
   FieldPredicateExpressions,
-  FormFieldPredicateEvaluation,
   ValueOrErrors,
   PassthroughFormState,
   PassthroughFormContext,
@@ -43,17 +41,19 @@ import {
   ParsedUnionFormConfig,
   FormLabel,
   UnionForm,
+  Form,
+  FormFieldPredicateEvaluation,
 } from "../../../../main";
 import { EnumReference } from "../collection/domains/reference/state";
 import { SearchableInfiniteStreamState } from "../primitives/domains/searchable-infinite-stream/state";
-import { Form } from "../singleton/template";
+import { SingletonForm } from "../singleton/template";
 import { ParsedRenderer } from "./domains/renderer/state";
 
 export type ParsedRecordForm<T> = {
   initialFormState: any;
   formConfig: any;
   formName: string;
-  formDef: ParsedFormConfig<T>;
+  formDef: Form<T>;
   visibilityPredicateExpressions: FieldPredicateExpressions;
   disabledPredicatedExpressions: FieldPredicateExpressions;
   parsedRenderer: ParsedRenderer<T>;
@@ -63,7 +63,7 @@ export type ParsedUnionForm<T> = {
   initialFormState: any;
   formConfig: any;
   formName: string;
-  formDef: ParsedFormConfig<T>;
+  formDef: Form<T>;
   parsedRenderer: ParsedRenderer<T>;
 };
 
@@ -226,7 +226,7 @@ export const ParseForms =
   ) =>
   (types: Map<TypeName, ParsedType<T>>) =>
   (
-    forms: Map<string, ParsedFormConfig<T>>,
+    forms: Map<string, Form<T>>,
   ): ValueOrErrors<ParsedForms<T>, string> => {
     const recordForms = forms.filter((form) => form.kind == "recordForm");
     const unionForms = forms.filter((form) => form.kind == "unionForm");
@@ -303,7 +303,7 @@ export const ParseForms =
           defaultState(types, builtIns, injectedPrimitives),
           injectedPrimitives,
         )(parsedForms)(formName, formConfig);
-        const formBuilder = Form<any, any, any>().Default<any>();
+        const formBuilder = SingletonForm<any, any, any>().Default<any>();
         const form = formBuilder
           .template({
             ...parsedForm.formConfig,
@@ -467,7 +467,7 @@ export const parseFormsToLaunchers =
     enumOptionsSources: EnumOptionsSources,
     entityApis: EntityApis,
   ) =>
-  (formsConfig: ParsedFormJSON<T>): FormParsingResult => {
+  (formsConfig: Specification<T>): FormParsingResult => {
     let parsedLaunchers: ParsedLaunchers = {
       create: Map(),
       edit: Map(),

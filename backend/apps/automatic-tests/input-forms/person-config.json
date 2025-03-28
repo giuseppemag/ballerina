@@ -687,8 +687,12 @@
       "type": "Job",
       "renderer": "defaultUnionRenderer",
       "cases": {
-        "Barista": "baristaJob",
-        "Waiter": "waiterJob"
+        "Barista": {
+          "renderer": "baristaJob"
+        },
+        "Waiter": {
+          "renderer": "waiterJob"
+        }
       }
     },
     "person": {
