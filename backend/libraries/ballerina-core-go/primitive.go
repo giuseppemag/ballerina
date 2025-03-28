@@ -53,6 +53,10 @@ func DefaultFloat32() float32 {
 	return 0.0
 }
 
+func DefaultFloat64() float64 { 
+	return 0.0
+}
+
 type DeltaStringEffectsEnum string
 const (
   StringReplace DeltaStringEffectsEnum = "StringReplace" 
@@ -244,5 +248,38 @@ func MatchDeltaFloat32[Result any](
         return onReplace(delta.Replace)
     }
     return result, NewInvalidDiscriminatorError(string(delta.Discriminator), "DeltaFloat32")
+  }
+}
+
+
+type DeltaFloat64EffectsEnum string
+const (
+  Float64Replace DeltaFloat64EffectsEnum = "Float64Replace" 
+)
+var AllDeltaFloat64EffectsEnumCases = [...]DeltaFloat64EffectsEnum{ Float64Replace, }
+
+func DefaultDeltaFloat64EffectsEnum() DeltaFloat64EffectsEnum { return AllDeltaFloat64EffectsEnumCases[0]; }
+
+type DeltaFloat64 struct {
+  DeltaBase
+  Discriminator DeltaFloat64EffectsEnum
+  Replace float64
+}
+func NewDeltaFloat64Replace(value float64) DeltaFloat64 {
+  return DeltaFloat64 {
+    Discriminator:Float64Replace,
+    Replace:value,
+ }
+}
+func MatchDeltaFloat64[Result any](
+  onReplace func(float64) (Result, error),
+) func (DeltaFloat64) (Result, error) {
+  return func (delta DeltaFloat64) (Result,error) {
+    var result Result
+    switch delta.Discriminator {
+      case "Float64Replace":
+        return onReplace(delta.Replace)
+    }
+    return result, NewInvalidDiscriminatorError(string(delta.Discriminator), "DeltaFloat64")
   }
 }

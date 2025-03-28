@@ -211,6 +211,15 @@
       ],
       "DefaultConstructor": "ballerina.DefaultFloat32",
       "DeltaTypeName": "ballerina.DeltaFloat32"
+    },
+    "Float64": {
+      "GeneratedTypeName": "float64",
+      "RequiredImport": "",
+      "SupportedRenderers": [
+        "defaultFloat64"
+      ],
+      "DefaultConstructor": "ballerina.DefaultFloat64",
+      "DeltaTypeName": "ballerina.DeltaFloat64"
     }
   },
   "Generic": [

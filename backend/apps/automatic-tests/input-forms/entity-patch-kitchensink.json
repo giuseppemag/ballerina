@@ -76,7 +76,8 @@
         "E10": { "fun": "Tuple", "args": ["Int32", "Float32", "string", "boolean"] },
         "E11": { "fun": "Tuple", "args": ["Int32", "Float32", "string", "boolean", "number"] },
         "E12": { "fun": "Tuple", "args": ["Int32", "Float32", "string", "boolean", "number", "guid"] },
-        "E13": { "fun": "Tuple", "args": ["Int32", "Float32", "string", "boolean", "number", "guid", "Date"] }
+        "E13": { "fun": "Tuple", "args": ["Int32", "Float32", "string", "boolean", "number", "guid", "Date"] },
+        "E14": "Float64"
       }
     },
     "F": {
