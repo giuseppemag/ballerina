@@ -86,31 +86,39 @@
               ✅ DeltaOption[A,DA]
                 ✅ Replace A
                 ✅ Value DA
-              ❌ DeltaSum[A,B,DA,DB]
-                ❌ Replace A+B
-                ❌ Left DA
-                ❌ Right DB
-              ❌ DeltaSet[A,DA]
-                ❌ Replace(Set A)
-                ❌ Value A x DA
-                ❌ Add A
-                ❌ Remove A
-              ❌ DeltaList[A,DA]
-                ❌ Replace(List A)
-                ❌ Value int x DA
-                ❌ AddAt int x A
-                ❌ RemoveAt int
-                ❌ Move int x int
-              ❌ DeltaMap[K,V,DK,DV]
-                ❌ Replace(Map K V)
-                ❌ Value K x DV
-                ❌ Add K x V
-                ❌ Remove K
+                ✅ Match
+              ✅ DeltaSum[A,B,DA,DB]
+                ✅ Replace A+B
+                ✅ Left DA
+                ✅ Right DB
+                ✅ Match
+              ✅ DeltaList[A,DA]
+                ✅ Replace(List A)
+                ✅ Value int x DA
+                ✅ AddAt int x A
+                ✅ RemoveAt int
+                ✅ Move int x int
+                ✅ Match
+              ✅ DeltaSet[A,DA]
+                ✅ Replace(Set A)
+                ✅ Value A x DA
+                ✅ Add A
+                ✅ Remove A
+                ✅ Match
+              ✅ DeltaMap[K,V,DK,DV]
+                ✅ Replace(Map K V)
+                ✅ Value K x DV
+                ✅ Add K x V
+                ✅ Remove K
+                ✅ Match
               ❌ DeltaTuple[A1,A2,...An,DA1,DA2,...DAn]
                 ❌ Replace(A1 x A2 x ... x An)
                 ❌ Item_i DAi
+                ❌ Match
               ❌ names of generic parameters is inconsistent and should be fixed
-              ❌ `"IntReplace"`, etc. should all just be `"Replace"`
+              ❌ define the deltas, make an array of Deltas[Unit] foldable into a single Deltas[DeltaBase]
+                ❌ also needs DeltaRecord and DeltaUnit in the dynamic version
+              ❌ add unit tests for all the go structures
           ❌ imports
           ❌ `generated types`
           ❌ ToGolang in the typename and method name is redundant, remove it

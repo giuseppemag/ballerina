@@ -49,8 +49,6 @@ func NewDeltaOptionValue[a any, deltaA any](delta deltaA) DeltaOption[a, deltaA]
     Value:delta,
  }
 }
-
-
 func MatchDeltaOption[a any, deltaA any, Result any](
   onReplace func(a) (Result, error),
   onValue func(deltaA) (Result, error),

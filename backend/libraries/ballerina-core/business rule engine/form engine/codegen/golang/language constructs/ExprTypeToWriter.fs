@@ -81,9 +81,13 @@ module WritersAndDeltas =
             let! wa = ExprType.ToWriter { WriterName = $"{writerName.WriterName}_left" } a
             let! wb = ExprType.ToWriter { WriterName = $"{writerName.WriterName}_right" } b
 
+            let! a_annotation = toGolangTypeAnnotation a
+            let! b_annotation = toGolangTypeAnnotation b
+
             let w =
               { Name = { WriterName = $"SumWriter[{wa.DeltaTypeName}, {wb.DeltaTypeName}]" }
-                DeltaTypeName = $"{codegenConfig.Sum.DeltaTypeName}[{wa.DeltaTypeName}, {wb.DeltaTypeName}]"
+                DeltaTypeName =
+                  $"{codegenConfig.Sum.DeltaTypeName}[{a_annotation}, {b_annotation}, {wa.DeltaTypeName}, {wb.DeltaTypeName}]"
                 Type = t
                 Components = Map.empty
                 Kind = WriterKind.Imported }
@@ -107,9 +111,11 @@ module WritersAndDeltas =
           | ExprType.SetType(a) ->
             let! wa = ExprType.ToWriter { WriterName = $"{writerName.WriterName}_Element" } a
 
+            let! a_annotation = toGolangTypeAnnotation a
+
             let w =
               { Name = { WriterName = $"SetWriter[{wa.DeltaTypeName}]" }
-                DeltaTypeName = $"{codegenConfig.Set.DeltaTypeName}[{wa.DeltaTypeName}]"
+                DeltaTypeName = $"{codegenConfig.Set.DeltaTypeName}[{a_annotation}, {wa.DeltaTypeName}]"
                 Type = t
                 Components = Map.empty
                 Kind = WriterKind.Imported }
@@ -131,9 +137,11 @@ module WritersAndDeltas =
           | ExprType.ListType(e) ->
             let! we = ExprType.ToWriter { WriterName = $"{writerName.WriterName}_Element" } e
 
+            let! e_annotation = toGolangTypeAnnotation e
+
             let w =
               { Name = { WriterName = $"ListWriter[{we.DeltaTypeName}]" }
-                DeltaTypeName = $"{codegenConfig.List.DeltaTypeName}[{we.DeltaTypeName}]"
+                DeltaTypeName = $"{codegenConfig.List.DeltaTypeName}[{e_annotation}, {we.DeltaTypeName}]"
                 Type = t
                 Components = Map.empty
                 Kind = WriterKind.Imported }
@@ -144,9 +152,13 @@ module WritersAndDeltas =
             let! wk = ExprType.ToWriter { WriterName = $"{writerName.WriterName}_Key" } k
             let! wv = ExprType.ToWriter { WriterName = $"{writerName.WriterName}_Value" } v
 
+            let! k_annotation = toGolangTypeAnnotation k
+            let! v_annotation = toGolangTypeAnnotation v
+
             let w =
               { Name = { WriterName = $"MapWriter[{wk.DeltaTypeName}, {wv.DeltaTypeName}]" }
-                DeltaTypeName = $"{codegenConfig.Map.DeltaTypeName}[{wk.DeltaTypeName}, {wv.DeltaTypeName}]"
+                DeltaTypeName =
+                  $"{codegenConfig.Map.DeltaTypeName}[{k_annotation}, {v_annotation}, {wk.DeltaTypeName}, {wv.DeltaTypeName}]"
                 Type = t
                 Components = Map.empty
                 Kind = WriterKind.Imported }

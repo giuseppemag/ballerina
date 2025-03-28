@@ -80,6 +80,28 @@ func NewTuple6[a any, b any, c any, d any, e any, f any](item1 a, item2 b, item3
 	return p
 }
 
+type Tuple7[a any, b any, c any, d any, e any, f any, g any] struct {
+	Item1 a
+	Item2 b
+	Item3 c
+	Item4 d
+	Item5 e
+	Item6 f
+	Item7 g
+}
+
+func NewTuple7[a any, b any, c any, d any, e any, f any, g any](item1 a, item2 b, item3 c, item4 d, item5 e, item6 f, item7 g) Tuple7[a, b, c, d, e, f, g] {
+	var p Tuple7[a, b, c, d, e, f, g]
+	p.Item1 = item1
+	p.Item2 = item2
+	p.Item3 = item3
+	p.Item4 = item4
+	p.Item5 = item5
+	p.Item6 = item6
+	p.Item7 = item7
+	return p
+}
+
 type DeltaTuple2[DeltaA any, DeltaB any] interface{
 	DeltaBase
 }
@@ -97,5 +119,9 @@ type DeltaTuple5[DeltaA any, DeltaB any, DeltaC any, DeltaD any, DeltaE any] int
 }
 
 type DeltaTuple6[DeltaA any, DeltaB any, DeltaC any, DeltaD any, DeltaE any, DeltaF any] interface{
+	DeltaBase
+}
+
+type DeltaTuple7[DeltaA any, DeltaB any, DeltaC any, DeltaD any, DeltaE any, DeltaF any, DeltaG any] interface{
 	DeltaBase
 }
