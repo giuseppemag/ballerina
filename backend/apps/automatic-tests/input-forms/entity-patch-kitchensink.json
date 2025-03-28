@@ -70,7 +70,13 @@
         "E4": "guid",
         "E5": "Date",
         "E6": "Int32",
-        "E7": "Float32"
+        "E7": "Float32",
+        "E8": { "fun": "Tuple", "args": ["Int32", "Float32"] },
+        "E9": { "fun": "Tuple", "args": ["Int32", "Float32", "string"] },
+        "E10": { "fun": "Tuple", "args": ["Int32", "Float32", "string", "boolean"] },
+        "E11": { "fun": "Tuple", "args": ["Int32", "Float32", "string", "boolean", "number"] },
+        "E12": { "fun": "Tuple", "args": ["Int32", "Float32", "string", "boolean", "number", "guid"] },
+        "E13": { "fun": "Tuple", "args": ["Int32", "Float32", "string", "boolean", "number", "guid", "Date"] }
       }
     },
     "F": {

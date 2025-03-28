@@ -179,7 +179,6 @@ module Main =
                   yield StringBuilder.One "\n"
                   yield StringBuilder.One "}"
                   yield StringBuilder.One "\n"
-
                 }
               ))
 
@@ -314,7 +313,7 @@ module Main =
 
                   return!
                     allWriters
-                    |> Map.tryFindWithError ({ WriterName = e.TypeId.TypeName }, t) "writer" e.TypeId.TypeName
+                    |> Map.tryFindWithError ({ WriterName = e.TypeId.TypeName }) "writer" e.TypeId.TypeName
                     |> Sum.map (fun w ->
                       {| Writer = w
                          EntityApiName = e.EntityName |})

@@ -180,3 +180,69 @@ func MatchDeltaTime[Result any](
     return result, NewInvalidDiscriminatorError(string(delta.Discriminator), "DeltaTime")
   }
 }
+
+
+type DeltaInt32EffectsEnum string
+const (
+  Int32Replace DeltaInt32EffectsEnum = "Int32Replace" 
+)
+var AllDeltaInt32EffectsEnumCases = [...]DeltaInt32EffectsEnum{ Int32Replace, }
+
+func DefaultDeltaInt32EffectsEnum() DeltaInt32EffectsEnum { return AllDeltaInt32EffectsEnumCases[0]; }
+
+type DeltaInt32 struct {
+  DeltaBase
+  Discriminator DeltaInt32EffectsEnum
+  Replace int32
+}
+func NewDeltaInt32Replace(value int32) DeltaInt32 {
+  return DeltaInt32 {
+    Discriminator:Int32Replace,
+    Replace:value,
+ }
+}
+func MatchDeltaInt32[Result any](
+  onReplace func(int32) (Result, error),
+) func (DeltaInt32) (Result, error) {
+  return func (delta DeltaInt32) (Result,error) {
+    var result Result
+    switch delta.Discriminator {
+      case "Int32Replace":
+        return onReplace(delta.Replace)
+    }
+    return result, NewInvalidDiscriminatorError(string(delta.Discriminator), "DeltaInt32")
+  }
+}
+
+
+type DeltaFloat32EffectsEnum string
+const (
+  Float32Replace DeltaFloat32EffectsEnum = "Float32Replace" 
+)
+var AllDeltaFloat32EffectsEnumCases = [...]DeltaFloat32EffectsEnum{ Float32Replace, }
+
+func DefaultDeltaFloat32EffectsEnum() DeltaFloat32EffectsEnum { return AllDeltaFloat32EffectsEnumCases[0]; }
+
+type DeltaFloat32 struct {
+  DeltaBase
+  Discriminator DeltaFloat32EffectsEnum
+  Replace float32
+}
+func NewDeltaFloat32Replace(value float32) DeltaFloat32 {
+  return DeltaFloat32 {
+    Discriminator:Float32Replace,
+    Replace:value,
+ }
+}
+func MatchDeltaFloat32[Result any](
+  onReplace func(float32) (Result, error),
+) func (DeltaFloat32) (Result, error) {
+  return func (delta DeltaFloat32) (Result,error) {
+    var result Result
+    switch delta.Discriminator {
+      case "Float32Replace":
+        return onReplace(delta.Replace)
+    }
+    return result, NewInvalidDiscriminatorError(string(delta.Discriminator), "DeltaFloat32")
+  }
+}

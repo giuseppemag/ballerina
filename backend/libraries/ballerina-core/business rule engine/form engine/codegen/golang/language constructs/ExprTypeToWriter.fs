@@ -12,10 +12,11 @@ module WritersAndDeltas =
   open Ballerina.DSL.FormEngine.Codegen.Golang.Generator.Model
   open Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs
   open Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs.TypeAnnotations
+  open System.Text.RegularExpressions
 
   type ExprType with
     static member ToWriter (writerName: WriterName) (t: ExprType) =
-      let add (w: Writer) = Map.add (w.Name, w.Type) w
+      let add (w: Writer) = Map.add w.Name w
 
       let toGolangTypeAnnotation t =
         state {
@@ -29,9 +30,11 @@ module WritersAndDeltas =
       state {
         let! ((ctx, codegenConfig): ParsedFormsContext * CodeGenConfig) = state.GetContext()
         let! st = state.GetState()
-        let customTypes = codegenConfig.Custom.Keys |> Set.ofSeq
+        let identifierAllowedRegex = Regex codegenConfig.IdentifierAllowedRegex
+        let sanitized (s: string) = identifierAllowedRegex.Replace(s, "_")
+        // let customTypes = codegenConfig.Custom.Keys |> Set.ofSeq
 
-        match st |> Map.tryFind (writerName, t) with
+        match st |> Map.tryFind writerName with
         | Some w -> return w
         | None ->
           match t with
@@ -40,8 +43,8 @@ module WritersAndDeltas =
               fields
               |> Seq.map (fun field ->
                 state {
-                  let! wf = ExprType.ToWriterComponent writerName field.Key field.Value
-                  return field.Key, wf
+                  let! wf, t = ExprType.ToWriterComponent writerName field.Key field.Value
+                  return field.Key, (wf.Name, t)
                 })
               |> state.All
 
@@ -61,8 +64,8 @@ module WritersAndDeltas =
               cases
               |> Seq.map (fun case ->
                 state {
-                  let! wf = ExprType.ToWriterComponent writerName case.Key.CaseName case.Value.Fields
-                  return case.Key.CaseName, wf
+                  let! wf, t = ExprType.ToWriterComponent writerName (case.Key.CaseName |> sanitized) case.Value.Fields
+                  return case.Key.CaseName |> sanitized, (wf.Name, t)
                 })
               |> state.All
 
@@ -169,11 +172,24 @@ module WritersAndDeltas =
             let! fields =
               fields
               |> Seq.mapi (fun index field ->
-                ExprType.ToWriter { WriterName = $"{writerName.WriterName}_Item{(index + 1)}" } field)
+                state {
+                  let! w, _ = ExprType.ToWriterComponent writerName $"Item{index + 1}" field
+
+                  // if field.IsLookupType then
+                  //   do System.Console.WriteLine field
+                  //   do System.Console.WriteLine w.ToFSharpString
+                  //   do System.Console.ReadLine() |> ignore
+
+                  let! a = toGolangTypeAnnotation field
+                  return {| Writer = w; TypeAnnotation = a |}
+                })
               |> state.All
 
-            let fields = fields |> Seq.map (fun field -> field.DeltaTypeName) |> Seq.toList
-            let fieldDeltaTypeNames = System.String.Join(',', fields)
+            let fieldTypeAnnotations =
+              System.String.Join(',', fields |> Seq.map (fun field -> field.TypeAnnotation))
+
+            let fieldDeltaTypeNames =
+              System.String.Join(',', fields |> Seq.map (fun field -> field.Writer.DeltaTypeName))
 
             let! tupleConfig =
               codegenConfig.Tuple
@@ -183,7 +199,7 @@ module WritersAndDeltas =
 
             let w =
               { Name = { WriterName = $"TupleWriter[{fieldDeltaTypeNames}]" }
-                DeltaTypeName = $"{tupleConfig.DeltaTypeName}[{fieldDeltaTypeNames}]"
+                DeltaTypeName = $"{tupleConfig.DeltaTypeName}[{fieldTypeAnnotations}, {fieldDeltaTypeNames}]"
                 Type = t
                 Components = Map.empty
                 Kind = WriterKind.Imported }
@@ -225,9 +241,9 @@ module WritersAndDeltas =
         match componentType with
         | ExprType.LookupType tn ->
           let! t = ctx.Types |> Map.tryFindWithError tn.TypeName "types" "types" |> state.OfSum
-          let! w = ExprType.ToWriter { WriterName = tn.TypeName } t.Type
-          return w.Name, t.Type
+          let! w = ExprType.ToWriter { WriterName = tn.TypeName } componentType
+          return w, t.Type
         | _ ->
           let! w = ExprType.ToWriter { WriterName = $"{parentName.WriterName}_{componentName}" } componentType
-          return w.Name, componentType
+          return w, componentType
       }

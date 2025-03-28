@@ -31,6 +31,8 @@
           ❌ missing cases on either side
           ❌ mismatched type of cases in renderer vs type
           ❌ wrong use of `Sum`
+        ❌ add entity PATCH sample to successful samples
+        ❌ add errorless Go compilation to tests
     ✅ turn union cases into maps - makes lookups more robust and ensures uniqueness
     ❌ entites visitors
       ✅ the `entityName` should be the API name, not the type
@@ -111,12 +113,13 @@
                 ✅ Add K x V
                 ✅ Remove K
                 ✅ Match
-              ❌ DeltaTuple[A1,A2,...An,DA1,DA2,...DAn]
-                ❌ Replace(A1 x A2 x ... x An)
-                ❌ Item_i DAi
-                ❌ Match
+              ✅ DeltaTuple[A1,A2,...An,DA1,DA2,...DAn]
+                ✅ Replace(A1 x A2 x ... x An)
+                ✅ Item_i DAi
+                ✅ Match
+              ✅ Add every tuple to the entity patch kitchen sink up to 7
               ❌ names of generic parameters is inconsistent and should be fixed
-              ❌ define the deltas, make an array of Deltas[Unit] foldable into a single Deltas[DeltaBase]
+              ❌ define the FE deltas, make an array of Deltas[Unit] foldable into a single Deltas[DeltaBase]
                 ❌ also needs DeltaRecord and DeltaUnit in the dynamic version
               ❌ add unit tests for all the go structures
           ❌ imports
@@ -130,6 +133,8 @@
             ❌ write marshall and unmarshall for the generated deltas
           ❌ generate more than one file
           ❌ toTypeAnnotation in ExprType.ToWriter could benefit from a better context mapper
+          ❌ the injected types generate unused delta types
+          ❌ all delta and writer type names should be sanitized
         ✅ complete the kitchen sink sample with all generics
           ✅ add a few more tuples - up to 5
           ✅ add all possible generic types - including single and multi selects

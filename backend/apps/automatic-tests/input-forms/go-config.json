@@ -128,6 +128,46 @@
         "defaultTuple3"
       ],
       "Constructor": "ballerina.NewTuple3"
+    },
+    {
+      "Ariety": 4,
+      "GeneratedTypeName": "ballerina.Tuple4",
+      "DeltaTypeName": "ballerina.DeltaTuple4",
+      "RequiredImport": "ballerina.com/core",
+      "SupportedRenderers": [
+        "defaultTuple4"
+      ],
+      "Constructor": "ballerina.NewTuple4"
+    },    
+    {
+      "Ariety": 5,
+      "GeneratedTypeName": "ballerina.Tuple5",
+      "DeltaTypeName": "ballerina.DeltaTuple5",
+      "RequiredImport": "ballerina.com/core",
+      "SupportedRenderers": [
+        "defaultTuple5"
+      ],
+      "Constructor": "ballerina.NewTuple5"
+    },    
+    {
+      "Ariety": 6,
+      "GeneratedTypeName": "ballerina.Tuple6",
+      "DeltaTypeName": "ballerina.DeltaTuple6",
+      "RequiredImport": "ballerina.com/core",
+      "SupportedRenderers": [
+        "defaultTuple6"
+      ],
+      "Constructor": "ballerina.NewTuple6"
+    },    
+    {
+      "Ariety": 7,
+      "GeneratedTypeName": "ballerina.Tuple7",
+      "DeltaTypeName": "ballerina.DeltaTuple7",
+      "RequiredImport": "ballerina.com/core",
+      "SupportedRenderers": [
+        "defaultTuple7"
+      ],
+      "Constructor": "ballerina.NewTuple7"
     }
   ],
   "Union": {

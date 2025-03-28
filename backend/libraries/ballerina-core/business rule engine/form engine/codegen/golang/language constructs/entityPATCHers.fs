@@ -12,7 +12,7 @@ open System.Text.RegularExpressions
 type GolangEntityPATCHers =
   { FunctionName: string
     EntityNotFoundErrorConstructor: string
-    Writers: Map<WriterName * ExprType, Writer>
+    Writers: Map<WriterName, Writer>
     CommittableWriters:
       List<
         {| Writer: Writer
@@ -45,17 +45,17 @@ type GolangEntityPATCHers =
           let patterns =
             seq {
               for wf in w.Components do
-                match entities.Writers |> Map.tryFind (wf.Value) with
+                match entities.Writers |> Map.tryFind (wf.Value |> fst) with
                 | Some nw ->
                   yield
                     {| Name = wf.Key
                        Type = nw.DeltaTypeName |}
                 | _ -> ()
 
-              if ctx.Types |> Map.containsKey (wkv.Key |> fst).WriterName then
+              if ctx.Types |> Map.containsKey (wkv.Key).WriterName then
                 yield
                   {| Name = "Replace"
-                     Type = (wkv.Key |> fst).WriterName |}
+                     Type = (wkv.Key).WriterName |}
             }
 
           let casesEnum: GolangEnum =
@@ -90,14 +90,15 @@ type GolangEntityPATCHers =
           yield StringBuilder.One $"func Match{w.DeltaTypeName}[Result any](\n"
 
           for wf in w.Components do
-            match entities.Writers |> Map.tryFind (wf.Value) with
+            match entities.Writers |> Map.tryFind (wf.Value |> fst) with
             | Some nw -> yield StringBuilder.One $"  on{wf.Key} func({nw.DeltaTypeName}) (Result, error),\n"
             | _ ->
               yield
-                StringBuilder.One $"  // ERROR: cannot find writer {wf.Value} in {entities.Writers.ToFSharpString},\n"
+                StringBuilder.One
+                  $"  // ERROR: cannot find writer {wf.Value} in {(entities.Writers |> Map.keys |> List.ofSeq).ToFSharpString},\n"
           // { WriterName = t.TypeId.TypeName }
-          if ctx.Types |> Map.containsKey (wkv.Key |> fst).WriterName then
-            yield StringBuilder.One $"  onReplace func({(wkv.Key |> fst).WriterName}) (Result, error),\n"
+          if ctx.Types |> Map.containsKey (wkv.Key).WriterName then
+            yield StringBuilder.One $"  onReplace func({(wkv.Key).WriterName}) (Result, error),\n"
 
           yield StringBuilder.One $") func ({w.DeltaTypeName}) (Result, error) {{\n"
           yield StringBuilder.One $"  return func (delta {w.DeltaTypeName}) (Result,error) {{\n"
