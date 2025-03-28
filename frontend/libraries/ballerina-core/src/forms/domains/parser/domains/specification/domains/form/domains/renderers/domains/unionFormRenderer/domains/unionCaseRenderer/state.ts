@@ -1,7 +1,7 @@
 import { ValueOrErrors } from "../../../../../../../../../../../../../../main";
 import { isObject, ParsedType } from "../../../../../../../types/state";
-import { BuiltInRenderer } from "../../../builtInRenderer/state";
 import { List, Map } from "immutable";
+import { NestedRenderer } from "../../../nestedRenderer/state";
 
 export type SerializedUnionCaseRenderer = {
   renderer?: any;
@@ -12,7 +12,7 @@ export type UnionCaseRenderer<T> = {
   type: ParsedType<T>;
   caseName: string;
   casePath: List<string>;
-  renderer: BuiltInRenderer<T>;
+  renderer: NestedRenderer<T>;
 };
 
 export const UnionCaseRenderer = {
@@ -20,7 +20,7 @@ export const UnionCaseRenderer = {
     type: ParsedType<T>,
     caseName: string,
     casePath: List<string>,
-    renderer: BuiltInRenderer<T>,
+    renderer: NestedRenderer<T>,
   ): UnionCaseRenderer<T> => ({ kind: "unionCase", type, caseName, casePath, renderer }),
   Operations: {
     tryAsValidUnionCase: <T>(
@@ -61,7 +61,6 @@ export const UnionCaseRenderer = {
       casePath: List<string>,
       serialized: SerializedUnionCaseRenderer,
       caseTypes: Map<string, ParsedType<T>>,
-      allTypes: Map<string, ParsedType<T>>,
     ): ValueOrErrors<UnionCaseRenderer<T>, string> => {
       return UnionCaseRenderer.Operations.tryAsValidUnionCase(
         caseName,
@@ -69,10 +68,10 @@ export const UnionCaseRenderer = {
         serialized,
         caseTypes,
       ).Then((validUnionCase) =>
-        BuiltInRenderer.Operations.Deserialize(
+        NestedRenderer.Operations.Deserialize(
           validUnionCase.type,
+          validUnionCase.casePath,
           validUnionCase.renderer,
-          allTypes,
         ).Then((renderer) =>
           ValueOrErrors.Default.return(
             UnionCaseRenderer.Default(validUnionCase.type, caseName, casePath, renderer),

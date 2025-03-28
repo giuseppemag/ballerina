@@ -37,8 +37,6 @@ import {
   PassthroughFormTemplate,
   defaultState,
   TypeName,
-  ParsedRecordFormConfig,
-  ParsedUnionFormConfig,
   FormLabel,
   UnionForm,
   Form,
@@ -47,27 +45,26 @@ import {
 import { EnumReference } from "../collection/domains/reference/state";
 import { SearchableInfiniteStreamState } from "../primitives/domains/searchable-infinite-stream/state";
 import { SingletonForm } from "../singleton/template";
-import { ParsedRenderer } from "./domains/renderer/state";
 
-export type ParsedRecordForm<T> = {
-  initialFormState: any;
-  formConfig: any;
-  formName: string;
-  formDef: Form<T>;
-  visibilityPredicateExpressions: FieldPredicateExpressions;
-  disabledPredicatedExpressions: FieldPredicateExpressions;
-  parsedRenderer: ParsedRenderer<T>;
-};
+// export type ParsedRecordForm<T> = {
+//   initialFormState: any;
+//   formConfig: any;
+//   formName: string;
+//   formDef: Form<T>;
+//   visibilityPredicateExpressions: FieldPredicateExpressions;
+//   disabledPredicatedExpressions: FieldPredicateExpressions;
+//   parsedRenderer: ParsedRenderer<T>;
+// };
 
-export type ParsedUnionForm<T> = {
-  initialFormState: any;
-  formConfig: any;
-  formName: string;
-  formDef: Form<T>;
-  parsedRenderer: ParsedRenderer<T>;
-};
+// export type ParsedUnionForm<T> = {
+//   initialFormState: any;
+//   formConfig: any;
+//   formName: string;
+//   formDef: Form<T>;
+//   parsedRenderer: ParsedRenderer<T>;
+// };
 
-export type ParsedForm<T> = ParsedRecordForm<T> | ParsedUnionForm<T>;
+// export type ParsedForm<T> = ParsedRecordForm<T> | ParsedUnionForm<T>;
 export const ParseForm =
   <T,>(
     nestedContainerFormView: any,

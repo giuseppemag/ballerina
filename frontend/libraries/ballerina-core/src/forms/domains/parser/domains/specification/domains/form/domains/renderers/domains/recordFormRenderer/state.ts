@@ -11,8 +11,7 @@ import {
   RecordFieldRenderer,
 } from "./domains/recordFieldRenderer/state";
 
-export type SerializedRecordFormRenderer<T> = {
-  type: ParsedRecord<T>;
+export type SerializedRecordFormRenderer = {
   fields?: unknown;
   tabs?: unknown;
   extends?: unknown;
@@ -53,13 +52,15 @@ export const RecordFormRenderer = {
       isObject(_) && "fields" in _ && isObject(_.fields),
     hasTabs: (_: unknown): _ is { tabs: object } =>
       isObject(_) && "tabs" in _ && isObject(_.tabs),
+    hasExtends: (_: unknown): _ is { extends: unknown } =>
+      isObject(_) && "extends" in _ && isObject(_.extends),
     hasValidExtends: (_: unknown): _ is string[] =>
       Array.isArray(_) &&
       (_.length == 0 || _.every((e) => typeof e == "string")),
     tryAsValidRecordForm: <T>(
-      _: SerializedRecordFormRenderer<T>,
+      _: SerializedRecordFormRenderer,
     ): ValueOrErrors<
-      Omit<SerializedRecordFormRenderer<T>, "fields" | "tabs" | "extends"> & {
+      Omit<SerializedRecordFormRenderer, "fields" | "tabs" | "extends"> & {
         fields: Map<string, SerializedRecordFieldRenderer>;
         tabs: object;
         extends: string[];
@@ -79,7 +80,7 @@ export const RecordFormRenderer = {
           "record form is missing the required tabs attribute",
         );
       }
-      const extendedFields = _.extends ?? [];
+      const extendedFields = RecordFormRenderer.Operations.hasExtends(_) ? _.extends : [];
       if (!RecordFormRenderer.Operations.hasValidExtends(extendedFields)) {
         return ValueOrErrors.Default.throwOne(
           "record form extends attribute is not an array of strings",
@@ -94,9 +95,9 @@ export const RecordFormRenderer = {
       });
     },
     Deserialize: <T>(
+      type: ParsedRecord<T>,
       fieldPath: List<string>,
-      serialized: SerializedRecordFormRenderer<T>,
-      types: Map<string, ParsedType<T>>,
+      serialized: SerializedRecordFormRenderer,
     ): ValueOrErrors<RecordFormRenderer<T>, string> => {
       return RecordFormRenderer.Operations.tryAsValidRecordForm(
         serialized,
@@ -110,7 +111,7 @@ export const RecordFormRenderer = {
                   string,
                   SerializedRecordFieldRenderer,
                 ]) => {
-                  const fieldType = types.get(fieldName);
+                  const fieldType = type.fields.get(fieldName);
                   if (!fieldType) {
                     return ValueOrErrors.Default.throwOne(
                       `Unknown field type ${fieldName}  in ${fieldPath.join(
@@ -155,7 +156,7 @@ export const RecordFormRenderer = {
 
           return ValueOrErrors.Default.return(
             RecordFormRenderer.Default(
-              serialized.type,
+              type,
               fields,
               tabs,
               validRecordForm.extends,

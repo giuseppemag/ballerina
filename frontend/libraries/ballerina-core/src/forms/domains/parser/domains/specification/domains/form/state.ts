@@ -31,8 +31,8 @@ export const SerializedForm = {
       _: SerializedForm,
       types: Map<string, ParsedType<T>>,
     ): ValueOrErrors<
-      | { kind: "recordForm"; renderer: SerializedRecordFormRenderer<T> }
-      | { kind: "unionForm"; renderer: SerializedUnionFormRenderer<T> },
+      | { kind: "recordForm"; renderer: SerializedRecordFormRenderer; type: ParsedRecord<T> }
+      | { kind: "unionForm"; renderer: SerializedUnionFormRenderer; type: ParsedUnion<T> },
       string
     > => {
       if (isObject(_) && "type" in _ && typeof _.type == "string") {
@@ -44,13 +44,15 @@ export const SerializedForm = {
         if (formType.kind == "record") {
           return ValueOrErrors.Default.return({
             kind: "recordForm",
-            renderer: { ..._, type: formType },
+            renderer: _,
+            type: formType,
           });
         }
         if (formType.kind == "union") {
           return ValueOrErrors.Default.return({
             kind: "unionForm",
-            renderer: { ..._, type: formType },
+            renderer: _,
+            type: formType,
           });
         }
         return ValueOrErrors.Default.throwOne("form type is not supported");
@@ -83,16 +85,16 @@ export const Form = <T>() => ({
         (serializedWithType) => {
           if (serializedWithType.kind == "recordForm") {
             return RecordFormRenderer.Operations.Deserialize(
+              serializedWithType.type,
               fieldPath,
               serializedWithType.renderer,
-              types,
             );
           }
           if (serializedWithType.kind == "unionForm") {
             return UnionFormRenderer.Operations.Deserialize(
+              serializedWithType.type,
               fieldPath,
               serializedWithType.renderer,
-              types,
             );
           }
           return ValueOrErrors.Default.throwOne("form type is not supported");

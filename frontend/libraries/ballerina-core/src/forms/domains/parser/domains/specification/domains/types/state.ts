@@ -192,12 +192,27 @@ export type ParsedApplicationType<T> = {
   args: Array<ParsedType<T>>;
 };
 
+export type ParsedLookupType = {
+  kind: "lookup";
+  name: TypeName;
+};
+
+export type ParsedOptionType<T> = {
+  kind: "option";
+  value: ParsedType<T>;
+};
+
+export type ParsedPrimitiveType<T> = {
+  kind: "primitive";
+  value: PrimitiveTypeName<T>;
+};
+
 export type ParsedType<T> = (
   | ParsedUnionCase<T>
-  | { kind: "option"; value: ParsedType<T> }
+  | ParsedOptionType<T>
   | ParsedRecord<T>
-  | { kind: "lookup"; name: TypeName }
-  | { kind: "primitive"; value: PrimitiveTypeName<T> }
+  | ParsedLookupType
+  | ParsedPrimitiveType<T>
   | ParsedApplicationType<T>
   | ParsedUnion<T>
 ) & { typeName: TypeName };

@@ -1,8 +1,7 @@
 import { List } from "immutable";
 import {
-  BoolExpr,
   Expr,
-  ParsedType,
+  ParsedApplicationType,
   ValueOrErrors,
 } from "../../../../../../../../../../../../../../../../main";
 import {
@@ -16,12 +15,13 @@ export type SerializedEnumRecordFieldRenderer = {
 export type EnumRecordFieldRenderer<T> = BaseRecordFieldRenderer<T> & {
   kind: "enumRecordField";
   options: string;
+  type: ParsedApplicationType<T>;
 };
 
 export const EnumRecordFieldRenderer = {
   Default: <T>(
     fieldPath: List<string>,
-    type: ParsedType<T>,
+    type: ParsedApplicationType<T>,
     options: string,
     renderer: string,
     visible: Expr,
@@ -84,7 +84,7 @@ export const EnumRecordFieldRenderer = {
       return ValueOrErrors.Default.return(serialized);
     },
     Deserialize: <T>(
-      type: ParsedType<T>,
+      type: ParsedApplicationType<T>,
       fieldPath: List<string>,
       serialized: SerializedEnumRecordFieldRenderer,
     ): ValueOrErrors<EnumRecordFieldRenderer<T>, string> => {

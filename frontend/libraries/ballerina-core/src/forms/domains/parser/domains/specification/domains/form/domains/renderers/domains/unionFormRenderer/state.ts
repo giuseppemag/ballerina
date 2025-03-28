@@ -10,8 +10,7 @@ import {
   SerializedNestedRenderer,
 } from "../nestedRenderer/state";
 
-export type SerializedUnionFormRenderer<T> = {
-  type: ParsedUnion<T>;
+export type SerializedUnionFormRenderer = {
   renderer?: unknown;
   cases?: unknown;
 };
@@ -35,9 +34,9 @@ export const UnionFormRenderer = {
     hasValidRenderer: (_: unknown): _ is SerializedNestedRenderer =>
       isObject(_) && "renderer" in _ && isObject(_.renderer),
     tryAsValidUnionForm: <T>(
-      serialized: SerializedUnionFormRenderer<T>,
+      serialized: SerializedUnionFormRenderer
     ): ValueOrErrors<
-      Omit<SerializedUnionFormRenderer<T>, "cases" | "renderer"> & {
+      Omit<SerializedUnionFormRenderer, "cases" | "renderer"> & {
         renderer?: SerializedNestedRenderer;
         cases: Map<string, SerializedUnionCaseRenderer>;
       },
@@ -72,9 +71,9 @@ export const UnionFormRenderer = {
       });
     },
     Deserialize: <T>(
+      type: ParsedUnion<T>,
       fieldPath: List<string>,
-      serialized: SerializedUnionFormRenderer<T>,
-      types: Map<string, ParsedType<T>>,
+      serialized: SerializedUnionFormRenderer,
     ): ValueOrErrors<UnionFormRenderer<T>, string> =>
       UnionFormRenderer.Operations.tryAsValidUnionForm(serialized).Then(
         (validUnionForm) =>
@@ -88,8 +87,7 @@ export const UnionFormRenderer = {
                     caseName,
                     fieldPath.push(caseName),
                     caseRenderer,
-                    validUnionForm.type.args,
-                    types,
+                    type.args,
                   ).Then((caseRenderer) =>
                     ValueOrErrors.Default.return([caseName, caseRenderer]),
                   );
@@ -99,17 +97,17 @@ export const UnionFormRenderer = {
             const cases = Map(caseTuples);
             if (validUnionForm.renderer != undefined) {
               return NestedRenderer.Operations.Deserialize(
-                validUnionForm.type,
+                type,
                 fieldPath,
                 validUnionForm.renderer,
               ).Then((renderer) => {
                 return ValueOrErrors.Default.return(
-                  UnionFormRenderer.Default(serialized.type, cases, renderer),
+                  UnionFormRenderer.Default(type, cases, renderer),
                 );
               });
             }
             return ValueOrErrors.Default.return(
-              UnionFormRenderer.Default(serialized.type, cases),
+              UnionFormRenderer.Default(type, cases),
             );
           }),
       ),

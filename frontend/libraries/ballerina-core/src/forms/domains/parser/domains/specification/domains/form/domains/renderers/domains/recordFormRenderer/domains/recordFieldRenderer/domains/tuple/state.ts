@@ -1,6 +1,6 @@
 import {
   Expr,
-  ParsedType,
+  ParsedApplicationType,
   ValueOrErrors,
 } from "../../../../../../../../../../../../../../../../main";
 
@@ -19,11 +19,12 @@ export type SerializedTupleRecordFieldRenderer = {
 export type TupleRecordFieldRenderer<T> = BaseRecordFieldRenderer<T> & {
   kind: "tupleRecordField";
   itemRenderers: Array<RecordFieldRenderer<T>>;
+  type: ParsedApplicationType<T>;
 };
 
 export const TupleRecordFieldRenderer = {
   Default: <T>(
-    type: ParsedType<T>,
+    type: ParsedApplicationType<T>,
     fieldPath: List<string>,
     renderer: string,
     itemRenderers: Array<RecordFieldRenderer<T>>,
@@ -100,7 +101,7 @@ export const TupleRecordFieldRenderer = {
       });
     },
     Deserialize: <T>(
-      type: ParsedType<T>,
+      type: ParsedApplicationType<T>,
       fieldPath: List<string>,
       serialized: SerializedTupleRecordFieldRenderer,
     ): ValueOrErrors<TupleRecordFieldRenderer<T>, string> => {
@@ -121,7 +122,7 @@ export const TupleRecordFieldRenderer = {
                 serializedTupleRecordFieldRenderer.itemRenderers.map(
                   (itemRenderer, index) =>
                     RecordFieldRenderer.Operations.Deserialize(
-                      type,
+                      type.args[index],
                       fieldPath.push((index + 1).toString()),
                       itemRenderer,
                     ).Then((deserializedItemRenderer) => {

@@ -1,6 +1,7 @@
 import {
   Expr,
   ParsedType,
+  ParsedUnion,
   ValueOrErrors,
 } from "../../../../../../../../../../../../../../../../main";
 
@@ -19,11 +20,12 @@ export type SerializedUnionRecordFieldRenderer = {
 export type UnionRecordFieldRenderer<T> = BaseRecordFieldRenderer<T> & {
   kind: "unionRecordField";
   cases: Map<string, RecordFieldRenderer<T>>;
+  type: ParsedUnion<T>;
 };
 
 export const UnionRecordFieldRenderer = {
   Default: <T>(
-    type: ParsedType<T>,
+    type: ParsedUnion<T>,
     fieldPath: List<string>,
     renderer: string,
     cases: Map<string, RecordFieldRenderer<T>>,
@@ -100,7 +102,7 @@ export const UnionRecordFieldRenderer = {
       });
     },
     Deserialize: <T>(
-      type: ParsedType<T>,
+      type: ParsedUnion<T>,
       fieldPath: List<string>,
       serialized: SerializedUnionRecordFieldRenderer,
     ): ValueOrErrors<UnionRecordFieldRenderer<T>, string> => {
@@ -119,9 +121,15 @@ export const UnionRecordFieldRenderer = {
             ValueOrErrors.Operations.All(
               List<ValueOrErrors<[string, RecordFieldRenderer<T>], string>>(
                 Object.entries(serializedUnionRecordFieldRenderer.cases).map(
-                  ([caseName, caseProp]) =>
-                    RecordFieldRenderer.Operations.Deserialize(
-                      type,
+                  ([caseName, caseProp]) => {
+                    const caseType = type.args.get(caseName);
+                    if (!caseType) {
+                      return ValueOrErrors.Default.throwOne(
+                        `case ${caseName} not found in union ${fieldPath.join(".")}`,
+                      );
+                    }
+                    return RecordFieldRenderer.Operations.Deserialize(
+                      caseType,
                       fieldPath.push(caseName),
                       caseProp,
                     ).Then((deserializedCase) => {
@@ -129,7 +137,8 @@ export const UnionRecordFieldRenderer = {
                         caseName,
                         deserializedCase,
                       ]);
-                    }),
+                    });
+                  },
                 ),
               ),
             ).Then((deserializedCases) => {

@@ -1,6 +1,7 @@
 import { List } from "immutable";
 import {
   Expr,
+  ParsedApplicationType,
   ParsedType,
   ValueOrErrors,
 } from "../../../../../../../../../../../../../../../../main";
@@ -19,11 +20,12 @@ export type SerializedListRecordFieldRenderer = {
 export type ListRecordFieldRenderer<T> = BaseRecordFieldRenderer<T> & {
   kind: "listRecordField";
   elementRenderer: RecordFieldRenderer<T>;
+  type: ParsedApplicationType<T>;
 };
 
 export const ListRecordFieldRenderer = {
   Default: <T>(
-    type: ParsedType<T>,
+    type: ParsedApplicationType<T>,
     fieldPath: List<string>,
     renderer: string,
     elementRenderer: RecordFieldRenderer<T>,
@@ -98,7 +100,7 @@ export const ListRecordFieldRenderer = {
       });
     },
     Deserialize: <T>(
-      type: ParsedType<T>,
+      type: ParsedApplicationType<T>,
       fieldPath: List<string>,
       serialized: SerializedListRecordFieldRenderer,
     ): ValueOrErrors<ListRecordFieldRenderer<T>, string> => {
@@ -115,7 +117,7 @@ export const ListRecordFieldRenderer = {
             fieldPath.push("disabledPredicate"),
           ).Then((disabledExpr) =>
             RecordFieldRenderer.Operations.Deserialize(
-              type,
+              type.args[0],
               fieldPath.push("elementRenderer"),
               serializedListRecordFieldRenderer.elementRenderer,
             ).Then((elementRenderer) =>

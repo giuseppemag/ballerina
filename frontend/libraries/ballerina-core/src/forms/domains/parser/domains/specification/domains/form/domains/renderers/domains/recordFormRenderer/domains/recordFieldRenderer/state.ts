@@ -64,7 +64,6 @@ export type SerializedRecordFieldRenderer =
 
 export type BaseRecordFieldRenderer<T> = {
   fieldPath: List<string>;
-  type: ParsedType<T>;
   renderer: string;
   visible: Expr;
   disabled: Expr;

@@ -6,7 +6,7 @@ import {
   BaseRecordFieldRenderer,
 } from "../../state";
 import {
-  ParsedType,
+  ParsedApplicationType,
   ValueOrErrors,
 } from "../../../../../../../../../../../../../../../../main";
 import { Expr } from "../../../../../../../../../../../../../../../../main";
@@ -20,11 +20,12 @@ export type SumRecordFieldRenderer<T> = BaseRecordFieldRenderer<T> & {
   kind: "sumRecordField";
   leftRenderer: RecordFieldRenderer<T>;
   rightRenderer: RecordFieldRenderer<T>;
+  type: ParsedApplicationType<T>;
 };
 
 export const SumRecordFieldRenderer = {
   Default: <T>(
-    type: ParsedType<T>,
+    type: ParsedApplicationType<T>,
     fieldPath: List<string>,
     renderer: string,
     leftRenderer: RecordFieldRenderer<T>,
@@ -83,7 +84,7 @@ export const SumRecordFieldRenderer = {
       return ValueOrErrors.Default.return(serialized);
     },
     Deserialize: <T>(
-      type: ParsedType<T>,
+      type: ParsedApplicationType<T>,
       rendererPath: List<string>,
       serialized: SerializedSumRecordFieldRenderer,
     ): ValueOrErrors<SumRecordFieldRenderer<T>, string> => {
@@ -100,12 +101,12 @@ export const SumRecordFieldRenderer = {
             rendererPath.push("disabled"),
           ).Then((disabledExpr) =>
             RecordFieldRenderer.Operations.Deserialize(
-              type,
+              type.args[0],
               rendererPath.push("leftRenderer"),
               serializedSumRecordFieldRenderer.leftRenderer,
             ).Then((deserializedLeftRenderer) =>
               RecordFieldRenderer.Operations.Deserialize(
-                type,
+                type.args[1],
                 rendererPath.push("rightRenderer"),
                 serializedSumRecordFieldRenderer.rightRenderer,
               ).Then((deserializedRightRenderer) => {

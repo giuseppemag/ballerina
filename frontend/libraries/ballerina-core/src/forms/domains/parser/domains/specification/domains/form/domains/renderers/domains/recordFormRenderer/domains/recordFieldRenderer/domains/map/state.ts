@@ -1,6 +1,6 @@
 import { Expr } from "../../../../../../../../../../../../../../../../main";
 import {
-  ParsedType,
+  ParsedApplicationType,
   ValueOrErrors,
 } from "../../../../../../../../../../../../../../../../main";
 import {
@@ -20,11 +20,12 @@ export type MapRecordFieldRenderer<T> = BaseRecordFieldRenderer<T> & {
   kind: "mapRecordField";
   keyRenderer: RecordFieldRenderer<T>;
   valueRenderer: RecordFieldRenderer<T>;
+  type: ParsedApplicationType<T>;
 };
 
 export const MapRecordFieldRenderer = {
   Default: <T>(
-    type: ParsedType<T>,
+    type: ParsedApplicationType<T>,
     fieldPath: List<string>,
     renderer: string,
     keyRenderer: RecordFieldRenderer<T>,
@@ -83,7 +84,7 @@ export const MapRecordFieldRenderer = {
       return ValueOrErrors.Default.return(serialized);
     },
     Deserialize: <T>(
-      type: ParsedType<T>,
+      type: ParsedApplicationType<T>,
       fieldPath: List<string>,
       serialized: SerializedMapRecordFieldRenderer,
     ): ValueOrErrors<MapRecordFieldRenderer<T>, string> => {
@@ -100,12 +101,12 @@ export const MapRecordFieldRenderer = {
             fieldPath.push("disabledPredicate"),
           ).Then((disabledExpr) =>
             RecordFieldRenderer.Operations.Deserialize(
-              type,
+              type.args[0],
               fieldPath.push("keyRenderer"),
               serializedMapRecordFieldRenderer.keyRenderer,
             ).Then((deserializedKeyRenderer) =>
               RecordFieldRenderer.Operations.Deserialize(
-                type,
+                type.args[1],
                 fieldPath.push("valueRenderer"),
                 serializedMapRecordFieldRenderer.valueRenderer,
               ).Then((deserializedValueRenderer) => {

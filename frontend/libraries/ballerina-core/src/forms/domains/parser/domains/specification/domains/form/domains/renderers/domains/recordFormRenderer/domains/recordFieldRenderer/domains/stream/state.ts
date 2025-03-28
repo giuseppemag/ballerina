@@ -1,7 +1,7 @@
 import { List } from "immutable";
 import {
   Expr,
-  ParsedType,
+  ParsedApplicationType,
   ValueOrErrors,
 } from "../../../../../../../../../../../../../../../../main";
 import {
@@ -15,11 +15,12 @@ export type SerializedStreamRecordFieldRenderer = {
 export type StreamRecordFieldRenderer<T> = BaseRecordFieldRenderer<T> & {
   kind: "streamRecordField";
   stream: string;
+  type: ParsedApplicationType<T>;
 };
 
 export const StreamRecordFieldRenderer = {
   Default: <T>(
-    type: ParsedType<T>,
+    type: ParsedApplicationType<T>,
     fieldPath: List<string>,
     stream: string,
     renderer: string,
@@ -83,7 +84,7 @@ export const StreamRecordFieldRenderer = {
       return ValueOrErrors.Default.return(serialized);
     },
     Deserialize: <T>(
-      type: ParsedType<T>,
+      type: ParsedApplicationType<T>,
       fieldPath: List<string>,
 
       serialized: SerializedStreamRecordFieldRenderer,
