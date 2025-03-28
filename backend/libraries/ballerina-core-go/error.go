@@ -65,3 +65,17 @@ func (err *EntityNameAndDeltaTypeMismatch) Error() string {
 func NewEntityNameAndDeltaTypeMismatch(entityName string, delta DeltaBase)  error {
 	return &EntityNameAndDeltaTypeMismatch{EntityName: entityName, Delta: delta}
 }
+
+type InvalidDiscriminatorError struct {
+	DiscriminatorValue  string
+	TypeName string
+}
+
+func (err *InvalidDiscriminatorError) Error() string {
+	return fmt.Sprintf("%s is not a valid discriminator for type %s", err.DiscriminatorValue, err.TypeName)
+}
+
+func NewInvalidDiscriminatorError(discriminatorValue string, typeName string) error {
+	return &InvalidDiscriminatorError{DiscriminatorValue: discriminatorValue, TypeName: typeName}
+}
+

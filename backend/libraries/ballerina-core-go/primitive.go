@@ -33,7 +33,7 @@ func MatchDeltaInt[Result any](
       case "IntReplace":
         return onReplace(delta.Replace)
     }
-    return result, nil
+    return result, NewInvalidDiscriminatorError(string(delta.Discriminator), "DeltaInt")
   }
 }
 
@@ -81,7 +81,7 @@ func MatchDeltaString[Result any](
       case "StringReplace":
         return onReplace(delta.Replace)
     }
-    return result, nil
+    return result, NewInvalidDiscriminatorError(string(delta.Discriminator), "DeltaString")
   }
 }
 
@@ -113,7 +113,7 @@ func MatchDeltaBool[Result any](
       case "BoolReplace":
         return onReplace(delta.Replace)
     }
-    return result, nil
+    return result, NewInvalidDiscriminatorError(string(delta.Discriminator), "DeltaBool")
   }
 }
 
@@ -145,7 +145,7 @@ func MatchDeltaGuid[Result any](
       case "GuidReplace":
         return onReplace(delta.Replace)
     }
-    return result, nil
+    return result, NewInvalidDiscriminatorError(string(delta.Discriminator), "DeltaGuid")
   }
 }
 
@@ -177,6 +177,6 @@ func MatchDeltaTime[Result any](
       case "TimeReplace":
         return onReplace(delta.Replace)
     }
-    return result, nil
+    return result, NewInvalidDiscriminatorError(string(delta.Discriminator), "DeltaTime")
   }
 }

@@ -11,10 +11,20 @@ module WritersAndDeltas =
   open Ballerina.Collections.Sum
   open Ballerina.DSL.FormEngine.Codegen.Golang.Generator.Model
   open Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs
+  open Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs.TypeAnnotations
 
   type ExprType with
     static member ToWriter (writerName: WriterName) (t: ExprType) =
       let add (w: Writer) = Map.add (w.Name, w.Type) w
+
+      let toGolangTypeAnnotation t =
+        state {
+          let! ((ctx, codegenConfig): ParsedFormsContext * CodeGenConfig) = state.GetContext()
+
+          match (t |> ExprType.ToGolangTypeAnnotation).run (codegenConfig, { UsedImports = Set.empty }) with
+          | Right(err, _) -> return! state.Throw err
+          | Left(t_a, _) -> return t_a
+        }
 
       state {
         let! ((ctx, codegenConfig): ParsedFormsContext * CodeGenConfig) = state.GetContext()
@@ -83,9 +93,11 @@ module WritersAndDeltas =
           | ExprType.OptionType(a) ->
             let! wa = ExprType.ToWriter { WriterName = $"{writerName.WriterName}_Value" } a
 
+            let! a_annotation = toGolangTypeAnnotation a
+
             let w =
               { Name = { WriterName = $"OptionWriter[{wa.DeltaTypeName}]" }
-                DeltaTypeName = $"{codegenConfig.Option.DeltaTypeName}[{wa.DeltaTypeName}]"
+                DeltaTypeName = $"{codegenConfig.Option.DeltaTypeName}[{a_annotation}, {wa.DeltaTypeName}]"
                 Type = t
                 Components = Map.empty
                 Kind = WriterKind.Imported }

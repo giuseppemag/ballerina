@@ -82,13 +82,35 @@
             ✅ ballerina.NewEntityNotFoundError should come from config in entityPATCHer
             ✅ ballerina.NewEntityNameAndDeltaTypeMismatch should come from config in entityPATCHer
             ❌ define the polymorphic variants (`Match` with at least `replaceWith`, plus all the mapping compositions: `left, right, nth element, add, remove, moveBefore, moveAfter`)
-              ✅ Primitive
-              ❌ Option
-              ❌ Sum
-              ❌ Set
-              ❌ List
-              ❌ Map
-              ❌ Tuples
+              ✅ DeltaPrimitive
+              ✅ DeltaOption[A,DA]
+                ✅ Replace A
+                ✅ Value DA
+              ❌ DeltaSum[A,B,DA,DB]
+                ❌ Replace A+B
+                ❌ Left DA
+                ❌ Right DB
+              ❌ DeltaSet[A,DA]
+                ❌ Replace(Set A)
+                ❌ Value A x DA
+                ❌ Add A
+                ❌ Remove A
+              ❌ DeltaList[A,DA]
+                ❌ Replace(List A)
+                ❌ Value int x DA
+                ❌ AddAt int x A
+                ❌ RemoveAt int
+                ❌ Move int x int
+              ❌ DeltaMap[K,V,DK,DV]
+                ❌ Replace(Map K V)
+                ❌ Value K x DV
+                ❌ Add K x V
+                ❌ Remove K
+              ❌ DeltaTuple[A1,A2,...An,DA1,DA2,...DAn]
+                ❌ Replace(A1 x A2 x ... x An)
+                ❌ Item_i DAi
+              ❌ names of generic parameters is inconsistent and should be fixed
+              ❌ `"IntReplace"`, etc. should all just be `"Replace"`
           ❌ imports
           ❌ `generated types`
           ❌ ToGolang in the typename and method name is redundant, remove it
@@ -99,6 +121,7 @@
             ❌ generate marshall and unmarshall for the generated deltas
             ❌ write marshall and unmarshall for the generated deltas
           ❌ generate more than one file
+          ❌ toTypeAnnotation in ExprType.ToWriter could benefit from a better context mapper
         ✅ complete the kitchen sink sample with all generics
           ✅ add a few more tuples - up to 5
           ✅ add all possible generic types - including single and multi selects
