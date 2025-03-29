@@ -120,7 +120,7 @@ export const AsyncState = {
       })),
     toReloading: <a>(): Updater<AsyncState<a>> =>
       Updater((current) =>
-        current.kind == "loaded"
+        current.kind == "loaded" || current.kind == "reloading"
           ? AsyncState.Default.reloading(current.value)
           : AsyncState.Updaters.toLoading<a>()(current),
       ),
