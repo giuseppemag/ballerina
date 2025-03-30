@@ -1,6 +1,26 @@
 import { Sum, Errors, ValueOrErrors, MapRepo } from "ballerina-core";
 import { List, Map, Set } from "immutable";
 
+export type ExprType = 
+| { kind:"string" }
+| { kind:"bool" }
+| { kind:"int32" }
+| { kind:"float32" }
+| { kind:"time" }
+| { kind:"date" }
+| { kind:"guid" }
+| { kind:"unit" }
+| { kind:"Union", cases:Map<string, ExprType> }
+| { kind:"Record", fields:Map<string, ExprType> }
+| { kind:"Tuple", items:List<ExprType> }
+| { kind:"Sum", items:[ExprType,ExprType] }
+| { kind:"Option", items:[ExprType] }
+| { kind:"SingleSelection", items:[ExprType] }
+| { kind:"List", items:[ExprType] }
+| { kind:"MultiSelection", items:[ExprType] }
+| { kind:"Set", items:[ExprType] }
+| { kind:"Map", items:[ExprType, ExprType] }
+
 export type ValueRecord = { kind: "record"; fields: Map<string, Value> };
 export type ValueUnionCase = {
   kind: "unionCase";
@@ -565,3 +585,110 @@ console.log(JSON.stringify(res));
 //   console.log("Error: ", JSON.stringify(parsedSample.errors))
 
 // }
+
+
+type DeltaPrimitive = 
+  | { kind:"IntReplace", replace:number }
+  | { kind:"StringReplace", replace:string }
+  | { kind:"BoolReplace", replace:boolean }
+  | { kind:"TimeReplace", replace:number }
+  | { kind:"GuidReplace", replace:string }
+  | { kind:"Int32Replace", replace:bigint }
+  | { kind:"Float32Replace", replace:number }
+type DeltaUnit = 
+| { kind:"UnitReplace", replace:Value }
+  type DeltaOption = 
+| { kind:"OptionReplace", replace:Value, type:ExprType }
+| { kind:"OptionValue", value:Delta, type:ExprType }
+type DeltaSum = 
+| { kind:"SumReplace", replace:Value, type:ExprType }
+| { kind:"SumLeft", value:Delta, type:ExprType }
+| { kind:"SumRight", value:Delta, type:ExprType }
+type DeltaList = 
+| { kind:"ArrayReplace", replace:Value, type:ExprType }
+| { kind:"ArrayValue", value:[number, Delta] }
+| { kind:"ArrayAddAt", value:[number,Value], type:ExprType }
+| { kind:"ArrayRemoveAt", index:number }
+| { kind:"ArrayMoveFromTo", from:number, to:number }
+type DeltaSet = 
+| { kind:"SetReplace", replace:Value, type:ExprType }
+| { kind:"SetValue", value:[Value, Delta], type:ExprType }
+| { kind:"SetAdd", value:Value, type:ExprType }
+| { kind:"SetRemove", value:Value, type:ExprType }
+type DeltaMap = 
+| { kind:"MapReplace", replace:Value, type:ExprType }
+| { kind:"MapValue", keyValue:[Value, Delta], type:ExprType }
+| { kind:"MapAdd", keyValue:[Value,Value], type:ExprType }
+| { kind:"MapRemove", key:Value, type:ExprType }
+type DeltaRecord = 
+| { kind:"RecordReplace", replace:Value, type:ExprType }
+| { kind:"RecordField", field:[string, Delta], type:ExprType }
+type DeltaUnion = 
+| { kind:"UnionReplace", replace:Value, type:ExprType }
+| { kind:"UnionCase", case:[string, Delta], type:ExprType }
+type DeltaTuple = 
+| { kind:"TupleReplace", replace:Value, type:ExprType }
+| { kind:"TupleCase", item:[number, Delta], type:ExprType }
+type Delta = DeltaPrimitive | DeltaOption | DeltaSum | DeltaList | DeltaSet | DeltaMap | DeltaRecord | DeltaUnion | DeltaTuple
+
+type TransferTuple2<a,b> = { Item1:a, Item2:b }
+type DeltaTransferPrimitive = 
+  | { Discriminator:"IntReplace", Replace:number }
+  | { Discriminator:"StringReplace", Replace:string }
+  | { Discriminator:"BoolReplace", Replace:boolean }
+  | { Discriminator:"TimeReplace", Replace:number }
+  | { Discriminator:"GuidReplace", Replace:string }
+  | { Discriminator:"Int32Replace", Replace:bigint }
+  | { Discriminator:"Float32Replace", Replace:number }
+type DeltaTransferUnit = 
+| { Discriminator:"UnitReplace", Replace:any }
+  type DeltaTransferOption = 
+| { Discriminator:"OptionReplace", Replace:any }
+| { Discriminator:"OptionValue", Value:DeltaTransfer }
+type DeltaTransferSum = 
+| { Discriminator:"SumReplace", Replace:any }
+| { Discriminator:"SumLeft", Left:DeltaTransfer }
+| { Discriminator:"SumRight", Right:DeltaTransfer }
+type DeltaTransferList = 
+| { Discriminator:"ArrayReplace", Replace:any }
+| { Discriminator:"ArrayValue", Value:TransferTuple2<number, DeltaTransfer> }
+| { Discriminator:"ArrayAddAt", AddAt:TransferTuple2<number,any> }
+| { Discriminator:"ArrayRemoveAt", RemoveAt:number }
+| { Discriminator:"ArrayMoveFromTo", MoveFromTo:TransferTuple2<number,number> }
+type DeltaTransferSet = 
+| { Discriminator:"SetReplace", Replace:any }
+| { Discriminator:"SetValue", Value:TransferTuple2<any, DeltaTransfer> }
+| { Discriminator:"SetAdd", Add:any }
+| { Discriminator:"SetRemove", Remove:any }
+type DeltaTransferMap = 
+| { Discriminator:"MapReplace", Replace:any }
+| { Discriminator:"MapValue", Value:TransferTuple2<any, DeltaTransfer> }
+| { Discriminator:"MapAdd", Add:TransferTuple2<any,any> }
+| { Discriminator:"MapRemove", Remove:any }
+type DeltaTransferRecord = 
+| { Discriminator:"RecordReplace", Replace:any }
+| ({ Discriminator:"RecordField"} & { [field:string]:DeltaTransfer })
+type DeltaTransferUnion = 
+| { Discriminator:"UnionReplace", Replace:any }
+| ({ Discriminator:"UnionCase"} & { [caseName:string]:DeltaTransfer })
+type DeltaTransferTuple = 
+| { Discriminator:"TupleReplace", Replace:any }
+| ({ Discriminator:"TupleCase" } & { [item:string]:DeltaTransfer })
+
+type DeltaTransfer = DeltaTransferPrimitive | DeltaTransferOption | DeltaTransferSum | DeltaTransferList | DeltaTransferSet | DeltaTransferMap | DeltaTransferRecord | DeltaTransferUnion | DeltaTransferTuple
+
+
+const DeltaTransfer = {
+  Default:{
+    FromDelta:(toRawObject:(value:Value,type:ExprType) => ValueOrErrors<any, string>) => (delta:Delta) : ValueOrErrors<DeltaTransfer, string> => {
+      const rec = DeltaTransfer.Default.FromDelta(toRawObject)
+      return delta.kind == "ArrayAddAt" ?
+        delta.type.kind == "List" ?
+          toRawObject(delta.value[1], delta.type.items[0]).Then(element => 
+            ValueOrErrors.Default.return<DeltaTransfer, string>({ Discriminator:"ArrayAddAt", AddAt:{ Item1:delta.value[0], Item2:element } })
+          )
+          : ValueOrErrors.Default.throwOne<DeltaTransfer, string>(`Error: cannot process AddAt for delta ${delta}, the type is not a list.`)
+        : null!
+    }
+  }
+}

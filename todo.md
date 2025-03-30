@@ -87,41 +87,29 @@
               ✅ Add every tuple to the entity patch kitchen sink up to 7
               ❌ names of generic parameters is inconsistent and should be fixed
               ❌ define the FE deltas, make an array of Deltas[Unit] foldable into a single Deltas[DeltaBase]
-                ❌ DeltaPrimitive
-                ❌ DeltaOption[A,DA]
-                  ❌ Replace A
-                  ❌ Value DA
-                  ❌ Match
-                ❌ DeltaSum[A,B,DA,DB]
-                  ❌ Replace A+B
-                  ❌ Left DA
-                  ❌ Right DB
-                  ❌ Match
-                ❌ DeltaList[A,DA]
-                  ❌ Replace(List A)
-                  ❌ Value int x DA
-                  ❌ AddAt int x A
-                  ❌ RemoveAt int
-                  ❌ Move int x int
-                  ❌ Match
-                ❌ DeltaSet[A,DA]
-                  ❌ Replace(Set A)
-                  ❌ Value A x DA
-                  ❌ Add A
-                  ❌ Remove A
-                  ❌ Match
-                ❌ DeltaMap[K,V,DK,DV]
-                  ❌ Replace(Map K V)
-                  ❌ Value K x DV
-                  ❌ Add K x V
-                  ❌ Remove K
-                  ❌ Match
-                ❌ DeltaTuple[A1,A2,...An,DA1,DA2,...DAn]
-                  ❌ Replace(A1 x A2 x ... x An)
-                  ❌ Item_i DAi
-                  ❌ Match
-                ❌ DeltaRecord
-                ❌ DeltaUnit
+                ✅ DeltaPrimitive
+                ✅ DeltaOption[A,DA]
+                ✅ DeltaSum[A,B,DA,DB]
+                ✅ DeltaList[A,DA]
+                ✅ DeltaSet[A,DA]
+                ✅ DeltaMap[K,V,DK,DV]
+                ✅ DeltaTuple[A1,A2,...An,DA1,DA2,...DAn]
+                ✅ DeltaRecord
+                ✅ DeltaUnit
+                ✅ define a DeltaTransfer structure and Delta structure
+                  ✅ use the right Discriminator
+                  ✅ use the right container names
+                  ✅ Delta -> DeltaTransfer
+                  ✅ Value -> any
+                  ✅ no `type` field
+                ❌ convert Delta to DeltaTransfer
+                ❌ verify that the DeltaTransfer structure deserializes correctly in the Go structures
+                  ❌ create main.go
+                  ❌ unmarshall hand-written json (in TS) with Discriminators to the right structures, pick first successful
+                  ❌ process nested match expressions in main.go for maximum realism
+                  ❌ create sample Delta in TS
+                  ❌ convert it to delta transfer
+                  ❌ print json result and test it again in main.go
               ❌ add unit tests for all the go structures
           ❌ imports
           ❌ `generated types`
