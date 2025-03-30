@@ -6,7 +6,6 @@ import {
   UnionType,
 } from "../../../../../types/state";
 import { NestedRenderer } from "../nestedRenderer/state";
-import { UnionCaseRenderer } from "./domains/unionCaseRenderer/state";
 import { List, Map } from "immutable";
 
 export type SerializedUnionFormRenderer = {

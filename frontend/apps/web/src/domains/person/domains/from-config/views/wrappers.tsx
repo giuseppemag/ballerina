@@ -9,8 +9,7 @@ import {
   CreateFormWritableState,
   CreateFormForeignMutationsExpected,
   SimpleCallback,
-  FormParsingResult,
-  FormConfigValidationAndParseResult,
+  FormLaunchersResult,
   EditFormView,
   EditFormWritableState,
   EditFormContext,
@@ -145,16 +144,16 @@ export const EditPersonSubmitButtonWrapper: EditFormView<any, any> =
     </>
   ));
 
-export const PersonShowFormSetupErrors = (
-  validatedFormsConfig: FormConfigValidationAndParseResult<Unit>,
-  parsedFormsConfig: FormParsingResult,
-) => ({
-  form: Template.Default((props: any) => (
-    <>
-      {validatedFormsConfig.kind == "errors" &&
-        JSON.stringify(validatedFormsConfig.errors)}
-      {parsedFormsConfig.kind == "r" && JSON.stringify(parsedFormsConfig.value)}
-    </>
-  )),
-  initialState: unit,
-});
+// export const PersonShowFormSetupErrors = (
+//   validatedFormsConfig: FormConfigValidationAndParseResult<Unit>,
+//   parsedFormsConfig: FormLaunchersResult<any>,
+// ) => ({
+//   form: Template.Default((props: any) => (
+//     <>
+//       {validatedFormsConfig.kind == "errors" &&
+//         JSON.stringify(validatedFormsConfig.errors)}
+//       {parsedFormsConfig.kind == "r" && JSON.stringify(parsedFormsConfig.value)}
+//     </>
+//   )),
+//   initialState: unit,
+// });

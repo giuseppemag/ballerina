@@ -39,6 +39,10 @@ import {
   NestedTupleRenderer,
   SerializedNestedTupleRenderer,
 } from "./domains/tuple/state";
+import {
+  NestedSumUnitDateRenderer,
+  SerializedNestedSumUnitDateRenderer,
+} from "./domains/sumUnitDate/state";
 
 export type BaseSerializedNestedRenderer = {
   renderer?: unknown;
@@ -56,7 +60,8 @@ export type SerializedNestedRenderer =
   | SerializedNestedMapRenderer
   | SerializedNestedSumRenderer
   | SerializedNestedUnionRenderer
-  | SerializedNestedTupleRenderer;
+  | SerializedNestedTupleRenderer
+  | SerializedNestedSumUnitDateRenderer;
 
 export type BaseNestedRenderer = {
   rendererPath: List<string>;
@@ -75,7 +80,8 @@ export type NestedRenderer<T> =
   | NestedMapRenderer<T>
   | NestedSumRenderer<T>
   | NestedUnionRenderer<T>
-  | NestedTupleRenderer<T>;
+  | NestedTupleRenderer<T>
+  | NestedSumUnitDateRenderer<T>;
 
 export const NestedRenderer = {
   Operations: {

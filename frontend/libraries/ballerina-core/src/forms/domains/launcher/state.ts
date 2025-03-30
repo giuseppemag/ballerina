@@ -8,7 +8,11 @@ import {
   Unit,
   Updater,
 } from "../../../../main";
-import { FormParsingResult, FormsParserState } from "../parser/state";
+import {
+  FormLaunchersResult,
+  FormsParserState,
+  ParsedLauncher,
+} from "../parser/state";
 
 export type FormRefCreateApiHandlers<Arg> = {
   onDefaultSuccess?: (_: Arg) => void;
@@ -50,31 +54,23 @@ export type FormRef = {
     }
 );
 
-export type FormRunnerContext = {
+export type FormRunnerContext<T extends { [key in keyof T]: { type: any; state: any } }> = {
   extraContext: any;
   formRef: FormRef;
-  showFormParsingErrors: BasicFun<FormParsingResult, JSX.Element>;
-} & FormsParserState;
+  showFormParsingErrors: BasicFun<FormLaunchersResult<T>, JSX.Element>;
+} & FormsParserState<T>;
 
-export type FormRunnerState = {
-  form: Sum<
-    {
-      form: any;
-      formFieldStates: any;
-      entity: any;
-      commonFormState: any;
-      customFormState: any;
-      globalConfiguration: any;
-    },
-    "not initialized"
-  >;
+export type FormRunnerState<T> = {
+  form: Sum<ParsedLauncher<T>, "not initialized">;
 };
 export type FormRunnerForeignMutationsExpected = Unit;
-export const FormRunnerState = {
-  Default: (): FormRunnerState => ({
-    form: Sum.Default.right("not initialized"),
-  }),
-  Updaters: {
-    ...simpleUpdater<FormRunnerState>()("form"),
-  },
+export const FormRunnerState = <T>() => {
+  return {
+    Default: (): FormRunnerState<T> => ({
+      form: Sum.Default.right("not initialized"),
+    }),
+    Updaters: {
+      ...simpleUpdater<FormRunnerState<T>>()("form"),
+    },
+  };
 };

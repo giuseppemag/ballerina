@@ -9,7 +9,7 @@ import {
 } from "../../../../../main";
 import { CoTypedFactory } from "../../../../coroutines/builder";
 import {
-  FormParsingResult,
+  FormLaunchersResult,
   FormsParserContext,
   FormsParserState,
   parseFormsToLaunchers,
@@ -18,11 +18,11 @@ import {
 export const LoadValidateAndParseFormsConfig = <
   T extends { [key in keyof T]: { type: any; state: any } },
 >() => {
-  const Co = CoTypedFactory<FormsParserContext<T>, FormsParserState>();
+  const Co = CoTypedFactory<FormsParserContext<T>, FormsParserState<T>>();
 
   return Co.Template<Unit>(
     Co.GetState().then((current) =>
-      Synchronize<Unit, FormParsingResult>(
+      Synchronize<Unit, FormLaunchersResult<T>>(
         async () => {
           const serializedSpecifications = await current.getFormsConfig();
           const builtIns = builtInsFromFieldViews(current.fieldViews);
@@ -38,9 +38,17 @@ export const LoadValidateAndParseFormsConfig = <
               injectedPrimitives,
             )(serializedSpecifications);
           if (deserializationResult.kind == "errors")
-            return Sum.Default.right(deserializationResult.errors);
-          console.debug("Deserialized specification");
-          console.debug(deserializationResult.value);
+            return deserializationResult
+          const dispatcherContext = {
+            builtIns,
+            injectedPrimitives,
+            fieldTypeConverters: current.fieldTypeConverters,
+            containerFormView: current.containerFormView,
+            nestedContainerFormView: current.nestedContainerFormView,
+            fieldViews: current.fieldViews,
+            infiniteStreamSources: current.infiniteStreamSources,
+            enumOptionsSources: current.enumOptionsSources,
+          }
           return parseFormsToLaunchers(
             builtIns,
             injectedPrimitives,
@@ -56,7 +64,7 @@ export const LoadValidateAndParseFormsConfig = <
         (_) => "transient failure",
         5,
         50,
-      ).embed((_) => _.formsConfig, FormsParserState.Updaters.formsConfig),
+      ).embed((_) => _.formsConfig, FormsParserState<T>().Updaters.formsConfig),
     ),
     {
       interval: 15,

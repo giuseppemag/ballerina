@@ -1,10 +1,10 @@
-import { Set, List, Map, OrderedMap } from "immutable";
+import { Set, List, Map } from "immutable";
 import {
   BuiltInGenericType,
   BuiltInGenericTypes,
   BuiltInPrimitiveTypes,
-} from "../../../built-ins/state";
-import { InjectedPrimitives } from "../../../injectables/state";
+} from "../../../../../parser/domains/built-ins/state";
+import { InjectedPrimitives } from "../../../../../parser/domains/injectables/state";
 import { ValueOrErrors } from "../../../../../../../collections/domains/valueOrErrors/state";
 import { Unit } from "../../../../../../../../main";
 
@@ -107,6 +107,8 @@ export const RawType = {
     _: SerializedType<T>,
   ): _ is { fun: "Sum"; args: Array<SerializedType<T>> } =>
     RawType.isApplication(_) && _.fun == "Sum" && _.args.length == 2,
+  isSumUnitDate: <T>(_: SerializedType<T>): _ is "SumUnitDate" =>
+    typeof _ == "string" && _ == "SumUnitDate",
   isSingleSelection: <T>(
     _: SerializedType<T>,
   ): _ is { fun: "SingleSelection"; args: Array<SerializedType<T>> } =>
@@ -166,6 +168,11 @@ export type PrimitiveTypeName<T> =
   | "secret"
   | keyof T
   | "guid";
+
+export type SumUnitDateType = {
+  kind: "sumUnitDate";
+  typeName: TypeName;
+};
 
 export type UnionType<T> = {
   kind: "union";
@@ -247,10 +254,15 @@ export type ParsedType<T> = (
   | TupleType<T>
   | SumType<T>
   | MapType<T>
+  | SumUnitDateType
 ) & { typeName: TypeName };
 
 export const ParsedType = {
   Default: {
+    sumUnitDate: (typeName: TypeName): SumUnitDateType => ({
+      kind: "sumUnitDate",
+      typeName,
+    }),
     unionCase: <T>(
       name: CaseName,
       fields: RecordType<T> | LookupType,
@@ -365,6 +377,8 @@ export const ParsedType = {
         ? fst.name == snd.name
         : fst.kind == "primitive" && snd.kind == "primitive"
         ? fst.name == snd.name
+        : fst.kind == "sumUnitDate" && snd.kind == "sumUnitDate"
+        ? fst.typeName == snd.typeName
         : fst.kind == "list" && snd.kind == "list"
         ? fst.name == snd.name
         : fst.kind == "singleSelection" && snd.kind == "singleSelection"
@@ -394,6 +408,10 @@ export const ParsedType = {
       typeNames: Set<TypeName>,
       injectedPrimitives?: InjectedPrimitives<T>,
     ): ValueOrErrors<ParsedType<T>, string> => {
+      if (RawType.isSumUnitDate(rawType))
+        return ValueOrErrors.Default.return(
+          ParsedType.Default.sumUnitDate(typeName),
+        );
       if (RawType.isPrimitive(rawType, injectedPrimitives))
         return ValueOrErrors.Default.return(
           ParsedType.Default.primitive(

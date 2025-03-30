@@ -338,13 +338,7 @@
             "Address"
           ]
         },
-        "importantDate": {
-          "fun": "Sum",
-          "args": [
-            "unit",
-            "Date"
-          ]
-        },
+        "importantDate": "SumUnitDate",
         "addressesBy": {
           "fun": "Sum",
           "args": [

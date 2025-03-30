@@ -41,6 +41,10 @@ import {
   ListRecordFieldRenderer,
   SerializedListRecordFieldRenderer,
 } from "./domains/list/state";
+import {
+  SumUnitDateFieldRenderer,
+  SerializedSumUnitDateFieldRenderer,
+} from "./domains/sumUnitDate/state";
 
 export type BaseSerializedRecordFieldRenderer = {
   renderer?: unknown;
@@ -60,7 +64,8 @@ export type SerializedRecordFieldRenderer =
   | SerializedTupleRecordFieldRenderer
   | SerializedUnionRecordFieldRenderer
   | SerializedLookupRecordFieldRenderer
-  | SerializedListRecordFieldRenderer;
+  | SerializedListRecordFieldRenderer
+  | SerializedSumUnitDateFieldRenderer;
 
 export type BaseRecordFieldRenderer<T> = {
   fieldPath: List<string>;
@@ -81,7 +86,8 @@ export type RecordFieldRenderer<T> =
   | MapRecordFieldRenderer<T>
   | SumRecordFieldRenderer<T>
   | TupleRecordFieldRenderer<T>
-  | UnionRecordFieldRenderer<T>;
+  | UnionRecordFieldRenderer<T>
+  | SumUnitDateFieldRenderer<T>;
 
 export const RecordFieldRenderer = {
   Operations: {
@@ -90,6 +96,14 @@ export const RecordFieldRenderer = {
       fieldPath: List<string>,
       serialized: SerializedRecordFieldRenderer,
     ): ValueOrErrors<RecordFieldRenderer<T>, string> => {
+
+      if (type.kind == "sumUnitDate") {
+        return SumUnitDateFieldRenderer.Operations.Deserialize(
+          type,
+          fieldPath.push("sumUnitDateField"),
+          serialized,
+        );
+      }
       if (type.kind == "primitive") {
         return PrimitiveRecordFieldRenderer.Operations.Deserialize(
           type,
