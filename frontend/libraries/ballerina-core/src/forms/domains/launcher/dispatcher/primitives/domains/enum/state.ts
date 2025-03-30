@@ -1,18 +1,11 @@
 import { OrderedMap } from "immutable";
-import {
-  Guid,
-  SimpleCallback,
-  Synchronized,
-  Unit,
-  unit,
-  ValueOption,
-  PredicateValue,
-  ValueRecord,
-} from "../../../../../../main";
-import { View } from "../../../../../template/state";
-import { Value } from "../../../../../value/state";
+
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import { OnChange, CommonFormState } from "../../../singleton/state";
+import { Guid, Synchronized, Unit, unit, SimpleCallback } from "../../../../../../../../main";
+import { View } from "../../../../../../../template/state";
+import { Value } from "../../../../../../../value/state";
+import { ValueRecord, ValueOption } from "../../../../../parser/domains/predicates/state";
 
 export type BaseEnumContext = {
   getOptions: () => Promise<OrderedMap<Guid, ValueRecord>>;

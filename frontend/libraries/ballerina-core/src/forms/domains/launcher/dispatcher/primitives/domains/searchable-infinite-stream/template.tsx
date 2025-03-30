@@ -1,21 +1,5 @@
 import { List } from "immutable";
-import {
-  SimpleCallback,
-  Debounce,
-  InfiniteStreamLoader,
-  id,
-  replaceWith,
-  BasicFun,
-  ValidateRunner,
-  ValueOption,
-  PredicateValue,
-} from "../../../../../../main";
-import { CoTypedFactory } from "../../../../../coroutines/builder";
-import { Debounced } from "../../../../../debounced/state";
-import { InfiniteStreamState } from "../../../../../infinite-data-stream/state";
-import { Template } from "../../../../../template/state";
-import { Value } from "../../../../../value/state";
-import { CollectionReference } from "../../../collection/domains/reference/state";
+
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import {
   FieldValidation,
@@ -26,6 +10,17 @@ import {
   SearchableInfiniteStreamState,
   SearchableInfiniteStreamView,
 } from "./state";
+import React from "react";
+import { SimpleCallback, Debounce, InfiniteStreamLoader, replaceWith, id } from "../../../../../../../../main";
+import { CoTypedFactory } from "../../../../../../../coroutines/builder";
+import { Debounced } from "../../../../../../../debounced/state";
+import { BasicFun } from "../../../../../../../fun/state";
+import { InfiniteStreamState } from "../../../../../../../infinite-data-stream/state";
+import { Template } from "../../../../../../../template/state";
+import { Value } from "../../../../../../../value/state";
+import { CollectionReference } from "../../../../../collection/domains/reference/state";
+import { ValueOption, PredicateValue } from "../../../../../parser/domains/predicates/state";
+import { ValidateRunner } from "../../../singleton/template";
 
 export const SearchableInfiniteStreamForm = <
   Context extends FormLabel,

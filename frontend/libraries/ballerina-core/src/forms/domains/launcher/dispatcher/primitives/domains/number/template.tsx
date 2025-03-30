@@ -1,13 +1,5 @@
 import { List } from "immutable";
-import {
-  BasicFun,
-  NumberView,
-  replaceWith,
-  ValidateRunner,
-  NumberFormState,
-} from "../../../../../../main";
-import { Template } from "../../../../../template/state";
-import { Value } from "../../../../../value/state";
+
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import {
   FieldValidation,
@@ -15,6 +7,13 @@ import {
   OnChange,
   CommonFormState,
 } from "../../../singleton/state";
+import React from "react";
+import { replaceWith } from "../../../../../../../../main";
+import { BasicFun } from "../../../../../../../fun/state";
+import { Template } from "../../../../../../../template/state";
+import { Value } from "../../../../../../../value/state";
+import { ValidateRunner } from "../../../singleton/template";
+import { NumberFormState, NumberView } from "./state";
 
 export const NumberForm = <Context extends FormLabel, ForeignMutationsExpected>(
   validation?: BasicFun<number, Promise<FieldValidation>>,

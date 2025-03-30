@@ -1,3 +1,5 @@
+
+import React from "react";
 import {
   BasicFun,
   BasicUpdater,
@@ -5,17 +7,17 @@ import {
   Sum,
   SumFieldPredicateEvaluation,
   Updater,
-  ValidateRunner,
   Value,
   ValueSum,
-} from "../../../../../../main";
-import { Template } from "../../../../../template/state";
+} from "../../../../../../../../main";
+import { Template } from "../../../../../../../template/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import {
   FieldValidation,
   FieldValidationWithPath,
   OnChange,
 } from "../../../singleton/state";
+import { ValidateRunner } from "../../../singleton/template";
 import { SumFormState, SumFormView } from "./state";
 
 export const SumForm = <

@@ -1,4 +1,6 @@
-import { FormLabel, simpleUpdater, Unit, View } from "../../../../../../main";
+import { Unit, simpleUpdater } from "../../../../../../../../main";
+import { View } from "../../../../../../../template/state";
+import { FormLabel } from "../../../singleton/domains/form-label/state";
 import { CommonFormState } from "../../../singleton/state";
 
 export type UnitFormState = {

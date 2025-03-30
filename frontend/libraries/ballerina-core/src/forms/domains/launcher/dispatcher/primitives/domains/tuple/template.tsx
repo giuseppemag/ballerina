@@ -4,7 +4,6 @@ import {
   SimpleCallback,
   BasicFun,
   Unit,
-  ValidateRunner,
   Updater,
   BasicUpdater,
   MapRepo,
@@ -15,9 +14,9 @@ import {
   FieldPredicateExpression,
   TuplePredicateExpression,
   TupleFieldPredicateEvaluation,
-} from "../../../../../../main";
-import { Template } from "../../../../../template/state";
-import { Value } from "../../../../../value/state";
+} from "../../../../../../../../main";
+import { Template } from "../../../../../../../template/state";
+import { Value } from "../../../../../../../value/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import {
   FieldValidation,
@@ -25,6 +24,7 @@ import {
   OnChange,
 } from "../../../singleton/state";
 import { TupleFormState, TupleFormView } from "./state";
+import { ValidateRunner } from "../../../singleton/template";
 
 export const TupleForm = <
   ElementFormStates extends List<{
@@ -72,7 +72,7 @@ export const TupleForm = <
           ...props.foreignMutations,
           onChange: (elementUpdater, path) => {
             props.foreignMutations.onChange(
-              Updater((tuple) =>
+              Updater((tuple: ValueTuple) =>
                 tuple.values.has(elementIndex)
                   ? PredicateValue.Default.tuple(
                       tuple.values.update(

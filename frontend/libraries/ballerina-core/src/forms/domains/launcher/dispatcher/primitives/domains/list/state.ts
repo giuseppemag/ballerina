@@ -1,17 +1,12 @@
-import { List, Map } from "immutable";
-import {
-  simpleUpdater,
-  Updater,
-  SimpleCallback,
-  Unit,
-  PredicateValue,
-  ValueTuple,
-} from "../../../../../../main";
-import { BasicFun } from "../../../../../fun/state";
-import { Template, View } from "../../../../../template/state";
-import { Value } from "../../../../../value/state";
+import { Map } from "immutable";
+
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import { OnChange, CommonFormState } from "../../../singleton/state";
+import { simpleUpdater, SimpleCallback, Unit } from "../../../../../../../../main";
+import { BasicFun } from "../../../../../../../fun/state";
+import { View, Template } from "../../../../../../../template/state";
+import { Value } from "../../../../../../../value/state";
+import { ValueTuple } from "../../../../../parser/domains/predicates/state";
 
 export type ListFieldState<ElementFormState> = {
   commonFormState: CommonFormState;

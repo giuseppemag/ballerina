@@ -4,17 +4,13 @@ import {
   BasicUpdater,
   PredicateValue,
   Updater,
-  ValidateRunner,
   Value,
-  ValueRecord,
   ValueUnionCase,
-} from "../../../../../../main";
-import { Template } from "../../../../../template/state";
+} from "../../../../../../../../main";
+import { Template } from "../../../../../../../template/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import {
-    CommonFormState,
-  EntityFormContext,
-  EntityFormForeignMutationsExpected,
+  CommonFormState,
   EntityFormState,
   EntityFormTemplate,
   FieldValidation,
@@ -23,6 +19,7 @@ import {
 } from "../../../singleton/state";
 import { UnionFormState, UnionFormView } from "./state";
 import { Map, Set } from "immutable";
+import { ValidateRunner } from "../../../singleton/template";
 
 export const UnionForm = <
   Context extends FormLabel & { caseNames: Set<string> },
@@ -42,7 +39,11 @@ export const UnionForm = <
           onChange: OnChange<ValueUnionCase>;
         }
       >(
-        (props): ForeignMutationsExpected & { onChange: OnChange<PredicateValue> } => ({
+        (
+          props,
+        ): ForeignMutationsExpected & {
+          onChange: OnChange<PredicateValue>;
+        } => ({
           ...props.foreignMutations,
           onChange: (elementUpdater: any, path: any) => {
             props.foreignMutations.onChange(
@@ -58,11 +59,10 @@ export const UnionForm = <
       )
       .mapContext(
         (
-          _: Context &
-            Value<ValueUnionCase> &
-            UnionFormState<CaseFormStates>,
+          _: Context & Value<ValueUnionCase> & UnionFormState<CaseFormStates>,
         ): Context & Value<ValueUnionCase> & { caseNames: Set<string> } => {
-          const context: Context & Value<ValueUnionCase> & { caseNames: Set<string> } = {
+          const context: Context &
+            Value<ValueUnionCase> & { caseNames: Set<string> } = {
             ..._,
             ..._.customFormState.caseStates.get(caseName),
             caseNames,
@@ -76,7 +76,10 @@ export const UnionForm = <
       )
       .mapState(
         (
-          _: BasicUpdater<{ formFieldStates: any; commonFormState: CommonFormState }>,
+          _: BasicUpdater<{
+            formFieldStates: any;
+            commonFormState: CommonFormState;
+          }>,
         ): Updater<UnionFormState<CaseFormStates>> =>
           UnionFormState<CaseFormStates>().Updaters.Core.customFormState(
             (__) => ({

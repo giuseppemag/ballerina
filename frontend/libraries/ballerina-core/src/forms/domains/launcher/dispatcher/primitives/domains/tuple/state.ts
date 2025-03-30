@@ -1,8 +1,8 @@
 import { List } from "immutable";
-import { simpleUpdater, ValueTuple } from "../../../../../../main";
-import { BasicFun } from "../../../../../fun/state";
-import { Template, View } from "../../../../../template/state";
-import { Value } from "../../../../../value/state";
+import { simpleUpdater, ValueTuple } from "../../../../../../../../main";
+import { BasicFun } from "../../../../../../../fun/state";
+import { Template, View } from "../../../../../../../template/state";
+import { Value } from "../../../../../../../value/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import { OnChange, CommonFormState } from "../../../singleton/state";
 

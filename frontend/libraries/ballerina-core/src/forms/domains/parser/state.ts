@@ -38,7 +38,6 @@ import {
   defaultState,
   TypeName,
   FormLabel,
-  UnionForm,
   Form,
   FormFieldPredicateEvaluation,
   RecordFormRenderer,
@@ -46,7 +45,6 @@ import {
 } from "../../../../main";
 import { EnumReference } from "../collection/domains/reference/state";
 import { SearchableInfiniteStreamState } from "../primitives/domains/searchable-infinite-stream/state";
-import { SingletonForm } from "../singleton/template";
 
 // export type ParsedRecordForm<T> = {
 //   initialFormState: any;
@@ -447,6 +445,21 @@ export type ParsedLaunchers<T> = {
 //   }
 // >;
 
+export const FormViewToViewKind =
+  (formViews: Record<string, any>) =>
+  (viewName: string | undefined): ValueOrErrors<string, string> => {
+    if (viewName == undefined) {
+      return ValueOrErrors.Default.throwOne(`cannot resolve view ${viewName}`);
+    }
+    const viewTypes = Object.keys(formViews);
+    for (const viewType of viewTypes) {
+      if (viewName in formViews[viewType]) {
+        return ValueOrErrors.Default.return(viewType);
+      }
+    }
+    return ValueOrErrors.Default.throwOne(`cannot resolve view ${viewName}`);
+  };
+
 export type DispatcherContext<
   T extends { [key in keyof T]: { type: any; state: any } },
 > = {
@@ -459,6 +472,7 @@ export type DispatcherContext<
   infiniteStreamSources: InfiniteStreamSources;
   enumOptionsSources: EnumOptionsSources;
   entityApis: EntityApis;
+  getViewKind: (viewName: string | undefined) => ValueOrErrors<string, string>;
 };
 
 export type FormLaunchersResult<
@@ -629,7 +643,11 @@ export const parseFormsToLaunchers =
                         apiConverters,
                         injectedPrimitives,
                       )(raw),
-                    parseEntityToApi: (entityType: ParsedType<T>, entity: PredicateValue, state: any) =>
+                    parseEntityToApi: (
+                      entityType: ParsedType<T>,
+                      entity: PredicateValue,
+                      state: any,
+                    ) =>
                       toAPIRawValue(
                         entityType,
                         specification.types,
@@ -658,6 +676,7 @@ export const parseFormsToLaunchers =
               infiniteStreamSources,
               enumOptionsSources,
               entityApis,
+              getViewKind: FormViewToViewKind(fieldViews),
             },
           }),
         ),

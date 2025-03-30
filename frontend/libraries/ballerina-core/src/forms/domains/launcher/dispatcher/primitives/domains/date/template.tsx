@@ -1,14 +1,5 @@
 import { List } from "immutable";
-import {
-  BasicFun,
-  id,
-  Maybe,
-  PredicateValue,
-  replaceWith,
-  ValidateRunner,
-  Value,
-} from "../../../../../../main";
-import { Template } from "../../../../../template/state";
+
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import {
   FieldValidation,
@@ -16,6 +7,12 @@ import {
   OnChange,
 } from "../../../singleton/state";
 import { DateFormState, DateView } from "./state";
+import React from "react";
+import { replaceWith, id } from "../../../../../../../../main";
+import { BasicFun } from "../../../../../../../fun/state";
+import { Template } from "../../../../../../../template/state";
+import { Value } from "../../../../../../../value/state";
+import { ValidateRunner } from "../../../singleton/template";
 
 export const DateForm = <Context extends FormLabel, ForeignMutationsExpected>(
   validation?: BasicFun<Date, Promise<FieldValidation>>,

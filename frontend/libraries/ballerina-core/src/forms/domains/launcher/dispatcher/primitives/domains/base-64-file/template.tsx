@@ -1,7 +1,5 @@
 import { List } from "immutable";
-import { BasicFun, replaceWith, ValidateRunner } from "../../../../../../main";
-import { Template } from "../../../../../template/state";
-import { Value } from "../../../../../value/state";
+
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import {
   FieldValidation,
@@ -9,6 +7,12 @@ import {
   OnChange,
 } from "../../../singleton/state";
 import { Base64FileFormState, Base64FileFormView } from "./state";
+import React from "react";
+import { replaceWith } from "../../../../../../../../main";
+import { BasicFun } from "../../../../../../../fun/state";
+import { Template } from "../../../../../../../template/state";
+import { Value } from "../../../../../../../value/state";
+import { ValidateRunner } from "../../../singleton/template";
 
 export const Base64FileForm = <
   Context extends FormLabel,

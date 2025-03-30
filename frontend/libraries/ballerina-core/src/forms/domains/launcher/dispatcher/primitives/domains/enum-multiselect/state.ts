@@ -1,6 +1,8 @@
-import { Guid, SimpleCallback, ValueRecord } from "../../../../../../main";
-import { View } from "../../../../../template/state";
-import { Value } from "../../../../../value/state";
+
+import { Guid, SimpleCallback } from "../../../../../../../../main";
+import { View } from "../../../../../../../template/state";
+import { Value } from "../../../../../../../value/state";
+import { ValueRecord } from "../../../../../parser/domains/predicates/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import { OnChange } from "../../../singleton/state";
 import { BaseEnumContext, EnumFormState } from "../enum/state";

@@ -1,19 +1,5 @@
 import { List } from "immutable";
-import {
-  SimpleCallback,
-  BasicFun,
-  Unit,
-  ValidateRunner,
-  Updater,
-  BasicUpdater,
-  MapRepo,
-  ListRepo,
-  ValueTuple,
-  PredicateValue,
-  ListFieldPredicateEvaluation,
-} from "../../../../../../main";
-import { Template } from "../../../../../template/state";
-import { Value } from "../../../../../value/state";
+
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import {
   FieldValidation,
@@ -21,6 +7,13 @@ import {
   OnChange,
 } from "../../../singleton/state";
 import { ListFieldState, ListFieldView } from "./state";
+import React from "react";
+import { SimpleCallback, Unit, Updater, BasicUpdater, MapRepo, ListRepo } from "../../../../../../../../main";
+import { BasicFun } from "../../../../../../../fun/state";
+import { Template } from "../../../../../../../template/state";
+import { Value } from "../../../../../../../value/state";
+import { ListFieldPredicateEvaluation, PredicateValue, ValueTuple } from "../../../../../parser/domains/predicates/state";
+import { ValidateRunner } from "../../../singleton/template";
 
 export const ListForm = <
   ElementFormState extends { commonFormState: { modifiedByUser: boolean } },
@@ -61,7 +54,7 @@ export const ListForm = <
           ...props.foreignMutations,
           onChange: (elementUpdater, path) => {
             props.foreignMutations.onChange(
-              Updater((list) =>
+              Updater((list: ValueTuple) =>
                 list.values.has(elementIndex)
                   ? PredicateValue.Default.tuple(
                       list.values.update(
@@ -151,7 +144,7 @@ export const ListForm = <
             ...props.foreignMutations,
             add: (_) => {
               props.foreignMutations.onChange(
-                Updater((list) =>
+                Updater((list: ValueTuple) =>
                   PredicateValue.Default.tuple(
                     ListRepo.Updaters.push<PredicateValue>(Element.Default())(
                       list.values,
@@ -163,7 +156,7 @@ export const ListForm = <
             },
             remove: (_) => {
               props.foreignMutations.onChange(
-                Updater((list) =>
+                Updater((list: ValueTuple) =>
                   PredicateValue.Default.tuple(
                     ListRepo.Updaters.remove<PredicateValue>(_)(list.values),
                   ),
@@ -173,7 +166,7 @@ export const ListForm = <
             },
             move: (index, to) => {
               props.foreignMutations.onChange(
-                Updater((list) =>
+                Updater((list: ValueTuple) =>
                   PredicateValue.Default.tuple(
                     ListRepo.Updaters.move<PredicateValue>(
                       index,
@@ -186,7 +179,7 @@ export const ListForm = <
             },
             duplicate: (_) => {
               props.foreignMutations.onChange(
-                Updater((list) =>
+                Updater((list: ValueTuple) =>
                   PredicateValue.Default.tuple(
                     ListRepo.Updaters.duplicate<PredicateValue>(_)(list.values),
                   ),
@@ -196,7 +189,7 @@ export const ListForm = <
             },
             insert: (_) => {
               props.foreignMutations.onChange(
-                Updater((list) =>
+                Updater((list: ValueTuple) =>
                   PredicateValue.Default.tuple(
                     ListRepo.Updaters.insert<PredicateValue>(
                       _,

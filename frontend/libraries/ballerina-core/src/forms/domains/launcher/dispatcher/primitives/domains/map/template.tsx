@@ -1,20 +1,5 @@
 import { List } from "immutable";
-import {
-  SimpleCallback,
-  BasicFun,
-  Unit,
-  ValidateRunner,
-  Updater,
-  BasicUpdater,
-  MapRepo,
-  ListRepo,
-  FormFieldPredicateEvaluation,
-  PredicateValue,
-  ValueTuple,
-  MapFieldPredicateEvaluation,
-} from "../../../../../../main";
-import { Template } from "../../../../../template/state";
-import { Value } from "../../../../../value/state";
+
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import {
   CommonFormState,
@@ -23,6 +8,12 @@ import {
   OnChange,
 } from "../../../singleton/state";
 import { MapFieldState, MapFieldView } from "./state";
+import React from "react";
+import { SimpleCallback, Unit, Updater, BasicUpdater, MapRepo, ListRepo, Value } from "../../../../../../../../main";
+import { BasicFun } from "../../../../../../../fun/state";
+import { Template } from "../../../../../../../template/state";
+import { MapFieldPredicateEvaluation, PredicateValue, ValueTuple } from "../../../../../parser/domains/predicates/state";
+import { ValidateRunner } from "../../../singleton/template";
 
 export const MapForm = <
   KeyFormState extends { commonFormState: CommonFormState },
@@ -289,7 +280,7 @@ export const MapForm = <
             ...props.foreignMutations,
             add: (_) => {
               props.foreignMutations.onChange(
-                Updater((list) =>
+                Updater((list: ValueTuple) =>
                   PredicateValue.Default.tuple(
                     ListRepo.Updaters.push<ValueTuple>(
                       PredicateValue.Default.tuple(
@@ -303,7 +294,7 @@ export const MapForm = <
             },
             remove: (_) => {
               props.foreignMutations.onChange(
-                Updater((list) =>
+                Updater((list: ValueTuple) =>
                   PredicateValue.Default.tuple(
                     ListRepo.Updaters.remove<ValueTuple>(_)(
                       list.values as List<ValueTuple>,

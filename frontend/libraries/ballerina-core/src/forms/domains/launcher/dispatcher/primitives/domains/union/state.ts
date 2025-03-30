@@ -8,7 +8,7 @@ import {
   ValueRecord,
   ValueUnionCase,
   View,
-} from "../../../../../../main";
+} from "../../../../../../../../main";
 import {
   CommonFormState,
   EntityFormState,

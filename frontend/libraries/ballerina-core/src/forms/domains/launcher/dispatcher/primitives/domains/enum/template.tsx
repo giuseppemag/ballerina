@@ -1,19 +1,5 @@
 import { List, OrderedMap } from "immutable";
-import {
-  AsyncState,
-  BasicFun,
-  CoTypedFactory,
-  Guid,
-  PredicateValue,
-  replaceWith,
-  Synchronize,
-  Unit,
-  ValidateRunner,
-  ValueOption,
-  ValueRecord,
-} from "../../../../../../main";
-import { Template } from "../../../../../template/state";
-import { Value } from "../../../../../value/state";
+
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import {
   FieldValidation,
@@ -21,6 +7,15 @@ import {
   OnChange,
 } from "../../../singleton/state";
 import { BaseEnumContext, EnumFormState, EnumView } from "./state";
+import React from "react";
+import { replaceWith, Synchronize, Unit, Guid } from "../../../../../../../../main";
+import { AsyncState } from "../../../../../../../async/state";
+import { CoTypedFactory } from "../../../../../../../coroutines/builder";
+import { BasicFun } from "../../../../../../../fun/state";
+import { Template } from "../../../../../../../template/state";
+import { Value } from "../../../../../../../value/state";
+import { ValueOption, PredicateValue, ValueRecord } from "../../../../../parser/domains/predicates/state";
+import { ValidateRunner } from "../../../singleton/template";
 
 export const EnumForm = <
   Context extends FormLabel & BaseEnumContext,

@@ -1,7 +1,5 @@
 import { List } from "immutable";
-import { BasicFun, replaceWith, ValidateRunner } from "../../../../../../main";
-import { Template } from "../../../../../template/state";
-import { Value } from "../../../../../value/state";
+
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import {
   FieldValidation,
@@ -9,6 +7,12 @@ import {
   OnChange,
 } from "../../../singleton/state";
 import { SecretFormState, SecretFormView } from "./state";
+import React from "react";
+import { replaceWith } from "../../../../../../../../main";
+import { BasicFun } from "../../../../../../../fun/state";
+import { Template } from "../../../../../../../template/state";
+import { Value } from "../../../../../../../value/state";
+import { ValidateRunner } from "../../../singleton/template";
 
 export const SecretForm = <Context extends FormLabel, ForeignMutationsExpected>(
   validation?: BasicFun<string, Promise<FieldValidation>>,
