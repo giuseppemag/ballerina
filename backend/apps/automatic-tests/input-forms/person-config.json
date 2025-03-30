@@ -743,6 +743,7 @@
                 ]
               },
               {
+                "kind": "caseName",
                 "caseName": "ERP:SAP",
                 "handler": {
                   "kind": "lambda",
@@ -761,6 +762,7 @@
                         ]
                       },
                       {
+                        "kind": "caseName",
                         "caseName": "SAP:S2",
                         "handler": {
                           "kind": "lambda",
@@ -778,6 +780,7 @@
                         }
                       },
                       {
+                        "kind": "caseName",
                         "caseName": "SAP:S3",
                         "handler": {
                           "kind": "lambda",
@@ -795,6 +798,7 @@
                         }
                       },
                       {
+                        "kind": "caseName",
                         "caseName": "SAP:S4",
                         "handler": {
                           "kind": "lambda",

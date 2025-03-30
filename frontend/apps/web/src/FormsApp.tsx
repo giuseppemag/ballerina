@@ -30,7 +30,7 @@ import {
   CategoryState,
   PersonFormInjectedTypes,
 } from "./domains/person-from-config/injected-forms/category";
-import PersonConfig from "../../../../backend/apps/ballerina-runtime/input-forms/simple-union-example-lookups.json";
+import PersonConfig from "../../../../backend/apps/automatic-tests/input-forms/person-config.json";
 import { PassthroughFormContainerWrapper } from "./domains/passthrough-forms/views/wrappers";
 
 const ShowFormsParsingErrors = (parsedFormsConfig: FormParsingResult) => (
@@ -174,6 +174,17 @@ export const FormsApp = (props: {}) => {
         });
     }
   }, [personPassthroughFormState.form.kind, formToShow]);
+
+  if (
+    configFormsParser.formsConfig.sync.kind == "loaded" &&
+    configFormsParser.formsConfig.sync.value.kind == "r"
+  ) {
+    return (
+      <div>
+        {JSON.stringify(configFormsParser.formsConfig.sync.value.value)}
+      </div>
+    );
+  }
 
   return (
     <div className="App">

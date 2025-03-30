@@ -1,8 +1,7 @@
 import { List } from "immutable";
 import {
   Expr,
-  ParsedApplicationType,
-  ParsedType,
+  ListType,
   ValueOrErrors,
 } from "../../../../../../../../../../../../../../../../main";
 import {
@@ -20,12 +19,12 @@ export type SerializedListRecordFieldRenderer = {
 export type ListRecordFieldRenderer<T> = BaseRecordFieldRenderer<T> & {
   kind: "listRecordField";
   elementRenderer: RecordFieldRenderer<T>;
-  type: ParsedApplicationType<T>;
+  type: ListType<T>;
 };
 
 export const ListRecordFieldRenderer = {
   Default: <T>(
-    type: ParsedApplicationType<T>,
+    type: ListType<T>,
     fieldPath: List<string>,
     renderer: string,
     elementRenderer: RecordFieldRenderer<T>,
@@ -100,7 +99,7 @@ export const ListRecordFieldRenderer = {
       });
     },
     Deserialize: <T>(
-      type: ParsedApplicationType<T>,
+      type: ListType<T>,
       fieldPath: List<string>,
       serialized: SerializedListRecordFieldRenderer,
     ): ValueOrErrors<ListRecordFieldRenderer<T>, string> => {

@@ -2,7 +2,7 @@ import { List, OrderedMap, Map } from "immutable";
 import {
   FieldName,
   isObject,
-  ParsedRecord,
+  RecordType,
   ParsedType,
 } from "../../../../../types/state";
 import { ValueOrErrors } from "../../../../../../../../../../../collections/domains/valueOrErrors/state";
@@ -95,7 +95,7 @@ export const RecordFormRenderer = {
       });
     },
     Deserialize: <T>(
-      type: ParsedRecord<T>,
+      type: RecordType<T>,
       fieldPath: List<string>,
       serialized: SerializedRecordFormRenderer,
     ): ValueOrErrors<RecordFormRenderer<T>, string> => {

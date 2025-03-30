@@ -6,7 +6,7 @@ import {
   BaseRecordFieldRenderer,
 } from "../../state";
 import {
-  ParsedApplicationType,
+  SumType,
   ValueOrErrors,
 } from "../../../../../../../../../../../../../../../../main";
 import { Expr } from "../../../../../../../../../../../../../../../../main";
@@ -20,12 +20,12 @@ export type SumRecordFieldRenderer<T> = BaseRecordFieldRenderer<T> & {
   kind: "sumRecordField";
   leftRenderer: RecordFieldRenderer<T>;
   rightRenderer: RecordFieldRenderer<T>;
-  type: ParsedApplicationType<T>;
+  type: SumType<T>;
 };
 
 export const SumRecordFieldRenderer = {
   Default: <T>(
-    type: ParsedApplicationType<T>,
+    type: SumType<T>,
     fieldPath: List<string>,
     renderer: string,
     leftRenderer: RecordFieldRenderer<T>,
@@ -84,7 +84,7 @@ export const SumRecordFieldRenderer = {
       return ValueOrErrors.Default.return(serialized);
     },
     Deserialize: <T>(
-      type: ParsedApplicationType<T>,
+      type: SumType<T>,
       rendererPath: List<string>,
       serialized: SerializedSumRecordFieldRenderer,
     ): ValueOrErrors<SumRecordFieldRenderer<T>, string> => {

@@ -1,7 +1,7 @@
 import {
   Expr,
   ParsedType,
-  ParsedUnion,
+  UnionType,
   ValueOrErrors,
 } from "../../../../../../../../../../../../../../../../main";
 
@@ -20,12 +20,12 @@ export type SerializedUnionRecordFieldRenderer = {
 export type UnionRecordFieldRenderer<T> = BaseRecordFieldRenderer<T> & {
   kind: "unionRecordField";
   cases: Map<string, RecordFieldRenderer<T>>;
-  type: ParsedUnion<T>;
+  type: UnionType<T>;
 };
 
 export const UnionRecordFieldRenderer = {
   Default: <T>(
-    type: ParsedUnion<T>,
+    type: UnionType<T>,
     fieldPath: List<string>,
     renderer: string,
     cases: Map<string, RecordFieldRenderer<T>>,
@@ -102,7 +102,7 @@ export const UnionRecordFieldRenderer = {
       });
     },
     Deserialize: <T>(
-      type: ParsedUnion<T>,
+      type: UnionType<T>,
       fieldPath: List<string>,
       serialized: SerializedUnionRecordFieldRenderer,
     ): ValueOrErrors<UnionRecordFieldRenderer<T>, string> => {

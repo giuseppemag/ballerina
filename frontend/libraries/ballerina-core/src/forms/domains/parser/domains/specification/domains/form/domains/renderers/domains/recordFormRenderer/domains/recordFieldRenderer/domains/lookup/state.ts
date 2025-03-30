@@ -1,7 +1,7 @@
 import { List } from "immutable";
 import {
   Expr,
-  ParsedLookupType,
+  LookupType,
   ValueOrErrors,
 } from "../../../../../../../../../../../../../../../../main";
 import {
@@ -14,12 +14,12 @@ export type SerializedLookupRecordFieldRenderer =
 
 export type LookUpRecordFieldRenderer<T> = BaseRecordFieldRenderer<T> & {
   kind: "lookupRecordField";
-  type: ParsedLookupType;
+  type: LookupType;
 };
 
 export const LookUpRecordFieldRenderer = {
   Default: <T>(
-    type: ParsedLookupType,
+    type: LookupType,
     fieldPath: List<string>,
     renderer: string,
     visible: Expr,
@@ -65,7 +65,7 @@ export const LookUpRecordFieldRenderer = {
       return ValueOrErrors.Default.return(serialized);
     },
     Deserialize: <T>(
-      type: ParsedLookupType,
+      type: LookupType,
       fieldPath: List<string>,
       serialized: SerializedLookupRecordFieldRenderer,
     ): ValueOrErrors<LookUpRecordFieldRenderer<T>, string> => {

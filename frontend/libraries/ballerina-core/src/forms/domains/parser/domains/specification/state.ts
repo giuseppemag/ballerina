@@ -151,7 +151,7 @@ export const Specification = {
         List<ValueOrErrors<[string, Form<T>], string>>(
           Object.entries(forms).map(([formName, form]) =>
             Form<T>()
-              .Operations.Deserialize(types, List("formName"), form)
+              .Operations.Deserialize(types, List([formName]), form)
               .Then((form) => ValueOrErrors.Default.return([formName, form])),
           ),
         ),
@@ -299,7 +299,9 @@ export const Specification = {
               ParsedType.Operations.ExtendParsedTypes(unextendedTypes),
             )
             .Then((allTypes) =>
-              Specification.Operations.DeserializeForms<T>(
+              {
+                console.debug("allTypes", allTypes.toJS());
+                return Specification.Operations.DeserializeForms<T>(
                 mergedValidatedSpecification.forms,
                 allTypes,
               ).Then((forms) => {
@@ -414,7 +416,7 @@ export const Specification = {
                   },
                   launchers,
                 });
-              }),
+              })}
             );
         });
       },

@@ -1,6 +1,6 @@
 import { Expr } from "../../../../../../../../../../../../../../../../main";
 import {
-  ParsedApplicationType,
+  MapType,
   ValueOrErrors,
 } from "../../../../../../../../../../../../../../../../main";
 import {
@@ -20,12 +20,12 @@ export type MapRecordFieldRenderer<T> = BaseRecordFieldRenderer<T> & {
   kind: "mapRecordField";
   keyRenderer: RecordFieldRenderer<T>;
   valueRenderer: RecordFieldRenderer<T>;
-  type: ParsedApplicationType<T>;
+  type: MapType<T>;
 };
 
 export const MapRecordFieldRenderer = {
   Default: <T>(
-    type: ParsedApplicationType<T>,
+    type: MapType<T>,
     fieldPath: List<string>,
     renderer: string,
     keyRenderer: RecordFieldRenderer<T>,
@@ -84,7 +84,7 @@ export const MapRecordFieldRenderer = {
       return ValueOrErrors.Default.return(serialized);
     },
     Deserialize: <T>(
-      type: ParsedApplicationType<T>,
+      type: MapType<T>,
       fieldPath: List<string>,
       serialized: SerializedMapRecordFieldRenderer,
     ): ValueOrErrors<MapRecordFieldRenderer<T>, string> => {

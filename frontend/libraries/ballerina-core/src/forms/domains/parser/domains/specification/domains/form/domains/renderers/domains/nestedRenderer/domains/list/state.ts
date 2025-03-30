@@ -1,4 +1,5 @@
 import {
+  ListType,
   ParsedType,
   ValueOrErrors,
 } from "../../../../../../../../../../../../../../main";
@@ -17,14 +18,15 @@ export type SerializedNestedListRenderer = {
   elementDetails?: string;
 } & BaseSerializedNestedRenderer;
 
-export type NestedListRenderer<T> = BaseNestedRenderer<T> & {
+export type NestedListRenderer<T> = BaseNestedRenderer & {
   kind: "nestedListRenderer";
   elementRenderer: NestedRenderer<T>;
+  type: ListType<T>;
 };
 
 export const NestedListRenderer = {
   Default: <T>(
-    type: ParsedType<T>,
+    type: ListType<T>,
     rendererPath: List<string>,
     renderer: string,
     elementRenderer: NestedRenderer<T>,
@@ -88,7 +90,7 @@ export const NestedListRenderer = {
       });
     },
     Deserialize: <T>(
-      type: ParsedType<T>,
+      type: ListType<T>,
       rendererPath: List<string>,
       serialized: SerializedNestedListRenderer,
     ): ValueOrErrors<NestedListRenderer<T>, string> => {
@@ -97,7 +99,7 @@ export const NestedListRenderer = {
         serialized,
       ).Then((serializedNestedListRenderer) =>
         NestedRenderer.Operations.Deserialize(
-          type,
+          type.args[0],
           rendererPath.push("elementRenderer"),
           serializedNestedListRenderer.elementRenderer,
         ).Then((deserializedElementRenderer) => {

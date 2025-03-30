@@ -1,8 +1,8 @@
 import { Set, List, Map, OrderedMap } from "immutable";
 import {
-  GenericType,
-  GenericTypes,
-  PrimitiveTypes,
+  BuiltInGenericType,
+  BuiltInGenericTypes,
+  BuiltInPrimitiveTypes,
 } from "../../../built-ins/state";
 import { InjectedPrimitives } from "../../../injectables/state";
 import { ValueOrErrors } from "../../../../../../../collections/domains/valueOrErrors/state";
@@ -10,8 +10,8 @@ import { Unit } from "../../../../../../../../main";
 
 export const isString = (_: any): _ is string => typeof _ == "string";
 export const isObject = (_: any): _ is object => typeof _ == "object";
-export const isGenericType = (_: any): _ is GenericType =>
-  _ && GenericTypes.includes(_);
+export const isGenericType = (_: any): _ is BuiltInGenericType =>
+  _ && BuiltInGenericTypes.includes(_);
 export const hasFun = (_: any): _ is { fun: string } =>
   isObject(_) && "fun" in _ && isString(_.fun);
 export const hasArgs = (_: any): _ is { args: Array<any> } =>
@@ -21,7 +21,7 @@ export type FieldName = string;
 export type TypeName = string;
 
 export type SerializedApplicationType<T> = {
-  fun?: GenericType;
+  fun?: BuiltInGenericType;
   args?: Array<SerializedType<T>>;
 };
 
@@ -84,13 +84,13 @@ export const RawType = {
     injectedPrimitives: InjectedPrimitives<T> | undefined,
   ): _ is PrimitiveTypeName<T> =>
     Boolean(
-      PrimitiveTypes.some((__) => _ == __) ||
+      BuiltInPrimitiveTypes.some((__) => _ == __) ||
         injectedPrimitives?.injectedPrimitives.has(_ as keyof T),
     ),
   isMaybeApplication: (_: any): _ is Object => isObject(_),
   isApplication: <T>(
     _: SerializedType<T>,
-  ): _ is { fun: GenericType; args: Array<SerializedType<T>> } =>
+  ): _ is { fun: BuiltInGenericType; args: Array<SerializedType<T>> } =>
     hasFun(_) && isGenericType(_.fun) && hasArgs(_),
   isMaybeLookup: (_: any) => isString(_),
   isLookup: <T>(_: SerializedType<T>, forms: Set<TypeName>): _ is TypeName =>
@@ -119,11 +119,14 @@ export const RawType = {
     RawType.isApplication(_) && _.fun == "MultiSelection" && _.args.length == 1,
   isUnionCase: <T>(
     _: SerializedType<T>,
-  ): _ is { caseName: string; fields: object; extends?: Array<TypeName> } =>
-    typeof _ == "object" && "caseName" in _ && "fields" in _,
+  ): _ is {
+    caseName: string;
+    fields: object | string;
+    extends?: Array<TypeName>;
+  } => typeof _ == "object" && "caseName" in _ && "fields" in _,
   isUnion: <T>(
     _: SerializedType<T>,
-  ): _ is { fun: "Union"; args: Array<{ case: string; fields: object }> } =>
+  ): _ is { fun: "Union"; args: Array<{ caseName: string; fields: object }> } =>
     hasFun(_) &&
     isGenericType(_.fun) &&
     hasArgs(_) &&
@@ -164,86 +167,110 @@ export type PrimitiveTypeName<T> =
   | keyof T
   | "guid";
 
-export type ParsedUnion<T> = {
+export type UnionType<T> = {
   kind: "union";
-  args: Map<CaseName, ParsedUnionCase<T>>;
+  args: Map<CaseName, ParsedType<T>>;
   typeName: TypeName;
 };
 
-export type ParsedUnionCase<T> = {
+export type UnionCaseType<T> = {
   kind: "unionCase";
   name: CaseName;
-  fields: ParsedRecord<T>;
-  typeName: TypeName;
+  fields: RecordType<T> | LookupType;
   extendedTypes: Array<TypeName>;
+  typeName: TypeName;
 };
 
-export type ParsedRecord<T> = {
+export type RecordType<T> = {
   kind: "record";
-  value: TypeName;
+  name: TypeName;
   fields: Map<FieldName, ParsedType<T>>;
   extendedTypes: Array<TypeName>;
   typeName: TypeName;
 };
 
-export type ParsedApplicationType<T> = {
-  kind: "application";
-  value: GenericType;
-  args: Array<ParsedType<T>>;
-};
-
-export type ParsedLookupType = {
+export type LookupType = {
   kind: "lookup";
   name: TypeName;
 };
 
-export type ParsedOptionType<T> = {
-  kind: "option";
-  value: ParsedType<T>;
+export type PrimitiveType<T> = {
+  kind: "primitive";
+  name: PrimitiveTypeName<T>;
 };
 
-export type ParsedPrimitiveType<T> = {
-  kind: "primitive";
-  value: PrimitiveTypeName<T>;
+export type SingleSelectionType<T> = {
+  kind: "singleSelection";
+  name: TypeName;
+  args: Array<ParsedType<T>>;
+};
+
+export type MultiSelectionType<T> = {
+  kind: "multiSelection";
+  name: TypeName;
+  args: Array<ParsedType<T>>;
+};
+
+export type ListType<T> = {
+  kind: "list";
+  name: TypeName;
+  args: Array<ParsedType<T>>;
+};
+
+export type TupleType<T> = {
+  kind: "tuple";
+  name: TypeName;
+  args: Array<ParsedType<T>>;
+};
+
+export type SumType<T> = {
+  kind: "sum";
+  name: TypeName;
+  args: Array<ParsedType<T>>;
+};
+
+export type MapType<T> = {
+  kind: "map";
+  name: TypeName;
+  args: Array<ParsedType<T>>;
 };
 
 export type ParsedType<T> = (
-  | ParsedUnionCase<T>
-  | ParsedOptionType<T>
-  | ParsedRecord<T>
-  | ParsedLookupType
-  | ParsedPrimitiveType<T>
-  | ParsedApplicationType<T>
-  | ParsedUnion<T>
+  | UnionCaseType<T>
+  | RecordType<T>
+  | LookupType
+  | PrimitiveType<T>
+  | UnionType<T>
+  | SingleSelectionType<T>
+  | MultiSelectionType<T>
+  | ListType<T>
+  | TupleType<T>
+  | SumType<T>
+  | MapType<T>
 ) & { typeName: TypeName };
 
 export const ParsedType = {
   Default: {
     unionCase: <T>(
       name: CaseName,
-      fields: ParsedRecord<T>,
+      fields: RecordType<T> | LookupType,
       typeName: TypeName,
       extendedTypes: Array<TypeName>,
-    ): ParsedUnionCase<T> => ({
+    ): UnionCaseType<T> => ({
       kind: "unionCase",
       name,
       fields,
       typeName,
       extendedTypes,
     }),
-    option: <T>(value: ParsedType<T>, typeName: TypeName): ParsedType<T> => ({
-      kind: "option",
-      value,
-      typeName: typeName,
-    }),
     record: <T>(
-      value: TypeName,
+      name: TypeName,
       fields: Map<FieldName, ParsedType<T>>,
       typeName: TypeName,
       extendedTypes: Array<TypeName>,
-    ): ParsedRecord<T> => ({
+    ): RecordType<T> => ({
       kind: "record",
-      value,
+      name,
       fields,
       typeName: typeName,
       extendedTypes,
@@ -253,21 +280,76 @@ export const ParsedType = {
       typeName: TypeName,
     ): ParsedType<T> => ({
       kind: "primitive",
-      value: name,
+      name,
       typeName: typeName,
     }),
-    application: <T>(
-      value: GenericType,
+    singleSelection: <T>(
+      name: TypeName,
       args: Array<ParsedType<T>>,
       typeName: TypeName,
-    ): ParsedType<T> => ({ kind: "application", value, args, typeName }),
+    ): ParsedType<T> => ({
+      kind: "singleSelection",
+      name,
+      args,
+      typeName: typeName,
+    }),
+    multiSelection: <T>(
+      name: TypeName,
+      args: Array<ParsedType<T>>,
+      typeName: TypeName,
+    ): ParsedType<T> => ({
+      kind: "multiSelection",
+      name,
+      args,
+      typeName: typeName,
+    }),
+    list: <T>(
+      name: TypeName,
+      args: Array<ParsedType<T>>,
+      typeName: TypeName,
+    ): ParsedType<T> => ({
+      kind: "list",
+      name,
+      args,
+      typeName: typeName,
+    }),
+    tuple: <T>(
+      name: TypeName,
+      args: Array<ParsedType<T>>,
+      typeName: TypeName,
+    ): ParsedType<T> => ({
+      kind: "tuple",
+      name,
+      args,
+      typeName: typeName,
+    }),
+    sum: <T>(
+      name: TypeName,
+      args: Array<ParsedType<T>>,
+      typeName: TypeName,
+    ): ParsedType<T> => ({
+      kind: "sum",
+      name,
+      args,
+      typeName: typeName,
+    }),
+    map: <T>(
+      name: TypeName,
+      args: Array<ParsedType<T>>,
+      typeName: TypeName,
+    ): ParsedType<T> => ({
+      kind: "map",
+      name,
+      args,
+      typeName: typeName,
+    }),
     union: <T>(
-      args: Map<CaseName, ParsedUnionCase<T>>,
+      args: Map<CaseName, ParsedType<T>>,
       typeName: TypeName,
     ): ParsedType<T> => ({
       kind: "union",
       args,
-      typeName: typeName,
+      typeName,
     }),
     lookup: <T>(name: string, typeName: TypeName): ParsedType<T> => ({
       kind: "lookup",
@@ -278,19 +360,25 @@ export const ParsedType = {
   Operations: {
     Equals: <T>(fst: ParsedType<T>, snd: ParsedType<T>): boolean =>
       fst.kind == "record" && snd.kind == "record"
-        ? fst.value == snd.value
+        ? fst.name == snd.name
         : fst.kind == "lookup" && snd.kind == "lookup"
         ? fst.name == snd.name
         : fst.kind == "primitive" && snd.kind == "primitive"
-        ? fst.value == snd.value
-        : fst.kind == "application" && snd.kind == "application"
-        ? fst.value == snd.value &&
+        ? fst.name == snd.name
+        : fst.kind == "list" && snd.kind == "list"
+        ? fst.name == snd.name
+        : fst.kind == "singleSelection" && snd.kind == "singleSelection"
+        ? fst.name == snd.name
+        : fst.kind == "multiSelection" && snd.kind == "multiSelection"
+        ? fst.name == snd.name
+        : fst.kind == "map" && snd.kind == "map"
+        ? fst.name == snd.name
+        : fst.kind == "sum" && snd.kind == "sum"
+        ? fst.name == snd.name
+        : fst.kind == "tuple" && snd.kind == "tuple"
+        ? fst.name == snd.name &&
           fst.args.length == snd.args.length &&
           fst.args.every((v, i) => ParsedType.Operations.Equals(v, snd.args[i]))
-        : fst.kind == "option" && snd.kind == "option"
-        ? fst.value.kind == "option" &&
-          snd.value.kind == "option" &&
-          ParsedType.Operations.Equals(fst.value.value, snd.value.value)
         : fst.kind == "union" && snd.kind == "union"
         ? fst.args.size == snd.args.size &&
           fst.args.every((v, i) =>
@@ -321,8 +409,8 @@ export const ParsedType = {
           injectedPrimitives,
         ).Then((parsedArgs) =>
           ValueOrErrors.Default.return(
-            ParsedType.Default.application(
-              "SingleSelection",
+            ParsedType.Default.singleSelection(
+              typeName,
               [parsedArgs],
               typeName,
             ),
@@ -336,11 +424,7 @@ export const ParsedType = {
           injectedPrimitives,
         ).Then((parsedArgs) =>
           ValueOrErrors.Default.return(
-            ParsedType.Default.application(
-              "MultiSelection",
-              [parsedArgs],
-              typeName,
-            ),
+            ParsedType.Default.multiSelection(typeName, [parsedArgs], typeName),
           ),
         );
       if (RawType.isList(rawType))
@@ -351,7 +435,7 @@ export const ParsedType = {
           injectedPrimitives,
         ).Then((parsedArgs) =>
           ValueOrErrors.Default.return(
-            ParsedType.Default.application("List", [parsedArgs], typeName),
+            ParsedType.Default.list(typeName, [parsedArgs], typeName),
           ),
         );
       if (RawType.isTuple(rawType))
@@ -368,23 +452,7 @@ export const ParsedType = {
           ),
         ).Then((parsedArgs) =>
           ValueOrErrors.Default.return(
-            ParsedType.Default.application(
-              "Tuple",
-              parsedArgs.toArray(),
-              typeName,
-            ),
-          ),
-        );
-
-      if (RawType.isOption(rawType))
-        return ParsedType.Operations.ParseRawType(
-          typeName,
-          rawType.args[0],
-          typeNames,
-          injectedPrimitives,
-        ).Then((parsedArg) =>
-          ValueOrErrors.Default.return(
-            ParsedType.Default.option(parsedArg, typeName),
+            ParsedType.Default.tuple(typeName, parsedArgs.toArray(), typeName),
           ),
         );
       if (RawType.isMap(rawType))
@@ -401,8 +469,8 @@ export const ParsedType = {
             injectedPrimitives,
           ).Then((parsedArgs1) =>
             ValueOrErrors.Default.return(
-              ParsedType.Default.application(
-                "Map",
+              ParsedType.Default.map(
+                typeName,
                 [parsedArgs0, parsedArgs1],
                 typeName,
               ),
@@ -423,14 +491,87 @@ export const ParsedType = {
             injectedPrimitives,
           ).Then((parsedArgs1) =>
             ValueOrErrors.Default.return(
-              ParsedType.Default.application(
-                "Sum",
+              ParsedType.Default.sum(
+                typeName,
                 [parsedArgs0, parsedArgs1],
                 typeName,
               ),
             ),
           ),
         );
+      // A union case is a special case of a record and must be checked before records
+      // if (RawType.isUnionCase(rawType)) {
+      //   if (typeof rawType.fields == "string") {
+      //     return ParsedType.Operations.ParseRawType(
+      //       rawType.caseName,
+      //       rawType.fields as SerializedType<T>,
+      //       typeNames,
+      //       injectedPrimitives,
+      //     ).Then((parsedFields) => {
+      //       if (parsedFields.kind == "lookup") {
+      //         return ValueOrErrors.Default.return(
+      //           ParsedType.Default.unionCase(
+      //             rawType.caseName,
+      //             parsedFields,
+      //             typeName,
+      //             rawType.extends ?? [],
+      //           ),
+      //         );
+      //       }
+      //       return ValueOrErrors.Default.throwOne(
+      //         `Error: parsed union case ${JSON.stringify(
+      //           parsedFields,
+      //         )} is not a valid union case`,
+      //       );
+      //     });
+      //   }
+      //   return ValueOrErrors.Operations.All(
+      //     List(
+      //       Object.entries(rawType.fields).map(([fieldName, fieldType]) =>
+      //         ParsedType.Operations.ParseRawType(
+      //           fieldName,
+      //           fieldType as SerializedType<T>,
+      //           typeNames,
+      //           injectedPrimitives,
+      //         ).Then((parsedField) =>
+      //           ValueOrErrors.Default.return([fieldName, parsedField] as const),
+      //         ),
+      //       ),
+      //     ),
+      //   )
+      //     .Then((parsedFields) =>
+      //       ValueOrErrors.Default.return(
+      //         ParsedType.Default.record(
+      //           typeName,
+      //           Map(
+      //             parsedFields.map(([fieldName, parsedField]) => [
+      //               fieldName,
+      //               parsedField,
+      //             ]),
+      //           ),
+      //           typeName,
+      //           rawType.extends ?? [],
+      //         ),
+      //       ),
+      //     )
+      //     .Then((parsedField) => {
+      //       if (parsedField.kind == "record") {
+      //         return ValueOrErrors.Default.return<ParsedType<T>, string>(
+      //           ParsedType.Default.unionCase(
+      //             typeName,
+      //             parsedField,
+      //             typeName,
+      //             rawType.extends ?? [],
+      //           ),
+      //         );
+      //       }
+      //       return ValueOrErrors.Default.throwOne(
+      //         `Error: parsed union case ${JSON.stringify(
+      //           parsedField,
+      //         )} is not a valid union case`,
+      //       );
+      //     });
+      // }
       if (RawType.isRecord(rawType)) {
         return ValueOrErrors.Operations.All(
           List(
@@ -467,57 +608,28 @@ export const ParsedType = {
             ),
           );
       }
-      if (RawType.isUnionCase(rawType)) {
-        return ParsedType.Operations.ParseRawType(
-          rawType.caseName,
-          rawType.fields,
-          typeNames,
-          injectedPrimitives,
-        ).Then((parsedFields) =>
-          ValueOrErrors.Default.return(
-            ParsedType.Default.unionCase(
-              rawType.caseName,
-              parsedFields as ParsedRecord<T>,
-              typeName,
-              rawType.extends ?? [],
-            ),
-          ),
-        );
-      }
       if (RawType.isUnion(rawType)) {
         return ValueOrErrors.Operations.All(
-          List<ValueOrErrors<ParsedUnionCase<T>, string>>(
+          List<ValueOrErrors<[string, ParsedType<T>], string>>(
             rawType.args.map((unionCase) => {
-              if (!RawType.isUnionCase(unionCase)) {
-                return ValueOrErrors.Default.throwOne(
-                  `Error: arg ${JSON.stringify(
-                    unionCase,
-                  )} is not a valid union case`,
-                );
-              }
               return ParsedType.Operations.ParseRawType(
-                unionCase.case,
-                unionCase,
+                unionCase.caseName,
+                typeof unionCase.fields == "string"
+                  ? unionCase.fields
+                  : unionCase,
                 typeNames,
                 injectedPrimitives,
-              ).Then((parsedFields) =>
-                ValueOrErrors.Default.return(
-                  ParsedType.Default.unionCase(
-                    unionCase.caseName,
-                    parsedFields as ParsedRecord<T>,
-                    typeName,
-                    unionCase.extends ?? [],
-                  ),
-                ),
-              );
+              ).Then((parsedUnionCase) => {
+                return ValueOrErrors.Default.return([
+                  unionCase.caseName,
+                  parsedUnionCase,
+                ]);
+              });
             }),
           ),
         ).Then((parsedUnionCases) =>
           ValueOrErrors.Default.return(
-            ParsedType.Default.union(
-              Map(parsedUnionCases.toArray().map((_) => [_.name, _] as const)),
-              typeName,
-            ),
+            ParsedType.Default.union(Map(parsedUnionCases), typeName),
           ),
         );
       }
@@ -548,7 +660,7 @@ export const ParsedType = {
             .valueSeq()
             .toArray()
             .map((parsedType) => {
-              if (parsedType.kind != "record" && parsedType.kind != "union") {
+              if (parsedType.kind != "record") {
                 return ValueOrErrors.Default.return(parsedType);
               }
 
@@ -572,68 +684,69 @@ export const ParsedType = {
                 }
                 return ValueOrErrors.Default.return(
                   ParsedType.Default.record(
-                    parsedType.value,
+                    parsedType.name,
                     parsedType.fields.merge(extendedType.fields),
                     parsedType.typeName,
                     parsedType.extendedTypes,
                   ),
                 );
               }
-              if (parsedType.kind == "union") {
-                return ValueOrErrors.Operations.All(
-                  List<ValueOrErrors<ParsedUnionCase<T>, string>>(
-                    parsedType.args
-                      .valueSeq()
-                      .toArray()
-                      .map((unionCase) => {
-                        if (unionCase.extendedTypes.length <= 0) {
-                          return ValueOrErrors.Default.return(unionCase);
-                        }
-                        const extendedType = parsedTypes.get(
-                          unionCase.extendedTypes[0],
-                        );
+              // if (parsedType.kind == "union") {
+              //   return ValueOrErrors.Operations.All(
+              //     List<ValueOrErrors<UnionCaseType<T>, string>>(
+              //       parsedType.args
+              //         .valueSeq()
+              //         .toArray()
+              //         .map((unionCase) => {
+              //           if (unionCase.extendedTypes.length <= 0) {
+              //             return ValueOrErrors.Default.return(unionCase);
+              //           }
+              //           const extendedType = parsedTypes.get(
+              //             unionCase.extendedTypes[0],
+              //           );
 
-                        if (
-                          extendedType == undefined ||
-                          extendedType.kind != "record"
-                        ) {
-                          return ValueOrErrors.Default.throwOne(
-                            `Error: extended type ${JSON.stringify(
-                              unionCase.extendedTypes,
-                            )} is not a valid extended type`,
-                          );
-                        }
+              //           if (
+              //             extendedType == undefined ||
+              //             extendedType.kind != "record" ||
+              //             unionCase.fields.kind != "record"
+              //           ) {
+              //             return ValueOrErrors.Default.throwOne(
+              //               `Error: extended type ${JSON.stringify(
+              //                 unionCase.extendedTypes,
+              //               )} is not a valid extended type`,
+              //             );
+              //           }
 
-                        return ValueOrErrors.Default.return(
-                          ParsedType.Default.unionCase(
-                            unionCase.name,
-                            ParsedType.Default.record(
-                              "unionCase",
-                              unionCase.fields.fields.merge(
-                                extendedType.fields,
-                              ),
-                              unionCase.typeName,
-                              unionCase.extendedTypes,
-                            ),
-                            parsedType.typeName,
-                            unionCase.extendedTypes,
-                          ),
-                        );
-                      }),
-                  ),
-                ).Then((parsedUnionCases) =>
-                  ValueOrErrors.Default.return(
-                    ParsedType.Default.union(
-                      Map(
-                        parsedUnionCases
-                          .toArray()
-                          .map((_) => [_.name, _] as const),
-                      ),
-                      parsedType.typeName,
-                    ),
-                  ),
-                );
-              }
+              //           return ValueOrErrors.Default.return(
+              //             ParsedType.Default.unionCase(
+              //               unionCase.name,
+              //               ParsedType.Default.record(
+              //                 "unionCase",
+              //                 unionCase.fields.fields.merge(
+              //                   extendedType.fields,
+              //                 ),
+              //                 unionCase.typeName,
+              //                 unionCase.extendedTypes,
+              //               ),
+              //               parsedType.typeName,
+              //               unionCase.extendedTypes,
+              //             ),
+              //           );
+              //         }),
+              //     ),
+              //   ).Then((parsedUnionCases) =>
+              //     ValueOrErrors.Default.return(
+              //       ParsedType.Default.union(
+              //         Map(
+              //           parsedUnionCases
+              //             .toArray()
+              //             .map((_) => [_.name, _] as const),
+              //         ),
+              //         parsedType.typeName,
+              //       ),
+              //     ),
+              //   );
+              // }
               return ValueOrErrors.Default.throwOne(
                 `Error: parsed type ${JSON.stringify(
                   parsedType,

@@ -1,5 +1,6 @@
 import {
   ParsedType,
+  UnionType,
   ValueOrErrors,
 } from "../../../../../../../../../../../../../../main";
 import {
@@ -14,14 +15,15 @@ export type SerializedNestedUnionRenderer = {
   cases?: unknown;
 } & BaseSerializedNestedRenderer;
 
-export type NestedUnionRenderer<T> = BaseNestedRenderer<T> & {
+export type NestedUnionRenderer<T> = BaseNestedRenderer & {
   kind: "nestedUnionRenderer";
   cases: Map<string, NestedRenderer<T>>;
+  type: UnionType<T>;
 };
 
 export const NestedUnionRenderer = {
   Default: <T>(
-    type: ParsedType<T>,
+    type: UnionType<T>,
     rendererPath: List<string>,
     renderer: string,
     cases: Map<string, NestedRenderer<T>>,
@@ -96,7 +98,7 @@ export const NestedUnionRenderer = {
       });
     },
     Deserialize: <T>(
-      type: ParsedType<T>,
+      type: UnionType<T>,
       rendererPath: List<string>,
       serialized: SerializedNestedUnionRenderer,
     ): ValueOrErrors<NestedUnionRenderer<T>, string> => {
@@ -107,9 +109,17 @@ export const NestedUnionRenderer = {
         ValueOrErrors.Operations.All(
           List<ValueOrErrors<[string, NestedRenderer<T>], string>>(
             Object.entries(serializedNestedUnionRenderer.cases).map(
-              ([caseName, caseProp]) =>
-                NestedRenderer.Operations.Deserialize(
-                  type,
+              ([caseName, caseProp]) => {
+                const caseType = type.args.get(caseName);
+                if (caseType == undefined) {
+                  return ValueOrErrors.Default.throwOne(
+                    `case ${caseName} not found in union type ${rendererPath.join(
+                      ".",
+                    )}`,
+                  );
+                }
+                return NestedRenderer.Operations.Deserialize(
+                  caseType,
                   rendererPath.push(caseName),
                   caseProp,
                 ).Then((deserializedCase) => {
@@ -117,7 +127,8 @@ export const NestedUnionRenderer = {
                     caseName,
                     deserializedCase,
                   ]);
-                }),
+                });
+              },
             ),
           ),
         ).Then((deserializedCases) => {

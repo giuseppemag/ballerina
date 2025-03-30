@@ -1,5 +1,6 @@
 import {
   ParsedType,
+  SumType,
   ValueOrErrors,
 } from "../../../../../../../../../../../../../../main";
 import {
@@ -15,15 +16,16 @@ export type SerializedNestedSumRenderer = {
   rightRenderer?: unknown;
 } & BaseSerializedNestedRenderer;
 
-export type NestedSumRenderer<T> = BaseNestedRenderer<T> & {
+export type NestedSumRenderer<T> = BaseNestedRenderer & {
   kind: "nestedSumRenderer";
   leftRenderer: NestedRenderer<T>;
   rightRenderer: NestedRenderer<T>;
+  type: SumType<T>;
 };
 
 export const NestedSumRenderer = {
   Default: <T>(
-    type: ParsedType<T>,
+    type: SumType<T>,
     rendererPath: List<string>,
     renderer: string,
     leftRenderer: NestedRenderer<T>,
@@ -78,7 +80,7 @@ export const NestedSumRenderer = {
       return ValueOrErrors.Default.return(serialized);
     },
     Deserialize: <T>(
-      type: ParsedType<T>,
+      type: SumType<T>,
       rendererPath: List<string>,
       serialized: SerializedNestedSumRenderer,
     ): ValueOrErrors<NestedSumRenderer<T>, string> => {
@@ -87,12 +89,12 @@ export const NestedSumRenderer = {
         serialized,
       ).Then((serializedNestedSumRenderer) =>
         NestedRenderer.Operations.Deserialize(
-          type,
+          type.args[0],
           rendererPath.push("leftRenderer"),
           serializedNestedSumRenderer.leftRenderer,
         ).Then((deserializedLeftRenderer) =>
           NestedRenderer.Operations.Deserialize(
-            type,
+            type.args[1],
             rendererPath.push("rightRenderer"),
             serializedNestedSumRenderer.rightRenderer,
           ).Then((deserializedRightRenderer) => {

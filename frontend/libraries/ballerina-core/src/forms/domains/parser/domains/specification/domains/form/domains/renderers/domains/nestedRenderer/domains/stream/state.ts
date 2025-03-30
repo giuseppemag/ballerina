@@ -1,5 +1,7 @@
 import {
   ParsedType,
+  SingleSelectionType,
+  MultiSelectionType,
   ValueOrErrors,
 } from "../../../../../../../../../../../../../../main";
 import { BaseSerializedNestedRenderer, BaseNestedRenderer } from "../../state";
@@ -9,15 +11,16 @@ export type SerializedNestedStreamRenderer = {
   stream?: string;
 } & BaseSerializedNestedRenderer;
 
-export type NestedStreamRenderer<T> = BaseNestedRenderer<T> & {
+export type NestedStreamRenderer<T> = BaseNestedRenderer & {
   kind: "nestedStreamRenderer";
   stream: string;
+  type: SingleSelectionType<T> | MultiSelectionType<T>;
 };
 
 export const NestedStreamRenderer = {
   Default: <T>(
     rendererPath: List<string>,
-    type: ParsedType<T>,
+    type: SingleSelectionType<T> | MultiSelectionType<T>,
     stream: string,
     renderer: string,
     label?: string,
@@ -76,7 +79,7 @@ export const NestedStreamRenderer = {
       return ValueOrErrors.Default.return(serialized);
     },
     Deserialize: <T>(
-      type: ParsedType<T>,
+      type: SingleSelectionType<T> | MultiSelectionType<T>,
       rendererPath: List<string>,
       serialized: SerializedNestedStreamRenderer,
     ): ValueOrErrors<NestedStreamRenderer<T>, string> => {

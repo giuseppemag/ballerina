@@ -1,6 +1,6 @@
 import {
   Expr,
-  ParsedPrimitiveType,
+  PrimitiveType,
   ValueOrErrors,
 } from "../../../../../../../../../../../../../../../../main";
 import {
@@ -14,12 +14,12 @@ export type SerializedPrimitiveRecordFieldRenderer =
 
 export type PrimitiveRecordFieldRenderer<T> = BaseRecordFieldRenderer<T> & {
   kind: "primitiveRecordField";
-  type: ParsedPrimitiveType<T>;
+  type: PrimitiveType<T>;
 };
 
 export const PrimitiveRecordFieldRenderer = {
   Default: <T>(
-    type: ParsedPrimitiveType<T>,
+    type: PrimitiveType<T>,
     fieldPath: List<string>,
     renderer: string,
     visible: Expr,
@@ -66,7 +66,7 @@ export const PrimitiveRecordFieldRenderer = {
       return ValueOrErrors.Default.return(serialized);
     },
     Deserialize: <T>(
-      type: ParsedPrimitiveType<T>,
+      type: PrimitiveType<T>,
       fieldPath: List<string>,
       serialized: SerializedPrimitiveRecordFieldRenderer,
     ): ValueOrErrors<PrimitiveRecordFieldRenderer<T>, string> => {

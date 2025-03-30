@@ -1,4 +1,5 @@
 import {
+  MapType,
   ParsedType,
   ValueOrErrors,
 } from "../../../../../../../../../../../../../../main";
@@ -15,15 +16,16 @@ export type SerializedNestedMapRenderer = {
   valueRenderer?: unknown;
 } & BaseSerializedNestedRenderer;
 
-export type NestedMapRenderer<T> = BaseNestedRenderer<T> & {
+export type NestedMapRenderer<T> = BaseNestedRenderer & {
   kind: "nestedMapRenderer";
   keyRenderer: NestedRenderer<T>;
   valueRenderer: NestedRenderer<T>;
+  type: MapType<T>;
 };
 
 export const NestedMapRenderer = {
   Default: <T>(
-    type: ParsedType<T>,
+    type: MapType<T>,
     rendererPath: List<string>,
     renderer: string,
     keyRenderer: NestedRenderer<T>,
@@ -78,7 +80,7 @@ export const NestedMapRenderer = {
       return ValueOrErrors.Default.return(serialized);
     },
     Deserialize: <T>(
-      type: ParsedType<T>,
+      type: MapType<T>,
       rendererPath: List<string>,
       serialized: SerializedNestedMapRenderer,
     ): ValueOrErrors<NestedMapRenderer<T>, string> => {
@@ -87,12 +89,12 @@ export const NestedMapRenderer = {
         serialized,
       ).Then((serializedNestedMapRenderer) =>
         NestedRenderer.Operations.Deserialize(
-          type,
+          type.args[0],
           rendererPath.push("keyRenderer"),
           serializedNestedMapRenderer.keyRenderer,
         ).Then((deserializedKeyRenderer) =>
           NestedRenderer.Operations.Deserialize(
-            type,
+            type.args[1],
             rendererPath.push("valueRenderer"),
             serializedNestedMapRenderer.valueRenderer,
           ).Then((deserializedValueRenderer) => {

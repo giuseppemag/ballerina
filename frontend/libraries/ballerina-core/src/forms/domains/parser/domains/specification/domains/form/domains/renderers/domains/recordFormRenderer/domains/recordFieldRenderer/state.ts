@@ -98,8 +98,8 @@ export const RecordFieldRenderer = {
         );
       }
       if (
-        type.kind == "application" &&
-        type.value == "SingleSelection" &&
+        (type.kind == "singleSelection" ||
+          type.kind == "multiSelection") &&
         "options" in serialized
       ) {
         return EnumRecordFieldRenderer.Operations.Deserialize(
@@ -109,8 +109,8 @@ export const RecordFieldRenderer = {
         );
       }
       if (
-        type.kind == "application" &&
-        type.value == "SingleSelection" &&
+        (type.kind == "singleSelection" ||
+          type.kind == "multiSelection") &&
         "stream" in serialized
       ) {
         return StreamRecordFieldRenderer.Operations.Deserialize(
@@ -126,37 +126,44 @@ export const RecordFieldRenderer = {
           serialized,
         );
       }
-      if (type.kind == "application" && type.value == "List") {
+      if (type.kind == "list") {
         return ListRecordFieldRenderer.Operations.Deserialize(
           type,
           fieldPath.push("listRecordField"),
           serialized,
         );
       }
-      if (type.kind == "application" && type.value == "Map") {
+      if (type.kind == "map") {
         return MapRecordFieldRenderer.Operations.Deserialize(
           type,
           fieldPath.push("mapRecordField"),
           serialized,
         );
       }
-      if (type.kind == "application" && type.value == "Sum") {
+      if (type.kind == "sum") {
         return SumRecordFieldRenderer.Operations.Deserialize(
           type,
           fieldPath.push("sumRecordField"),
           serialized,
         );
       }
-      if (type.kind == "application" && type.value == "Union") {
+      if (type.kind == "union") {
         return UnionRecordFieldRenderer.Operations.Deserialize(
           type,
           fieldPath.push("unionRecordField"),
           serialized,
         );
       }
+      if (type.kind == "tuple") {
+        return TupleRecordFieldRenderer.Operations.Deserialize(
+          type,
+          fieldPath.push("tupleRecordField"),
+          serialized,
+        );
+      }
 
       return ValueOrErrors.Default.throwOne(
-        `Unknown nested renderer type: ${fieldPath.join(".")}`,
+        `Unknown record field renderer type ${JSON.stringify(type)} at ${fieldPath.join(".")}`,
       );
     },
   },

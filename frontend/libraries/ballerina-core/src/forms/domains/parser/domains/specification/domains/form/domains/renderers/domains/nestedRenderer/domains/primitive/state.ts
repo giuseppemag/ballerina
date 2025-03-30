@@ -1,5 +1,6 @@
 import {
   ParsedType,
+  PrimitiveType,
   ValueOrErrors,
 } from "../../../../../../../../../../../../../../main";
 import { NestedRenderer, BaseSerializedNestedRenderer, BaseNestedRenderer } from "../../state";
@@ -7,13 +8,14 @@ import { List } from "immutable";
 
 export type SerializedNestedPrimitiveRenderer = BaseSerializedNestedRenderer;
 
-export type NestedPrimitiveRenderer<T> = BaseNestedRenderer<T> & {
+export type NestedPrimitiveRenderer<T> = BaseNestedRenderer & {
   kind: "nestedPrimitiveRenderer";
+  type: PrimitiveType<T>;
 };
 
 export const NestedPrimitiveRenderer = {
   Default: <T>(
-    type: ParsedType<T>,
+    type: PrimitiveType<T>,
     rendererPath: List<string>,
     renderer: string,
     label?: string,
@@ -56,7 +58,7 @@ export const NestedPrimitiveRenderer = {
       return ValueOrErrors.Default.return(serialized);
     },
     Deserialize: <T>(
-      type: ParsedType<T>,
+      type: PrimitiveType<T>,
       rendererPath: List<string>,
       serialized: SerializedNestedPrimitiveRenderer,
     ): ValueOrErrors<NestedPrimitiveRenderer<T>, string> => {

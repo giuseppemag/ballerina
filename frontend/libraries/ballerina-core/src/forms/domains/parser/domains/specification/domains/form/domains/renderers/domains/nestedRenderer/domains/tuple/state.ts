@@ -1,5 +1,6 @@
 import {
   ParsedType,
+  TupleType,
   ValueOrErrors,
 } from "../../../../../../../../../../../../../../main";
 import {
@@ -14,14 +15,15 @@ export type SerializedNestedTupleRenderer = {
   itemRenderers?: unknown;
 } & BaseSerializedNestedRenderer;
 
-export type NestedTupleRenderer<T> = BaseNestedRenderer<T> & {
+export type NestedTupleRenderer<T> = BaseNestedRenderer & {
   kind: "nestedTupleRenderer";
   itemRenderers: Array<NestedRenderer<T>>;
+  type: TupleType<T>;
 };
 
 export const NestedTupleRenderer = {
   Default: <T>(
-    type: ParsedType<T>,
+    type: TupleType<T>,
     rendererPath: List<string>,
     renderer: string,
     itemRenderers: Array<NestedRenderer<T>>,
@@ -98,7 +100,7 @@ export const NestedTupleRenderer = {
       });
     },
     Deserialize: <T>(
-      type: ParsedType<T>,
+      type: TupleType<T>,
       rendererPath: List<string>,
       serialized: SerializedNestedTupleRenderer,
     ): ValueOrErrors<NestedTupleRenderer<T>, string> => {
@@ -111,7 +113,7 @@ export const NestedTupleRenderer = {
             serializedNestedTupleRenderer.itemRenderers.map(
               (itemRenderer, index) =>
                 NestedRenderer.Operations.Deserialize(
-                  type,
+                  type.args[index],
                   rendererPath.push((index + 1).toString()),
                   itemRenderer,
                 ).Then((deserializedItemRenderer) => {

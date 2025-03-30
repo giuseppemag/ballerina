@@ -1,7 +1,8 @@
 import { List } from "immutable";
 import {
   Expr,
-  ParsedApplicationType,
+  MultiSelectionType,
+  SingleSelectionType,
   ValueOrErrors,
 } from "../../../../../../../../../../../../../../../../main";
 import {
@@ -15,12 +16,12 @@ export type SerializedStreamRecordFieldRenderer = {
 export type StreamRecordFieldRenderer<T> = BaseRecordFieldRenderer<T> & {
   kind: "streamRecordField";
   stream: string;
-  type: ParsedApplicationType<T>;
+  type: SingleSelectionType<T> | MultiSelectionType<T>;
 };
 
 export const StreamRecordFieldRenderer = {
   Default: <T>(
-    type: ParsedApplicationType<T>,
+    type: SingleSelectionType<T> | MultiSelectionType<T>,
     fieldPath: List<string>,
     stream: string,
     renderer: string,
@@ -84,7 +85,7 @@ export const StreamRecordFieldRenderer = {
       return ValueOrErrors.Default.return(serialized);
     },
     Deserialize: <T>(
-      type: ParsedApplicationType<T>,
+      type: SingleSelectionType<T> | MultiSelectionType<T>,
       fieldPath: List<string>,
 
       serialized: SerializedStreamRecordFieldRenderer,

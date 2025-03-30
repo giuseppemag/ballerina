@@ -1,7 +1,7 @@
 import { ValueOrErrors } from "../../../../../../../../../../../../../../main";
 import { isObject, ParsedType } from "../../../../../../../types/state";
 import { List, Map } from "immutable";
-import { NestedRenderer } from "../../../nestedRenderer/state";
+import { NestedRenderer, SerializedNestedRenderer } from "../../../nestedRenderer/state";
 
 export type SerializedUnionCaseRenderer = {
   renderer?: any;
@@ -21,7 +21,13 @@ export const UnionCaseRenderer = {
     caseName: string,
     casePath: List<string>,
     renderer: NestedRenderer<T>,
-  ): UnionCaseRenderer<T> => ({ kind: "unionCase", type, caseName, casePath, renderer }),
+  ): UnionCaseRenderer<T> => ({
+    kind: "unionCase",
+    type,
+    caseName,
+    casePath,
+    renderer,
+  }),
   Operations: {
     tryAsValidUnionCase: <T>(
       caseName: string,
@@ -32,22 +38,31 @@ export const UnionCaseRenderer = {
       SerializedUnionCaseRenderer & {
         casePath: List<string>;
         type: ParsedType<T>;
-        renderer: any;
+        renderer: SerializedNestedRenderer;
       },
       string
     > => {
+      console.debug(serialized);
       if (!isObject(serialized)) {
-        return ValueOrErrors.Default.throwOne(`When deserializing ${casePath.join(".")} union case is not an object`);
-      }
-      if (!("renderer" in serialized)) {
         return ValueOrErrors.Default.throwOne(
-          `When deserializing case ${casePath.join(".")} union case is missing the required renderer attribute`,
+          `When deserializing ${casePath.join(
+            ".",
+          )} union case is not an object`,
+        );
+      }
+      if (!("renderer" in serialized) || serialized.renderer == null || typeof serialized.renderer != "object") {
+        return ValueOrErrors.Default.throwOne(
+          `When deserializing case ${casePath.join(
+            ".",
+          )} union case is missing the required renderer attribute`,
         );
       }
       const caseType = caseTypes.get(caseName);
       if (caseType == undefined) {
         return ValueOrErrors.Default.throwOne(
-          `When deserializing case ${casePath.join(".")} union case type ${caseName} is not supported`,
+          `When deserializing case ${casePath.join(
+            ".",
+          )} union case type ${caseName} is not supported`,
         );
       }
       return ValueOrErrors.Default.return({
@@ -67,17 +82,23 @@ export const UnionCaseRenderer = {
         casePath,
         serialized,
         caseTypes,
-      ).Then((validUnionCase) =>
-        NestedRenderer.Operations.Deserialize(
-          validUnionCase.type,
+      ).Then((validUnionCase) => {
+        console.debug(validUnionCase);
+        return NestedRenderer.Operations.Deserialize(
+          validUnionCase.type.fields,
           validUnionCase.casePath,
-          validUnionCase.renderer,
+          {renderer: validUnionCase.renderer},
         ).Then((renderer) =>
           ValueOrErrors.Default.return(
-            UnionCaseRenderer.Default(validUnionCase.type, caseName, casePath, renderer),
+            UnionCaseRenderer.Default(
+              validUnionCase.type,
+              caseName,
+              casePath,
+              renderer,
+            ),
           ),
-        ),
-      );
+        );
+      });
     },
   },
 };

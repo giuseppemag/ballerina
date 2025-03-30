@@ -11,7 +11,7 @@ import {
   DateFormState,
   InjectedPrimitives,
   Maybe,
-  ParsedRecord,
+  RecordType,
   NumberFormState,
   ParsedType,
   PredicateValue,
@@ -45,7 +45,7 @@ const simpleMapKeyToIdentifer = (key: any): string => {
   return JSON.stringify(key);
 };
 
-export const PrimitiveTypes = [
+export const BuiltInPrimitiveTypes = [
   "unit",
   "guid", //resolves to string
   "string",
@@ -55,9 +55,9 @@ export const PrimitiveTypes = [
   "base64File",
   "secret",
 ] as const;
-export type PrimitiveType = (typeof PrimitiveTypes)[number];
+export type BuiltInPrimitiveType = (typeof BuiltInPrimitiveTypes)[number];
 
-export const GenericTypes = [
+export const BuiltInGenericTypes = [
   "SingleSelection",
   "MultiSelection",
   "List",
@@ -67,7 +67,7 @@ export const GenericTypes = [
   "Option",
   "Sum",
 ] as const;
-export type GenericType = (typeof GenericTypes)[number];
+export type BuiltInGenericType = (typeof BuiltInGenericTypes)[number];
 
 export type ApiConverter<T> = {
   fromAPIRawValue: BasicFun<any, T>;

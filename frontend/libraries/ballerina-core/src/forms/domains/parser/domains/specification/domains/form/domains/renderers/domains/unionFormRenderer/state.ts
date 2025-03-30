@@ -1,14 +1,13 @@
 import { ValueOrErrors } from "../../../../../../../../../../../../main";
-import { isObject, ParsedType, ParsedUnion } from "../../../../../types/state";
 import {
-  SerializedUnionCaseRenderer,
-  UnionCaseRenderer,
-} from "./domains/unionCaseRenderer/state";
+  isObject,
+  isString,
+  ParsedType,
+  UnionType,
+} from "../../../../../types/state";
+import { NestedRenderer } from "../nestedRenderer/state";
+import { UnionCaseRenderer } from "./domains/unionCaseRenderer/state";
 import { List, Map } from "immutable";
-import {
-  NestedRenderer,
-  SerializedNestedRenderer,
-} from "../nestedRenderer/state";
 
 export type SerializedUnionFormRenderer = {
   renderer?: unknown;
@@ -17,99 +16,101 @@ export type SerializedUnionFormRenderer = {
 
 export type UnionFormRenderer<T> = {
   kind: "unionForm";
-  renderer?: NestedRenderer<T>;
+  renderer?: string;
   type: ParsedType<T>;
-  cases: Map<string, UnionCaseRenderer<T>>;
+  cases: Map<string, NestedRenderer<T>>;
 };
 
 export const UnionFormRenderer = {
   Default: <T>(
     type: ParsedType<T>,
-    cases: Map<string, UnionCaseRenderer<T>>,
-    renderer?: NestedRenderer<T>,
+    cases: Map<string, NestedRenderer<T>>,
+    renderer?: string,
   ): UnionFormRenderer<T> => ({ kind: "unionForm", type, renderer, cases }),
   Operations: {
-    hasCases: (_: unknown): _ is { cases: Record<string, unknown> } =>
-      isObject(_) && "cases" in _ && isObject(_.cases),
-    hasValidRenderer: (_: unknown): _ is SerializedNestedRenderer =>
-      isObject(_) && "renderer" in _ && isObject(_.renderer),
+    hasCases: (
+      _: unknown,
+    ): _ is { cases: Record<string, object>; renderer?: unknown } =>
+      isObject(_) &&
+      "cases" in _ &&
+      isObject(_.cases) &&
+      Object.values(_.cases).every((caseRenderer) => isObject(caseRenderer)),
+    isValidRenderer: (_: unknown): _ is string => isString(_),
     tryAsValidUnionForm: <T>(
-      serialized: SerializedUnionFormRenderer
+      rendererPath: List<string>,
+      serialized: SerializedUnionFormRenderer,
     ): ValueOrErrors<
       Omit<SerializedUnionFormRenderer, "cases" | "renderer"> & {
-        renderer?: SerializedNestedRenderer;
-        cases: Map<string, SerializedUnionCaseRenderer>;
+        renderer?: string;
+        cases: Map<string, object>;
       },
       string
     > => {
-      const cases = serialized.cases;
-      if (!UnionFormRenderer.Operations.hasCases(cases))
+      if (!UnionFormRenderer.Operations.hasCases(serialized))
         return ValueOrErrors.Default.throwOne(
-          "union form is missing the required cases attribute",
+          `union form ${rendererPath.join(
+            ".",
+          )} is missing the required cases attribute`,
         );
 
       const renderer = serialized.renderer;
       if (
-        renderer === null ||
-        (renderer !== undefined &&
-          !UnionFormRenderer.Operations.hasValidRenderer(renderer))
+        renderer !== undefined &&
+        !UnionFormRenderer.Operations.isValidRenderer(renderer)
       )
         return ValueOrErrors.Default.throwOne(
-          "union form is missing the required renderer attribute",
+          `union form ${rendererPath.join(
+            ".",
+          )} has an invalid renderer attribute, ${JSON.stringify(renderer)}`,
         );
-
-      if (!isObject(serialized.cases)) {
-        return ValueOrErrors.Default.throwOne(
-          "union form cases attribute is not an object",
-        );
-      }
 
       return ValueOrErrors.Default.return({
         ...serialized,
-        cases: Map<string, SerializedUnionCaseRenderer>(cases),
+        cases: Map(serialized.cases),
         renderer,
       });
     },
     Deserialize: <T>(
-      type: ParsedUnion<T>,
-      fieldPath: List<string>,
+      type: UnionType<T>,
+      formPath: List<string>,
       serialized: SerializedUnionFormRenderer,
     ): ValueOrErrors<UnionFormRenderer<T>, string> =>
-      UnionFormRenderer.Operations.tryAsValidUnionForm(serialized).Then(
-        (validUnionForm) =>
-          ValueOrErrors.Operations.All(
-            List<ValueOrErrors<[string, UnionCaseRenderer<T>], string>>(
-              validUnionForm.cases
-                .entrySeq()
-                .toArray()
-                .map(([caseName, caseRenderer]) => {
-                  return UnionCaseRenderer.Operations.Deserialize(
-                    caseName,
-                    fieldPath.push(caseName),
-                    caseRenderer,
-                    type.args,
-                  ).Then((caseRenderer) =>
-                    ValueOrErrors.Default.return([caseName, caseRenderer]),
+      UnionFormRenderer.Operations.tryAsValidUnionForm(
+        formPath,
+        serialized,
+      ).Then((validUnionForm) =>
+        ValueOrErrors.Operations.All(
+          List<ValueOrErrors<[string, NestedRenderer<T>], string>>(
+            validUnionForm.cases
+              .entrySeq()
+              .toArray()
+              .map(([caseName, caseRenderer]) => {
+                const caseType = type.args.get(caseName);
+                if (caseType == undefined) {
+                  return ValueOrErrors.Default.throwOne(
+                    `When deserializing union form ${formPath.join(
+                      ".",
+                    )} case ${caseName} is not supported`,
                   );
-                }),
-            ),
-          ).Then((caseTuples) => {
-            const cases = Map(caseTuples);
-            if (validUnionForm.renderer != undefined) {
-              return NestedRenderer.Operations.Deserialize(
-                type,
-                fieldPath,
-                validUnionForm.renderer,
-              ).Then((renderer) => {
-                return ValueOrErrors.Default.return(
-                  UnionFormRenderer.Default(type, cases, renderer),
+                }
+                return NestedRenderer.Operations.Deserialize(
+                  caseType,
+                  formPath.push(caseName),
+                  caseRenderer,
+                ).Then((caseRenderer) =>
+                  ValueOrErrors.Default.return([caseName, caseRenderer]),
                 );
-              });
-            }
-            return ValueOrErrors.Default.return(
-              UnionFormRenderer.Default(type, cases),
-            );
-          }),
+              }),
+          ),
+        ).Then((caseTuples) =>
+          ValueOrErrors.Default.return(
+            UnionFormRenderer.Default(
+              type,
+              Map(caseTuples),
+              validUnionForm.renderer,
+            ),
+          ),
+        ),
       ),
   },
 };

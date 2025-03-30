@@ -6,7 +6,10 @@ import {
   NestedLookupRenderer,
   SerializedNestedLookupRenderer,
 } from "./domains/lookup/state";
-import { NestedEnumRenderer, SerializedNestedEnumRenderer } from "./domains/enum/state";
+import {
+  NestedEnumRenderer,
+  SerializedNestedEnumRenderer,
+} from "./domains/enum/state";
 import {
   NestedPrimitiveRenderer,
   SerializedNestedPrimitiveRenderer,
@@ -16,9 +19,18 @@ import {
   SerializedNestedStreamRenderer,
 } from "./domains/stream/state";
 import { List } from "immutable";
-import { NestedListRenderer, SerializedNestedListRenderer } from "./domains/list/state";
-import { NestedMapRenderer, SerializedNestedMapRenderer } from "./domains/map/state";
-import { NestedSumRenderer, SerializedNestedSumRenderer } from "./domains/sum/state";
+import {
+  NestedListRenderer,
+  SerializedNestedListRenderer,
+} from "./domains/list/state";
+import {
+  NestedMapRenderer,
+  SerializedNestedMapRenderer,
+} from "./domains/map/state";
+import {
+  NestedSumRenderer,
+  SerializedNestedSumRenderer,
+} from "./domains/sum/state";
 import {
   NestedUnionRenderer,
   SerializedNestedUnionRenderer,
@@ -46,8 +58,7 @@ export type SerializedNestedRenderer =
   | SerializedNestedUnionRenderer
   | SerializedNestedTupleRenderer;
 
-export type BaseNestedRenderer<T> = {
-  type: ParsedType<T>;
+export type BaseNestedRenderer = {
   rendererPath: List<string>;
   renderer: string;
   label?: string;
@@ -81,8 +92,7 @@ export const NestedRenderer = {
         );
       }
       if (
-        type.kind == "application" &&
-        type.value == "SingleSelection" &&
+        (type.kind == "singleSelection" || type.kind == "multiSelection") &&
         "options" in serialized
       ) {
         return NestedEnumRenderer.Operations.Deserialize(
@@ -92,8 +102,7 @@ export const NestedRenderer = {
         );
       }
       if (
-        type.kind == "application" &&
-        type.value == "SingleSelection" &&
+        (type.kind == "singleSelection" || type.kind == "multiSelection") &&
         "stream" in serialized
       ) {
         return NestedStreamRenderer.Operations.Deserialize(
@@ -109,37 +118,46 @@ export const NestedRenderer = {
           serialized,
         );
       }
-      if (type.kind == "application" && type.value == "List") {
+      if (type.kind == "list") {
         return NestedListRenderer.Operations.Deserialize(
           type,
           rendererPath.push("nestedListRenderer"),
           serialized,
         );
       }
-      if (type.kind == "application" && type.value == "Map") {
+      if (type.kind == "map") {
         return NestedMapRenderer.Operations.Deserialize(
           type,
           rendererPath.push("nestedMapRenderer"),
           serialized,
         );
       }
-      if (type.kind == "application" && type.value == "Sum") {
+      if (type.kind == "sum") {
         return NestedSumRenderer.Operations.Deserialize(
           type,
           rendererPath.push("nestedSumRenderer"),
           serialized,
         );
       }
-      if (type.kind == "application" && type.value == "Union") {
+      if (type.kind == "union") {
         return NestedUnionRenderer.Operations.Deserialize(
           type,
           rendererPath.push("nestedUnionRenderer"),
           serialized,
         );
       }
+      // if (type.kind == "unionCase") {
+      //   return NestedUnionCaseRenderer.Operations.Deserialize(
+      //     type,
+      //     rendererPath.push("nestedUnionRenderer"),
+      //     serialized,
+      //   );
+      // }
 
       return ValueOrErrors.Default.throwOne(
-        `Unknown nested renderer type: ${rendererPath.join(".")}`,
+        `Unknown nested renderer type at ${rendererPath.join(
+          ".",
+        )} : ${JSON.stringify(type)}`,
       );
     },
   },

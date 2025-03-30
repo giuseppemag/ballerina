@@ -1,5 +1,6 @@
 import {
-  ParsedType,
+  SingleSelectionType,
+  MultiSelectionType,
   ValueOrErrors,
 } from "../../../../../../../../../../../../../../main";
 import { BaseNestedRenderer, BaseSerializedNestedRenderer } from "../../state";
@@ -9,14 +10,15 @@ export type SerializedNestedEnumRenderer = {
   options?: string;
 } & BaseSerializedNestedRenderer;
 
-export type NestedEnumRenderer<T> = BaseNestedRenderer<T> & {
+export type NestedEnumRenderer<T> = BaseNestedRenderer & {
   kind: "nestedEnumRenderer";
   options: string;
+  type: SingleSelectionType<T> | MultiSelectionType<T>;
 };
 
 export const NestedEnumRenderer = {
   Default: <T>(
-    type: ParsedType<T>,
+    type: SingleSelectionType<T> | MultiSelectionType<T>,
     rendererPath: List<string>,
     options: string,
     renderer: string,
@@ -104,7 +106,7 @@ export const NestedEnumRenderer = {
       return ValueOrErrors.Default.return(serialized);
     },
     Deserialize: <T>(
-      type: ParsedType<T>,
+      type: SingleSelectionType<T> | MultiSelectionType<T>,
       rendererPath: List<string>,
       serialized: SerializedNestedEnumRenderer,
     ): ValueOrErrors<NestedEnumRenderer<T>, string> => {

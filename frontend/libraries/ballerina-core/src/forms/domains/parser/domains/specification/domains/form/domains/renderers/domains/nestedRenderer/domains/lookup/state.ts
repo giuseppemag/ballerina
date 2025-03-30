@@ -1,5 +1,6 @@
 import {
   ParsedType,
+  LookupType,
   ValueOrErrors,
 } from "../../../../../../../../../../../../../../main";
 import { BaseSerializedNestedRenderer, BaseNestedRenderer } from "../../state";
@@ -7,13 +8,14 @@ import { List } from "immutable";
 
 export type SerializedNestedLookupRenderer = BaseSerializedNestedRenderer;
 
-export type NestedLookupRenderer<T> = BaseNestedRenderer<T> & {
+export type NestedLookupRenderer<T> = BaseNestedRenderer & {
   kind: "lookupRecordField";
+  type: LookupType;
 };
 
 export const NestedLookupRenderer = {
   Default: <T>(
-    type: ParsedType<T>,
+    type: LookupType,
     rendererPath: List<string>,
     renderer: string,
     label?: string,
@@ -55,7 +57,7 @@ export const NestedLookupRenderer = {
       return ValueOrErrors.Default.return(serialized);
     },
     Deserialize: <T>(
-      type: ParsedType<T>,
+      type: LookupType,
       rendererPath: List<string>,
       serialized: SerializedNestedLookupRenderer,
     ): ValueOrErrors<NestedLookupRenderer<T>, string> => {

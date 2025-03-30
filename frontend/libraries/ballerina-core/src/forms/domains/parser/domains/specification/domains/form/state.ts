@@ -2,9 +2,9 @@ import { List, Map } from "immutable";
 import {
   FieldName,
   isObject,
-  ParsedRecord,
+  RecordType,
   ParsedType,
-  ParsedUnion,
+  UnionType,
 } from "../types/state";
 import {
   RecordFormRenderer,
@@ -31,8 +31,8 @@ export const SerializedForm = {
       _: SerializedForm,
       types: Map<string, ParsedType<T>>,
     ): ValueOrErrors<
-      | { kind: "recordForm"; renderer: SerializedRecordFormRenderer; type: ParsedRecord<T> }
-      | { kind: "unionForm"; renderer: SerializedUnionFormRenderer; type: ParsedUnion<T> },
+      | { kind: "recordForm"; renderer: SerializedRecordFormRenderer; type: RecordType<T> }
+      | { kind: "unionForm"; renderer: SerializedUnionFormRenderer; type: UnionType<T> },
       string
     > => {
       if (isObject(_) && "type" in _ && typeof _.type == "string") {
