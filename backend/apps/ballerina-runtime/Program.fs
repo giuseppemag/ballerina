@@ -15,6 +15,13 @@ let formsOptions =
         "Path of json file to process. Use a folder path to process all files in the folder.",
         IsRequired = true
       ))
+     linkedFiles =
+      (new Option<string[]>(
+        "-linked",
+        "Paths of json files to link.",
+        IsRequired = false,
+        AllowMultipleArgumentsPerToken = true
+      ))
      output =
       (new Option<string>(
         "-output",
@@ -33,12 +40,13 @@ let formsOptions =
 
 [<EntryPoint>]
 let main args =
-  let rootCommand = new RootCommand("Sample app for System.CommandLine")
+  let rootCommand = new RootCommand("Ballerina runtime.")
   let formsCommand = new Command("forms")
   rootCommand.AddCommand(formsCommand)
   formsCommand.AddOption(formsOptions.mode)
   formsCommand.AddOption(formsOptions.language)
   formsCommand.AddOption(formsOptions.input)
+  formsCommand.AddOption(formsOptions.linkedFiles)
   formsCommand.AddOption(formsOptions.output)
   formsCommand.AddOption(formsOptions.package_name)
   formsCommand.AddOption(formsOptions.form_name)
@@ -46,10 +54,11 @@ let main args =
 
   // dotnet run -- forms -input person-config.json -validate -codegen ts
   formsCommand.SetHandler(
-    Action<_, _, _, _, _, _, _>(Ballerina.DSL.FormEngine.Runner.run),
+    Action<_, _, _, _, _, _, _, _>(Ballerina.DSL.FormEngine.Runner.run),
     formsOptions.mode,
     formsOptions.language,
     formsOptions.input,
+    formsOptions.linkedFiles,
     formsOptions.output,
     formsOptions.package_name,
     formsOptions.form_name,

@@ -1,0 +1,162 @@
+{
+  "forms": {
+    "jobBase": {
+      "type": "JobBase",
+      "fields": {
+        "Name": {
+          "renderer": "defaultString"
+        },
+        "Salary": {
+          "renderer": "defaultNumber"
+        }
+      },
+      "tabs": {}
+    },
+    "baristaJob": {
+      "type": "BaristaJob",
+      "extends": [
+        "jobBase"
+      ],
+      "fields": {
+        "Salary": {
+          "renderer": "defaultNumber"
+        },
+        "Drinks": {
+          "renderer": "defaultList",
+          "elementRenderer": {
+            "renderer": "defaultString"
+          }
+        }
+      },
+      "tabs": {
+        "main": {
+          "columns": {
+            "main": {
+              "groups": {
+                "main": [
+                  "Name",
+                  "Salary",
+                  "Drinks"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "waiterJob": {
+      "type": "WaiterJob",
+      "extends": [
+        "jobBase"
+      ],
+      "fields": {
+        "Salary": {
+          "renderer": "defaultNumber",
+          "visible": {
+            "kind": "or",
+            "operands": [
+              {
+                "kind": "fieldLookup",
+                "operands": [
+                  {
+                    "kind": "varLookup",
+                    "varName": "root"
+                  },
+                  "subscribeToNewsletter"
+                ]
+              },
+              {
+                "kind": "equals",
+                "operands": [
+                  {
+                    "kind": "fieldLookup",
+                    "operands": [
+                      {
+                        "kind": "varLookup",
+                        "varName": "local"
+                      },
+                      "Patience"
+                    ]
+                  },
+                  100
+                ]
+              }
+            ]
+          }
+        },
+        "Patience": {
+          "renderer": "defaultNumber"
+        }
+      },
+      "tabs": {
+        "main": {
+          "columns": {
+            "main": {
+              "groups": {
+                "main": [
+                  "Name",
+                  "Salary",
+                  "Patience"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "landArea": {
+      "type": "LandArea",
+      "fields": {
+        "x": {
+          "renderer": "defaultNumber"
+        },
+        "y": {
+          "renderer": "defaultNumber"
+        }
+      },
+      "tabs": {
+        "main": {
+          "columns": {
+            "main": {
+              "groups": {
+                "main": [
+                  "x",
+                  "y"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "plotInfo": {
+      "type": "PlotInfo",
+      "fields": {
+        "landArea": {
+          "renderer": "landArea"
+        }
+      },
+      "tabs": {
+        "main": {
+          "columns": {
+            "main": {
+              "groups": {
+                "main": [
+                  "landArea"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "job": {
+      "type": "Job",
+      "renderer": "defaultUnionRenderer",
+      "cases": {
+        "Barista": "baristaJob",
+        "Waiter": "waiterJob"
+      }
+    }
+  }
+}

@@ -43,6 +43,18 @@ module Main =
           let identifierAllowedRegex = Regex codegenConfig.IdentifierAllowedRegex
           let (!) (s: string) = identifierAllowedRegex.Replace(s, "_")
 
+          let launchersEnum: GolangEnum =
+            { Name = $"{formName}LaunchersEnum"
+              Cases =
+                ctx.Launchers
+                |> Map.values
+                |> Seq.map (fun launcher ->
+                  {| Name = $"{!launcher.LauncherName}Launcher"
+                     Value = $"{launcher.LauncherName}" |})
+                |> Seq.toList }
+
+          let launchersEnum = GolangEnum.ToGolang () launchersEnum
+
           let entitiesEnum: GolangEnum =
             { Name = $"{formName}EntitiesEnum"
               Cases =
@@ -333,6 +345,8 @@ module Main =
             return
               StringBuilder.Many(
                 seq {
+                  yield launchersEnum
+                  yield entitiesEnum
                   yield entityGETters
                   yield entityDEFAULTers
                   yield entityPOSTers

@@ -29,6 +29,7 @@ module Runner =
     (validate: bool)
     (language: FormsGenTarget)
     (inputPath: string)
+    (linkedFiles: List<string>)
     (outputPath: string)
     (generatedPackage: string)
     (formName: string)
@@ -47,12 +48,13 @@ module Runner =
          generatedPackage),
       (if formName = null then inputFileName else formName)
 
-    if File.Exists inputPath |> not then
-      Right(Errors.Singleton "Input file does not exist.")
-    else
+    let inputFiles = inputPath :: linkedFiles
+
+    match inputFiles |> Seq.tryFind (File.Exists >> not) with
+    | Some file -> Right(Errors.Singleton $"Input file {file} does not exist.")
+    | _ ->
       try
-        let inputConfig = File.ReadAllText inputPath
-        let jsonValue = JsonValue.Parse inputConfig
+        let jsonValues = inputFiles |> List.map (File.ReadAllText >> JsonValue.Parse)
 
         try
           let codegenConfig = System.IO.File.ReadAllText codegenConfigPath
@@ -84,7 +86,7 @@ module Runner =
                 StreamDisplayValueFieldName = "displayValue" }
 
           match
-            ((ParsedFormsContext.Parse generatedLanguageSpecificConfig jsonValue).run (codegenConfig, initialContext))
+            ((ParsedFormsContext.Parse generatedLanguageSpecificConfig jsonValues).run (codegenConfig, initialContext))
           with
           | Left(_, Some parsedForms) ->
             match
@@ -129,6 +131,7 @@ module Runner =
     (validate: bool)
     (language: FormsGenTarget)
     (inputPath: string)
+    (linkedFiles: string[])
     (outputPath: string)
     (generatedPackage: string)
     (formName: string)
@@ -146,6 +149,7 @@ module Runner =
           (validate: bool)
           (language: FormsGenTarget)
           (inputPath: string)
+          (linkedFiles |> List.ofArray)
           (outputPath: string)
           (generatedPackage: string)
           (formName: string)
@@ -166,7 +170,7 @@ dotnet run -- forms -input ../automatic-tests/input-forms/simple-union-example-l
 
 dotnet run -- forms -input ../automatic-tests/input-forms/entity-patch-kitchensink.json -output ./generated-output/models -validate -codegen golang -codegen_config ../automatic-tests/input-forms/go-config.json
 
-dotnet run -- forms -input ../automatic-tests/input-forms/person-config.json -output ./generated-output/models -validate -codegen golang -codegen_config ../automatic-tests/input-forms/go-config.json
+dotnet run -- forms -input ../automatic-tests/input-forms/person-config.json -linked ../automatic-tests/input-forms/person-config-types-base.json ../automatic-tests/input-forms/person-config-types-person-address.json ../automatic-tests/input-forms/person-config-apis-base.json ../automatic-tests/input-forms/person-config-apis-person-address.json ../automatic-tests/input-forms/person-config-forms-base.json ../automatic-tests/input-forms/person-config-forms-person-address.json -output ./generated-output/models -validate -codegen golang -codegen_config ../automatic-tests/input-forms/go-config.json
 
 dotnet run -- forms -input ../automatic-tests/input-forms/form-config-config.json -output ./generated-output/models -validate -codegen golang -codegen_config ../automatic-tests/input-forms/go-config.json
 *)

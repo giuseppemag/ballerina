@@ -230,7 +230,7 @@
       ]
     }
   ],
-  "IdentifierAllowedRegex": "[^a-zA-Z0-9/-]+",
+  "IdentifierAllowedRegex": "[^a-zA-Z0-9]+",
   "DeltaBase": {
     "GeneratedTypeName": "ballerina.DeltaBase",
     "RequiredImport": "ballerina.com/core"

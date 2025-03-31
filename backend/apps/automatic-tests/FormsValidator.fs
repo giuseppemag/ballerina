@@ -20,6 +20,7 @@ let rec iterateTestsOverFiles baseName start count printLastErrors =
         true
         FormsGenTarget.golang
         fileName
+        []
         "./generated-output/models"
         null
         null
@@ -39,6 +40,12 @@ let CorrectSpec () =
       true
       FormsGenTarget.golang
       "./input-forms/person-config.json"
+      [ "./input-forms/person-config-types-base.json"
+        "./input-forms/person-config-types-person-address.json"
+        "./input-forms/person-config-apis-base.json"
+        "./input-forms/person-config-apis-person-address.json"
+        "./input-forms/person-config-forms-base.json"
+        "./input-forms/person-config-forms-person-address.json" ]
       "./generated-output/models"
       null
       null
@@ -71,6 +78,7 @@ let MissingReference () =
       true
       FormsGenTarget.golang
       "./input-forms/with errors/missing reference.json"
+      []
       "./generated-output/models"
       null
       null

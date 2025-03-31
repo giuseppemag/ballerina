@@ -106,7 +106,7 @@ module Sum =
 
     member sum.Delay p = sum.Bind((sum.Return()), p)
 
-    member sum.Lift2 (f: 'a -> 'b -> 'c) p1 p2 =
+    member sum.Lift2 (f: 'a -> 'b -> 'c) (p1: Sum<_, 's>) (p2: Sum<_, 's>) =
       sum {
         let! a = p1
         let! b = p2

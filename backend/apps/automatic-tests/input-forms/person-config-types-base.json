@@ -1,0 +1,219 @@
+{
+  "types": {
+    "SAPConfig": {
+      "fun": "Union",
+      "args": [
+        {
+          "caseName": "SAP:S2",
+          "fields": {
+            "S2OnlyField": "boolean"
+          }
+        },
+        {
+          "caseName": "SAP:S3",
+          "fields": {
+            "S3OnlyField": "boolean"
+          }
+        },
+        {
+          "caseName": "SAP:S4",
+          "fields": {
+            "S4OnlyField": "boolean"
+          }
+        }
+      ]
+    },
+    "ERPConfig": {
+      "fun": "Union",
+      "args": [
+        {
+          "caseName": "ERP:SAP",
+          "fields": {
+            "Value": "SAPConfig"
+          }
+        },
+        {
+          "caseName": "ERP:BC",
+          "fields": {}
+        },
+        {
+          "caseName": "ERP:FAndO",
+          "fields": {}
+        }
+      ]
+    },
+    "JobBase": {
+      "fields": {
+        "Name": "string",
+        "Salary": "number"
+      }
+    },
+    "BaristaJob": {
+      "extends": [
+        "JobBase"
+      ],
+      "fields": {
+        "Drinks": {
+          "fun": "List",
+          "args": [
+            "string"
+          ]
+        }
+      }
+    },
+    "WaiterJob": {
+      "extends": [
+        "JobBase"
+      ],
+      "fields": {
+        "Patience": "number"
+      }
+    },
+    "Job": {
+      "fun": "Union",
+      "args": [
+        {
+          "caseName": "Barista",
+          "fields": "BaristaJob"
+        },
+        {
+          "caseName": "Waiter",
+          "fields": "WaiterJob"
+        }
+      ]
+    },
+    "GlobalConfiguration": {
+      "extends": [],
+      "fields": {
+        "IsAdmin": "boolean",
+        "ERP": "ERPConfig"
+      }
+    },
+    "CollectionReference": {
+      "extends": [],
+      "fields": {
+        "DisplayValue": "string",
+        "Id": "guid"
+      }
+    },
+    "CityRef": {
+      "extends": [
+        "CollectionReference"
+      ],
+      "fields": {}
+    },
+    "LandArea": {
+      "fields": {
+        "x": "number",
+        "y": "number"
+      }
+    },
+    "PlotInfo": {
+      "fields": {
+        "landArea": "LandArea"
+      }
+    },
+    "GendersEnum": {
+      "fun": "Union",
+      "args": [
+        {
+          "caseName": "M",
+          "fields": {}
+        },
+        {
+          "caseName": "F",
+          "fields": {}
+        },
+        {
+          "caseName": "X",
+          "fields": {}
+        }
+      ]
+    },
+    "GenderRef": {
+      "fields": {
+        "Value": "GendersEnum"
+      }
+    },
+    "ColorsEnum": {
+      "fun": "Union",
+      "args": [
+        {
+          "caseName": "Red",
+          "fields": {}
+        },
+        {
+          "caseName": "Green",
+          "fields": {}
+        },
+        {
+          "caseName": "Blue",
+          "fields": {}
+        }
+      ]
+    },
+    "ColorRef": {
+      "fields": {
+        "Value": "ColorsEnum"
+      }
+    },
+    "InterestsEnum": {
+      "fun": "Union",
+      "args": [
+        {
+          "caseName": "Soccer",
+          "fields": {}
+        },
+        {
+          "caseName": "Hockey",
+          "fields": {}
+        },
+        {
+          "caseName": "BoardGames",
+          "fields": {}
+        },
+        {
+          "caseName": "HegelianPhilosophy",
+          "fields": {}
+        }
+      ]
+    },
+    "InterestRef": {
+      "fields": {
+        "Value": "InterestsEnum"
+      }
+    },
+    "PermissionsEnum": {
+      "fun": "Union",
+      "args": [
+        {
+          "caseName": "Create",
+          "fields": {}
+        },
+        {
+          "caseName": "Read",
+          "fields": {}
+        },
+        {
+          "caseName": "Update",
+          "fields": {}
+        },
+        {
+          "caseName": "Delete",
+          "fields": {}
+        }
+      ]
+    },
+    "PermissionRef": {
+      "fields": {
+        "Value": "PermissionsEnum"
+      }
+    },
+    "DepartmentRef": {
+      "extends": [
+        "CollectionReference"
+      ],
+      "fields": {}
+    }
+  } 
+}

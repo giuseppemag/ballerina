@@ -17,6 +17,66 @@ module Parser =
   open FSharp.Data
   open Ballerina.Collections.NonEmptyList
 
+  type TopLevel =
+    { Types: (string * JsonValue)[]
+      Forms: (string * JsonValue)[]
+      Launchers: (string * JsonValue)[]
+      Enums: (string * JsonValue)[]
+      Streams: (string * JsonValue)[]
+      Entities: (string * JsonValue)[] }
+
+    static member Merge (main1: TopLevel) (main2: TopLevel) : Sum<TopLevel, Errors> =
+      sum {
+        let inline ensureNoOverlap (m1: seq<'k * 'v>) (m2: seq<'k * 'v>) name =
+          sum {
+            let m1 = m1 |> Map.ofSeq
+            let m2 = m2 |> Map.ofSeq
+
+            let overlappingKeys =
+              Set.intersect (m1 |> Map.keys |> Set.ofSeq) (m2 |> Map.keys |> Set.ofSeq)
+
+            if overlappingKeys |> Set.isEmpty then
+              return ()
+            else
+              return! sum.Throw(Errors.Singleton $"Error: {overlappingKeys} multiple definitions of the same {name} ")
+          }
+
+        do! ensureNoOverlap main1.Types main2.Types "Types"
+        do! ensureNoOverlap main1.Forms main2.Forms "Forms"
+        do! ensureNoOverlap main1.Launchers main2.Launchers "Launchers"
+        do! ensureNoOverlap main1.Enums main2.Enums "Enums"
+        do! ensureNoOverlap main1.Streams main2.Streams "Streams"
+        do! ensureNoOverlap main1.Entities main2.Entities "Entities"
+
+        let inline naiveMerge (m1: seq<'k * 'v>) (m2: seq<'k * 'v>) =
+          seq {
+            yield! m1
+            yield! m2
+          }
+          |> Array.ofSeq
+
+        return
+          { Types = naiveMerge main1.Types main2.Types
+            Forms = naiveMerge main1.Forms main2.Forms
+            Launchers = naiveMerge main1.Launchers main2.Launchers
+            Enums = naiveMerge main1.Enums main2.Enums
+            Streams = naiveMerge main1.Streams main2.Streams
+            Entities = naiveMerge main1.Entities main2.Entities }
+      }
+
+    static member MergeMany(mains: List<TopLevel>) : Sum<TopLevel, Errors> =
+      sum {
+        let liftedMerge (m1: Sum<TopLevel, Errors>) (m2: Sum<TopLevel, Errors>) =
+          sum {
+            let! m1 = m1
+            let! m2 = m2
+            return! TopLevel.Merge m1 m2
+          }
+
+        let (mains: List<Sum<TopLevel, Errors>>) = mains |> List.map sum.Return
+        return! mains |> List.reduce liftedMerge
+      }
+
   type SumBuilder with
     member sum.TryFindField name fields =
       fields
@@ -1433,20 +1493,10 @@ module Parser =
   type ParsedFormsContext with
     static member ParseApis
       enumValueFieldName
-      (apisJson: seq<string * JsonValue>)
+      (topLevel: TopLevel)
       : State<Unit, CodeGenConfig, ParsedFormsContext, Errors> =
       state {
-        let! enumsJson, searchableStreamsJson, entitiesJson =
-          state.All3
-            (state.Either (apisJson |> state.TryFindField "enumOptions") (state.Return(JsonValue.Record [||])))
-            (state.Either (apisJson |> state.TryFindField "searchableStreams") (state.Return(JsonValue.Record [||])))
-            (state.Either (apisJson |> state.TryFindField "entities") (state.Return(JsonValue.Record [||])))
-
-        let! enums, streams, entities =
-          state.All3
-            (enumsJson |> JsonValue.AsRecord |> state.OfSum)
-            (searchableStreamsJson |> JsonValue.AsRecord |> state.OfSum)
-            (entitiesJson |> JsonValue.AsRecord |> state.OfSum)
+        let enums, streams, entities = topLevel.Enums, topLevel.Streams, topLevel.Entities
 
         for enumName, enumJson in enums do
           do! EnumApi.Parse enumValueFieldName enumName enumJson
@@ -1459,9 +1509,7 @@ module Parser =
 
         return ()
       }
-      |> state.MapError(
-        Errors.Map(String.appendNewline $$"""...when parsing APIs {{apisJson.ToFSharpString.ReasonablyClamped}}""")
-      )
+      |> state.MapError(Errors.Map(String.appendNewline $$"""...when parsing APIs"""))
 
     static member ParseTypes
       (typesJson: seq<string * JsonValue>)
@@ -1636,16 +1684,13 @@ module Parser =
       }
       |> state.WithErrorContext $"...when parsing launchers"
 
-    static member Parse
-      generatedLanguageSpecificConfig
-      (json: JsonValue)
-      : State<Unit, CodeGenConfig, ParsedFormsContext, Errors> =
+    static member ExtractTopLevel json =
       state {
         let! properties = json |> JsonValue.AsRecord |> state.OfSum
 
         let! typesJson, apisJson, formsJson, launchersJson =
           state.All4
-            (properties |> state.TryFindField "types")
+            (state.Either (properties |> state.TryFindField "types") (state.Return(JsonValue.Record [||])))
             (state.Either (properties |> state.TryFindField "apis") (state.Return(JsonValue.Record [||])))
             (state.Either (properties |> state.TryFindField "forms") (state.Return(JsonValue.Record [||])))
             (state.Either (properties |> state.TryFindField "launchers") (state.Return(JsonValue.Record [||])))
@@ -1657,7 +1702,36 @@ module Parser =
             (formsJson |> JsonValue.AsRecord |> state.OfSum)
             (launchersJson |> JsonValue.AsRecord |> state.OfSum)
 
-        do! ParsedFormsContext.ParseTypes typesJson
+        let! enumsJson, searchableStreamsJson, entitiesJson =
+          state.All3
+            (state.Either (apisJson |> state.TryFindField "enumOptions") (state.Return(JsonValue.Record [||])))
+            (state.Either (apisJson |> state.TryFindField "searchableStreams") (state.Return(JsonValue.Record [||])))
+            (state.Either (apisJson |> state.TryFindField "entities") (state.Return(JsonValue.Record [||])))
+
+        let! enums, streams, entities =
+          state.All3
+            (enumsJson |> JsonValue.AsRecord |> state.OfSum)
+            (searchableStreamsJson |> JsonValue.AsRecord |> state.OfSum)
+            (entitiesJson |> JsonValue.AsRecord |> state.OfSum)
+
+        return
+          { Types = typesJson
+            Forms = formsJson
+            Launchers = launchersJson
+            Enums = enums
+            Streams = streams
+            Entities = entities }
+      }
+
+    static member Parse
+      generatedLanguageSpecificConfig
+      (jsons: List<JsonValue>)
+      : State<Unit, CodeGenConfig, ParsedFormsContext, Errors> =
+      state {
+        let! topLevel = jsons |> List.map ParsedFormsContext.ExtractTopLevel |> state.All
+        let! topLevel = TopLevel.MergeMany topLevel |> state.OfSum
+
+        do! ParsedFormsContext.ParseTypes topLevel.Types
         let! c = state.GetContext()
 
         for g in c.Generic do
@@ -1679,7 +1753,7 @@ module Parser =
             )
 
         let! s = state.GetState()
-        do! ParsedFormsContext.ParseApis generatedLanguageSpecificConfig.EnumValueFieldName apisJson
-        do! ParsedFormsContext.ParseForms formsJson
-        do! ParsedFormsContext.ParseLaunchers launchersJson
+        do! ParsedFormsContext.ParseApis generatedLanguageSpecificConfig.EnumValueFieldName topLevel
+        do! ParsedFormsContext.ParseForms topLevel.Forms
+        do! ParsedFormsContext.ParseLaunchers topLevel.Launchers
       }

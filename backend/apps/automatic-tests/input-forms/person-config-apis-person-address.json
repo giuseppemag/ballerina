@@ -1,0 +1,21 @@
+{
+  "apis": {
+    "entities": {
+      "person": {
+        "type": "Person",
+        "methods": [
+          "create",
+          "get",
+          "update",
+          "default"
+        ]
+      },
+      "globalConfiguration": {
+        "type": "GlobalConfiguration",
+        "methods": [
+          "get"
+        ]
+      }
+    }
+  }
+}

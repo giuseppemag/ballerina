@@ -1,0 +1,14 @@
+{
+  "apis": {
+    "enumOptions": {
+      "genders": "GenderRef",
+      "colors": "ColorRef",
+      "interests": "InterestRef",
+      "permissions": "PermissionRef"
+    },
+    "searchableStreams": {
+      "cities": "CityRef",
+      "departments": "DepartmentRef"
+    }
+  }
+}

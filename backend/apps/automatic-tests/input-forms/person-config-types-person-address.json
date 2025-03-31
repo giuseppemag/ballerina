@@ -1,0 +1,220 @@
+{
+  "types": {
+    "Address": {
+      "fields": {
+        "streetNumberAndCity": {
+          "fun": "Tuple",
+          "args": [
+            "string",
+            "number",
+            {
+              "fun": "SingleSelection",
+              "args": [
+                "CityRef"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "Person": {
+      "fields": {
+        "category": "injectedCategory",
+        "fullName": {
+          "fun": "Tuple",
+          "args": [
+            "string",
+            "string"
+          ]
+        },
+        "birthday": "Date",
+        "job": "Job",
+        "subscribeToNewsletter": "boolean",
+        "favoriteColor": {
+          "fun": "SingleSelection",
+          "args": [
+            "ColorRef"
+          ]
+        },
+        "gender": {
+          "fun": "SingleSelection",
+          "args": [
+            "GenderRef"
+          ]
+        },
+        "dependants": {
+          "fun": "Map",
+          "args": [
+            "string",
+            "injectedCategory"
+          ]
+        },
+        "friendsByCategory": {
+          "fun": "Map",
+          "args": [
+            "injectedCategory",
+            "string"
+          ]
+        },
+        "relatives": {
+          "fun": "List",
+          "args": [
+            "injectedCategory"
+          ]
+        },
+        "interests": {
+          "fun": "MultiSelection",
+          "args": [
+            "InterestRef"
+          ]
+        },
+        "departments": {
+          "fun": "MultiSelection",
+          "args": [
+            "DepartmentRef"
+          ]
+        },
+        "emails": {
+          "fun": "List",
+          "args": [
+            "string"
+          ]
+        },
+        "mainAddress": {
+          "fun": "Sum",
+          "args": [
+            "string",
+            {
+              "fun": "Tuple",
+              "args": [
+                "Address",
+                "PlotInfo"
+              ]
+            }
+          ]
+        },
+        "addressesAndAddressesWithLabel": {
+          "fun": "Tuple",
+          "args": [
+            {
+              "fun": "List",
+              "args": [
+                "Address"
+              ]
+            },
+            {
+              "fun": "Map",
+              "args": [
+                "string",
+                "Address"
+              ]
+            }
+          ]
+        },
+        "addressesByCity": {
+          "fun": "Map",
+          "args": [
+            {
+              "fun": "SingleSelection",
+              "args": [
+                "CityRef"
+              ]
+            },
+            "Address"
+          ]
+        },
+        "importantDate": {
+          "fun": "Sum",
+          "args": [
+            "unit",
+            "Date"
+          ]
+        },
+        "addressesBy": {
+          "fun": "Sum",
+          "args": [
+            {
+              "fun": "Map",
+              "args": [
+                {
+                  "fun": "SingleSelection",
+                  "args": [
+                    "ColorRef"
+                  ]
+                },
+                "Address"
+              ]
+            },
+            {
+              "fun": "Map",
+              "args": [
+                "string",
+                "Address"
+              ]
+            }
+          ]
+        },
+        "addressesWithColorLabel": {
+          "fun": "Map",
+          "args": [
+            {
+              "fun": "SingleSelection",
+              "args": [
+                "ColorRef"
+              ]
+            },
+            "Address"
+          ]
+        },
+        "permissions": {
+          "fun": "Map",
+          "args": [
+            {
+              "fun": "SingleSelection",
+              "args": [
+                "PermissionRef"
+              ]
+            },
+            "boolean"
+          ]
+        },
+        "cityByDepartment": {
+          "fun": "Map",
+          "args": [
+            {
+              "fun": "SingleSelection",
+              "args": [
+                "DepartmentRef"
+              ]
+            },
+            {
+              "fun": "SingleSelection",
+              "args": [
+                "CityRef"
+              ]
+            }
+          ]
+        },
+        "shoeColours": {
+          "fun": "MultiSelection",
+          "args": [
+            "ColorRef"
+          ]
+        },
+        "friendsBirthdays": {
+          "fun": "Map",
+          "args": [
+            "string",
+            "Date"
+          ]
+        },
+        "holidays": {
+          "fun": "List",
+          "args": [
+            "Date"
+          ]
+        }
+      }
+    }
+  }
+}
