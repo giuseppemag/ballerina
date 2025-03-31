@@ -17,22 +17,12 @@ import {
   ValueOrErrors,
   UnitFormState,
 } from "../../../../../../../../../main";
-import { UnitForm } from "../../../../primitives/domains/unit/template";
-import { StringForm } from "../../../../primitives/domains/string/template";
-import { NumberForm } from "../../../../primitives/domains/number/template";
-import { BooleanForm } from "../../../../primitives/domains/boolean/template";
-import { SecretForm } from "../../../../primitives/domains/secret/template";
 import { MapForm } from "../../../../primitives/domains/map/template";
-import { ListForm } from "../../../../primitives/domains/list/template";
 import { TupleForm } from "../../../../primitives/domains/tuple/template";
 import { UnionForm } from "../../../../primitives/domains/union/template";
-import { Base64FileForm } from "../../../../primitives/domains/base-64-file/template";
-import { DateForm } from "../../../../primitives/domains/date/template";
-import { EnumForm } from "../../../../primitives/domains/enum/template";
-import { EnumMultiselectForm } from "../../../../primitives/domains/enum-multiselect/template";
-import { SearchableInfiniteStreamForm } from "../../../../primitives/domains/searchable-infinite-stream/template";
-import { InfiniteMultiselectDropdownForm } from "../../../../primitives/domains/searchable-infinite-stream-multiselect/template";
 import { SumForm } from "../../../../primitives/domains/sum/template";
+import { PrimitiveFieldDispatcher } from "./domains/primitiveFieldDispatcher/state";
+import { NestedPrimitiveDispatcher } from "../../../nestedDispatcher/domains/nestedPrimitiveDispatcher/state";
 
 export const RecordFieldDispatcher = {
   Operations: {
@@ -42,110 +32,7 @@ export const RecordFieldDispatcher = {
       renderer: RecordFieldRenderer<T>,
       viewKind: string,
     ): ValueOrErrors<Template<any, any, any, any>, string> => {
-      if (viewKind == "unit") {
-        return ValueOrErrors.Default.return(UnitForm());
-      }
-      if (viewKind == "string") {
-        if (!PredicateValue.Operations.IsString(value)) {
-          return ValueOrErrors.Default.throwOne(
-            `When dispatching ${fieldPath.join(
-              ".",
-            )} expected string but got ${typeof value}`,
-          );
-        }
-        return ValueOrErrors.Default.return(StringForm());
-      }
-      if (viewKind == "number") {
-        if (!PredicateValue.Operations.IsNumber(value)) {
-          return ValueOrErrors.Default.throwOne(
-            `When dispatching ${fieldPath.join(
-              ".",
-            )} expected number but got ${typeof value}`,
-          );
-        }
-        return ValueOrErrors.Default.return(NumberForm());
-      }
-      if (viewKind == "boolean") {
-        if (!PredicateValue.Operations.IsBoolean(value)) {
-          return ValueOrErrors.Default.throwOne(
-            `When dispatching ${fieldPath.join(
-              ".",
-            )} expected boolean but got ${typeof value}`,
-          );
-        }
-        return ValueOrErrors.Default.return(BooleanForm());
-      }
-      if (viewKind == "secret") {
-        if (!PredicateValue.Operations.IsString(value)) {
-          return ValueOrErrors.Default.throwOne(
-            `When dispatching ${fieldPath.join(
-              ".",
-            )} expected secret but got ${typeof value}`,
-          );
-        }
-        return ValueOrErrors.Default.return(SecretForm());
-      }
-      if (viewKind == "base64File") {
-        if (!PredicateValue.Operations.IsString(value)) {
-          return ValueOrErrors.Default.throwOne(
-            `When dispatching ${fieldPath.join(
-              ".",
-            )} expected base64File but got ${typeof value}`,
-          );
-        }
-        return ValueOrErrors.Default.return(Base64FileForm());
-      }
-      if (viewKind == "date") {
-        if (!PredicateValue.Operations.IsDate(value)) {
-          return ValueOrErrors.Default.throwOne(
-            `When dispatching ${fieldPath.join(
-              ".",
-            )} expected date but got ${typeof value}`,
-          );
-        }
-        return ValueOrErrors.Default.return(DateForm());
-      }
-      if(viewKind == "enumSingleSelection" && renderer.kind == "enumRecordField"){
-        if (!PredicateValue.Operations.IsOption(value)) {
-          return ValueOrErrors.Default.throwOne(
-            `When dispatching ${fieldPath.join(
-              ".",
-            )} expected enum but got ${typeof value}`,
-          );
-        }
-        return ValueOrErrors.Default.return(EnumForm());
-      }
-      if(viewKind == "enumMultiSelection" && renderer.kind == "enumRecordField"){
-        if (!PredicateValue.Operations.IsTuple(value)) {
-          return ValueOrErrors.Default.throwOne(
-            `When dispatching ${fieldPath.join(
-              ".",
-            )} expected enum but got ${typeof value}`,
-          );
-        }
-        return ValueOrErrors.Default.return(EnumMultiselectForm());
-      }
-      if(viewKind == "enumSingleSelection" && renderer.kind == "streamRecordField"){
-        if (!PredicateValue.Operations.IsOption(value)) {
-          return ValueOrErrors.Default.throwOne(
-            `When dispatching ${fieldPath.join(
-              ".",
-            )} expected enum but got ${typeof value}`,
-          );
-        }
-        return ValueOrErrors.Default.return(SearchableInfiniteStreamForm());
-      }
-      if(viewKind == "enumMultiSelection" && renderer.kind == "streamRecordField"){
-        if (!PredicateValue.Operations.IsTuple(value)) {
-          return ValueOrErrors.Default.throwOne(
-            `When dispatching ${fieldPath.join(
-              ".",
-            )} expected enum but got ${typeof value}`,
-          );
-        }
-        return ValueOrErrors.Default.return(InfiniteMultiselectDropdownForm());
-      }
-      if(viewKind == "sumUnitDate"){
+      if (viewKind == "sumUnitDate") {
         if (!PredicateValue.Operations.IsSum(value)) {
           return ValueOrErrors.Default.throwOne(
             `When dispatching ${fieldPath.join(
@@ -155,19 +42,10 @@ export const RecordFieldDispatcher = {
         }
         return ValueOrErrors.Default.return(SumUnitDateForm());
       }
-      if(viewKind == "sum"){
-        if (!PredicateValue.Operations.IsSum(value)) {
-          return ValueOrErrors.Default.throwOne(
-            `When dispatching ${fieldPath.join(
-              ".",
-            )} expected sum but got ${typeof value}`,
-          );
-        }
-        return ValueOrErrors.Default.return(SumForm());
-      }
+
       if (viewKind == "tuple") {
         if (!PredicateValue.Operations.IsTuple(value)) {
-            return ValueOrErrors.Default.throwOne(
+          return ValueOrErrors.Default.throwOne(
             `When dispatching ${fieldPath.join(
               ".",
             )} expected tuple but got ${typeof value}`,
@@ -185,16 +63,7 @@ export const RecordFieldDispatcher = {
         }
         return ValueOrErrors.Default.return(MapForm());
       }
-      if (viewKind == "list") {
-        if (!PredicateValue.Operations.IsTuple(value)) {
-          return ValueOrErrors.Default.throwOne(
-            `When dispatching ${fieldPath.join(
-              ".",
-            )} expected list but got ${typeof value}`,
-          );
-        }
-        return ValueOrErrors.Default.return(ListForm());
-      }
+
       if (viewKind == "union") {
         if (!PredicateValue.Operations.IsUnionCase(value)) {
           return ValueOrErrors.Default.throwOne(
@@ -235,6 +104,14 @@ export const RecordFieldDispatcher = {
             dispatcherContext
               .getViewKind(fieldRenderer.renderer)
               .Then((viewKind) => {
+                if (type.kind == "primitive") {
+                  return NestedPrimitiveDispatcher.Dispatch(
+                    viewKind,
+                    fieldRenderer,
+                    fieldPath,
+                    value,
+                  );
+                }
                 return RecordFieldDispatcher.Operations.ViewKindToForm(
                   fieldPath,
                   value,

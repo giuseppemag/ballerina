@@ -473,6 +473,8 @@ export type DispatcherContext<
   enumOptionsSources: EnumOptionsSources;
   entityApis: EntityApis;
   getViewKind: (viewName: string | undefined) => ValueOrErrors<string, string>;
+  defaultValue: BasicFun<ParsedType<T>, any>;
+  defaultState: BasicFun<ParsedType<T>, any>;
 };
 
 export type FormLaunchersResult<
@@ -677,6 +679,8 @@ export const parseFormsToLaunchers =
               enumOptionsSources,
               entityApis,
               getViewKind: FormViewToViewKind(fieldViews),
+              defaultValue: defaultValue(specification.types, builtIns, injectedPrimitives),
+              defaultState: defaultState(specification.types, builtIns, injectedPrimitives),
             },
           }),
         ),

@@ -9,59 +9,47 @@ import {
   ValueUnionCase,
   View,
 } from "../../../../../../../../main";
-import {
-  CommonFormState,
-  EntityFormState,
-  EntityFormTemplate,
-} from "../../../singleton/state";
+import { CommonFormState, EntityFormState } from "../../../singleton/state";
 import { Map, Set } from "immutable";
 
-export type UnionFormState<
-  CaseFormStates extends Map<string, EntityFormState<any, any, any, any>>,
-> = {
+export type UnionFormState = {
   commonFormState: CommonFormState;
 } & {
   customFormState: {
     selectedCase: string;
-    caseStates: CaseFormStates;
+    caseState: any;
   };
 };
 
-export const UnionFormState = <
-  CaseFormStates extends Map<string, EntityFormState<any, any, any, any>>,
->() => ({
+export const UnionFormState = () => ({
   Default: (
-    customFormState: UnionFormState<CaseFormStates>["customFormState"],
-  ): UnionFormState<CaseFormStates> => ({
+    customFormState: UnionFormState["customFormState"],
+  ): UnionFormState => ({
     commonFormState: CommonFormState.Default(),
     customFormState,
   }),
   Updaters: {
     Core: {
-      ...simpleUpdater<UnionFormState<CaseFormStates>>()("customFormState"),
+      ...simpleUpdater<UnionFormState>()("customFormState"),
     },
     Template: {},
   },
 });
 export type UnionFormView<
-  CaseFormStates extends Map<string, EntityFormState<any, any, any, any>>,
-  Context extends FormLabel & {
-    caseNames: Set<string>;
-  },
+  Context extends FormLabel,
   ForeignMutationsExpected,
 > = View<
-  Context & Value<ValueUnionCase> & UnionFormState<CaseFormStates>,
-  UnionFormState<CaseFormStates>,
+  Context & Value<ValueUnionCase> & UnionFormState,
+  UnionFormState,
   ForeignMutationsExpected & {
     onChange: OnChange<ValueUnionCase>;
   },
   {
     embeddedCaseTemplate: BasicFun<
       string,
-      // EntityFormTemplate<any, any, any, any>
       Template<
-        Context & Value<ValueUnionCase> & UnionFormState<CaseFormStates>,
-        UnionFormState<CaseFormStates>,
+        Context & Value<ValueUnionCase> & UnionFormState,
+        UnionFormState,
         ForeignMutationsExpected & {
           onChange: OnChange<ValueUnionCase>;
         }

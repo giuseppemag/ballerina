@@ -22,18 +22,17 @@ import { Map, Set } from "immutable";
 import { ValidateRunner } from "../../../singleton/template";
 
 export const UnionForm = <
-  Context extends FormLabel & { caseNames: Set<string> },
+  Context extends FormLabel,
   ForeignMutationsExpected,
-  CaseFormStates extends Map<string, EntityFormState<any, any, any, any>>,
 >(
-  caseTemplates: Map<string, EntityFormTemplate<any, any, any, any>>,
-
+  //TODO: Use state and values
+  defaultState: { Default: () => any },
+  defaultValues: { Default: () => PredicateValue },
+  caseTemplate: EntityFormTemplate<any, any, any, any>,
   validation?: BasicFun<ValueUnionCase, Promise<FieldValidation>>,
 ) => {
-  const caseNames = caseTemplates.keySeq().toSet();
   const embeddedCaseTemplate = (caseName: string) =>
-    caseTemplates
-      .get(caseName)!
+    caseTemplate
       .mapForeignMutationsFromProps<
         ForeignMutationsExpected & {
           onChange: OnChange<ValueUnionCase>;
@@ -59,13 +58,12 @@ export const UnionForm = <
       )
       .mapContext(
         (
-          _: Context & Value<ValueUnionCase> & UnionFormState<CaseFormStates>,
+          _: Context & Value<ValueUnionCase> & UnionFormState,
         ): Context & Value<ValueUnionCase> & { caseNames: Set<string> } => {
           const context: Context &
             Value<ValueUnionCase> & { caseNames: Set<string> } = {
             ..._,
-            ..._.customFormState.caseStates.get(caseName),
-            caseNames,
+            ..._.customFormState.caseState,
             value: _.value.fields,
             commonFormState: {
               modifiedByUser: true,
@@ -80,33 +78,25 @@ export const UnionForm = <
             formFieldStates: any;
             commonFormState: CommonFormState;
           }>,
-        ): Updater<UnionFormState<CaseFormStates>> =>
-          UnionFormState<CaseFormStates>().Updaters.Core.customFormState(
-            (__) => ({
-              ...__,
-              caseStates: __.caseStates.update(caseName, (state) =>
-                _(state as EntityFormState<any, any, any, any>),
-              ),
-            }),
-          ),
+        ): Updater<UnionFormState> =>
+          UnionFormState().Updaters.Core.customFormState((__) => ({
+            ...__,
+            caseState: _(__.caseState),
+          })),
       );
   return Template.Default<
     Context & Value<ValueUnionCase>,
-    UnionFormState<CaseFormStates>,
+    UnionFormState,
     ForeignMutationsExpected & {
       onChange: OnChange<ValueUnionCase>;
     },
-    UnionFormView<
-      CaseFormStates,
-      Context & { caseNames: Set<string> },
-      ForeignMutationsExpected
-    >
+    UnionFormView<Context, ForeignMutationsExpected>
   >((props) => {
     return (
       <>
         <props.view
           {...props}
-          context={{ ...props.context, caseNames }}
+          context={props.context}
           foreignMutations={{
             ...props.foreignMutations,
           }}
@@ -117,7 +107,7 @@ export const UnionForm = <
   }).any([
     ValidateRunner<
       Context,
-      UnionFormState<CaseFormStates>,
+      UnionFormState,
       ForeignMutationsExpected,
       ValueUnionCase
     >(

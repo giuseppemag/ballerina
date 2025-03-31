@@ -31,10 +31,7 @@ export const TupleForm = <
     commonFormState: { modifiedByUser: boolean };
   }>,
   Context extends FormLabel & {
-    visibilities: TupleFieldPredicateEvaluation;
-    disabledFields: TupleFieldPredicateEvaluation;
     disabled: boolean;
-    visible: boolean;
   },
   ForeignMutationsExpected,
 >(
@@ -105,31 +102,18 @@ export const TupleForm = <
               })
           | undefined => {
           if (!_.value.values.has(elementIndex)) return undefined;
-          if (_.visibilities == undefined || _.visibilities.kind != "tuple")
-            return undefined;
-          if (_.disabledFields == undefined || _.disabledFields.kind != "tuple")
-            return undefined;
-          const disabled =
-            _.disabledFields.elementValues[elementIndex].value ?? true;
-          const visible =
-            _.visibilities.elementValues[elementIndex].value ?? false;
           const element = _.value.values.get(elementIndex);
           const elementFormState =
             _.elementFormStates.get(elementIndex) ||
             ElementFormStates.get(elementIndex)!.Default();
-          const elementVisibility = _.visibilities.elementValues[elementIndex];
-          const elementDisabled = _.disabledFields.elementValues[elementIndex];
           const elementContext: Context &
             Value<ValueTuple> & {
               commonFormState: { modifiedByUser: boolean };
             } = {
             ..._,
             ...elementFormState,
-            disabled: disabled,
-            visible: visible,
+            disabled: _.disabled,
             value: element,
-            visibilities: elementVisibility,
-            disabledFields: elementDisabled,
           };
           return elementContext;
         },
