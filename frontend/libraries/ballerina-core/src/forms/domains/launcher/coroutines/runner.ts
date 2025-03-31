@@ -1,10 +1,5 @@
 import { List } from "immutable";
-import {
-  FormRunnerErrorsTemplate,
-  id,
-  replaceWith,
-  Sum,
-} from "../../../../../main";
+import { id, ParsedLauncher, replaceWith, Sum } from "../../../../../main";
 import { AsyncState } from "../../../../async/state";
 import { CoTypedFactory } from "../../../../coroutines/builder";
 import {
@@ -13,8 +8,8 @@ import {
   FormRunnerState,
 } from "../state";
 
-export const FormRunnerLoader = () => {
-  const Co = CoTypedFactory<FormRunnerContext, FormRunnerState>();
+export const FormRunnerLoader = <T extends { [key in keyof T]: { type: any; state: any } }>() => {
+  const Co = CoTypedFactory<FormRunnerContext<T>, FormRunnerState<T>>();
 
   return Co.Template<FormRunnerForeignMutationsExpected>(
     Co.GetState().then((current) =>
@@ -23,11 +18,11 @@ export const FormRunnerLoader = () => {
         : Co.UpdateState((_) => {
             if (!AsyncState.Operations.hasValue(current.formsConfig.sync))
               return id;
-            if (current.formsConfig.sync.value.kind == "r")
-              return FormRunnerState.Updaters.form(
+            if (current.formsConfig.sync.value.kind == "errors")
+              return FormRunnerState<T>().Updaters.form(
                 replaceWith(
-                  Sum.Default.left(
-                    FormRunnerErrorsTemplate(current.formsConfig.sync.value),
+                  Sum.Default.right<ParsedLauncher<T>, "not initialized">(
+                    "not initialized",
                   ),
                 ),
               );
@@ -35,104 +30,92 @@ export const FormRunnerLoader = () => {
             const formRef = current.formRef;
             if (formRef.kind == "create") {
               const createForm =
-                current.formsConfig.sync.value.value.create.get(
+                current.formsConfig.sync.value.value.launchers.edit.get(
                   formRef.formName,
                 );
               if (createForm == undefined)
-                return FormRunnerState.Updaters.form(
+                return FormRunnerState<T>().Updaters.form(
                   replaceWith(
-                    Sum.Default.left(
-                      FormRunnerErrorsTemplate(
-                        Sum.Default.right(
-                          List([`Cannot find form '${formRef.formName}'`]),
-                        ),
-                      ),
+                    Sum.Default.right<ParsedLauncher<T>, "not initialized">(
+                      "not initialized",
                     ),
                   ),
                 );
-              const instantiatedForm = createForm();
-              return FormRunnerState.Updaters.form(
+
+              return FormRunnerState<T>().Updaters.form(
                 replaceWith(
-                  Sum.Default.left({
-                    form: instantiatedForm.form,
-                    formFieldStates:
-                      instantiatedForm.initialState.formFieldStates,
-                    entity: instantiatedForm.initialState.entity,
-                    commonFormState:
-                      instantiatedForm.initialState.commonFormState,
-                    customFormState:
-                      instantiatedForm.initialState.customFormState,
-                    globalConfiguration:
-                      instantiatedForm.initialState.globalConfiguration,
-                  }),
+                  Sum.Default.left<ParsedLauncher<T>, "not initialized">(
+                    createForm,
+                  ),
                 ),
               );
             } else if (formRef.kind == "edit") {
-              const editForm = current.formsConfig.sync.value.value.edit.get(
-                formRef.formName,
-              );
-              if (editForm == undefined)
-                return FormRunnerState.Updaters.form(
-                  replaceWith(
-                    Sum.Default.left(
-                      FormRunnerErrorsTemplate(
-                        Sum.Default.right(
-                          List([`Cannot find form '${formRef.formName}'`]),
-                        ),
-                      ),
-                    ),
-                  ),
+              const editLauncher =
+                current.formsConfig.sync.value.value.launchers.edit.get(
+                  formRef.formName,
                 );
-              const instantiatedForm = editForm();
-              return FormRunnerState.Updaters.form(
+              if (editLauncher == undefined)
+                return FormRunnerState<T>().Updaters.form(
+                  replaceWith(Sum.Default.right("not initialized")),
+                );
+              return FormRunnerState<T>().Updaters.form(
                 replaceWith(
-                  Sum.Default.left({
-                    form: instantiatedForm.form,
-                    formFieldStates:
-                      instantiatedForm.initialState.formFieldStates,
-                    entity: instantiatedForm.initialState.entity,
-                    commonFormState:
-                      instantiatedForm.initialState.commonFormState,
-                    customFormState:
-                      instantiatedForm.initialState.customFormState,
-                    globalConfiguration:
-                      instantiatedForm.initialState.globalConfiguration,
-                  }),
+                  Sum.Default.left<ParsedLauncher<T>, "not initialized">(
+                    editLauncher,
+                  ),
                 ),
               );
-            } else if (formRef.kind == "passthrough") {
-              const form = current.formsConfig.sync.value.value.passthrough.get(
-                formRef.formName,
-              );
-              if (form == undefined)
-                return FormRunnerState.Updaters.form(
-                  replaceWith(
-                    Sum.Default.left(
-                      FormRunnerErrorsTemplate(
-                        Sum.Default.right(
-                          List([`Cannot find form '${formRef.formName}'`]),
-                        ),
-                      ),
-                    ),
-                  ),
+            } else {
+              const passthroughLauncher =
+                current.formsConfig.sync.value.value.launchers.passthrough.get(
+                  formRef.formName,
                 );
-              const instantiatedForm = form();
-              return FormRunnerState.Updaters.form(
+              if (passthroughLauncher == undefined)
+                return FormRunnerState<T>().Updaters.form(
+                  replaceWith(Sum.Default.right("not initialized")),
+                );
+              return FormRunnerState<T>().Updaters.form(
                 replaceWith(
-                  Sum.Default.left({
-                    form: instantiatedForm.form,
-                    formFieldStates:
-                      instantiatedForm.initialState.formFieldStates,
-                    commonFormState:
-                      instantiatedForm.initialState.commonFormState,
-                    customFormState:
-                      instantiatedForm.initialState.customFormState,
-                    entity: undefined,
-                    globalConfiguration: undefined,
-                  }),
+                  Sum.Default.left<ParsedLauncher<T>, "not initialized">(
+                    passthroughLauncher,
+                  ),
                 ),
               );
             }
+
+            // else {
+            //   const form = current.formsConfig.sync.value.value.passthrough.get(
+            //     formRef.formName,
+            //   );
+            //   if (form == undefined)
+            //     return FormRunnerState.Updaters.form(
+            //       replaceWith(
+            //         Sum.Default.left(
+            //           FormRunnerErrorsTemplate(
+            //             Sum.Default.right(
+            //               List([`Cannot find form '${formRef.formName}'`]),
+            //             ),
+            //           ),
+            //         ),
+            //       ),
+            //     );
+            //   const instantiatedForm = form();
+            //   return FormRunnerState.Updaters.form(
+            //     replaceWith(
+            //       Sum.Default.left({
+            //         form: instantiatedForm.form,
+            //         formFieldStates:
+            //           instantiatedForm.initialState.formFieldStates,
+            //         commonFormState:
+            //           instantiatedForm.initialState.commonFormState,
+            //         customFormState:
+            //           instantiatedForm.initialState.customFormState,
+            //         entity: undefined,
+            //         globalConfiguration: undefined,
+            //       }),
+            //     ),
+            //   );
+            // }
 
             return id;
           }),

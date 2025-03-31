@@ -58,7 +58,9 @@
     },
     "CityRef": {
       "extends": ["CollectionReference"],
-      "fields": {}
+      "fields": {
+        "Test": "string"
+      }
     },
     "LandArea": {
       "fields": {
@@ -235,10 +237,13 @@
         },
         "mainAddress": {
           "fun": "Sum",
-          "args": ["string", {
-            "fun": "Tuple",
-            "args": ["Address", "PlotInfo"]
-          }]
+          "args": [
+            "string",
+            {
+              "fun": "Tuple",
+              "args": ["Address", "PlotInfo"]
+            }
+          ]
         },
         "addressesAndAddressesWithLabel": {
           "fun": "Tuple",

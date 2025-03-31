@@ -8,38 +8,39 @@ import {
   unit,
 } from "../../../../main";
 import { Template } from "../../../template/state";
-import { FormParsingResult } from "../parser/state";
+import { FormLaunchersResult } from "../parser/state";
 
-export const FormRunnerErrorsTemplate = (
-  parsedFormsConfig: FormParsingResult,
-) => ({
-  form: Template.Default<
-    FormRunnerContext & FormRunnerState,
-    FormRunnerState,
+// export const FormRunnerErrorsTemplate = (
+//   parsedFormsConfig: FormParsingResult,
+// ) => ({
+//   renderer: Template.Default<
+//     FormRunnerContext & FormRunnerState,
+//     FormRunnerState,
+//     FormRunnerForeignMutationsExpected
+//   >((props) => (
+//     <>
+//       {JSON.stringify(parsedFormsConfig)}
+//       <br />
+//       {JSON.stringify(props)}
+//     </>
+//   )),
+//   // form: Template.Default<FormRunnerContext & FormRunnerState, FormRunnerState, FormRunnerForeignMutationsExpected>(props =>
+//   //   props.context.showFormParsingErrors(parsedFormsConfig)
+//   // ),
+//   initialState: unit,
+//   entity: unit,
+//   globalConfiguration: unit,
+// });
+
+export const FormRunnerTemplate = <T extends { [key in keyof T]: { type: any; state: any } }>() =>
+  Template.Default<
+    FormRunnerContext<T> & FormRunnerState<T>,
+    FormRunnerState<T>,
     FormRunnerForeignMutationsExpected
-  >((props) => (
-    <>
-      {JSON.stringify(parsedFormsConfig)}
-      <br />
-      {JSON.stringify(props)}
-    </>
-  )),
-  // form: Template.Default<FormRunnerContext & FormRunnerState, FormRunnerState, FormRunnerForeignMutationsExpected>(props =>
-  //   props.context.showFormParsingErrors(parsedFormsConfig)
-  // ),
-  formFieldStates: unit,
-  entity: unit,
-  commonFormState: unit,
-  customFormState: unit,
-  globalConfiguration: unit,
-});
-
-export const FormRunnerTemplate = Template.Default<
-  FormRunnerContext & FormRunnerState,
-  FormRunnerState,
-  FormRunnerForeignMutationsExpected
 >((props) => {
   if (props.context.form.kind == "r") return <></>;
+  // dispatcher based on type
+  // need type?
   return (
     <>
       <props.context.form.value.form

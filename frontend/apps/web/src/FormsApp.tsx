@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import "./App.css";
 import {
   unit,
-  FormParsingResult,
+  FormLaunchersResult,
   FormsParserState,
   FormRunnerState,
   FormsParserTemplate,
@@ -30,32 +30,40 @@ import {
   CategoryState,
   PersonFormInjectedTypes,
 } from "./domains/person-from-config/injected-forms/category";
-import PersonConfig from "../../../../backend/apps/ballerina-runtime/input-forms/person-config.json";
+import PersonConfig from "../../../../backend/apps/automatic-tests/input-forms/person-config.json";
 import { PassthroughFormContainerWrapper } from "./domains/passthrough-forms/views/wrappers";
 
-const ShowFormsParsingErrors = (parsedFormsConfig: FormParsingResult) => (
+const ShowFormsParsingErrors = <
+  T extends { [key in keyof T]: { type: any; state: any } },
+>(
+  parsedFormsConfig: FormLaunchersResult<T>,
+) => (
   <div style={{ border: "red" }}>
-    {parsedFormsConfig.kind == "r" && JSON.stringify(parsedFormsConfig.value)}
+    {parsedFormsConfig.kind == "errors" &&
+      JSON.stringify(parsedFormsConfig.errors)}
   </div>
 );
 
 const InstantiedPersonFormsParserTemplate =
   FormsParserTemplate<PersonFormInjectedTypes>();
 
+const InstantiedPersonFormRunnerTemplate =
+  FormRunnerTemplate<PersonFormInjectedTypes>();
+
 export const FormsApp = (props: {}) => {
   const [configFormsParser, setConfigFormsParser] = useState(
-    FormsParserState.Default(),
+    FormsParserState<PersonFormInjectedTypes>().Default(),
   );
   const [formToShow, setFormToShow] = useState(1);
   const numForms = 3;
   const [personCreateFormState, setPersonCreateFormState] = useState(
-    FormRunnerState.Default(),
+    FormRunnerState<PersonFormInjectedTypes>().Default(),
   );
   const [personEditFormState, setPersonEditFormState] = useState(
-    FormRunnerState.Default(),
+    FormRunnerState<PersonFormInjectedTypes>().Default(),
   );
   const [personPassthroughFormState, setPersonPassthroughFormState] = useState(
-    FormRunnerState.Default(),
+    FormRunnerState<PersonFormInjectedTypes>().Default(),
   );
   const [personState, setPersonState] = useState(Person.Default.mocked());
   const [formErrors, setFormErrors] = useState<List<string>>(List());
@@ -65,34 +73,6 @@ export const FormsApp = (props: {}) => {
 
   const [renderParserState, renderForms] = [true, true];
   const logState = true;
-
-  if (
-    personCreateFormState.form.kind == "l" &&
-    personCreateFormState.form.value.entity.sync.kind == "loaded"
-  ) {
-    console.log(
-      "entity",
-      personCreateFormState.form.value.entity.sync.value.fields.toJS(),
-    );
-    console.log(
-      "visibilities",
-      personCreateFormState.form.value.customFormState.predicateEvaluations.value.visiblityPredicateEvaluations.fields.toJS(),
-    );
-  }
-
-  if (
-    personEditFormState.form.kind == "l" &&
-    personEditFormState.form.value.entity.sync.kind == "loaded"
-  ) {
-    console.log(
-      "entity",
-      personEditFormState.form.value.entity.sync.value.fields.toJS(),
-    );
-    console.log(
-      "visibilities",
-      personEditFormState.form.value.customFormState.predicateEvaluations.value.visiblityPredicateEvaluations.fields.toJS(),
-    );
-  }
 
   logState &&
     console.log({
@@ -105,11 +85,11 @@ export const FormsApp = (props: {}) => {
 
   if (
     configFormsParser.formsConfig.sync.kind == "loaded" &&
-    configFormsParser.formsConfig.sync.value.kind == "r"
+    configFormsParser.formsConfig.sync.value.kind == "errors"
   ) {
     return (
       <ol>
-        {configFormsParser.formsConfig.sync.value.value.map((_: string) => (
+        {configFormsParser.formsConfig.sync.value.errors.map((_: string) => (
           <li>{_}</li>
         ))}
       </ol>
@@ -128,10 +108,23 @@ export const FormsApp = (props: {}) => {
   const onEntityChange = (updater: Updater<any>, path: List<string>): void => {
     if (personPassthroughFormState.form.kind == "r") return;
     setTimeout(() => {}, 500);
-    const newEntity = updater(entity.value);
-    console.log("patching entity", newEntity);
-    setEntity(replaceWith(Sum.Default.left(newEntity)));
-    setEntityPath(path);
+    if (
+      personPassthroughFormState.form.kind == "l" &&
+      personPassthroughFormState.form.value.kind == "passthrough"
+    ) {
+      const newEntity = updater(entity.value);
+      console.log("patching entity", newEntity);
+      setEntity(replaceWith(Sum.Default.left(newEntity)));
+      setEntityPath(path);
+      const patchedEntity =
+        personPassthroughFormState.form.value.parseEntityToApi(
+          personPassthroughFormState.form.value.type,
+          newEntity,
+          // TODO: fix this
+          personPassthroughFormState.form.value as any,
+        );
+      console.debug("patched entity", patchedEntity);
+    }
   };
 
   useEffect(() => {
@@ -141,12 +134,12 @@ export const FormsApp = (props: {}) => {
         .then((raw) => {
           if (
             configFormsParser.formsConfig.sync.kind == "loaded" &&
-            configFormsParser.formsConfig.sync.value.kind == "l"
+            configFormsParser.formsConfig.sync.value.kind == "value"
           ) {
             const parsed =
-              configFormsParser.formsConfig.sync.value.value.passthrough.get(
-                "person-transparent",
-              )!().fromApiParser(raw);
+              configFormsParser.formsConfig.sync.value.value.launchers.passthrough
+                .get("person-transparent")!
+                .parseEntityFromApi(raw);
             if (parsed.kind == "errors") {
               console.error(parsed.errors);
             } else {
@@ -159,12 +152,12 @@ export const FormsApp = (props: {}) => {
         .then((raw) => {
           if (
             configFormsParser.formsConfig.sync.kind == "loaded" &&
-            configFormsParser.formsConfig.sync.value.kind == "l"
+            configFormsParser.formsConfig.sync.value.kind == "value"
           ) {
             const parsed =
-              configFormsParser.formsConfig.sync.value.value.passthrough.get(
-                "person-transparent",
-              )!().parseGlobalConfiguration(raw);
+              configFormsParser.formsConfig.sync.value.value.launchers.passthrough
+                .get("person-transparent")!
+                .parseGlobalConfigurationFromApi(raw);
             if (parsed.kind == "errors") {
               console.error(parsed.errors);
             } else {
@@ -174,6 +167,17 @@ export const FormsApp = (props: {}) => {
         });
     }
   }, [personPassthroughFormState.form.kind, formToShow]);
+
+  if (
+    configFormsParser.formsConfig.sync.kind == "loaded" &&
+    configFormsParser.formsConfig.sync.value.kind == "errors"
+  ) {
+    return (
+      <div>
+        {JSON.stringify(configFormsParser.formsConfig.sync.value.errors)}
+      </div>
+    );
+  }
 
   return (
     <div className="App">
@@ -267,7 +271,7 @@ export const FormsApp = (props: {}) => {
                         Form successfully submitted
                       </div>
                     )}
-                    <FormRunnerTemplate
+                    <InstantiedPersonFormRunnerTemplate
                       context={{
                         ...configFormsParser,
                         ...personCreateFormState,
@@ -343,7 +347,7 @@ export const FormsApp = (props: {}) => {
                         Form successfully submitted
                       </div>
                     )}
-                    <FormRunnerTemplate
+                    <InstantiedPersonFormRunnerTemplate
                       context={{
                         ...configFormsParser,
                         ...personEditFormState,
@@ -392,7 +396,7 @@ export const FormsApp = (props: {}) => {
                   <>
                     <h3>Passthrough form</h3>
                     <p>Path: {JSON.stringify(entityPath)}</p>
-                    <FormRunnerTemplate
+                    <InstantiedPersonFormRunnerTemplate
                       context={{
                         ...configFormsParser,
                         ...personPassthroughFormState,

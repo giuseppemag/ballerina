@@ -338,13 +338,7 @@
             "Address"
           ]
         },
-        "importantDate": {
-          "fun": "Sum",
-          "args": [
-            "unit",
-            "Date"
-          ]
-        },
+        "importantDate": "SumUnitDate",
         "addressesBy": {
           "fun": "Sum",
           "args": [
@@ -687,8 +681,12 @@
       "type": "Job",
       "renderer": "defaultUnionRenderer",
       "cases": {
-        "Barista": "baristaJob",
-        "Waiter": "waiterJob"
+        "Barista": {
+          "renderer": "baristaJob"
+        },
+        "Waiter": {
+          "renderer": "waiterJob"
+        }
       }
     },
     "person": {
@@ -739,6 +737,7 @@
                 ]
               },
               {
+                "kind": "caseName",
                 "caseName": "ERP:SAP",
                 "handler": {
                   "kind": "lambda",
@@ -757,6 +756,7 @@
                         ]
                       },
                       {
+                        "kind": "caseName",
                         "caseName": "SAP:S2",
                         "handler": {
                           "kind": "lambda",
@@ -774,6 +774,7 @@
                         }
                       },
                       {
+                        "kind": "caseName",
                         "caseName": "SAP:S3",
                         "handler": {
                           "kind": "lambda",
@@ -791,6 +792,7 @@
                         }
                       },
                       {
+                        "kind": "caseName",
                         "caseName": "SAP:S4",
                         "handler": {
                           "kind": "lambda",

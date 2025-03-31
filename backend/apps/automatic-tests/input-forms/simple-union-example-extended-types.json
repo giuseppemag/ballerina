@@ -1,0 +1,143 @@
+{
+    "types": {
+      "GlobalConfiguration": {
+        "extends": [],
+        "fields": {
+          "IsAdmin": "boolean"
+        }
+      },
+      "BaseLegalEntity": {
+        "fields": {
+          "Emails": {
+            "fun": "List",
+            "args": ["string"]
+          }
+        }
+      },
+      "LegalEntity": {
+        "fun": "Union",
+        "args": [
+          {
+            "caseName": "Person",
+            "extends": ["BaseLegalEntity"],
+            "fields": {
+              "FirstName": "string",
+              "LastName": "string"
+            }
+          },
+          {
+            "caseName": "Company",
+            "extends": ["BaseLegalEntity"],
+            "fields": {
+              "CompanyName": "string"
+            }
+          }
+        ]
+      }
+    },
+    "apis": {
+      "enumOptions": {},
+      "searchableStreams": {},
+      "entities": {
+        "legalEntity": {
+          "type": "LegalEntity",
+          "methods": ["create", "get", "update", "default"]
+        },
+        "globalConfiguration": {
+          "type": "GlobalConfiguration",
+          "methods": ["get"]
+        }
+      }
+    },
+    "forms": {
+      "baseLegalEntity": {
+        "type": "BaseLegalEntity",
+        "fields": {
+          "Emails": {
+            "label": "emails",
+            "renderer": "defaultList",
+            "elementRenderer": {
+              "label": "email",
+              "renderer": "defaultString",
+              "disabled": true
+            }
+          }
+        },
+        "tabs": {}
+      },
+      "legalEntity": {
+        "type": "LegalEntity",
+        "cases": {
+          "Person": {
+            "extends": ["baseLegalEntity"],
+            "fields": {
+              "FirstName": {
+                "label": "first name",
+                "renderer": "defaultString"
+              },
+              "LastName": {
+                "label": "last name",
+                "renderer": "defaultString"
+              }
+            },
+            "tabs": {
+              "main": {
+                "columns": {
+                  "demographics": {
+                    "groups": {
+                      "main": ["FirstName", "LastName"]
+                    }
+                  },
+                  "mailing": {
+                    "groups": {
+                      "main": ["Emails"]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "Company": {
+            "extends": ["baseLegalEntity"],
+            "fields": {
+              "CompanyName": {
+                "label": "company name",
+                "renderer": "defaultString"
+              }
+            },
+            "tabs": {
+              "main": {
+                "columns": {
+                  "main": {
+                    "groups": {
+                      "main": ["CompanyName", "Emails"]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "launchers": {
+      "create-legalEntity": {
+        "kind": "create",
+        "form": "legalEntity",
+        "api": "legalEntity",
+        "configApi": "globalConfiguration"
+      },
+      "edit-legalEntity": {
+        "kind": "edit",
+        "form": "legalEntity",
+        "api": "legalEntity",
+        "configApi": "globalConfiguration"
+      },
+      "legalEntity-transparent": {
+        "kind": "passthrough",
+        "form": "legalEntity",
+        "configType": "GlobalConfiguration"
+      }
+    }
+  }
+  

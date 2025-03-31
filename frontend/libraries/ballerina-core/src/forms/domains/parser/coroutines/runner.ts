@@ -5,11 +5,11 @@ import {
   Sum,
   Synchronize,
   Unit,
-  FormsConfig,
+  Specification,
 } from "../../../../../main";
 import { CoTypedFactory } from "../../../../coroutines/builder";
 import {
-  FormParsingResult,
+  FormLaunchersResult,
   FormsParserContext,
   FormsParserState,
   parseFormsToLaunchers,
@@ -18,13 +18,13 @@ import {
 export const LoadValidateAndParseFormsConfig = <
   T extends { [key in keyof T]: { type: any; state: any } },
 >() => {
-  const Co = CoTypedFactory<FormsParserContext<T>, FormsParserState>();
+  const Co = CoTypedFactory<FormsParserContext<T>, FormsParserState<T>>();
 
   return Co.Template<Unit>(
     Co.GetState().then((current) =>
-      Synchronize<Unit, FormParsingResult>(
+      Synchronize<Unit, FormLaunchersResult<T>>(
         async () => {
-          const rawFormsConfig = await current.getFormsConfig();
+          const serializedSpecifications = await current.getFormsConfig();
           const builtIns = builtInsFromFieldViews(current.fieldViews);
           const injectedPrimitives = current.injectedPrimitives
             ? injectablesFromFieldViews(
@@ -32,14 +32,23 @@ export const LoadValidateAndParseFormsConfig = <
                 current.injectedPrimitives,
               )
             : undefined;
-          const validationResult =
-            FormsConfig.Default.validateAndParseFormConfig(
-              builtIns,
+          const deserializationResult =
+            Specification.Operations.Deserialize(
               current.fieldTypeConverters,
               injectedPrimitives,
-            )(rawFormsConfig);
-          if (validationResult.kind == "errors")
-            return Sum.Default.right(validationResult.errors);
+            )(serializedSpecifications);
+          if (deserializationResult.kind == "errors")
+            return deserializationResult
+          const dispatcherContext = {
+            builtIns,
+            injectedPrimitives,
+            fieldTypeConverters: current.fieldTypeConverters,
+            containerFormView: current.containerFormView,
+            nestedContainerFormView: current.nestedContainerFormView,
+            fieldViews: current.fieldViews,
+            infiniteStreamSources: current.infiniteStreamSources,
+            enumOptionsSources: current.enumOptionsSources,
+          }
           return parseFormsToLaunchers(
             builtIns,
             injectedPrimitives,
@@ -50,12 +59,12 @@ export const LoadValidateAndParseFormsConfig = <
             current.infiniteStreamSources,
             current.enumOptionsSources,
             current.entityApis,
-          )(validationResult.value);
+          )(deserializationResult.value);
         },
         (_) => "transient failure",
         5,
         50,
-      ).embed((_) => _.formsConfig, FormsParserState.Updaters.formsConfig),
+      ).embed((_) => _.formsConfig, FormsParserState<T>().Updaters.formsConfig),
     ),
     {
       interval: 15,
