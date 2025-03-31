@@ -169,6 +169,10 @@ func MatchDeltaGuid[Result any](
 	}
 }
 
+func DefaultGuid() uuid.UUID {
+	return uuid.Nil
+}
+
 type DeltaTimeEffectsEnum string
 
 const (
