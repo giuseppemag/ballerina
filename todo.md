@@ -57,7 +57,7 @@
         ✅ fix array type in ballerina/Go
         ✅ fix sum type in ballerina/Go
         ✅ support generic type renderers over specific types
-        ❌ link multiple files
+        ✅ link multiple files
           ✅ get command line parameters differently
           ✅ extract and merge (uniquely)
             ✅ types
@@ -66,8 +66,8 @@
             ✅ streams
             ✅ entities
             ✅ launchers
-          ❌ generate an enum of all the launchers
-          ❌ generate an enum of all the fields of each record
+          ✅ generate an enum of all the launchers
+          ✅ generate an enum of all the fields of each record
         ❌ add a renderer decorator to forms
         ❌ ensure Types and Forms can only extend other types and forms which are not extending anything
         ❌ allow Types and Forms which can extend, to only extend 1 other type/form (array length == 1 in extends)

@@ -19,6 +19,7 @@ module Record =
   open Ballerina.Fun
   open Ballerina.Collections
   open Ballerina.Collections.NonEmptyList
+  open Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs.Enum
 
   type GolangRecord =
     { Name: string
@@ -32,6 +33,18 @@ module Record =
     static member ToGolang (ctx: GolangContext) (record: GolangRecord) =
       StringBuilder.Many(
         seq {
+
+          let fieldsEnum: GolangEnum =
+            { Name = $"{record.Name}FieldsEnum"
+              Cases =
+                record.Fields
+                |> Seq.map (fun field ->
+                  {| Name = $"{record.Name}{field.FieldName}"
+                     Value = field.FieldName |})
+                |> Seq.toList }
+
+          let fieldsEnum = GolangEnum.ToGolang () fieldsEnum
+
           let typeStart = $$"""type {{record.Name}} struct {""" + "\n"
 
           let fieldDeclarations =
@@ -104,6 +117,8 @@ module Record =
               }
             )
 
+          yield StringBuilder.One "\n"
+          yield fieldsEnum
           yield StringBuilder.One "\n"
           yield StringBuilder.One typeStart
           yield fieldDeclarations

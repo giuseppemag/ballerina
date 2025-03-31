@@ -48,7 +48,7 @@ module Runner =
          generatedPackage),
       (if formName = null then inputFileName else formName)
 
-    let inputFiles = inputPath :: linkedFiles
+    let inputFiles = linkedFiles @ [ inputPath ]
 
     match inputFiles |> Seq.tryFind (File.Exists >> not) with
     | Some file -> Right(Errors.Singleton $"Input file {file} does not exist.")
