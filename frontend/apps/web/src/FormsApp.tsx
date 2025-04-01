@@ -239,7 +239,13 @@ export const FormsApp = (props: {}) => {
                         "injectedCategory",
                         {
                           fieldView: categoryForm,
-                          defaultValue: "adult",
+                          defaultValue: {
+                            kind: "custom",
+                            value: {
+                              kind: "adult",
+                              extraSpecial: false,
+                            },
+                          },
                           defaultState: CategoryState.Default(),
                         },
                       ],

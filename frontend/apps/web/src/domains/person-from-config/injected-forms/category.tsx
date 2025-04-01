@@ -17,7 +17,13 @@ import {
 } from "ballerina-core";
 import { List } from "immutable";
 
-export type Category = "child" | "adult" | "senior";
+export type Category = {
+  kind: "custom";
+  value: {
+    kind: "child" | "adult" | "senior";
+    extraSpecial: boolean;
+  }
+};
 
 export type CategoryState = {
   customFormState: {
