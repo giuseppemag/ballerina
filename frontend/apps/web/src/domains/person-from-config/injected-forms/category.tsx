@@ -22,7 +22,7 @@ export type Category = {
   value: {
     kind: "child" | "adult" | "senior";
     extraSpecial: boolean;
-  }
+  };
 };
 
 export type CategoryState = {

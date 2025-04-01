@@ -59,8 +59,8 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
       typeof _ == "string"
         ? new Date(Date.parse(_))
         : typeof _ == "number"
-        ? new Date(_)
-        : new Date(Date.now()),
+          ? new Date(_)
+          : new Date(Date.now()),
     toAPIRawValue: ([_, __]) => _,
   },
   union: { fromAPIRawValue: (_) => _, toAPIRawValue: ([_, __]) => _ },
