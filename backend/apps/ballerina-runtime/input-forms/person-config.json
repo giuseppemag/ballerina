@@ -778,10 +778,10 @@
                           "kind": "varLookup",
                           "varName": "root"
                         },
-                        "category"
+                        "subscribeToNewsletter"
                       ]
                     },
-                    "child"
+                    true
                   ]
                 }
               }

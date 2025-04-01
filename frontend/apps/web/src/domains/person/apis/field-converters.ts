@@ -10,8 +10,29 @@ import { PersonFormInjectedTypes } from "src/domains/person-from-config/injected
 
 export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
   injectedCategory: {
-    fromAPIRawValue: (_) => _ ?? "adult",
-    toAPIRawValue: ([_, __]) => _,
+    fromAPIRawValue: (_) => {
+      if (_ == undefined) {
+        return {
+          kind: "custom",
+          value: {
+            kind: "adult",
+            extraSpecial: false,
+          },
+        };
+      } else {
+        return {
+          kind: "custom",
+          value: {
+            kind: _.kind,
+            extraSpecial: _.extraSpecial,
+          },
+        };
+      }
+    },
+    toAPIRawValue: ([_, __]) => ({
+      kind: _.value.kind,
+      extraSpecial: _.value.extraSpecial,
+    }),
   },
   string: {
     fromAPIRawValue: (_) => (typeof _ == "string" ? _ : ""),

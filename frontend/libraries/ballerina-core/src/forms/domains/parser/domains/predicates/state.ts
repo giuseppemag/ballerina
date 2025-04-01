@@ -235,6 +235,12 @@ export const ValueRecord = {
     },
   },
 };
+
+export type ValueCustom = {
+  kind: "custom";
+  value: any;
+};
+
 export type ValueUnionCase = {
   kind: "unionCase";
   caseName: string;
@@ -262,7 +268,8 @@ export type PredicateValue =
   | ValueUnionCase
   | ValueOption
   | ValueVarLookup
-  | ValueSum;
+  | ValueSum
+  | ValueCustom;
 
 export type ExprLambda = { kind: "lambda"; parameter: string; body: Expr };
 export type ExprMatchCase = { kind: "matchCase"; operands: Expr[] };

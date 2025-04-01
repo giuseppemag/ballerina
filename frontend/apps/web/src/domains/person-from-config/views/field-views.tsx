@@ -77,22 +77,56 @@ export const PersonFieldViews = {
             </p>
           )}
           <button
-            style={props.context.value == "child" ? { borderColor: "red" } : {}}
-            onClick={(_) => props.foreignMutations.setNewValue("child")}
+            style={
+              props.context.value.value.kind == "child"
+                ? { borderColor: "red" }
+                : {}
+            }
+            onClick={(_) =>
+              props.foreignMutations.setNewValue({
+                kind: "custom",
+                value: {
+                  kind: "child",
+                  extraSpecial: false,
+                },
+              })
+            }
           >
             child
           </button>
           <button
-            style={props.context.value == "adult" ? { borderColor: "red" } : {}}
-            onClick={(_) => props.foreignMutations.setNewValue("adult")}
+            style={
+              props.context.value.value.kind == "adult"
+                ? { borderColor: "red" }
+                : {}
+            }
+            onClick={(_) =>
+              props.foreignMutations.setNewValue({
+                kind: "custom",
+                value: {
+                  kind: "adult",
+                  extraSpecial: false,
+                },
+              })
+            }
           >
             adult
           </button>
           <button
             style={
-              props.context.value == "senior" ? { borderColor: "red" } : {}
+              props.context.value.value.kind == "senior"
+                ? { borderColor: "red" }
+                : {}
             }
-            onClick={(_) => props.foreignMutations.setNewValue("senior")}
+            onClick={(_) =>
+              props.foreignMutations.setNewValue({
+                kind: "custom",
+                value: {
+                  kind: "senior",
+                  extraSpecial: false,
+                },
+              })
+            }
           >
             senior
           </button>

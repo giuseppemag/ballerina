@@ -91,9 +91,12 @@ const entityApis: EntityApis = {
         return (id: Guid) => {
           console.log(`get person ${id}`);
           return Promise.resolve({
-            category: ["child", "adult", "senior"][
-              Math.round(Math.random() * 10) % 3
-            ],
+            category: {
+              kind: ["child", "adult", "senior"][
+                Math.round(Math.random() * 10) % 3
+              ],
+              extraSpecial: false,
+            },
             fullName: {
               Item1: faker.person.firstName(),
               Item2: faker.person.lastName(),
@@ -116,9 +119,24 @@ const entityApis: EntityApis = {
             ],
             friendsByCategory: [],
             relatives: [
-              ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3],
-              ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3],
-              ["child", "adult", "senior"][Math.round(Math.random() * 10) % 3],
+              {
+                kind: ["child", "adult", "senior"][
+                  Math.round(Math.random() * 10) % 3
+                ],
+                extraSpecial: false,
+              },
+              {
+                kind: ["child", "adult", "senior"][
+                  Math.round(Math.random() * 10) % 3
+                ],
+                extraSpecial: false,
+              },
+              {
+                kind: ["child", "adult", "senior"][
+                  Math.round(Math.random() * 10) % 3
+                ],
+                extraSpecial: false,
+              },
             ],
             interests: [{ Value: interests[1] }, { Value: interests[2] }],
             departments: [
@@ -386,7 +404,10 @@ const entityApis: EntityApis = {
       ? (_) =>
           PromiseRepo.Default.mock(() => {
             return {
-              category: "",
+              category: {
+                kind: "adult",
+                extraSpecial: false,
+              },
               fullName: {
                 Item1: "",
                 Item2: "",
