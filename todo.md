@@ -37,6 +37,35 @@
     ❌ entites visitors
       ✅ the `entityName` should be the API name, not the type
       ❌ entities PATCH - gets single value and path of change
+        ✅ support Id:string in CollectionReference, not just Id:Guid
+        ❌ lots of no-ops in deltas
+          ❌ add ˋreadonlyˋ flag to fields
+            ❌ parse into record type
+            ❌ do not generate the components for them
+          ❌ do not generate PATCH callbacks for those fields and cases
+        ❌ split mega-spec logically
+          ❌ primitives
+            ❌ types and forms
+          ❌ data-sync
+            ❌ types and api streams
+          ❌ invoice header
+            ❌ type and form
+          ❌ X=documentType header
+            ❌ revise
+            ❌ type and form
+          ❌ document header
+            ❌ type, form, launcher
+          ❌ invoice header config
+            ❌ type and form
+          ❌ X=documentType header config
+            ❌ type and form
+          ❌ document header config
+            ❌ type, form, launcher
+          ❌ ˋReadOnly -> Readonlyˋ
+        ❌ names of generic parameters of the deltas is inconsistent and should be fixed
+        ❌ define the FE deltas, make an array of Deltas[Unit] foldable into a single Deltas[DeltaBase]
+          ❌ verify that the DeltaTransfer FE structure deserializes correctly to the BE structure
+        ❌ add unit tests for all the go Deltas
         ❌ why do codegen errors (related to the writers) show up twice?
         ✅ `ballerina.DefaultSum` should be `ballerina.Left`, and take the first constructor parameters
         ✅ build sample with A, B, C (polymorphic), D, and E (excluded from the transitive closure)
@@ -69,70 +98,16 @@
           ✅ generate an enum of all the launchers
           ✅ generate an enum of all the fields of each record
         ❌ add a renderer decorator to forms
-        ❌ ensure Types and Forms can only extend other types and forms which are not extending anything
-        ❌ allow Types and Forms which can extend, to only extend 1 other type/form (array length == 1 in extends)
-        ❌ make sure that the failing tests fail for the right reason
-        ❌ define methods for codegen'ing
-          ❌ EntityPATCH
-            ✅ generate the traversable polymorphic sequence of possible effects
-              ✅ always add a case handler, `onReplace(T)`
-              ✅ create a discriminator with N+1 cases, `onReplace` included when present
-              ✅ create DeltaX as a struct with private members
-              ✅ generate the union case concrete constructors (N+1, `onReplace`, when present)
-              ✅ the generated deltas have the `MatchDeltaX` method which takes as input the callbacks over the deltas for the individual components
-              ✅ make `MatchDeltaX` curried in the actual `DeltaX`
-              ✅ implement the body of `MatchDeltaX`
-              ✅ `writerA` is missing the components `A2` and `A3`
-            ✅ `entityPATCHer` takes as input the parsed delta, the committers, checks the type of the parsed delta, and invokes the right committer
-              ✅ the `path` has the wrong placeholder type at the moment, use `DeltaBase`
-            ✅ cleanup the entityPATCHer.fs
-            ✅ remove the writers from the go-configs as well
-            ✅ remove the writers from the ballerina.go library
-            ✅ the delta generation should be moved to a separate .fs file in `LanguageConstructs`
-            ✅ ballerina.DeltaBase should come from config
-            ✅ ballerina.NewEntityNotFoundError should come from config in entityPATCHer
-            ✅ ballerina.NewEntityNameAndDeltaTypeMismatch should come from config in entityPATCHer
-            ❌ define the polymorphic variants (`Match` with at least `replaceWith`, plus all the mapping compositions: `left, right, nth element, add, remove, moveBefore, moveAfter`)
-              ✅ Add every tuple to the entity patch kitchen sink up to 7
-              ❌ names of generic parameters is inconsistent and should be fixed
-              ❌ define the FE deltas, make an array of Deltas[Unit] foldable into a single Deltas[DeltaBase]
-                ✅ DeltaPrimitive
-                ✅ DeltaOption[A,DA]
-                ✅ DeltaSum[A,B,DA,DB]
-                ✅ DeltaList[A,DA]
-                ✅ DeltaSet[A,DA]
-                ✅ DeltaMap[K,V,DK,DV]
-                ✅ DeltaTuple[A1,A2,...An,DA1,DA2,...DAn]
-                ✅ DeltaRecord
-                ✅ DeltaUnit
-                ✅ define a DeltaTransfer structure and Delta structure
-                  ✅ use the right Discriminator
-                  ✅ use the right container names
-                  ✅ Delta -> DeltaTransfer
-                  ✅ Value -> any
-                  ✅ no `type` field
-                ❌ convert Delta to DeltaTransfer
-                ❌ verify that the DeltaTransfer structure deserializes correctly in the Go structures
-                  ❌ create main.go
-                  ❌ unmarshall hand-written json (in TS) with Discriminators to the right structures, pick first successful
-                  ❌ process nested match expressions in main.go for maximum realism
-                  ❌ create sample Delta in TS
-                  ❌ convert it to delta transfer
-                  ❌ print json result and test it again in main.go
-              ❌ add unit tests for all the go structures
+        ❌ `extends`
+          ❌ errors when extending a non-existent type are terrible
+          ❌ test transitive/multiple extensions
+          ❌ give errors in case of mutually recursive extensions
+          ❌ add `extends` statement to unions and enums
+        ❌ make sure that the failing tests fail for the right reason - inspect and partially match the errors
+        ❌ separate more codegen modules to extra files
           ❌ imports
           ❌ `generated types`
           ❌ ToGolang in the typename and method name is redundant, remove it
-        ❌ improvements to the generated Golang code
-          ❌ generate constructors with the `new{ ... }` syntax, not the field-by-field assignment
-          ❌ make the deltas typesafe
-            ❌ use `private_` as a prefix for the patterns
-            ❌ generate marshall and unmarshall for the generated deltas
-            ❌ write marshall and unmarshall for the generated deltas
-          ❌ generate more than one file
-          ❌ toTypeAnnotation in ExprType.ToWriter could benefit from a better context mapper
-          ❌ the injected types generate unused delta types
-          ❌ all delta and writer type names should be sanitized
         ✅ complete the kitchen sink sample with all generics
           ✅ add a few more tuples - up to 5
           ✅ add all possible generic types - including single and multi selects
@@ -144,14 +119,31 @@
     ✅ currying the arguments of `entityGET` and `entityPOST`
     ✅ add tuple renderers
     ✅ add proper Sum
-    ❌ take as input a list of specs, stitch them together, generate a single file - no `include` needed
+    ❌ add documentation (Confluence)
+      ❌ high-level workings of the form engine
+      ❌ high-level anatomy of a spec
+      ❌ about the generated BE code
+      ❌ add readme with runner instructions to ballerina-core
+      ❌ cleanup the unnecessary modules such as OAuth2 (should be moved to apps)
+    ❌ requiredImport is either one or multiple strings (defaultTime needed this)
+    ❌ lists, sets, etc. should be top-level forms
+    ❌ no more primitives, only custom types
+      ❌ custom types should have their algebra of operators
     ❌ add paginated lists
     ❌ add lazy fields
     ❌ add union renderers
-    ❌ add `extends` statement to unions
-    ❌ add documentation (Confluence)
+    ❌ improvements to the generated Golang code
+      ❌ generate constructors with the `new{ ... }` syntax, not the field-by-field assignment
+      ❌ make the deltas typesafe
+        ❌ use `private_` as a prefix for the patterns
+        ❌ generate marshall and unmarshall for the generated deltas
+        ❌ write marshall and unmarshall for the generated deltas
+      ❌ generate more than one file
+      ❌ toTypeAnnotation in ExprType.ToWriter could benefit from a better context mapper
+      ❌ the injected types generate unused delta types
+      ❌ all delta and writer type names should be sanitized
     ❌ the validator is now mature
-    ❌ add configuration for float and datetime
+    ❌ validate that tabs are exhaustive in the fields - if not, show a warning with the missing fields
     ❌ define live webservice variant
       ❌ in separate repo
         ❌ move the Golang codegen there after extracting the intermediate representation for the codegen
@@ -160,21 +152,18 @@
         ❌ in-memory storage
         ❌ api extended overridden on top of database
       ❌ OData (AST-only) API generator
-      ❌ rules and execution engine
+      ❌ inference rules and execution engine
       ❌ database storage and migration manager in ES
-    ❌ extensions in a separate (private) repo
-      ❌ preprocessor plugins
-        ❌ injected at specific times
-        ❌ language generation as parameters
-      ❌ add homomorphic forms
-      ❌ add homomorphic+config forms
     ❌ disallow unsupported keywords (`visibIle` wasted me a good chunk of time)
     ❌ make recursive `Value/Expr` types work in Go
     ❌ add custom generics with their renderer (for example, `WithEvidenceAndApproval<value>`)
+    ❌ support multiple imports or none at all
+    ❌ add custom operators to codegenConfig
     ❌ refactor `sprintf` instances in `typeCheck.fs`
     ❌ add `sum.Map`, remove `Sum.Map` references (ugly and inconsistent wrt `state.Map`)
     ❌ add `sum.For`, use it instead of `sum.All >> sum.Map ignore`
     ❌ `sum.fromOption` is inconsistent, should be `Sum.ofOption`
+    ❌ `state.OfSum` is inconsistent, should be `State.ofSum`
     ❌ paths inside `Any` have a priority after a partial match is found - `Any` filters errors lower than the highest priority
       ❌ add to each `Any`, streamline operators
         ❌ parser

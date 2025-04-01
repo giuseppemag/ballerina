@@ -526,32 +526,16 @@ module Validator =
 
         let error =
           sum.Throw(
-            $$"""Error: type {{streamType}} in stream {{streamApi.StreamName}} is invalid: expected fields id:Guid, displayValue:string but found {{fields}}"""
+            $$"""Error: type {{streamType}} in stream {{streamApi.StreamName}} is invalid: expected fields id:(Guid|string), displayValue:string but found {{fields}}"""
             |> Errors.Singleton
           )
 
-        match
-          fields
-          |> Seq.tryFind (
-            snd
-            >> (function
-            | ExprType.PrimitiveType(PrimitiveType.GuidType) -> true
-            | _ -> false)
-          )
-        with
-        | Some(id, _) when id = generatedLanguageSpecificConfig.StreamIdFieldName ->
-          match
-            fields
-            |> Seq.tryFind (
-              snd
-              >> (function
-              | ExprType.PrimitiveType(PrimitiveType.StringType) -> true
-              | _ -> false)
-            )
-          with
-          | Some(displayValue, _) when displayValue = generatedLanguageSpecificConfig.StreamDisplayValueFieldName ->
-            return ()
-          | _ -> return! error
+        let! id, displayName = sum.All2((fields |> sum.TryFindField "Id"), (fields |> sum.TryFindField "DisplayValue"))
+
+        match id, displayName with
+        | ExprType.PrimitiveType(PrimitiveType.GuidType), ExprType.PrimitiveType(PrimitiveType.StringType)
+        | ExprType.PrimitiveType(PrimitiveType.StringType), ExprType.PrimitiveType(PrimitiveType.StringType) ->
+          return ()
         | _ -> return! error
       }
       |> sum.WithErrorContext $"...when validating stream {streamApi.StreamName}"

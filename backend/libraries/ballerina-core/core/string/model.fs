@@ -10,7 +10,7 @@ module String =
 
   type String with
     member self.ReasonablyClamped =
-      Regex.Replace(self.Substring(0, min self.Length 50).ReplaceLineEndings(" "), " +", " ")
+      Regex.Replace(self.Substring(0, min self.Length 250).ReplaceLineEndings(" "), " +", " ")
       + "..."
 
     static member append (s2: string) s1 = s1 + s2
