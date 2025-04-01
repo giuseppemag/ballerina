@@ -1528,7 +1528,8 @@ module Parser =
                     Map.add
                       name
                       { Type = ExprType.UnitType
-                        TypeId = typeId }
+                        TypeId = typeId
+                        Const = false }
                   )
                 )
 
@@ -1551,14 +1552,21 @@ module Parser =
                         |> Sum.toOption
                         |> Option.defaultWith (fun () -> JsonValue.Array [||])
 
+                      let isConstJson =
+                        typeJsonArgs
+                        |> sum.TryFindField "const"
+                        |> Sum.toOption
+                        |> Option.defaultWith (fun () -> JsonValue.Boolean false)
+
                       let! fieldsJson = typeJsonArgs |> sum.TryFindField "fields" |> state.OfSum
 
                       return!
                         state {
-                          let! extends, fields =
-                            state.All2
+                          let! extends, fields, isConst =
+                            state.All3
                               (extendsJson |> JsonValue.AsArray |> state.OfSum)
                               (fieldsJson |> JsonValue.AsRecord |> state.OfSum)
+                              (isConstJson |> JsonValue.AsBoolean |> state.OfSum)
 
                           let! s = state.GetState()
 
@@ -1599,7 +1607,13 @@ module Parser =
 
                           do!
                             state.SetState(
-                              ParsedFormsContext.Updaters.Types(Map.add typeName { Type = exprType; TypeId = typeId })
+                              ParsedFormsContext.Updaters.Types(
+                                Map.add
+                                  typeName
+                                  { Type = exprType
+                                    TypeId = typeId
+                                    Const = isConst }
+                              )
                             )
 
                           return ()
@@ -1613,7 +1627,13 @@ module Parser =
 
                         do!
                           state.SetState(
-                            ParsedFormsContext.Updaters.Types(Map.add typeName { Type = parsedType; TypeId = typeId })
+                            ParsedFormsContext.Updaters.Types(
+                              Map.add
+                                typeName
+                                { Type = parsedType
+                                  TypeId = typeId
+                                  Const = false }
+                            )
                           )
                       }
                       state.Throw(

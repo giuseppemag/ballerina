@@ -43,12 +43,28 @@ module WritersAndDeltas =
               fields
               |> Seq.map (fun field ->
                 state {
+                  let! isConst =
+                    state {
+                      match field.Value with
+                      | ExprType.LookupType tn as lt ->
+                        let! t = ctx.Types |> Map.tryFindWithError tn.TypeName "types" "types" |> state.OfSum
+
+                        match codegenConfig.Custom |> Map.tryFind tn.TypeName with
+                        | Some customT -> return customT.Const
+                        | _ -> return t.Const
+                      | _ -> return false
+                    }
+
                   let! wf, t = ExprType.ToWriterComponent writerName field.Key field.Value
-                  return field.Key, (wf.Name, t)
+                  return field.Key, (wf.Name, t), isConst
                 })
               |> state.All
 
-            let fields = fields |> Map.ofSeq
+            let fields =
+              fields
+              |> Seq.filter (fun (_, _, isConst) -> isConst |> not)
+              |> Seq.map (fun (k, v, _) -> k, v)
+              |> Map.ofSeq
 
             let w =
               { Name = writerName

@@ -12,7 +12,12 @@ module Model =
   open Ballerina.DSL.Expr.Model
 
   type TypeVarBindings = Map<VarName, ExprType>
-  and TypeBinding = { TypeId: TypeId; Type: ExprType }
+
+  and TypeBinding =
+    { TypeId: TypeId
+      Type: ExprType
+      Const: bool }
+
   and TypeBindings = Map<TypeId, ExprType>
   and TypeId = { TypeName: string }
 
@@ -48,7 +53,8 @@ module Model =
   type TypeBinding with
     static member Create(name, exprType) =
       { TypeBinding.TypeId = name
-        TypeBinding.Type = exprType }
+        TypeBinding.Type = exprType
+        Const = false }
 
   type TypeId with
     static member Create name = { TypeName = name }
