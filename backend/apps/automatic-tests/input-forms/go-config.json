@@ -183,7 +183,8 @@
         "defaultInjectedType"
       ],
       "DefaultConstructor": "ballerina.NewUnit",
-      "DeltaTypeName": "ballerina.DeltaUnit"
+      "DeltaTypeName": "ballerina.DeltaUnit",
+      "Const":false
     },
     "injectedCategory": {
       "GeneratedTypeName": "ballerina.Unit",
@@ -192,7 +193,8 @@
         "defaultCategory"
       ],
       "DefaultConstructor": "ballerina.NewUnit",
-      "DeltaTypeName": "ballerina.DeltaUnit"
+      "DeltaTypeName": "ballerina.DeltaUnit",
+      "Const":false
     },
     "Int32": {
       "GeneratedTypeName": "int32",
@@ -201,7 +203,8 @@
         "defaultInt32"
       ],
       "DefaultConstructor": "ballerina.DefaultInt32",
-      "DeltaTypeName": "ballerina.DeltaInt32"
+      "DeltaTypeName": "ballerina.DeltaInt32",
+      "Const":false
     },
     "Float32": {
       "GeneratedTypeName": "float32",
@@ -210,7 +213,8 @@
         "defaultFloat32"
       ],
       "DefaultConstructor": "ballerina.DefaultFloat32",
-      "DeltaTypeName": "ballerina.DeltaFloat32"
+      "DeltaTypeName": "ballerina.DeltaFloat32",
+      "Const":false
     },
     "Float64": {
       "GeneratedTypeName": "float64",
@@ -219,7 +223,8 @@
         "defaultFloat64"
       ],
       "DefaultConstructor": "ballerina.DefaultFloat64",
-      "DeltaTypeName": "ballerina.DeltaFloat64"
+      "DeltaTypeName": "ballerina.DeltaFloat64",
+      "Const":false
     }
   },
   "Generic": [
