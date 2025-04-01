@@ -20,9 +20,10 @@ const (
   ArrayValue DeltaArrayEffectsEnum = "ArrayValue" 
   ArrayAddAt DeltaArrayEffectsEnum = "ArrayAddAt" 
   ArrayRemoveAt DeltaArrayEffectsEnum = "ArrayRemoveAt" 
-  ArrayMoveFromTo DeltaArrayEffectsEnum = "ArrayMoveFromTo" 
+  ArrayMoveFromTo DeltaArrayEffectsEnum = "ArrayMoveFromTo"
+  ArrayDuplicateAt DeltaArrayEffectsEnum = "ArrayDuplicateAt"
 )
-var AllDeltaArrayEffectsEnumCases = [...]DeltaArrayEffectsEnum{ ArrayReplace, ArrayValue, ArrayAddAt, ArrayRemoveAt, ArrayMoveFromTo }
+var AllDeltaArrayEffectsEnumCases = [...]DeltaArrayEffectsEnum{ ArrayReplace, ArrayValue, ArrayAddAt, ArrayRemoveAt, ArrayMoveFromTo, ArrayDuplicateAt }
 
 func DefaultDeltaArrayEffectsEnum() DeltaArrayEffectsEnum { return AllDeltaArrayEffectsEnumCases[0]; }
 
@@ -34,6 +35,7 @@ type DeltaArray[a any, deltaA any] struct{
 	AddAt Tuple2[int, a]
 	RemoveAt int
 	MoveFromTo Tuple2[int,int]
+	DuplicateAt int
 }
 func NewDeltaArrayReplace[a any, deltaA any](value Array[a]) DeltaArray[a, deltaA] {
   return DeltaArray[a, deltaA] {
@@ -65,6 +67,12 @@ func NewDeltaArrayMoveFromTo[a any, deltaA any](from int, to int) DeltaArray[a, 
     MoveFromTo:NewTuple2(from, to),
  }
 }
+func NewDeltaArrayDuplicateAt[a any, deltaA any](index int) DeltaArray[a, deltaA] {
+  return DeltaArray[a, deltaA] {
+    Discriminator:ArrayDuplicateAt,
+    DuplicateAt:index,
+ }
+}
 
 func MatchDeltaArray[a any, deltaA any, Result any](
   onReplace func(Array[a]) (Result, error),
@@ -72,6 +80,7 @@ func MatchDeltaArray[a any, deltaA any, Result any](
   onAddAt func(Tuple2[int, a]) (Result, error),
   onRemoveAt func(int) (Result, error),
   onMoveFromTo func(Tuple2[int, int]) (Result, error),
+  onDuplicateAt func(int) (Result, error),
 ) func (DeltaArray[a, deltaA]) (Result, error) {
   return func (delta DeltaArray[a, deltaA]) (Result,error) {
     var result Result
@@ -86,7 +95,9 @@ func MatchDeltaArray[a any, deltaA any, Result any](
         return onRemoveAt(delta.RemoveAt)
       case "ArrayMoveFromTo":
         return onMoveFromTo(delta.MoveFromTo)
-			}
+      case "ArrayDuplicateAt":
+        return onDuplicateAt(delta.DuplicateAt)
+    }
     return result, NewInvalidDiscriminatorError(string(delta.Discriminator), "DeltaArray")
   }
 }

@@ -13,12 +13,13 @@ func DefaultMap[k comparable, v any]() Map[k, v] {
 
 type DeltaMapEffectsEnum string
 const (
-  MapReplace DeltaMapEffectsEnum = "MapReplace" 
+  MapReplace DeltaMapEffectsEnum = "MapReplace"
+  MapKey DeltaMapEffectsEnum = "MapKey"
   MapValue DeltaMapEffectsEnum = "MapValue" 
   MapAdd DeltaMapEffectsEnum = "MapAdd" 
   MapRemove DeltaMapEffectsEnum = "MapRemove" 
 )
-var AllDeltaMapEffectsEnumCases = [...]DeltaMapEffectsEnum{ MapReplace, MapValue, MapAdd, MapRemove }
+var AllDeltaMapEffectsEnumCases = [...]DeltaMapEffectsEnum{ MapReplace, MapKey, MapValue, MapAdd, MapRemove }
 
 func DefaultDeltaMapEffectsEnum() DeltaMapEffectsEnum { return AllDeltaMapEffectsEnumCases[0]; }
 
@@ -26,9 +27,10 @@ type DeltaMap[k comparable, v any, deltaK any, deltaV any] struct{
 	DeltaBase
 	Discriminator DeltaMapEffectsEnum
 	Replace Map[k, v]
-	Value Tuple2[k, deltaV]
+	Key Tuple2[int, deltaK]
+	Value Tuple2[int, deltaV]
 	Add Tuple2[k, v]
-	Remove k
+	Remove int
 }
 func NewDeltaMapReplace[k comparable, v any, deltaK any, deltaV any](value Map[k, v]) DeltaMap[k, v, deltaK, deltaV] {
   return DeltaMap[k, v, deltaK, deltaV] {
@@ -36,7 +38,13 @@ func NewDeltaMapReplace[k comparable, v any, deltaK any, deltaV any](value Map[k
     Replace:value,
  }
 }
-func NewDeltaMapValue[k comparable, v any, deltaK any, deltaV any](index k, delta deltaV) DeltaMap[k, v, deltaK, deltaV] {
+func NewDeltaMapKey[k comparable, v any, deltaK any, deltaV any](index int, delta deltaK) DeltaMap[k, v, deltaK, deltaV] {
+  return DeltaMap[k, v, deltaK, deltaV] {
+    Discriminator:MapKey,
+    Key:NewTuple2(index, delta),
+ }
+}
+func NewDeltaMapValue[k comparable, v any, deltaK any, deltaV any](index int, delta deltaV) DeltaMap[k, v, deltaK, deltaV] {
   return DeltaMap[k, v, deltaK, deltaV] {
     Discriminator:MapValue,
     Value:NewTuple2(index, delta),
@@ -48,7 +56,7 @@ func NewDeltaMapAdd[k comparable, v any, deltaK any, deltaV any](newElement Tupl
     Add:newElement,
  }
 }
-func NewDeltaMapRemove[k comparable, v any, deltaK any, deltaV any](index k) DeltaMap[k, v, deltaK, deltaV] {
+func NewDeltaMapRemove[k comparable, v any, deltaK any, deltaV any](index int) DeltaMap[k, v, deltaK, deltaV] {
   return DeltaMap[k, v, deltaK, deltaV] {
     Discriminator:MapRemove,
     Remove:index,
@@ -57,15 +65,18 @@ func NewDeltaMapRemove[k comparable, v any, deltaK any, deltaV any](index k) Del
 
 func MatchDeltaMap[k comparable, v any, deltaK any, deltaV any, Result any](
   onReplace func(Map[k, v]) (Result, error),
-  onValue func(Tuple2[k, deltaV]) (Result, error),
+  onKey func(Tuple2[int, deltaK]) (Result, error),
+  onValue func(Tuple2[int, deltaV]) (Result, error),
   onAdd func(Tuple2[k, v]) (Result, error),
-  onRemove func(k) (Result, error),
+  onRemove func(int) (Result, error),
 ) func (DeltaMap[k, v, deltaK, deltaV]) (Result, error) {
   return func (delta DeltaMap[k, v, deltaK, deltaV]) (Result,error) {
     var result Result
     switch delta.Discriminator {
       case "MapReplace":
         return onReplace(delta.Replace)
+      case "MapKey":
+        return onKey(delta.Key)
       case "MapValue":
         return onValue(delta.Value)
       case "MapAdd":
