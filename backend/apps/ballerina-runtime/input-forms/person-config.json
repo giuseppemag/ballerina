@@ -233,6 +233,7 @@
           "fun": "List",
           "args": ["string"]
         },
+        "schoolAddress": "Address",
         "mainAddress": {
           "fun": "Sum",
           "args": ["string", {
@@ -412,7 +413,6 @@
       "type": "Address",
       "fields": {
         "streetNumberAndCity": {
-          "label": "street number and city",
           "renderer": "defaultTuple3",
           "itemRenderers": [
             {
@@ -677,6 +677,11 @@
             ]
           }
         },
+        "schoolAddress": {
+          "label": "school address",
+          "renderer": "address",
+          "overrideChildLabels": true
+        },
         "mainAddress": {
           "label": "main address",
           "renderer": "defaultSum",
@@ -731,7 +736,7 @@
               "renderer": "defaultString"
             },
             "valueRenderer": {
-              "label": "address",
+              "label": "main address",
               "renderer": "address"
             }
           }
@@ -910,6 +915,7 @@
               "groups": {
                 "main": [
                   "departments",
+                  "schoolAddress",
                   "mainAddress",
                   "addressesAndAddressesWithLabel",
                   "addressesByCity",
