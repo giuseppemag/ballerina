@@ -158,7 +158,7 @@ module Runner =
       | Left res ->
         do System.IO.File.WriteAllText(res.OutputPath, res.GeneratedCode)
         do Console.ForegroundColor <- ConsoleColor.Green
-        do printf $$"""Code for {{inputPath}} is generated at {{outputPath}}.  """
+        do Console.WriteLine $$"""Code for {{inputPath}} is generated at {{outputPath}}.  """
         do Console.ResetColor()
       | Right err -> do Errors.Print inputPath err
 
@@ -172,7 +172,7 @@ dotnet run -- forms -input ../automatic-tests/input-forms/entity-patch-kitchensi
 
 dotnet run -- forms -input ../automatic-tests/input-forms/person-config.json -linked ../automatic-tests/input-forms/person-config-types-base.json ../automatic-tests/input-forms/person-config-types-person-address.json ../automatic-tests/input-forms/person-config-apis-base.json ../automatic-tests/input-forms/person-config-apis-person-address.json ../automatic-tests/input-forms/person-config-forms-base.json ../automatic-tests/input-forms/person-config-forms-person-address.json -output ./generated-output/models -validate -codegen golang -codegen_config ../automatic-tests/input-forms/go-config.json
 
-dotnet run -- forms -input ./input-forms/blp/document.json -linked ./input-forms/blp/global-config.json ./input-forms/blp/reference-primitives.json ./input-forms/blp/primitives.json ./input-forms/blp/references.json ./input-forms/blp/invoice-header.json ./input-forms/blp/delivery-note-header.json  -output ./generated-output/models -validate -codegen golang -codegen_config ./input-forms/blp/go-config.json
+dotnet run -- forms -input ../../../../unbound/specs/document.json -linked ../../../../unbound/specs/global-config.json ../../../../unbound/specs/reference-primitives.json ../../../../unbound/specs/primitives.json ../../../../unbound/specs/references.json ../../../../unbound/specs/invoice-header.json ../../../../unbound/specs/delivery-note-header.json  -output ./generated-output/models -validate -codegen golang -codegen_config ../../../../unbound/specs/go-config.json
 
 
 dotnet run -- forms -input ../automatic-tests/input-forms/form-config-config.json -output ./generated-output/models -validate -codegen golang -codegen_config ../automatic-tests/input-forms/go-config.json

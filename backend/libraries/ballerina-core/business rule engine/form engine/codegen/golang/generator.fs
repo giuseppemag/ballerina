@@ -287,7 +287,7 @@ module Main =
                       { Name = t.Value.TypeId.TypeName
                         Fields = fields }
 
-                    return GolangRecord.ToGolang () record
+                    return GolangRecord.ToGolang (ctx, codegenConfig, formName) record
                 }
                 |> state.WithErrorContext $"...when generating type {t.Value.TypeId.TypeName}")
               |> List.ofSeq

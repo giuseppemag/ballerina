@@ -38,30 +38,9 @@
       ✅ the `entityName` should be the API name, not the type
       ❌ entities PATCH - gets single value and path of change
         ✅ support Id:string in CollectionReference, not just Id:Guid
-        ❌ lots of no-ops in deltas
-          ❌ add ˋreadonlyˋ flag to fields
-            ❌ parse into record type
-            ❌ do not generate the components for them
-          ❌ do not generate PATCH callbacks for those fields and cases
-        ❌ split mega-spec logically
-          ❌ primitives
-            ❌ types and forms
-          ❌ data-sync
-            ❌ types and api streams
-          ❌ invoice header
-            ❌ type and form
-          ❌ X=documentType header
-            ❌ revise
-            ❌ type and form
-          ❌ document header
-            ❌ type, form, launcher
-          ❌ invoice header config
-            ❌ type and form
-          ❌ X=documentType header config
-            ❌ type and form
-          ❌ document header config
-            ❌ type, form, launcher
-          ❌ ˋReadOnly -> Readonlyˋ
+        ✅ lots of no-ops in deltas
+          ✅ add ˋreadonlyˋ flag to record and custom types
+          ✅ do not generate PATCH callbacks for those fields and cases
         ❌ names of generic parameters of the deltas is inconsistent and should be fixed
         ❌ define the FE deltas, make an array of Deltas[Unit] foldable into a single Deltas[DeltaBase]
           ❌ verify that the DeltaTransfer FE structure deserializes correctly to the BE structure

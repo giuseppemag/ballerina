@@ -44,7 +44,12 @@ module Enum =
           yield StringBuilder.One $$"""{{case.Name}}, """
 
         yield StringBuilder.One "}\n\n"
-        yield StringBuilder.One $"func Default{enum.Name}() {enum.Name} {{ return All{enum.Name}Cases[0]; }}"
+
+        if enum.Cases |> List.isEmpty |> not then
+          yield StringBuilder.One $"func Default{enum.Name}() {enum.Name} {{ return All{enum.Name}Cases[0]; }}"
+        else
+          yield StringBuilder.One $"func Default{enum.Name}() {enum.Name} {{ var res {enum.Name}; return res; }}"
+
         yield StringBuilder.One "\n\n"
       }
       |> StringBuilder.Many

@@ -30,7 +30,10 @@ module Record =
              FieldDefaultValue: string |}
          > }
 
-    static member ToGolang (ctx: GolangContext) (record: GolangRecord) =
+    static member ToGolang
+      (ctx: ParsedFormsContext, codegenConfig: CodeGenConfig, formName: string)
+      (record: GolangRecord)
+      =
       StringBuilder.Many(
         seq {
 
@@ -39,7 +42,7 @@ module Record =
               Cases =
                 record.Fields
                 |> Seq.map (fun field ->
-                  {| Name = $"{record.Name}{field.FieldName}"
+                  {| Name = $"{record.Name}{field.FieldName}FieldsEnum"
                      Value = field.FieldName |})
                 |> Seq.toList }
 
