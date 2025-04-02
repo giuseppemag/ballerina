@@ -432,13 +432,6 @@ export const fromAPIRawValue =
     injectedPrimitives?: InjectedPrimitives<T>,
   ) =>
   (raw: any): ValueOrErrors<PredicateValue, string> => {
-    // allow undefined for unit renderer
-    if (raw == undefined && (t.kind !== "primitive" || t.value != "unit")) {
-      return ValueOrErrors.Default.throwOne(
-        `raw value is undefined for type ${JSON.stringify(t)}`,
-      );
-    }
-
     if (t.kind == "primitive") {
       // unit is a special kind of primitive
       if (t.value == "unit") {
