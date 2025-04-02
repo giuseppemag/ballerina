@@ -67,7 +67,13 @@ module Runner =
 
           let injectedTypes: Map<string, TypeBinding> =
             codegenConfig.Custom
-            |> Seq.map (fun c -> c.Key, (c.Key |> TypeId.Create, ExprType.RecordType Map.empty) |> TypeBinding.Create)
+            |> Seq.map (fun c ->
+              c.Key,
+              (c.Key |> TypeId.Create,
+               [ ($"__CUSTOM_TYPE__{c.Key}__", ExprType.UnitType) ]
+               |> Map.ofSeq
+               |> ExprType.RecordType)
+              |> TypeBinding.Create)
             |> Map.ofSeq
 
           let initialContext =

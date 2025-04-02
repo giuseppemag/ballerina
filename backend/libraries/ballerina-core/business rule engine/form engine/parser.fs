@@ -1748,6 +1748,9 @@ module Parser =
       (jsons: List<JsonValue>)
       : State<Unit, CodeGenConfig, ParsedFormsContext, Errors> =
       state {
+        // let! ctx = state.GetState()
+        // do System.Console.WriteLine ctx.Types.ToFSharpString
+        // do System.Console.ReadLine() |> ignore
         let! topLevel = jsons |> List.map ParsedFormsContext.ExtractTopLevel |> state.All
         let! topLevel = TopLevel.MergeMany topLevel |> state.OfSum
 

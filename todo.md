@@ -34,6 +34,7 @@
         ❌ add entity PATCH sample to successful samples
         ❌ add errorless Go compilation to tests
     ✅ turn union cases into maps - makes lookups more robust and ensures uniqueness
+    ✅ custom types unify because they are all collapsed to Unit, generate some unique type underwater
     ❌ entites visitors
       ✅ the `entityName` should be the API name, not the type
       ❌ entities PATCH - gets single value and path of change
@@ -42,8 +43,10 @@
           ✅ add ˋreadonlyˋ flag to record and custom types
           ✅ do not generate PATCH callbacks for those fields and cases
         ❌ names of generic parameters of the deltas is inconsistent and should be fixed
+        ❌ the BE can guide by providing deserializer callbacks for all the required types, such as `tryParseAsUpdateableEntityX:Raw -> UpdateableEntityX`
         ❌ define the FE deltas, make an array of Deltas[Unit] foldable into a single Deltas[DeltaBase]
           ❌ verify that the DeltaTransfer FE structure deserializes correctly to the BE structure
+          ❌ PATCH from the FE
         ❌ add unit tests for all the go Deltas
         ❌ why do codegen errors (related to the writers) show up twice?
         ✅ `ballerina.DefaultSum` should be `ballerina.Left`, and take the first constructor parameters
@@ -112,8 +115,9 @@
     ❌ add lazy fields
     ❌ add union renderers
     ❌ improvements to the generated Golang code
+      ❌ generate prefilled tuple match functions when some parameters are readonly types
       ❌ generate constructors with the `new{ ... }` syntax, not the field-by-field assignment
-      ❌ make the deltas typesafe
+      ❌ make the deltas encapsulated
         ❌ use `private_` as a prefix for the patterns
         ❌ generate marshall and unmarshall for the generated deltas
         ❌ write marshall and unmarshall for the generated deltas
