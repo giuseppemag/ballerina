@@ -58,6 +58,7 @@ type Form = {
 export type RawRenderer = {
   renderer?: any;
   label?: any;
+  overrideChildLabels?: boolean;
   tooltip?: any;
   visible?: any;
   disabled?: any;
@@ -73,7 +74,7 @@ export type RawRenderer = {
 };
 export type ParsedRenderer<T> = (
   | { kind: "primitive" }
-  | { kind: "record" }
+  | { kind: "record"; overrideChildLabels?: boolean }
   | { kind: "unit" }
   | { kind: "enum"; options: string }
   | { kind: "stream"; stream: string }
@@ -129,6 +130,7 @@ export const ParsedRenderer = {
       label?: string,
       tooltip?: string,
       details?: string,
+      overrideChildLabels?: boolean,
     ): ParsedRenderer<T> => ({
       kind: "record",
       type,
@@ -136,6 +138,7 @@ export const ParsedRenderer = {
       label,
       tooltip,
       details,
+      overrideChildLabels,
       visible,
       disabled: disabled != undefined ? disabled : false,
     }),
@@ -307,6 +310,7 @@ export const ParsedRenderer = {
           field.label,
           field.tooltip,
           field.details,
+          field.overrideChildLabels,
         );
       if (fieldType.kind == "application" && "options" in field)
         return ParsedRenderer.Default.enum(
@@ -525,7 +529,9 @@ export const ParsedRenderer = {
                         )
                         .mapContext<any>((_) => ({
                           ..._,
-                          label: parsedRenderer.label,
+                          ...(parsedRenderer.label && {
+                            label: parsedRenderer.label,
+                          }),
                           tooltip: parsedRenderer.tooltip,
                           details: parsedRenderer.details,
                         })),
@@ -555,7 +561,11 @@ export const ParsedRenderer = {
                         .form.withView(parsingContext.nestedContainerFormView)
                         .mapContext<any>((_) => ({
                           ..._,
-                          label: parsedRenderer.label,
+                          overrideChildLabels:
+                            parsedRenderer.overrideChildLabels,
+                          ...(parsedRenderer.label && {
+                            label: parsedRenderer.label,
+                          }),
                           tooltip: parsedRenderer.tooltip,
                           details: parsedRenderer.details,
                         })),
@@ -612,7 +622,9 @@ export const ParsedRenderer = {
                           .mapContext<any>((_) => {
                             return {
                               ..._,
-                              label: parsedRenderer.label,
+                              ...(parsedRenderer.label && {
+                                label: parsedRenderer.label,
+                              }),
                               tooltip: parsedRenderer.tooltip,
                               details: parsedRenderer.details,
                             };
@@ -680,7 +692,9 @@ export const ParsedRenderer = {
                             )
                             .mapContext<any>((_) => ({
                               ..._,
-                              label: parsedRenderer.label,
+                              ...(parsedRenderer.label && {
+                                label: parsedRenderer.label,
+                              }),
                               tooltip: parsedRenderer.tooltip,
                               details: parsedRenderer.details,
                             })),
@@ -737,7 +751,9 @@ export const ParsedRenderer = {
                           )
                           .mapContext<any>((_) => ({
                             ..._,
-                            label: parsedRenderer.label,
+                            ...(parsedRenderer.label && {
+                              label: parsedRenderer.label,
+                            }),
                             tooltip: parsedRenderer.tooltip,
                             details: parsedRenderer.details,
                           })),
@@ -846,7 +862,9 @@ export const ParsedRenderer = {
                         )
                         .mapContext<any>((_) => ({
                           ..._,
-                          label: parsedRenderer.label,
+                          ...(parsedRenderer.label && {
+                            label: parsedRenderer.label,
+                          }),
                           tooltip: parsedRenderer.tooltip,
                           details: parsedRenderer.details,
                         })),

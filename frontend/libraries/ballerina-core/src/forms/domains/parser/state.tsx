@@ -210,6 +210,7 @@ export const ParseForms =
           })
           .mapContext<Unit>((_) => {
             return {
+              overrideChildLabels: (_ as any).overrideChildLabels ?? false,
               visible: (_ as any).visible ?? true,
               disabled: (_ as any).disabled ?? false,
               label: (_ as any).label,

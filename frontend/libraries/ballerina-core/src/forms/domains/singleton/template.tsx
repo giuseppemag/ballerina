@@ -84,7 +84,11 @@ export const Form = <
                 FieldStates,
                 Context,
                 ForeignMutationsExpected
-              > & { disabled: boolean; visible: boolean }
+              > & {
+                disabled: boolean;
+                visible: boolean;
+                overrideChildLabels?: boolean;
+              }
             >((_) => {
               // disabled flag is passed in from the wrapping container when mapping over fields
               const visibilitiesFromParent =
@@ -98,6 +102,7 @@ export const Form = <
                   : undefined;
 
               return {
+                ...(_.overrideChildLabels && { label: _.label }),
                 rootValue: _.rootValue,
                 value: (_.value as ValueRecord).fields.get(field as string),
                 extraContext: _.extraContext,

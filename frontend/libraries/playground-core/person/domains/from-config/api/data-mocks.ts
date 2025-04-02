@@ -144,6 +144,18 @@ const entityApis: EntityApis = {
               { Id: v4(), DisplayValue: "Department 2" },
             ],
             emails: ["john@doe.it", "johnthedon@doe.com"],
+            schoolAddress: {
+              streetNumberAndCity: {
+                Item1: faker.location.street(),
+                Item2: Math.floor(Math.random() * 500),
+                Item3: {
+                  IsSome: true,
+                  Value: {
+                    ...City.Default(v4(), faker.location.city()),
+                  },
+                },
+              },
+            },
             mainAddress: {
               IsRight: true,
               Value: {
@@ -425,6 +437,21 @@ const entityApis: EntityApis = {
               interests: [],
               departments: [],
               emails: [],
+              schoolAddress: {
+                streetNumberAndCity: {
+                  Item1: faker.location.street(),
+                  Item2: Math.floor(Math.random() * 500),
+                  Item3:
+                    Math.random() > 0.5
+                      ? { IsSome: false, Value: { Value: "" } }
+                      : {
+                          IsSome: true,
+                          Value: {
+                            ...City.Default(v4(), faker.location.city()),
+                          },
+                        },
+                },
+              },
               mainAddress: {
                 IsRight: false,
                 Value: "",
