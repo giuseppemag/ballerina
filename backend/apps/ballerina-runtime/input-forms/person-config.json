@@ -679,8 +679,7 @@
         },
         "schoolAddress": {
           "label": "school address",
-          "renderer": "address",
-          "overrideChildLabels": true
+          "renderer": "address"
         },
         "mainAddress": {
           "label": "main address",
@@ -890,7 +889,6 @@
             "demographics": {
               "groups": {
                 "main": [
-                  "plotInfo",
                   "category",
                   "fullName",
                   "birthday",
