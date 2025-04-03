@@ -52,9 +52,9 @@
           ❌ test transitive/multiple extensions
           ❌ give errors in case of extensions of placeholder types
           ❌ add `extends` statement to unions and enums
-        ❌ separate more codegen modules to extra files
+        ✅ separate more codegen modules to extra files
           ✅ custom types
-          ❌ imports
+          ✅ imports
           ✅ `generated types`
           ✅ ToGolang in the typename and method name is redundant, remove it
     ❌ add documentation (Confluence)

@@ -60,6 +60,7 @@
     <Compile Include="business rule engine/form engine/codegen/golang/language constructs/ExprTypeDefaultValue.fs" />
     <Compile Include="business rule engine/form engine/codegen/golang/language constructs/customTypes.fs" />
     <Compile Include="business rule engine/form engine/codegen/golang/language constructs/generatedTypes.fs" />
+    <Compile Include="business rule engine/form engine/codegen/golang/language constructs/header.fs" />
     <Compile Include="business rule engine/form engine/codegen/golang/generator.fs" />
     <Compile Include="business rule engine/form engine/runner.fs" />
   </ItemGroup>
