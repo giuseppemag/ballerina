@@ -58,7 +58,6 @@ type Form = {
 export type RawRenderer = {
   renderer?: any;
   label?: any;
-  overrideChildLabels?: boolean;
   tooltip?: any;
   visible?: any;
   disabled?: any;
@@ -74,7 +73,7 @@ export type RawRenderer = {
 };
 export type ParsedRenderer<T> = (
   | { kind: "primitive" }
-  | { kind: "record"; overrideChildLabels?: boolean }
+  | { kind: "record" }
   | { kind: "unit" }
   | { kind: "enum"; options: string }
   | { kind: "stream"; stream: string }
@@ -130,7 +129,6 @@ export const ParsedRenderer = {
       label?: string,
       tooltip?: string,
       details?: string,
-      overrideChildLabels?: boolean,
     ): ParsedRenderer<T> => ({
       kind: "record",
       type,
@@ -138,7 +136,6 @@ export const ParsedRenderer = {
       label,
       tooltip,
       details,
-      overrideChildLabels,
       visible,
       disabled: disabled != undefined ? disabled : false,
     }),
@@ -310,7 +307,6 @@ export const ParsedRenderer = {
           field.label,
           field.tooltip,
           field.details,
-          field.overrideChildLabels,
         );
       if (fieldType.kind == "application" && "options" in field)
         return ParsedRenderer.Default.enum(
@@ -463,6 +459,7 @@ export const ParsedRenderer = {
         form: Form;
         visibilityPredicateExpression: FieldPredicateExpression;
         disabledPredicatedExpression: FieldPredicateExpression;
+        label: string | undefined;
       },
       string
     > => {
@@ -510,6 +507,7 @@ export const ParsedRenderer = {
                     FieldPredicateExpression.Default.primitive(visibilityExpr),
                   disabledPredicatedExpression:
                     FieldPredicateExpression.Default.primitive(disabledExpr),
+                  label: parsedRenderer.label,
                 }),
               );
             },
@@ -529,9 +527,7 @@ export const ParsedRenderer = {
                         )
                         .mapContext<any>((_) => ({
                           ..._,
-                          ...(parsedRenderer.label && {
-                            label: parsedRenderer.label,
-                          }),
+                          label: parsedRenderer.label,
                           tooltip: parsedRenderer.tooltip,
                           details: parsedRenderer.details,
                         })),
@@ -546,6 +542,7 @@ export const ParsedRenderer = {
                       FieldPredicateExpression.Default.unit(visibilityExpr),
                     disabledPredicatedExpression:
                       FieldPredicateExpression.Default.unit(disabledExpr),
+                    label: parsedRenderer.label,
                   }),
               ),
           );
@@ -561,11 +558,7 @@ export const ParsedRenderer = {
                         .form.withView(parsingContext.nestedContainerFormView)
                         .mapContext<any>((_) => ({
                           ..._,
-                          overrideChildLabels:
-                            parsedRenderer.overrideChildLabels,
-                          ...(parsedRenderer.label && {
-                            label: parsedRenderer.label,
-                          }),
+                          label: parsedRenderer.label,
                           tooltip: parsedRenderer.tooltip,
                           details: parsedRenderer.details,
                         })),
@@ -588,6 +581,7 @@ export const ParsedRenderer = {
                         parsingContext.forms.get(parsedRenderer.renderer)!
                           .disabledPredicatedExpressions,
                       ),
+                    label: parsedRenderer.label,
                   }),
               ),
           );
@@ -622,9 +616,7 @@ export const ParsedRenderer = {
                           .mapContext<any>((_) => {
                             return {
                               ..._,
-                              ...(parsedRenderer.label && {
-                                label: parsedRenderer.label,
-                              }),
+                              label: parsedRenderer.label,
                               tooltip: parsedRenderer.tooltip,
                               details: parsedRenderer.details,
                             };
@@ -644,6 +636,7 @@ export const ParsedRenderer = {
                           disabledExpr,
                           parsedElementRenderer.disabledPredicatedExpression,
                         ),
+                      label: parsedRenderer.label,
                     }),
                   ),
               ),
@@ -692,9 +685,7 @@ export const ParsedRenderer = {
                             )
                             .mapContext<any>((_) => ({
                               ..._,
-                              ...(parsedRenderer.label && {
-                                label: parsedRenderer.label,
-                              }),
+                              label: parsedRenderer.label,
                               tooltip: parsedRenderer.tooltip,
                               details: parsedRenderer.details,
                             })),
@@ -717,6 +708,7 @@ export const ParsedRenderer = {
                             parsedKeyRenderer.disabledPredicatedExpression,
                             parsedValueRenderer.disabledPredicatedExpression,
                           ),
+                        label: parsedRenderer.label,
                       }),
                     ),
                   ),
@@ -751,9 +743,7 @@ export const ParsedRenderer = {
                           )
                           .mapContext<any>((_) => ({
                             ..._,
-                            ...(parsedRenderer.label && {
-                              label: parsedRenderer.label,
-                            }),
+                            label: parsedRenderer.label,
                             tooltip: parsedRenderer.tooltip,
                             details: parsedRenderer.details,
                           })),
@@ -778,6 +768,7 @@ export const ParsedRenderer = {
                             .map((item) => item.disabledPredicatedExpression)
                             .toArray(),
                         ),
+                      label: parsedRenderer.label,
                     }),
                   );
                 },
@@ -862,9 +853,7 @@ export const ParsedRenderer = {
                         )
                         .mapContext<any>((_) => ({
                           ..._,
-                          ...(parsedRenderer.label && {
-                            label: parsedRenderer.label,
-                          }),
+                          label: parsedRenderer.label,
                           tooltip: parsedRenderer.tooltip,
                           details: parsedRenderer.details,
                         })),
@@ -893,7 +882,8 @@ export const ParsedRenderer = {
                         parsedLeftRenderer?.value.disabledPredicatedExpression,
                         parsedRightRenderer?.value.disabledPredicatedExpression,
                       ),
-                  });
+                      label: parsedRenderer.label,
+                    });
                 },
               ),
           );

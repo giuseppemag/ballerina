@@ -1,4 +1,4 @@
-import { List, OrderedSet } from "immutable";
+import { List, OrderedSet, Map } from "immutable";
 import {
   BasicUpdater,
   id,
@@ -58,6 +58,7 @@ export const Form = <
       config: id<EntityFormConfig>,
       template: (
         config: EntityFormConfig,
+        fieldLabels: Map<FieldName, string | undefined>,
         validation?: BasicFun<PredicateValue, Promise<FieldValidationWithPath>>,
       ): EntityFormTemplate<
         Fields,
@@ -87,7 +88,6 @@ export const Form = <
               > & {
                 disabled: boolean;
                 visible: boolean;
-                overrideChildLabels?: boolean;
               }
             >((_) => {
               // disabled flag is passed in from the wrapping container when mapping over fields
@@ -102,7 +102,6 @@ export const Form = <
                   : undefined;
 
               return {
-                ...(_.overrideChildLabels && { label: _.label }),
                 rootValue: _.rootValue,
                 value: (_.value as ValueRecord).fields.get(field as string),
                 extraContext: _.extraContext,
@@ -262,6 +261,7 @@ export const Form = <
                 VisibleFieldKeys={visibleFieldKeys}
                 DisabledFieldKeys={disabledFieldKeys}
                 EmbeddedFields={fieldTemplates}
+                FieldLabels={fieldLabels}
               />
             </>
           );

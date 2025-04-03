@@ -62,7 +62,7 @@ export const PersonContainerFormView: EntityFormView<
 export const PersonNestedContainerFormView: EntityFormView<
   any,
   any,
-  { layout: FormLayout; overrideChildLabels: boolean },
+  { layout: FormLayout },
   Unit
 > = (props) => {
   return (
@@ -86,9 +86,6 @@ export const PersonNestedContainerFormView: EntityFormView<
                           context: {
                             ...props.context,
                             disabled: props.DisabledFieldKeys.has(fieldName),
-                            ...(props.context.overrideChildLabels && {
-                              label: props.context.label,
-                            }),
                           },
                           view: unit,
                         })}

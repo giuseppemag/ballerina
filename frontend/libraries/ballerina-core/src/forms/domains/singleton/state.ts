@@ -1,4 +1,4 @@
-import { List, OrderedMap, OrderedSet } from "immutable";
+import { List, OrderedMap, OrderedSet, Map } from "immutable";
 import {
   BasicUpdater,
   id,
@@ -146,6 +146,7 @@ export type EntityFormView<
     >;
     VisibleFieldKeys: OrderedSet<FieldName>;
     DisabledFieldKeys: OrderedSet<FieldName>;
+    FieldLabels: Map<FieldName, string | undefined>;
   }
 >;
 export type EntityFormTemplate<
@@ -172,7 +173,6 @@ export type EmbeddedFieldTemplate<
 > = Template<
   EntityFormContext<Fields, FieldStates, Context, ForeignMutationsExpected> & {
     disabled: boolean;
-    overrideChildLabels?: boolean;
   },
   EntityFormState<Fields, FieldStates, Context, ForeignMutationsExpected>,
   EntityFormForeignMutationsExpected<

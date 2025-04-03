@@ -38,6 +38,7 @@ import {
   PassthroughFormContext,
   PassthroughFormTemplate,
   defaultState,
+  FieldName,
 } from "../../../../main";
 import { EnumReference } from "../collection/domains/reference/state";
 import { SearchableInfiniteStreamState } from "../primitives/domains/searchable-infinite-stream/state";
@@ -51,6 +52,7 @@ export type ParsedForm<T> = {
   formDef: ParsedFormConfig<T>;
   visibilityPredicateExpressions: FieldPredicateExpressions;
   disabledPredicatedExpressions: FieldPredicateExpressions;
+  fieldLabels: Map<FieldName, string | undefined>;
 };
 export const ParseForm = <T,>(
   formName: string,
@@ -68,6 +70,7 @@ export const ParseForm = <T,>(
   const formConfig: any = {};
   let visibilityPredicateExpressions: FieldPredicateExpressions = Map();
   let disabledPredicatedExpressions: FieldPredicateExpressions = Map();
+  let fieldLabels: Map<FieldName, string | undefined> = Map();
   const initialFormState: any = {
     commonFormState: CommonFormState.Default(),
     formFieldStates: {},
@@ -103,6 +106,7 @@ export const ParseForm = <T,>(
       fieldName,
       parsedFormConfig.value.disabledPredicatedExpression,
     );
+    fieldLabels = fieldLabels.set(fieldName, parsedFormConfig.value.label);
     initialFormState["formFieldStates"][fieldName] =
       parsedFormConfig.value.form.initialState;
   });
@@ -114,6 +118,7 @@ export const ParseForm = <T,>(
     formConfig,
     visibilityPredicateExpressions,
     disabledPredicatedExpressions,
+    fieldLabels,
   };
 };
 
@@ -205,12 +210,14 @@ export const ParseForms =
         );
         const formBuilder = Form<any, any, any>().Default<any>();
         const form = formBuilder
-          .template({
-            ...parsedForm.formConfig,
-          })
+          .template(
+            {
+              ...parsedForm.formConfig,
+            },
+            parsedForm.fieldLabels,
+          )
           .mapContext<Unit>((_) => {
             return {
-              overrideChildLabels: (_ as any).overrideChildLabels ?? false,
               visible: (_ as any).visible ?? true,
               disabled: (_ as any).disabled ?? false,
               label: (_ as any).label,
@@ -481,7 +488,7 @@ export const parseFormsToLaunchers =
                     visibilities: _.visibilities,
                     disabledFields: _.disabledFields,
                   })),
-              }) as any,
+              } as any),
           )
           .withViewFromProps((props) => props.context.submitButtonWrapper)
           .mapForeignMutationsFromProps(
@@ -679,7 +686,7 @@ export const parseFormsToLaunchers =
                       visibilities: _.visibilities,
                       disabledFields: _.disabledFields,
                     })),
-                }) as any,
+                } as any),
             )
             .withViewFromProps((props) => props.context.containerWrapper)
             .mapForeignMutationsFromProps(
