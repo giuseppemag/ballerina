@@ -80,6 +80,7 @@
             "string"
           ]
         },
+        "schoolAddress": "Address",
         "mainAddress": {
           "fun": "Sum",
           "args": [

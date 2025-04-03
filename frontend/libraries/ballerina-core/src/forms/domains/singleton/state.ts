@@ -172,7 +172,7 @@ export type EmbeddedFieldTemplate<
 > = Template<
   EntityFormContext<Fields, FieldStates, Context, ForeignMutationsExpected> & {
     disabled: boolean;
-    overrideChildLabels?: boolean;
+    propagateLabel?: boolean;
   },
   EntityFormState<Fields, FieldStates, Context, ForeignMutationsExpected>,
   EntityFormForeignMutationsExpected<

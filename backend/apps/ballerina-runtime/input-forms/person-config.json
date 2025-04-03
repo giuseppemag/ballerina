@@ -680,7 +680,7 @@
         "schoolAddress": {
           "label": "school address",
           "renderer": "address",
-          "overrideChildLabels": true
+          "propagateLabel": true
         },
         "mainAddress": {
           "label": "main address",

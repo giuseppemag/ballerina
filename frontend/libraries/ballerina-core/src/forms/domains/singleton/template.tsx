@@ -87,7 +87,7 @@ export const Form = <
               > & {
                 disabled: boolean;
                 visible: boolean;
-                overrideChildLabels?: boolean;
+                propagateLabel?: boolean;
               }
             >((_) => {
               // disabled flag is passed in from the wrapping container when mapping over fields
@@ -102,7 +102,7 @@ export const Form = <
                   : undefined;
 
               return {
-                ...(_.overrideChildLabels && { label: _.label }),
+                ...(_.propagateLabel && { label: _.label }),
                 rootValue: _.rootValue,
                 value: (_.value as ValueRecord).fields.get(field as string),
                 extraContext: _.extraContext,

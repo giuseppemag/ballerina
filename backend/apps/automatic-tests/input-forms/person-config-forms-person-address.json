@@ -283,6 +283,11 @@
             ]
           }
         },
+        "schoolAddress": {
+          "label": "school address",
+          "renderer": "address",
+          "propagateLabel": true
+        },
         "mainAddress": {
           "label": "main address",
           "renderer": "defaultSum",
@@ -508,6 +513,7 @@
               "groups": {
                 "main": [
                   "departments",
+                  "schoolAddress",
                   "mainAddress",
                   "addressesAndAddressesWithLabel",
                   "addressesByCity",

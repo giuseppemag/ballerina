@@ -62,12 +62,11 @@ export const PersonContainerFormView: EntityFormView<
 export const PersonNestedContainerFormView: EntityFormView<
   any,
   any,
-  { layout: FormLayout; overrideChildLabels: boolean },
+  { layout: FormLayout; propagateLabel: boolean },
   Unit
 > = (props) => {
   return (
     <>
-      {props.context.label && <h3>{props.context.label}</h3>}
       <table>
         <tbody>
           {/* {JSON.stringify(props.VisibleFieldKeys.toArray())} */}
@@ -86,7 +85,7 @@ export const PersonNestedContainerFormView: EntityFormView<
                           context: {
                             ...props.context,
                             disabled: props.DisabledFieldKeys.has(fieldName),
-                            ...(props.context.overrideChildLabels && {
+                            ...(props.context.propagateLabel && {
                               label: props.context.label,
                             }),
                           },

@@ -58,7 +58,7 @@ type Form = {
 export type RawRenderer = {
   renderer?: any;
   label?: any;
-  overrideChildLabels?: boolean;
+  propagateLabel?: boolean;
   tooltip?: any;
   visible?: any;
   disabled?: any;
@@ -74,7 +74,7 @@ export type RawRenderer = {
 };
 export type ParsedRenderer<T> = (
   | { kind: "primitive" }
-  | { kind: "record"; overrideChildLabels?: boolean }
+  | { kind: "record"; propagateLabel?: boolean }
   | { kind: "unit" }
   | { kind: "enum"; options: string }
   | { kind: "stream"; stream: string }
@@ -130,7 +130,7 @@ export const ParsedRenderer = {
       label?: string,
       tooltip?: string,
       details?: string,
-      overrideChildLabels?: boolean,
+      propagateLabel?: boolean,
     ): ParsedRenderer<T> => ({
       kind: "record",
       type,
@@ -138,7 +138,7 @@ export const ParsedRenderer = {
       label,
       tooltip,
       details,
-      overrideChildLabels,
+      propagateLabel,
       visible,
       disabled: disabled != undefined ? disabled : false,
     }),
@@ -310,7 +310,7 @@ export const ParsedRenderer = {
           field.label,
           field.tooltip,
           field.details,
-          field.overrideChildLabels,
+          field.propagateLabel,
         );
       if (fieldType.kind == "application" && "options" in field)
         return ParsedRenderer.Default.enum(
@@ -561,8 +561,8 @@ export const ParsedRenderer = {
                         .form.withView(parsingContext.nestedContainerFormView)
                         .mapContext<any>((_) => ({
                           ..._,
-                          overrideChildLabels:
-                            parsedRenderer.overrideChildLabels,
+                          propagateLabel:
+                            parsedRenderer.propagateLabel,
                           ...(parsedRenderer.label && {
                             label: parsedRenderer.label,
                           }),
