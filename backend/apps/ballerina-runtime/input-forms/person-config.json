@@ -890,7 +890,6 @@
             "demographics": {
               "groups": {
                 "main": [
-                  "plotInfo",
                   "category",
                   "fullName",
                   "birthday",
