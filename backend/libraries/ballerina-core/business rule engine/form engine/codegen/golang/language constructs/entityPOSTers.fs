@@ -13,7 +13,7 @@ type GolangEntityPOSTers =
            EntityType: string |}
        > }
 
-  static member ToGolang (_: GolangContext) (entities: GolangEntityPOSTers) =
+  static member Generate (_: GolangContext) (entities: GolangEntityPOSTers) =
     StringBuilder.Many(
       seq {
         yield StringBuilder.One $"func {entities.FunctionName}[id any, payload any]("

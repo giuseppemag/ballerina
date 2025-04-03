@@ -19,7 +19,7 @@ type GolangEntityPATCHers =
            EntityApiName: string |}
        > }
 
-  static member ToGolang
+  static member Generate
     (ctx: ParsedFormsContext, codegenConfig: CodeGenConfig, formName: string)
     (entities: GolangEntityPATCHers)
     =
@@ -67,7 +67,7 @@ type GolangEntityPATCHers =
                      Value = $"{w.Name.WriterName}{p.Name}" |})
                 |> Seq.toList }
 
-          yield GolangEnum.ToGolang () casesEnum
+          yield GolangEnum.Generate () casesEnum
 
           yield StringBuilder.One $"type {w.DeltaTypeName} struct {{\n"
           yield StringBuilder.One $"  {codegenConfig.DeltaBase.GeneratedTypeName}\n"

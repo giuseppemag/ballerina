@@ -30,7 +30,7 @@ module Record =
              FieldDefaultValue: string |}
          > }
 
-    static member ToGolang
+    static member Generate
       (ctx: ParsedFormsContext, codegenConfig: CodeGenConfig, formName: string)
       (record: GolangRecord)
       =
@@ -46,7 +46,7 @@ module Record =
                      Value = field.FieldName |})
                 |> Seq.toList }
 
-          let fieldsEnum = GolangEnum.ToGolang () fieldsEnum
+          let fieldsEnum = GolangEnum.Generate () fieldsEnum
 
           let typeStart = $$"""type {{record.Name}} struct {""" + "\n"
 

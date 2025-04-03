@@ -22,7 +22,7 @@ module WritersAndDeltas =
         state {
           let! ((ctx, codegenConfig): ParsedFormsContext * CodeGenConfig) = state.GetContext()
 
-          match (t |> ExprType.ToGolangTypeAnnotation).run (codegenConfig, { UsedImports = Set.empty }) with
+          match (t |> ExprType.GenerateTypeAnnotation).run (codegenConfig, { UsedImports = Set.empty }) with
           | Right(err, _) -> return! state.Throw err
           | Left(t_a, _) -> return t_a
         }

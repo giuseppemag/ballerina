@@ -13,7 +13,7 @@ type GolangEntityGETters =
            EntityType: string |}
        > }
 
-  static member ToGolang (_: GolangContext) (entities: GolangEntityGETters) =
+  static member Generate (_: GolangContext) (entities: GolangEntityGETters) =
     StringBuilder.Many(
       seq {
         yield StringBuilder.One $"func {entities.FunctionName}[id any, result any]("

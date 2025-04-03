@@ -25,7 +25,7 @@ module EnumGETters =
       Enums: List<{| EnumName: string; EnumType: string |}>
       EnumNotFoundErrorConstructor: string }
 
-    static member ToGolang (ctx: GolangContext) (getters: GolangEnumGETters) =
+    static member Generate (ctx: GolangContext) (getters: GolangEnumGETters) =
       StringBuilder.Many(
         seq {
           yield StringBuilder.One $"func {getters.FunctionName}[result any](enumName string, "

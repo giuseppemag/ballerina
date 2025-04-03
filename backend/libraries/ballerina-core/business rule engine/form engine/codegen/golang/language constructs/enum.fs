@@ -24,7 +24,7 @@ module Enum =
     { Name: string
       Cases: List<{| Name: string; Value: string |}> }
 
-    static member ToGolang (ctx: GolangContext) (enum: GolangEnum) =
+    static member Generate (ctx: GolangContext) (enum: GolangEnum) =
       seq {
         yield StringBuilder.One $"type {enum.Name} string"
         yield StringBuilder.One "\n"

@@ -29,7 +29,7 @@ module StreamGETters =
          >
       StreamNotFoundErrorConstructor: string }
 
-    static member ToGolang (ctx: GolangContext) (getters: GolangStreamGETters) =
+    static member Generate (ctx: GolangContext) (getters: GolangStreamGETters) =
       StringBuilder.Many(
         seq {
           yield

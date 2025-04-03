@@ -26,7 +26,7 @@ module EnumPOSTers =
       UnitType: string
       InvalidEnumValueCombinationError: string }
 
-    static member ToGolang (ctx: GolangContext) (posters: GolangEnumPOSTers) =
+    static member Generate (ctx: GolangContext) (posters: GolangEnumPOSTers) =
       StringBuilder.Many(
         seq {
           yield StringBuilder.One $"func {posters.FunctionName}(enumName string, enumValue string, "

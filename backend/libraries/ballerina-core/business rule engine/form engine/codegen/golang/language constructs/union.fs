@@ -33,7 +33,7 @@ module Union =
                 > |}
          > }
 
-    static member ToGolang (ctx: GolangContext) (union: GolangUnion) =
+    static member Generate (ctx: GolangContext) (union: GolangUnion) =
       let cases = union.Cases
       let firstUnionCaseName = union.Cases.Head.CaseName
 

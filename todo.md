@@ -33,7 +33,7 @@
           ❌ wrong use of `Sum`
         ❌ add entity PATCH sample to successful samples
         ❌ add errorless Go compilation to tests
-    ✅ turn union cases into maps - makes lookups more robust and ensures uniqueness
+        ❌ make sure that the failing tests fail for the right reason - inspect and partially match the errors
     ✅ custom types unify because they are all collapsed to Unit, generate some unique type underwater
     ❌ entites visitors
       ✅ the `entityName` should be the API name, not the type
@@ -42,79 +42,40 @@
         ✅ lots of no-ops in deltas
           ✅ add ˋreadonlyˋ flag to record and custom types
           ✅ do not generate PATCH callbacks for those fields and cases
-        ❌ names of generic parameters of the deltas is inconsistent and should be fixed
+        ✅ names of generic parameters of the deltas is inconsistent and should be fixed
         ❌ the BE can guide by providing deserializer callbacks for all the required types, such as `tryParseAsUpdateableEntityX:Raw -> UpdateableEntityX`
         ❌ define the FE deltas, make an array of Deltas[Unit] foldable into a single Deltas[DeltaBase]
           ❌ verify that the DeltaTransfer FE structure deserializes correctly to the BE structure
           ❌ PATCH from the FE
-        ❌ add unit tests for all the go Deltas
-        ❌ why do codegen errors (related to the writers) show up twice?
-        ✅ `ballerina.DefaultSum` should be `ballerina.Left`, and take the first constructor parameters
-        ✅ build sample with A, B, C (polymorphic), D, and E (excluded from the transitive closure)
-        ✅ traverse the entity, generate the deltas recursively for any nested constructs, lookups refer to existing writers, and loops are prevented with a `visited` set
-          ✅ the output of this is a map `TypeName -> Writer`
-          ✅ `Writer = RecordWriter of Fields | CaseWriter of Casename x Fields`
-        ✅ `writerA: { x:Delta -> DeltaA + error; B:DeltaB x Delta -> DeltaA + error; Zero:() -> DeltaA + error }`
-        ✅ `writerB: { B1:DeltaB_B1 x Delta -> DeltaB + error; B2:DeltaB_B2 x Delta -> DeltaB + error }`
-        ✅ recurse on every single type case when building the writer, no unsupported types or shapes here
-          ✅ define generic writers such as `writerOption[DeltaE, Delta]`, `writerSum[DeltaL, DeltaR, Delta]`, etc,
-          ✅ define generic deltas such as `DeltaOption[DeltaE, Delta]`, `DeltaSum[DeltaL, DeltaR, Delta]`, etc,
-          ✅ define generic writers such as `writerInt`, `writerBool`, etc,
-          ✅ define generic deltas such as `DeltaInt`, `DeltaBool`, etc,
-        ✅ Unit renderer looks weird
-        ✅ Unit does not unify
-        ✅ improve union cases renderer
-        ✅ make sure tests and person-config all work properly
-        ✅ fix array type in ballerina/Go
-        ✅ fix sum type in ballerina/Go
-        ✅ support generic type renderers over specific types
-        ✅ link multiple files
-          ✅ get command line parameters differently
-          ✅ extract and merge (uniquely)
-            ✅ types
-            ✅ forms
-            ✅ enums
-            ✅ streams
-            ✅ entities
-            ✅ launchers
-          ✅ generate an enum of all the launchers
-          ✅ generate an enum of all the fields of each record
-        ❌ add a renderer decorator to forms
         ❌ `extends`
           ❌ errors when extending a non-existent type are terrible
           ❌ test transitive/multiple extensions
-          ❌ give errors in case of mutually recursive extensions
+          ❌ give errors in case of extensions of placeholder types
           ❌ add `extends` statement to unions and enums
-        ❌ make sure that the failing tests fail for the right reason - inspect and partially match the errors
         ❌ separate more codegen modules to extra files
+          ✅ custom types
           ❌ imports
-          ❌ `generated types`
-          ❌ ToGolang in the typename and method name is redundant, remove it
-        ✅ complete the kitchen sink sample with all generics
-          ✅ add a few more tuples - up to 5
-          ✅ add all possible generic types - including single and multi selects
-          ✅ move the configurations (names of deltas and writers) to ballerina/core.go and the go-config
-        ✅ complete the kitchen sink sample with all primitives
-          ✅ move the configurations (names of deltas and writers) to ballerina/core.go and the go-config
-        ✅ support imported types
-        ✅ split map, set from sum.go into their respective files
-    ✅ currying the arguments of `entityGET` and `entityPOST`
-    ✅ add tuple renderers
-    ✅ add proper Sum
+          ✅ `generated types`
+          ✅ ToGolang in the typename and method name is redundant, remove it
     ❌ add documentation (Confluence)
       ❌ high-level workings of the form engine
       ❌ high-level anatomy of a spec
       ❌ about the generated BE code
       ❌ add readme with runner instructions to ballerina-core
       ❌ cleanup the unnecessary modules such as OAuth2 (should be moved to apps)
-    ❌ requiredImport is either one or multiple strings (defaultTime needed this)
+    ❌ `requiredImport` is an optional either of one or multiple strings (`Time` needed this)
     ❌ lists, sets, etc. should be top-level forms
     ❌ no more primitives, only custom types
       ❌ custom types should have their algebra of operators
+    ❌ allow using tuple renderers with records
     ❌ add paginated lists
     ❌ add lazy fields
     ❌ add union renderers
+    ❌ why do codegen errors (related to the writers) show up twice?
+    ❌ add a renderer decorator to forms
+      ❌ get rid of tuple renderer
     ❌ improvements to the generated Golang code
+      ❌ add unit tests for all the go Deltas
       ❌ generate prefilled tuple match functions when some parameters are readonly types
       ❌ generate constructors with the `new{ ... }` syntax, not the field-by-field assignment
       ❌ make the deltas encapsulated

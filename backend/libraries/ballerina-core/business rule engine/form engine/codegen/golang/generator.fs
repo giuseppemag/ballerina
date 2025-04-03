@@ -53,7 +53,7 @@ module Main =
                      Value = $"{launcher.LauncherName}" |})
                 |> Seq.toList }
 
-          let launchersEnum = GolangEnum.ToGolang () launchersEnum
+          let launchersEnum = GolangEnum.Generate () launchersEnum
 
           let entitiesEnum: GolangEnum =
             { Name = $"{formName}EntitiesEnum"
@@ -66,10 +66,10 @@ module Main =
                      Value = $"{entityApi.TypeId.TypeName}" |})
                 |> Seq.toList }
 
-          let entitiesEnum = GolangEnum.ToGolang () entitiesEnum
+          let entitiesEnum = GolangEnum.Generate () entitiesEnum
 
           let entityGETters =
-            GolangEntityGETters.ToGolang
+            GolangEntityGETters.Generate
               ()
               { FunctionName = $"{formName}EntityGETter"
                 EntityNotFoundErrorConstructor = codegenConfig.EntityNotFoundError.Constructor
@@ -97,7 +97,7 @@ module Main =
                   |> List.ofSeq
                 EntityNotFoundErrorConstructor = codegenConfig.EntityNotFoundError.Constructor }
 
-            GolangEntityGETDEFAULTers.ToGolang () entities
+            GolangEntityGETDEFAULTers.Generate () entities
 
           let entityPOSTers =
             let entities =
@@ -113,7 +113,7 @@ module Main =
                   |> List.ofSeq
                 EntityNotFoundErrorConstructor = codegenConfig.EntityNotFoundError.Constructor }
 
-            GolangEntityPOSTers.ToGolang () entities
+            GolangEntityPOSTers.Generate () entities
 
           let enumCasesGETters =
             let getters =
@@ -127,7 +127,7 @@ module Main =
                        EnumType = e.UnderlyingEnum.TypeName |})
                   |> List.ofSeq }
 
-            GolangEnumGETters.ToGolang () getters
+            GolangEnumGETters.Generate () getters
 
           let enumCasesPOSTters =
             let posters =
@@ -142,7 +142,7 @@ module Main =
                        EnumType = e.UnderlyingEnum.TypeName |})
                   |> List.ofSeq }
 
-            GolangEnumPOSTers.ToGolang () posters
+            GolangEnumPOSTers.Generate () posters
 
           let streamGETters =
             let getters =
@@ -156,7 +156,7 @@ module Main =
                   |> List.ofSeq
                 StreamNotFoundErrorConstructor = codegenConfig.StreamNotFoundError.Constructor }
 
-            GolangStreamGETters.ToGolang () getters
+            GolangStreamGETters.Generate () getters
 
           let streamPOSTters =
             let posters: GolangStreamPOSTers =
@@ -171,128 +171,29 @@ module Main =
                 GuidType = codegenConfig.Guid.GeneratedTypeName
                 StreamNotFoundErrorConstructor = codegenConfig.StreamNotFoundError.Constructor }
 
-            GolangStreamPOSTers.ToGolang () posters
+            GolangStreamPOSTers.Generate () posters
 
           let customTypes = codegenConfig.Custom.Keys |> Set.ofSeq
 
           let typesToGenerate =
-            ctx.Types |> Map.filter (fun k v -> customTypes |> Set.contains k |> not)
+            ctx.Types
+            |> Map.filter (fun k v -> customTypes |> Set.contains k |> not)
+            |> Seq.map (fun t ->
+              { TypeName = t.Key
+                Type = t.Value.Type })
+            |> List.ofSeq
 
-          let customTypes =
+          let! generatedTypes = GolangGeneratedType.Generate (ctx, codegenConfig, formName) typesToGenerate
+
+          let customTypes: List<GolangCustomType> =
             codegenConfig.Custom
             |> Seq.map (fun t ->
-              StringBuilder.Many(
-                seq {
-                  yield StringBuilder.One "\n"
-                  yield StringBuilder.One $"type {t.Key} = {t.Value.GeneratedTypeName}"
-                  yield StringBuilder.One "\n"
-                  yield StringBuilder.One $"func Default{t.Key}() {t.Key} {{"
-                  yield StringBuilder.One $"  return {t.Value.GeneratedTypeName}({t.Value.DefaultConstructor}());"
-                  yield StringBuilder.One "\n"
-                  yield StringBuilder.One "}"
-                  yield StringBuilder.One "\n"
-                }
-              ))
+              { TypeName = t.Key
+                GeneratedTypeName = t.Value.GeneratedTypeName
+                DefaultConstructor = t.Value.DefaultConstructor })
+            |> List.ofSeq
 
-          let! generatedTypes =
-            state.All(
-              typesToGenerate
-              |> Seq.map (fun t ->
-                state {
-                  match t.Value.Type with
-                  | ExprType.UnionType cases when
-                    cases |> Map.values |> Seq.forall (fun case -> case.Fields.IsUnitType)
-                    && cases |> Map.isEmpty |> not
-                    ->
-                    let enum: GolangEnum =
-                      { Name = $"{t.Key}"
-                        Cases =
-                          cases
-                          |> Map.values
-                          |> Seq.map (fun case -> case.CaseName)
-                          |> Seq.map (fun enumCase ->
-                            {| Name = $"{t.Key}{!enumCase}"
-                               Value = $"{enumCase}" |})
-                          |> Seq.toList }
-
-                    return StringBuilder.Many(seq { yield GolangEnum.ToGolang () enum })
-                  | ExprType.UnionType cases when cases |> Map.isEmpty |> not ->
-                    let! caseValues =
-                      state.All(
-                        cases
-                        |> Map.values
-                        |> Seq.map (fun case ->
-                          state {
-                            let! fields = case.Fields |> ExprType.ResolveLookup ctx |> state.OfSum
-
-                            let! (fields: Map<string, ExprType>) =
-                              state.Any(
-                                NonEmptyList.OfList(
-                                  fields |> ExprType.AsRecord |> state.OfSum,
-                                  [ case.Fields |> ExprType.AsUnit |> state.OfSum |> state.Map(fun _ -> Map.empty)
-                                    state.Return([ "Value", case.Fields ] |> Map.ofList) ]
-                                )
-                              )
-
-                            let! fields =
-                              fields
-                              |> Seq.map (fun f ->
-                                state {
-                                  let! (field: string) = f.Value |> ExprType.ToGolangTypeAnnotation
-                                  let! (fieldDefaultValue: string) = f.Value |> ExprType.ToGolangDefaultValue
-
-                                  return
-                                    {| FieldName = f.Key
-                                       FieldType = field
-                                       FieldDefaultValue = fieldDefaultValue |}
-                                })
-                              |> state.All
-
-                            return
-                              {| CaseName = !case.CaseName
-                                 Fields = fields |}
-                          })
-                        |> List.ofSeq
-                      )
-
-                    let! caseValues =
-                      caseValues
-                      |> NonEmptyList.TryOfList
-                      |> Sum.fromOption (fun () -> Errors.Singleton "Error: expected non-empty list of cases.")
-                      |> state.OfSum
-
-                    let (union: GolangUnion) = { Name = t.Key; Cases = caseValues }
-
-                    return GolangUnion.ToGolang () union
-                  | _ ->
-                    let! fields = ExprType.GetFields t.Value.Type |> state.OfSum
-
-                    let! fields =
-                      state.All(
-                        fields
-                        |> Seq.map (fun (fieldName, field) ->
-                          state {
-                            let! fieldType = field |> ExprType.ToGolangTypeAnnotation
-                            let! fieldDefaultValue = field |> ExprType.ToGolangDefaultValue
-
-                            return
-                              {| FieldName = fieldName
-                                 FieldType = fieldType
-                                 FieldDefaultValue = fieldDefaultValue |}
-                          })
-                        |> List.ofSeq
-                      )
-
-                    let record =
-                      { Name = t.Value.TypeId.TypeName
-                        Fields = fields }
-
-                    return GolangRecord.ToGolang (ctx, codegenConfig, formName) record
-                }
-                |> state.WithErrorContext $"...when generating type {t.Value.TypeId.TypeName}")
-              |> List.ofSeq
-            )
-
+          let customTypes = GolangCustomType.Generate () customTypes
 
           let entityAPIsWithUPDATE =
             ctx.Apis.Entities
@@ -340,7 +241,7 @@ module Main =
                   CommittableWriters = allCommittables
                   EntityNotFoundErrorConstructor = codegenConfig.EntityNotFoundError.Constructor }
 
-              GolangEntityPATCHers.ToGolang (ctx, codegenConfig, formName) entities
+              GolangEntityPATCHers.Generate (ctx, codegenConfig, formName) entities
 
             return
               StringBuilder.Many(
@@ -356,7 +257,7 @@ module Main =
                   yield streamGETters
                   yield streamPOSTters
                   yield! generatedTypes
-                  yield! customTypes
+                  yield customTypes
                 }
               )
         }

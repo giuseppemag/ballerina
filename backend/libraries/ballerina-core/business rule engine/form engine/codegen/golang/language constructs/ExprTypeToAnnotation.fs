@@ -10,8 +10,8 @@ module TypeAnnotations =
   open Ballerina.DSL.FormEngine.Codegen.Golang.Generator.Model
 
   type ExprType with
-    static member ToGolangTypeAnnotation(t: ExprType) : State<string, CodeGenConfig, GoCodeGenState, Errors> =
-      let (!) = ExprType.ToGolangTypeAnnotation
+    static member GenerateTypeAnnotation(t: ExprType) : State<string, CodeGenConfig, GoCodeGenState, Errors> =
+      let (!) = ExprType.GenerateTypeAnnotation
 
       let error =
         sum.Throw(

@@ -13,7 +13,7 @@ type GolangEntityGETDEFAULTers =
            EntityType: string |}
        > }
 
-  static member ToGolang (_: GolangContext) (entities: GolangEntityGETDEFAULTers) =
+  static member Generate (_: GolangContext) (entities: GolangEntityGETDEFAULTers) =
     StringBuilder.Many(
       seq {
         yield StringBuilder.One $"func {entities.FunctionName}[result any]("

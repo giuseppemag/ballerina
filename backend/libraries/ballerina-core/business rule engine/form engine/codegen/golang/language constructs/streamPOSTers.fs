@@ -30,7 +30,7 @@ module StreamPOSTers =
       GuidType: string
       StreamNotFoundErrorConstructor: string }
 
-    static member ToGolang (ctx: GolangContext) (posters: GolangStreamPOSTers) =
+    static member Generate (ctx: GolangContext) (posters: GolangStreamPOSTers) =
       StringBuilder.Many(
         seq {
           yield

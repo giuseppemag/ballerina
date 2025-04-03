@@ -10,8 +10,8 @@ module DefaultValues =
   open Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs.TypeAnnotations
 
   type ExprType with
-    static member ToGolangDefaultValue(t: ExprType) =
-      let (!) = ExprType.ToGolangDefaultValue
+    static member GenerateDefaultValue(t: ExprType) =
+      let (!) = ExprType.GenerateDefaultValue
 
       state {
         let! (cfg: CodeGenConfig) = state.GetContext()
@@ -29,26 +29,26 @@ module DefaultValues =
           | PrimitiveType.StringType -> return cfg.String.DefaultValue
           | _ -> return! state.Throw(Errors.Singleton $"Error: not implemented default value for primitive type {p}")
         | ExprType.ListType e ->
-          let! e = e |> ExprType.ToGolangTypeAnnotation
+          let! e = e |> ExprType.GenerateTypeAnnotation
           return $"{cfg.List.DefaultConstructor}[{e}]()"
         | ExprType.MapType(k, v) ->
-          let! k = k |> ExprType.ToGolangTypeAnnotation
-          let! v = v |> ExprType.ToGolangTypeAnnotation
+          let! k = k |> ExprType.GenerateTypeAnnotation
+          let! v = v |> ExprType.GenerateTypeAnnotation
           return $"{cfg.Map.DefaultConstructor}[{k}, {v}]()"
         | ExprType.SumType(lt, rt) ->
-          let! l = lt |> ExprType.ToGolangTypeAnnotation
-          let! r = rt |> ExprType.ToGolangTypeAnnotation
-          let! ldef = ExprType.ToGolangDefaultValue(lt)
+          let! l = lt |> ExprType.GenerateTypeAnnotation
+          let! r = rt |> ExprType.GenerateTypeAnnotation
+          let! ldef = ExprType.GenerateDefaultValue(lt)
           return $"{cfg.Sum.LeftConstructor}[{l}, {r}]({ldef})"
         | ExprType.OptionType(e) ->
-          let! e = e |> ExprType.ToGolangTypeAnnotation
+          let! e = e |> ExprType.GenerateTypeAnnotation
           return $"{cfg.Option.DefaultConstructor}[{e}]()"
         | ExprType.SetType(e) ->
-          let! e = e |> ExprType.ToGolangTypeAnnotation
+          let! e = e |> ExprType.GenerateTypeAnnotation
           return $"{cfg.Set.DefaultConstructor}[{e}]()"
         | ExprType.TupleType(items) ->
-          let! e = items |> Seq.map ExprType.ToGolangTypeAnnotation |> state.All
-          let! eDefaults = items |> Seq.map ExprType.ToGolangDefaultValue |> state.All
+          let! e = items |> Seq.map ExprType.GenerateTypeAnnotation |> state.All
+          let! eDefaults = items |> Seq.map ExprType.GenerateDefaultValue |> state.All
 
           let! tupleConfig =
             cfg.Tuple
