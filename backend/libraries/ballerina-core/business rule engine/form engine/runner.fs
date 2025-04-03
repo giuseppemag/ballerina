@@ -69,10 +69,10 @@ module Runner =
             codegenConfig.Custom
             |> Seq.map (fun c ->
               c.Key,
-              (c.Key |> TypeId.Create,
-               [ ($"__CUSTOM_TYPE__{c.Key}__", ExprType.UnitType) ]
-               |> Map.ofSeq
-               |> ExprType.RecordType)
+              (c.Key |> TypeId.Create, ExprType.CustomType c.Key)
+              //  [ ($"__CUSTOM_TYPE__{c.Key}__", ExprType.UnitType) ]
+              //  |> Map.ofSeq
+              //  |> ExprType.RecordType)
               |> TypeBinding.Create)
             |> Map.ofSeq
 

@@ -33,6 +33,7 @@ module Model =
 
   and ExprType =
     | UnitType
+    | CustomType of string
     | VarType of VarName
     | SchemaLookupType of EntityDescriptorId
     | LookupType of TypeId
@@ -77,6 +78,7 @@ module Model =
       let (!) (t: ExprType) = t.ToString()
 
       match t with
+      | ExprType.CustomType l -> l
       | ExprType.LookupType l -> l.TypeName
       | ExprType.SchemaLookupType l -> l.EntityName
       | ExprType.PrimitiveType p -> p.ToString()
@@ -116,6 +118,7 @@ module Model =
 
       match t with
       | ExprType.UnitType
+      | ExprType.CustomType _
       | ExprType.VarType _ -> Set.empty
       | ExprType.TupleType ts -> ts |> Seq.map (!) |> Seq.fold (+) Set.empty
       | ExprType.ListType t
@@ -136,6 +139,7 @@ module Model =
       let (!!) = List.map (!)
 
       match t with
+      | ExprType.CustomType _
       | ExprType.LookupType _
       | ExprType.SchemaLookupType _
       | ExprType.PrimitiveType _

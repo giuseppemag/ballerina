@@ -38,6 +38,19 @@ module WritersAndDeltas =
         | Some w -> return w
         | None ->
           match t with
+          | ExprType.CustomType tn as lt ->
+            match codegenConfig.Custom |> Map.tryFind tn with
+            | Some customType ->
+              let w =
+                { Name = { WriterName = $"CustomWriter[{tn}]" }
+                  DeltaTypeName = $"{customType.DeltaTypeName}"
+                  Type = lt
+                  Components = Map.empty
+                  Kind = WriterKind.Imported }
+
+              do! state.SetState(add w)
+              return w
+            | _ -> return! state.Throw(Errors.Singleton $"Error: cannot find custom type {t} to a Writer.")
           | ExprType.RecordType fields ->
             let! fields =
               fields

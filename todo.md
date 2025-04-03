@@ -65,6 +65,7 @@
       ❌ cleanup the unnecessary modules such as OAuth2 (should be moved to apps)
     ❌ `requiredImport` is an optional either of one or multiple strings (`Time` needed this)
     ❌ lists, sets, etc. should be top-level forms
+    ❌ Custom types should not generate writer fields
     ❌ no more primitives, only custom types
       ❌ custom types should have their algebra of operators
     ❌ allow using tuple renderers with records
