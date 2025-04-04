@@ -94,7 +94,7 @@ module Runner =
           match
             ((ParsedFormsContext.Parse generatedLanguageSpecificConfig jsonValues).run (codegenConfig, initialContext))
           with
-          | Left(_, Some parsedForms) ->
+          | Left(mergedJson, Some parsedForms) ->
             match
               (ParsedFormsContext.Validate generatedLanguageSpecificConfig parsedForms)
                 .run ((), { PredicateValidationHistory = Set.empty })
@@ -117,7 +117,18 @@ module Runner =
 
                     Left(
                       {| OutputPath = outputPath
-                         GeneratedCode = generatedCode |}
+                         GeneratedCode = generatedCode
+                         MergedJson =
+                          JsonValue.Record(
+                            [| ("types", JsonValue.Record mergedJson.Types)
+                               ("apis",
+                                JsonValue.Record
+                                  [| ("enums", JsonValue.Record mergedJson.Enums)
+                                     ("streams", JsonValue.Record mergedJson.Streams)
+                                     ("entities", JsonValue.Record mergedJson.Entities) |])
+                               ("forms", JsonValue.Record mergedJson.Forms)
+                               ("launchers", JsonValue.Record mergedJson.Launchers) |]
+                          ) |}
                     )
                   with err ->
                     Right(Errors.Singleton $"Error when generating output file {{err.Message.ReasonablyClamped}}")
@@ -163,6 +174,13 @@ module Runner =
       with
       | Left res ->
         do System.IO.File.WriteAllText(res.OutputPath, res.GeneratedCode)
+
+        do
+          System.IO.File.WriteAllText(
+            System.IO.Path.ChangeExtension(res.OutputPath, ".json"),
+            res.MergedJson.ToString()
+          )
+
         do Console.ForegroundColor <- ConsoleColor.Green
         do Console.WriteLine $$"""Code for {{inputPath}} is generated at {{outputPath}}.  """
         do Console.ResetColor()

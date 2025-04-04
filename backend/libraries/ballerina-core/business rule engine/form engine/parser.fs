@@ -1746,7 +1746,7 @@ module Parser =
     static member Parse
       generatedLanguageSpecificConfig
       (jsons: List<JsonValue>)
-      : State<Unit, CodeGenConfig, ParsedFormsContext, Errors> =
+      : State<TopLevel, CodeGenConfig, ParsedFormsContext, Errors> =
       state {
         // let! ctx = state.GetState()
         // do System.Console.WriteLine ctx.Types.ToFSharpString
@@ -1779,4 +1779,5 @@ module Parser =
         do! ParsedFormsContext.ParseApis generatedLanguageSpecificConfig.EnumValueFieldName topLevel
         do! ParsedFormsContext.ParseForms topLevel.Forms
         do! ParsedFormsContext.ParseLaunchers topLevel.Launchers
+        return topLevel
       }
