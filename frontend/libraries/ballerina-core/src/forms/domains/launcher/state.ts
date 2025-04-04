@@ -1,6 +1,7 @@
 import { List } from "immutable";
 import {
   BasicFun,
+  Delta,
   Guid,
   PredicateValue,
   simpleUpdater,
@@ -45,7 +46,7 @@ export type FormRef = {
       containerWrapper: any;
       onEntityChange: (
         updater: Updater<PredicateValue>,
-        path: List<string>,
+        delta: Delta,
       ) => void;
     }
 );

@@ -12,6 +12,11 @@ import {
   PredicateValue,
   replaceWith,
   Updater,
+  DeltaTransfer,
+  Delta,
+  DeltaCustom,
+  ValueOrErrors,
+  ParsedType,
 } from "ballerina-core";
 import { List, Set, Map } from "immutable";
 // import { PersonView } from "./domains/person/views/main-view";
@@ -46,7 +51,7 @@ export const FormsApp = (props: {}) => {
   const [configFormsParser, setConfigFormsParser] = useState(
     FormsParserState.Default(),
   );
-  const [formToShow, setFormToShow] = useState(1);
+  const [formToShow, setFormToShow] = useState(2);
   const numForms = 3;
   const [personCreateFormState, setPersonCreateFormState] = useState(
     FormRunnerState.Default(),
@@ -123,15 +128,59 @@ export const FormsApp = (props: {}) => {
   const [globalConfiguration, setGlobalConfiguration] = useState<
     Sum<PredicateValue, "not initialized">
   >(Sum.Default.right("not initialized"));
-  const [entityPath, setEntityPath] = useState<List<string>>(List());
+  const [entityPath, setEntityPath] = useState<any>(null);
 
-  const onEntityChange = (updater: Updater<any>, path: List<string>): void => {
+  const parseCustomDelta =
+    <T,>(
+      toRawObject: (
+        value: PredicateValue,
+        state: any,
+        type: ParsedType<any>,
+      ) => ValueOrErrors<any, string>,
+      fromDelta: (delta: Delta) => ValueOrErrors<DeltaTransfer<T>, string>,
+    ) =>
+    (deltaCustom: DeltaCustom): ValueOrErrors<[T, string], string> => {
+      if (deltaCustom.value.kind == "CategoryReplace") {
+        return toRawObject(
+          deltaCustom.value.replace,
+          deltaCustom.value.state,
+          deltaCustom.value.type,
+        ).Then((value) => {
+          return ValueOrErrors.Default.return([
+            {
+              kind: "CategoryReplace",
+              replace: value,
+            },
+            "[CategoryReplace]",
+          ] as [T, string]);
+        });
+      }
+      return ValueOrErrors.Default.throwOne(
+        `Unsupported delta kind: ${deltaCustom.value.kind}`,
+      );
+    };
+
+  const onEntityChange = (updater: Updater<any>, delta: Delta): void => {
     if (personPassthroughFormState.form.kind == "r") return;
     setTimeout(() => {}, 500);
     const newEntity = updater(entity.value);
     console.log("patching entity", newEntity);
     setEntity(replaceWith(Sum.Default.left(newEntity)));
-    setEntityPath(path);
+    if (
+      configFormsParser.formsConfig.sync.kind == "loaded" &&
+      configFormsParser.formsConfig.sync.value.kind == "l"
+    ) {
+      const toApiRawParser =
+        configFormsParser.formsConfig.sync.value.value.passthrough.get(
+          "person-transparent",
+        )!().toApiParser;
+      setEntityPath(
+        DeltaTransfer.Default.FromDelta(
+          toApiRawParser,
+          parseCustomDelta,
+        )(delta),
+      );
+    }
   };
 
   useEffect(() => {
@@ -397,7 +446,24 @@ export const FormsApp = (props: {}) => {
                 ) : renderForms && formToShow % numForms == 2 ? (
                   <>
                     <h3>Passthrough form</h3>
-                    <p>Path: {JSON.stringify(entityPath)}</p>
+
+                    {entityPath && entityPath.kind == "value" && (
+                      <pre
+                        style={{
+                          display: "inline-block",
+                          verticalAlign: "top",
+                          textAlign: "left",
+                        }}
+                      >
+                        {JSON.stringify(entityPath.value, null, 2)}
+                      </pre>
+                    )}
+                    {entityPath && entityPath.kind == "errors" && (
+                      <p>
+                        DeltaErrors:{" "}
+                        {JSON.stringify(entityPath.errors, null, 2)}
+                      </p>
+                    )}
                     <FormRunnerTemplate
                       context={{
                         ...configFormsParser,

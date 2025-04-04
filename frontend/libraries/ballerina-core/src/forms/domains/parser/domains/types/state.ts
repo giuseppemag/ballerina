@@ -174,12 +174,29 @@ export type ParsedApplicationType<T> = {
   value: GenericType;
   args: Array<ParsedType<T>>;
 };
+
+export type ParsedOptionType<T> = {
+  kind: "option";
+  value: ParsedType<T>;
+};
+
+export type ParsedRecordType<T> = {
+  kind: "record";
+  value: TypeName;
+  fields: RecordFields<T>;
+};
+
+export type ParsedPrimitiveType<T> = {
+  kind: "primitive";
+  value: PrimitiveTypeName<T> | keyof T;
+};
+
 export type ParsedType<T> =
   | ParsedUnionCase<T>
-  | { kind: "option"; value: ParsedType<T> }
-  | { kind: "record"; value: TypeName; fields: RecordFields<T> }
+  | ParsedOptionType<T>
+  | ParsedRecordType<T>
+  | ParsedPrimitiveType<T>
   | { kind: "lookup"; name: TypeName }
-  | { kind: "primitive"; value: PrimitiveTypeName<T> }
   | ParsedApplicationType<T>
   | { kind: "union"; args: Map<CaseName, ParsedUnionCase<T>> };
 
@@ -217,27 +234,25 @@ export const ParsedType = {
       fst.kind == "record" && snd.kind == "record"
         ? fst.value == snd.value
         : fst.kind == "lookup" && snd.kind == "lookup"
-          ? fst.name == snd.name
-          : fst.kind == "primitive" && snd.kind == "primitive"
-            ? fst.value == snd.value
-            : fst.kind == "application" && snd.kind == "application"
-              ? fst.value == snd.value &&
-                fst.args.length == snd.args.length &&
-                fst.args.every((v, i) =>
-                  ParsedType.Operations.Equals(v, snd.args[i]),
-                )
-              : fst.kind == "option" && snd.kind == "option"
-                ? fst.value.kind == "option" &&
-                  snd.value.kind == "option" &&
-                  ParsedType.Operations.Equals(fst.value.value, snd.value.value)
-                : fst.kind == "union" && snd.kind == "union"
-                  ? fst.args.size == snd.args.size &&
-                    fst.args.every((v, i) =>
-                      ParsedType.Operations.Equals(v, snd.args.get(i)!),
-                    )
-                  : fst.kind == "unionCase" && snd.kind == "unionCase"
-                    ? fst.name == snd.name
-                    : false,
+        ? fst.name == snd.name
+        : fst.kind == "primitive" && snd.kind == "primitive"
+        ? fst.value == snd.value
+        : fst.kind == "application" && snd.kind == "application"
+        ? fst.value == snd.value &&
+          fst.args.length == snd.args.length &&
+          fst.args.every((v, i) => ParsedType.Operations.Equals(v, snd.args[i]))
+        : fst.kind == "option" && snd.kind == "option"
+        ? fst.value.kind == "option" &&
+          snd.value.kind == "option" &&
+          ParsedType.Operations.Equals(fst.value.value, snd.value.value)
+        : fst.kind == "union" && snd.kind == "union"
+        ? fst.args.size == snd.args.size &&
+          fst.args.every((v, i) =>
+            ParsedType.Operations.Equals(v, snd.args.get(i)!),
+          )
+        : fst.kind == "unionCase" && snd.kind == "unionCase"
+        ? fst.name == snd.name
+        : false,
 
     ParseRawFieldType: <T>(
       fieldName: TypeName,

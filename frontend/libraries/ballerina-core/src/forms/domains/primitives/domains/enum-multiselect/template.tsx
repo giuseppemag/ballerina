@@ -3,7 +3,9 @@ import {
   AsyncState,
   BasicFun,
   CoTypedFactory,
+  Delta,
   Guid,
+  ParsedType,
   PredicateValue,
   replaceWith,
   Synchronize,
@@ -31,11 +33,20 @@ export const EnumMultiselectForm = <
   const Co = CoTypedFactory<
     Context &
       Value<ValueRecord> &
-      EnumFormState & { disabled: boolean; visible: boolean },
+      EnumFormState & {
+        disabled: boolean;
+        visible: boolean;
+        type: ParsedType<any>;
+      },
     EnumFormState
   >();
   return Template.Default<
-    Context & Value<ValueRecord> & { disabled: boolean; visible: boolean },
+    Context &
+      Value<ValueRecord> & {
+        disabled: boolean;
+        visible: boolean;
+        type: ParsedType<any>;
+      },
     EnumFormState,
     ForeignMutationsExpected & {
       onChange: OnChange<ValueRecord>;
@@ -75,9 +86,18 @@ export const EnumMultiselectForm = <
                 }
                 return [];
               });
+              const delta: Delta = {
+                kind: "SetReplace",
+                replace: PredicateValue.Default.record(Map(newSelection)),
+                state: {
+                  commonFormState: props.context.commonFormState,
+                  customFormState: props.context.customFormState,
+                },
+                type: props.context.type,
+              };
               props.foreignMutations.onChange(
                 replaceWith(PredicateValue.Default.record(Map(newSelection))),
-                List(),
+                delta,
               );
             },
           }}
@@ -86,7 +106,7 @@ export const EnumMultiselectForm = <
     );
   }).any([
     ValidateRunner<
-      Context & { disabled: boolean; visible: boolean },
+      Context & { disabled: boolean; visible: boolean; type: ParsedType<any> },
       EnumFormState,
       ForeignMutationsExpected,
       ValueRecord

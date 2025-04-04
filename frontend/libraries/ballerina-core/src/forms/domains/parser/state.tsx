@@ -218,6 +218,7 @@ export const ParseForms =
           )
           .mapContext<Unit>((_) => {
             return {
+              type: parsedForm.formDef.type,
               visible: (_ as any).visible ?? true,
               disabled: (_ as any).disabled ?? false,
               label: (_ as any).label,
@@ -325,6 +326,7 @@ export type ParsedLaunchers = {
       toApiParser: (
         value: PredicateValue,
         formState: any,
+        type: ParsedType<any>,
       ) => ValueOrErrors<any, string>;
       parseGlobalConfiguration: (
         raw: any,
@@ -675,6 +677,7 @@ export const parseFormsToLaunchers =
                   actualForm: form
                     .withView(containerFormView)
                     .mapContext((_: any) => ({
+                      type: _.type,
                       value: _.value,
                       entity: _.entity,
                       formFieldStates: parentContext.formFieldStates,
@@ -704,9 +707,9 @@ export const parseFormsToLaunchers =
               apiConverters,
               injectedPrimitives,
             )(value),
-          toApiParser: (value: PredicateValue, formState: any) =>
+          toApiParser: (value: PredicateValue, formState: any, type: ParsedType<any>) =>
             toAPIRawValue(
-              formType,
+              type,
               formsConfig.types,
               builtIns,
               apiConverters,

@@ -5,6 +5,8 @@ import {
   replaceWith,
   ValidateRunner,
   NumberFormState,
+  ParsedType,
+  Delta,
 } from "../../../../../../main";
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
@@ -20,7 +22,12 @@ export const NumberForm = <Context extends FormLabel, ForeignMutationsExpected>(
   validation?: BasicFun<number, Promise<FieldValidation>>,
 ) => {
   return Template.Default<
-    Context & Value<number> & { disabled: boolean; visible: boolean },
+    Context &
+      Value<number> & {
+        disabled: boolean;
+        visible: boolean;
+        type: ParsedType<any>;
+      },
     NumberFormState,
     ForeignMutationsExpected & { onChange: OnChange<number> },
     NumberView<Context, ForeignMutationsExpected>
@@ -30,14 +37,24 @@ export const NumberForm = <Context extends FormLabel, ForeignMutationsExpected>(
         {...props}
         foreignMutations={{
           ...props.foreignMutations,
-          setNewValue: (_) =>
-            props.foreignMutations.onChange(replaceWith(_), List()),
+          setNewValue: (_) => {
+            const delta: Delta = {
+              kind: "NumberReplace",
+              replace: _,
+              state: {
+                commonFormState: props.context.commonFormState,
+                customFormState: props.context.customFormState,
+              },
+              type: props.context.type,
+            };
+            props.foreignMutations.onChange(replaceWith(_), delta);
+          },
         }}
       />
     </>
   )).any([
     ValidateRunner<
-      Context & { disabled: boolean; visible: boolean },
+      Context & { disabled: boolean; visible: boolean; type: ParsedType<any> },
       NumberFormState,
       ForeignMutationsExpected,
       number

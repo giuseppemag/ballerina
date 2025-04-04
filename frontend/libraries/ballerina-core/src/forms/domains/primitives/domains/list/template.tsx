@@ -11,6 +11,9 @@ import {
   ValueTuple,
   PredicateValue,
   ListFieldPredicateEvaluation,
+  Delta,
+  ParsedType,
+  ParsedApplicationType,
 } from "../../../../../../main";
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
@@ -27,6 +30,7 @@ export const ListForm = <
   Context extends FormLabel & {
     visibilities: ListFieldPredicateEvaluation;
     disabledFields: ListFieldPredicateEvaluation;
+    type: ParsedType<any>;
   },
   ForeignMutationsExpected,
 >(
@@ -59,7 +63,11 @@ export const ListForm = <
           onChange: OnChange<PredicateValue>;
         } => ({
           ...props.foreignMutations,
-          onChange: (elementUpdater, path) => {
+          onChange: (elementUpdater, nestedDelta) => {            
+            const delta: Delta = {
+              kind: "ArrayValue",
+              value: [elementIndex, nestedDelta],
+            }
             props.foreignMutations.onChange(
               Updater((list) =>
                 list.values.has(elementIndex)
@@ -72,7 +80,7 @@ export const ListForm = <
                     )
                   : list,
               ),
-              List([elementIndex]).concat(path),
+              delta,
             );
             props.setState((_) => ({
               ..._,
@@ -150,6 +158,15 @@ export const ListForm = <
           foreignMutations={{
             ...props.foreignMutations,
             add: (_) => {
+              const delta: Delta = {
+                kind: "ArrayAdd",
+                value: Element.Default(),
+                state: {
+                  commonFormState: props.context.commonFormState,
+                  elementFormStates: props.context.elementFormStates,
+                },
+                type: (props.context.type as ParsedApplicationType<any>).args[0],
+              }
               props.foreignMutations.onChange(
                 Updater((list) =>
                   PredicateValue.Default.tuple(
@@ -158,20 +175,29 @@ export const ListForm = <
                     ),
                   ),
                 ),
-                List([{ kind: "add" }]),
+                delta,
               );
             },
             remove: (_) => {
+              const delta: Delta = {
+                kind: "ArrayRemoveAt",
+                index: _,
+              }
               props.foreignMutations.onChange(
                 Updater((list) =>
                   PredicateValue.Default.tuple(
                     ListRepo.Updaters.remove<PredicateValue>(_)(list.values),
                   ),
                 ),
-                List([_, { kind: "remove" }]),
+                delta,
               );
             },
             move: (index, to) => {
+              const delta: Delta = {
+                kind: "ArrayMoveFromTo",
+                from: index,
+                to: to,
+              }
               props.foreignMutations.onChange(
                 Updater((list) =>
                   PredicateValue.Default.tuple(
@@ -181,20 +207,30 @@ export const ListForm = <
                     )(list.values),
                   ),
                 ),
-                List([index, { kind: "move", to }]),
+                delta,
               );
             },
             duplicate: (_) => {
+              const delta: Delta = {
+                kind: "ArrayDuplicateAt",
+                index: _,
+              }
               props.foreignMutations.onChange(
                 Updater((list) =>
                   PredicateValue.Default.tuple(
                     ListRepo.Updaters.duplicate<PredicateValue>(_)(list.values),
                   ),
                 ),
-                List([_, { kind: "duplicate" }]),
+                delta,
               );
             },
             insert: (_) => {
+              const delta: Delta = {
+                kind: "ArrayAddAt",
+                value: [_, Element.Default()],
+                elementState: ElementFormState.Default(),
+                elementType: (props.context.type as ParsedApplicationType<any>).args[0],
+              }
               props.foreignMutations.onChange(
                 Updater((list) =>
                   PredicateValue.Default.tuple(
@@ -204,7 +240,7 @@ export const ListForm = <
                     )(list.values),
                   ),
                 ),
-                List([_, { kind: "insert" }]),
+                delta,
               );
             },
           }}

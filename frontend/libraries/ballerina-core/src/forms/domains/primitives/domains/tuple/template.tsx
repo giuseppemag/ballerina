@@ -15,6 +15,8 @@ import {
   FieldPredicateExpression,
   TuplePredicateExpression,
   TupleFieldPredicateEvaluation,
+  Delta,
+  ParsedType,
 } from "../../../../../../main";
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
@@ -35,6 +37,7 @@ export const TupleForm = <
     disabledFields: TupleFieldPredicateEvaluation;
     disabled: boolean;
     visible: boolean;
+    type: ParsedType<any>;
   },
   ForeignMutationsExpected,
 >(
@@ -70,7 +73,12 @@ export const TupleForm = <
           onChange: OnChange<PredicateValue>;
         } => ({
           ...props.foreignMutations,
-          onChange: (elementUpdater, path) => {
+          onChange: (elementUpdater, nestedDelta) => {
+            const delta: Delta = {
+              kind: "TupleCase",
+              item: [elementIndex, nestedDelta],
+              tupleType: props.context.type,
+            };
             props.foreignMutations.onChange(
               Updater((tuple) =>
                 tuple.values.has(elementIndex)
@@ -83,7 +91,7 @@ export const TupleForm = <
                     )
                   : tuple,
               ),
-              List([elementIndex]).concat(path),
+              delta,
             );
             props.setState((_) => ({
               ..._,

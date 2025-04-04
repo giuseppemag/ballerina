@@ -3,7 +3,9 @@ import {
   AsyncState,
   BasicFun,
   CoTypedFactory,
+  Delta,
   Guid,
+  ParsedType,
   PredicateValue,
   replaceWith,
   Synchronize,
@@ -29,11 +31,11 @@ export const EnumForm = <
   validation?: BasicFun<ValueOption, Promise<FieldValidation>>,
 ) => {
   const Co = CoTypedFactory<
-    Context & Value<ValueOption> & { disabled: boolean; visible: boolean },
+    Context & Value<ValueOption> & { disabled: boolean; visible: boolean; type: ParsedType<any> },
     EnumFormState
   >();
   return Template.Default<
-    Context & Value<ValueOption> & { disabled: boolean; visible: boolean },
+    Context & Value<ValueOption> & { disabled: boolean; visible: boolean; type: ParsedType<any> },
     EnumFormState,
     ForeignMutationsExpected & {
       onChange: OnChange<ValueOption>;
@@ -65,7 +67,16 @@ export const EnumForm = <
                 return;
               const newSelection =
                 props.context.customFormState.options.sync.value.get(_);
-              if (newSelection == undefined)
+              if (newSelection == undefined){
+                const delta: Delta = {
+                  kind: "OptionReplace",
+                  replace: PredicateValue.Default.option(false, PredicateValue.Default.unit()),
+                  state: {
+                    commonFormState: props.context.commonFormState,
+                    customFormState: props.context.customFormState,
+                  },
+                  type: props.context.type,
+                };
                 return props.foreignMutations.onChange(
                   replaceWith(
                     PredicateValue.Default.option(
@@ -73,15 +84,25 @@ export const EnumForm = <
                       PredicateValue.Default.unit(),
                     ),
                   ),
-                  List(),
+                  delta,
                 );
-              else
+              } else {
+                const delta: Delta = {
+                  kind: "OptionReplace",
+                  replace: PredicateValue.Default.option(true, newSelection),
+                  state: {
+                    commonFormState: props.context.commonFormState,
+                    customFormState: props.context.customFormState,
+                  },
+                  type: props.context.type,
+                };
                 return props.foreignMutations.onChange(
                   replaceWith(
                     PredicateValue.Default.option(true, newSelection),
                   ),
-                  List(),
+                  delta,
                 );
+              }
             },
           }}
         />
@@ -89,7 +110,7 @@ export const EnumForm = <
     );
   }).any([
     ValidateRunner<
-      Context & { disabled: boolean; visible: boolean },
+      Context & { disabled: boolean; visible: boolean; type: ParsedType<any> },
       EnumFormState,
       ForeignMutationsExpected,
       ValueOption

@@ -28,6 +28,7 @@ export type PassthroughFormContext<T, FS> = {
   toApiParser: (
     entity: PredicateValue,
     formstate: PassthroughFormState<T, FS>,
+    type: ParsedType<any>,
   ) => ValueOrErrors<any, string>;
   fromApiParser: (raw: any) => ValueOrErrors<PredicateValue, string>;
   parseGlobalConfiguration: (raw: any) => ValueOrErrors<PredicateValue, string>;

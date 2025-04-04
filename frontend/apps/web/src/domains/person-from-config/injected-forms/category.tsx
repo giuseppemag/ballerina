@@ -14,8 +14,9 @@ import {
   Unit,
   simpleUpdater,
   simpleUpdaterWithChildren,
+  DeltaCustom,
+  ParsedType,
 } from "ballerina-core";
-import { List } from "immutable";
 
 export type Category = {
   kind: "custom";
@@ -54,7 +55,7 @@ export type CategoryView<
     Value<Category> & {
       commonFormState: CommonFormState;
       customFormState: CategoryState["customFormState"];
-    } & { disabled: boolean },
+    } & { disabled: boolean; type: ParsedType<any> },
   {
     commonFormState: CommonFormState;
     customFormState: CategoryState["customFormState"];
@@ -72,7 +73,7 @@ export const CategoryForm = <
   validation?: BasicFun<Category, Promise<FieldValidation>>,
 ) => {
   return Template.Default<
-    Context & Value<Category> & { disabled: boolean },
+    Context & Value<Category> & { disabled: boolean; type: ParsedType<any> },
     {
       commonFormState: CommonFormState;
       customFormState: CategoryState["customFormState"];
@@ -85,14 +86,27 @@ export const CategoryForm = <
         {...props}
         foreignMutations={{
           ...props.foreignMutations,
-          setNewValue: (_) =>
-            props.foreignMutations.onChange(replaceWith(_), List()),
+          setNewValue: (_) => {
+            const delta: DeltaCustom = {
+              kind: "CustomDelta",
+              value: {
+                kind: "CategoryReplace",
+                replace: _,
+                state: {
+                  commonFormState: props.context.commonFormState,
+                  customFormState: props.context.customFormState,
+                },
+                type: props.context.type,
+              },
+            };
+            props.foreignMutations.onChange(replaceWith(_), delta);
+          },
         }}
       />
     </>
   )).any([
     ValidateRunner<
-      Context & { disabled: boolean },
+      Context & { disabled: boolean; type: ParsedType<any> },
       {
         commonFormState: CommonFormState;
         customFormState: CategoryState["customFormState"];
@@ -122,6 +136,10 @@ export const categoryForm = (
     .withView(((fieldViews as any)[viewType] as any)[viewName]() as any)
     .mapContext<any & CommonFormState & Value<Category>>((_) => ({
       ..._,
+      type: {
+        kind: "primitive",
+        value: "injectedCategory",
+      },
       label,
       tooltip,
       details,

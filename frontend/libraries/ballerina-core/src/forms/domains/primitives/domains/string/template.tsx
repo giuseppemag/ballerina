@@ -1,5 +1,11 @@
 import { List } from "immutable";
-import { BasicFun, replaceWith, ValidateRunner } from "../../../../../../main";
+import {
+  BasicFun,
+  Delta,
+  ParsedType,
+  replaceWith,
+  ValidateRunner,
+} from "../../../../../../main";
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
@@ -14,7 +20,12 @@ export const StringForm = <Context extends FormLabel, ForeignMutationsExpected>(
   validation?: BasicFun<string, Promise<FieldValidation>>,
 ) => {
   return Template.Default<
-    Context & Value<string> & { disabled: boolean; visible: boolean },
+    Context &
+      Value<string> & {
+        disabled: boolean;
+        visible: boolean;
+        type: ParsedType<any>;
+      },
     StringFormState,
     ForeignMutationsExpected & { onChange: OnChange<string> },
     StringFormView<Context, ForeignMutationsExpected>
@@ -24,14 +35,28 @@ export const StringForm = <Context extends FormLabel, ForeignMutationsExpected>(
         {...props}
         foreignMutations={{
           ...props.foreignMutations,
-          setNewValue: (_) =>
-            props.foreignMutations.onChange(replaceWith(_), List()),
+          setNewValue: (_) => {
+            const delta: Delta = {
+              kind:
+                props.context.type.kind == "primitive" &&
+                props.context.type.value == "string"
+                  ? "StringReplace"
+                  : "GuidReplace",
+              replace: _,
+              state: {
+                commonFormState: props.context.commonFormState,
+                customFormState: props.context.customFormState,
+              },
+              type: props.context.type,
+            };
+            props.foreignMutations.onChange(replaceWith(_), delta);
+          },
         }}
       />
     </>
   )).any([
     ValidateRunner<
-      Context & { disabled: boolean; visible: boolean },
+      Context & { disabled: boolean; visible: boolean; type: ParsedType<any> },
       StringFormState,
       ForeignMutationsExpected,
       string
