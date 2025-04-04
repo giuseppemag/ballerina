@@ -22,8 +22,9 @@ const (
   ArrayRemoveAt DeltaArrayEffectsEnum = "ArrayRemoveAt" 
   ArrayMoveFromTo DeltaArrayEffectsEnum = "ArrayMoveFromTo"
   ArrayDuplicateAt DeltaArrayEffectsEnum = "ArrayDuplicateAt"
+  ArrayAdd DeltaArrayEffectsEnum = "ArrayAdd"
 )
-var AllDeltaArrayEffectsEnumCases = [...]DeltaArrayEffectsEnum{ ArrayReplace, ArrayValue, ArrayAddAt, ArrayRemoveAt, ArrayMoveFromTo, ArrayDuplicateAt }
+var AllDeltaArrayEffectsEnumCases = [...]DeltaArrayEffectsEnum{ ArrayReplace, ArrayValue, ArrayAddAt, ArrayRemoveAt, ArrayMoveFromTo, ArrayDuplicateAt, ArrayAdd }
 
 func DefaultDeltaArrayEffectsEnum() DeltaArrayEffectsEnum { return AllDeltaArrayEffectsEnumCases[0]; }
 
@@ -36,6 +37,7 @@ type DeltaArray[a any, deltaA any] struct{
 	RemoveAt int
 	MoveFromTo Tuple2[int,int]
 	DuplicateAt int
+	Add a
 }
 func NewDeltaArrayReplace[a any, deltaA any](value Array[a]) DeltaArray[a, deltaA] {
   return DeltaArray[a, deltaA] {
@@ -73,6 +75,12 @@ func NewDeltaArrayDuplicateAt[a any, deltaA any](index int) DeltaArray[a, deltaA
     DuplicateAt:index,
  }
 }
+func NewDeltaArrayAdd[a any, deltaA any](newElement a) DeltaArray[a, deltaA] {
+  return DeltaArray[a, deltaA] {
+    Discriminator:ArrayAdd,
+    Add: newElement,
+ }
+}
 
 func MatchDeltaArray[a any, deltaA any, Result any](
   onReplace func(Array[a]) (Result, error),
@@ -81,6 +89,7 @@ func MatchDeltaArray[a any, deltaA any, Result any](
   onRemoveAt func(int) (Result, error),
   onMoveFromTo func(Tuple2[int, int]) (Result, error),
   onDuplicateAt func(int) (Result, error),
+  onAdd func(a) (Result, error),
 ) func (DeltaArray[a, deltaA]) (Result, error) {
   return func (delta DeltaArray[a, deltaA]) (Result,error) {
     var result Result
@@ -97,6 +106,8 @@ func MatchDeltaArray[a any, deltaA any, Result any](
         return onMoveFromTo(delta.MoveFromTo)
       case "ArrayDuplicateAt":
         return onDuplicateAt(delta.DuplicateAt)
+      case "ArrayAdd":
+        return onAdd(delta.Add)
     }
     return result, NewInvalidDiscriminatorError(string(delta.Discriminator), "DeltaArray")
   }

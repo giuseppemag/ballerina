@@ -5,6 +5,8 @@ import {
   replaceWith,
   ValidateRunner,
   BooleanFormState,
+  ParsedType,
+  Delta,
 } from "../../../../../../main";
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
@@ -22,7 +24,12 @@ export const BooleanForm = <
   validation?: BasicFun<boolean, Promise<FieldValidation>>,
 ) => {
   return Template.Default<
-    Context & Value<boolean> & { disabled: boolean; visible: boolean },
+    Context &
+      Value<boolean> & {
+        disabled: boolean;
+        visible: boolean;
+        type: ParsedType<any>;
+      },
     BooleanFormState,
     ForeignMutationsExpected & { onChange: OnChange<boolean> },
     BooleanView<Context, ForeignMutationsExpected>
@@ -32,14 +39,29 @@ export const BooleanForm = <
         {...props}
         foreignMutations={{
           ...props.foreignMutations,
-          setNewValue: (_) =>
-            props.foreignMutations.onChange(replaceWith(_), List()),
+          setNewValue: (_) => {
+            const delta: Delta = {
+              kind: "BoolReplace",
+              replace: _,
+              state: {
+                commonFormState: props.context.commonFormState,
+                customFormState: props.context.customFormState,
+              },
+              type: props.context.type,
+            };
+            props.foreignMutations.onChange(replaceWith(_), delta);
+          },
         }}
       />
     </>
   )).any([
     ValidateRunner<
-      Context & { disabled: boolean; visible: boolean },
+      Context &
+        Value<boolean> & {
+          disabled: boolean;
+          visible: boolean;
+          type: ParsedType<any>;
+        },
       BooleanFormState,
       ForeignMutationsExpected,
       boolean

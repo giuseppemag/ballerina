@@ -25,6 +25,9 @@ import {
   FieldName,
   PredicateValue,
   ValueRecord,
+  Delta,
+  ParsedType,
+  ParsedRecordType,
 } from "../../../../main";
 import { Template } from "../../../template/state";
 import { Value } from "../../../value/state";
@@ -45,7 +48,7 @@ export const Form = <
       Context & {
         customFormState: State["formFieldStates"][f]["customFormState"];
         commonFormState: State["formFieldStates"][f]["commonFormState"];
-      } & Value<f> & { disabled: boolean; visible: boolean },
+      } & Value<f> & { disabled: boolean; visible: boolean; type: ParsedType<any> },
       {
         customFormState: State["formFieldStates"][f]["customFormState"];
         commonFormState: State["formFieldStates"][f]["commonFormState"];
@@ -88,6 +91,7 @@ export const Form = <
               > & {
                 disabled: boolean;
                 visible: boolean;
+                type: ParsedType<any>;
               }
             >((_) => {
               // disabled flag is passed in from the wrapping container when mapping over fields
@@ -133,7 +137,7 @@ export const Form = <
               >
             >((props) => ({
               ...props.foreignMutations,
-              onChange: (_: BasicUpdater<PredicateValue>, path) => {
+              onChange: (_: BasicUpdater<PredicateValue>, nestedDelta) => {
                 const stateUpdater: BasicUpdater<
                   EntityFormState<
                     Fields,
@@ -188,6 +192,12 @@ export const Form = <
                   props.setState(stateUpdater);
                 }, 0);
 
+                const delta: Delta = {
+                  kind: "RecordField",
+                  field: [field as string, nestedDelta],
+                  recordType: props.context.type,
+                };
+
                 props.foreignMutations.onChange(
                   (current: PredicateValue): PredicateValue =>
                     PredicateValue.Operations.IsRecord(current)
@@ -199,7 +209,7 @@ export const Form = <
                           ),
                         )
                       : current,
-                  path.unshift(field as string),
+                  delta,
                 );
               },
             }));

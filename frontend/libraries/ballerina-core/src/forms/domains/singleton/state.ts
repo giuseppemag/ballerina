@@ -18,6 +18,8 @@ import {
   FieldName,
   PredicateValue,
   ValueRecord,
+  Delta,
+  ParsedType,
 } from "../../../../main";
 import { Template, View } from "../../../template/state";
 import { Value } from "../../../value/state";
@@ -95,10 +97,11 @@ export type EntityFormContext<
     visibilities: FormFieldPredicateEvaluation | undefined;
     disabledFields: FormFieldPredicateEvaluation | undefined;
     label?: string;
+    type: ParsedType<any>;
   } & Value<ValueRecord> & { rootValue: ValueRecord };
 export type OnChange<Entity> = (
   updater: BasicUpdater<Entity>,
-  path: List<string | number | EntityAction>,
+  delta: Delta,
 ) => void;
 export type EntityFormForeignMutationsExpected<
   Fields extends keyof FieldStates,

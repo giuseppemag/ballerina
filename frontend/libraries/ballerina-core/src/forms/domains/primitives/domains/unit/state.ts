@@ -1,5 +1,5 @@
 import { FormLabel, simpleUpdater, Unit, View } from "../../../../../../main";
-import { CommonFormState } from "../../../singleton/state";
+import { CommonFormState, OnChange } from "../../../singleton/state";
 
 export type UnitFormState = {
   commonFormState: CommonFormState;
@@ -21,5 +21,5 @@ export const UnitFormState = {
 export type UnitFormView<Context extends FormLabel> = View<
   Context & UnitFormState,
   UnitFormState,
-  Unit
+  { onChange: OnChange<Unit> }
 >;

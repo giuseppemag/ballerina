@@ -759,8 +759,7 @@
           "renderer": "defaultList",
           "elementRenderer": {
             "label": "email",
-            "renderer": "defaultString",
-            "disabled": true
+            "renderer": "defaultString"
           }
         },
         "addressesAndAddressesWithLabel": {

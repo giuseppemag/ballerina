@@ -1,6 +1,8 @@
 import {
   BasicFun,
   BasicUpdater,
+  Delta,
+  ParsedType,
   PredicateValue,
   Sum,
   SumFieldPredicateEvaluation,
@@ -26,6 +28,7 @@ export const SumForm = <
     disabledFields: SumFieldPredicateEvaluation;
     disabled: boolean;
     visible: boolean;
+    type: ParsedType<any>;
   },
   ForeignMutationsExpected,
 >(
@@ -63,7 +66,11 @@ export const SumForm = <
                 onChange: OnChange<PredicateValue>;
               } => ({
                 ...props.foreignMutations,
-                onChange: (elementUpdater, path) => {
+                onChange: (elementUpdater, nestedDelta) => {
+                  const delta: Delta = {
+                    kind: "SumLeft",
+                    value: nestedDelta,
+                  };
                   props.foreignMutations.onChange(
                     (_) => ({
                       ..._,
@@ -71,7 +78,7 @@ export const SumForm = <
                         elementUpdater,
                       )(_.value),
                     }),
-                    path,
+                    delta,
                   );
                   props.setState((_) => ({ ..._, modifiedByUser: true }));
                 },
@@ -137,7 +144,11 @@ export const SumForm = <
                 onChange: OnChange<PredicateValue>;
               } => ({
                 ...props.foreignMutations,
-                onChange: (elementUpdater, path) => {
+                onChange: (elementUpdater, nestedDelta) => {
+                  const delta: Delta = {
+                    kind: "SumRight",
+                    value: nestedDelta,
+                  };
                   props.foreignMutations.onChange(
                     (_) => ({
                       ..._,
@@ -145,7 +156,7 @@ export const SumForm = <
                         elementUpdater,
                       )(_.value),
                     }),
-                    path,
+                    delta,
                   );
                   props.setState((_) => ({ ..._, modifiedByUser: true }));
                 },

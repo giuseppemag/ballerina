@@ -1,8 +1,10 @@
 import { List } from "immutable";
 import {
   BasicFun,
+  Delta,
   id,
   Maybe,
+  ParsedType,
   PredicateValue,
   replaceWith,
   ValidateRunner,
@@ -21,7 +23,12 @@ export const DateForm = <Context extends FormLabel, ForeignMutationsExpected>(
   validation?: BasicFun<Date, Promise<FieldValidation>>,
 ) => {
   return Template.Default<
-    Context & Value<Date> & { disabled: boolean; visible: boolean },
+    Context &
+      Value<Date> & {
+        disabled: boolean;
+        visible: boolean;
+        type: ParsedType<any>;
+      },
     DateFormState,
     ForeignMutationsExpected & { onChange: OnChange<Date> },
     DateView<Context, ForeignMutationsExpected>
@@ -38,21 +45,36 @@ export const DateForm = <Context extends FormLabel, ForeignMutationsExpected>(
               ),
             );
             const newValue = _ == undefined ? _ : new Date(_);
-            setTimeout(() => {
-              props.foreignMutations.onChange(
-                newValue == undefined || isNaN(newValue.getTime())
-                  ? id
-                  : replaceWith(newValue),
-                List(),
-              );
-            }, 0);
+
+            if (!(newValue == undefined || isNaN(newValue.getTime()))) {
+              const delta: Delta = {
+                kind: "TimeReplace",
+                replace: newValue.toISOString(),
+                state: {
+                  commonFormState: props.context.commonFormState,
+                  customFormState: props.context.customFormState,
+                },
+                type: props.context.type,
+              };
+              setTimeout(() => {
+                props.foreignMutations.onChange(
+                  replaceWith(newValue),
+                  delta,
+                );
+              }, 0);
+            }
           },
         }}
       />
     </>
   )).any([
     ValidateRunner<
-      Context & { disabled: boolean; visible: boolean },
+      Context &
+        Value<Date> & {
+          disabled: boolean;
+          visible: boolean;
+          type: ParsedType<any>;
+        },
       DateFormState,
       ForeignMutationsExpected,
       Date

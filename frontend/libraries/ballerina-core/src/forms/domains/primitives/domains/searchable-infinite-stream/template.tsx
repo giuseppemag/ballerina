@@ -9,6 +9,8 @@ import {
   ValidateRunner,
   ValueOption,
   PredicateValue,
+  Delta,
+  ParsedType,
 } from "../../../../../../main";
 import { CoTypedFactory } from "../../../../../coroutines/builder";
 import { Debounced } from "../../../../../debounced/state";
@@ -34,7 +36,12 @@ export const SearchableInfiniteStreamForm = <
   validation?: BasicFun<ValueOption, Promise<FieldValidation>>,
 ) => {
   const Co = CoTypedFactory<
-    Context & Value<ValueOption> & { disabled: boolean; visible: boolean },
+    Context &
+      Value<ValueOption> & {
+        disabled: boolean;
+        visible: boolean;
+        type: ParsedType<any>;
+      },
     SearchableInfiniteStreamState
   >();
   const DebouncerCo = CoTypedFactory<
@@ -92,7 +99,12 @@ export const SearchableInfiniteStreamForm = <
   );
 
   return Template.Default<
-    Context & Value<ValueOption> & { disabled: boolean; visible: boolean },
+    Context &
+      Value<ValueOption> & {
+        disabled: boolean;
+        visible: boolean;
+        type: ParsedType<any>;
+      },
     SearchableInfiniteStreamState,
     ForeignMutationsExpected & {
       onChange: OnChange<ValueOption>;
@@ -131,6 +143,18 @@ export const SearchableInfiniteStreamForm = <
                 ),
             ),
           clearSelection: () => {
+            const delta: Delta = {
+              kind: "OptionReplace",
+              replace: PredicateValue.Default.option(
+                false,
+                PredicateValue.Default.unit(),
+              ),
+              state: {
+                commonFormState: props.context.commonFormState,
+                customFormState: props.context.customFormState,
+              },
+              type: props.context.type,
+            };
             props.foreignMutations.onChange(
               replaceWith(
                 PredicateValue.Default.option(
@@ -138,7 +162,7 @@ export const SearchableInfiniteStreamForm = <
                   PredicateValue.Default.unit(),
                 ),
               ),
-              List(),
+              delta,
             );
           },
           setSearchText: (_) =>
@@ -159,8 +183,18 @@ export const SearchableInfiniteStreamForm = <
                 replaceWith(""),
               ),
             ),
-          select: (_) =>
-            props.foreignMutations.onChange(replaceWith(_), List()),
+          select: (_) => {
+            const delta: Delta = {
+              kind: "OptionReplace",
+              replace: _,
+              state: {
+                commonFormState: props.context.commonFormState,
+                customFormState: props.context.customFormState,
+              },
+              type: props.context.type,
+            };
+            props.foreignMutations.onChange(replaceWith(_), delta);
+          },
         }}
       />
     </>
@@ -180,7 +214,7 @@ export const SearchableInfiniteStreamForm = <
         ),
     })),
     ValidateRunner<
-      Context & { disabled: boolean; visible: boolean },
+      Context & { disabled: boolean; visible: boolean; type: ParsedType<any> },
       SearchableInfiniteStreamState,
       ForeignMutationsExpected,
       ValueOption

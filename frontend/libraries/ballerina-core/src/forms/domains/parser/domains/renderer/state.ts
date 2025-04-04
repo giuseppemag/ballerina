@@ -413,7 +413,7 @@ export const ParsedRenderer = {
           types.get(fieldType.name)!,
           field,
           types,
-        );
+        )
       }
       console.error(
         `Invalid field type ${JSON.stringify(
@@ -527,6 +527,7 @@ export const ParsedRenderer = {
                         )
                         .mapContext<any>((_) => ({
                           ..._,
+                          type: parsedRenderer.type,
                           label: parsedRenderer.label,
                           tooltip: parsedRenderer.tooltip,
                           details: parsedRenderer.details,
@@ -558,6 +559,7 @@ export const ParsedRenderer = {
                         .form.withView(parsingContext.nestedContainerFormView)
                         .mapContext<any>((_) => ({
                           ..._,
+                          type: parsedRenderer.type,
                           label: parsedRenderer.label,
                           tooltip: parsedRenderer.tooltip,
                           details: parsedRenderer.details,
@@ -616,6 +618,7 @@ export const ParsedRenderer = {
                           .mapContext<any>((_) => {
                             return {
                               ..._,
+                              type: parsedRenderer.type,
                               label: parsedRenderer.label,
                               tooltip: parsedRenderer.tooltip,
                               details: parsedRenderer.details,
@@ -685,6 +688,7 @@ export const ParsedRenderer = {
                             )
                             .mapContext<any>((_) => ({
                               ..._,
+                              type: parsedRenderer.type,
                               label: parsedRenderer.label,
                               tooltip: parsedRenderer.tooltip,
                               details: parsedRenderer.details,
@@ -743,6 +747,7 @@ export const ParsedRenderer = {
                           )
                           .mapContext<any>((_) => ({
                             ..._,
+                            type: parsedRenderer.type,
                             label: parsedRenderer.label,
                             tooltip: parsedRenderer.tooltip,
                             details: parsedRenderer.details,
@@ -853,6 +858,7 @@ export const ParsedRenderer = {
                         )
                         .mapContext<any>((_) => ({
                           ..._,
+                          type: parsedRenderer.type,
                           label: parsedRenderer.label,
                           tooltip: parsedRenderer.tooltip,
                           details: parsedRenderer.details,
@@ -911,6 +917,7 @@ export const ParsedRenderer = {
           .withView(formViews[viewKind][viewName]())
           .mapContext<any & CommonFormState & Value<Unit>>((_) => ({
             ..._,
+            type: rendererConfig.type,
             label,
             tooltip,
             details,
@@ -921,6 +928,7 @@ export const ParsedRenderer = {
           .withView(formViews[viewKind][viewName]())
           .mapContext<any & CommonFormState & Value<boolean>>((_) => ({
             ..._,
+            type: rendererConfig.type,
             label,
             tooltip,
             details,
@@ -930,6 +938,7 @@ export const ParsedRenderer = {
           .withView(formViews[viewKind][viewName]())
           .mapContext<any & DateFormState & Value<Maybe<Date>>>((_) => ({
             ..._,
+            type: rendererConfig.type,
             label,
             tooltip,
             details,
@@ -939,6 +948,7 @@ export const ParsedRenderer = {
           .withView(formViews[viewKind][viewName]())
           .mapContext<any & CommonFormState & Value<number>>((_) => ({
             ..._,
+            type: rendererConfig.type,
             label,
             tooltip,
             details,
@@ -948,6 +958,7 @@ export const ParsedRenderer = {
           .withView(formViews[viewKind][viewName]())
           .mapContext<any & CommonFormState & Value<string>>((_) => ({
             ..._,
+            type: rendererConfig.type,
             label,
             tooltip,
             details,
@@ -958,6 +969,7 @@ export const ParsedRenderer = {
           .mapContext<any & EnumFormState & ValueOption>((_) => {
             return {
               ..._,
+              type: rendererConfig.type,
               label,
               tooltip,
               details,
@@ -980,6 +992,7 @@ export const ParsedRenderer = {
           .mapContext<EnumFormState & Value<OrderedMap<Guid, ValueRecord>>>(
             (_) => ({
               ..._,
+              type: rendererConfig.type,
               label,
               details,
               tooltip,
@@ -1003,7 +1016,13 @@ export const ParsedRenderer = {
             any &
               SearchableInfiniteStreamState &
               Value<CollectionSelection<CollectionReference>>
-          >((_) => ({ ..._, label, tooltip, details }));
+          >((_) => ({
+            ..._,
+            type: rendererConfig.type,
+            label,
+            tooltip,
+            details,
+          }));
       if (viewKind == "streamMultiSelection")
         return InfiniteMultiselectDropdownForm<any & FormLabel, Unit>()
           .withView(formViews[viewKind][viewName]())
@@ -1015,6 +1034,7 @@ export const ParsedRenderer = {
               Value<OrderedMap<Guid, CollectionReference>>
           >((_) => ({
             ..._,
+            type: rendererConfig.type,
             label,
             tooltip,
             details,
@@ -1023,13 +1043,25 @@ export const ParsedRenderer = {
         return Base64FileForm<any & FormLabel, Unit>()
           .withView(formViews[viewKind][viewName]())
           .mapContext<any & FormLabel & CommonFormState & Value<string>>(
-            (_) => ({ ..._, label, tooltip, details }),
+            (_) => ({
+              ..._,
+              type: rendererConfig.type,
+              label,
+              tooltip,
+              details,
+            }),
           );
       if (viewKind == "secret")
         return SecretForm<any & FormLabel, Unit>()
           .withView(formViews[viewKind][viewName]())
           .mapContext<any & FormLabel & CommonFormState & Value<string>>(
-            (_) => ({ ..._, label, tooltip, details }),
+            (_) => ({
+              ..._,
+              type: rendererConfig.type,
+              label,
+              tooltip,
+              details,
+            }),
           );
       // check injectedViews
       if (injectedPrimitives?.injectedPrimitives.has(viewKind as keyof T)) {
@@ -1044,6 +1076,7 @@ export const ParsedRenderer = {
           label,
           tooltip,
           details,
+          rendererConfig.type,
         );
       }
       return `error: the view for ${viewKind as string}::${

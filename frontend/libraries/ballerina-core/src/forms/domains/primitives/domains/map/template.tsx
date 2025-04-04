@@ -12,6 +12,9 @@ import {
   PredicateValue,
   ValueTuple,
   MapFieldPredicateEvaluation,
+  Delta,
+  ParsedType,
+  ParsedApplicationType,
 } from "../../../../../../main";
 import { Template } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
@@ -30,6 +33,7 @@ export const MapForm = <
   Context extends FormLabel & {
     visibilities: MapFieldPredicateEvaluation;
     disabledFields: MapFieldPredicateEvaluation;
+    type: ParsedType<any>;
   },
   ForeignMutationsExpected,
 >(
@@ -68,7 +72,11 @@ export const MapForm = <
           onChange: OnChange<PredicateValue>;
         } => ({
           ...props.foreignMutations,
-          onChange: (elementUpdater, path) => {
+          onChange: (elementUpdater, nestedDelta) => {
+            const delta: Delta = {
+              kind: "MapKey",
+              value: [elementIndex, nestedDelta],
+            };
             props.foreignMutations.onChange(
               Updater((elements: ValueTuple) =>
                 PredicateValue.Default.tuple(
@@ -79,17 +87,17 @@ export const MapForm = <
                       _ == undefined
                         ? _
                         : !PredicateValue.Operations.IsTuple(_)
-                          ? _
-                          : PredicateValue.Default.tuple(
-                              List([
-                                elementUpdater(_.values.get(0)!),
-                                _.values.get(1)!,
-                              ]),
-                            ),
+                        ? _
+                        : PredicateValue.Default.tuple(
+                            List([
+                              elementUpdater(_.values.get(0)!),
+                              _.values.get(1)!,
+                            ]),
+                          ),
                   ),
                 ),
               ),
-              List([elementIndex.toString(), "key"]).concat(path),
+              delta,
             );
             props.setState((_) => ({
               ..._,
@@ -111,14 +119,22 @@ export const MapForm = <
         ): (Context & Value<ValueTuple> & KeyFormState) | undefined => {
           const element = _.value.values.get(elementIndex) as ValueTuple;
           if (element == undefined) return undefined;
-          if (_.visibilities == undefined || _.visibilities.kind != "map")
+          if (
+            _.visibilities == undefined ||
+            _.visibilities.elementValues[elementIndex] == undefined ||
+            _.visibilities.kind != "map"
+          )
             return undefined;
-          if (_.disabledFields == undefined || _.disabledFields.kind != "map")
+          if (
+            _.disabledFields == undefined ||
+            _.disabledFields.elementValues[elementIndex] == undefined ||
+            _.disabledFields.kind != "map"
+          )
             return undefined;
           const disabled =
-            _.disabledFields.elementValues[elementIndex].key.value ?? true;
+            _.disabledFields.elementValues[elementIndex]?.key.value ?? true;
           const visible =
-            _.visibilities.elementValues[elementIndex].key.value ?? false;
+            _.visibilities.elementValues[elementIndex]?.key.value ?? false;
           const elementFormState = _.elementFormStates.get(elementIndex) || {
             KeyFormState: KeyFormState.Default(),
             ValueFormState: ValueFormState.Default(),
@@ -175,7 +191,11 @@ export const MapForm = <
           onChange: OnChange<PredicateValue>;
         } => ({
           ...props.foreignMutations,
-          onChange: (elementUpdater, path) => {
+          onChange: (elementUpdater, nestedDelta) => {
+            const delta: Delta = {
+              kind: "MapValue",
+              value: [elementIndex, nestedDelta],
+            };
             props.foreignMutations.onChange(
               Updater((elements: ValueTuple) =>
                 PredicateValue.Default.tuple(
@@ -186,17 +206,17 @@ export const MapForm = <
                       _ == undefined
                         ? _
                         : !PredicateValue.Operations.IsTuple(_)
-                          ? _
-                          : PredicateValue.Default.tuple(
-                              List([
-                                _.values.get(0)!,
-                                elementUpdater(_.values.get(1)!),
-                              ]),
-                            ),
+                        ? _
+                        : PredicateValue.Default.tuple(
+                            List([
+                              _.values.get(0)!,
+                              elementUpdater(_.values.get(1)!),
+                            ]),
+                          ),
                   ),
                 ),
               ),
-              List([elementIndex.toString(), "value"]).concat(path),
+              delta,
             );
             props.setState((_) => ({
               ..._,
@@ -218,9 +238,17 @@ export const MapForm = <
         ): (Context & Value<ValueTuple> & ValueFormState) | undefined => {
           const element = _.value.values.get(elementIndex) as ValueTuple;
           if (element == undefined) return undefined;
-          if (_.visibilities == undefined || _.visibilities.kind != "map")
+          if (
+            _.visibilities == undefined ||
+            _.visibilities.elementValues[elementIndex] == undefined ||
+            _.visibilities.kind != "map"
+          )
             return undefined;
-          if (_.disabledFields == undefined || _.disabledFields.kind != "map")
+          if (
+            _.disabledFields == undefined ||
+            _.disabledFields.elementValues[elementIndex] == undefined ||
+            _.disabledFields.kind != "map"
+          )
             return undefined;
           const disabled =
             _.disabledFields.elementValues[elementIndex].value.value ?? true;
@@ -288,6 +316,16 @@ export const MapForm = <
           foreignMutations={{
             ...props.foreignMutations,
             add: (_) => {
+              const delta: Delta = {
+                kind: "MapAdd",
+                keyValue: [Key.Default(), Value.Default()],
+                keyState: KeyFormState.Default(),
+                keyType: (props.context.type as ParsedApplicationType<any>)
+                  .args[0],
+                valueState: ValueFormState.Default(),
+                valueType: (props.context.type as ParsedApplicationType<any>)
+                  .args[1],
+              };
               props.foreignMutations.onChange(
                 Updater((list) =>
                   PredicateValue.Default.tuple(
@@ -298,10 +336,14 @@ export const MapForm = <
                     )(list.values as List<ValueTuple>),
                   ),
                 ),
-                List([{ kind: "add" }]),
+                delta,
               );
             },
             remove: (_) => {
+              const delta: Delta = {
+                kind: "MapRemove",
+                index: _,
+              };
               props.foreignMutations.onChange(
                 Updater((list) =>
                   PredicateValue.Default.tuple(
@@ -310,7 +352,7 @@ export const MapForm = <
                     ),
                   ),
                 ),
-                List([_, { kind: "remove" }]),
+                delta,
               );
             },
           }}

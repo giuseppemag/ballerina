@@ -1,21 +1,18 @@
-import { List, Map } from "immutable";
+import { Map } from "immutable";
 import {
-  Guid,
   SimpleCallback,
   Debounce,
   InfiniteStreamLoader,
-  CollectionSelection,
   id,
   replaceWith,
-  OrderedMapRepo,
   AsyncState,
   BasicFun,
-  Synchronize,
-  Unit,
   ValidateRunner,
   ValueRecord,
   PredicateValue,
-  MapRepo,
+  Delta,
+  ParsedType,
+  ParsedApplicationType,
 } from "../../../../../../main";
 import { CoTypedFactory } from "../../../../../coroutines/builder";
 import { Debounced } from "../../../../../debounced/state";
@@ -27,9 +24,7 @@ import { FormLabel } from "../../../singleton/domains/form-label/state";
 import {
   FieldValidation,
   FieldValidationWithPath,
-  FormValidatorSynchronized,
   OnChange,
-  ValidationError,
 } from "../../../singleton/state";
 import { SearchableInfiniteStreamState } from "../searchable-infinite-stream/state";
 import { InfiniteStreamMultiselectView } from "./state";
@@ -41,7 +36,12 @@ export const InfiniteMultiselectDropdownForm = <
   validation?: BasicFun<ValueRecord, Promise<FieldValidation>>,
 ) => {
   const Co = CoTypedFactory<
-    Context & Value<ValueRecord> & { disabled: boolean; visible: boolean },
+    Context &
+      Value<ValueRecord> & {
+        disabled: boolean;
+        visible: boolean;
+        type: ParsedType<any>;
+      },
     SearchableInfiniteStreamState
   >();
   const DebouncerCo = CoTypedFactory<
@@ -95,7 +95,12 @@ export const InfiniteMultiselectDropdownForm = <
   );
 
   return Template.Default<
-    Context & Value<ValueRecord> & { disabled: boolean; visible: boolean },
+    Context &
+      Value<ValueRecord> & {
+        disabled: boolean;
+        visible: boolean;
+        type: ParsedType<any>;
+      },
     SearchableInfiniteStreamState,
     ForeignMutationsExpected & {
       onChange: OnChange<ValueRecord>;
@@ -141,9 +146,18 @@ export const InfiniteMultiselectDropdownForm = <
                 ),
             ),
           clearSelection: () => {
+            const delta: Delta = {
+              kind: "SetReplace",
+              replace: PredicateValue.Default.record(Map()),
+              state: {
+                commonFormState: props.context.commonFormState,
+                customFormState: props.context.customFormState,
+              },
+              type: props.context.type,
+            };
             props.foreignMutations.onChange(
               ValueRecord.Updaters.clear(),
-              List(),
+              delta,
             );
           },
           setSearchText: (_) =>
@@ -165,20 +179,28 @@ export const InfiniteMultiselectDropdownForm = <
               ),
             ),
           toggleSelection: (elementRecord: ValueRecord) => {
-            props.foreignMutations.onChange(
-              props.context.value.fields.has(
-                elementRecord.fields.get("Id")! as string,
-              )
-                ? ValueRecord.Updaters.remove(
-                    elementRecord.fields.get("Id")! as string,
-                  )
-                : ValueRecord.Updaters.set(
-                    elementRecord.fields.get("Id")! as string,
-                    elementRecord,
-                  ),
+            const updater = props.context.value.fields.has(
+              elementRecord.fields.get("Id")! as string,
+            )
+              ? ValueRecord.Updaters.remove(
+                  elementRecord.fields.get("Id")! as string,
+                )
+              : ValueRecord.Updaters.set(
+                  elementRecord.fields.get("Id")! as string,
+                  elementRecord,
+                );
 
-              List(),
-            );
+            const delta: Delta = {
+              kind: "SetReplace",
+              // Maybe unsafe - check
+              replace: updater(props.context.value),
+              state: {
+                commonFormState: props.context.commonFormState,
+                customFormState: props.context.customFormState,
+              },
+              type: props.context.type,
+            };
+            props.foreignMutations.onChange(updater, delta);
           },
         }}
       />
@@ -199,7 +221,7 @@ export const InfiniteMultiselectDropdownForm = <
         ),
     })),
     ValidateRunner<
-      Context & { disabled: boolean; visible: boolean },
+      Context & { disabled: boolean; visible: boolean; type: ParsedType<any> },
       SearchableInfiniteStreamState,
       ForeignMutationsExpected,
       ValueRecord
