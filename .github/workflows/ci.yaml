@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.2
-      - uses: actions/setup-dotnet@v4.3.0
+      - uses: actions/setup-dotnet@v4.3.1
       - run: |
           dotnet restore backend
           dotnet tool restore
@@ -62,7 +62,7 @@ jobs:
         working-directory: backend/apps/ballerina-runtime
     steps:
       - uses: actions/checkout@v4.2.2
-      - uses: actions/setup-dotnet@v4.3.0
+      - uses: actions/setup-dotnet@v4.3.1
       - run: dotnet restore
       - name: Build and package for all runtimes
         run: |
