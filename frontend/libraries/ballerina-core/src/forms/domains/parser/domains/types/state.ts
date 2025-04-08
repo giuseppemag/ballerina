@@ -120,19 +120,17 @@ export const RawFieldType = {
     _.args.length == 1,
   isUnionCase: <T>(
     _: RawFieldType<T>,
-  ): _ is { caseName: string; fields: object } =>
-    typeof _ == "object" && "caseName" in _ && "fields" in _,
+  ): _ is { caseName: string; fields?: object } =>
+    typeof _ == "object" && "caseName" in _,
   isUnion: <T>(
     _: RawFieldType<T>,
-  ): _ is { fun: "Union"; args: Array<{ case: string; fields: object }> } =>
+  ): _ is { fun: "Union"; args: Array<{ caseName: string; fields?: object }> } =>
     hasFun(_) &&
     isGenericType(_.fun) &&
     hasArgs(_) &&
     _.fun == "Union" &&
     _.args.length > 0 &&
-    _.args.every(
-      (__) => typeof __ == "object" && "caseName" in __ && "fields" in __,
-    ),
+    _.args.every((__) => typeof __ == "object" && "caseName" in __),
   isTuple: <T>(
     _: RawFieldType<T>,
   ): _ is { fun: "Tuple"; args: Array<RawFieldType<T>> } =>
@@ -396,7 +394,7 @@ export const ParsedType = {
       if (RawFieldType.isUnionCase(rawFieldType)) {
         return ParsedType.Operations.ParseRawFieldType(
           rawFieldType.caseName,
-          rawFieldType.fields,
+          { fields: rawFieldType.fields ?? {} },
           types,
           injectedPrimitives,
         ).Then((parsedFields) =>
@@ -417,7 +415,7 @@ export const ParsedType = {
                 );
               }
               return ParsedType.Operations.ParseRawFieldType(
-                unionCase.case,
+                unionCase.caseName,
                 unionCase,
                 types,
                 injectedPrimitives,

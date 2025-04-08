@@ -33,12 +33,10 @@
           }
         },
         {
-          "caseName": "ERP:BC",
-          "fields": {}
+          "caseName": "ERP:BC"
         },
         {
-          "caseName": "ERP:FAndO",
-          "fields": {}
+          "caseName": "ERP:FAndO"
         }
       ]
     },
@@ -90,16 +88,13 @@
       "fun": "Union",
       "args": [
         {
-          "caseName": "M",
-          "fields": {}
+          "caseName": "M"
         },
         {
-          "caseName": "F",
-          "fields": {}
+          "caseName": "F"
         },
         {
-          "caseName": "X",
-          "fields": {}
+          "caseName": "X"
         }
       ]
     },
