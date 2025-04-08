@@ -53,7 +53,7 @@ jobs:
     needs:
       - frontend
       - backend
-      - ballerina-go
+      # - ballerina-go
     runs-on: ubuntu-latest
     permissions:
       contents: write
