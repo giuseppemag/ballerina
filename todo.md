@@ -31,11 +31,12 @@
           ❌ missing cases on either side
           ❌ mismatched type of cases in renderer vs type
           ❌ wrong use of `Sum`
+        ❌ add invalid tabs type of computed visible fields
         ❌ add entity PATCH sample to successful samples
         ❌ add errorless Go compilation to tests
         ❌ make sure that the failing tests fail for the right reason - inspect and partially match the errors
     ✅ custom types unify because they are all collapsed to Unit, generate some unique type underwater
-    ❌ config forms
+    ✅ config forms
       ✅ "fmt" is imported when unused because of no discriminated unions (not enums, they do not need a visitor!) and causes a compiler error
       ✅ define spec
         ✅ `keyof`
@@ -52,8 +53,8 @@
           ✅ represent preloaded types as a special ExprType.Placeholder
           ✅ any ExprType.Placeholder left -> error
         ✅ tabs group can be either a list of fields or an expression
-      ❌ TypeCheck
-        ❌ validate the type of the expression as `Set<Enum>` where `Enum` is a subset of the field names of the type
+      ✅ TypeCheck
+        ✅ validate the type of the expression as `Set<Enum>` where `Enum` is a subset of the field names of the type
     ❌ tables support
       ❌ renderer
       ❌ columns

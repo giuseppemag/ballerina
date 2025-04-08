@@ -274,6 +274,72 @@ module Validator =
           do!
             FieldConfig.ValidatePredicates ctx globalType rootType localType f.Value
             |> state.Map ignore
+
+        for tab in formFields.Tabs.FormTabs |> Map.values do
+          for col in tab.FormColumns |> Map.values do
+            for group in col.FormGroups |> Map.values do
+              match group with
+              | FormGroup.Computed e ->
+                let schema =
+                  { tryFindEntity = fun _ -> None
+                    tryFindField = fun _ -> None }
+
+                let vars =
+                  [ ("global", globalType.Type); ("root", rootType.Type); ("local", localType) ]
+                  |> Seq.map (VarName.Create <*> id)
+                  |> Map.ofSeq
+
+                let! eType, _ =
+                  Expr.typeCheck
+                    (ctx.Types |> Seq.map (fun tb -> tb.Value.TypeId, tb.Value.Type) |> Map.ofSeq)
+                    schema
+                    vars
+                    e
+                  |> state.OfSum
+
+                let! eTypeSetArg = ExprType.AsSet eType |> state.OfSum
+                let! eTypeRefId = ExprType.AsLookupId eTypeSetArg |> state.OfSum
+
+                let! eTypeRef =
+                  ctx.Types
+                  |> Map.tryFindWithError eTypeRefId.TypeName "types" "types"
+                  |> state.OfSum
+
+                let! eTypeRefFields = ExprType.AsRecord eTypeRef.Type |> state.OfSum
+
+                let! eTypeEnum = eTypeRefFields |> Map.tryFindWithError "Value" "fields" "fields" |> state.OfSum
+                let! eTypeEnumId = ExprType.AsLookupId eTypeEnum |> state.OfSum
+
+                let! eTypeEnum =
+                  ctx.Types
+                  |> Map.tryFindWithError eTypeEnumId.TypeName "types" "types"
+                  |> state.OfSum
+
+                let! eTypeEnumCases = eTypeEnum.Type |> ExprType.AsUnion |> state.OfSum
+
+                match eTypeEnumCases |> Seq.tryFind (fun c -> c.Value.Fields.IsUnitType |> not) with
+                | Some nonUnitCaseFields ->
+                  return!
+                    state.Throw(
+                      Errors.Singleton
+                        $"Error: all cases of {eTypeEnum.TypeId.TypeName} should be of type unit (ie the type is a proper enum), but {nonUnitCaseFields.Key} has type {nonUnitCaseFields.Value}"
+                    )
+                | _ ->
+                  let caseNames = eTypeEnumCases.Keys |> Seq.map (fun c -> c.CaseName) |> Set.ofSeq
+                  let! fields = localType |> ExprType.AsRecord |> state.OfSum
+                  let fields = fields |> Seq.map (fun c -> c.Key) |> Set.ofSeq
+
+                  let missingFields = caseNames - fields
+
+                  if missingFields |> Set.isEmpty |> not then
+                    return!
+                      state.Throw(
+                        Errors.Singleton
+                          $"Error: the group provides fields {caseNames |> Seq.toList} but the form type has fields {fields |> Seq.toList}: fields {missingFields |> Seq.toList} are missing from the type and so cannot be part of the visibility!"
+                      )
+                  else
+                    return ()
+              | _ -> return ()
       }
 
     static member Validate (ctx: ParsedFormsContext) (rootType: ExprType) (body: FormFields) : Sum<Unit, Errors> =

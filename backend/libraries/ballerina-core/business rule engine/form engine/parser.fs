@@ -32,6 +32,13 @@ module Parser =
       | ExprType.UnionType cs -> sum { return cs }
       | _ -> sum.Throw(sprintf "Error: type %A is no union and thus has no cases" t |> Errors.Singleton)
 
+    static member AsSet(t: ExprType) : Sum<ExprType, Errors> =
+      sum {
+        match t with
+        | ExprType.SetType e -> return e
+        | _ -> return! sum.Throw(Errors.Singleton $$"""Error: type {{t}} cannot be converted to a Set.""")
+      }
+
     static member AsLookupId(t: ExprType) : Sum<TypeId, Errors> =
       sum {
         match t with
