@@ -1,4 +1,4 @@
-import { Set, List, Map, OrderedMap } from "immutable";
+import { Set, List, Map, OrderedMap, isMap } from "immutable";
 import { GenericType, GenericTypes, PrimitiveTypes } from "../built-ins/state";
 import { InjectedPrimitives } from "../injectables/state";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
@@ -16,6 +16,8 @@ export type CaseName = string;
 export type FieldName = string;
 export type TypeName = string;
 export type RawType<T> = {
+  fun?: string;
+  args?: Array<RawFieldType<T>> | Array<string>;
   extends?: Array<TypeName>;
   fields?: OrderedMap<FieldName, RawFieldType<T>>;
 };
@@ -43,6 +45,16 @@ export const RawType = {
     _["args"].every(
       (__) => typeof __ == "object" && "caseName" in __ && "fields" in __,
     ),
+  isKeyOf: <T>(
+    _: RawFieldType<T>,
+  ): _ is { fun: "KeyOf"; args: Array<string> } =>
+    typeof _ == "object" &&
+    "fun" in _ &&
+    _.fun == "KeyOf" &&
+    "args" in _ &&
+    Array.isArray(_.args) &&
+    _.args.length == 1 &&
+    isString(_.args[0]),
 };
 export type RawApplicationType<T> = {
   fun?: GenericType;
@@ -253,7 +265,51 @@ export const ParsedType = {
         : fst.kind == "unionCase" && snd.kind == "unionCase"
         ? fst.name == snd.name
         : false,
+    ParseRawKeyOf: <T>(
+      fieldName: TypeName,
+      rawFieldType: RawFieldType<T>,
+      types: Map<TypeName, ParsedType<T>>,
+    ): ValueOrErrors<ParsedType<T>, string> => {
+      if (RawType.isKeyOf(rawFieldType)) {
+        const extendedType = types.get(rawFieldType.args[0]);
+        if (extendedType == undefined) {
+          return ValueOrErrors.Default.throwOne(
+            `Error: cannot find arg ${JSON.stringify(
+              rawFieldType.args[0],
+            )} in types for key of ${fieldName}`,
+          );
+        }
+        if (!RawFieldType.isRecord(extendedType)) {
+          return ValueOrErrors.Default.throwOne(
+            `Error: arg for key of ${fieldName} is not a record`,
+          );
+        }
+        const fields = extendedType.fields;
+        if (!isMap(fields) || fields.size == 0) {
+          return ValueOrErrors.Default.throwOne(
+            `No fields found for ${rawFieldType.args[0]} when parsing key of ${fieldName}`,
+          );
+        }
 
+        const keys = fields.keySeq().toArray();
+        return ValueOrErrors.Default.return(
+          ParsedType.Default.union(
+            Map(
+              keys.map((key) => [
+                key,
+                ParsedType.Default.unionCase(
+                  key,
+                  ParsedType.Default.record(key, Map()),
+                ),
+              ]),
+            ),
+          ),
+        );
+      }
+      return ValueOrErrors.Default.throwOne(
+        `Error: ${JSON.stringify(rawFieldType)} is not a valid key of`,
+      );
+    },
     ParseRawFieldType: <T>(
       fieldName: TypeName,
       rawFieldType: RawFieldType<T>,
