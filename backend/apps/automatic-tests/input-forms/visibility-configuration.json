@@ -1,6 +1,6 @@
 {
   "types": {
-    "GlobalConfiguration": {
+    "GlobalConfig": {
       "fields": {}
     },
     "Person": {
@@ -14,7 +14,9 @@
     },
     "PersonFieldEnum": {
       "fun": "KeyOf",
-      "args": ["Person"]
+      "args": [
+        "Person"
+      ]
     },
     "PersonFieldRef": {
       "fields": {
@@ -23,8 +25,13 @@
     },
     "PersonConfig": {
       "fields": {
-        "ActiveFields": { "fun": "MultiSelection", "args": ["PersonFieldRef"] },
-        "IsDigital": "string"
+        "ActiveFields": {
+          "fun": "MultiSelection",
+          "args": [
+            "PersonFieldRef"
+          ]
+        },
+        "IsDigital": "boolean"
       }
     }
   },
@@ -35,15 +42,20 @@
     "entities": {
       "GlobalConfigApi": {
         "type": "GlobalConfig",
-        "methods": ["get"]
+        "methods": [
+          "get"
+        ]
       },
       "PersonConfigApi": {
         "type": "PersonConfig",
-        "methods": ["default", "create"]
+        "methods": [
+          "default",
+          "create"
+        ]
       }
     }
   },
-  "forms":{
+  "forms": {
     "PersonConfigForm": {
       "type": "PersonConfig",
       "fields": {
@@ -68,7 +80,7 @@
             }
           }
         }
-      }  
+      }
     },
     "PersonForm": {
       "type": "Person",
@@ -84,16 +96,28 @@
         },
         "Email": {
           "renderer": "defaultString",
-          "visible":{
-            "kind":"fieldLookup",
-            "operands":[{"kind":"varLookup", "varName":"global" }, "IsDigital"]
+          "visible": {
+            "kind": "fieldLookup",
+            "operands": [
+              {
+                "kind": "varLookup",
+                "varName": "global"
+              },
+              "IsDigital"
+            ]
           }
         },
         "SubscribeToNewsletter": {
           "renderer": "defaultBoolean",
-          "visible":{
-            "kind":"fieldLookup",
-            "operands":[{"kind":"varLookup", "varName":"global" }, "IsDigital"]
+          "visible": {
+            "kind": "fieldLookup",
+            "operands": [
+              {
+                "kind": "varLookup",
+                "varName": "global"
+              },
+              "IsDigital"
+            ]
           }
         }
       },
@@ -102,24 +126,41 @@
           "columns": {
             "main": {
               "groups": {
-                "main": {
-                  "kind":"fieldLookup",
-                  "operands":[{"kind":"varLookup", "varName":"global" }, "ActiveFields"]
-                }
+                "main": [
+                  "Name",
+                  "Surname",
+                  "Birthday",
+                  "Email",
+                  "SubscribeToNewsletter"
+                ]
               }
             }
           }
         }
-      }  
+      },
+      "mainGroup": {
+        "kind": "fieldLookup",
+        "operands": [
+          {
+            "kind": "varLookup",
+            "varName": "global"
+          },
+          "ActiveFields"
+        ]
+      }
     }
-
   },
-  "launchers":{
+  "launchers": {
     "PersonConfigLauncher": {
       "kind": "create",
       "form": "PersonConfigForm",
       "api": "PersonConfigApi",
-      "configApi": "GlobalConfigApi"      
+      "configApi": "GlobalConfigApi"
+    },
+    "Person":{
+      "kind": "passthrough",
+      "form": "PersonForm",
+      "configType": "PersonConfig"
     }
   }
 }

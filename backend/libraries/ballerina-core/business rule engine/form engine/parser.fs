@@ -17,6 +17,50 @@ module Parser =
   open FSharp.Data
   open Ballerina.Collections.NonEmptyList
 
+  type ExprType with
+    static member GetFields(t: ExprType) : Sum<List<string * ExprType>, Errors> =
+      match t with
+      | ExprType.RecordType fs -> sum { return fs |> Seq.map (fun v -> v.Key, v.Value) |> List.ofSeq }
+      | _ ->
+        sum.Throw(
+          sprintf "Error: type %A is no record and thus has no fields" t
+          |> Errors.Singleton
+        )
+
+    static member GetCases(t: ExprType) : Sum<Map<CaseName, UnionCase>, Errors> =
+      match t with
+      | ExprType.UnionType cs -> sum { return cs }
+      | _ -> sum.Throw(sprintf "Error: type %A is no union and thus has no cases" t |> Errors.Singleton)
+
+    static member AsLookupId(t: ExprType) : Sum<TypeId, Errors> =
+      sum {
+        match t with
+        | ExprType.LookupType l -> return l
+        | _ -> return! sum.Throw(Errors.Singleton $$"""Error: type {{t}} cannot be converted to a lookup.""")
+      }
+
+    static member AsRecord(t: ExprType) : Sum<Map<string, ExprType>, Errors> =
+      sum {
+        match t with
+        | ExprType.RecordType l -> return l
+        | _ -> return! sum.Throw(Errors.Singleton $$"""Error: type {{t}} cannot be converted to a record.""")
+      }
+
+    static member AsUnion(t: ExprType) : Sum<_, Errors> =
+      sum {
+        match t with
+        | ExprType.UnionType c -> return c
+        | _ -> return! sum.Throw(Errors.Singleton $$"""Error: type {{t}} cannot be converted to a union.""")
+      }
+
+    static member AsUnit(t: ExprType) : Sum<Unit, Errors> =
+      sum {
+        match t with
+        | ExprType.UnitType -> return ()
+        | _ -> return! sum.Throw(Errors.Singleton $$"""Error: type {{t}} cannot be converted to a lookup.""")
+      }
+
+
   type TopLevel =
     { Types: (string * JsonValue)[]
       Forms: (string * JsonValue)[]
@@ -106,6 +150,17 @@ module Parser =
 
     member ctx.TryFindLauncher name =
       ctx.Launchers |> Map.tryFindWithError name "launcher" name
+
+  type ExprType with
+    static member Find (ctx: ParsedFormsContext) (typeId: TypeId) : Sum<ExprType, Errors> =
+      sum { return! ctx.TryFindType typeId.TypeName |> Sum.map (fun tb -> tb.Type) }
+
+    static member ResolveLookup (ctx: ParsedFormsContext) (t: ExprType) : Sum<ExprType, Errors> =
+      sum {
+        match t with
+        | ExprType.LookupType l -> return! ExprType.Find ctx l
+        | _ -> return t
+      }
 
   type StateBuilder with
     member state.TryFindType name =
@@ -1310,6 +1365,43 @@ module Parser =
                               }
                               |> state.MapError(Errors.WithPriority ErrorPriority.High)
                           }
+                          state {
+                            do!
+                              funJson
+                              |> JsonValue.AsEnum(Set.singleton "KeyOf")
+                              |> state.OfSum
+                              |> state.Map(ignore)
+
+                            return!
+                              state {
+                                let! argsJson = (fields |> state.TryFindField "args")
+                                let! records = argsJson |> JsonValue.AsArray |> state.OfSum
+
+                                let! records = state.All(records |> Seq.map (JsonValue.AsString >> state.OfSum))
+
+                                if records.Length <> 1 then
+                                  return!
+                                    state.Throw(
+                                      Errors.Singleton
+                                        $"Error: cannot parse generic type {funJson}. Expected a single type name, found {records}"
+                                    )
+                                else
+                                  let! record = records.[0] |> state.TryFindType
+                                  let! record = record.Type |> ExprType.AsRecord |> state.OfSum
+
+                                  return
+                                    ExprType.UnionType(
+                                      record
+                                      |> Seq.map (fun c ->
+                                        { CaseName = c.Key },
+                                        { CaseName = c.Key
+                                          Fields = ExprType.UnitType })
+                                      |> Map.ofSeq
+                                    )
+                              }
+                              |> state.MapError(Errors.WithPriority ErrorPriority.High)
+                          }
+
                           state.Throw(Errors.Singleton $"Error: cannot parse generic type {funJson}")
                           |> state.MapError(Errors.WithPriority ErrorPriority.High) ]
                       )
@@ -1320,59 +1412,6 @@ module Parser =
           )
       }
       |> state.MapError(Errors.HighestPriority)
-
-  type ExprType with
-    static member GetFields(t: ExprType) : Sum<List<string * ExprType>, Errors> =
-      match t with
-      | ExprType.RecordType fs -> sum { return fs |> Seq.map (fun v -> v.Key, v.Value) |> List.ofSeq }
-      | _ ->
-        sum.Throw(
-          sprintf "Error: type %A is no record and thus has no fields" t
-          |> Errors.Singleton
-        )
-
-    static member GetCases(t: ExprType) : Sum<Map<CaseName, UnionCase>, Errors> =
-      match t with
-      | ExprType.UnionType cs -> sum { return cs }
-      | _ -> sum.Throw(sprintf "Error: type %A is no union and thus has no cases" t |> Errors.Singleton)
-
-    static member Find (ctx: ParsedFormsContext) (typeId: TypeId) : Sum<ExprType, Errors> =
-      sum { return! ctx.TryFindType typeId.TypeName |> Sum.map (fun tb -> tb.Type) }
-
-    static member AsLookupId(t: ExprType) : Sum<TypeId, Errors> =
-      sum {
-        match t with
-        | ExprType.LookupType l -> return l
-        | _ -> return! sum.Throw(Errors.Singleton $$"""Error: type {{t}} cannot be converted to a lookup.""")
-      }
-
-    static member AsRecord(t: ExprType) : Sum<Map<string, ExprType>, Errors> =
-      sum {
-        match t with
-        | ExprType.RecordType l -> return l
-        | _ -> return! sum.Throw(Errors.Singleton $$"""Error: type {{t}} cannot be converted to a record.""")
-      }
-
-    static member AsUnion(t: ExprType) : Sum<_, Errors> =
-      sum {
-        match t with
-        | ExprType.UnionType c -> return c
-        | _ -> return! sum.Throw(Errors.Singleton $$"""Error: type {{t}} cannot be converted to a union.""")
-      }
-
-    static member AsUnit(t: ExprType) : Sum<Unit, Errors> =
-      sum {
-        match t with
-        | ExprType.UnitType -> return ()
-        | _ -> return! sum.Throw(Errors.Singleton $$"""Error: type {{t}} cannot be converted to a lookup.""")
-      }
-
-    static member ResolveLookup (ctx: ParsedFormsContext) (t: ExprType) : Sum<ExprType, Errors> =
-      sum {
-        match t with
-        | ExprType.LookupType l -> return! ExprType.Find ctx l
-        | _ -> return t
-      }
 
   type EnumApi with
     static member Parse

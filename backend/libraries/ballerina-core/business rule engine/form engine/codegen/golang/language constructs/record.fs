@@ -37,16 +37,16 @@ module Record =
       StringBuilder.Many(
         seq {
 
-          let fieldsEnum: GolangEnum =
-            { Name = $"{record.Name}FieldsEnum"
-              Cases =
-                record.Fields
-                |> Seq.map (fun field ->
-                  {| Name = $"{record.Name}{field.FieldName}FieldsEnum"
-                     Value = field.FieldName |})
-                |> Seq.toList }
+          // let fieldsEnum: GolangEnum =
+          //   { Name = $"{record.Name}FieldsEnum"
+          //     Cases =
+          //       record.Fields
+          //       |> Seq.map (fun field ->
+          //         {| Name = $"{record.Name}{field.FieldName}FieldsEnum"
+          //            Value = field.FieldName |})
+          //       |> Seq.toList }
 
-          let fieldsEnum = GolangEnum.Generate () fieldsEnum
+          // let fieldsEnum = GolangEnum.Generate () fieldsEnum
 
           let typeStart = $$"""type {{record.Name}} struct {""" + "\n"
 
@@ -120,8 +120,8 @@ module Record =
               }
             )
 
-          yield StringBuilder.One "\n"
-          yield fieldsEnum
+          // yield StringBuilder.One "\n"
+          // yield fieldsEnum
           yield StringBuilder.One "\n"
           yield StringBuilder.One typeStart
           yield fieldDeclarations
