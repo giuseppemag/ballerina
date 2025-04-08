@@ -33,16 +33,16 @@ jobs:
       - run: dotnet build backend
       # - run: dotnet fantomas --check backend
       - run: dotnet test backend
-  # ballerina-go:
-  #   runs-on: ubuntu-latest
-  #   defaults:
-  #     run:
-  #       working-directory: ./backend/libraries/ballerina-core-go
-  #   steps:
-  #     - uses: actions/checkout@v4.2.2
-  #     - uses: actions/setup-go@v5.4.0
-  #       with:
-  #         go-version-file: backend/libraries/ballerina-core-go/go.mod
+  ballerina-go:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend/libraries/ballerina-core-go
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-go@v5.4.0
+        with:
+          go-version-file: backend/libraries/ballerina-core-go/go.mod
       # - name: Check formatting
       #   run: test -z "$(gofmt -l .)"
       # - run: go test ./...
@@ -53,7 +53,7 @@ jobs:
     needs:
       - frontend
       - backend
-      # - ballerina-go
+      - ballerina-go
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -66,7 +66,7 @@ jobs:
       - run: dotnet restore
       - name: Build and package for all runtimes
         run: |
-          for RUNTIME in osx-x64 osx-arm64 win-x64 linux-x64 linux-arm64; do
+          for RUNTIME in osx-x64 win-x64 linux-x64 linux-arm64; do
             dotnet publish --runtime $RUNTIME
             zip -r ballerina-runtime.$RUNTIME.zip ./bin/Release/net9.0/$RUNTIME/publish
           done
