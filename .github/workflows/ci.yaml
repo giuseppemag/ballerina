@@ -33,16 +33,16 @@ jobs:
       - run: dotnet build backend
       # - run: dotnet fantomas --check backend
       - run: dotnet test backend
-  ballerina-go:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./backend/libraries/ballerina-core-go
-    steps:
-      - uses: actions/checkout@v4.2.2
-      - uses: actions/setup-go@v5.4.0
-        with:
-          go-version-file: backend/libraries/ballerina-core-go/go.mod
+  # ballerina-go:
+  #   runs-on: ubuntu-latest
+  #   defaults:
+  #     run:
+  #       working-directory: ./backend/libraries/ballerina-core-go
+  #   steps:
+  #     - uses: actions/checkout@v4.2.2
+  #     - uses: actions/setup-go@v5.4.0
+  #       with:
+  #         go-version-file: backend/libraries/ballerina-core-go/go.mod
       # - name: Check formatting
       #   run: test -z "$(gofmt -l .)"
       # - run: go test ./...
