@@ -1,6 +1,7 @@
 namespace Ballerina.DSL.FormEngine.Codegen.Golang.LanguageConstructs
 
 open Ballerina.DSL.FormEngine.Model
+open Ballerina.DSL.Expr.Types.Model
 open Ballerina.Core
 open Enum
 open System
@@ -44,6 +45,19 @@ module Header =
         imports
 
     let imports =
+      if
+        ctx.Types
+        |> Map.values
+        |> Seq.map (fun t -> t.Type)
+        |> Seq.exists (function
+          | ExprType.UnionType cases -> cases |> Map.values |> Seq.exists (fun c -> c.Fields.IsUnitType |> not)
+          | _ -> false)
+      then
+        imports + Set.singleton "fmt"
+      else
+        imports
+
+    let imports =
       imports + (codegenConfig.Guid.RequiredImport |> Option.toList |> Set.ofList)
 
     let imports =
@@ -63,7 +77,6 @@ module Header =
 package {{packageName}}
 
 import (
-  "fmt"
 {{imports
   |> Seq.filter ((fun s -> String.IsNullOrEmpty s || String.IsNullOrWhiteSpace s) >> not)
   |> Seq.map (sprintf "  \"%s\"\n")

@@ -36,7 +36,7 @@
         ❌ make sure that the failing tests fail for the right reason - inspect and partially match the errors
     ✅ custom types unify because they are all collapsed to Unit, generate some unique type underwater
     ❌ config forms
-      ❌ "fmt" is imported and causes a compiler error
+      ✅ "fmt" is imported when unused because of no discriminated unions (not enums, they do not need a visitor!) and causes a compiler error
       ✅ define spec
         ✅ `keyof`
         ✅ Fields type
