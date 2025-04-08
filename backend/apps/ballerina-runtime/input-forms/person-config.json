@@ -23,6 +23,15 @@
         }
       ]
     },
+    "PersonFieldEnum": {
+      "fun": "KeyOf",
+      "args": ["Person"]
+    },
+    "PersonFieldRef": {
+      "fields": {
+        "Value": "PersonFieldEnum"
+      }
+    },
     "ERPConfig": {
       "fun": "Union",
       "args": [
