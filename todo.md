@@ -37,7 +37,7 @@
     ✅ custom types unify because they are all collapsed to Unit, generate some unique type underwater
     ❌ config forms
       ❌ "fmt" is imported and causes a compiler error
-      ❌ define spec
+      ✅ define spec
         ✅ `keyof`
         ✅ Fields type
         ✅ Config type with fields field and an extra predicate for the digital communication
@@ -46,13 +46,14 @@
         ✅ Form for the config type
         ✅ Form for the main type
         ✅ Visibility predicates on email and subscribe to newsletter
-        ❌ Tabs as a visibility expression
-      ❌ Parse
+        ✅ Tabs as a visibility expression
+      ✅ Parse
         ✅ keyof -> inline type fields as union case if possible, error otherwise
           ✅ represent preloaded types as a special ExprType.Placeholder
           ✅ any ExprType.Placeholder left -> error
-        ❌ tabs group can be either a list of fields or an expression
-          ❌ the type of the expression is `Set<Enum>` where `Enum` is a subset of the field names of the type
+        ✅ tabs group can be either a list of fields or an expression
+      ❌ TypeCheck
+        ❌ validate the type of the expression as `Set<Enum>` where `Enum` is a subset of the field names of the type
     ❌ tables support
       ❌ renderer
       ❌ columns

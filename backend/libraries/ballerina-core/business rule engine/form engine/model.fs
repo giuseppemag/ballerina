@@ -265,8 +265,11 @@ module Model =
   and FormColumns =
     { FormColumns: Map<string, FormGroups> }
 
-  and FormGroups =
-    { FormGroups: Map<string, List<FieldConfigId>> }
+  and FormGroups = { FormGroups: Map<string, FormGroup> }
+
+  and FormGroup =
+    | Computed of Expr
+    | Inlined of List<FieldConfigId>
 
   and FieldConfigId = { FieldName: string; FieldId: Guid }
 

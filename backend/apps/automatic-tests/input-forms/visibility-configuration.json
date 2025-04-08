@@ -126,27 +126,20 @@
           "columns": {
             "main": {
               "groups": {
-                "main": [
-                  "Name",
-                  "Surname",
-                  "Birthday",
-                  "Email",
-                  "SubscribeToNewsletter"
-                ]
+                "main": {
+                  "kind": "fieldLookup",
+                  "operands": [
+                    {
+                      "kind": "varLookup",
+                      "varName": "global"
+                    },
+                    "ActiveFields"
+                  ]
+                }
               }
             }
           }
         }
-      },
-      "mainGroup": {
-        "kind": "fieldLookup",
-        "operands": [
-          {
-            "kind": "varLookup",
-            "varName": "global"
-          },
-          "ActiveFields"
-        ]
       }
     }
   },

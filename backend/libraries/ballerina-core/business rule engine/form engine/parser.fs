@@ -988,26 +988,33 @@ module Parser =
       (groupName: string)
       (fieldConfigs: Map<string, FieldConfig>)
       (json: JsonValue)
-      : State<List<FieldConfigId>, CodeGenConfig, ParsedFormsContext, Errors> =
-      state {
-        let! fields = json |> JsonValue.AsArray |> state.OfSum
+      : State<FormGroup, CodeGenConfig, ParsedFormsContext, Errors> =
+      state.Either
+        (state {
+          let! fields = json |> JsonValue.AsArray |> state.OfSum
 
-        return!
-          seq {
-            for fieldJson in fields do
-              yield
-                state {
-                  let! fieldName = fieldJson |> JsonValue.AsString |> state.OfSum
+          return!
+            seq {
+              for fieldJson in fields do
+                yield
+                  state {
+                    let! fieldName = fieldJson |> JsonValue.AsString |> state.OfSum
 
-                  return!
-                    fieldConfigs
-                    |> Map.tryFindWithError fieldName "field name" fieldName
-                    |> Sum.map (FieldConfig.Id)
-                    |> state.OfSum
-                }
-          }
-          |> state.All
-      }
+                    return!
+                      fieldConfigs
+                      |> Map.tryFindWithError fieldName "field name" fieldName
+                      |> Sum.map (FieldConfig.Id)
+                      |> state.OfSum
+                  }
+            }
+            |> state.All
+            |> state.Map(FormGroup.Inlined)
+            |> state.MapError(Errors.WithPriority ErrorPriority.High)
+        })
+        (state {
+          let! expr = json |> Expr.Parse
+          return FormGroup.Computed expr
+        })
       |> state.WithErrorContext $"...when parsing group {groupName}"
 
     static member ParseColumn
