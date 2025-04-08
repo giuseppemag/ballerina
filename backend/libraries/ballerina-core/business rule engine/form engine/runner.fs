@@ -198,6 +198,7 @@ dotnet run -- forms -input ../automatic-tests/input-forms/person-config.json -li
 
 dotnet run -- forms -input ../../../../unbound/specs/document.json -linked ../../../../unbound/specs/global-config.json ../../../../unbound/specs/reference-primitives.json ../../../../unbound/specs/primitives.json ../../../../unbound/specs/references.json ../../../../unbound/specs/invoice-header.json ../../../../unbound/specs/delivery-note-header.json  -output ./generated-output/models -validate -codegen golang -codegen_config ../../../../unbound/specs/go-config.json
 
+dotnet run -- forms -input ../automatic-tests/input-forms/visibility-configuration.json -output ./generated-output/models -validate -codegen golang -codegen_config ../automatic-tests/input-forms/go-config.json
 
 dotnet run -- forms -input ../automatic-tests/input-forms/form-config-config.json -output ./generated-output/models -validate -codegen golang -codegen_config ../automatic-tests/input-forms/go-config.json
 *)

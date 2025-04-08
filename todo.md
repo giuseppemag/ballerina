@@ -35,34 +35,56 @@
         ❌ add errorless Go compilation to tests
         ❌ make sure that the failing tests fail for the right reason - inspect and partially match the errors
     ✅ custom types unify because they are all collapsed to Unit, generate some unique type underwater
-    ❌ entites visitors
-      ✅ the `entityName` should be the API name, not the type
-      ❌ entities PATCH - gets single value and path of change
-        ✅ support Id:string in CollectionReference, not just Id:Guid
-        ✅ lots of no-ops in deltas
-          ✅ add ˋreadonlyˋ flag to record and custom types
-          ✅ do not generate PATCH callbacks for those fields and cases
-        ✅ names of generic parameters of the deltas is inconsistent and should be fixed
-        ❌ the BE can guide by providing deserializer callbacks for all the required types, such as `tryParseAsUpdateableEntityX:Raw -> UpdateableEntityX`
-        ❌ define the FE deltas, make an array of Deltas[Unit] foldable into a single Deltas[DeltaBase]
-          ❌ verify that the DeltaTransfer FE structure deserializes correctly to the BE structure
-          ❌ PATCH from the FE
-        ❌ `extends`
-          ❌ errors when extending a non-existent type are terrible
-          ❌ test transitive/multiple extensions
-          ❌ give errors in case of extensions of placeholder types
-          ❌ add `extends` statement to unions and enums
-        ✅ separate more codegen modules to extra files
-          ✅ custom types
-          ✅ imports
-          ✅ `generated types`
-          ✅ ToGolang in the typename and method name is redundant, remove it
+    ❌ config forms
+      ❌ define spec
+        ❌ `keyof`
+        ❌ Fields type
+        ❌ Config type with fields field and an extra predicate for the digital communication
+        ❌ Fields enum api
+        ❌ Main type (name, surname, birthday, email, subscribe to newsletter)
+        ❌ Form for the config type
+        ❌ Form for the main type
+        ❌ Visibility predicates on email and subscribe to newsletter
+        ❌ Tabs as a visibility expression
+      ❌ Parse
+        ❌ keyof -> inline type fields as union case if possible, error otherwise
+          ❌ represent preloaded types as a special ExprType.Placeholder
+          ❌ any ExprType.Placeholder left -> error
+        ❌ tabs group can be either a list of fields or an expression
+          ❌ the type of the expression is `Set<Enum>` where `Enum` is a subset of the field names of the type
+    ❌ tables support
+      ❌ renderer
+      ❌ columns
+      ❌ visibility
+      ❌ API
+      ❌ launcher with getMore
+      ❌ field renderer with getMore
+    ❌ entities PATCH - gets single value and path of change
+      ✅ support Id:string in CollectionReference, not just Id:Guid
+      ✅ lots of no-ops in deltas
+        ✅ add ˋreadonlyˋ flag to record and custom types
+        ✅ do not generate PATCH callbacks for those fields and cases
+      ✅ names of generic parameters of the deltas is inconsistent and should be fixed
+      ❌ the BE can guide by providing deserializer callbacks for all the required types, such as `tryParseAsUpdateableEntityX:Raw -> UpdateableEntityX`
+      ✅ define the FE deltas, make an array of Deltas[Unit] foldable into a single Deltas[DeltaBase]
+        ✅ verify that the DeltaTransfer FE structure deserializes correctly to the BE structure
+        ✅ PATCH from the FE
+      ✅ separate more codegen modules to extra files
+        ✅ custom types
+        ✅ imports
+        ✅ `generated types`
+        ✅ ToGolang in the typename and method name is redundant, remove it
     ❌ add documentation (Confluence)
       ❌ high-level workings of the form engine
       ❌ high-level anatomy of a spec
       ❌ about the generated BE code
       ❌ add readme with runner instructions to ballerina-core
       ❌ cleanup the unnecessary modules such as OAuth2 (should be moved to apps)
+    ❌ `extends`
+      ❌ errors when extending a non-existent type are terrible
+      ❌ test transitive/multiple extensions
+      ❌ give errors in case of extensions of placeholder types
+      ❌ add `extends` statement to unions and enums
     ❌ `requiredImport` is an optional either of one or multiple strings (`Time` needed this)
     ❌ lists, sets, etc. should be top-level forms
     ❌ Custom types should not generate writer fields

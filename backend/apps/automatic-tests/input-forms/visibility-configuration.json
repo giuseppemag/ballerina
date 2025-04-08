@@ -1,0 +1,125 @@
+{
+  "types": {
+    "GlobalConfiguration": {
+      "fields": {}
+    },
+    "Person": {
+      "fields": {
+        "Name": "string",
+        "Surname": "string",
+        "Birthday": "Date",
+        "Email": "string",
+        "SubscribeToNewsletter": "boolean"
+      }
+    },
+    "PersonFieldEnum": {
+      "fun": "KeyOf",
+      "args": ["Person"]
+    },
+    "PersonFieldRef": {
+      "fields": {
+        "Value": "PersonFieldEnum"
+      }
+    },
+    "PersonConfig": {
+      "fields": {
+        "ActiveFields": { "fun": "MultiSelection", "args": ["PersonFieldRef"] },
+        "IsDigital": "string"
+      }
+    }
+  },
+  "apis": {
+    "enumOptions": {
+      "PersonFieldsApi": "PersonFieldRef"
+    },
+    "entities": {
+      "GlobalConfigApi": {
+        "type": "GlobalConfig",
+        "methods": ["get"]
+      },
+      "PersonConfigApi": {
+        "type": "PersonConfig",
+        "methods": ["default", "create"]
+      }
+    }
+  },
+  "forms":{
+    "PersonConfigForm": {
+      "type": "PersonConfig",
+      "fields": {
+        "ActiveFields": {
+          "renderer": "defaultEnumMultiselect",
+          "options": "PersonFieldsApi"
+        },
+        "IsDigital": {
+          "renderer": "defaultBoolean"
+        }
+      },
+      "tabs": {
+        "main": {
+          "columns": {
+            "main": {
+              "groups": {
+                "main": [
+                  "ActiveFields",
+                  "IsDigital"
+                ]
+              }
+            }
+          }
+        }
+      }  
+    },
+    "PersonForm": {
+      "type": "Person",
+      "fields": {
+        "Name": {
+          "renderer": "defaultString"
+        },
+        "Surname": {
+          "renderer": "defaultString"
+        },
+        "Birthday": {
+          "renderer": "defaultDate"
+        },
+        "Email": {
+          "renderer": "defaultString",
+          "visible":{
+            "kind":"fieldLookup",
+            "operands":[{"kind":"varLookup", "varName":"global" }, "IsDigital"]
+          }
+        },
+        "SubscribeToNewsletter": {
+          "renderer": "defaultBoolean",
+          "visible":{
+            "kind":"fieldLookup",
+            "operands":[{"kind":"varLookup", "varName":"global" }, "IsDigital"]
+          }
+        }
+      },
+      "tabs": {
+        "main": {
+          "columns": {
+            "main": {
+              "groups": {
+                "main": {
+                  "kind":"fieldLookup",
+                  "operands":[{"kind":"varLookup", "varName":"global" }, "ActiveFields"]
+                }
+              }
+            }
+          }
+        }
+      }  
+    }
+
+  },
+  "launchers":{
+    "PersonConfigLauncher": {
+      "kind": "create",
+      "form": "PersonConfigForm",
+      "api": "PersonConfigApi",
+      "configApi": "GlobalConfigApi"      
+    }
+  }
+}
