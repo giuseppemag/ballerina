@@ -413,7 +413,7 @@ export const ParsedRenderer = {
           types.get(fieldType.name)!,
           field,
           types,
-        )
+        );
       }
       console.error(
         `Invalid field type ${JSON.stringify(
@@ -888,8 +888,8 @@ export const ParsedRenderer = {
                         parsedLeftRenderer?.value.disabledPredicatedExpression,
                         parsedRightRenderer?.value.disabledPredicatedExpression,
                       ),
-                      label: parsedRenderer.label,
-                    });
+                    label: parsedRenderer.label,
+                  });
                 },
               ),
           );

@@ -516,21 +516,18 @@ export const DeltaTransfer = {
           );
         }
         if (delta.kind == "ArrayAdd") {
-          return toRawObject(
-            delta.value,
-            delta.state,
-            delta.type,
-          ).Then((value) =>
-            ValueOrErrors.Default.return<
-              [DeltaTransfer<DeltaTransferCustom>, DeltaTransferComparand],
-              string
-            >([
-              {
-                Discriminator: "ArrayAdd",
-                Add: value,
-              },
-              "[ArrayAdd]",
-            ]),
+          return toRawObject(delta.value, delta.state, delta.type).Then(
+            (value) =>
+              ValueOrErrors.Default.return<
+                [DeltaTransfer<DeltaTransferCustom>, DeltaTransferComparand],
+                string
+              >([
+                {
+                  Discriminator: "ArrayAdd",
+                  Add: value,
+                },
+                "[ArrayAdd]",
+              ]),
           );
         }
         if (delta.kind == "ArrayAddAt") {

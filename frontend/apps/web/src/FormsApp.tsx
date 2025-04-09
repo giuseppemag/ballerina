@@ -424,7 +424,7 @@ export const FormsApp = (props: {}) => {
                         Form successfully submitted
                       </div>
                     )}
-                    
+
                     <FormRunnerTemplate
                       context={{
                         ...configFormsParser,

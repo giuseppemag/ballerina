@@ -493,7 +493,9 @@ export const fromAPIRawValue =
       }
       if (t.value == "MultiSelection") {
         const result = converters[t.value].fromAPIRawValue(raw);
-        const values = result.map((_) => PredicateValue.Default.record(OrderedMap(_)));
+        const values = result.map((_) =>
+          PredicateValue.Default.record(OrderedMap(_)),
+        );
         return ValueOrErrors.Default.return(
           PredicateValue.Default.record(OrderedMap(values)),
         );

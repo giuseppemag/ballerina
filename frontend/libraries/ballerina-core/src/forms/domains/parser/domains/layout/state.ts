@@ -162,9 +162,7 @@ export const FormLayout = {
             `Invalid group layout: ${JSON.stringify(result)}`,
           );
         }
-        return ValueOrErrors.Default.return(
-          Array.from(result.fields.keys()),
-        );
+        return ValueOrErrors.Default.return(Array.from(result.fields.keys()));
       });
     },
     CalculateLayout: (
