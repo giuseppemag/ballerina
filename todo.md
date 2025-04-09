@@ -125,6 +125,7 @@
       ❌ inference rules and execution engine
       ❌ database storage and migration manager in ES
     ❌ disallow unsupported keywords (`visibIle` wasted me a good chunk of time)
+    ❌ gently deprecate "defaultX" naming convention
     ❌ make recursive `Value/Expr` types work in Go
     ❌ add custom generics with their renderer (for example, `WithEvidenceAndApproval<value>`)
     ❌ support multiple imports or none at all

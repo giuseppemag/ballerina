@@ -200,5 +200,7 @@ dotnet run -- forms -input ../../../../unbound/specs/document.json -linked ../..
 
 dotnet run -- forms -input ../automatic-tests/input-forms/visibility-configuration.json -output ./generated-output/models -validate -codegen golang -codegen_config ../automatic-tests/input-forms/go-config.json
 
+dotnet run -- forms -input ../automatic-tests/input-forms/tabbed-table-with-configuration.json -output ./generated-output/models -validate -codegen golang -codegen_config ../automatic-tests/input-forms/go-config.json
+
 dotnet run -- forms -input ../automatic-tests/input-forms/form-config-config.json -output ./generated-output/models -validate -codegen golang -codegen_config ../automatic-tests/input-forms/go-config.json
 *)

@@ -1,0 +1,406 @@
+{
+  "types": {
+    "GlobalConfig": {
+      "fields": {}
+    },
+    "User": {
+      "fields": {
+        "Name": "string",
+        "Surname": "string",
+        "Birthday": "Date",
+        "Email": "string",
+        "SubscribeToNewsletter": "boolean"
+      }
+    },
+    "UserGroup": {
+      "fields": {
+        "Name": "string",
+        "Description": "string"
+      }
+    },
+    "Activity": {
+      "fields": {
+        "Description": "string",
+        "Timestamp": "Date"
+      }
+    },
+    "UsersSetup": {
+      "fields": {
+        "Active": {
+          "fun": "Table",
+          "args": [
+            "User"
+          ]
+        },
+        "Inactive": {
+          "fun": "Table",
+          "args": [
+            "User"
+          ]
+        },
+        "Groups": {
+          "fun": "Table",
+          "args": [
+            "UserGroup"
+          ]
+        },
+        "Activities": {
+          "fun": "Table",
+          "args": [
+            "Activity"
+          ]
+        }
+      }
+    },
+    "UsersSetupTabsEnum": {
+      "fun": "Union",
+      "args": [
+        { "caseName": "Active", "fields":{} },
+        { "caseName": "Inactive", "fields":{} },
+        { "caseName": "Groups", "fields":{} },
+        { "caseName": "Activities", "fields":{} }
+      ]
+    },
+    "UsersSetupTabsRef": {
+      "fields": {
+        "Value": "UsersSetupTabsEnum"
+      }
+    },
+    "UserFieldEnum": {
+      "fun": "KeyOf",
+      "args": [
+        "User"
+      ]
+    },
+    "UserFieldRef": {
+      "fields": {
+        "Value": "UserFieldEnum"
+      }
+    },
+    "UserGroupFieldEnum": {
+      "fun": "KeyOf",
+      "args": [
+        "UserGroup"
+      ]
+    },
+    "UserGroupFieldRef": {
+      "fields": {
+        "Value": "UserGroupFieldEnum"
+      }
+    },
+    "ActivityFieldEnum": {
+      "fun": "KeyOf",
+      "args": [
+        "Activity"
+      ]
+    },
+    "ActivityFieldRef": {
+      "fields": {
+        "Value": "ActivityFieldEnum"
+      }
+    },
+    "UsersSetupConfig": {
+      "fields": {
+        "ActiveTabs": {
+          "fun": "MultiSelection",
+          "args": [
+            "UsersSetupTabsRef"
+          ]
+        },
+        "ActiveFields": {
+          "fun": "MultiSelection",
+          "args": [
+            "UserFieldRef"
+          ]
+        },
+        "InactiveFields": {
+          "fun": "MultiSelection",
+          "args": [
+            "UserFieldRef"
+          ]
+        },
+        "GroupsFields": {
+          "fun": "MultiSelection",
+          "args": [
+            "GroupsFieldRef"
+          ]
+        },
+        "ActivityFields": {
+          "fun": "MultiSelection",
+          "args": [
+            "ActivityFieldRef"
+          ]
+        }
+      }
+    }
+  },
+  "apis": {
+    "enumOptions": {
+      "UserFieldsApi": "UserFieldRef",
+      "UserGroupFieldsApi": "UserGroupFieldRef",
+      "ActivityFieldsApi": "ActivityFieldRef"
+    },
+    "entities": {
+      "GlobalConfigApi": {
+        "type": "GlobalConfig",
+        "methods": [
+          "get"
+        ]
+      },
+      "UsersSetupConfigApi": {
+        "type": "UsersSetupConfig",
+        "methods": [
+          "default",
+          "create"
+        ]
+      },
+      "UsersSetupApi": {
+        "type": "UsersSetup",
+        "methods": [
+          "get",
+          "update"
+        ]
+      }
+    },
+    "tables": {
+      "ActiveUsersApi": {
+        "type": "User",
+        "methods": [
+          "create",
+          "delete",
+          "get",
+          "update"
+        ]
+      },
+      "InactiveUsersApi": {
+        "type": "User",
+        "methods": [
+          "create",
+          "delete",
+          "get",
+          "update"
+        ]
+      },
+      "UserGroupsApi": {
+        "type": "UserGroup",
+        "methods": [
+          "create",
+          "delete",
+          "get",
+          "update"
+        ]
+      },
+      "ActivitiesApi": {
+        "type": "Activity",
+        "methods": [
+          "create",
+          "delete",
+          "get",
+          "update"
+        ]
+      }
+    }
+  },
+  "forms": {
+    "UserConfig": {
+      "type": "UserConfig",
+      "fields": {
+        "ActiveFields": {
+          "renderer": "enumMultiselect",
+          "options": "UserFieldsApi"
+        }
+      },
+      "tabs": {
+        "main": {
+          "columns": {
+            "main": {
+              "groups": {
+                "main": [
+                  "ActiveFields"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "UsersSetup": {
+      "type": "UsersSetup",
+      "fields": {
+        "Active": {
+          "renderer": "ActiveUsers"
+        },
+        "Inactive": {
+          "renderer": "InactiveUsers"
+        },
+        "Groups": {
+          "renderer": "UserGroups"
+        },
+        "Activities": {
+          "renderer": "streamingTable",
+          "rowRenderer": "Activity",
+          "api": "ActivitiesApi",
+          "visibleColumns": {
+            "kind": "fieldLookup",
+            "operands": [
+              {
+                "kind": "varLookup",
+                "varName": "global"
+              },
+              "ActivitiesFields"
+            ]
+          }          
+        }
+      },
+      "tabs": {
+        "main": {
+          "columns": {
+            "main": {
+              "groups": {
+                "main": [
+                  "Active"
+                ],
+                "secondary": {
+                  "kind": "fieldLookup",
+                  "operands": [
+                    {
+                      "kind": "varLookup",
+                      "varName": "global"
+                    },
+                    "ActiveTabs"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "ActiveUsers": {
+      "type": "User",
+      "renderer": "finiteTable",
+      "columns": {
+        "Name": {
+          "renderer": "string"
+        },
+        "Surname": {
+          "renderer": "string"
+        },
+        "Birthday": {
+          "renderer": "date"
+        },
+        "Email": {
+          "renderer": "string"
+        },
+        "SubscribeToNewsletter": {
+          "renderer": "bool"
+        }
+      },
+      "api": "ActiveUsersApi",
+      "visibleColumns": {
+        "kind": "fieldLookup",
+        "operands": [
+          {
+            "kind": "varLookup",
+            "varName": "global"
+          },
+          "ActiveFields"
+        ]
+      }
+    },
+    "InactiveUsers": {
+      "type": "User",
+      "renderer": "streamingTable",
+      "columns": {
+        "Name": {
+          "renderer": "string"
+        },
+        "Surname": {
+          "renderer": "string"
+        },
+        "Birthday": {
+          "renderer": "date"
+        },
+        "Email": {
+          "renderer": "string"
+        },
+        "SubscribeToNewsletter": {
+          "renderer": "bool"
+        }
+      },
+      "api": "InactiveUsersApi",
+      "visibleColumns": {
+        "kind": "fieldLookup",
+        "operands": [
+          {
+            "kind": "varLookup",
+            "varName": "global"
+          },
+          "InactiveFields"
+        ]
+      }
+    },
+    "UserGroups": {
+      "type": "UserGroup",
+      "renderer": "streamingTable",
+      "columns": {
+        "Name": {
+          "renderer": "string"
+        },
+        "Description": {
+          "renderer": "string"
+        }
+      },
+      "api": "UserGroupsApi",
+      "visibleColumns": {
+        "kind": "fieldLookup",
+        "operands": [
+          {
+            "kind": "varLookup",
+            "varName": "global"
+          },
+          "GroupsFields"
+        ]
+      }
+    },
+    "Activity": {
+      "type": "Activity",
+      "fields": {
+        "Description": {
+          "renderer": "string"
+        },
+        "Timestamp": {
+          "renderer": "date"
+        }
+      },
+      "tabs": {
+        "main": {
+          "columns": {
+            "main": {
+              "groups": {
+                "main": [
+                  "Description",
+                  "Timestamp"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "launchers": {
+    "UserConfigLauncher": {
+      "kind": "create",
+      "form": "UserConfig",
+      "api": "UserConfigApi",
+      "configApi": "GlobalConfigApi"
+    },
+    "UsersSetup":{
+      "kind": "passthrough",
+      "form": "UsersSetup",
+      "configType": "UserConfig"
+    }
+  }
+}

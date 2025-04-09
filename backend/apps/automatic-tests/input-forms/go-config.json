@@ -4,7 +4,7 @@
     "DeltaTypeName": "ballerina.DeltaString",
     "RequiredImport": null,
     "SupportedRenderers": [
-      "defaultString"
+      "defaultString", "string"
     ],
     "DefaultValue": "\"\""
   },
@@ -13,7 +13,7 @@
     "DeltaTypeName": "ballerina.DeltaInt",
     "RequiredImport": null,
     "SupportedRenderers": [
-      "defaultNumber"
+      "defaultNumber", "number"
     ],
     "DefaultValue": "0"
   },
@@ -22,7 +22,7 @@
     "DeltaTypeName": "ballerina.DeltaBool",
     "RequiredImport": null,
     "SupportedRenderers": [
-      "defaultBoolean"
+      "defaultBoolean", "bool"
     ],
     "DefaultValue": "false"
   },
@@ -31,7 +31,7 @@
     "DeltaTypeName": "ballerina.DeltaTime",
     "RequiredImport": "time",
     "SupportedRenderers": [
-      "defaultDate"
+      "defaultDate", "date"
     ],
     "DefaultValue": "time.Now()"
   },
@@ -39,7 +39,7 @@
     "GeneratedTypeName": "uuid.UUID",
     "DeltaTypeName": "ballerina.DeltaGuid",
     "RequiredImport": "github.com/google/uuid",
-    "SupportedRenderers": [],
+    "SupportedRenderers": ["guid"],
     "DefaultValue": "uuid.Nil"
   },
   "Unit": {
@@ -47,7 +47,7 @@
     "DeltaTypeName": "ballerina.DeltaUnit",
     "RequiredImport": "ballerina.com/core",
     "SupportedRenderers": [
-      "defaultUnit"
+      "defaultUnit", "unit"
     ],
     "DefaultConstructor": "ballerina.DefaultUnit"
   },
@@ -57,10 +57,10 @@
     "RequiredImport": "ballerina.com/core",
     "SupportedRenderers": {
       "Enum": [
-        "defaultEnum"
+        "defaultEnum", "enumSingleSelect"
       ],
       "Stream": [
-        "defaultInfiniteStream"
+        "defaultInfiniteStream", "streamSingleselection"
       ]
     },
     "DefaultConstructor": "ballerina.None"
@@ -71,10 +71,10 @@
     "RequiredImport": "ballerina.com/core",
     "SupportedRenderers": {
       "Enum": [
-        "defaultEnumMultiselect"
+        "defaultEnumMultiselect", "enumMultiselect"
       ],
       "Stream": [
-        "defaultInfiniteStreamMultiselect"
+        "defaultInfiniteStreamMultiselect", "streamMultiselect"
       ]
     },
     "DefaultConstructor": "ballerina.DefaultSet"
@@ -84,7 +84,7 @@
     "DeltaTypeName": "ballerina.DeltaArray",
     "RequiredImport": "ballerina.com/core",
     "SupportedRenderers": [
-      "defaultList"
+      "defaultList", "list"
     ],
     "MappingFunction": "ballerina.MapArray",
     "DefaultConstructor": "ballerina.DefaultArray"
@@ -94,7 +94,7 @@
     "DeltaTypeName": "ballerina.DeltaMap",
     "RequiredImport": "ballerina.com/core",
     "SupportedRenderers": [
-      "defaultMap"
+      "defaultMap", "map"
     ],
     "DefaultConstructor": "ballerina.DefaultMap"
   },
@@ -103,7 +103,7 @@
     "DeltaTypeName": "ballerina.DeltaSum",
     "RequiredImport": "ballerina.com/core",
     "SupportedRenderers": [
-      "defaultSum"
+      "defaultSum", "sum"
     ],
     "LeftConstructor": "ballerina.Left",
     "RightConstructor": "ballerina.Right"
@@ -115,7 +115,7 @@
       "DeltaTypeName": "ballerina.DeltaTuple2",
       "RequiredImport": "ballerina.com/core",
       "SupportedRenderers": [
-        "defaultTuple2"
+        "defaultTuple2", "tuple2"
       ],
       "Constructor": "ballerina.NewTuple2"
     },
@@ -125,7 +125,7 @@
       "DeltaTypeName": "ballerina.DeltaTuple3",
       "RequiredImport": "ballerina.com/core",
       "SupportedRenderers": [
-        "defaultTuple3"
+        "defaultTuple3", "tuple3"
       ],
       "Constructor": "ballerina.NewTuple3"
     },
@@ -135,7 +135,7 @@
       "DeltaTypeName": "ballerina.DeltaTuple4",
       "RequiredImport": "ballerina.com/core",
       "SupportedRenderers": [
-        "defaultTuple4"
+        "defaultTuple4", "tuple4"
       ],
       "Constructor": "ballerina.NewTuple4"
     },    
@@ -145,7 +145,7 @@
       "DeltaTypeName": "ballerina.DeltaTuple5",
       "RequiredImport": "ballerina.com/core",
       "SupportedRenderers": [
-        "defaultTuple5"
+        "defaultTuple5", "tuple5"
       ],
       "Constructor": "ballerina.NewTuple5"
     },    
@@ -155,7 +155,7 @@
       "DeltaTypeName": "ballerina.DeltaTuple6",
       "RequiredImport": "ballerina.com/core",
       "SupportedRenderers": [
-        "defaultTuple6"
+        "defaultTuple6", "tuple6"
       ],
       "Constructor": "ballerina.NewTuple6"
     },    
@@ -165,14 +165,14 @@
       "DeltaTypeName": "ballerina.DeltaTuple7",
       "RequiredImport": "ballerina.com/core",
       "SupportedRenderers": [
-        "defaultTuple7"
+        "defaultTuple7", "tuple7"
       ],
       "Constructor": "ballerina.NewTuple7"
     }
   ],
   "Union": {
     "SupportedRenderers": [
-      "defaultUnionRenderer"
+      "defaultUnionRenderer", "union"
     ]
   },
   "Custom": {
@@ -180,7 +180,7 @@
       "GeneratedTypeName": "ballerina.Unit",
       "RequiredImport": "ballerina.com/core",
       "SupportedRenderers": [
-        "defaultInjectedType"
+        "defaultInjectedType", "injectedType"
       ],
       "DefaultConstructor": "ballerina.NewUnit",
       "DeltaTypeName": "ballerina.DeltaUnit",
@@ -190,7 +190,7 @@
       "GeneratedTypeName": "ballerina.Unit",
       "RequiredImport": "ballerina.com/core",
       "SupportedRenderers": [
-        "defaultCategory"
+        "defaultCategory", "injectedCategory"
       ],
       "DefaultConstructor": "ballerina.NewUnit",
       "DeltaTypeName": "ballerina.DeltaUnit",
@@ -200,7 +200,7 @@
       "GeneratedTypeName": "int32",
       "RequiredImport": "",
       "SupportedRenderers": [
-        "defaultInt32"
+        "defaultInt32", "int32"
       ],
       "DefaultConstructor": "ballerina.DefaultInt32",
       "DeltaTypeName": "ballerina.DeltaInt32",
@@ -210,7 +210,7 @@
       "GeneratedTypeName": "float32",
       "RequiredImport": "",
       "SupportedRenderers": [
-        "defaultFloat32"
+        "defaultFloat32", "float32"
       ],
       "DefaultConstructor": "ballerina.DefaultFloat32",
       "DeltaTypeName": "ballerina.DeltaFloat32",
@@ -220,7 +220,7 @@
       "GeneratedTypeName": "float64",
       "RequiredImport": "",
       "SupportedRenderers": [
-        "defaultFloat64"
+        "defaultFloat64", "float64"
       ],
       "DefaultConstructor": "ballerina.DefaultFloat64",
       "DeltaTypeName": "ballerina.DeltaFloat64",
