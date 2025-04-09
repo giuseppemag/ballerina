@@ -3,6 +3,10 @@ import {
   ApiConverters,
   BuiltIns,
   FieldName,
+  FormLayout,
+  TabLayout,
+  ColumnLayout,
+  GroupLayout,
   FormsConfigMerger,
   InjectedPrimitives,
   isObject,
@@ -33,15 +37,6 @@ export type ParsedFormConfig<T> = {
   fields: Map<FieldName, ParsedRenderer<T>>;
   tabs: FormLayout;
   header?: string;
-};
-
-export type FormLayout = OrderedMap<string, TabLayout>;
-export type GroupLayout = Array<FieldName>;
-export type ColumnLayout = {
-  groups: OrderedMap<string, GroupLayout>;
-};
-export type TabLayout = {
-  columns: OrderedMap<string, ColumnLayout>;
 };
 
 export type BaseLauncher = {
@@ -176,10 +171,15 @@ export const FormsConfig = {
             ]),
           );
 
+        let keyOfTypes: Map<TypeName, RawType<T>> = Map();
         let parsedTypes: Map<TypeName, ParsedType<T>> = Map();
         const rawTypesFromConfig = formsConfig.types;
         const rawTypeNames = Set(Object.keys(rawTypesFromConfig));
         Object.entries(rawTypesFromConfig).forEach(([rawTypeName, rawType]) => {
+          if (RawType.isKeyOf<T>(rawType)) {
+            keyOfTypes = keyOfTypes.set(rawTypeName, rawType);
+            return;
+          }
           if (RawType.isExtendedType<T>(rawType)) {
             parsedTypes = parsedTypes.set(
               rawTypeName,
@@ -254,6 +254,27 @@ export const FormsConfig = {
           );
           parsedTypes = parsedTypes.set(rawTypeName, parsedType);
         });
+        const keyOfTypesResult = ValueOrErrors.Operations.All(
+          List<ValueOrErrors<[string, ParsedType<T>], string>>(
+            keyOfTypes.entrySeq().map(([rawTypeName, rawType]) => {
+              return ParsedType.Operations.ParseRawKeyOf(
+                rawTypeName,
+                rawType,
+                parsedTypes,
+              ).Then((parsedType) =>
+                ValueOrErrors.Default.return([rawTypeName, parsedType]),
+              );
+            }),
+          ),
+        );
+        if (keyOfTypesResult.kind == "errors") {
+          errors = errors.concat(keyOfTypesResult.errors.toArray());
+          return ValueOrErrors.Default.throw(errors);
+        }
+        keyOfTypesResult.value.forEach(([rawTypeName, parsedType]) => {
+          parsedTypes = parsedTypes.set(rawTypeName, parsedType);
+        });
+
         let enums: Map<string, TypeName> = Map();
         Object.entries(formsConfig.apis.enumOptions).forEach(
           ([enumOptionName, enumOption]) =>
@@ -412,6 +433,8 @@ export const FormsConfig = {
           console.error(errors);
           return ValueOrErrors.Default.throw(errors);
         }
+
+        console.debug("parsedTypes", parsedTypes.toJS());
 
         return ValueOrErrors.Default.return({
           types: parsedTypes,
