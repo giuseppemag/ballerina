@@ -104,8 +104,7 @@ export const RawFieldType = {
   ): _ is { fun: GenericType; args: Array<RawFieldType<T>> } =>
     hasFun(_) && isGenericType(_.fun) && hasArgs(_),
   isMaybeLookup: (_: any) => isString(_),
-  isLookup: <T>(_: RawFieldType<T>, forms: Set<TypeName>): _ is TypeName =>
-    isString(_) && forms.has(_),
+  isLookup: <T>(_: RawFieldType<T>): _ is TypeName => isString(_),
   isList: <T>(
     _: RawFieldType<T>,
   ): _ is { fun: "List"; args: Array<RawFieldType<T>> } =>
@@ -136,7 +135,10 @@ export const RawFieldType = {
     typeof _ == "object" && "caseName" in _,
   isUnion: <T>(
     _: RawFieldType<T>,
-  ): _ is { fun: "Union"; args: Array<{ caseName: string; fields?: object }> } =>
+  ): _ is {
+    fun: "Union";
+    args: Array<{ caseName: string; fields?: object | string }>;
+  } =>
     hasFun(_) &&
     isGenericType(_.fun) &&
     hasArgs(_) &&
@@ -450,7 +452,9 @@ export const ParsedType = {
       if (RawFieldType.isUnionCase(rawFieldType)) {
         return ParsedType.Operations.ParseRawFieldType(
           rawFieldType.caseName,
-          { fields: rawFieldType.fields ?? {} },
+          typeof rawFieldType.fields == "string"
+            ? rawFieldType.fields
+            : { fields: rawFieldType.fields ?? {} },
           types,
           injectedPrimitives,
         ).Then((parsedFields) =>
@@ -493,7 +497,7 @@ export const ParsedType = {
           ),
         );
       }
-      if (RawFieldType.isLookup(rawFieldType, types))
+      if (RawFieldType.isLookup(rawFieldType))
         return ValueOrErrors.Default.return(
           ParsedType.Default.lookup(rawFieldType),
         );
