@@ -1,4 +1,4 @@
-import { List, OrderedSet, Map } from "immutable";
+import { OrderedSet, Map, OrderedMap } from "immutable";
 import {
   BasicUpdater,
   id,
@@ -27,7 +27,9 @@ import {
   ValueRecord,
   Delta,
   ParsedType,
-  ParsedRecordType,
+  Sum,
+  AsyncState,
+  FormLayout,
 } from "../../../../main";
 import { Template } from "../../../template/state";
 import { Value } from "../../../value/state";
@@ -48,7 +50,11 @@ export const Form = <
       Context & {
         customFormState: State["formFieldStates"][f]["customFormState"];
         commonFormState: State["formFieldStates"][f]["commonFormState"];
-      } & Value<f> & { disabled: boolean; visible: boolean; type: ParsedType<any> },
+      } & Value<f> & {
+          disabled: boolean;
+          visible: boolean;
+          type: ParsedType<any>;
+        },
       {
         customFormState: State["formFieldStates"][f]["customFormState"];
         commonFormState: State["formFieldStates"][f]["commonFormState"];
@@ -117,6 +123,7 @@ export const Form = <
                 elementFormStates: _.formFieldStates[field].elementFormStates,
                 visibilities: visibilitiesFromParent,
                 disabledFields: disabledFieldsFromParent,
+                globalConfiguration: _.globalConfiguration,
               } as any;
             })
             .mapState<State>((_) => (current) => {
@@ -234,6 +241,43 @@ export const Form = <
           >,
           EntityFormView<Fields, FieldStates, Context, ForeignMutationsExpected>
         >((props) => {
+          const globalConfig: Sum<PredicateValue, "not initialized"> = (() => {
+            if (
+              props.context.globalConfiguration.kind != "l" &&
+              props.context.globalConfiguration.kind != "r"
+            ) {
+              // global config is in an async state
+              if (
+                AsyncState.Operations.hasValue(
+                  props.context.globalConfiguration,
+                )
+              ) {
+                return Sum.Default.left<PredicateValue, "not initialized">(
+                  props.context.globalConfiguration.value,
+                );
+              }
+              return Sum.Default.right<PredicateValue, "not initialized">(
+                "not initialized",
+              );
+            }
+            return props.context.globalConfiguration as Sum<
+              PredicateValue,
+              "not initialized"
+            >;
+          })();
+
+          if (globalConfig.kind == "r") {
+            console.error("global configuration is not initialized");
+            return <></>;
+          }
+
+          const Layout = FormLayout.Operations.CalculateLayout(
+            OrderedMap([["global", globalConfig.value]]),
+            props.context.layout,
+          );
+          if (Layout.kind == "errors") {
+            return <>Error parsing layout {JSON.stringify(Layout.errors)}</>;
+          }
           const visibleFieldKeys: OrderedSet<FieldName> = (() => {
             if (
               props.context.visibilities == undefined ||
@@ -268,6 +312,10 @@ export const Form = <
             <>
               <props.view
                 {...props}
+                context={{
+                  ...props.context,
+                  layout: Layout.value,
+                }}
                 VisibleFieldKeys={visibleFieldKeys}
                 DisabledFieldKeys={disabledFieldKeys}
                 EmbeddedFields={fieldTemplates}

@@ -20,6 +20,10 @@ import {
   ValueRecord,
   Delta,
   ParsedType,
+  FormLayout,
+  PredicateFormLayout,
+  Sum,
+  AsyncState,
 } from "../../../../main";
 import { Template, View } from "../../../template/state";
 import { Value } from "../../../value/state";
@@ -98,6 +102,10 @@ export type EntityFormContext<
     disabledFields: FormFieldPredicateEvaluation | undefined;
     label?: string;
     type: ParsedType<any>;
+    layout: PredicateFormLayout;
+    globalConfiguration:
+      | Sum<PredicateValue, "not intialized">
+      | AsyncState<PredicateValue>;
   } & Value<ValueRecord> & { rootValue: ValueRecord };
 export type OnChange<Entity> = (
   updater: BasicUpdater<Entity>,

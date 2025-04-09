@@ -57,10 +57,7 @@ export const DateForm = <Context extends FormLabel, ForeignMutationsExpected>(
                 type: props.context.type,
               };
               setTimeout(() => {
-                props.foreignMutations.onChange(
-                  replaceWith(newValue),
-                  delta,
-                );
+                props.foreignMutations.onChange(replaceWith(newValue), delta);
               }, 0);
             }
           },

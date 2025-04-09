@@ -65,11 +65,31 @@ const enumApis: EnumOptionsSources = (enumName: string) =>
                 1,
                 0,
               )
-          : () =>
-              PromiseRepo.Default.mock(() => {
-                alert(`Cannot find enum API ${enumName}`);
-                return [];
-              });
+          : enumName == "addressesFields"
+            ? () =>
+                PromiseRepo.Default.mock(
+                  () =>
+                    [
+                      "addressByCity",
+                      "departments",
+                      "schoolAddress",
+                      "mainAddress",
+                      "addressesAndAddressesWithLabel",
+                      "addressesWithColorLabel",
+                      "addressesBy",
+                      "permissions",
+                      "cityByDepartment",
+                      "holidays",
+                    ].map((_) => ({ Value: _ })),
+                  undefined,
+                  1,
+                  0,
+                )
+            : () =>
+                PromiseRepo.Default.mock(() => {
+                  alert(`Cannot find enum API ${enumName}`);
+                  return [];
+                });
 const entityApis: EntityApis = {
   create: (apiName: string) =>
     apiName == "person"
@@ -376,6 +396,17 @@ const entityApis: EntityApis = {
         return (_: Guid) => {
           return Promise.resolve({
             IsAdmin: false,
+            ActiveFields: [
+              { Value: "schoolAddress" },
+              { Value: "mainAddress" },
+              { Value: "addressesAndAddressesWithLabel" },
+              { Value: "addressesWithColorLabel" },
+              { Value: "addressesBy" },
+              { Value: "permissions" },
+              { Value: "cityByDepartment" },
+              { Value: "holidays" },
+              { Value: "addressesByCity" },
+            ],
             ERP: {
               caseName: "ERP:SAP",
               fields: {

@@ -41,6 +41,51 @@
         }
       ]
     },
+    "AddressesFieldsEnum": {
+      "fun": "Union",
+      "args": [
+        {
+          "caseName": "departments"
+        },
+        {
+          "caseName": "schoolAddress"
+        },
+        {
+          "caseName": "mainAddress"
+        },
+        {
+          "caseName": "addressesAndAddressesWithLabel"
+        },
+        {
+          "caseName": "addressesWithColorLabel"
+        },
+        {
+          "caseName": "addressesBy"
+        },
+        {
+          "caseName": "permissions"
+        },
+        {
+          "caseName": "cityByDepartment"
+        },
+        {
+          "caseName": "holidays"
+        }
+      ]
+    },
+    "AddressesFieldRef": {
+      "fields": {
+        "Value": "AddressesFieldsEnum"
+      }
+    },
+    "AddressesConfig": {
+      "fields": {
+        "ActiveFields": {
+          "fun": "MultiSelection",
+          "args": ["AddressesFieldRef"]
+        }
+      }
+    },
     "ERPConfig": {
       "fun": "Union",
       "args": [
@@ -62,7 +107,11 @@
       "extends": [],
       "fields": {
         "IsAdmin": "boolean",
-        "ERP": "ERPConfig"
+        "ERP": "ERPConfig",
+        "ActiveFields": {
+          "fun": "MultiSelection",
+          "args": ["AddressesFieldRef"]
+        }
       }
     },
     "CollectionReference": {
@@ -249,10 +298,13 @@
         "schoolAddress": "Address",
         "mainAddress": {
           "fun": "Sum",
-          "args": ["string", {
-            "fun": "Tuple",
-            "args": ["Address", "PlotInfo"]
-          }]
+          "args": [
+            "string",
+            {
+              "fun": "Tuple",
+              "args": ["Address", "PlotInfo"]
+            }
+          ]
         },
         "addressesAndAddressesWithLabel": {
           "fun": "Tuple",
@@ -283,10 +335,12 @@
         },
         "cutOffDates": {
           "fun": "List",
-          "args": [{
-            "fun": "Sum",
-            "args": ["unit", "Date"]
-          }]
+          "args": [
+            {
+              "fun": "Sum",
+              "args": ["unit", "Date"]
+            }
+          ]
         },
         "addressesBy": {
           "fun": "Sum",
@@ -357,6 +411,7 @@
   },
   "apis": {
     "enumOptions": {
+      "addressesFields": "AddressesFieldRef",
       "genders": "GenderRef",
       "colors": "ColorRef",
       "interests": "InterestRef",
@@ -490,6 +545,28 @@
         }
       }
     },
+    "addressesConfig": {
+      "type": "AddressesConfig",
+      "fields": {
+        "ActiveFields": {
+          "label": "addresses tab field selection",
+          "renderer": "defaultEnumMultiselect",
+          "options": "addressesFields"
+        }
+      },
+      "tabs": {
+        "main": {
+          "columns": {
+            "main": {
+              "groups": {
+                "main": ["ActiveFields"]
+              }
+            }
+          }
+        }
+      }
+    },
+
     "person": {
       "type": "Person",
       "fields": {
@@ -923,18 +1000,16 @@
             },
             "addresses": {
               "groups": {
-                "main": [
-                  "departments",
-                  "schoolAddress",
-                  "mainAddress",
-                  "addressesAndAddressesWithLabel",
-                  "addressesByCity",
-                  "addressesWithColorLabel",
-                  "addressesBy",
-                  "permissions",
-                  "cityByDepartment",
-                  "holidays"
-                ]
+                "main": {
+                  "kind": "fieldLookup",
+                  "operands": [
+                    {
+                      "kind": "varLookup",
+                      "varName": "global"
+                    },
+                    "ActiveFields"
+                  ]
+                }
               }
             }
           }
@@ -959,6 +1034,11 @@
       "kind": "passthrough",
       "form": "person",
       "configType": "GlobalConfiguration"
+    },
+    "addresses-config": {
+      "kind": "passthrough",
+      "form": "addressesConfig",
+      "configApi": "GlobalConfiguration"
     }
   }
 }

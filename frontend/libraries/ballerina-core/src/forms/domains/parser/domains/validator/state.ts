@@ -6,11 +6,12 @@ import {
   FormsConfigMerger,
   InjectedPrimitives,
   isObject,
-  isString,
   ParsedType,
   RawFieldType,
   RawType,
   TypeName,
+  PredicateFormLayout,
+  FormLayout,
 } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 import { ParsedRenderer } from "../renderer/state";
@@ -31,17 +32,8 @@ export type ParsedFormConfig<T> = {
   name: string;
   type: ParsedType<T>;
   fields: Map<FieldName, ParsedRenderer<T>>;
-  tabs: FormLayout;
+  tabs: PredicateFormLayout;
   header?: string;
-};
-
-export type FormLayout = OrderedMap<string, TabLayout>;
-export type GroupLayout = Array<FieldName>;
-export type ColumnLayout = {
-  groups: OrderedMap<string, GroupLayout>;
-};
-export type TabLayout = {
-  columns: OrderedMap<string, ColumnLayout>;
 };
 
 export type BaseLauncher = {
@@ -259,7 +251,7 @@ export const FormsConfig = {
           );
           parsedTypes = parsedTypes.set(rawTypeName, parsedType);
         });
-        
+
         const keyOfTypesResult = ValueOrErrors.Operations.All(
           List<ValueOrErrors<[string, ParsedType<T>], string>>(
             keyOfTypes.entrySeq().map(([rawTypeName, rawType]) => {
@@ -374,28 +366,16 @@ export const FormsConfig = {
               },
             );
 
-            let tabs: FormLayout = OrderedMap();
-            Object.entries(form.tabs).forEach(
-              ([tabName, tab]: [tabName: string, tab: any]) => {
-                let cols: TabLayout = { columns: OrderedMap() };
-                tabs = tabs.set(tabName, cols);
-                Object.entries(tab.columns).forEach(
-                  ([colName, col]: [colName: string, col: any]) => {
-                    let column: ColumnLayout = { groups: OrderedMap() };
-                    cols.columns = cols.columns.set(colName, column);
-                    Object.keys(col.groups).forEach((groupName) => {
-                      const groupConfig = col.groups[groupName];
-                      let group: GroupLayout = [];
-                      column.groups = column.groups.set(groupName, group);
-                      groupConfig.forEach((fieldName: any) => {
-                        group.push(fieldName);
-                      });
-                    });
-                  },
-                );
-              },
+            const parsedTabs = FormLayout.Operations.ParseLayout(
+              form,
+              formName,
             );
-            parsedForm.tabs = tabs;
+            if (parsedTabs.kind == "errors") {
+              errors = errors.concat(parsedTabs.errors.toArray());
+              return ValueOrErrors.Default.throw(errors);
+            }
+            parsedForm.tabs = parsedTabs.value;
+
             forms = forms.set(formName, parsedForm);
           },
         );

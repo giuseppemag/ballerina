@@ -1,4 +1,4 @@
-import { Map } from "immutable";
+import { Map, OrderedMap } from "immutable";
 import {
   SimpleCallback,
   Debounce,
@@ -148,7 +148,7 @@ export const InfiniteMultiselectDropdownForm = <
           clearSelection: () => {
             const delta: Delta = {
               kind: "SetReplace",
-              replace: PredicateValue.Default.record(Map()),
+              replace: PredicateValue.Default.record(OrderedMap()),
               state: {
                 commonFormState: props.context.commonFormState,
                 customFormState: props.context.customFormState,

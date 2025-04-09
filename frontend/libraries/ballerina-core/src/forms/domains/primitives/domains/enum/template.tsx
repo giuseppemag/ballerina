@@ -31,11 +31,21 @@ export const EnumForm = <
   validation?: BasicFun<ValueOption, Promise<FieldValidation>>,
 ) => {
   const Co = CoTypedFactory<
-    Context & Value<ValueOption> & { disabled: boolean; visible: boolean; type: ParsedType<any> },
+    Context &
+      Value<ValueOption> & {
+        disabled: boolean;
+        visible: boolean;
+        type: ParsedType<any>;
+      },
     EnumFormState
   >();
   return Template.Default<
-    Context & Value<ValueOption> & { disabled: boolean; visible: boolean; type: ParsedType<any> },
+    Context &
+      Value<ValueOption> & {
+        disabled: boolean;
+        visible: boolean;
+        type: ParsedType<any>;
+      },
     EnumFormState,
     ForeignMutationsExpected & {
       onChange: OnChange<ValueOption>;
@@ -67,10 +77,13 @@ export const EnumForm = <
                 return;
               const newSelection =
                 props.context.customFormState.options.sync.value.get(_);
-              if (newSelection == undefined){
+              if (newSelection == undefined) {
                 const delta: Delta = {
                   kind: "OptionReplace",
-                  replace: PredicateValue.Default.option(false, PredicateValue.Default.unit()),
+                  replace: PredicateValue.Default.option(
+                    false,
+                    PredicateValue.Default.unit(),
+                  ),
                   state: {
                     commonFormState: props.context.commonFormState,
                     customFormState: props.context.customFormState,

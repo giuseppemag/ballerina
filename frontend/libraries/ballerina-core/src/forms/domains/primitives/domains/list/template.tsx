@@ -63,11 +63,11 @@ export const ListForm = <
           onChange: OnChange<PredicateValue>;
         } => ({
           ...props.foreignMutations,
-          onChange: (elementUpdater, nestedDelta) => {            
+          onChange: (elementUpdater, nestedDelta) => {
             const delta: Delta = {
               kind: "ArrayValue",
               value: [elementIndex, nestedDelta],
-            }
+            };
             props.foreignMutations.onChange(
               Updater((list) =>
                 list.values.has(elementIndex)
@@ -165,8 +165,9 @@ export const ListForm = <
                   commonFormState: props.context.commonFormState,
                   elementFormStates: props.context.elementFormStates,
                 },
-                type: (props.context.type as ParsedApplicationType<any>).args[0],
-              }
+                type: (props.context.type as ParsedApplicationType<any>)
+                  .args[0],
+              };
               props.foreignMutations.onChange(
                 Updater((list) =>
                   PredicateValue.Default.tuple(
@@ -182,7 +183,7 @@ export const ListForm = <
               const delta: Delta = {
                 kind: "ArrayRemoveAt",
                 index: _,
-              }
+              };
               props.foreignMutations.onChange(
                 Updater((list) =>
                   PredicateValue.Default.tuple(
@@ -197,7 +198,7 @@ export const ListForm = <
                 kind: "ArrayMoveFromTo",
                 from: index,
                 to: to,
-              }
+              };
               props.foreignMutations.onChange(
                 Updater((list) =>
                   PredicateValue.Default.tuple(
@@ -214,7 +215,7 @@ export const ListForm = <
               const delta: Delta = {
                 kind: "ArrayDuplicateAt",
                 index: _,
-              }
+              };
               props.foreignMutations.onChange(
                 Updater((list) =>
                   PredicateValue.Default.tuple(
@@ -229,8 +230,9 @@ export const ListForm = <
                 kind: "ArrayAddAt",
                 value: [_, Element.Default()],
                 elementState: ElementFormState.Default(),
-                elementType: (props.context.type as ParsedApplicationType<any>).args[0],
-              }
+                elementType: (props.context.type as ParsedApplicationType<any>)
+                  .args[0],
+              };
               props.foreignMutations.onChange(
                 Updater((list) =>
                   PredicateValue.Default.tuple(
