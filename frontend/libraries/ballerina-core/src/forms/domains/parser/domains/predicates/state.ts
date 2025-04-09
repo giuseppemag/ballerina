@@ -413,6 +413,13 @@ export const PredicateValue = {
         value.kind == "varLookup"
       );
     },
+    IsCustom: (value: PredicateValue | Expr): value is ValueCustom => {
+      return (
+        typeof value == "object" &&
+        !PredicateValue.Operations.IsDate(value) &&
+        value.kind == "custom"
+      );
+    },
     ParseAsDate: (json: any): ValueOrErrors<PredicateValue, string> => {
       if (PredicateValue.Operations.IsDate(json))
         return ValueOrErrors.Default.return(json);
