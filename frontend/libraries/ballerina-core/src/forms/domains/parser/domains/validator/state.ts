@@ -3,10 +3,6 @@ import {
   ApiConverters,
   BuiltIns,
   FieldName,
-  FormLayout,
-  TabLayout,
-  ColumnLayout,
-  GroupLayout,
   FormsConfigMerger,
   InjectedPrimitives,
   isObject,
@@ -37,6 +33,15 @@ export type ParsedFormConfig<T> = {
   fields: Map<FieldName, ParsedRenderer<T>>;
   tabs: FormLayout;
   header?: string;
+};
+
+export type FormLayout = OrderedMap<string, TabLayout>;
+export type GroupLayout = Array<FieldName>;
+export type ColumnLayout = {
+  groups: OrderedMap<string, GroupLayout>;
+};
+export type TabLayout = {
+  columns: OrderedMap<string, ColumnLayout>;
 };
 
 export type BaseLauncher = {
@@ -170,8 +175,8 @@ export const FormsConfig = {
               `the formsConfig does not contain an Api Converter for all injected primitives`,
             ]),
           );
-
         let keyOfTypes: Map<TypeName, RawType<T>> = Map();
+
         let parsedTypes: Map<TypeName, ParsedType<T>> = Map();
         const rawTypesFromConfig = formsConfig.types;
         const rawTypeNames = Set(Object.keys(rawTypesFromConfig));
@@ -254,6 +259,7 @@ export const FormsConfig = {
           );
           parsedTypes = parsedTypes.set(rawTypeName, parsedType);
         });
+        
         const keyOfTypesResult = ValueOrErrors.Operations.All(
           List<ValueOrErrors<[string, ParsedType<T>], string>>(
             keyOfTypes.entrySeq().map(([rawTypeName, rawType]) => {
@@ -433,8 +439,6 @@ export const FormsConfig = {
           console.error(errors);
           return ValueOrErrors.Default.throw(errors);
         }
-
-        console.debug("parsedTypes", parsedTypes.toJS());
 
         return ValueOrErrors.Default.return({
           types: parsedTypes,
