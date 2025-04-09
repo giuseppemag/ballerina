@@ -123,8 +123,8 @@ module Runner =
                             [| ("types", JsonValue.Record mergedJson.Types)
                                ("apis",
                                 JsonValue.Record
-                                  [| ("enums", JsonValue.Record mergedJson.Enums)
-                                     ("streams", JsonValue.Record mergedJson.Streams)
+                                  [| ("enumOptions", JsonValue.Record mergedJson.Enums)
+                                     ("searchableStreams", JsonValue.Record mergedJson.Streams)
                                      ("entities", JsonValue.Record mergedJson.Entities) |])
                                ("forms", JsonValue.Record mergedJson.Forms)
                                ("launchers", JsonValue.Record mergedJson.Launchers) |]
