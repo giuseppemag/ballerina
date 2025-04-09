@@ -979,7 +979,7 @@ export const ParsedRenderer = {
                     OrderedMap(
                       options.map((o: EnumReference) => [
                         o.Value,
-                        PredicateValue.Default.record(Map(o)),
+                        PredicateValue.Default.record(OrderedMap(o)),
                       ]),
                     ),
                 );
@@ -1002,7 +1002,7 @@ export const ParsedRenderer = {
                     OrderedMap(
                       options.map((o: EnumReference) => [
                         o.Value,
-                        PredicateValue.Default.record(Map(o)),
+                        PredicateValue.Default.record(OrderedMap(o)),
                       ]),
                     ),
                 );

@@ -17,8 +17,9 @@ import {
   DeltaCustom,
   ValueOrErrors,
   ParsedType,
+  ValueRecord,
 } from "ballerina-core";
-import { List, Set, Map } from "immutable";
+import { List, Set, Map, OrderedMap } from "immutable";
 // import { PersonView } from "./domains/person/views/main-view";
 import {
   PersonContainerFormView,
@@ -62,6 +63,8 @@ export const FormsApp = (props: {}) => {
   const [personPassthroughFormState, setPersonPassthroughFormState] = useState(
     FormRunnerState.Default(),
   );
+  const [personAddressConfigFormState, setPersonAddressConfigFormState] =
+    useState(FormRunnerState.Default());
   const [personState, setPersonState] = useState(Person.Default.mocked());
   const [formErrors, setFormErrors] = useState<List<string>>(List());
   const [formSuccess, setFormSuccess] = useState(false);
@@ -173,6 +176,29 @@ export const FormsApp = (props: {}) => {
       const toApiRawParser =
         configFormsParser.formsConfig.sync.value.value.passthrough.get(
           "person-transparent",
+        )!().toApiParser;
+      setEntityPath(
+        DeltaTransfer.Default.FromDelta(
+          toApiRawParser,
+          parseCustomDelta,
+        )(delta),
+      );
+    }
+  };
+
+  const onAddressFieldsChange = (updater: Updater<any>, delta: Delta): void => {
+    if (personPassthroughFormState.form.kind == "r") return;
+    setTimeout(() => {}, 500);
+    const newEntity = updater(globalConfiguration.value);
+    console.log("patching entity", newEntity);
+    setGlobalConfiguration(replaceWith(Sum.Default.left(newEntity)));
+    if (
+      configFormsParser.formsConfig.sync.kind == "loaded" &&
+      configFormsParser.formsConfig.sync.value.kind == "l"
+    ) {
+      const toApiRawParser =
+        configFormsParser.formsConfig.sync.value.value.passthrough.get(
+          "addresses-config",
         )!().toApiParser;
       setEntityPath(
         DeltaTransfer.Default.FromDelta(
@@ -398,6 +424,7 @@ export const FormsApp = (props: {}) => {
                         Form successfully submitted
                       </div>
                     )}
+                    
                     <FormRunnerTemplate
                       context={{
                         ...configFormsParser,
@@ -463,6 +490,49 @@ export const FormsApp = (props: {}) => {
                         DeltaErrors:{" "}
                         {JSON.stringify(entityPath.errors, null, 2)}
                       </p>
+                    )}
+                    {globalConfiguration.kind == "l" && (
+                      <div
+                        style={{
+                          border: "2px solid lightblue",
+                          display: "inline-block",
+                          verticalAlign: "top",
+                        }}
+                      >
+                        <p>Addresses config</p>
+                        <FormRunnerTemplate
+                          context={{
+                            ...configFormsParser,
+                            ...personAddressConfigFormState,
+                            formRef: {
+                              formName: "addresses-config",
+                              kind: "passthrough",
+                              containerWrapper: PassthroughFormContainerWrapper,
+                              entity: Sum.Default.left(
+                                PredicateValue.Default.record(
+                                  OrderedMap([
+                                    [
+                                      "ActiveFields",
+                                      (
+                                        globalConfiguration.value as ValueRecord
+                                      ).fields.get("ActiveFields")!,
+                                    ],
+                                  ]),
+                                ),
+                              ),
+                              globalConfiguration,
+                              onEntityChange: onAddressFieldsChange,
+                            },
+                            showFormParsingErrors: ShowFormsParsingErrors,
+                            extraContext: {
+                              flags: Set(["BC", "X"]),
+                            },
+                          }}
+                          setState={setPersonAddressConfigFormState}
+                          view={unit}
+                          foreignMutations={unit}
+                        />
+                      </div>
                     )}
                     <FormRunnerTemplate
                       context={{

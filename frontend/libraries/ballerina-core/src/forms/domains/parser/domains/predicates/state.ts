@@ -1,4 +1,4 @@
-import { Map, Set, List } from "immutable";
+import { Map, Set, List, OrderedMap } from "immutable";
 import {
   ValueOrErrors,
   MapRepo,
@@ -313,7 +313,7 @@ export const PredicateValue = {
       kind: "tuple",
       values,
     }),
-    record: (fields: Map<string, PredicateValue>): ValueRecord => ({
+    record: (fields: OrderedMap<string, PredicateValue>): ValueRecord => ({
       kind: "record",
       fields,
     }),
@@ -468,7 +468,7 @@ export const PredicateValue = {
           ),
         ).Then((entries) =>
           ValueOrErrors.Default.return(
-            PredicateValue.Default.record(Map(entries)),
+            PredicateValue.Default.record(OrderedMap(entries)),
           ),
         );
       }
@@ -691,7 +691,7 @@ export const PredicateValue = {
         ).Then((entries: List<[string, PredicateValue]>) =>
           ValueOrErrors.Default.return(
             PredicateValue.Default.record(
-              Map(entries.map((_) => [_[0], _[1]])),
+              OrderedMap(entries.map((_) => [_[0], _[1]])),
             ),
           ),
         );

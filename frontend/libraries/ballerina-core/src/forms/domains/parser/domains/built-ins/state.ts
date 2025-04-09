@@ -212,7 +212,7 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
       ],
       [
         "MultiSelection",
-        { defaultValue: PredicateValue.Default.record(Map()) },
+        { defaultValue: PredicateValue.Default.record(OrderedMap()) },
       ],
       [
         "List",
@@ -417,7 +417,7 @@ export const defaultValue =
           injectedPrimitives,
         )(field);
       });
-      return PredicateValue.Default.record(Map(res));
+      return PredicateValue.Default.record(OrderedMap(res));
     }
     throw Error(
       `cannot find type ${JSON.stringify(t)} when resolving defaultValue`,
@@ -484,7 +484,7 @@ export const fromAPIRawValue =
         const result = converters[t.value].fromAPIRawValue(raw);
         const isSome = result.kind == "l";
         const value = isSome
-          ? PredicateValue.Default.record(Map(result.value))
+          ? PredicateValue.Default.record(OrderedMap(result.value))
           : PredicateValue.Default.unit();
 
         return ValueOrErrors.Default.return(
@@ -493,9 +493,9 @@ export const fromAPIRawValue =
       }
       if (t.value == "MultiSelection") {
         const result = converters[t.value].fromAPIRawValue(raw);
-        const values = result.map((_) => PredicateValue.Default.record(Map(_)));
+        const values = result.map((_) => PredicateValue.Default.record(OrderedMap(_)));
         return ValueOrErrors.Default.return(
-          PredicateValue.Default.record(Map(values)),
+          PredicateValue.Default.record(OrderedMap(values)),
         );
       }
       if (t.value == "List") {
@@ -642,6 +642,7 @@ export const toAPIRawValue =
     injectedPrimitives?: InjectedPrimitives<T>,
   ) =>
   (raw: PredicateValue, formState: any): ValueOrErrors<any, string> => {
+    console.debug("toAPIRawValue", t, JSON.stringify(raw, null, 2), formState);
     if (t.kind == "primitive") {
       if (t.value == "unit") {
         return ValueOrErrors.Default.return(unit);

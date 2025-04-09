@@ -1,6 +1,6 @@
 import {
   EntityFormView,
-  FormLayout,
+  PredicateFormLayout,
   Unit,
   unit,
   CreateFormView,
@@ -15,6 +15,7 @@ import {
   EditFormWritableState,
   EditFormContext,
   EditFormForeignMutationsExpected,
+  FormLayout,
 } from "ballerina-core";
 
 export const PersonContainerFormView: EntityFormView<

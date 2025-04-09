@@ -88,7 +88,7 @@ export const EnumMultiselectForm = <
               });
               const delta: Delta = {
                 kind: "SetReplace",
-                replace: PredicateValue.Default.record(Map(newSelection)),
+                replace: PredicateValue.Default.record(OrderedMap(newSelection)),
                 state: {
                   commonFormState: props.context.commonFormState,
                   customFormState: props.context.customFormState,
@@ -96,7 +96,7 @@ export const EnumMultiselectForm = <
                 type: props.context.type,
               };
               props.foreignMutations.onChange(
-                replaceWith(PredicateValue.Default.record(Map(newSelection))),
+                replaceWith(PredicateValue.Default.record(OrderedMap(newSelection))),
                 delta,
               );
             },

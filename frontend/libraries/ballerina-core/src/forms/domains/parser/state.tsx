@@ -229,6 +229,7 @@ export const ParseForms =
               extraContext: (_ as any).extraContext,
               visibilities: (_ as any).visibilities,
               disabledFields: (_ as any).disabledFields,
+              globalConfiguration: (_ as any).globalConfiguration,
               visibilityPredicateExpressions:
                 parsedForm.visibilityPredicateExpressions,
               disabledPredicateExpressions:
@@ -489,6 +490,7 @@ export const parseFormsToLaunchers =
                       parentContext.customFormState.predicateEvaluations,
                     visibilities: _.visibilities,
                     disabledFields: _.disabledFields,
+                    globalConfiguration: parentContext.globalConfiguration.sync,
                   })),
               } as any),
           )
@@ -606,6 +608,7 @@ export const parseFormsToLaunchers =
                       parentContext.customFormState.predicateEvaluations,
                     visibilities: _.visibilities,
                     disabledFields: _.disabledFields,
+                    globalConfiguration: parentContext.globalConfiguration.sync,
                   };
                 }),
             } as any;
@@ -688,6 +691,7 @@ export const parseFormsToLaunchers =
                         parentContext.customFormState.predicateEvaluations,
                       visibilities: _.visibilities,
                       disabledFields: _.disabledFields,
+                      globalConfiguration: parentContext.globalConfiguration,
                     })),
                 } as any),
             )
@@ -707,7 +711,11 @@ export const parseFormsToLaunchers =
               apiConverters,
               injectedPrimitives,
             )(value),
-          toApiParser: (value: PredicateValue, formState: any, type: ParsedType<any>) =>
+          toApiParser: (
+            value: PredicateValue,
+            formState: any,
+            type: ParsedType<any>,
+          ) =>
             toAPIRawValue(
               type,
               formsConfig.types,
