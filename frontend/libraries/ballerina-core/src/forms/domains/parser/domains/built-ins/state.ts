@@ -64,6 +64,7 @@ export const GenericTypes = [
   "Tuple",
   "Option",
   "Sum",
+  "KeyOf",
 ] as const;
 export type GenericType = (typeof GenericTypes)[number];
 
