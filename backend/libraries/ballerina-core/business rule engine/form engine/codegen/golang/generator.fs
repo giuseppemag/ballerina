@@ -62,7 +62,7 @@ module Main =
                 |> Map.values
                 |> Seq.map fst
                 |> Seq.map (fun entityApi ->
-                  {| Name = $"{entityApi.TypeId.TypeName}Entity"
+                  {| Name = $"{entityApi.EntityName}Entity"
                      Value = $"{entityApi.TypeId.TypeName}" |})
                 |> Seq.toList }
 

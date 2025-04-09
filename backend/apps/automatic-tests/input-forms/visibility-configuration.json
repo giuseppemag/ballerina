@@ -46,6 +46,12 @@
           "get"
         ]
       },
+      "GlobalConfigApi2": {
+        "type": "GlobalConfig",
+        "methods": [
+          "get"
+        ]
+      },
       "PersonConfigApi": {
         "type": "PersonConfig",
         "methods": [
