@@ -175,11 +175,16 @@ export const FormsConfig = {
               `the formsConfig does not contain an Api Converter for all injected primitives`,
             ]),
           );
+        let keyOfTypes: Map<TypeName, RawType<T>> = Map();
 
         let parsedTypes: Map<TypeName, ParsedType<T>> = Map();
         const rawTypesFromConfig = formsConfig.types;
         const rawTypeNames = Set(Object.keys(rawTypesFromConfig));
         Object.entries(rawTypesFromConfig).forEach(([rawTypeName, rawType]) => {
+          if (RawType.isKeyOf<T>(rawType)) {
+            keyOfTypes = keyOfTypes.set(rawTypeName, rawType);
+            return;
+          }
           if (RawType.isExtendedType<T>(rawType)) {
             parsedTypes = parsedTypes.set(
               rawTypeName,
@@ -254,6 +259,28 @@ export const FormsConfig = {
           );
           parsedTypes = parsedTypes.set(rawTypeName, parsedType);
         });
+        
+        const keyOfTypesResult = ValueOrErrors.Operations.All(
+          List<ValueOrErrors<[string, ParsedType<T>], string>>(
+            keyOfTypes.entrySeq().map(([rawTypeName, rawType]) => {
+              return ParsedType.Operations.ParseRawKeyOf(
+                rawTypeName,
+                rawType,
+                parsedTypes,
+              ).Then((parsedType) =>
+                ValueOrErrors.Default.return([rawTypeName, parsedType]),
+              );
+            }),
+          ),
+        );
+        if (keyOfTypesResult.kind == "errors") {
+          errors = errors.concat(keyOfTypesResult.errors.toArray());
+          return ValueOrErrors.Default.throw(errors);
+        }
+        keyOfTypesResult.value.forEach(([rawTypeName, parsedType]) => {
+          parsedTypes = parsedTypes.set(rawTypeName, parsedType);
+        });
+
         let enums: Map<string, TypeName> = Map();
         Object.entries(formsConfig.apis.enumOptions).forEach(
           ([enumOptionName, enumOption]) =>
