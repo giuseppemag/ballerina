@@ -23,14 +23,23 @@
         }
       ]
     },
-    "PersonFieldEnum": {
-      "fun": "KeyOf",
-      "args": ["Person"]
-    },
-    "PersonFieldRef": {
-      "fields": {
-        "Value": "PersonFieldEnum"
-      }
+    "UnusedEnum": {
+      "fun": "Union",
+      "args": [
+        {
+          "caseName": "A",
+          "fields": {
+            "AOnlyField": "boolean"
+          }
+        },
+        {
+          "caseName": "B"
+        },
+        {
+          "caseName": "C",
+          "fields": "C"
+        }
+      ]
     },
     "ERPConfig": {
       "fun": "Union",
