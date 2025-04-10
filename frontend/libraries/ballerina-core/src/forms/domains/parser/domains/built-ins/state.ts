@@ -410,6 +410,7 @@ export const defaultValue =
 
     if (t.kind == "record") {
       let res = {} as Record<string, PredicateValue>;
+
       t.fields.forEach((field, fieldName) => {
         res[fieldName] = defaultValue(
           types,
@@ -609,6 +610,9 @@ export const fromAPIRawValue =
       let errors: List<string> = List();
       t.fields.forEach((fieldType, fieldName) => {
         const fieldValue = raw[fieldName];
+        if (fieldValue == undefined) {
+          return;
+        }
         const parsedValue = fromAPIRawValue(
           fieldType,
           types,
@@ -949,8 +953,12 @@ export const toAPIRawValue =
         );
       }
       const res = [] as any;
-      t.fields.forEach((fieldType, fieldName) =>
+      t.fields.forEach((fieldType, fieldName) => {
         // nullish coalescing operator on state used for extended type state, but this maybe should have its own kind
+        const rawField = raw.fields.get(fieldName);
+        if (rawField == undefined) {
+          return;
+        }
         res.push([
           fieldName,
           toAPIRawValue(
@@ -963,8 +971,8 @@ export const toAPIRawValue =
             raw.fields.get(fieldName)!,
             formState?.formFieldStates?.[fieldName] ?? formState,
           ),
-        ]),
-      );
+        ]);
+      });
       const errors: ValueOrErrors<
         List<any>,
         string
