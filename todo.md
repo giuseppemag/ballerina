@@ -66,15 +66,17 @@
       ❌ parse
         ✅ Table type
         ❌ `apis::tables`
-          ❌ REMOVE PLACEHOLDER from table parser
+        ❌ Table is a new type of form, not body
+          ❌ after fixing this, have the forms contain the actual ExprType, not a TypeId
+          ❌ after fixing this, rename every bit of the FormBody structure and substructures (Fields -> Record, for example)
         ❌ Table renderer (new form body)
-          ❌ columns
+          ✅ columns
             ❌ REPLACE FIELDCONFIG WITH COLUMNCONFIG
-          ❌ api
+          ❌ api at instantiation site, not in form
+            ❌ REMOVE PLACEHOLDER API IN RENDERER
           ❌ visible
             ❌ add InlinedColumns case, parse it explicitly
             ❌ REMOVE Map.empty and pass the columns map instead
-        ❌ Field table renderer (new Renderer)
       ❌ REPLACE INLINED sum.All over table.Columns and make it a separate function
         ❌ do the same for the cases
       ❌ test validation

@@ -818,16 +818,21 @@ module Parser =
                   }
                   state {
                     let! form = formsState.TryFindForm s |> state.OfSum
-                    let! formType = formsState.TryFindType form.TypeId.TypeName |> state.OfSum
-                    return FormRenderer(form |> FormConfig.Id, formType.Type, children)
+
+                    match form.Body with
+                    | FormBody.Cases cases ->
+                      let! formType = formsState.TryFindType cases.UnionType.TypeName |> state.OfSum
+                      return FormRenderer(form |> FormConfig.Id, formType.Type, children)
+                    | FormBody.Fields fields ->
+                      let! formType = formsState.TryFindType fields.TypeId.TypeName |> state.OfSum
+                      return FormRenderer(form |> FormConfig.Id, formType.Type, children)
+                    | FormBody.Table table ->
+                      let! formType = formsState.TryFindType table.RowType.TypeName |> state.OfSum
+                      return FormRenderer(form |> FormConfig.Id, formType.Type |> ExprType.TableType, children)
                   }
                   state.Throw(
                     Errors.Singleton
-                      $"Error: cannot resolve field renderer {s} in {(formsState.Forms
-                                                                      |> Map.values
-                                                                      |> Seq.map (fun v -> v.FormName, v.TypeId.TypeName)
-                                                                      |> List.ofSeq)
-                                                                       .ToFSharpString}"
+                      $"Error: cannot resolve field renderer {s} in {(formsState.Forms |> Map.values |> Seq.map (fun v -> v.FormName) |> List.ofSeq).ToFSharpString}"
                     |> Errors.WithPriority ErrorPriority.High
                   ) ]
               )
@@ -960,7 +965,7 @@ module Parser =
             fs
             |> Seq.map (fun f -> state.AsFormBodyFields f.Body)
             |> state.All
-            |> state.Map(List.map (fun f -> f.Fields))
+            |> state.Map(List.map (fun f -> f.Fields.Fields))
 
         let! formFields = fieldsJson |> JsonValue.AsRecord |> state.OfSum
 
@@ -983,11 +988,15 @@ module Parser =
       }
 
   and FormBody with
-    static member Parse(fields: (string * JsonValue)[]) =
+    static member Parse (fields: (string * JsonValue)[]) (formTypeId: TypeId) =
       state.Either3
         (state {
           let! formFields = FormFields.Parse fields
-          return FormBody.Fields formFields
+
+          return
+            FormBody.Fields
+              {| Fields = formFields
+                 TypeId = formTypeId |}
         })
         (state {
           let! casesJson = fields |> state.TryFindField "cases"
@@ -1010,7 +1019,11 @@ module Parser =
                 |> state.All
                 |> state.Map(Map.ofSeq)
 
-              return {| Cases = cases; Renderer = renderer |} |> FormBody.Cases
+              return
+                {| Cases = cases
+                   Renderer = renderer
+                   UnionType = formTypeId |}
+                |> FormBody.Cases
             }
             |> state.MapError(Errors.WithPriority ErrorPriority.High)
         })
@@ -1046,6 +1059,7 @@ module Parser =
 
                 return
                   {| Columns = columns
+                     RowType = formTypeId
                      Renderer = renderer
                      Api =
                       { TableName = "PLACEHOLDER"
@@ -1201,7 +1215,7 @@ module Parser =
         let! typeName = typeJson |> JsonValue.AsString |> state.OfSum
         let! (s: ParsedFormsContext) = state.GetState()
         let! typeBinding = s.TryFindType typeName |> state.OfSum
-        let! body = FormBody.Parse fields
+        let! body = FormBody.Parse fields typeBinding.TypeId
 
         return
           {| TypeId = typeBinding.TypeId
@@ -1803,8 +1817,8 @@ module Parser =
                                 PrimitiveRendererId = Guid.CreateVersion7()
                                 Type = ExprType.UnitType
                                 Children = { Fields = Map.empty } }
-                           Cases = Map.empty |}
-                    FormConfig.TypeId = formType.TypeId
+                           Cases = Map.empty
+                           UnionType = formType.TypeId |}
                     FormId = Guid.CreateVersion7()
                     FormName = formName }
               )

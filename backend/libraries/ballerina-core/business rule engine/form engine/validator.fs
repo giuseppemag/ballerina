@@ -403,7 +403,7 @@ module Validator =
             sum.Throw(
               Errors.Singleton $"Error: the form type is a union, expected cases in the body but found fields instead."
             )
-        | _, FormBody.Fields fields -> do! FormFields.Validate ctx localType fields
+        | _, FormBody.Fields fields -> do! FormFields.Validate ctx localType fields.Fields
         | _, FormBody.Table table ->
           return!
             sum.All(
@@ -426,7 +426,7 @@ module Validator =
       : State<Unit, Unit, ValidationState, Errors> =
       state {
         match body with
-        | FormBody.Fields fields -> do! FormFields.ValidatePredicates ctx globalType rootType localType fields
+        | FormBody.Fields fields -> do! FormFields.ValidatePredicates ctx globalType rootType localType fields.Fields
         | FormBody.Cases cases ->
           let! typeCases = localType |> ExprType.AsUnion |> state.OfSum
 
@@ -454,7 +454,7 @@ module Validator =
   and FormConfig with
     static member Validate (ctx: ParsedFormsContext) (formConfig: FormConfig) : Sum<Unit, Errors> =
       sum {
-        let! formType = ctx.TryFindType formConfig.TypeId.TypeName
+        let! formType = (formConfig.Body |> FormBody.FormType).TypeName |> ctx.TryFindType
 
         do! FormBody.Validate ctx formType.Type formConfig.Body
 
@@ -477,7 +477,11 @@ module Validator =
 
         if s.PredicateValidationHistory |> Set.contains processedForm |> not then
           do! state.SetState(ValidationState.Updaters.PredicateValidationHistory(Set.add processedForm))
-          let! formType = ctx.TryFindType formConfig.TypeId.TypeName |> state.OfSum
+
+          let! formType =
+            (formConfig.Body |> FormBody.FormType).TypeName
+            |> ctx.TryFindType
+            |> state.OfSum
 
           do! FormBody.ValidatePredicates ctx globalType rootType formType.Type formConfig.Body
 
@@ -496,7 +500,11 @@ module Validator =
       : State<Unit, Unit, ValidationState, Errors> =
       state {
         let! formConfig = ctx.TryFindForm formLauncher.Form.FormName |> state.OfSum
-        let! formType = ctx.TryFindType formConfig.TypeId.TypeName |> state.OfSum
+
+        let! formType =
+          (formConfig.Body |> FormBody.FormType).TypeName
+          |> ctx.TryFindType
+          |> state.OfSum
 
         match formLauncher.Mode with
         | FormLauncherMode.Create({ EntityApi = entityApi
@@ -571,7 +579,11 @@ module Validator =
               |> state.OfSum
         | FormLauncherMode.Passthrough m ->
           let! configEntityType = ctx.TryFindType m.ConfigType.TypeName |> state.OfSum
-          let! entityType = ctx.TryFindType formConfig.TypeId.TypeName |> state.OfSum
+
+          let! entityType =
+            (formConfig.Body |> FormBody.FormType).TypeName
+            |> ctx.TryFindType
+            |> state.OfSum
 
           do!
             FormConfig.ValidatePredicates ctx configEntityType entityType formConfig

@@ -340,31 +340,6 @@
         ]
       }
     },
-    "Activity": {
-      "type": "Activity",
-      "fields": {
-        "Description": {
-          "renderer": "string"
-        },
-        "Timestamp": {
-          "renderer": "date"
-        }
-      },
-      "tabs": {
-        "main": {
-          "columns": {
-            "main": {
-              "groups": {
-                "main": [
-                  "Description",
-                  "Timestamp"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
     "Activities": {
       "type": "Activity",
       "renderer": "streamingTable",
@@ -402,21 +377,6 @@
         },
         "Activities": {
           "renderer": "Activities"
-        }
-      },
-      "Activities": {
-        "renderer": "streamingTable",
-        "rowRenderer": "Activity",
-        "api": "ActivitiesApi",
-        "visibleColumns": {
-          "kind": "fieldLookup",
-          "operands": [
-            {
-              "kind": "varLookup",
-              "varName": "global"
-            },
-            "ActivitiesFields"
-          ]
         }
       },
       "tabs": {

@@ -275,7 +275,6 @@ module Model =
   and FormConfig =
     { FormName: string
       FormId: Guid
-      TypeId: TypeId
       Body: FormBody }
 
     static member Name f = f.FormName
@@ -285,15 +284,23 @@ module Model =
         FormId = f.FormId }
 
   and FormBody =
-    | Fields of FormFields
+    | Fields of {| Fields: FormFields; TypeId: TypeId |}
     | Cases of
       {| Renderer: Renderer
-         Cases: Map<string, Renderer> |}
+         Cases: Map<string, Renderer>
+         UnionType: TypeId |}
     | Table of
       {| Renderer: string
          Columns: Map<string, FieldConfig>
          Api: TableApiId
-         VisibleColumns: FormGroup |}
+         VisibleColumns: FormGroup
+         RowType: TypeId |}
+
+    static member FormType(self: FormBody) =
+      match self with
+      | Fields f -> f.TypeId
+      | Cases c -> c.UnionType
+      | Table t -> t.RowType
 
   and FormFields =
     { Fields: Map<string, FieldConfig>
