@@ -81,7 +81,8 @@ module Parser =
       Launchers: (string * JsonValue)[]
       Enums: (string * JsonValue)[]
       Streams: (string * JsonValue)[]
-      Entities: (string * JsonValue)[] }
+      Entities: (string * JsonValue)[]
+      Tables: (string * JsonValue)[] }
 
     static member Merge (main1: TopLevel) (main2: TopLevel) : Sum<TopLevel, Errors> =
       sum {
@@ -119,7 +120,8 @@ module Parser =
             Launchers = naiveMerge main1.Launchers main2.Launchers
             Enums = naiveMerge main1.Enums main2.Enums
             Streams = naiveMerge main1.Streams main2.Streams
-            Entities = naiveMerge main1.Entities main2.Entities }
+            Entities = naiveMerge main1.Entities main2.Entities
+            Tables = naiveMerge main1.Tables main2.Tables }
       }
 
     static member MergeMany(mains: List<TopLevel>) : Sum<TopLevel, Errors> =
@@ -152,6 +154,9 @@ module Parser =
 
     member ctx.TryFindStream name =
       ctx.Apis.Streams |> Map.tryFindWithError name "stream" name
+
+    member ctx.TryFindTableApi name =
+      ctx.Apis.Tables |> Map.tryFindWithError name "table" name
 
     member ctx.TryFindEntityApi name =
       ctx.Apis.Entities |> Map.tryFindWithError name "entity api" name
@@ -194,8 +199,8 @@ module Parser =
 
     member state.AsFormBodyFields fb =
       match fb with
-      | FormBody.Fields fs -> state { return fs }
-      | FormBody.Cases _
+      | FormBody.Record fs -> state { return fs }
+      | FormBody.Union _
       | FormBody.Table _ -> state.Throw(Errors.Singleton $"Error: expected fields in form body, found cases.")
 
   type FormLauncher with
@@ -241,6 +246,19 @@ module Parser =
           let! configTypeName = configTypeJson |> JsonValue.AsString |> state.OfSum
           let! configType = state.TryFindType configTypeName
           return FormLauncherMode.Passthrough {| ConfigType = configType.TypeId |}, form |> FormConfig.Id
+        elif kind = "passthrough-table" then
+          let! configTypeJson = launcherFields |> state.TryFindField "configType"
+          let! configTypeName = configTypeJson |> JsonValue.AsString |> state.OfSum
+          let! configType = state.TryFindType configTypeName
+          let! apiNameJson = launcherFields |> state.TryFindField "api"
+          let! apiName = apiNameJson |> JsonValue.AsString |> state.OfSum
+          let! api = s.TryFindTableApi apiName |> state.OfSum
+
+          return
+            FormLauncherMode.PassthroughTable
+              {| ConfigType = configType.TypeId
+                 TableApi = api |> TableApi.Id |},
+            form |> FormConfig.Id
         else
           return!
             $"Error: invalid launcher mode {kind}: it should be either 'create' or 'edit'."
@@ -283,11 +301,11 @@ module Parser =
       | MapRenderer r -> ExprType.MapType(r.Key.Type, r.Value.Type)
       | SumRenderer r -> ExprType.SumType(r.Left.Type, r.Right.Type)
       | ListRenderer r -> ExprType.ListType r.Element.Type
-      | TableRenderer r -> ExprType.TableType r.Row.Type
+      // | TableRenderer r -> ExprType.TableType r.Row.Type
       | EnumRenderer(_, r)
       | StreamRenderer(_, r) -> r.Type
       | TupleRenderer i -> ExprType.TupleType(i.Elements |> Seq.map (fun e -> e.Type) |> List.ofSeq)
-      | FormRenderer(_, t, _) -> t
+      | FormRenderer(f, t, _) -> t
       | UnionRenderer r ->
         ExprType.UnionType(
           r.Cases
@@ -695,20 +713,20 @@ module Parser =
                       Children = { Fields = Map.empty } }
                  Element = elementRenderer
                  Children = children |}
-        elif config.Table.SupportedRenderers |> Set.contains s then
-          let! elementRendererJson = parentJsonFields |> sum.TryFindField "rowRenderer" |> state.OfSum
-          let! elementRenderer = NestedRenderer.Parse elementRendererJson
+        // elif config.Table.SupportedRenderers |> Set.contains s then
+        //   let! elementRendererJson = parentJsonFields |> sum.TryFindField "rowRenderer" |> state.OfSum
+        //   let! elementRenderer = NestedRenderer.Parse elementRendererJson
 
-          return
-            TableRenderer
-              {| Table =
-                  PrimitiveRenderer
-                    { PrimitiveRendererName = s
-                      PrimitiveRendererId = Guid.CreateVersion7()
-                      Type = ExprType.TableType elementRenderer.Renderer.Type
-                      Children = { Fields = Map.empty } }
-                 Row = elementRenderer
-                 Children = children |}
+        //   return
+        //     TableRenderer
+        //       {| Table =
+        //           PrimitiveRenderer
+        //             { PrimitiveRendererName = s
+        //               PrimitiveRendererId = Guid.CreateVersion7()
+        //               Type = ExprType.TableType elementRenderer.Renderer.Type
+        //               Children = { Fields = Map.empty } }
+        //          Row = elementRenderer
+        //          Children = children |}
         elif config.Union.SupportedRenderers |> Set.contains s then
           let! casesJson = parentJsonFields |> sum.TryFindField "cases" |> state.OfSum
           let! casesJson = casesJson |> JsonValue.AsRecord |> state.OfSum
@@ -820,15 +838,20 @@ module Parser =
                     let! form = formsState.TryFindForm s |> state.OfSum
 
                     match form.Body with
-                    | FormBody.Cases cases ->
-                      let! formType = formsState.TryFindType cases.UnionType.TypeName |> state.OfSum
-                      return FormRenderer(form |> FormConfig.Id, formType.Type, children)
-                    | FormBody.Fields fields ->
-                      let! formType = formsState.TryFindType fields.TypeId.TypeName |> state.OfSum
-                      return FormRenderer(form |> FormConfig.Id, formType.Type, children)
+                    | FormBody.Union cases ->
+                      let formType = cases.UnionType
+                      return FormRenderer(form |> FormConfig.Id, formType, children)
+                    | FormBody.Record fields -> return FormRenderer(form |> FormConfig.Id, fields.RecordType, children)
                     | FormBody.Table table ->
-                      let! formType = formsState.TryFindType table.RowType.TypeName |> state.OfSum
-                      return FormRenderer(form |> FormConfig.Id, formType.Type |> ExprType.TableType, children)
+                      // do Console.WriteLine form.FormName
+                      // do Console.WriteLine parentJsonFields.ToFSharpString
+                      // do Console.ReadLine() |> ignore
+                      let! tableApiNameJson = parentJsonFields |> sum.TryFindField "api" |> state.OfSum
+                      let! tableApiName = tableApiNameJson |> JsonValue.AsString |> state.OfSum
+                      let! (tableApi) = formsState.TryFindTableApi tableApiName |> state.OfSum
+                      let! tableType = formsState.TryFindType tableApi.TypeId.TypeName |> state.OfSum
+
+                      return FormRenderer(form |> FormConfig.Id, tableType.Type |> ExprType.TableType, children)
                   }
                   state.Throw(
                     Errors.Singleton
@@ -992,11 +1015,12 @@ module Parser =
       state.Either3
         (state {
           let! formFields = FormFields.Parse fields
+          let! t = state.TryFindType formTypeId.TypeName
 
           return
-            FormBody.Fields
+            FormBody.Record
               {| Fields = formFields
-                 TypeId = formTypeId |}
+                 RecordType = t.Type |}
         })
         (state {
           let! casesJson = fields |> state.TryFindField "cases"
@@ -1006,6 +1030,7 @@ module Parser =
               let! casesJson = casesJson |> JsonValue.AsRecord |> state.OfSum
               let! rendererJson = fields |> state.TryFindField "renderer"
               let! renderer = Renderer.Parse fields rendererJson
+              let! t = state.TryFindType formTypeId.TypeName
 
               let! cases =
                 casesJson
@@ -1022,8 +1047,8 @@ module Parser =
               return
                 {| Cases = cases
                    Renderer = renderer
-                   UnionType = formTypeId |}
-                |> FormBody.Cases
+                   UnionType = t.Type |}
+                |> FormBody.Union
             }
             |> state.MapError(Errors.WithPriority ErrorPriority.High)
         })
@@ -1036,12 +1061,11 @@ module Parser =
               let! rendererJson = fields |> state.TryFindField "renderer"
               let! renderer = rendererJson |> JsonValue.AsString |> state.OfSum
               let! config = state.GetContext()
+              let! t = state.TryFindType formTypeId.TypeName
 
               if config.Table.SupportedRenderers |> Set.contains renderer |> not then
                 return! state.Throw(Errors.Singleton $"Error: cannot find table renderer {renderer}")
               else
-                let! apiJson = fields |> state.TryFindField "api"
-
                 let! columns =
                   columnsJson
                   |> Seq.map (fun (columnName, columnJson) ->
@@ -1055,15 +1079,12 @@ module Parser =
                   |> state.Map(Map.ofSeq)
 
                 let! visibleColumnsJson = fields |> state.TryFindField "visibleColumns"
-                let! visibleColumns = FormConfig.ParseGroup "visibleColumns" Map.empty visibleColumnsJson
+                let! visibleColumns = FormConfig.ParseGroup "visibleColumns" columns visibleColumnsJson
 
                 return
                   {| Columns = columns
-                     RowType = formTypeId
+                     RowType = t.Type
                      Renderer = renderer
-                     Api =
-                      { TableName = "PLACEHOLDER"
-                        TableId = Guid.Empty }
                      VisibleColumns = visibleColumns |}
                   |> FormBody.Table
             }
@@ -1605,6 +1626,34 @@ module Parser =
         )
       )
 
+  type TableApi with
+    static member Parse
+      (tableName: string)
+      (tableTypeJson: JsonValue)
+      : State<Unit, CodeGenConfig, ParsedFormsContext, Errors> =
+      state {
+        let! tableTypeFieldJsons = tableTypeJson |> JsonValue.AsRecord |> state.OfSum
+
+        let! typeJson = (tableTypeFieldJsons |> state.TryFindField "type")
+
+        let! tableType = ExprType.Parse typeJson
+        let! tableTypeId = tableType |> ExprType.AsLookupId |> state.OfSum
+
+        do!
+          state.SetState(
+            ParsedFormsContext.Updaters.Apis(
+              FormApis.Updaters.Tables(
+                Map.add
+                  tableName
+                  ({ TableApi.TableId = Guid.CreateVersion7()
+                     TypeId = tableTypeId
+                     TableName = tableName })
+              )
+            )
+          )
+      }
+      |> state.WithErrorContext $"...when parsing table api {tableName}"
+
   type EntityApi with
     static member Parse
       (entityName: string)
@@ -1645,7 +1694,8 @@ module Parser =
       (topLevel: TopLevel)
       : State<Unit, CodeGenConfig, ParsedFormsContext, Errors> =
       state {
-        let enums, streams, entities = topLevel.Enums, topLevel.Streams, topLevel.Entities
+        let enums, streams, entities, tables =
+          topLevel.Enums, topLevel.Streams, topLevel.Entities, topLevel.Tables
 
         for enumName, enumJson in enums do
           do! EnumApi.Parse enumValueFieldName enumName enumJson
@@ -1655,6 +1705,9 @@ module Parser =
 
         for entityName, entityJson in entities do
           do! EntityApi.Parse entityName entityJson
+
+        for tableName, entityJson in tables do
+          do! TableApi.Parse tableName entityJson
 
         return ()
       }
@@ -1810,7 +1863,7 @@ module Parser =
                 Map.add
                   formName
                   { Body =
-                      FormBody.Cases
+                      FormBody.Union
                         {| Renderer =
                             Renderer.PrimitiveRenderer
                               { PrimitiveRendererName = ""
@@ -1818,7 +1871,7 @@ module Parser =
                                 Type = ExprType.UnitType
                                 Children = { Fields = Map.empty } }
                            Cases = Map.empty
-                           UnionType = formType.TypeId |}
+                           UnionType = formType.Type |}
                     FormId = Guid.CreateVersion7()
                     FormName = formName }
               )
@@ -1871,17 +1924,19 @@ module Parser =
             (formsJson |> JsonValue.AsRecord |> state.OfSum)
             (launchersJson |> JsonValue.AsRecord |> state.OfSum)
 
-        let! enumsJson, searchableStreamsJson, entitiesJson =
-          state.All3
+        let! enumsJson, searchableStreamsJson, entitiesJson, tablesJson =
+          state.All4
             (state.Either (apisJson |> state.TryFindField "enumOptions") (state.Return(JsonValue.Record [||])))
             (state.Either (apisJson |> state.TryFindField "searchableStreams") (state.Return(JsonValue.Record [||])))
             (state.Either (apisJson |> state.TryFindField "entities") (state.Return(JsonValue.Record [||])))
+            (state.Either (apisJson |> state.TryFindField "tables") (state.Return(JsonValue.Record [||])))
 
-        let! enums, streams, entities =
-          state.All3
+        let! enums, streams, entities, tables =
+          state.All4
             (enumsJson |> JsonValue.AsRecord |> state.OfSum)
             (searchableStreamsJson |> JsonValue.AsRecord |> state.OfSum)
             (entitiesJson |> JsonValue.AsRecord |> state.OfSum)
+            (tablesJson |> JsonValue.AsRecord |> state.OfSum)
 
         return
           { Types = typesJson
@@ -1889,7 +1944,8 @@ module Parser =
             Launchers = launchersJson
             Enums = enums
             Streams = streams
-            Entities = entities }
+            Entities = entities
+            Tables = tables }
       }
 
     static member Parse

@@ -56,37 +56,34 @@
       ✅ TypeCheck
         ✅ validate the type of the expression as `Set<Enum>` where `Enum` is a subset of the field names of the type
     ❌ tables support
-      ❌ spec
-        ❌ renderer
-        ❌ columns
-        ❌ visibility
-        ❌ API
-        ❌ launcher with getMore
-        ❌ field renderer with getMore
-      ❌ parse
+      ✅ spec
+        ✅ renderer
+        ✅ columns
+        ✅ visibility
+        ✅ API
+        ✅ launcher with getMore
+        ✅ field renderer with getMore
+      ✅ parse
         ✅ Table type
-        ❌ `apis::tables`
-        ❌ Table is a new type of form, not body
-          ❌ after fixing this, have the forms contain the actual ExprType, not a TypeId
-          ❌ after fixing this, rename every bit of the FormBody structure and substructures (Fields -> Record, for example)
-        ❌ Table renderer (new form body)
+        ✅ `apis::tables`
+        ✅ Table is a new type of form, not body
+          ✅ ProcessedType -> ExprType ([RowType] in particular)
+          ✅ after fixing this, rename every bit of the FormBody structure and substructures (Fields -> Record, for example)
+        ✅ Table renderer (new type of form)
           ✅ columns
-            ❌ REPLACE FIELDCONFIG WITH COLUMNCONFIG
-          ❌ api at instantiation site, not in form
-            ❌ REMOVE PLACEHOLDER API IN RENDERER
-          ❌ visible
-            ❌ add InlinedColumns case, parse it explicitly
-            ❌ REMOVE Map.empty and pass the columns map instead
-      ❌ REPLACE INLINED sum.All over table.Columns and make it a separate function
-        ❌ do the same for the cases
-      ❌ test validation
-      ❌ test visibility predicate validation
+          ✅ api at instantiation site, not in form
+            ✅ REMOVE PLACEHOLDER API IN RENDERER
+          ✅ visible
+            ✅ add InlinedColumns case, parse it explicitly
+        ✅ new table launcher type with table API
+        ✅ the renderer of a table needs an extra API field
       ❌ codegen
         ❌ go-config and underlying table types and operations
         ❌ paginated API
     ❌ form parser file is too long
       ❌ split off the renderers parsers
       ❌ split off the ExprType decomposition patterns
+    ❌ FormDeclarationType should be a TypeId/TypeName, because at that level of the form the type given is a name <- more type safety
     ❌ plenty of nonsense `Id` fields in enumApiId, streamApiId, etc.
     ❌ entities PATCH - gets single value and path of change
       ✅ support Id:string in CollectionReference, not just Id:Guid

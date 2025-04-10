@@ -177,40 +177,16 @@
     },
     "tables": {
       "ActiveUsersApi": {
-        "type": "User",
-        "methods": [
-          "create",
-          "delete",
-          "get",
-          "update"
-        ]
+        "type": "User"
       },
       "InactiveUsersApi": {
-        "type": "User",
-        "methods": [
-          "create",
-          "delete",
-          "get",
-          "update"
-        ]
+        "type": "User"
       },
       "UserGroupsApi": {
-        "type": "UserGroup",
-        "methods": [
-          "create",
-          "delete",
-          "get",
-          "update"
-        ]
+        "type": "UserGroup"
       },
       "ActivitiesApi": {
-        "type": "Activity",
-        "methods": [
-          "create",
-          "delete",
-          "get",
-          "update"
-        ]
+        "type": "Activity"
       }
     }
   },
@@ -273,7 +249,6 @@
           "renderer": "bool"
         }
       },
-      "api": "ActiveUsersApi",
       "visibleColumns": {
         "kind": "fieldLookup",
         "operands": [
@@ -305,7 +280,6 @@
           "renderer": "bool"
         }
       },
-      "api": "InactiveUsersApi",
       "visibleColumns": {
         "kind": "fieldLookup",
         "operands": [
@@ -328,7 +302,6 @@
           "renderer": "string"
         }
       },
-      "api": "UserGroupsApi",
       "visibleColumns": {
         "kind": "fieldLookup",
         "operands": [
@@ -351,7 +324,6 @@
           "renderer": "date"
         }
       },
-      "api": "ActivitiesApi",
       "visibleColumns": {
         "kind": "fieldLookup",
         "operands": [
@@ -367,16 +339,20 @@
       "type": "UsersSetup",
       "fields": {
         "Active": {
-          "renderer": "ActiveUsers"
-        },
+          "renderer": "ActiveUsers",
+          "api": "ActiveUsersApi"
+          },
         "Inactive": {
-          "renderer": "InactiveUsers"
+          "renderer": "InactiveUsers",
+          "api": "InactiveUsersApi"
         },
         "Groups": {
-          "renderer": "UserGroups"
+          "renderer": "UserGroups",
+          "api": "UserGroupsApi"
         },
         "Activities": {
-          "renderer": "Activities"
+          "renderer": "Activities",
+          "api": "ActivitiesApi"
         }
       },
       "tabs": {
@@ -415,6 +391,12 @@
       "kind": "passthrough",
       "form": "UsersSetup",
       "configType": "UsersSetupConfig"
+    },
+    "ActiveUsers": {
+      "kind": "passthrough-table",
+      "form": "ActiveUsers",
+      "configType": "UsersSetupConfig",
+      "api": "ActiveUsersApi"
     }
   }
 }

@@ -40,13 +40,13 @@ module Validator =
         | Renderer.FormRenderer(f, body, children) ->
           do! children |> validateChildren
 
-          let! f = ctx.TryFindForm f.FormName
+          // let! f = ctx.TryFindForm f.FormName
+          // do System.Console.WriteLine f.FormName
+          // do System.Console.WriteLine(f.Body |> FormBody.ProcessedType)
+          // do System.Console.WriteLine fr.Type
+          // do System.Console.ReadLine() |> ignore
 
-          return
-            if f.Body.IsTable then
-              ExprType.TableType fr.Type
-            else
-              fr.Type
+          return fr.Type
         | Renderer.ListRenderer(l) ->
           do! !l.List |> Sum.map ignore
           do! !l.Element.Renderer |> Sum.map ignore
@@ -54,13 +54,13 @@ module Validator =
           do! l.Children |> validateChildren
 
           return fr.Type
-        | Renderer.TableRenderer(t) ->
-          do! !t.Table |> Sum.map ignore
-          do! !t.Row.Renderer |> Sum.map ignore
+        // | Renderer.TableRenderer(t) ->
+        //   do! !t.Table |> Sum.map ignore
+        //   do! !t.Row.Renderer |> Sum.map ignore
 
-          do! t.Children |> validateChildren
+        //   do! t.Children |> validateChildren
 
-          return fr.Type
+        //   return fr.Type
         | Renderer.MapRenderer(m) ->
           do! !m.Map |> Sum.map ignore
           do! !m.Key.Renderer |> Sum.map ignore
@@ -103,8 +103,8 @@ module Validator =
   and NestedRenderer with
     static member ValidatePredicates
       (ctx: ParsedFormsContext)
-      (globalType: TypeBinding)
-      (rootType: TypeBinding)
+      (globalType: ExprType)
+      (rootType: ExprType)
       (localType: ExprType)
       (r: NestedRenderer)
       : State<Unit, Unit, ValidationState, Errors> =
@@ -114,7 +114,7 @@ module Validator =
             tryFindField = fun _ -> None }
 
         let vars =
-          [ ("global", globalType.Type); ("root", rootType.Type); ("local", localType) ]
+          [ ("global", globalType); ("root", rootType); ("local", localType) ]
           |> Seq.map (VarName.Create <*> id)
           |> Map.ofSeq
 
@@ -124,8 +124,8 @@ module Validator =
   and Renderer with
     static member ValidatePredicates
       (ctx: ParsedFormsContext)
-      (globalType: TypeBinding)
-      (rootType: TypeBinding)
+      (globalType: ExprType)
+      (rootType: ExprType)
       (localType: ExprType)
       (r: Renderer)
       : State<Unit, Unit, ValidationState, Errors> =
@@ -155,11 +155,11 @@ module Validator =
           do! !!e.Element
 
           do! e.Children |> validateChildrenPredicates
-        | Renderer.TableRenderer e ->
-          do! !e.Table
-          do! !!e.Row
+        // | Renderer.TableRenderer e ->
+        //   do! !e.Table
+        //   do! !!e.Row
 
-          do! e.Children |> validateChildrenPredicates
+        //   do! e.Children |> validateChildrenPredicates
         | Renderer.MapRenderer kv ->
           do! !kv.Map
           do! !!kv.Key
@@ -224,8 +224,8 @@ module Validator =
 
     static member ValidatePredicates
       (ctx: ParsedFormsContext)
-      (globalType: TypeBinding)
-      (rootType: TypeBinding)
+      (globalType: ExprType)
+      (rootType: ExprType)
       (localType: ExprType)
       (fc: FieldConfig)
       : State<Unit, Unit, ValidationState, Errors> =
@@ -235,7 +235,7 @@ module Validator =
             tryFindField = fun _ -> None }
 
         let vars =
-          [ ("global", globalType.Type); ("root", rootType.Type); ("local", localType) ]
+          [ ("global", globalType); ("root", rootType); ("local", localType) ]
           |> Seq.map (VarName.Create <*> id)
           |> Map.ofSeq
 
@@ -284,8 +284,8 @@ module Validator =
   and FormFields with
     static member ValidatePredicates
       (ctx: ParsedFormsContext)
-      (globalType: TypeBinding)
-      (rootType: TypeBinding)
+      (globalType: ExprType)
+      (rootType: ExprType)
       (localType: ExprType)
       (formFields: FormFields)
       : State<Unit, Unit, ValidationState, Errors> =
@@ -305,7 +305,7 @@ module Validator =
                     tryFindField = fun _ -> None }
 
                 let vars =
-                  [ ("global", globalType.Type); ("root", rootType.Type); ("local", localType) ]
+                  [ ("global", globalType); ("root", rootType); ("local", localType) ]
                   |> Seq.map (VarName.Create <*> id)
                   |> Map.ofSeq
 
@@ -375,7 +375,7 @@ module Validator =
     static member Validate (ctx: ParsedFormsContext) (localType: ExprType) (body: FormBody) : Sum<Unit, Errors> =
       sum {
         match localType, body with
-        | ExprType.UnionType typeCases, FormBody.Cases formCases ->
+        | ExprType.UnionType typeCases, FormBody.Union formCases ->
           let typeCaseNames =
             typeCases |> Map.values |> Seq.map (fun c -> c.CaseName) |> Set.ofSeq
 
@@ -403,7 +403,7 @@ module Validator =
             sum.Throw(
               Errors.Singleton $"Error: the form type is a union, expected cases in the body but found fields instead."
             )
-        | _, FormBody.Fields fields -> do! FormFields.Validate ctx localType fields.Fields
+        | _, FormBody.Record fields -> do! FormFields.Validate ctx localType fields.Fields
         | _, FormBody.Table table ->
           return!
             sum.All(
@@ -419,15 +419,15 @@ module Validator =
 
     static member ValidatePredicates
       (ctx: ParsedFormsContext)
-      (globalType: TypeBinding)
-      (rootType: TypeBinding)
+      (globalType: ExprType)
+      (rootType: ExprType)
       (localType: ExprType)
       (body: FormBody)
       : State<Unit, Unit, ValidationState, Errors> =
       state {
         match body with
-        | FormBody.Fields fields -> do! FormFields.ValidatePredicates ctx globalType rootType localType fields.Fields
-        | FormBody.Cases cases ->
+        | FormBody.Record fields -> do! FormFields.ValidatePredicates ctx globalType rootType localType fields.Fields
+        | FormBody.Union cases ->
           let! typeCases = localType |> ExprType.AsUnion |> state.OfSum
 
           for case in cases.Cases do
@@ -454,17 +454,17 @@ module Validator =
   and FormConfig with
     static member Validate (ctx: ParsedFormsContext) (formConfig: FormConfig) : Sum<Unit, Errors> =
       sum {
-        let! formType = (formConfig.Body |> FormBody.FormType).TypeName |> ctx.TryFindType
+        let formType = formConfig.Body |> FormBody.FormDeclarationType
 
-        do! FormBody.Validate ctx formType.Type formConfig.Body
+        do! FormBody.Validate ctx formType formConfig.Body
 
       }
       |> sum.WithErrorContext $"...when validating form config {formConfig.FormName}"
 
     static member ValidatePredicates
       (ctx: ParsedFormsContext)
-      (globalType: TypeBinding)
-      (rootType: TypeBinding)
+      (globalType: ExprType)
+      (rootType: ExprType)
       (formConfig: FormConfig)
       : State<Unit, Unit, ValidationState, Errors> =
       state {
@@ -472,18 +472,15 @@ module Validator =
 
         let processedForm =
           { Form = formConfig |> FormConfig.Id
-            GlobalType = globalType.TypeId
-            RootType = rootType.TypeId }
+            GlobalType = globalType
+            RootType = rootType }
 
         if s.PredicateValidationHistory |> Set.contains processedForm |> not then
           do! state.SetState(ValidationState.Updaters.PredicateValidationHistory(Set.add processedForm))
 
-          let! formType =
-            (formConfig.Body |> FormBody.FormType).TypeName
-            |> ctx.TryFindType
-            |> state.OfSum
+          let formType = formConfig.Body |> FormBody.FormDeclarationType
 
-          do! FormBody.ValidatePredicates ctx globalType rootType formType.Type formConfig.Body
+          do! FormBody.ValidatePredicates ctx globalType rootType formType formConfig.Body
 
           return ()
         else
@@ -501,10 +498,7 @@ module Validator =
       state {
         let! formConfig = ctx.TryFindForm formLauncher.Form.FormName |> state.OfSum
 
-        let! formType =
-          (formConfig.Body |> FormBody.FormType).TypeName
-          |> ctx.TryFindType
-          |> state.OfSum
+        let formType = formConfig.Body |> FormBody.FormDeclarationType
 
         match formLauncher.Mode with
         | FormLauncherMode.Create({ EntityApi = entityApi
@@ -522,13 +516,13 @@ module Validator =
               ExprType.Unify
                 Map.empty
                 (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq)
-                formType.Type
+                formType
                 entityApiType.Type
               |> Sum.map ignore
               |> state.OfSum
 
             do!
-              FormConfig.ValidatePredicates ctx configEntityApiType entityApiType formConfig
+              FormConfig.ValidatePredicates ctx configEntityApiType.Type entityApiType.Type formConfig
               |> state.Map ignore
 
             match formLauncher.Mode with
@@ -580,13 +574,30 @@ module Validator =
         | FormLauncherMode.Passthrough m ->
           let! configEntityType = ctx.TryFindType m.ConfigType.TypeName |> state.OfSum
 
-          let! entityType =
-            (formConfig.Body |> FormBody.FormType).TypeName
-            |> ctx.TryFindType
-            |> state.OfSum
+          let entityType = (formConfig.Body |> FormBody.FormDeclarationType)
 
           do!
-            FormConfig.ValidatePredicates ctx configEntityType entityType formConfig
+            FormConfig.ValidatePredicates ctx configEntityType.Type entityType formConfig
+            |> state.Map ignore
+        | FormLauncherMode.PassthroughTable m ->
+          let! configEntityType = ctx.TryFindType m.ConfigType.TypeName |> state.OfSum
+          let! api = ctx.TryFindTableApi m.TableApi.TableName |> state.OfSum
+          let! apiType = ctx.TryFindType api.TypeId.TypeName |> state.OfSum
+          let apiType = apiType.Type
+
+          do!
+            ExprType.Unify
+              Map.empty
+              (ctx.Types |> Map.values |> Seq.map (fun v -> v.TypeId, v.Type) |> Map.ofSeq)
+              formType
+              apiType
+            |> Sum.map ignore
+            |> state.OfSum
+
+          let entityType = (formConfig.Body |> FormBody.FormDeclarationType)
+
+          do!
+            FormConfig.ValidatePredicates ctx configEntityType.Type entityType formConfig
             |> state.Map ignore
       }
       |> state.WithErrorContext $"...when validating launcher {formLauncher.LauncherName}"

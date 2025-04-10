@@ -168,6 +168,9 @@ module Model =
     | Create of FormLauncherApis
     | Edit of FormLauncherApis
     | Passthrough of {| ConfigType: TypeId |}
+    | PassthroughTable of
+      {| ConfigType: TypeId
+         TableApi: TableApiId |}
 
   and EnumApiId = { EnumName: string; EnumId: Guid }
 
@@ -247,7 +250,7 @@ module Model =
     { Enums: Map<string, EnumApi>
       Streams: Map<string, StreamApi>
       Entities: Map<string, EntityApi * Set<CrudMethod>>
-      Tables: Map<string, TableApi * Set<CrudMethod>> }
+      Tables: Map<string, TableApi> }
 
     static member Empty =
       { Enums = Map.empty
@@ -284,23 +287,30 @@ module Model =
         FormId = f.FormId }
 
   and FormBody =
-    | Fields of {| Fields: FormFields; TypeId: TypeId |}
-    | Cases of
+    | Record of
+      {| Fields: FormFields
+         RecordType: ExprType |}
+    | Union of
       {| Renderer: Renderer
          Cases: Map<string, Renderer>
-         UnionType: TypeId |}
+         UnionType: ExprType |}
     | Table of
       {| Renderer: string
          Columns: Map<string, FieldConfig>
-         Api: TableApiId
          VisibleColumns: FormGroup
-         RowType: TypeId |}
+         RowType: ExprType |}
 
-    static member FormType(self: FormBody) =
+    static member FormDeclarationType(self: FormBody) =
       match self with
-      | Fields f -> f.TypeId
-      | Cases c -> c.UnionType
+      | Record f -> f.RecordType
+      | Union c -> c.UnionType
       | Table t -> t.RowType
+
+    static member ProcessedType(self: FormBody) =
+      match self with
+      | Record f -> f.RecordType
+      | Union c -> c.UnionType
+      | Table t -> t.RowType |> ExprType.TableType
 
   and FormFields =
     { Fields: Map<string, FieldConfig>
@@ -350,10 +360,10 @@ module Model =
       {| List: Renderer
          Element: NestedRenderer
          Children: RendererChildren |}
-    | TableRenderer of
-      {| Table: Renderer
-         Row: NestedRenderer
-         Children: RendererChildren |}
+    // | TableRenderer of
+    //   {| Table: Renderer
+    //      Row: NestedRenderer
+    //      Children: RendererChildren |}
     | SumRenderer of
       {| Sum: Renderer
          Left: NestedRenderer
@@ -391,8 +401,8 @@ module Model =
 
   type FormPredicateValidationHistoryItem =
     { Form: FormConfigId
-      GlobalType: TypeId
-      RootType: TypeId }
+      GlobalType: ExprType
+      RootType: ExprType }
 
   type ValidationState =
     { PredicateValidationHistory: Set<FormPredicateValidationHistoryItem> }
