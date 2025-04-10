@@ -38,6 +38,7 @@ import {
 } from "./domains/person-from-config/injected-forms/category";
 import PersonConfig from "../../../../backend/apps/ballerina-runtime/input-forms/person-config.json";
 import { PassthroughFormContainerWrapper } from "./domains/passthrough-forms/views/wrappers";
+import TabbedTableWithConfiguration from "../../../../backend/apps/ballerina-runtime/input-forms/tabbed-table-with-configuration.json";
 
 const ShowFormsParsingErrors = (parsedFormsConfig: FormParsingResult) => (
   <div style={{ border: "red" }}>
@@ -308,7 +309,7 @@ export const FormsApp = (props: {}) => {
                     enumOptionsSources: PersonFromConfigApis.enumApis,
                     entityApis: PersonFromConfigApis.entityApis,
                     getFormsConfig: () =>
-                      PromiseRepo.Default.mock(() => PersonConfig),
+                      PromiseRepo.Default.mock(() => TabbedTableWithConfiguration),
                     injectedPrimitives: Map([
                       [
                         "injectedCategory",
@@ -505,7 +506,7 @@ export const FormsApp = (props: {}) => {
                             ...configFormsParser,
                             ...personAddressConfigFormState,
                             formRef: {
-                              formName: "addresses-config",
+                              formName: "passthrough-table",
                               kind: "passthrough",
                               containerWrapper: PassthroughFormContainerWrapper,
                               entity: Sum.Default.left(

@@ -161,6 +161,10 @@ export const RawFieldType = {
     Array.isArray(_.args) &&
     _.args.length == 1,
   isUnit: <T>(_: RawFieldType<T>): _ is string => _ == "unit",
+  isTable: <T>(
+    _: RawFieldType<T>,
+  ): _ is { fun: "Table"; args: Array<string> } =>
+    RawFieldType.isApplication(_) && _.fun == "Table" && _.args.length == 1,
 };
 
 export type PrimitiveTypeName<T> =
@@ -203,6 +207,12 @@ export type ParsedPrimitiveType<T> = {
   value: PrimitiveTypeName<T> | keyof T;
 };
 
+export type ParsedTableType = {
+  kind: "table";
+  value: TypeName;
+  tableType: TypeName;
+};
+
 export type ParsedType<T> =
   | ParsedUnionCase<T>
   | ParsedOptionType<T>
@@ -210,6 +220,7 @@ export type ParsedType<T> =
   | ParsedPrimitiveType<T>
   | { kind: "lookup"; name: TypeName }
   | ParsedApplicationType<T>
+  | ParsedTableType
   | { kind: "union"; args: Map<CaseName, ParsedUnionCase<T>> };
 
 export const ParsedType = {
@@ -240,6 +251,11 @@ export const ParsedType = {
       args,
     }),
     lookup: <T>(name: string): ParsedType<T> => ({ kind: "lookup", name }),
+    table: (value: TypeName, tableType: TypeName): ParsedType<any> => ({
+      kind: "table",
+      value,
+      tableType,
+    }),
   },
   Operations: {
     Equals: <T>(fst: ParsedType<T>, snd: ParsedType<T>): boolean =>
@@ -497,6 +513,11 @@ export const ParsedType = {
               Map(parsedUnionCases.toArray().map((_) => [_.name, _] as const)),
             ),
           ),
+        );
+      }
+      if (RawFieldType.isTable(rawFieldType)) {
+        return ValueOrErrors.Default.return(
+          ParsedType.Default.table(fieldName, rawFieldType.args[0]),
         );
       }
       if (RawFieldType.isLookup(rawFieldType))
