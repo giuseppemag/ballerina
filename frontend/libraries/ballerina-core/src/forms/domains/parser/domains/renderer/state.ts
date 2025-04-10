@@ -47,6 +47,7 @@ import {
   Value,
   ValueOption,
   ValueRecord,
+  ParsedRecordForm,
 } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 
@@ -610,13 +611,13 @@ export const ParsedRenderer = {
                     visibilityPredicateExpression:
                       FieldPredicateExpression.Default.record(
                         visibilityExpr,
-                        parsingContext.forms.get(parsedRenderer.renderer)!
+                        (parsingContext.forms.get(parsedRenderer.renderer)! as ParsedRecordForm<T>)
                           .visibilityPredicateExpressions,
                       ),
                     disabledPredicatedExpression:
                       FieldPredicateExpression.Default.record(
                         disabledExpr,
-                        parsingContext.forms.get(parsedRenderer.renderer)!
+                        (parsingContext.forms.get(parsedRenderer.renderer)! as ParsedRecordForm<T>)
                           .disabledPredicatedExpressions,
                       ),
                     label: parsedRenderer.label,

@@ -39,24 +39,34 @@ import {
   PassthroughFormTemplate,
   defaultState,
   FieldName,
+  ParsedRecordFormConfig,
+  ParsedTableFormConfig,
 } from "../../../../main";
 import { EnumReference } from "../collection/domains/reference/state";
 import { SearchableInfiniteStreamState } from "../primitives/domains/searchable-infinite-stream/state";
 import { Form } from "../singleton/template";
 import { ParsedRenderer } from "./domains/renderer/state";
 
-export type ParsedForm<T> = {
+export type ParsedRecordForm<T> = {
   initialFormState: any;
   formConfig: any;
   formName: string;
-  formDef: ParsedFormConfig<T>;
+  formDef: ParsedRecordFormConfig<T>;
   visibilityPredicateExpressions: FieldPredicateExpressions;
   disabledPredicatedExpressions: FieldPredicateExpressions;
   fieldLabels: Map<FieldName, string | undefined>;
+  form: EntityFormTemplate<any, any, any, any>;
 };
-export const ParseForm = <T,>(
+export type ParsedTableForm<T> = {
+  initialFormState: any;
+  formConfig: any;
+  formName: string;
+  formDef: ParsedTableFormConfig<T>;
+  form: EntityFormTemplate<any, any, any, any>;
+};
+export const ParseRecordForm = <T,>(
   formName: string,
-  formDef: ParsedFormConfig<T>,
+  formDef: ParsedRecordFormConfig<T>,
   nestedContainerFormView: any,
   formViews: Record<string, Record<string, any>>,
   forms: ParsedForms<T>,
@@ -66,7 +76,7 @@ export const ParseForm = <T,>(
   defaultValue: BasicFun<ParsedType<T>, any>,
   defaultState: BasicFun<ParsedType<T>, any>,
   injectedPrimitives?: InjectedPrimitives<T>,
-): ParsedForm<T> => {
+): Omit<ParsedRecordForm<T>, "form"> => {
   const formConfig: any = {};
   let visibilityPredicateExpressions: FieldPredicateExpressions = Map();
   let disabledPredicatedExpressions: FieldPredicateExpressions = Map();
@@ -150,7 +160,9 @@ export const ParseForms =
         return;
       }
       seen = seen.add(formDef.name);
-      formDef.fields.forEach((field, fieldName) => {
+      const formFields =
+        formDef.kind == "recordForm" ? formDef.fields : formDef.columns;
+      formFields.forEach((field, fieldName) => {
         if (field.type.kind == "lookup" || field.type.kind == "record") {
           traverse(formsConfig.forms.get(field.renderer)!);
         }
@@ -212,61 +224,61 @@ export const ParseForms =
 
     formProcessingOrder.forEach((formName) => {
       const formConfig = formsConfig.forms.get(formName)!;
-      const formFieldRenderers = formConfig.fields
-        .map((field) => field.renderer)
-        .toObject();
       try {
-        const parsedForm = ParseForm(
-          formName,
-          formConfig,
-          nestedContainerFormView,
-          fieldViews,
-          parsedForms,
-          formFieldRenderers,
-          infiniteStreamSources,
-          enumOptionsSources,
-          defaultValue(formsConfig.types, builtIns, injectedPrimitives),
-          defaultState(formsConfig.types, builtIns, injectedPrimitives),
-          injectedPrimitives,
-        );
-        const formBuilder = Form<any, any, any>().Default<any>();
-        const form = formBuilder
-          .template(
-            {
-              ...parsedForm.formConfig,
-            },
-            parsedForm.fieldLabels,
-          )
-          .mapContext<Unit>((_) => {
-            return {
-              type: parsedForm.formDef.type,
-              visible: (_ as any).visible ?? true,
-              disabled: (_ as any).disabled ?? false,
-              label: (_ as any).label,
-              value: (_ as any).value,
-              commonFormState: (_ as any).commonFormState,
-              formFieldStates: (_ as any).formFieldStates,
-              rootValue: (_ as any).rootValue,
-              extraContext: (_ as any).extraContext,
-              visibilities: (_ as any).visibilities,
-              disabledFields: (_ as any).disabledFields,
-              globalConfiguration: (_ as any).globalConfiguration,
-              visibilityPredicateExpressions:
-                parsedForm.visibilityPredicateExpressions,
-              disabledPredicateExpressions:
-                parsedForm.disabledPredicatedExpressions,
-              layout: formConfig.tabs,
-            };
-          });
+        if (formConfig.kind == "recordForm") {
+          const formFieldRenderers = formConfig.fields
+            .map((field) => field.renderer)
+            .toObject();
+          const parsedForm = ParseRecordForm(
+            formName,
+            formConfig,
+            nestedContainerFormView,
+            fieldViews,
+            parsedForms,
+            formFieldRenderers,
+            infiniteStreamSources,
+            enumOptionsSources,
+            defaultValue(formsConfig.types, builtIns, injectedPrimitives),
+            defaultState(formsConfig.types, builtIns, injectedPrimitives),
+            injectedPrimitives,
+          );
+          const formBuilder = Form<any, any, any>().Default<any>();
+          const form = formBuilder
+            .template(
+              {
+                ...parsedForm.formConfig,
+              },
+              parsedForm.fieldLabels,
+            )
+            .mapContext<Unit>((_) => {
+              return {
+                type: parsedForm.formDef.type,
+                visible: (_ as any).visible ?? true,
+                disabled: (_ as any).disabled ?? false,
+                label: (_ as any).label,
+                value: (_ as any).value,
+                commonFormState: (_ as any).commonFormState,
+                formFieldStates: (_ as any).formFieldStates,
+                rootValue: (_ as any).rootValue,
+                extraContext: (_ as any).extraContext,
+                visibilities: (_ as any).visibilities,
+                disabledFields: (_ as any).disabledFields,
+                globalConfiguration: (_ as any).globalConfiguration,
+                visibilityPredicateExpressions:
+                  parsedForm.visibilityPredicateExpressions,
+                disabledPredicateExpressions:
+                  parsedForm.disabledPredicatedExpressions,
+                layout: formConfig.tabs,
+              };
+            });
 
-        parsedForms = parsedForms.set(formName, {
-          ...parsedForm,
-          form,
-          visibilityPredicateExpressions:
-            parsedForm.visibilityPredicateExpressions,
-          disabledPredicatedExpressions:
-            parsedForm.disabledPredicatedExpressions,
-        });
+          parsedForms = parsedForms.set(formName, {
+            ...parsedForm,
+            form
+          });
+        } else if (formConfig.kind == "tableForm") {
+
+        }
       } catch (error: any) {
         console.error(error);
         errors.push(error.message ?? error);
@@ -356,14 +368,7 @@ export type ParsedLaunchers = {
     }
   >;
 };
-export type ParsedForms<T> = Map<
-  string,
-  ParsedForm<T> & {
-    form: EntityFormTemplate<any, any, any, any>;
-    visibilityPredicateExpressions: FieldPredicateExpressions;
-    disabledPredicatedExpressions: FieldPredicateExpressions;
-  }
->;
+export type ParsedForms<T> = Map<string, ParsedRecordForm<T> | ParsedTableForm<T>>;
 export type FormParsingErrors = List<string>;
 export type FormParsingResult = Sum<ParsedLaunchers, FormParsingErrors>;
 export type EnumName = string;
@@ -422,7 +427,7 @@ export const parseFormsToLaunchers =
     const parsedForms = parsedFormsResult.value;
 
     formsConfig.launchers.edit.forEach((launcher, launcherName) => {
-      const parsedForm = parsedForms.get(launcher.form)!;
+      const parsedForm = parsedForms.get(launcher.form)! as ParsedRecordForm<T>;
       const form = parsedForm.form;
       const initialState = parsedForm.initialFormState;
       const formType = parsedForm.formDef.type;
@@ -513,7 +518,7 @@ export const parseFormsToLaunchers =
                     disabledFields: _.disabledFields,
                     globalConfiguration: parentContext.globalConfiguration.sync,
                   })),
-              }) as any,
+              } as any),
           )
           .withViewFromProps((props) => props.context.submitButtonWrapper)
           .mapForeignMutationsFromProps(
@@ -541,7 +546,7 @@ export const parseFormsToLaunchers =
     });
 
     formsConfig.launchers.create.forEach((launcher, launcherName) => {
-      const parsedForm = parsedForms.get(launcher.form)!;
+      const parsedForm = parsedForms.get(launcher.form)! as ParsedRecordForm<T>;
       const form = parsedForm.form;
       const initialState = parsedForm.initialFormState;
       const formType = parsedForm.formDef.type;
@@ -660,7 +665,7 @@ export const parseFormsToLaunchers =
     });
 
     formsConfig.launchers.passthrough.forEach((launcher, launcherName) => {
-      const parsedForm = parsedForms.get(launcher.form)!;
+      const parsedForm = parsedForms.get(launcher.form)! as ParsedRecordForm<T>;
       const form = parsedForm.form;
       const globalConfigurationType = formsConfig.types.get(
         launcher.configType,
@@ -714,7 +719,7 @@ export const parseFormsToLaunchers =
                       disabledFields: _.disabledFields,
                       globalConfiguration: parentContext.globalConfiguration,
                     })),
-                }) as any,
+                } as any),
             )
             .withViewFromProps((props) => props.context.containerWrapper)
             .mapForeignMutationsFromProps(

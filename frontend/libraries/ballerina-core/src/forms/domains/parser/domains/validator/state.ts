@@ -43,6 +43,7 @@ export type ParsedFormConfig<T> =
   | ParsedTableFormConfig<T>;
 
 export type ParsedRecordFormConfig<T> = {
+  kind: "recordForm";
   name: string;
   type: ParsedType<T>;
   fields: Map<FieldName, ParsedRenderer<T>>;
@@ -51,6 +52,7 @@ export type ParsedRecordFormConfig<T> = {
 };
 
 export type ParsedTableFormConfig<T> = {
+  kind: "tableForm";
   name: string;
   type: ParsedType<T>;
   columns: Map<FieldName, ParsedRenderer<T>>;
@@ -376,7 +378,8 @@ export const FormsConfig = {
               return;
             }
 
-            const parsedForm: ParsedFormConfig<T> = {
+            const parsedForm: ParsedRecordFormConfig<T> = {
+              kind: "recordForm",
               name: formName,
               fields: Map(),
               tabs: Map(),
@@ -465,6 +468,7 @@ export const FormsConfig = {
             }
 
             const parsedForm: ParsedTableFormConfig<T> = {
+              kind: "tableForm",
               name: formName,
               columns: Map(),
               renderer: form.renderer,
