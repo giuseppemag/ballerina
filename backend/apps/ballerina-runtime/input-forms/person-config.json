@@ -405,6 +405,10 @@
         "holidays": {
           "fun": "List",
           "args": ["Date"]
+        },
+        "friendsAddresses": {
+          "fun": "Map",
+          "args": ["string", { "fun": "List", "args": ["Address"] }]
         }
       }
     }
@@ -969,6 +973,22 @@
           "elementRenderer": {
             "label": "holiday",
             "renderer": "defaultDate"
+          }
+        },
+        "friendsAddresses": {
+          "label": "friends addresses",
+          "renderer": "defaultMap",
+          "keyRenderer": {
+            "label": "name",
+            "renderer": "defaultString"
+          },
+          "valueRenderer": {
+            "label": "addresses",
+            "renderer": "defaultList",
+            "elementRenderer": {
+              "label": "address",
+              "renderer": "address"
+            }
           }
         }
       },

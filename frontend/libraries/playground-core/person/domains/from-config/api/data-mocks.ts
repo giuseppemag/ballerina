@@ -24,14 +24,14 @@ const streamApis: InfiniteStreamSources = (streamName: string) =>
   streamName == "departments"
     ? PersonApi.getDepartments()
     : streamName == "cities"
-      ? AddressApi.getCities()
-      : (_: any) => (_: any) => {
-          alert(`Cannot find stream API ${streamName}`);
-          return Promise.resolve({
-            hasMoreValues: false,
-            data: OrderedMap(),
-          });
-        };
+    ? AddressApi.getCities()
+    : (_: any) => (_: any) => {
+        alert(`Cannot find stream API ${streamName}`);
+        return Promise.resolve({
+          hasMoreValues: false,
+          data: OrderedMap(),
+        });
+      };
 const enumApis: EnumOptionsSources = (enumName: string) =>
   enumName == "colors"
     ? () =>
@@ -42,54 +42,55 @@ const enumApis: EnumOptionsSources = (enumName: string) =>
           0,
         )
     : enumName == "permissions"
-      ? () =>
-          PromiseRepo.Default.mock(
-            () => permissions.map((_) => ({ Value: _ })),
-            undefined,
-            1,
-            0,
-          )
-      : enumName == "genders"
-        ? () =>
-            PromiseRepo.Default.mock(
-              () => genders.map((_) => ({ Value: _ })),
-              undefined,
-              1,
-              0,
-            )
-        : enumName == "interests"
-          ? () =>
-              PromiseRepo.Default.mock(
-                () => interests.map((_) => ({ Value: _ })),
-                undefined,
-                1,
-                0,
-              )
-          : enumName == "addressesFields"
-            ? () =>
-                PromiseRepo.Default.mock(
-                  () =>
-                    [
-                      "addressByCity",
-                      "departments",
-                      "schoolAddress",
-                      "mainAddress",
-                      "addressesAndAddressesWithLabel",
-                      "addressesWithColorLabel",
-                      "addressesBy",
-                      "permissions",
-                      "cityByDepartment",
-                      "holidays",
-                    ].map((_) => ({ Value: _ })),
-                  undefined,
-                  1,
-                  0,
-                )
-            : () =>
-                PromiseRepo.Default.mock(() => {
-                  alert(`Cannot find enum API ${enumName}`);
-                  return [];
-                });
+    ? () =>
+        PromiseRepo.Default.mock(
+          () => permissions.map((_) => ({ Value: _ })),
+          undefined,
+          1,
+          0,
+        )
+    : enumName == "genders"
+    ? () =>
+        PromiseRepo.Default.mock(
+          () => genders.map((_) => ({ Value: _ })),
+          undefined,
+          1,
+          0,
+        )
+    : enumName == "interests"
+    ? () =>
+        PromiseRepo.Default.mock(
+          () => interests.map((_) => ({ Value: _ })),
+          undefined,
+          1,
+          0,
+        )
+    : enumName == "addressesFields"
+    ? () =>
+        PromiseRepo.Default.mock(
+          () =>
+            [
+              "addressesByCity",
+              "departments",
+              "schoolAddress",
+              "mainAddress",
+              "addressesAndAddressesWithLabel",
+              "addressesWithColorLabel",
+              "addressesBy",
+              "permissions",
+              "cityByDepartment",
+              "holidays",
+              "friendsAddresses",
+            ].map((_) => ({ Value: _ })),
+          undefined,
+          1,
+          0,
+        )
+    : () =>
+        PromiseRepo.Default.mock(() => {
+          alert(`Cannot find enum API ${enumName}`);
+          return [];
+        });
 const entityApis: EntityApis = {
   create: (apiName: string) =>
     apiName == "person"
@@ -390,6 +391,66 @@ const entityApis: EntityApis = {
             shoeColours: [],
             friendsBirthdays: [],
             holidays: [],
+            friendsAddresses: [
+              {
+                Key: `${faker.person.firstName()} ${faker.person.lastName()}`,
+                Value: [
+                  {
+                    streetNumberAndCity: {
+                      Item1: faker.location.street(),
+                      Item2: Math.floor(Math.random() * 500),
+                      Item3: {
+                        IsSome: true,
+                        Value: {
+                          ...City.Default(v4(), faker.location.city()),
+                        },
+                      },
+                    },
+                  },
+                  {
+                    streetNumberAndCity: {
+                      Item1: faker.location.street(),
+                      Item2: Math.floor(Math.random() * 500),
+                      Item3: {
+                        IsSome: true,
+                        Value: {
+                          ...City.Default(v4(), faker.location.city()),
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+              {
+                Key: `${faker.person.firstName()} ${faker.person.lastName()}`,
+                Value: [
+                  {
+                    streetNumberAndCity: {
+                      Item1: faker.location.street(),
+                      Item2: Math.floor(Math.random() * 500),
+                      Item3: {
+                        IsSome: true,
+                        Value: {
+                          ...City.Default(v4(), faker.location.city()),
+                        },
+                      },
+                    },
+                  },
+                  {
+                    streetNumberAndCity: {
+                      Item1: faker.location.street(),
+                      Item2: Math.floor(Math.random() * 500),
+                      Item3: {
+                        IsSome: true,
+                        Value: {
+                          ...City.Default(v4(), faker.location.city()),
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            ],
           });
         };
       case "globalConfiguration":
@@ -397,6 +458,7 @@ const entityApis: EntityApis = {
           return Promise.resolve({
             IsAdmin: false,
             ActiveFields: [
+              { Value: "departments" },
               { Value: "schoolAddress" },
               { Value: "mainAddress" },
               { Value: "addressesAndAddressesWithLabel" },
@@ -406,6 +468,7 @@ const entityApis: EntityApis = {
               { Value: "cityByDepartment" },
               { Value: "holidays" },
               { Value: "addressesByCity" },
+              // { Value: "friendsAddresses" },
             ],
             ERP: {
               caseName: "ERP:SAP",
@@ -507,6 +570,7 @@ const entityApis: EntityApis = {
               shoeColours: [],
               friendsBirthdays: [],
               holidays: [],
+              friendsAddresses: [],
             };
           })
       : (_) => {
