@@ -180,6 +180,20 @@ module WritersAndDeltas =
 
             do! state.SetState(add w)
             return w
+          | ExprType.TableType(e) ->
+            let! we = ExprType.ToWriter { WriterName = $"{writerName.WriterName}_Row" } e
+
+            let! e_annotation = toGolangTypeAnnotation e
+
+            let w =
+              { Name = { WriterName = $"TableWriter[{we.DeltaTypeName}]" }
+                DeltaTypeName = $"{codegenConfig.Table.DeltaTypeName}[{e_annotation}, {we.DeltaTypeName}]"
+                Type = t
+                Components = Map.empty
+                Kind = WriterKind.Imported }
+
+            do! state.SetState(add w)
+            return w
           | ExprType.MapType(k, v) ->
             let! wk = ExprType.ToWriter { WriterName = $"{writerName.WriterName}_Key" } k
             let! wv = ExprType.ToWriter { WriterName = $"{writerName.WriterName}_Value" } v

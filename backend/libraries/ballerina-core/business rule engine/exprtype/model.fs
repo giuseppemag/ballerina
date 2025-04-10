@@ -45,6 +45,7 @@ module Model =
     | TupleType of List<ExprType>
     | OptionType of ExprType
     | ListType of ExprType
+    | TableType of ExprType
     | SetType of ExprType
 
   and UnionCase = { CaseName: string; Fields: ExprType }
@@ -85,6 +86,7 @@ module Model =
       | ExprType.UnitType -> "()"
       | ExprType.VarType v -> v.VarName
       | ExprType.ListType t -> $"List<{!t}>"
+      | ExprType.TableType t -> $"Table<{!t}>"
       | ExprType.SetType t -> $"Set<{!t}>"
       | ExprType.OptionType t -> $"Option<{!t}>"
       | ExprType.MapType(k, v) -> $"Map<{!k},{!v}>"
@@ -122,6 +124,7 @@ module Model =
       | ExprType.VarType _ -> Set.empty
       | ExprType.TupleType ts -> ts |> Seq.map (!) |> Seq.fold (+) Set.empty
       | ExprType.ListType t
+      | ExprType.TableType t
       | ExprType.SetType t
       | ExprType.OptionType t -> !t
       | ExprType.LookupType t -> Set.singleton t
@@ -149,6 +152,7 @@ module Model =
         | None -> t
         | Some t -> t
       | ExprType.ListType t -> ExprType.ListType(!t)
+      | ExprType.TableType t -> ExprType.TableType(!t)
       | ExprType.SetType t -> ExprType.SetType(!t)
       | ExprType.OptionType t -> ExprType.OptionType(!t)
       | ExprType.MapType(k, v) -> ExprType.MapType(!k, !v)

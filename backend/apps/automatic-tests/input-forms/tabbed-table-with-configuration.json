@@ -119,10 +119,10 @@
             "UserFieldRef"
           ]
         },
-        "GroupsFields": {
+        "UserGroupsFields": {
           "fun": "MultiSelection",
           "args": [
-            "GroupsFieldRef"
+            "UserGroupFieldRef"
           ]
         },
         "ActivityFields": {
@@ -138,7 +138,8 @@
     "enumOptions": {
       "UserFieldsApi": "UserFieldRef",
       "UserGroupFieldsApi": "UserGroupFieldRef",
-      "ActivityFieldsApi": "ActivityFieldRef"
+      "ActivityFieldsApi": "ActivityFieldRef",
+      "UsersSetupTabsApi": "UsersSetupTabsRef"
     },
     "entities": {
       "GlobalConfigApi": {
@@ -202,14 +203,30 @@
     }
   },
   "forms": {
-    "UserConfig": {
-      "type": "UserConfig",
+    "UsersSetupConfig": {
+      "type": "UsersSetupConfig",
       "fields": {
         "ActiveFields": {
           "renderer": "enumMultiselect",
           "options": "UserFieldsApi"
+        },
+        "InactiveFields": {
+          "renderer": "enumMultiselect",
+          "options": "UserFieldsApi"
+        },
+        "UserGroupsFields": {
+          "renderer": "enumMultiselect",
+          "options": "UserGroupFieldsApi"
+        },
+        "ActivityFields": {
+          "renderer": "enumMultiselect",
+          "options": "ActivityFieldsApi"
+        },
+        "ActiveTabs": {
+          "renderer": "enumMultiselect",
+          "options": "UsersSetupTabsApi"
         }
-      },
+    },
       "tabs": {
         "main": {
           "columns": {
@@ -224,59 +241,6 @@
         }
       }
     },
-    "UsersSetup": {
-      "type": "UsersSetup",
-      "fields": {
-        "Active": {
-          "renderer": "ActiveUsers"
-        },
-        "Inactive": {
-          "renderer": "InactiveUsers"
-        },
-        "Groups": {
-          "renderer": "UserGroups"
-        },
-        "Activities": {
-          "renderer": "streamingTable",
-          "rowRenderer": "Activity",
-          "api": "ActivitiesApi",
-          "visibleColumns": {
-            "kind": "fieldLookup",
-            "operands": [
-              {
-                "kind": "varLookup",
-                "varName": "global"
-              },
-              "ActivitiesFields"
-            ]
-          }          
-        }
-      },
-      "tabs": {
-        "main": {
-          "columns": {
-            "main": {
-              "groups": {
-                "main": [
-                  "Active"
-                ],
-                "secondary": {
-                  "kind": "fieldLookup",
-                  "operands": [
-                    {
-                      "kind": "varLookup",
-                      "varName": "global"
-                    },
-                    "ActiveTabs"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-
     "ActiveUsers": {
       "type": "User",
       "renderer": "finiteTable",
@@ -360,7 +324,7 @@
             "kind": "varLookup",
             "varName": "global"
           },
-          "GroupsFields"
+          "UserGroupsFields"
         ]
       }
     },
@@ -388,19 +352,71 @@
           }
         }
       }
+    },
+    "UsersSetup": {
+      "type": "UsersSetup",
+      "fields": {
+        "Active": {
+          "renderer": "ActiveUsers"
+        },
+        "Inactive": {
+          "renderer": "InactiveUsers"
+        },
+        "Groups": {
+          "renderer": "UserGroups"
+        }
+      },
+      "Activities": {
+        "renderer": "streamingTable",
+        "rowRenderer": "Activity",
+        "api": "ActivitiesApi",
+        "visibleColumns": {
+          "kind": "fieldLookup",
+          "operands": [
+            {
+              "kind": "varLookup",
+              "varName": "global"
+            },
+            "ActivitiesFields"
+          ]
+        }          
+      },
+      "tabs": {
+        "main": {
+          "columns": {
+            "main": {
+              "groups": {
+                "main": [
+                  "Active"
+                ],
+                "secondary": {
+                  "kind": "fieldLookup",
+                  "operands": [
+                    {
+                      "kind": "varLookup",
+                      "varName": "global"
+                    },
+                    "ActiveTabs"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "launchers": {
-    "UserConfigLauncher": {
+    "UsersSetupConfigLauncher": {
       "kind": "create",
-      "form": "UserConfig",
-      "api": "UserConfigApi",
+      "form": "UsersSetupConfig",
+      "api": "UsersSetupConfigApi",
       "configApi": "GlobalConfigApi"
     },
     "UsersSetup":{
       "kind": "passthrough",
       "form": "UsersSetup",
-      "configType": "UserConfig"
+      "configType": "UsersSetupConfig"
     }
   }
 }

@@ -177,16 +177,14 @@ module WithError =
         | Right e1, Right e2 -> return! state.Throw('e.Concat(e1, e2))
       }
 
-    member inline state.Either3 p1 p2 p3 =
-      state.Either p1 (state.Either p2 p3) |> state.Map Tuple.fromNested3
+    member inline state.Either3 (p1: State<'a, 'c, 's, 'e>) (p2: State<'a, 'c, 's, 'e>) (p3: State<'a, 'c, 's, 'e>) =
+      state.Either p1 (state.Either p2 p3)
 
     member inline state.Either4 p1 p2 p3 p4 =
       state.Either p1 (state.Either p2 (state.Either p3 p4))
-      |> state.Map Tuple.fromNested4
 
     member inline state.Either5 p1 p2 p3 p4 p5 =
       state.Either p1 (state.Either p2 (state.Either p3 (state.Either p4 p5)))
-      |> state.Map Tuple.fromNested4
 
     member state.RunOption(p: Option<State<'a, 'c, 's, 'e>>) =
       state {

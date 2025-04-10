@@ -37,15 +37,28 @@ module Validator =
         | Renderer.EnumRenderer(enum, enumRenderer) ->
           do! !enumRenderer |> Sum.map ignore
           return fr.Type
-        | Renderer.FormRenderer(f, _, children) ->
+        | Renderer.FormRenderer(f, body, children) ->
           do! children |> validateChildren
 
-          return fr.Type
+          let! f = ctx.TryFindForm f.FormName
+
+          return
+            if f.Body.IsTable then
+              ExprType.TableType fr.Type
+            else
+              fr.Type
         | Renderer.ListRenderer(l) ->
           do! !l.List |> Sum.map ignore
           do! !l.Element.Renderer |> Sum.map ignore
 
           do! l.Children |> validateChildren
+
+          return fr.Type
+        | Renderer.TableRenderer(t) ->
+          do! !t.Table |> Sum.map ignore
+          do! !t.Row.Renderer |> Sum.map ignore
+
+          do! t.Children |> validateChildren
 
           return fr.Type
         | Renderer.MapRenderer(m) ->
@@ -142,6 +155,11 @@ module Validator =
           do! !!e.Element
 
           do! e.Children |> validateChildrenPredicates
+        | Renderer.TableRenderer e ->
+          do! !e.Table
+          do! !!e.Row
+
+          do! e.Children |> validateChildrenPredicates
         | Renderer.MapRenderer kv ->
           do! !kv.Map
           do! !!kv.Key
@@ -186,6 +204,8 @@ module Validator =
         | RecordType fields ->
           match fields |> Map.tryFind fc.FieldName with
           | Some fieldType ->
+            let! fieldType = ExprType.ResolveLookup ctx fieldType
+
             do!
               ExprType.Unify
                 Map.empty
@@ -384,6 +404,16 @@ module Validator =
               Errors.Singleton $"Error: the form type is a union, expected cases in the body but found fields instead."
             )
         | _, FormBody.Fields fields -> do! FormFields.Validate ctx localType fields
+        | _, FormBody.Table table ->
+          return!
+            sum.All(
+              table.Columns
+              |> Map.values
+              |> Seq.map (FieldConfig.Validate ctx localType)
+              |> Seq.toList
+            )
+            |> Sum.map ignore
+
         | _ -> return! sum.Throw(Errors.Singleton $"Error: mismatched form type and form body")
       }
 
@@ -408,6 +438,17 @@ module Validator =
               |> state.OfSum
 
             do! Renderer.ValidatePredicates ctx globalType rootType typeCase.Fields case.Value
+        | FormBody.Table table ->
+          let rowType = localType
+          let! rowTypeFields = rowType |> ExprType.AsRecord |> state.OfSum
+
+          for column in table.Columns do
+            let! columnType =
+              rowTypeFields
+              |> Map.tryFindWithError (column.Key) "fields" "fields"
+              |> state.OfSum
+
+            do! FieldConfig.ValidatePredicates ctx globalType rootType columnType column.Value
       }
 
   and FormConfig with

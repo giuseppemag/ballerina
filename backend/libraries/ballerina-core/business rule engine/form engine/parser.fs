@@ -39,6 +39,13 @@ module Parser =
         | _ -> return! sum.Throw(Errors.Singleton $$"""Error: type {{t}} cannot be converted to a Set.""")
       }
 
+    static member AsTable(t: ExprType) : Sum<ExprType, Errors> =
+      sum {
+        match t with
+        | ExprType.TableType e -> return e
+        | _ -> return! sum.Throw(Errors.Singleton $$"""Error: type {{t}} cannot be converted to a Table.""")
+      }
+
     static member AsLookupId(t: ExprType) : Sum<TypeId, Errors> =
       sum {
         match t with
@@ -166,6 +173,9 @@ module Parser =
       sum {
         match t with
         | ExprType.LookupType l -> return! ExprType.Find ctx l
+        | ExprType.TableType t ->
+          let! t = ExprType.ResolveLookup ctx t
+          return ExprType.TableType t
         | _ -> return t
       }
 
@@ -185,7 +195,8 @@ module Parser =
     member state.AsFormBodyFields fb =
       match fb with
       | FormBody.Fields fs -> state { return fs }
-      | FormBody.Cases _ -> state.Throw(Errors.Singleton $"Error: expected fields in form body, found cases.")
+      | FormBody.Cases _
+      | FormBody.Table _ -> state.Throw(Errors.Singleton $"Error: expected fields in form body, found cases.")
 
   type FormLauncher with
     static member Parse (launcherName: string) (json: JsonValue) : State<_, CodeGenConfig, ParsedFormsContext, Errors> =
@@ -272,6 +283,7 @@ module Parser =
       | MapRenderer r -> ExprType.MapType(r.Key.Type, r.Value.Type)
       | SumRenderer r -> ExprType.SumType(r.Left.Type, r.Right.Type)
       | ListRenderer r -> ExprType.ListType r.Element.Type
+      | TableRenderer r -> ExprType.TableType r.Row.Type
       | EnumRenderer(_, r)
       | StreamRenderer(_, r) -> r.Type
       | TupleRenderer i -> ExprType.TupleType(i.Elements |> Seq.map (fun e -> e.Type) |> List.ofSeq)
@@ -683,6 +695,20 @@ module Parser =
                       Children = { Fields = Map.empty } }
                  Element = elementRenderer
                  Children = children |}
+        elif config.Table.SupportedRenderers |> Set.contains s then
+          let! elementRendererJson = parentJsonFields |> sum.TryFindField "rowRenderer" |> state.OfSum
+          let! elementRenderer = NestedRenderer.Parse elementRendererJson
+
+          return
+            TableRenderer
+              {| Table =
+                  PrimitiveRenderer
+                    { PrimitiveRendererName = s
+                      PrimitiveRendererId = Guid.CreateVersion7()
+                      Type = ExprType.TableType elementRenderer.Renderer.Type
+                      Children = { Fields = Map.empty } }
+                 Row = elementRenderer
+                 Children = children |}
         elif config.Union.SupportedRenderers |> Set.contains s then
           let! casesJson = parentJsonFields |> sum.TryFindField "cases" |> state.OfSum
           let! casesJson = casesJson |> JsonValue.AsRecord |> state.OfSum
@@ -958,8 +984,7 @@ module Parser =
 
   and FormBody with
     static member Parse(fields: (string * JsonValue)[]) =
-      state.Either
-
+      state.Either3
         (state {
           let! formFields = FormFields.Parse fields
           return FormBody.Fields formFields
@@ -986,6 +1011,47 @@ module Parser =
                 |> state.Map(Map.ofSeq)
 
               return {| Cases = cases; Renderer = renderer |} |> FormBody.Cases
+            }
+            |> state.MapError(Errors.WithPriority ErrorPriority.High)
+        })
+        (state {
+          let! columnsJson = fields |> state.TryFindField "columns"
+
+          return!
+            state {
+              let! columnsJson = columnsJson |> JsonValue.AsRecord |> state.OfSum
+              let! rendererJson = fields |> state.TryFindField "renderer"
+              let! renderer = rendererJson |> JsonValue.AsString |> state.OfSum
+              let! config = state.GetContext()
+
+              if config.Table.SupportedRenderers |> Set.contains renderer |> not then
+                return! state.Throw(Errors.Singleton $"Error: cannot find table renderer {renderer}")
+              else
+                let! apiJson = fields |> state.TryFindField "api"
+
+                let! columns =
+                  columnsJson
+                  |> Seq.map (fun (columnName, columnJson) ->
+                    state {
+                      // let! caseJson = caseJson |> JsonValue.AsRecord |> state.OfSum
+                      let! columnBody = FieldConfig.Parse columnName columnJson
+                      return columnName, columnBody
+                    }
+                    |> state.MapError(Errors.Map(String.appendNewline $"\n...when parsing table column {columnName}")))
+                  |> state.All
+                  |> state.Map(Map.ofSeq)
+
+                let! visibleColumnsJson = fields |> state.TryFindField "visibleColumns"
+                let! visibleColumns = FormConfig.ParseGroup "visibleColumns" Map.empty visibleColumnsJson
+
+                return
+                  {| Columns = columns
+                     Renderer = renderer
+                     Api =
+                      { TableName = "PLACEHOLDER"
+                        TableId = Guid.Empty }
+                     VisibleColumns = visibleColumns |}
+                  |> FormBody.Table
             }
             |> state.MapError(Errors.WithPriority ErrorPriority.High)
         })
@@ -1323,6 +1389,22 @@ module Parser =
                                 let! arg = JsonValue.AsSingleton argsJson |> state.OfSum
                                 let! arg = !arg
                                 return ExprType.ListType arg
+                              }
+                              |> state.MapError(Errors.WithPriority ErrorPriority.High)
+                          }
+                          state {
+                            do!
+                              funJson
+                              |> JsonValue.AsEnum(Set.singleton "Table")
+                              |> state.OfSum
+                              |> state.Map(ignore)
+
+                            return!
+                              state {
+                                let! argsJson = (fields |> state.TryFindField "args")
+                                let! arg = JsonValue.AsSingleton argsJson |> state.OfSum
+                                let! arg = !arg
+                                return ExprType.TableType arg
                               }
                               |> state.MapError(Errors.WithPriority ErrorPriority.High)
                           }

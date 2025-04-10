@@ -56,12 +56,36 @@
       ✅ TypeCheck
         ✅ validate the type of the expression as `Set<Enum>` where `Enum` is a subset of the field names of the type
     ❌ tables support
-      ❌ renderer
-      ❌ columns
-      ❌ visibility
-      ❌ API
-      ❌ launcher with getMore
-      ❌ field renderer with getMore
+      ❌ spec
+        ❌ renderer
+        ❌ columns
+        ❌ visibility
+        ❌ API
+        ❌ launcher with getMore
+        ❌ field renderer with getMore
+      ❌ parse
+        ✅ Table type
+        ❌ `apis::tables`
+          ❌ REMOVE PLACEHOLDER from table parser
+        ❌ Table renderer (new form body)
+          ❌ columns
+            ❌ REPLACE FIELDCONFIG WITH COLUMNCONFIG
+          ❌ api
+          ❌ visible
+            ❌ add InlinedColumns case, parse it explicitly
+            ❌ REMOVE Map.empty and pass the columns map instead
+        ❌ Field table renderer (new Renderer)
+      ❌ REPLACE INLINED sum.All over table.Columns and make it a separate function
+        ❌ do the same for the cases
+      ❌ test validation
+      ❌ test visibility predicate validation
+      ❌ codegen
+        ❌ go-config and underlying table types and operations
+        ❌ paginated API
+    ❌ form parser file is too long
+      ❌ split off the renderers parsers
+      ❌ split off the ExprType decomposition patterns
+    ❌ plenty of nonsense `Id` fields in enumApiId, streamApiId, etc.
     ❌ entities PATCH - gets single value and path of change
       ✅ support Id:string in CollectionReference, not just Id:Guid
       ✅ lots of no-ops in deltas
@@ -119,11 +143,16 @@
         ❌ move the Golang codegen there after extracting the intermediate representation for the codegen
       ❌ database
         ❌ syntax
-        ❌ in-memory storage
-        ❌ api extended overridden on top of database
+        ❌ generated models and dbcontext in F# if migrations work, C# otherwise
+        ❌ with conversion to and from `Value`
+        ❌ with conversion of `Include`-heavy LINQ queries to and from `Expr`
+        ❌ api to and from `Value`, `Expr`
+        ❌ migration/fork-the-world strategy
+        ❌ multicast writing to old reference entities
+        ❌ permanently store sources in DB
+      ❌ update rules and execution engine
+        ❌ table of rules, saved in jsonb
       ❌ OData (AST-only) API generator
-      ❌ inference rules and execution engine
-      ❌ database storage and migration manager in ES
     ❌ disallow unsupported keywords (`visibIle` wasted me a good chunk of time)
     ❌ gently deprecate "defaultX" naming convention
     ❌ make recursive `Value/Expr` types work in Go
@@ -146,8 +175,6 @@
     ❌ remove all the nonsense `Guid`s from id types, the wrapped name is enough
     ❌ create gui editor as an instance of a form itself
       ❌ form specification
-      ❌ generated F# files with type definitions
-        ❌ because there will be an entity API with the database schema interpretation later
       ❌ package in a separate (private) repo
         ❌ served by an F# backend
         ❌ with access to folder IDE-style
@@ -168,7 +195,8 @@
     ❌ generate Typescript and C# code from forms-config
     ❌ extensibility of primitives as existentially-typed algebras
     ❌ improve the syntax of the form config with fslex and fsyacc
-    ❌ codegen the `import` command with some sort of linking strategy for shared files
+    ✅ codegen the `import` command with some sort of linking strategy for shared files
+    ❌ consider dropping `Children` if we do not use it
     ✅ allow union types (needs adjustment in frontend too)
 
   ❌ make validator partial

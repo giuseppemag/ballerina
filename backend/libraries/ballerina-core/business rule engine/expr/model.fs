@@ -52,6 +52,7 @@ module Model =
     | Exists of VarName * EntityDescriptorId * Expr
     | SumBy of VarName * EntityDescriptorId * Expr
     | MakeTuple of List<Expr>
+    | MakeSet of List<Expr>
     | Project of Expr * int
     | MakeCase of string * Expr
     | MatchCase of Expr * Map<string, VarName * Expr>
@@ -110,7 +111,8 @@ module Model =
       | MakeRecord fs ->
         let eq = "=" in
         $"{{ {fs |> Seq.map (fun f -> f.Key.ToString() + eq + f.Value.ToString())} |> String.Join ';' }}"
-      | MakeTuple fs -> $"{{ {fs |> Seq.map (fun f -> f.ToString())} |> String.Join ',' }}"
+      | MakeTuple fs -> $"({fs |> Seq.map (fun f -> f.ToString())} |> String.Join ',')"
+      | MakeSet fs -> $"{{ {fs |> Seq.map (fun f -> f.ToString())} |> String.Join ';' }}"
       | RecordFieldLookup(e, f) -> $"{e.ToString()}.{f}"
       | MakeCase(c, e) -> $"{c.ToString()}({e.ToString()})"
       | Project(e, f) -> $"{e.ToString()}.π{f}"

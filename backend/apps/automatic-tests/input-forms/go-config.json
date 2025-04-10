@@ -89,6 +89,16 @@
     "MappingFunction": "ballerina.MapArray",
     "DefaultConstructor": "ballerina.DefaultArray"
   },
+  "Table": {
+    "GeneratedTypeName": "ballerina.Array",
+    "DeltaTypeName": "ballerina.DeltaArray",
+    "RequiredImport": "ballerina.com/core",
+    "SupportedRenderers": [
+      "streamingTable", "finiteTable"
+    ],
+    "MappingFunction": "ballerina.MapArray",
+    "DefaultConstructor": "ballerina.DefaultArray"
+  },
   "Map": {
     "GeneratedTypeName": "ballerina.Map",
     "DeltaTypeName": "ballerina.DeltaMap",

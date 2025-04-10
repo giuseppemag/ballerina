@@ -28,6 +28,9 @@ module DefaultValues =
           | PrimitiveType.GuidType -> return cfg.Guid.DefaultValue
           | PrimitiveType.StringType -> return cfg.String.DefaultValue
           | _ -> return! state.Throw(Errors.Singleton $"Error: not implemented default value for primitive type {p}")
+        | ExprType.TableType e ->
+          let! e = e |> ExprType.GenerateTypeAnnotation
+          return $"{cfg.Table.DefaultConstructor}[{e}]()"
         | ExprType.ListType e ->
           let! e = e |> ExprType.GenerateTypeAnnotation
           return $"{cfg.List.DefaultConstructor}[{e}]()"

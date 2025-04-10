@@ -16,6 +16,7 @@ module Model =
       Option: CodegenConfigOptionDef
       Set: CodegenConfigSetDef
       List: CodegenConfigListDef
+      Table: CodegenConfigTableDef
       Map: CodegenConfigMapDef
       Sum: CodegenConfigSumDef
       Tuple: List<TupleCodegenConfigTypeDef>
@@ -69,6 +70,15 @@ module Model =
       SupportedRenderers: Set<string> }
 
   and CodegenConfigListDef =
+    { GeneratedTypeName: string
+      RequiredImport: Option<string>
+
+      DeltaTypeName: string
+      SupportedRenderers: Set<string>
+      DefaultConstructor: string
+      MappingFunction: string }
+
+  and CodegenConfigTableDef =
     { GeneratedTypeName: string
       RequiredImport: Option<string>
 
@@ -215,15 +225,35 @@ module Model =
 
     static member Type(a: EntityApi) : TypeId = a.TypeId
 
+  and TableApiId = { TableName: string; TableId: Guid }
+
+  and TableApi =
+    { TableName: string
+      TableId: Guid
+      TypeId: TypeId }
+
+    static member Id(e: TableApi) =
+      { TableName = e.TableName
+        TableId = e.TableId }
+
+    static member Create(n, t) : TableApi =
+      { TableName = n
+        TypeId = t
+        TableId = Guid.CreateVersion7() }
+
+    static member Type(a: TableApi) : TypeId = a.TypeId
+
   and FormApis =
     { Enums: Map<string, EnumApi>
       Streams: Map<string, StreamApi>
-      Entities: Map<string, EntityApi * Set<CrudMethod>> }
+      Entities: Map<string, EntityApi * Set<CrudMethod>>
+      Tables: Map<string, TableApi * Set<CrudMethod>> }
 
     static member Empty =
       { Enums = Map.empty
         Streams = Map.empty
-        Entities = Map.empty }
+        Entities = Map.empty
+        Tables = Map.empty }
 
     static member Updaters =
       {| Enums = fun u s -> { s with FormApis.Enums = u (s.Enums) }
@@ -234,7 +264,11 @@ module Model =
          Entities =
           fun u s ->
             { s with
-                FormApis.Entities = u (s.Entities) } |}
+                FormApis.Entities = u (s.Entities) }
+         Tables =
+          fun u s ->
+            { s with
+                FormApis.Tables = u (s.Tables) } |}
 
   and FormConfigId = { FormName: string; FormId: Guid }
 
@@ -255,6 +289,11 @@ module Model =
     | Cases of
       {| Renderer: Renderer
          Cases: Map<string, Renderer> |}
+    | Table of
+      {| Renderer: string
+         Columns: Map<string, FieldConfig>
+         Api: TableApiId
+         VisibleColumns: FormGroup |}
 
   and FormFields =
     { Fields: Map<string, FieldConfig>
@@ -303,6 +342,10 @@ module Model =
     | ListRenderer of
       {| List: Renderer
          Element: NestedRenderer
+         Children: RendererChildren |}
+    | TableRenderer of
+      {| Table: Renderer
+         Row: NestedRenderer
          Children: RendererChildren |}
     | SumRenderer of
       {| Sum: Renderer

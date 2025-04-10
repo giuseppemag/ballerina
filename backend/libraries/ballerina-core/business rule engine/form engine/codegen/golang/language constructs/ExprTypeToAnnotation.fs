@@ -80,6 +80,19 @@ module TypeAnnotations =
             |> state.SetState
 
           return $"{config.List.GeneratedTypeName}[{e}]"
+
+        | ExprType.TableType e ->
+          let! e = !e
+
+          do!
+            config.Table.RequiredImport
+            |> Option.toList
+            |> Set.ofList
+            |> Set.union
+            |> GoCodeGenState.Updaters.UsedImports
+            |> state.SetState
+
+          return $"{config.Table.GeneratedTypeName}[{e}]"
         | ExprType.SetType e ->
           let! e = !e
 
