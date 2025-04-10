@@ -70,7 +70,7 @@ const enumApis: EnumOptionsSources = (enumName: string) =>
                 PromiseRepo.Default.mock(
                   () =>
                     [
-                      "addressByCity",
+                      "addressesByCity",
                       "departments",
                       "schoolAddress",
                       "mainAddress",
@@ -80,6 +80,7 @@ const enumApis: EnumOptionsSources = (enumName: string) =>
                       "permissions",
                       "cityByDepartment",
                       "holidays",
+                      "friendsAddresses",
                     ].map((_) => ({ Value: _ })),
                   undefined,
                   1,
@@ -390,6 +391,66 @@ const entityApis: EntityApis = {
             shoeColours: [],
             friendsBirthdays: [],
             holidays: [],
+            friendsAddresses: [
+              {
+                Key: `${faker.person.firstName()} ${faker.person.lastName()}`,
+                Value: [
+                  {
+                    streetNumberAndCity: {
+                      Item1: faker.location.street(),
+                      Item2: Math.floor(Math.random() * 500),
+                      Item3: {
+                        IsSome: true,
+                        Value: {
+                          ...City.Default(v4(), faker.location.city()),
+                        },
+                      },
+                    },
+                  },
+                  {
+                    streetNumberAndCity: {
+                      Item1: faker.location.street(),
+                      Item2: Math.floor(Math.random() * 500),
+                      Item3: {
+                        IsSome: true,
+                        Value: {
+                          ...City.Default(v4(), faker.location.city()),
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+              {
+                Key: `${faker.person.firstName()} ${faker.person.lastName()}`,
+                Value: [
+                  {
+                    streetNumberAndCity: {
+                      Item1: faker.location.street(),
+                      Item2: Math.floor(Math.random() * 500),
+                      Item3: {
+                        IsSome: true,
+                        Value: {
+                          ...City.Default(v4(), faker.location.city()),
+                        },
+                      },
+                    },
+                  },
+                  {
+                    streetNumberAndCity: {
+                      Item1: faker.location.street(),
+                      Item2: Math.floor(Math.random() * 500),
+                      Item3: {
+                        IsSome: true,
+                        Value: {
+                          ...City.Default(v4(), faker.location.city()),
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            ],
           });
         };
       case "globalConfiguration":
@@ -397,6 +458,7 @@ const entityApis: EntityApis = {
           return Promise.resolve({
             IsAdmin: false,
             ActiveFields: [
+              { Value: "departments" },
               { Value: "schoolAddress" },
               { Value: "mainAddress" },
               { Value: "addressesAndAddressesWithLabel" },
@@ -406,6 +468,7 @@ const entityApis: EntityApis = {
               { Value: "cityByDepartment" },
               { Value: "holidays" },
               { Value: "addressesByCity" },
+              // { Value: "friendsAddresses" },
             ],
             ERP: {
               caseName: "ERP:SAP",
@@ -507,6 +570,7 @@ const entityApis: EntityApis = {
               shoeColours: [],
               friendsBirthdays: [],
               holidays: [],
+              friendsAddresses: [],
             };
           })
       : (_) => {

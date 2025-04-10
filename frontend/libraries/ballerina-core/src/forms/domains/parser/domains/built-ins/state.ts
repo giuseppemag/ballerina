@@ -644,7 +644,6 @@ export const toAPIRawValue =
     injectedPrimitives?: InjectedPrimitives<T>,
   ) =>
   (raw: PredicateValue, formState: any): ValueOrErrors<any, string> => {
-    console.debug("toAPIRawValue", t, JSON.stringify(raw, null, 2), formState);
     if (t.kind == "primitive") {
       if (t.value == "unit") {
         return ValueOrErrors.Default.return(unit);
@@ -652,7 +651,7 @@ export const toAPIRawValue =
       return ValueOrErrors.Operations.Return(
         converters[t.value as string | keyof T].toAPIRawValue([
           raw,
-          formState.commonFormState.modifiedByUser,
+          formState?.commonFormState?.modifiedByUser ?? false,
         ]),
       );
     }
@@ -685,7 +684,7 @@ export const toAPIRawValue =
       return ValueOrErrors.Operations.Return(
         converters["union"].toAPIRawValue([
           rawUnionCase,
-          formState.commonFormState.modifiedByUser,
+          formState?.commonFormState?.modifiedByUser ?? false,
         ]),
       );
     }
@@ -716,14 +715,14 @@ export const toAPIRawValue =
           return ValueOrErrors.Operations.Return(
             converters[t.value].toAPIRawValue([
               Sum.Default.left(rawValue),
-              formState.commonFormState.modifiedByUser,
+              formState?.commonFormState?.modifiedByUser ?? false,
             ]),
           );
         } else {
           return ValueOrErrors.Operations.Return(
             converters[t.value].toAPIRawValue([
               Sum.Default.right("no selection"),
-              formState.commonFormState.modifiedByUser,
+              formState?.commonFormState?.modifiedByUser ?? false,
             ]),
           );
         }
@@ -778,7 +777,7 @@ export const toAPIRawValue =
                     })
                     .toArray(),
                 ),
-                formState.commonFormState.modifiedByUser,
+                formState?.commonFormState?.modifiedByUser ?? false,
               ]),
             ),
         );
@@ -798,14 +797,14 @@ export const toAPIRawValue =
                 builtIns,
                 converters,
                 injectedPrimitives,
-              )(value, formState.elementFormStates.get(index)),
+              )(value, formState?.elementFormStates?.get(index)),
             ),
           ),
         ).Then((values) =>
           ValueOrErrors.Default.return(
             converters["List"].toAPIRawValue([
               values,
-              formState.commonFormState.modifiedByUser,
+              formState?.commonFormState?.modifiedByUser ?? false,
             ]),
           ),
         );
@@ -820,7 +819,7 @@ export const toAPIRawValue =
             injectedPrimitives,
           )(
             (keyValue as ValueTuple).values.get(0)!,
-            formState.elementFormStates.get(index).KeyFormState,
+            formState?.elementFormStates?.get(index)?.KeyFormState,
           )
             .Then((possiblyUndefinedKey) => {
               if (
@@ -850,7 +849,7 @@ export const toAPIRawValue =
                 injectedPrimitives,
               )(
                 (keyValue as ValueTuple).values.get(1)!,
-                formState.elementFormStates.get(index).ValueFormState,
+                formState?.elementFormStates.get(index)?.ValueFormState,
               ).Then((value) =>
                 ValueOrErrors.Default.return([key, value] as [any, any]),
               ),
@@ -867,7 +866,10 @@ export const toAPIRawValue =
             );
           }
           return ValueOrErrors.Operations.Return(
-            converters["Map"].toAPIRawValue([values, formState.modifiedByUser]),
+            converters["Map"].toAPIRawValue([
+              values,
+              formState.modifiedByUser ?? false,
+            ]),
           );
         });
       }
@@ -896,7 +898,7 @@ export const toAPIRawValue =
               raw.value.kind == "l"
                 ? Sum.Default.left(value)
                 : Sum.Default.right(value),
-              formState.commonFormState.modifiedByUser,
+              formState?.commonFormState?.modifiedByUser ?? false,
             ]),
           ),
         );
@@ -917,14 +919,14 @@ export const toAPIRawValue =
                 builtIns,
                 converters,
                 injectedPrimitives,
-              )(value, formState.elementFormStates.get(index));
+              )(value, formState?.elementFormStates?.get(index));
             }),
           ),
         ).Then((values) =>
           ValueOrErrors.Default.return(
             converters["Tuple"].toAPIRawValue([
               values,
-              formState.commonFormState.modifiedByUser,
+              formState?.commonFormState?.modifiedByUser ?? false,
             ]),
           ),
         );
@@ -959,7 +961,7 @@ export const toAPIRawValue =
             injectedPrimitives,
           )(
             raw.fields.get(fieldName)!,
-            formState["formFieldStates"]?.[fieldName] ?? formState,
+            formState?.formFieldStates?.[fieldName] ?? formState,
           ),
         ]),
       );
