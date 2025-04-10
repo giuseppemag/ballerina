@@ -65,6 +65,7 @@ export const GenericTypes = [
   "Option",
   "Sum",
   "KeyOf",
+  "Table",
 ] as const;
 export type GenericType = (typeof GenericTypes)[number];
 

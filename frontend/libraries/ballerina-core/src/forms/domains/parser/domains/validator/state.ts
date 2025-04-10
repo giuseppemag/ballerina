@@ -12,6 +12,8 @@ import {
   TypeName,
   PredicateFormLayout,
   FormLayout,
+  TableLayout,
+  PredicateVisibleColumns,
 } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 import { ParsedRenderer } from "../renderer/state";
@@ -21,18 +23,39 @@ export type RawForm = {
   fields?: any;
   tabs?: any;
   header?: any;
+  columns?: any;
+  renderer?: any;
+  visibleColumns?: any;
 };
 export const RawForm = {
   hasType: (_: any): _ is { type: any } => isObject(_) && "type" in _,
   hasFields: (_: any): _ is { fields: any } => isObject(_) && "fields" in _,
   hasTabs: (_: any): _ is { tabs: any } => isObject(_) && "tabs" in _,
   hasHeader: (_: any): _ is { header: any } => isObject(_) && "header" in _,
+  hasColumns: (_: any): _ is { columns: any } => isObject(_) && "columns" in _,
+  hasRenderer: (_: any): _ is { renderer: any } =>
+    isObject(_) && "renderer" in _,
+  hasVisibleColumns: (_: any): _ is { visibleColumns: any } =>
+    isObject(_) && "visibleColumns" in _,
 };
-export type ParsedFormConfig<T> = {
+export type ParsedFormConfig<T> =
+  | ParsedRecordFormConfig<T>
+  | ParsedTableFormConfig<T>;
+
+export type ParsedRecordFormConfig<T> = {
   name: string;
   type: ParsedType<T>;
   fields: Map<FieldName, ParsedRenderer<T>>;
   tabs: PredicateFormLayout;
+  header?: string;
+};
+
+export type ParsedTableFormConfig<T> = {
+  name: string;
+  type: ParsedType<T>;
+  columns: Map<FieldName, ParsedRenderer<T>>;
+  renderer: string;
+  visibleColumns: PredicateVisibleColumns;
   header?: string;
 };
 
@@ -58,7 +81,17 @@ export type PassthroughLauncher = {
   configType: string;
 } & BaseLauncher;
 
-export type Launcher = CreateLauncher | EditLauncher | PassthroughLauncher;
+export type PassthroughTableLauncher = {
+  kind: "passthrough-table";
+  configType: string;
+  api: string;
+} & BaseLauncher;
+
+export type Launcher =
+  | CreateLauncher
+  | EditLauncher
+  | PassthroughLauncher
+  | PassthroughTableLauncher;
 
 export type RawEntityApi = {
   type?: any;
@@ -67,6 +100,9 @@ export type RawEntityApi = {
 export type EntityApi = {
   type: TypeName;
   methods: { create: boolean; get: boolean; update: boolean; default: boolean };
+};
+export type TableApi = {
+  type: TypeName;
 };
 export type GlobalConfigurationApi = {
   type: TypeName;
@@ -88,18 +124,13 @@ export const RawFormJSON = {
     _: any,
   ): _ is {
     apis: {
-      enumOptions: object;
-      searchableStreams: object;
-      entities: { globalConfiguration: object };
-      globalConfiguration: object;
+      enumOptions?: object;
+      searchableStreams?: object;
+      entities?: { globalConfiguration?: object };
+      globalConfiguration?: object;
+      tables?: object;
     };
-  } =>
-    isObject(_) &&
-    "apis" in _ &&
-    isObject(_.apis) &&
-    "enumOptions" in _.apis &&
-    isObject(_.apis.enumOptions) &&
-    "searchableStreams" in _.apis,
+  } => isObject(_) && "apis" in _,
   hasLaunchers: (_: any): _ is { launchers: any } =>
     isObject(_) && "launchers" in _,
 };
@@ -109,12 +140,14 @@ export type ParsedFormJSON<T> = {
     enums: Map<string, TypeName>;
     streams: Map<string, TypeName>;
     entities: Map<string, EntityApi>;
+    tables: Map<string, TableApi>;
   };
   forms: Map<string, ParsedFormConfig<T>>;
   launchers: {
     create: Map<string, CreateLauncher>;
     edit: Map<string, EditLauncher>;
     passthrough: Map<string, PassthroughLauncher>;
+    passthroughTable: Map<string, PassthroughTableLauncher>;
   };
 };
 
@@ -274,38 +307,57 @@ export const FormsConfig = {
         });
 
         let enums: Map<string, TypeName> = Map();
-        Object.entries(formsConfig.apis.enumOptions).forEach(
-          ([enumOptionName, enumOption]) =>
-            (enums = enums.set(enumOptionName, enumOption)),
-        );
+        if (formsConfig.apis.enumOptions) {
+          Object.entries(formsConfig.apis.enumOptions).forEach(
+            ([enumOptionName, enumOption]) =>
+              (enums = enums.set(enumOptionName, enumOption)),
+          );
+        }
 
         let streams: Map<string, TypeName> = Map();
-        Object.entries(formsConfig.apis.searchableStreams).forEach(
-          ([searchableStreamName, searchableStream]) =>
-            (streams = streams.set(searchableStreamName, searchableStream)),
-        );
+        if (formsConfig.apis.searchableStreams) {
+          Object.entries(formsConfig.apis.searchableStreams).forEach(
+            ([searchableStreamName, searchableStream]) =>
+              (streams = streams.set(searchableStreamName, searchableStream)),
+          );
+        }
+
+        let tables: Map<string, TableApi> = Map();
+        if (formsConfig.apis.tables) {
+          Object.entries(formsConfig.apis.tables).forEach(
+            ([tableName, table]) =>
+              (tables = tables.set(tableName, { type: table })),
+          );
+        }
 
         let entities: Map<string, EntityApi> = Map();
-        Object.entries(formsConfig.apis.entities).forEach(
-          ([entityApiName, entityApi]: [
-            entiyApiName: string,
-            entityApi: RawEntityApi,
-          ]) => {
-            entities = entities.set(entityApiName, {
-              type: entityApi.type,
-              methods: {
-                create: entityApi.methods.includes("create"),
-                get: entityApi.methods.includes("get"),
-                update: entityApi.methods.includes("update"),
-                default: entityApi.methods.includes("default"),
-              },
-            });
-          },
-        );
+        if (formsConfig.apis.entities) {
+          Object.entries(formsConfig.apis.entities).forEach(
+            ([entityApiName, entityApi]: [
+              entiyApiName: string,
+              entityApi: RawEntityApi,
+            ]) => {
+              entities = entities.set(entityApiName, {
+                type: entityApi.type,
+                methods: {
+                  create: entityApi.methods.includes("create"),
+                  get: entityApi.methods.includes("get"),
+                  update: entityApi.methods.includes("update"),
+                  default: entityApi.methods.includes("default"),
+                },
+              });
+            },
+          );
+        }
 
         let forms: Map<string, ParsedFormConfig<T>> = Map();
+        // First Record Forms
         Object.entries(formsConfig.forms).forEach(
           ([formName, form]: [formName: string, form: RawForm]) => {
+            if (RawForm.hasColumns(form)) {
+              // Skip Table Forms in this pass
+              return;
+            }
             if (
               !RawForm.hasType(form) ||
               !RawForm.hasFields(form) ||
@@ -314,7 +366,7 @@ export const FormsConfig = {
               errors = errors.push(
                 `form ${formName} is missing the required type, fields or tabs attribute`,
               );
-              return;
+              throw new Error(errors.toArray().join("\n"));
             }
             const formType = parsedTypes.get(form.type)!;
             if (formType.kind != "record") {
@@ -379,11 +431,91 @@ export const FormsConfig = {
             forms = forms.set(formName, parsedForm);
           },
         );
+        // Then Table Forms
+        Object.entries(formsConfig.forms).forEach(
+          ([formName, form]: [formName: string, form: RawForm]) => {
+            if (!RawForm.hasColumns(form)) {
+              // Skip Record Forms in this pass
+              return;
+            }
+            if (
+              !RawForm.hasType(form) ||
+              !RawForm.hasRenderer(form) ||
+              !RawForm.hasVisibleColumns(form)
+            ) {
+              errors = errors.push(
+                `form ${formName} is missing the required type, renderer or visibleColumns attribute`,
+              );
+              throw new Error(errors.toArray().join("\n"));
+            }
+            const formType = parsedTypes.get(form.type)!;
+            if (formType.kind != "record") {
+              errors = errors.push(
+                `table form ${formName} references non-record type ${form.type}`,
+              );
+              return;
+            }
+
+            const parsedVisibleColumns = TableLayout.Operations.ParseLayout(
+              form.visibleColumns,
+            );
+            if (parsedVisibleColumns.kind == "errors") {
+              errors = errors.concat(parsedVisibleColumns.errors.toArray());
+              return ValueOrErrors.Default.throw(errors);
+            }
+
+            const parsedForm: ParsedTableFormConfig<T> = {
+              name: formName,
+              columns: Map(),
+              renderer: form.renderer,
+              visibleColumns: parsedVisibleColumns.value,
+              type: parsedTypes.get(form.type)!,
+              header: RawForm.hasHeader(form) ? form.header : undefined,
+            };
+
+            Object.entries(form.columns).forEach(
+              ([fieldName, field]: [fieldName: string, field: any]) => {
+                const fieldType = formType.fields.get(fieldName)!;
+
+                const bwcompatiblefield =
+                  fieldType.kind == "application" &&
+                  fieldType.value == "List" &&
+                  typeof field.elementRenderer == "string"
+                    ? {
+                        renderer: field.renderer,
+                        label: field?.label,
+                        visible: field.visible,
+                        disabled: field?.disabled,
+                        description: field?.description,
+                        elementRenderer: {
+                          renderer: field.elementRenderer,
+                          label: field?.elementLabel,
+                          tooltip: field?.elementTooltip,
+                          visible: field.visible,
+                        },
+                      }
+                    : field;
+
+                return (parsedForm.columns = parsedForm.columns.set(
+                  fieldName,
+                  ParsedRenderer.Operations.ParseRenderer(
+                    fieldType,
+                    bwcompatiblefield,
+                    parsedTypes,
+                  ),
+                ));
+              },
+            );
+
+            forms = forms.set(formName, parsedForm);
+          },
+        );
 
         let launchers: ParsedFormJSON<T>["launchers"] = {
           create: Map<string, CreateLauncher>(),
           edit: Map<string, EditLauncher>(),
           passthrough: Map<string, PassthroughLauncher>(),
+          passthroughTable: Map<string, PassthroughTableLauncher>(),
         };
 
         Object.keys(formsConfig["launchers"]).forEach((launcherName: any) => {
@@ -396,6 +528,15 @@ export const FormsConfig = {
                   form: formsConfig.launchers[launcherName]["form"],
                   api: formsConfig.launchers[launcherName]["api"],
                   configApi: formsConfig.launchers[launcherName]["configApi"],
+                }
+              : formsConfig.launchers[launcherName]["kind"] ==
+                "passthrough-table"
+              ? {
+                  name: launcherName,
+                  kind: formsConfig.launchers[launcherName]["kind"],
+                  form: formsConfig.launchers[launcherName]["form"],
+                  configType: formsConfig.launchers[launcherName]["configType"],
+                  api: formsConfig.launchers[launcherName]["api"],
                 }
               : {
                   name: launcherName,
@@ -412,6 +553,11 @@ export const FormsConfig = {
               launcherName,
               launcher,
             );
+          else if (launcher.kind == "passthrough-table")
+            launchers.passthroughTable = launchers.passthroughTable.set(
+              launcherName,
+              launcher,
+            );
         });
 
         if (errors.size > 0) {
@@ -420,6 +566,18 @@ export const FormsConfig = {
           return ValueOrErrors.Default.throw(errors);
         }
 
+        console.debug({
+          types: parsedTypes,
+          forms,
+          apis: {
+            enums,
+            streams,
+            entities,
+            tables,
+          },
+          launchers,
+        });
+
         return ValueOrErrors.Default.return({
           types: parsedTypes,
           forms,
@@ -427,6 +585,7 @@ export const FormsConfig = {
             enums,
             streams,
             entities,
+            tables,
           },
           launchers,
         });

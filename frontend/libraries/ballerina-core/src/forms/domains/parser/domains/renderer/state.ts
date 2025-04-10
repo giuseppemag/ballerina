@@ -70,6 +70,7 @@ export type RawRenderer = {
   leftRenderer?: any;
   rightRenderer?: any;
   details?: any;
+  api?: any;
 };
 export type ParsedRenderer<T> = (
   | { kind: "primitive" }
@@ -91,6 +92,10 @@ export type ParsedRenderer<T> = (
       kind: "sum";
       leftRenderer?: ParsedRenderer<T>;
       rightRenderer?: ParsedRenderer<T>;
+    }
+  | {
+      kind: "table";
+      api: string;
     }
 ) & {
   renderer: string;
@@ -281,6 +286,26 @@ export const ParsedRenderer = {
       visible,
       disabled: disabled != undefined ? disabled : false,
     }),
+    table: <T>(
+      type: ParsedType<T>,
+      renderer: string,
+      visible: any,
+      disabled: any,
+      api: string,
+      label?: string,
+      tooltip?: string,
+      details?: string,
+    ): ParsedRenderer<T> => ({
+      kind: "table",
+      type,
+      renderer,
+      label,
+      tooltip,
+      details,
+      visible,
+      disabled,
+      api,
+    }),
   },
   Operations: {
     ParseRenderer: <T>(
@@ -404,6 +429,17 @@ export const ParsedRenderer = {
                 types,
               )
             : undefined,
+          field.label,
+          field.tooltip,
+          field.details,
+        );
+      if (fieldType.kind == "table")
+        return ParsedRenderer.Default.table(
+          fieldType,
+          field.renderer,
+          field.visible,
+          field.disabled,
+          field.api,
           field.label,
           field.tooltip,
           field.details,
