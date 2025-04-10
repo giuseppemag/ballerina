@@ -56,10 +56,6 @@
       "fun": "Union",
       "args": [
         {
-          "caseName": "Active",
-          "fields": {}
-        },
-        {
           "caseName": "Inactive",
           "fields": {}
         },
@@ -221,7 +217,10 @@
             "main": {
               "groups": {
                 "main": [
-                  "ActiveFields"
+                  "ActiveFields",
+                  "InactiveFields",
+                  "UserGroupsFields",
+                  "ActiveTabs"
                 ]
               }
             }

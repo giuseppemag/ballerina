@@ -77,14 +77,17 @@
             ✅ add InlinedColumns case, parse it explicitly
         ✅ new table launcher type with table API
         ✅ the renderer of a table needs an extra API field
+        ✅ typecheck the visible columns
       ❌ codegen
         ❌ go-config and underlying table types and operations
         ❌ paginated API
     ❌ form parser file is too long
       ❌ split off the renderers parsers
       ❌ split off the ExprType decomposition patterns
-    ❌ FormDeclarationType should be a TypeId/TypeName, because at that level of the form the type given is a name <- more type safety
     ❌ plenty of nonsense `Id` fields in enumApiId, streamApiId, etc.
+    ❌ there is a lot of repetition in the validation of the visibility fields selector
+      ❌ basically from Expr -> EnumCases (so excluding proper unions) is a reusable ExprType.AsEnumCases
+    ❌ FormDeclarationType should be a TypeId/TypeName, because at that level of the form the type given is a name <- more type safety
     ❌ entities PATCH - gets single value and path of change
       ✅ support Id:string in CollectionReference, not just Id:Guid
       ✅ lots of no-ops in deltas
