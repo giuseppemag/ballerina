@@ -55,10 +55,22 @@
     "UsersSetupTabsEnum": {
       "fun": "Union",
       "args": [
-        { "caseName": "Active", "fields":{} },
-        { "caseName": "Inactive", "fields":{} },
-        { "caseName": "Groups", "fields":{} },
-        { "caseName": "Activities", "fields":{} }
+        {
+          "caseName": "Active",
+          "fields": {}
+        },
+        {
+          "caseName": "Inactive",
+          "fields": {}
+        },
+        {
+          "caseName": "Groups",
+          "fields": {}
+        },
+        {
+          "caseName": "Activities",
+          "fields": {}
+        }
       ]
     },
     "UsersSetupTabsRef": {
@@ -226,7 +238,7 @@
           "renderer": "enumMultiselect",
           "options": "UsersSetupTabsApi"
         }
-    },
+      },
       "tabs": {
         "main": {
           "columns": {
@@ -353,6 +365,29 @@
         }
       }
     },
+    "Activities": {
+      "type": "Activity",
+      "renderer": "streamingTable",
+      "columns": {
+        "Description": {
+          "renderer": "string"
+        },
+        "Timestamp": {
+          "renderer": "date"
+        }
+      },
+      "api": "ActivitiesApi",
+      "visibleColumns": {
+        "kind": "fieldLookup",
+        "operands": [
+          {
+            "kind": "varLookup",
+            "varName": "global"
+          },
+          "ActivityFields"
+        ]
+      }
+    },
     "UsersSetup": {
       "type": "UsersSetup",
       "fields": {
@@ -364,6 +399,9 @@
         },
         "Groups": {
           "renderer": "UserGroups"
+        },
+        "Activities": {
+          "renderer": "Activities"
         }
       },
       "Activities": {
@@ -379,7 +417,7 @@
             },
             "ActivitiesFields"
           ]
-        }          
+        }
       },
       "tabs": {
         "main": {
@@ -413,7 +451,7 @@
       "api": "UsersSetupConfigApi",
       "configApi": "GlobalConfigApi"
     },
-    "UsersSetup":{
+    "UsersSetup": {
       "kind": "passthrough",
       "form": "UsersSetup",
       "configType": "UsersSetupConfig"
