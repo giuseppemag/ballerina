@@ -1161,11 +1161,10 @@ export const evaluatePredicates = <T>(
                 const fieldRaw = raw.fields.get(fieldName);
 
                 if (fieldRaw == undefined) {
-                  return ValueOrErrors.Default.throwOne(
-                    `Error: parsing cannot find field ${fieldName} in raw ${JSON.stringify(
-                      raw,
-                    )}`,
-                  );
+                  return ValueOrErrors.Default.return([
+                    fieldName,
+                    { kind: "primitive", value: false },
+                  ]);
                 }
 
                 if (fieldPredicate.kind == "record") {
