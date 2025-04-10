@@ -24,14 +24,14 @@ const streamApis: InfiniteStreamSources = (streamName: string) =>
   streamName == "departments"
     ? PersonApi.getDepartments()
     : streamName == "cities"
-    ? AddressApi.getCities()
-    : (_: any) => (_: any) => {
-        alert(`Cannot find stream API ${streamName}`);
-        return Promise.resolve({
-          hasMoreValues: false,
-          data: OrderedMap(),
-        });
-      };
+      ? AddressApi.getCities()
+      : (_: any) => (_: any) => {
+          alert(`Cannot find stream API ${streamName}`);
+          return Promise.resolve({
+            hasMoreValues: false,
+            data: OrderedMap(),
+          });
+        };
 const enumApis: EnumOptionsSources = (enumName: string) =>
   enumName == "colors"
     ? () =>
@@ -42,55 +42,55 @@ const enumApis: EnumOptionsSources = (enumName: string) =>
           0,
         )
     : enumName == "permissions"
-    ? () =>
-        PromiseRepo.Default.mock(
-          () => permissions.map((_) => ({ Value: _ })),
-          undefined,
-          1,
-          0,
-        )
-    : enumName == "genders"
-    ? () =>
-        PromiseRepo.Default.mock(
-          () => genders.map((_) => ({ Value: _ })),
-          undefined,
-          1,
-          0,
-        )
-    : enumName == "interests"
-    ? () =>
-        PromiseRepo.Default.mock(
-          () => interests.map((_) => ({ Value: _ })),
-          undefined,
-          1,
-          0,
-        )
-    : enumName == "addressesFields"
-    ? () =>
-        PromiseRepo.Default.mock(
-          () =>
-            [
-              "addressesByCity",
-              "departments",
-              "schoolAddress",
-              "mainAddress",
-              "addressesAndAddressesWithLabel",
-              "addressesWithColorLabel",
-              "addressesBy",
-              "permissions",
-              "cityByDepartment",
-              "holidays",
-              "friendsAddresses",
-            ].map((_) => ({ Value: _ })),
-          undefined,
-          1,
-          0,
-        )
-    : () =>
-        PromiseRepo.Default.mock(() => {
-          alert(`Cannot find enum API ${enumName}`);
-          return [];
-        });
+      ? () =>
+          PromiseRepo.Default.mock(
+            () => permissions.map((_) => ({ Value: _ })),
+            undefined,
+            1,
+            0,
+          )
+      : enumName == "genders"
+        ? () =>
+            PromiseRepo.Default.mock(
+              () => genders.map((_) => ({ Value: _ })),
+              undefined,
+              1,
+              0,
+            )
+        : enumName == "interests"
+          ? () =>
+              PromiseRepo.Default.mock(
+                () => interests.map((_) => ({ Value: _ })),
+                undefined,
+                1,
+                0,
+              )
+          : enumName == "addressesFields"
+            ? () =>
+                PromiseRepo.Default.mock(
+                  () =>
+                    [
+                      "addressesByCity",
+                      "departments",
+                      "schoolAddress",
+                      "mainAddress",
+                      "addressesAndAddressesWithLabel",
+                      "addressesWithColorLabel",
+                      "addressesBy",
+                      "permissions",
+                      "cityByDepartment",
+                      "holidays",
+                      "friendsAddresses",
+                    ].map((_) => ({ Value: _ })),
+                  undefined,
+                  1,
+                  0,
+                )
+            : () =>
+                PromiseRepo.Default.mock(() => {
+                  alert(`Cannot find enum API ${enumName}`);
+                  return [];
+                });
 const entityApis: EntityApis = {
   create: (apiName: string) =>
     apiName == "person"
