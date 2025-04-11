@@ -4,6 +4,7 @@ import {
   Delta,
   Guid,
   PredicateValue,
+  SearchableInfiniteStreamState,
   simpleUpdater,
   Sum,
   Unit,
@@ -25,6 +26,11 @@ export type FormRefEditApiHandlers<Arg> = {
   onUpdateError?: (_: Arg) => void;
 };
 
+export type TableApiSources = BasicFun<
+string,
+SearchableInfiniteStreamState["customFormState"]["getChunk"]
+>;
+
 export type FormRef = {
   formName: string;
 } & (
@@ -44,6 +50,14 @@ export type FormRef = {
       entity: Sum<any, "not initialized">;
       globalConfiguration: Sum<any, "not initialized">;
       containerWrapper: any;
+      onEntityChange: (updater: Updater<PredicateValue>, delta: Delta) => void;
+    }
+  | {
+      kind: "passthrough-table";
+      entity: Sum<any, "not initialized">;
+      globalConfiguration: Sum<any, "not initialized">;
+      containerWrapper: any;
+      tableApis: 
       onEntityChange: (updater: Updater<PredicateValue>, delta: Delta) => void;
     }
 );

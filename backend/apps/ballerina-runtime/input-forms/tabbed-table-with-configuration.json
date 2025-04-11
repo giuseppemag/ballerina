@@ -195,23 +195,23 @@
       "type": "UsersSetupConfig",
       "fields": {
         "ActiveFields": {
-          "renderer": "enumMultiselect",
+          "renderer": "defaultEnumMultiselect",
           "options": "UserFieldsApi"
         },
         "InactiveFields": {
-          "renderer": "enumMultiselect",
+          "renderer": "defaultEnumMultiselect",
           "options": "UserFieldsApi"
         },
         "UserGroupsFields": {
-          "renderer": "enumMultiselect",
+          "renderer": "defaultEnumMultiselect",
           "options": "UserGroupFieldsApi"
         },
         "ActivityFields": {
-          "renderer": "enumMultiselect",
+          "renderer": "defaultEnumMultiselect",
           "options": "ActivityFieldsApi"
         },
         "ActiveTabs": {
-          "renderer": "enumMultiselect",
+          "renderer": "defaultEnumMultiselect",
           "options": "UsersSetupTabsApi"
         }
       },

@@ -129,6 +129,7 @@ export * from "./src/forms/domains/primitives/domains/unit/state";
 export * from "./src/forms/domains/primitives/domains/unit/template";
 export * from "./src/forms/domains/parser/domains/deltas/state";
 export * from "./src/forms/domains/parser/domains/layout/state";
+export * from "./src/forms/domains/primitives/domains/table/state";
 // import { simpleUpdater, simpleUpdaterWithChildren } from "./src/fun/domains/updater/domains/simpleUpdater/state"
 // import { Updater } from "./src/fun/domains/updater/state"
 

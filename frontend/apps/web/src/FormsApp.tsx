@@ -53,8 +53,8 @@ export const FormsApp = (props: {}) => {
   const [configFormsParser, setConfigFormsParser] = useState(
     FormsParserState.Default(),
   );
-  const [formToShow, setFormToShow] = useState(2);
-  const numForms = 3;
+  const [formToShow, setFormToShow] = useState(3);
+  const numForms = 4;
   const [personCreateFormState, setPersonCreateFormState] = useState(
     FormRunnerState.Default(),
   );
@@ -309,7 +309,7 @@ export const FormsApp = (props: {}) => {
                     enumOptionsSources: PersonFromConfigApis.enumApis,
                     entityApis: PersonFromConfigApis.entityApis,
                     getFormsConfig: () =>
-                      PromiseRepo.Default.mock(() => TabbedTableWithConfiguration),
+                      PromiseRepo.Default.mock(() => PersonConfig),
                     injectedPrimitives: Map([
                       [
                         "injectedCategory",
@@ -506,7 +506,7 @@ export const FormsApp = (props: {}) => {
                             ...configFormsParser,
                             ...personAddressConfigFormState,
                             formRef: {
-                              formName: "passthrough-table",
+                              formName: "addresses-config",
                               kind: "passthrough",
                               containerWrapper: PassthroughFormContainerWrapper,
                               entity: Sum.Default.left(
@@ -556,6 +556,95 @@ export const FormsApp = (props: {}) => {
                       view={unit}
                       foreignMutations={unit}
                     />
+                  </>
+                ) : renderForms && formToShow % numForms == 3 ? (
+                  <>
+                    <>
+                      <h3>Table form</h3>
+
+                      {entityPath && entityPath.kind == "value" && (
+                        <pre
+                          style={{
+                            display: "inline-block",
+                            verticalAlign: "top",
+                            textAlign: "left",
+                          }}
+                        >
+                          {JSON.stringify(entityPath.value, null, 2)}
+                        </pre>
+                      )}
+                      {entityPath && entityPath.kind == "errors" && (
+                        <p>
+                          DeltaErrors:{" "}
+                          {JSON.stringify(entityPath.errors, null, 2)}
+                        </p>
+                      )}
+                      {globalConfiguration.kind == "l" && (
+                        <div
+                          style={{
+                            border: "2px solid lightblue",
+                            display: "inline-block",
+                            verticalAlign: "top",
+                          }}
+                        >
+                          <p>Addresses config</p>
+                          <FormRunnerTemplate
+                            context={{
+                              ...configFormsParser,
+                              ...personAddressConfigFormState,
+                              formRef: {
+                                formName: "UsersSetupConfig",
+                                kind: "passthrough",
+                                containerWrapper:
+                                  PassthroughFormContainerWrapper,
+                                entity: Sum.Default.left(
+                                  PredicateValue.Default.record(
+                                    OrderedMap([
+                                      [
+                                        "ActiveFields",
+                                        (
+                                          globalConfiguration.value as ValueRecord
+                                        ).fields.get("ActiveFields")!,
+                                      ],
+                                    ]),
+                                  ),
+                                ),
+                                globalConfiguration,
+                                onEntityChange: onAddressFieldsChange,
+                              },
+                              showFormParsingErrors: ShowFormsParsingErrors,
+                              extraContext: {
+                                flags: Set(["BC", "X"]),
+                              },
+                            }}
+                            setState={setPersonAddressConfigFormState}
+                            view={unit}
+                            foreignMutations={unit}
+                          />
+                        </div>
+                      )}
+                      <FormRunnerTemplate
+                        context={{
+                          ...configFormsParser,
+                          ...personPassthroughFormState,
+                          formRef: {
+                            formName: "UsersSetup",
+                            kind: "passthrough",
+                            containerWrapper: PassthroughFormContainerWrapper,
+                            entity,
+                            globalConfiguration,
+                            onEntityChange,
+                          },
+                          showFormParsingErrors: ShowFormsParsingErrors,
+                          extraContext: {
+                            flags: Set(["BC", "X"]),
+                          },
+                        }}
+                        setState={setPersonPassthroughFormState}
+                        view={unit}
+                        foreignMutations={unit}
+                      />
+                    </>
                   </>
                 ) : undefined}
               </td>

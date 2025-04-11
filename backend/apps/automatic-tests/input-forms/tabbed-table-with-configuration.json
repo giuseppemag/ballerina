@@ -383,11 +383,10 @@
     }
   },
   "launchers": {
-    "UsersSetupConfigLauncher": {
-      "kind": "create",
+    "UsersSetupConfig": {
+      "kind": "passthrough",
       "form": "UsersSetupConfig",
-      "api": "UsersSetupConfigApi",
-      "configApi": "GlobalConfigApi"
+      "configType": "GlobalConfig"
     },
     "UsersSetup": {
       "kind": "passthrough",

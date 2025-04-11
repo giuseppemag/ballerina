@@ -27,6 +27,9 @@ import {
   MapFieldState,
   TupleFormState,
   SumFormState,
+  TableState,
+  StreamPosition,
+  Chunk,
 } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 
@@ -82,6 +85,11 @@ export type UnionCase = {
   fields: Record<string, any>;
 };
 
+export type Table = {
+  data: Map<string, Map<string, PredicateValue>>;
+  hasMoreValues: boolean;
+};
+
 export type BuiltInApiConverters = {
   string: ApiConverter<string>;
   number: ApiConverter<number>;
@@ -100,6 +108,7 @@ export type BuiltInApiConverters = {
   Map: ApiConverter<List<[any, any]>>;
   Tuple: ApiConverter<List<any>>;
   Sum: ApiConverter<Sum<any, any>>;
+  Table: ApiConverter<Table>;
 };
 
 export type PrimitiveBuiltIn = {
@@ -130,6 +139,7 @@ export type BuiltIns = {
     map: Set<string>;
     tuple: Set<string>;
     sum: Set<string>;
+    table: Set<string>;
   };
 };
 
@@ -259,6 +269,18 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
           //   UnionFormState().Default(fields),
         },
       ],
+      [
+        "Table",
+        {
+          defaultValue: PredicateValue.Default.record(OrderedMap()),
+          defaultState: (
+            getChunk: BasicFun<
+              Map<string, string>,
+              BasicFun<[StreamPosition], Promise<Chunk<any>>>
+            >,
+          ): TableState => TableState().Default(getChunk),
+        },
+      ],
     ]),
     renderers: {
       unit: Set(),
@@ -276,6 +298,7 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
       secret: Set(),
       map: Set(),
       sum: Set(),
+      table: Set(),
     },
   };
   Object.keys(builtins.renderers).forEach((_categoryName) => {
@@ -344,6 +367,19 @@ export const defaultState =
         .defaultState(
           defaultState(types, builtIns, injectedPrimitives)(t.args[0]),
           defaultState(types, builtIns, injectedPrimitives)(t.args[1]),
+        );
+    }
+
+    // TODO: spurious
+    if (t.kind == "table") {
+      return builtIns.generics
+        .get("Table")!
+        .defaultState(
+          (getChunk: BasicFun<
+              Map<string, string>,
+              BasicFun<[StreamPosition], Promise<Chunk<any>>>
+            >,
+          ): TableState => TableState().Default(getChunk),
         );
     }
 
