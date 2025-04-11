@@ -176,6 +176,27 @@ export const ParseForms =
               traverse(formsConfig.forms.get(valueRenderer.renderer)!);
             }
           }
+          if (field.kind == "sum") {
+            if (
+              field.leftRenderer &&
+              formsConfig.forms.has(field.leftRenderer.renderer)
+            ) {
+              traverse(formsConfig.forms.get(field.leftRenderer.renderer)!);
+            }
+            if (
+              field.rightRenderer &&
+              formsConfig.forms.has(field.rightRenderer.renderer)
+            ) {
+              traverse(formsConfig.forms.get(field.rightRenderer.renderer)!);
+            }
+          }
+          if (field.kind == "tuple") {
+            field.itemRenderers.forEach((itemRenderer) => {
+              if (formsConfig.forms.has(itemRenderer.renderer)) {
+                traverse(formsConfig.forms.get(itemRenderer.renderer)!);
+              }
+            });
+          }
         } catch (error: any) {
           console.error(`error parsing field :${fieldName}:: `, error);
           errors.push(error.message ?? error);
