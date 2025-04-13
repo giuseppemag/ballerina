@@ -5,6 +5,7 @@
     },
     "User": {
       "fields": {
+        "Id": "string",
         "Name": "string",
         "Surname": "string",
         "Birthday": "Date",
@@ -14,12 +15,14 @@
     },
     "UserGroup": {
       "fields": {
+        "Id": "string",
         "Name": "string",
         "Description": "string"
       }
     },
     "Activity": {
       "fields": {
+        "Id": "string",
         "Description": "string",
         "Timestamp": "Date"
       }

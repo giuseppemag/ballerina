@@ -51,6 +51,10 @@
     <Compile Include="business rule engine/form engine/codegen/golang/language constructs/entityGETDEFAULTers.fs" />
     <Compile Include="business rule engine/form engine/codegen/golang/language constructs/entityPOSTers.fs" />
     <Compile Include="business rule engine/form engine/codegen/golang/language constructs/entityPATCHers.fs" />
+    <Compile Include="business rule engine/form engine/codegen/golang/language constructs/tableGETters.fs" />
+    <Compile Include="business rule engine/form engine/codegen/golang/language constructs/tableDELETEers.fs" />
+    <Compile Include="business rule engine/form engine/codegen/golang/language constructs/tablePOSTers.fs" />
+    <Compile Include="business rule engine/form engine/codegen/golang/language constructs/tablePATCHers.fs" />
     <Compile Include="business rule engine/form engine/codegen/golang/language constructs/enumGETters.fs" />
     <Compile Include="business rule engine/form engine/codegen/golang/language constructs/enumPOSTers.fs" />
     <Compile Include="business rule engine/form engine/codegen/golang/language constructs/streamGETters.fs" />

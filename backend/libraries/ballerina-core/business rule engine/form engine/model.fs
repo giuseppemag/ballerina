@@ -26,6 +26,7 @@ module Model =
       IdentifierAllowedRegex: string
       DeltaBase: CodegenConfigInterfaceDef
       EntityNotFoundError: CodegenConfigErrorDef
+      TableNotFoundError: CodegenConfigErrorDef
       EntityNameAndDeltaTypeMismatchError: CodegenConfigErrorDef
       EnumNotFoundError: CodegenConfigErrorDef
       InvalidEnumValueCombinationError: CodegenConfigErrorDef

@@ -250,6 +250,11 @@
     "GeneratedTypeName": "ballerina.DeltaBase",
     "RequiredImport": "ballerina.com/core"
   },
+  "TableNotFoundError": {
+    "GeneratedTypeName": "ballerina.TableNotFoundError",
+    "RequiredImport": "ballerina.com/core",
+    "Constructor": "ballerina.NewTableNotFoundError"
+  },
   "EntityNotFoundError": {
     "GeneratedTypeName": "ballerina.EntityNotFoundError",
     "RequiredImport": "ballerina.com/core",

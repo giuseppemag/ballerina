@@ -55,6 +55,77 @@ module Main =
 
           let launchersEnum = GolangEnum.Generate () launchersEnum
 
+          let tablesEnum: GolangEnum =
+            { Name = $"{formName}TablesEnum"
+              Cases =
+                ctx.Apis.Tables
+                |> Map.values
+                |> Seq.map (fun entityApi ->
+                  {| Name = $"{entityApi.TableName}Entity"
+                     Value = $"{entityApi.TypeId.TypeName}" |})
+                |> Seq.toList }
+
+          let tablesEnum = GolangEnum.Generate () tablesEnum
+
+          let tableGETters =
+            GolangTableGETters.Generate
+              ()
+              { FunctionName = $"{formName}TableGETter"
+                TableNotFoundErrorConstructor = codegenConfig.TableNotFoundError.Constructor
+                Tables =
+                  ctx.Apis.Tables
+                  |> Map.values
+                  // |> Seq.filter (snd >> Set.contains CrudMethod.Get)
+                  // |> Seq.map fst
+                  |> Seq.map (fun e ->
+                    {| TableName = e.TableName
+                       TableType = $"{codegenConfig.Table.GeneratedTypeName}[{e.TypeId.TypeName}]" |})
+                  |> List.ofSeq }
+
+          let tablePOSTters =
+            GolangTablePOSTters.Generate
+              ()
+              { FunctionName = $"{formName}TablePOSTter"
+                TableNotFoundErrorConstructor = codegenConfig.TableNotFoundError.Constructor
+                Tables =
+                  ctx.Apis.Tables
+                  |> Map.values
+                  // |> Seq.filter (snd >> Set.contains CrudMethod.Get)
+                  // |> Seq.map fst
+                  |> Seq.map (fun e ->
+                    {| TableName = e.TableName
+                       TableRowType = e.TypeId.TypeName |})
+                  |> List.ofSeq }
+
+          let tableDELETEters =
+            GolangTableDELETEters.Generate
+              ()
+              { FunctionName = $"{formName}TableDELETEter"
+                TableNotFoundErrorConstructor = codegenConfig.TableNotFoundError.Constructor
+                Tables =
+                  ctx.Apis.Tables
+                  |> Map.values
+                  // |> Seq.filter (snd >> Set.contains CrudMethod.Get)
+                  // |> Seq.map fst
+                  |> Seq.map (fun e -> {| TableName = e.TableName |})
+                  |> List.ofSeq }
+
+          let tablePATCHters =
+            GolangTablePATCHters.Generate
+              ()
+              { FunctionName = $"{formName}TablePATCHter"
+                TableNotFoundErrorConstructor = codegenConfig.TableNotFoundError.Constructor
+                Tables =
+                  ctx.Apis.Tables
+                  |> Map.values
+                  // |> Seq.filter (snd >> Set.contains CrudMethod.Get)
+                  // |> Seq.map fst
+                  |> Seq.map (fun e ->
+                    {| TableName = e.TableName
+                       TableDeltaType =
+                        $"{codegenConfig.Table.DeltaTypeName}[{e.TypeId.TypeName}, Delta{e.TypeId.TypeName}]" |})
+                  |> List.ofSeq }
+
           let entitiesEnum: GolangEnum =
             { Name = $"{formName}EntitiesEnum"
               Cases =
@@ -252,6 +323,11 @@ module Main =
               StringBuilder.Many(
                 seq {
                   yield heading
+                  yield tablesEnum
+                  yield tableGETters
+                  yield tablePOSTters
+                  yield tableDELETEters
+                  yield tablePATCHters
                   yield launchersEnum
                   yield entitiesEnum
                   yield entityGETters

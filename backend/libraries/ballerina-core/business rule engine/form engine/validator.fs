@@ -732,6 +732,32 @@ module Validator =
       }
       |> sum.WithErrorContext $"...when validating stream {streamApi.StreamName}"
 
+  type TableApi with
+    static member Validate
+      (generatedLanguageSpecificConfig: GeneratedLanguageSpecificConfig)
+      (ctx: ParsedFormsContext)
+      (tableApi: TableApi)
+      : Sum<Unit, Errors> =
+      sum {
+        let! tableType = ExprType.Find ctx tableApi.TypeId
+        let! tableType = ExprType.ResolveLookup ctx tableType
+        let! fields = ExprType.GetFields tableType
+
+        let error =
+          sum.Throw(
+            $$"""Error: type {{tableType}} in table {{tableApi.TableName}} is invalid: expected field id:(Guid|string) but found {{fields}}"""
+            |> Errors.Singleton
+          )
+
+        let! id = fields |> sum.TryFindField "Id"
+
+        match id with
+        | ExprType.PrimitiveType(PrimitiveType.GuidType)
+        | ExprType.PrimitiveType(PrimitiveType.StringType) -> return ()
+        | _ -> return! error
+      }
+      |> sum.WithErrorContext $"...when validating table {tableApi.TableName}"
+
   type ParsedFormsContext with
     static member Validate codegenTargetConfig (ctx: ParsedFormsContext) : State<Unit, Unit, ValidationState, Errors> =
       state {
@@ -750,6 +776,16 @@ module Validator =
             ctx.Apis.Streams
             |> Map.values
             |> Seq.map (StreamApi.Validate codegenTargetConfig ctx)
+            |> Seq.toList
+          )
+          |> Sum.map ignore
+          |> state.OfSum
+
+        do!
+          sum.All(
+            ctx.Apis.Tables
+            |> Map.values
+            |> Seq.map (TableApi.Validate codegenTargetConfig ctx)
             |> Seq.toList
           )
           |> Sum.map ignore

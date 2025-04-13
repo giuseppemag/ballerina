@@ -78,9 +78,15 @@
         ✅ new table launcher type with table API
         ✅ the renderer of a table needs an extra API field
         ✅ typecheck the visible columns
-      ❌ codegen
-        ❌ go-config and underlying table types and operations
-        ❌ paginated API
+      ✅ force an Id of type string or guid
+      ✅ codegen
+        ✅ go-config
+        ✅ underlying table types and operations
+          ✅ GET[Id] Id x DeltaRow
+          ✅ PATCH[Id] Id x DeltaRow
+          ✅ POST[Id] Id x DeltaRow
+          ✅ DELETE[Id] Id x DeltaRow
+        ✅ paginated Table object
     ❌ form parser file is too long
       ❌ split off the renderers parsers
       ❌ split off the ExprType decomposition patterns

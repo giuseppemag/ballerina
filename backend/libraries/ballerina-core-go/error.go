@@ -4,6 +4,18 @@ import (
 	"fmt"
 )
 
+type TableNotFoundError struct {
+	TableName string
+}
+
+func (err *TableNotFoundError) Error() string {
+	return fmt.Sprintf("%s is not a valid Table name", err.TableName)
+}
+
+func NewTableNotFoundError(TableName string) error {
+	return &TableNotFoundError{TableName: TableName}
+}
+
 type EntityNotFoundError struct {
 	EntityName string
 }
