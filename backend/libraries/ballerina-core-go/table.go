@@ -27,9 +27,8 @@ func MapTable[T, U any](ts Table[T], f func(T) U) Table[U] {
 	}
 	return Table[U]{ Values:us, HasMore:ts.HasMore }
 }
-func DefaultTable[T any]() Array[T] {
-	var res Array[T] = make([]T, 0)
-	return res
+func DefaultTable[T any]() Table[T] {
+	return Table[T]{ Values:make([]T, 0), From:0, To:0, HasMore:false }
 }
 
 type DeltaTableEffectsEnum string
