@@ -34,7 +34,7 @@ import {
 import { Template } from "../../../template/state";
 import { Value } from "../../../value/state";
 
-export const Form = <
+export const RecordForm = <
   FieldStates extends { formFieldStates: any },
   Context,
   ForeignMutationsExpected,

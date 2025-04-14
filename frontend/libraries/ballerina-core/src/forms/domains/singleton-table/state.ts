@@ -11,20 +11,20 @@ import {
   Maybe,
   ValueOrErrors,
   PredicateValue,
-} from "../../../../../../main";
-import { Debounced } from "../../../../../debounced/state";
-import { BasicFun } from "../../../../../fun/state";
+} from "../../../../main";
+import { Debounced } from "../../../debounced/state";
+import { BasicFun } from "../../../fun/state";
 import {
   InfiniteStreamState,
   Chunk,
-} from "../../../../../infinite-data-stream/state";
-import { View } from "../../../../../template/state";
-import { Value } from "../../../../../value/state";
-import { CollectionReference } from "../../../collection/domains/reference/state";
-import { CollectionSelection } from "../../../collection/domains/selection/state";
-import { FormLabel } from "../../../singleton/domains/form-label/state";
-import { OnChange, CommonFormState } from "../../../singleton/state";
-import { ValueInfiniteStreamState } from "../../../../../value-infinite-data-stream/state";
+} from "../../../infinite-data-stream/state";
+import { View } from "../../../template/state";
+import { Value } from "../../../value/state";
+import { CollectionReference } from "../collection/domains/reference/state";
+import { CollectionSelection } from "../collection/domains/selection/state";
+import { FormLabel } from "../singleton/domains/form-label/state";
+import { OnChange, CommonFormState } from "../singleton/state";
+import { ValueInfiniteStreamState } from "../../../value-infinite-data-stream/state";
 
 export type TableReadonlyContext = {
   initialChunk: Chunk<any>;
@@ -36,7 +36,7 @@ export type TableState = {
     isInitialized: boolean;
     streamParams: Debounced<Map<string, string>>;
     stream: ValueInfiniteStreamState; // TODO: consider if its worth typing this
-    getChunk: BasicFun<
+    getChunk: BasicFun< 
       BasicFun<any, ValueOrErrors<PredicateValue, string>>,
       BasicFun<Map<string, string>, ValueInfiniteStreamState["getChunk"]>
     >;

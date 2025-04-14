@@ -52,14 +52,6 @@ export type FormRef = {
       containerWrapper: any;
       onEntityChange: (updater: Updater<PredicateValue>, delta: Delta) => void;
     }
-  | {
-      kind: "passthrough-table";
-      entity: Sum<any, "not initialized">;
-      globalConfiguration: Sum<any, "not initialized">;
-      containerWrapper: any;
-      tableApis: 
-      onEntityChange: (updater: Updater<PredicateValue>, delta: Delta) => void;
-    }
 );
 
 export type FormRunnerContext = {

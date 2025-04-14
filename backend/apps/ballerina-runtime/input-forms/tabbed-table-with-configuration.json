@@ -234,19 +234,19 @@
       "renderer": "finiteTable",
       "columns": {
         "Name": {
-          "renderer": "string"
+          "renderer": "defaultString"
         },
         "Surname": {
-          "renderer": "string"
+          "renderer": "defaultString"
         },
         "Birthday": {
-          "renderer": "date"
+          "renderer": "defaultDate"
         },
         "Email": {
-          "renderer": "string"
+          "renderer": "defaultString"
         },
         "SubscribeToNewsletter": {
-          "renderer": "bool"
+          "renderer": "defaultBoolean"
         }
       },
       "visibleColumns": {
@@ -265,19 +265,19 @@
       "renderer": "streamingTable",
       "columns": {
         "Name": {
-          "renderer": "string"
+          "renderer": "defaultString"
         },
         "Surname": {
-          "renderer": "string"
+          "renderer": "defaultString"
         },
         "Birthday": {
-          "renderer": "date"
+          "renderer": "defaultDate"
         },
         "Email": {
-          "renderer": "string"
+          "renderer": "defaultString"
         },
         "SubscribeToNewsletter": {
-          "renderer": "bool"
+          "renderer": "defaultBoolean"
         }
       },
       "visibleColumns": {
@@ -296,10 +296,10 @@
       "renderer": "streamingTable",
       "columns": {
         "Name": {
-          "renderer": "string"
+          "renderer": "defaultString"
         },
         "Description": {
-          "renderer": "string"
+          "renderer": "defaultString"
         }
       },
       "visibleColumns": {
@@ -318,10 +318,10 @@
       "renderer": "streamingTable",
       "columns": {
         "Description": {
-          "renderer": "string"
+          "renderer": "defaultString"
         },
         "Timestamp": {
-          "renderer": "date"
+          "renderer": "defaultDate"
         }
       },
       "visibleColumns": {

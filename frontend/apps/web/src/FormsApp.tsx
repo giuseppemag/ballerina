@@ -309,7 +309,7 @@ export const FormsApp = (props: {}) => {
                     enumOptionsSources: PersonFromConfigApis.enumApis,
                     entityApis: PersonFromConfigApis.entityApis,
                     getFormsConfig: () =>
-                      PromiseRepo.Default.mock(() => PersonConfig),
+                      PromiseRepo.Default.mock(() => TabbedTableWithConfiguration),
                     injectedPrimitives: Map([
                       [
                         "injectedCategory",

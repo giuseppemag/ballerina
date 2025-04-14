@@ -41,10 +41,13 @@ import {
   FieldName,
   ParsedRecordFormConfig,
   ParsedTableFormConfig,
+  TableApiSources,
+  PredicateVisibleColumns,
+  TableForm,
 } from "../../../../main";
 import { EnumReference } from "../collection/domains/reference/state";
 import { SearchableInfiniteStreamState } from "../primitives/domains/searchable-infinite-stream/state";
-import { Form } from "../singleton/template";
+import { RecordForm } from "../singleton/template";
 import { ParsedRenderer } from "./domains/renderer/state";
 
 export type ParsedRecordForm<T> = {
@@ -62,6 +65,8 @@ export type ParsedTableForm<T> = {
   formConfig: any;
   formName: string;
   formDef: ParsedTableFormConfig<T>;
+  visibileColumns: PredicateVisibleColumns;
+  columnHeaders: Map<FieldName, string | undefined>;
   form: EntityFormTemplate<any, any, any, any>;
 };
 export const ParseRecordForm = <T,>(
@@ -129,6 +134,65 @@ export const ParseRecordForm = <T,>(
     visibilityPredicateExpressions,
     disabledPredicatedExpressions,
     fieldLabels,
+  };
+};
+
+export const ParseTableForm = <T,>(
+  formName: string,
+  formDef: ParsedTableFormConfig<T>,
+  nestedContainerFormView: any,
+  formViews: Record<string, Record<string, any>>,
+  forms: ParsedForms<T>,
+  cellViewsConfig: any,
+  infiniteStreamSources: any,
+  enumOptionsSources: EnumOptionsSources,
+  defaultValue: BasicFun<ParsedType<T>, any>,
+  defaultState: BasicFun<ParsedType<T>, any>,
+  injectedPrimitives?: InjectedPrimitives<T>,
+): Omit<ParsedTableForm<T>, "form"> => {
+  const formConfig: any = {};
+
+  let columnHeaders: Map<FieldName, string | undefined> = Map();
+  const initialFormState: any = {
+    commonFormState: CommonFormState.Default(),
+    rowFieldStates: Map(),
+  };
+
+  const columnNames = Object.keys(cellViewsConfig);
+
+  columnNames.forEach((columnName) => {
+    const parsedFormConfig = ParsedRenderer.Operations.RendererToForm(
+      columnName,
+      {
+        formViews,
+        forms,
+        nestedContainerFormView,
+        defaultValue,
+        defaultState,
+        enumOptionsSources,
+        infiniteStreamSources,
+        injectedPrimitives,
+      },
+      formDef.columns.get(columnName)!,
+    );
+    if (parsedFormConfig.kind == "errors") {
+      console.error(parsedFormConfig.errors.toJS());
+      throw Error(
+        `Error parsing column renderer ${cellViewsConfig[columnName]}`,
+      );
+    }
+    formConfig[columnName] = parsedFormConfig.value.form.renderer;
+
+    columnHeaders = columnHeaders.set(columnName, parsedFormConfig.value.label);
+  });
+
+  return {
+    initialFormState,
+    formConfig,
+    formDef,
+    formName,
+    visibileColumns: formDef.visibleColumns,
+    columnHeaders,
   };
 };
 
@@ -222,8 +286,12 @@ export const ParseForms =
       traverse(form);
     });
 
+    console.debug("form processing order", formProcessingOrder.toJS());
+
     formProcessingOrder.forEach((formName) => {
+      console.debug("formName", formName);
       const formConfig = formsConfig.forms.get(formName)!;
+      console.debug("parsed forms", parsedForms.toJS());
       try {
         if (formConfig.kind == "recordForm") {
           const formFieldRenderers = formConfig.fields
@@ -242,7 +310,7 @@ export const ParseForms =
             defaultState(formsConfig.types, builtIns, injectedPrimitives),
             injectedPrimitives,
           );
-          const formBuilder = Form<any, any, any>().Default<any>();
+          const formBuilder = RecordForm<any, any, any>().Default<any>();
           const form = formBuilder
             .template(
               {
@@ -274,10 +342,45 @@ export const ParseForms =
 
           parsedForms = parsedForms.set(formName, {
             ...parsedForm,
-            form
+            form,
           });
         } else if (formConfig.kind == "tableForm") {
+          const formColumnRenderers = formConfig.columns
+            .map((column) => column.renderer)
+            .toObject();
 
+          const parsedForm = ParseTableForm(
+            formName,
+            formConfig,
+            nestedContainerFormView,
+            fieldViews,
+            parsedForms,
+            formColumnRenderers,
+            infiniteStreamSources,
+            enumOptionsSources,
+            defaultValue(formsConfig.types, builtIns, injectedPrimitives),
+            defaultState(formsConfig.types, builtIns, injectedPrimitives),
+            injectedPrimitives,
+          );
+
+          const formBuilder = TableForm.Default();
+          const form = formBuilder
+            .template(
+              {
+                ...parsedForm.formConfig,
+              },
+              parsedForm.columnHeaders,
+            )
+            .mapContext<Unit>((_) => {
+              return {
+                ...parsedForm,
+              };
+            });
+
+          parsedForms = parsedForms.set(formName, {
+            ...parsedForm,
+            form,
+          });
         }
       } catch (error: any) {
         console.error(error);
@@ -368,7 +471,10 @@ export type ParsedLaunchers = {
     }
   >;
 };
-export type ParsedForms<T> = Map<string, ParsedRecordForm<T> | ParsedTableForm<T>>;
+export type ParsedForms<T> = Map<
+  string,
+  ParsedRecordForm<T> | ParsedTableForm<T>
+>;
 export type FormParsingErrors = List<string>;
 export type FormParsingResult = Sum<ParsedLaunchers, FormParsingErrors>;
 export type EnumName = string;
@@ -425,6 +531,8 @@ export const parseFormsToLaunchers =
     }
 
     const parsedForms = parsedFormsResult.value;
+
+    console.debug(parsedForms.toJS());
 
     formsConfig.launchers.edit.forEach((launcher, launcherName) => {
       const parsedForm = parsedForms.get(launcher.form)! as ParsedRecordForm<T>;
@@ -760,6 +868,8 @@ export const parseFormsToLaunchers =
         }),
       );
     });
+
+    console.debug("hello world");
 
     return Sum.Default.left(parsedLaunchers);
   };
