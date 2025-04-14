@@ -9,40 +9,50 @@ import {
   ValueOption,
   MapRepo,
   Maybe,
+  ValueOrErrors,
+  PredicateValue,
 } from "../../../../../../main";
 import { Debounced } from "../../../../../debounced/state";
 import { BasicFun } from "../../../../../fun/state";
-import { InfiniteStreamState } from "../../../../../infinite-data-stream/state";
+import {
+  InfiniteStreamState,
+  Chunk,
+} from "../../../../../infinite-data-stream/state";
 import { View } from "../../../../../template/state";
 import { Value } from "../../../../../value/state";
 import { CollectionReference } from "../../../collection/domains/reference/state";
 import { CollectionSelection } from "../../../collection/domains/selection/state";
 import { FormLabel } from "../../../singleton/domains/form-label/state";
 import { OnChange, CommonFormState } from "../../../singleton/state";
+import { ValueInfiniteStreamState } from "../../../../../value-infinite-data-stream/state";
+
+export type TableReadonlyContext = {
+  initialChunk: Chunk<any>;
+};
 
 export type TableState = {
   commonFormState: CommonFormState;
   customFormState: {
+    isInitialized: boolean;
     streamParams: Debounced<Map<string, string>>;
-    stream: InfiniteStreamState<any>; // TODO: consider if its worth typing this
+    stream: ValueInfiniteStreamState; // TODO: consider if its worth typing this
     getChunk: BasicFun<
-      Map<string, string>,
-      InfiniteStreamState<any>["getChunk"] // TODO: consider if its worth typing this
+      BasicFun<any, ValueOrErrors<PredicateValue, string>>,
+      BasicFun<Map<string, string>, ValueInfiniteStreamState["getChunk"]>
     >;
   };
 };
 export const TableState = () => ({
   Default: (
-    getChunk: BasicFun<
-      Map<string, string>,
-      InfiniteStreamState<any>["getChunk"]
-    >,
+    getChunk: TableState["customFormState"]["getChunk"],
+    fromApiRaw: BasicFun<any, ValueOrErrors<PredicateValue, string>>,
   ): TableState => ({
     commonFormState: CommonFormState.Default(),
     customFormState: {
+      isInitialized: false,
       streamParams: Debounced.Default(Map()),
       getChunk,
-      stream: InfiniteStreamState<any>().Default(10, getChunk(Map())),
+      stream: ValueInfiniteStreamState().Default(10, getChunk(fromApiRaw)(Map())),
     },
   }),
   Updaters: {
