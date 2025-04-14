@@ -1,4 +1,4 @@
-import { OrderedMap } from "immutable";
+import { OrderedMap, Map } from "immutable";
 import { BasicUpdater, Updater } from "../fun/domains/updater/state";
 import { replaceWith } from "../fun/domains/updater/domains/replaceWith/state";
 import { simpleUpdater } from "../fun/domains/updater/domains/simpleUpdater/state";
@@ -70,23 +70,32 @@ export const ValueStreamPosition = {
 export type ValueChunk = {
   hasMoreValues: boolean;
   data: ValueRecord;
-  state: Record<string, any>;
 };
 export const ValueChunk = {
   Default: (
     hasMoreValues: boolean,
     data: ValueRecord,
-    state: Record<string, any>,
   ): ValueChunk => ({
     hasMoreValues,
     data,
-    state,
   }),
   Updaters: {
     Core: {
       ...simpleUpdater<ValueChunk>()("hasMoreValues"),
       ...simpleUpdater<ValueChunk>()("data"),
-      ...simpleUpdater<ValueChunk>()("state"),
+    },
+  },
+};
+
+export type StateChunk = {
+  state: Record<string, any>;
+};
+
+export const StateChunk = {
+  Default: (state: Record<string, any>): StateChunk => ({ state }),
+  Updaters: {
+    Core: {
+      ...simpleUpdater<StateChunk>()("state"),
     },
   },
 };
@@ -96,6 +105,7 @@ export type ValueInfiniteStreamState = {
   loadedElements: OrderedMap<ValueStreamPosition["chunkIndex"], ValueChunk>;
   position: ValueStreamPosition;
   getChunk: BasicFun<[ValueStreamPosition], Promise<ValueChunk>>;
+  chunkStates: Map<string, StateChunk>;
 };
 
 export const ValueInfiniteStreamState = () => ({
@@ -108,6 +118,7 @@ export const ValueInfiniteStreamState = () => ({
     loadedElements: OrderedMap(),
     position: ValueStreamPosition.Default(initialChunkSize, shouldLoad),
     getChunk,
+    chunkStates: Map(),
   }),
   Operations: {
     shouldCoroutineRun: (current: ValueInfiniteStreamState): boolean =>
@@ -130,6 +141,7 @@ export const ValueInfiniteStreamState = () => ({
       ...simpleUpdater<ValueInfiniteStreamState>()("getChunk"),
       ...simpleUpdater<ValueInfiniteStreamState>()("loadingMore"),
       ...simpleUpdater<ValueInfiniteStreamState>()("loadedElements"),
+      ...simpleUpdater<ValueInfiniteStreamState>()("chunkStates"),
       whenNotAlreadyLoading: (
         _: BasicUpdater<ValueInfiniteStreamState>,
       ): Updater<ValueInfiniteStreamState> => {

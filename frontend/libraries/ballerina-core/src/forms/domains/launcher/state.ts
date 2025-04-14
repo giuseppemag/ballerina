@@ -9,7 +9,9 @@ import {
   Sum,
   Unit,
   Updater,
+  ValueOrErrors,
 } from "../../../../main";
+import { ValueInfiniteStreamState } from "../../../value-infinite-data-stream/state";
 import { FormParsingResult, FormsParserState } from "../parser/state";
 
 export type FormRefCreateApiHandlers<Arg> = {
@@ -27,8 +29,11 @@ export type FormRefEditApiHandlers<Arg> = {
 };
 
 export type TableApiSources = BasicFun<
-string,
-SearchableInfiniteStreamState["customFormState"]["getChunk"]
+  string,
+  BasicFun<
+    BasicFun<any, ValueOrErrors<PredicateValue, string>>,
+    BasicFun<Map<string, string>, ValueInfiniteStreamState["getChunk"]>
+  >
 >;
 
 export type FormRef = {

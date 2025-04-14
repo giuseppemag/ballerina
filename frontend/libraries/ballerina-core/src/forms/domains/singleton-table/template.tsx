@@ -39,6 +39,7 @@ import { Template } from "../../../template/state";
 import { Value } from "../../../value/state";
 import React from "react";
 import {
+  StateChunk,
   ValueChunk,
   ValueInfiniteStreamState,
 } from "../../../value-infinite-data-stream/state";
@@ -50,16 +51,15 @@ export const TableForm = {
       columnLabels: Map<string, string | undefined>,
       validation?: BasicFun<PredicateValue, Promise<FieldValidationWithPath>>,
     ): Template<any, any, any, any> => {
-      // TODO HERE - map of map of map of templates
-      // chunkIndex -> rowId -> column -> template
+
       const cellTemplates: Record<
         string,
         (chunkIndex: number) => (rowId: string) => Template<any, any, any, any>
       > = {};
-      const setCellTemplate =
-        (column: string) =>  {
-          cellTemplates[column] = (chunkIndex: number) => (rowId: string) => 
-            config[column].mapContext<any>((_: any) => {
+      const setCellTemplate = (column: string) => {
+        cellTemplates[column] = (chunkIndex: number) => (rowId: string) =>
+          config[column]
+            .mapContext<any>((_: any) => {
               // disabled flag is passed in from the wrapping container when mapping over fields
 
               const rowData = (
@@ -88,11 +88,16 @@ export const TableForm = {
             })
             .mapState<any>((_) => {
               return TableState().Updaters.Core.customFormState.children.stream(
-                ValueInfiniteStreamState().Updaters.Core.loadedElements(
+                ValueInfiniteStreamState().Updaters.Core.chunkStates(
                   // TODO: this might need to be upsert
-                  MapRepo.Updaters.update(
-                    chunkIndex,
-                    ValueChunk.Updaters.Core.state((current) => ({
+                  MapRepo.Updaters.upsert(
+                    chunkIndex.toString(),
+                    () =>
+                      StateChunk.Default({
+                        commonFormState: CommonFormState.Default(),
+                        customFormState: {},
+                      }),
+                    StateChunk.Updaters.Core.state((current) => ({
                       ...current,
                       [rowId]: {
                         ...current[rowId],
@@ -103,92 +108,92 @@ export const TableForm = {
                 ),
               );
             });
-          // .mapForeignMutationsFromProps<
-          //   EntityFormForeignMutationsExpected<
-          //     Fields,
-          //     FieldStates,
-          //     Context,
-          //     ForeignMutationsExpected
-          //   >
-          // >((props) => ({
-          //   ...props.foreignMutations,
-          //   onChange: (_: BasicUpdater<PredicateValue>, nestedDelta) => {
-          //     const stateUpdater: BasicUpdater<
-          //       EntityFormState<
-          //         Fields,
-          //         FieldStates,
-          //         Context,
-          //         ForeignMutationsExpected
-          //       >
-          //     > = validation
-          //       ? (_) => ({
-          //           ..._,
-          //           commonFormState: {
-          //             ..._.commonFormState,
-          //             modifiedByUser: true,
-          //             validation:
-          //               Debounced.Updaters.Template.value<FormValidatorSynchronized>(
-          //                 Synchronized.Updaters.value(replaceWith(unit)),
-          //               )(_.commonFormState.validation),
-          //           },
-          //           formFieldStates: {
-          //             ..._.formFieldStates,
-          //             [field]: {
-          //               ..._.formFieldStates[field],
-          //               commonFormState: {
-          //                 ..._.formFieldStates[field].commonFormState,
-          //                 modifiedByUser: true,
-          //                 validation:
-          //                   Debounced.Updaters.Template.value<FormValidatorSynchronized>(
-          //                     Synchronized.Updaters.value(replaceWith(unit)),
-          //                   )(_.commonFormState.validation),
-          //               },
-          //             },
-          //           },
-          //         })
-          //       : (_) => ({
-          //           ..._,
-          //           commonFormState: {
-          //             ..._.commonFormState,
-          //             modifiedByUser: true,
-          //           },
-          //           formFieldStates: {
-          //             ..._.formFieldStates,
-          //             [field]: {
-          //               ..._.formFieldStates[field],
-          //               commonFormState: {
-          //                 ..._.formFieldStates[field].commonFormState,
-          //                 modifiedByUser: true,
-          //               },
-          //             },
-          //           },
-          //         });
-          //     setTimeout(() => {
-          //       props.setState(stateUpdater);
-          //     }, 0);
+        // .mapForeignMutationsFromProps<
+        //   EntityFormForeignMutationsExpected<
+        //     Fields,
+        //     FieldStates,
+        //     Context,
+        //     ForeignMutationsExpected
+        //   >
+        // >((props) => ({
+        //   ...props.foreignMutations,
+        //   onChange: (_: BasicUpdater<PredicateValue>, nestedDelta) => {
+        //     const stateUpdater: BasicUpdater<
+        //       EntityFormState<
+        //         Fields,
+        //         FieldStates,
+        //         Context,
+        //         ForeignMutationsExpected
+        //       >
+        //     > = validation
+        //       ? (_) => ({
+        //           ..._,
+        //           commonFormState: {
+        //             ..._.commonFormState,
+        //             modifiedByUser: true,
+        //             validation:
+        //               Debounced.Updaters.Template.value<FormValidatorSynchronized>(
+        //                 Synchronized.Updaters.value(replaceWith(unit)),
+        //               )(_.commonFormState.validation),
+        //           },
+        //           formFieldStates: {
+        //             ..._.formFieldStates,
+        //             [field]: {
+        //               ..._.formFieldStates[field],
+        //               commonFormState: {
+        //                 ..._.formFieldStates[field].commonFormState,
+        //                 modifiedByUser: true,
+        //                 validation:
+        //                   Debounced.Updaters.Template.value<FormValidatorSynchronized>(
+        //                     Synchronized.Updaters.value(replaceWith(unit)),
+        //                   )(_.commonFormState.validation),
+        //               },
+        //             },
+        //           },
+        //         })
+        //       : (_) => ({
+        //           ..._,
+        //           commonFormState: {
+        //             ..._.commonFormState,
+        //             modifiedByUser: true,
+        //           },
+        //           formFieldStates: {
+        //             ..._.formFieldStates,
+        //             [field]: {
+        //               ..._.formFieldStates[field],
+        //               commonFormState: {
+        //                 ..._.formFieldStates[field].commonFormState,
+        //                 modifiedByUser: true,
+        //               },
+        //             },
+        //           },
+        //         });
+        //     setTimeout(() => {
+        //       props.setState(stateUpdater);
+        //     }, 0);
 
-          //     const delta: Delta = {
-          //       kind: "RecordField",
-          //       field: [field as string, nestedDelta],
-          //       recordType: props.context.type,
-          //     };
+        //     const delta: Delta = {
+        //       kind: "RecordField",
+        //       field: [field as string, nestedDelta],
+        //       recordType: props.context.type,
+        //     };
 
-          //     props.foreignMutations.onChange(
-          //       (current: PredicateValue): PredicateValue =>
-          //         PredicateValue.Operations.IsRecord(current)
-          //           ? PredicateValue.Default.record(
-          //               current.fields.update(
-          //                 field as string,
-          //                 PredicateValue.Default.unit(),
-          //                 _,
-          //               ),
-          //             )
-          //           : current,
-          //       delta,
-          //     );
-          //   },
-          // }));
-        };
+        //     props.foreignMutations.onChange(
+        //       (current: PredicateValue): PredicateValue =>
+        //         PredicateValue.Operations.IsRecord(current)
+        //           ? PredicateValue.Default.record(
+        //               current.fields.update(
+        //                 field as string,
+        //                 PredicateValue.Default.unit(),
+        //                 _,
+        //               ),
+        //             )
+        //           : current,
+        //       delta,
+        //     );
+        //   },
+        // }));
+      };
       Object.keys(config).forEach((_) => {
         setCellTemplate(_);
       });
@@ -245,10 +250,13 @@ export const TableForm = {
         //     .keySeq()
         //     .toOrderedSet();
         // })();
+        console.debug("Table Form", props);
 
         return (
           <>
-            <props.view
+            <p>Table Form</p>
+            <props.view/>
+            {/* <props.view
               {...props}
               context={{
                 ...props.context,
@@ -258,7 +266,7 @@ export const TableForm = {
               // DisabledFieldKeys={disabledFieldKeys}
               EmbeddedCells={cellTemplates}
               ColumnsLabels={columnLabels}
-            />
+            /> */}
           </>
         );
       }).any([ValidateRunner<any, any, any, any>(validation)]);

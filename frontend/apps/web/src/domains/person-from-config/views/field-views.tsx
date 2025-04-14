@@ -64,8 +64,14 @@ export const MostUglyValidationDebugView = (props: {
 
 export const PersonFieldViews = {
   table: {
-    finiteTable: () => <></>,
-    streamingTable: () => <></>,
+    finiteTable: (props: any) => {
+      console.debug("finiteTable", props);
+      return <p>hello from finite table</p>;
+    },
+    streamingTable: (props: any) => {
+      console.debug("streamingTable", props);
+      return <p>hello from streaming table</p>;
+    },
   },
   injectedCategory: {
     defaultCategory:

@@ -40,6 +40,7 @@ export const passthroughFormRunner = <T, FS>() => {
     ) {
       return Co.Do(() => {});
     }
+    console.debug("calculateVisibilities", JSON.stringify(current.entity.value, null, 2));
     return Co.SetState(
       PassthroughFormState<T, FS>()
         .Updaters.Core.customFormState.children.predicateEvaluations(

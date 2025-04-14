@@ -31,6 +31,7 @@ export const PassthroughFormTemplate = <T, FS>(): PassthroughFormTemplate<
     PassthroughFormForeignMutationsExpected<T, FS>,
     PassthroughFormView<T, FS>
   >((props) => {
+    console.debug("PassthroughFormTemplate", props);
     if (
       props.context.entity.kind == "r" ||
       props.context.globalConfiguration.kind == "r"

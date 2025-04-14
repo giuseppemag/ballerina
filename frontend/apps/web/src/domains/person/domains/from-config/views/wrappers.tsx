@@ -24,6 +24,7 @@ export const PersonContainerFormView: EntityFormView<
   { layout: FormLayout },
   Unit
 > = (props) => {
+  console.debug("PersonContainerFormView", props);
   return (
     <>
       {props.context.label && <h1>{props.context.label}</h1>}

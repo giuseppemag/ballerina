@@ -570,18 +570,6 @@ export const FormsConfig = {
           return ValueOrErrors.Default.throw(errors);
         }
 
-        console.debug({
-          types: parsedTypes,
-          forms,
-          apis: {
-            enums,
-            streams,
-            entities,
-            tables,
-          },
-          launchers,
-        });
-
         return ValueOrErrors.Default.return({
           types: parsedTypes,
           forms,

@@ -31,27 +31,19 @@
       "fields": {
         "Active": {
           "fun": "Table",
-          "args": [
-            "User"
-          ]
+          "args": ["User"]
         },
         "Inactive": {
           "fun": "Table",
-          "args": [
-            "User"
-          ]
+          "args": ["User"]
         },
         "Groups": {
           "fun": "Table",
-          "args": [
-            "UserGroup"
-          ]
+          "args": ["UserGroup"]
         },
         "Activities": {
           "fun": "Table",
-          "args": [
-            "Activity"
-          ]
+          "args": ["Activity"]
         }
       }
     },
@@ -79,9 +71,7 @@
     },
     "UserFieldEnum": {
       "fun": "KeyOf",
-      "args": [
-        "User"
-      ]
+      "args": ["User"]
     },
     "UserFieldRef": {
       "fields": {
@@ -90,9 +80,7 @@
     },
     "UserGroupFieldEnum": {
       "fun": "KeyOf",
-      "args": [
-        "UserGroup"
-      ]
+      "args": ["UserGroup"]
     },
     "UserGroupFieldRef": {
       "fields": {
@@ -101,9 +89,7 @@
     },
     "ActivityFieldEnum": {
       "fun": "KeyOf",
-      "args": [
-        "Activity"
-      ]
+      "args": ["Activity"]
     },
     "ActivityFieldRef": {
       "fields": {
@@ -114,33 +100,23 @@
       "fields": {
         "ActiveTabs": {
           "fun": "MultiSelection",
-          "args": [
-            "UsersSetupTabsRef"
-          ]
+          "args": ["UsersSetupTabsRef"]
         },
         "ActiveFields": {
           "fun": "MultiSelection",
-          "args": [
-            "UserFieldRef"
-          ]
+          "args": ["UserFieldRef"]
         },
         "InactiveFields": {
           "fun": "MultiSelection",
-          "args": [
-            "UserFieldRef"
-          ]
+          "args": ["UserFieldRef"]
         },
         "UserGroupsFields": {
           "fun": "MultiSelection",
-          "args": [
-            "UserGroupFieldRef"
-          ]
+          "args": ["UserGroupFieldRef"]
         },
         "ActivityFields": {
           "fun": "MultiSelection",
-          "args": [
-            "ActivityFieldRef"
-          ]
+          "args": ["ActivityFieldRef"]
         }
       }
     }
@@ -155,23 +131,15 @@
     "entities": {
       "GlobalConfigApi": {
         "type": "GlobalConfig",
-        "methods": [
-          "get"
-        ]
+        "methods": ["get"]
       },
       "UsersSetupConfigApi": {
         "type": "UsersSetupConfig",
-        "methods": [
-          "default",
-          "create"
-        ]
+        "methods": ["default", "create"]
       },
       "UsersSetupApi": {
         "type": "UsersSetup",
-        "methods": [
-          "get",
-          "update"
-        ]
+        "methods": ["get", "update"]
       }
     },
     "tables": {
@@ -343,7 +311,7 @@
         "Active": {
           "renderer": "ActiveUsers",
           "api": "ActiveUsersApi"
-          },
+        },
         "Inactive": {
           "renderer": "InactiveUsers",
           "api": "InactiveUsersApi"
@@ -362,9 +330,7 @@
           "columns": {
             "main": {
               "groups": {
-                "main": [
-                  "Active"
-                ],
+                "main": ["Active"],
                 "secondary": {
                   "kind": "fieldLookup",
                   "operands": [
@@ -392,12 +358,6 @@
       "kind": "passthrough",
       "form": "UsersSetup",
       "configType": "UsersSetupConfig"
-    },
-    "ActiveUsers": {
-      "kind": "passthrough-table",
-      "form": "ActiveUsers",
-      "configType": "UsersSetupConfig",
-      "api": "ActiveUsersApi"
     }
   }
 }

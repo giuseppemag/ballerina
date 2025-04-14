@@ -86,7 +86,7 @@ export type UnionCase = {
 };
 
 export type Table = {
-  data: Map<string, Map<string, PredicateValue>>;
+  data: Map<string, any>;
   hasMoreValues: boolean;
 };
 
@@ -274,11 +274,8 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
         {
           defaultValue: PredicateValue.Default.record(OrderedMap()),
           defaultState: (
-            getChunk: BasicFun<
-              Map<string, string>,
-              BasicFun<[StreamPosition], Promise<Chunk<any>>>
-            >,
-          ): TableState => TableState().Default(getChunk),
+            getChunk: TableState["customFormState"]["getChunk"],
+          ): TableState => TableState().Default(getChunk, () => ValueOrErrors.Default.return(false)),
         },
       ],
     ]),
@@ -375,11 +372,8 @@ export const defaultState =
       return builtIns.generics
         .get("Table")!
         .defaultState(
-          (getChunk: BasicFun<
-              Map<string, string>,
-              BasicFun<[StreamPosition], Promise<Chunk<any>>>
-            >,
-          ): TableState => TableState().Default(getChunk),
+          (getChunk:TableState["customFormState"]["getChunk"],
+          ): TableState => TableState().Default(getChunk, () => ValueOrErrors.Default.return(false)),
         );
     }
 
@@ -407,6 +401,7 @@ export const defaultValue =
     injectedPrimitives?: InjectedPrimitives<T>,
   ) =>
   (t: ParsedType<T>): PredicateValue => {
+    
     if (t.kind == "primitive") {
       const primitive = builtIns.primitives.get(t.value as string);
       const injectedPrimitive = injectedPrimitives?.injectedPrimitives.get(
@@ -454,6 +449,29 @@ export const defaultValue =
           builtIns,
           injectedPrimitives,
         )(field);
+      });
+      return PredicateValue.Default.record(OrderedMap(res));
+    }
+
+    if (t.kind == "table") {
+      let res = {} as Record<string, PredicateValue>;
+
+      const tableType = types.get(t.tableType);
+
+      if (tableType == undefined) {
+        throw Error(`cannot find type ${t.tableType} when resolving defaultValue`);
+      }
+
+      if (tableType.kind != "record") {
+        throw Error(`tableType ${t.tableType} is not a record`);
+      }
+
+      tableType.fields.forEach((column, columnName) => {
+        res[columnName] = defaultValue(
+          types,
+          builtIns,
+          injectedPrimitives,
+        )(column);
       });
       return PredicateValue.Default.record(OrderedMap(res));
     }
@@ -663,6 +681,52 @@ export const fromAPIRawValue =
           result = result.set(fieldName, parsedValue.value);
         }
       });
+      if (errors.size > 0) {
+        return ValueOrErrors.Default.throw(errors);
+      }
+      return ValueOrErrors.Default.return(
+        PredicateValue.Default.record(result),
+      );
+    }
+
+    if (t.kind == "table") {
+      console.debug("table", raw);
+      const converted = converters['Table'].fromAPIRawValue(raw);
+      console.debug("converted", converted);
+      let result: Map<string, ValueRecord> = Map();
+      let errors: List<string> = List();
+      const tableType = types.get(t.tableType);
+      if (tableType == undefined) {
+        throw Error(`cannot find type ${t.tableType} when resolving defaultValue`);
+      }
+      if (tableType.kind != "record") {
+        throw Error(`tableType ${t.tableType} is not a record`);
+      }
+      converted.data.forEach((row: any, rowIndex: string) => {
+        console.debug("converted row", row);
+        let rowResult: Map<string, PredicateValue> = Map();
+        tableType.fields.forEach((fieldType, fieldName) => {
+          const fieldValue = row[fieldName];
+          if (fieldValue == undefined) {
+            return;
+          }
+          const parsedValue = fromAPIRawValue(
+            fieldType,
+            types,
+            builtIns,
+            converters,
+            injectedPrimitives,
+          )(fieldValue);
+          if (parsedValue.kind == "errors") {
+            errors = errors.concat(parsedValue.errors);
+          } else {
+            console.debug("converted parsedValue", parsedValue);
+            rowResult = rowResult.set(fieldName, parsedValue.value);
+          }
+        });
+        result = result.set(rowIndex.toString(), PredicateValue.Default.record(rowResult));
+      })
+
       if (errors.size > 0) {
         return ValueOrErrors.Default.throw(errors);
       }

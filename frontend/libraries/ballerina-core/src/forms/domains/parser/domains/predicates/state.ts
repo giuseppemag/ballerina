@@ -1150,6 +1150,8 @@ export const evaluatePredicates = <T>(
           `Error: parsing expected record in raw, got ${JSON.stringify(raw)}`,
         );
       }
+      console.debug("record", raw);
+      console.debug("predicate", predicate);
       return calculateVisibility(predicate.value, bindings).Then((result) =>
         ValueOrErrors.Operations.All(
           List<ValueOrErrors<[string, FormFieldPredicateEvaluation], string>>(

@@ -39,7 +39,7 @@ import {
 import PersonConfig from "../../../../backend/apps/ballerina-runtime/input-forms/person-config.json";
 import { PassthroughFormContainerWrapper } from "./domains/passthrough-forms/views/wrappers";
 import TabbedTableWithConfiguration from "../../../../backend/apps/ballerina-runtime/input-forms/tabbed-table-with-configuration.json";
-
+import { UsersSetupFromConfigApis } from "playground-core";
 const ShowFormsParsingErrors = (parsedFormsConfig: FormParsingResult) => (
   <div style={{ border: "red" }}>
     {parsedFormsConfig.kind == "r" && JSON.stringify(parsedFormsConfig.value)}
@@ -66,6 +66,12 @@ export const FormsApp = (props: {}) => {
   );
   const [personAddressConfigFormState, setPersonAddressConfigFormState] =
     useState(FormRunnerState.Default());
+  const [usersSetupFormState, setUsersSetupFormState] = useState(
+    FormRunnerState.Default(),
+  );
+  const [usersSetupConfigFormState, setUsersSetupConfigFormState] = useState(
+    FormRunnerState.Default(),
+  );
   const [personState, setPersonState] = useState(Person.Default.mocked());
   const [formErrors, setFormErrors] = useState<List<string>>(List());
   const [formSuccess, setFormSuccess] = useState(false);
@@ -103,14 +109,28 @@ export const FormsApp = (props: {}) => {
     );
   }
 
-  logState &&
-    console.log({
-      parser: configFormsParser,
-      runner:
-        formToShow % numForms == 0
-          ? personCreateFormState
-          : personEditFormState,
-    });
+  logState && formToShow % numForms == 0
+    ? console.log({
+        parser: configFormsParser,
+        runner: personCreateFormState,
+      })
+    : logState && formToShow % numForms == 1
+    ? console.log({
+        parser: configFormsParser,
+        runner: personEditFormState,
+      })
+    : logState && formToShow % numForms == 2
+    ? console.log({
+        parser: configFormsParser,
+        runner: personPassthroughFormState,
+      })
+    : logState && formToShow % numForms == 3
+    ? console.log({
+        parser: configFormsParser,
+        usersSetupFormState: usersSetupFormState,
+        usersSetupConfigFormState: usersSetupConfigFormState,
+      })
+    : undefined;
 
   if (
     configFormsParser.formsConfig.sync.kind == "loaded" &&
@@ -125,10 +145,10 @@ export const FormsApp = (props: {}) => {
     );
   }
 
-  // Passthrough form only
-  const [entity, setEntity] = useState<Sum<PredicateValue, "not initialized">>(
-    Sum.Default.right("not initialized"),
-  );
+  // Passthrough form only -- Person
+  const [personEntity, setPersonEntity] = useState<
+    Sum<PredicateValue, "not initialized">
+  >(Sum.Default.right("not initialized"));
   const [globalConfiguration, setGlobalConfiguration] = useState<
     Sum<PredicateValue, "not initialized">
   >(Sum.Default.right("not initialized"));
@@ -164,12 +184,12 @@ export const FormsApp = (props: {}) => {
       );
     };
 
-  const onEntityChange = (updater: Updater<any>, delta: Delta): void => {
+  const onPersonEntityChange = (updater: Updater<any>, delta: Delta): void => {
     if (personPassthroughFormState.form.kind == "r") return;
     setTimeout(() => {}, 500);
-    const newEntity = updater(entity.value);
+    const newEntity = updater(personEntity.value);
     console.log("patching entity", newEntity);
-    setEntity(replaceWith(Sum.Default.left(newEntity)));
+    setPersonEntity(replaceWith(Sum.Default.left(newEntity)));
     if (
       configFormsParser.formsConfig.sync.kind == "loaded" &&
       configFormsParser.formsConfig.sync.value.kind == "l"
@@ -226,7 +246,7 @@ export const FormsApp = (props: {}) => {
             if (parsed.kind == "errors") {
               console.error(parsed.errors);
             } else {
-              setEntity(Sum.Default.left(parsed.value));
+              setPersonEntity(Sum.Default.left(parsed.value));
             }
           }
         });
@@ -250,6 +270,63 @@ export const FormsApp = (props: {}) => {
         });
     }
   }, [personPassthroughFormState.form.kind, formToShow]);
+
+  // Passthrough form only -- UsersSetup
+  const [usersSetupEntity, setUsersSetupEntity] = useState<
+    Sum<PredicateValue, "not initialized">
+  >(Sum.Default.right("not initialized"));
+
+  const [usersSetupConfigEntity, setUsersSetupConfigEntity] = useState<
+    Sum<PredicateValue, "not initialized">
+  >(Sum.Default.right("not initialized"));
+
+  useEffect(() => {
+    if (formToShow % numForms == 3) {
+      UsersSetupFromConfigApis.entityApis
+        .get("UsersSetupApi")("")
+        .then((raw) => {
+          if (
+            configFormsParser.formsConfig.sync.kind == "loaded" &&
+            configFormsParser.formsConfig.sync.value.kind == "l"
+          ) {
+            const parsed =
+              configFormsParser.formsConfig.sync.value.value.passthrough.get(
+                "UsersSetup",
+              )!().fromApiParser(raw);
+            if (parsed.kind == "errors") {
+              console.error(parsed.errors);
+            } else {
+              setUsersSetupEntity(Sum.Default.left(parsed.value));
+            }
+          }
+        });
+      UsersSetupFromConfigApis.entityApis
+        .get("UsersSetupConfigApi")("")
+        .then((raw) => {
+          if (
+            configFormsParser.formsConfig.sync.kind == "loaded" &&
+            configFormsParser.formsConfig.sync.value.kind == "l"
+          ) {
+            const parsed =
+              configFormsParser.formsConfig.sync.value.value.passthrough.get(
+                "UsersSetupConfig",
+              )!().fromApiParser(raw);
+            if (parsed.kind == "errors") {
+              console.error(parsed.errors);
+            } else {
+              setUsersSetupConfigEntity(Sum.Default.left(parsed.value));
+            }
+          }
+        });
+    }
+  }, [
+    usersSetupFormState.form.kind,
+    usersSetupConfigFormState.form.kind,
+    formToShow,
+  ]);
+
+  console.debug("usersSetupConfigEntity", usersSetupConfigEntity);
+  console.debug("usersSetupEntity", JSON.stringify(usersSetupEntity, null, 2));
 
   return (
     <div className="App">
@@ -298,39 +375,78 @@ export const FormsApp = (props: {}) => {
                 >
                   Show next form
                 </button>
-                <InstantiedPersonFormsParserTemplate
-                  context={{
-                    ...configFormsParser,
-                    containerFormView: PersonContainerFormView,
-                    fieldTypeConverters: fieldTypeConverters,
-                    nestedContainerFormView: PersonNestedContainerFormView,
-                    fieldViews: PersonFieldViews,
-                    infiniteStreamSources: PersonFromConfigApis.streamApis,
-                    enumOptionsSources: PersonFromConfigApis.enumApis,
-                    entityApis: PersonFromConfigApis.entityApis,
-                    getFormsConfig: () =>
-                      PromiseRepo.Default.mock(() => TabbedTableWithConfiguration),
-                    injectedPrimitives: Map([
-                      [
-                        "injectedCategory",
-                        {
-                          fieldView: categoryForm,
-                          defaultValue: {
-                            kind: "custom",
-                            value: {
-                              kind: "adult",
-                              extraSpecial: false,
+                {formToShow % numForms == 3 ? (
+                  <InstantiedPersonFormsParserTemplate
+                    context={{
+                      ...configFormsParser,
+                      containerFormView: PersonContainerFormView,
+                      fieldTypeConverters: fieldTypeConverters,
+                      nestedContainerFormView: PersonNestedContainerFormView,
+                      fieldViews: PersonFieldViews,
+                      infiniteStreamSources: PersonFromConfigApis.streamApis, // TODO: remove
+                      enumOptionsSources: UsersSetupFromConfigApis.enumApis,
+                      entityApis: UsersSetupFromConfigApis.entityApis,
+                      tableApiSources: UsersSetupFromConfigApis.tableApiSources,
+                      getFormsConfig: () =>
+                        PromiseRepo.Default.mock(
+                          () => TabbedTableWithConfiguration,
+                        ),
+                      injectedPrimitives: Map([
+                        [
+                          "injectedCategory",
+                          {
+                            fieldView: categoryForm,
+                            defaultValue: {
+                              kind: "custom",
+                              value: {
+                                kind: "adult",
+                                extraSpecial: false,
+                              },
                             },
+                            defaultState: CategoryState.Default(),
                           },
-                          defaultState: CategoryState.Default(),
-                        },
-                      ],
-                    ]),
-                  }}
-                  setState={setConfigFormsParser}
-                  view={unit}
-                  foreignMutations={unit}
-                />
+                        ],
+                      ]),
+                    }}
+                    setState={setConfigFormsParser}
+                    view={unit}
+                    foreignMutations={unit}
+                  />
+                ) : (
+                  <InstantiedPersonFormsParserTemplate
+                    context={{
+                      ...configFormsParser,
+                      containerFormView: PersonContainerFormView,
+                      fieldTypeConverters: fieldTypeConverters,
+                      nestedContainerFormView: PersonNestedContainerFormView,
+                      fieldViews: PersonFieldViews,
+                      infiniteStreamSources: PersonFromConfigApis.streamApis,
+                      enumOptionsSources: PersonFromConfigApis.enumApis,
+                      entityApis: PersonFromConfigApis.entityApis,
+                      getFormsConfig: () =>
+                        PromiseRepo.Default.mock(() => PersonConfig),
+                      injectedPrimitives: Map([
+                        [
+                          "injectedCategory",
+                          {
+                            fieldView: categoryForm,
+                            defaultValue: {
+                              kind: "custom",
+                              value: {
+                                kind: "adult",
+                                extraSpecial: false,
+                              },
+                            },
+                            defaultState: CategoryState.Default(),
+                          },
+                        ],
+                      ]),
+                    }}
+                    setState={setConfigFormsParser}
+                    view={unit}
+                    foreignMutations={unit}
+                  />
+                )}
                 {renderForms && formToShow % numForms == 0 ? (
                   <>
                     <h3>Create person</h3>
@@ -543,9 +659,9 @@ export const FormsApp = (props: {}) => {
                           formName: "person-transparent",
                           kind: "passthrough",
                           containerWrapper: PassthroughFormContainerWrapper,
-                          entity,
+                          entity: personEntity,
                           globalConfiguration,
-                          onEntityChange,
+                          onEntityChange: onPersonEntityChange,
                         },
                         showFormParsingErrors: ShowFormsParsingErrors,
                         extraContext: {
@@ -579,68 +695,58 @@ export const FormsApp = (props: {}) => {
                           {JSON.stringify(entityPath.errors, null, 2)}
                         </p>
                       )}
-                      {globalConfiguration.kind == "l" && (
-                        <div
-                          style={{
-                            border: "2px solid lightblue",
-                            display: "inline-block",
-                            verticalAlign: "top",
+
+                      <div
+                        style={{
+                          border: "2px solid lightblue",
+                          display: "inline-block",
+                          verticalAlign: "top",
+                        }}
+                      >
+                        <p>Config</p>
+                        <FormRunnerTemplate
+                          context={{
+                            ...configFormsParser,
+                            ...usersSetupConfigFormState,
+                            formRef: {
+                              formName: "UsersSetupConfig",
+                              kind: "passthrough",
+                              containerWrapper: PassthroughFormContainerWrapper,
+                              entity: usersSetupConfigEntity,
+                              globalConfiguration: Sum.Default.left(
+                                PredicateValue.Default.record(OrderedMap()),
+                              ),
+                              onEntityChange: onAddressFieldsChange,
+                            },
+                            showFormParsingErrors: ShowFormsParsingErrors,
+                            extraContext: {
+                              flags: Set(["BC", "X"]),
+                            },
                           }}
-                        >
-                          <p>Addresses config</p>
-                          <FormRunnerTemplate
-                            context={{
-                              ...configFormsParser,
-                              ...personAddressConfigFormState,
-                              formRef: {
-                                formName: "UsersSetupConfig",
-                                kind: "passthrough",
-                                containerWrapper:
-                                  PassthroughFormContainerWrapper,
-                                entity: Sum.Default.left(
-                                  PredicateValue.Default.record(
-                                    OrderedMap([
-                                      [
-                                        "ActiveFields",
-                                        (
-                                          globalConfiguration.value as ValueRecord
-                                        ).fields.get("ActiveFields")!,
-                                      ],
-                                    ]),
-                                  ),
-                                ),
-                                globalConfiguration,
-                                onEntityChange: onAddressFieldsChange,
-                              },
-                              showFormParsingErrors: ShowFormsParsingErrors,
-                              extraContext: {
-                                flags: Set(["BC", "X"]),
-                              },
-                            }}
-                            setState={setPersonAddressConfigFormState}
-                            view={unit}
-                            foreignMutations={unit}
-                          />
-                        </div>
-                      )}
+                          setState={setUsersSetupConfigFormState}
+                          view={unit}
+                          foreignMutations={unit}
+                        />
+                      </div>
+                      <p>User Form</p>
                       <FormRunnerTemplate
                         context={{
                           ...configFormsParser,
-                          ...personPassthroughFormState,
+                          ...usersSetupFormState,
                           formRef: {
                             formName: "UsersSetup",
                             kind: "passthrough",
                             containerWrapper: PassthroughFormContainerWrapper,
-                            entity,
-                            globalConfiguration,
-                            onEntityChange,
+                            entity: usersSetupEntity,
+                            globalConfiguration: usersSetupConfigEntity,
+                            onEntityChange: onPersonEntityChange,
                           },
                           showFormParsingErrors: ShowFormsParsingErrors,
                           extraContext: {
                             flags: Set(["BC", "X"]),
                           },
                         }}
-                        setState={setPersonPassthroughFormState}
+                        setState={setUsersSetupFormState}
                         view={unit}
                         foreignMutations={unit}
                       />
