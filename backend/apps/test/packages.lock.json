@@ -53,11 +53,11 @@
       },
       "Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore": {
         "type": "Direct",
-        "requested": "[9.0.0, )",
-        "resolved": "9.0.0",
-        "contentHash": "iWGrOsmmgz7wKc27SzC/rWrTuzl/jqWKIl/+YP7OL3mrDcADS/W5WFtmGkfQCAVGv0aZyck4CVfAVdjZLyyY8w==",
+        "requested": "[9.0.2, )",
+        "resolved": "9.0.2",
+        "contentHash": "VW8iMcjcJz4HFOlHgbvlutwTIrVgKJ3zbQ8FCjkA6OekN1tNSzdRzV4uW9f1Pmz0bL6RzjzRv9GX/DP1E8WTZQ==",
         "dependencies": {
-          "Microsoft.EntityFrameworkCore.Relational": "9.0.0"
+          "Microsoft.EntityFrameworkCore.Relational": "9.0.2"
         }
       },
       "Microsoft.AspNetCore.OpenApi": {
@@ -89,14 +89,14 @@
       },
       "Microsoft.EntityFrameworkCore.Relational": {
         "type": "Direct",
-        "requested": "[9.0.0, )",
-        "resolved": "9.0.0",
-        "contentHash": "j+msw6fWgAE9M3Q/5B9Uhv7pdAdAQUvFPJAiBJmoy+OXvehVbfbCE8ftMAa51Uo2ZeiqVnHShhnv4Y4UJJmUzA==",
+        "requested": "[9.0.2, )",
+        "resolved": "9.0.2",
+        "contentHash": "r7O4N5uaM95InVSGUj7SMOQWN0f1PBF2Y30ow7Jg+pGX5GJCRVd/1fq83lQ50YMyq+EzyHac5o4CDQA2RsjKJQ==",
         "dependencies": {
-          "Microsoft.EntityFrameworkCore": "9.0.0",
-          "Microsoft.Extensions.Caching.Memory": "9.0.0",
-          "Microsoft.Extensions.Configuration.Abstractions": "9.0.0",
-          "Microsoft.Extensions.Logging": "9.0.0"
+          "Microsoft.EntityFrameworkCore": "9.0.2",
+          "Microsoft.Extensions.Caching.Memory": "9.0.2",
+          "Microsoft.Extensions.Configuration.Abstractions": "9.0.2",
+          "Microsoft.Extensions.Logging": "9.0.2"
         }
       },
       "Microsoft.EntityFrameworkCore.Tools": {
@@ -385,10 +385,10 @@
       },
       "Microsoft.Extensions.Configuration.Abstractions": {
         "type": "Transitive",
-        "resolved": "9.0.0",
-        "contentHash": "lqvd7W3FGKUO1+ZoUEMaZ5XDJeWvjpy2/M/ptCGz3tXLD4HWVaSzjufsAsjemasBEg+2SxXVtYVvGt5r2nKDlg==",
+        "resolved": "9.0.2",
+        "contentHash": "I0O/270E/lUNqbBxlRVjxKOMZyYjP88dpEgQTveml+h2lTzAP4vbawLVwjS9SC7lKaU893bwyyNz0IVJYsm9EA==",
         "dependencies": {
-          "Microsoft.Extensions.Primitives": "9.0.0"
+          "Microsoft.Extensions.Primitives": "9.0.2"
         }
       },
       "Microsoft.Extensions.DependencyInjection": {
@@ -1127,10 +1127,10 @@
       "migrations": {
         "type": "Project",
         "dependencies": {
-          "Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore": "[9.0.0, )",
+          "Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore": "[9.0.2, )",
           "Microsoft.EntityFrameworkCore": "[9.0.2, )",
           "Microsoft.EntityFrameworkCore.Abstractions": "[9.0.2, )",
-          "Microsoft.EntityFrameworkCore.Relational": "[9.0.0, )",
+          "Microsoft.EntityFrameworkCore.Relational": "[9.0.2, )",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "[9.0.1, )",
           "System.Text.Json": "[9.0.0, )",
           "absample": "[1.0.0, )",
