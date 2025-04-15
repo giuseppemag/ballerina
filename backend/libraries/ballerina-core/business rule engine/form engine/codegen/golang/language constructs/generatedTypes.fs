@@ -65,23 +65,30 @@ type GolangGeneratedType =
                         )
                       )
 
-                    let! fields =
-                      fields
-                      |> Seq.map (fun f ->
-                        state {
-                          let! (field: string) = f.Value |> ExprType.GenerateTypeAnnotation
-                          let! (fieldDefaultValue: string) = f.Value |> ExprType.GenerateDefaultValue
+                    match fields |> Seq.tryFind (fun f -> f.Key.[0] |> System.Char.IsLower) with
+                    | Some f ->
+                      return!
+                        Errors.Singleton
+                          $"Error: field name '{f.Key}' starts with a lowercase character, and this would not serialize correctly to JSON in Go."
+                        |> state.Throw
+                    | None ->
+                      let! fields =
+                        fields
+                        |> Seq.map (fun f ->
+                          state {
+                            let! (field: string) = f.Value |> ExprType.GenerateTypeAnnotation
+                            let! (fieldDefaultValue: string) = f.Value |> ExprType.GenerateDefaultValue
 
-                          return
-                            {| FieldName = f.Key
-                               FieldType = field
-                               FieldDefaultValue = fieldDefaultValue |}
-                        })
-                      |> state.All
+                            return
+                              {| FieldName = f.Key
+                                 FieldType = field
+                                 FieldDefaultValue = fieldDefaultValue |}
+                          })
+                        |> state.All
 
-                    return
-                      {| CaseName = !case.CaseName
-                         Fields = fields |}
+                      return
+                        {| CaseName = !case.CaseName
+                           Fields = fields |}
                   })
                 |> List.ofSeq
               )
@@ -116,9 +123,16 @@ type GolangGeneratedType =
                 |> List.ofSeq
               )
 
-            let record = { Name = t.TypeName; Fields = fields }
+            match fields |> Seq.tryFind (fun f -> f.FieldName.[0] |> System.Char.IsLower) with
+            | Some f ->
+              return!
+                Errors.Singleton
+                  $"Error: field name '{f.FieldName}' starts with a lowercase character, and this would not serialize correctly to JSON in Go."
+                |> state.Throw
+            | None ->
+              let record = { Name = t.TypeName; Fields = fields }
 
-            return GolangRecord.Generate (ctx, codegenConfig, formName) record
+              return GolangRecord.Generate (ctx, codegenConfig, formName) record
         }
         |> state.WithErrorContext $"...when generating type {t.TypeName}")
       |> List.ofSeq
