@@ -459,7 +459,7 @@ type CollectFailingChecks<T = Unit> = (
 ) => (v: PredicateValue) => ValueOrErrors<
   // these are all fields somewhere in the root
   Array<FailingCheckOp>,
-  "error"
+  [_: any, msg: string]
 >;
 
 const traverse: CollectFailingChecks = (typesMap, t) => {
@@ -467,14 +467,29 @@ const traverse: CollectFailingChecks = (typesMap, t) => {
     case "unionCase":
       return (_) => ValueOrErrors.Default.return([]);
     case "lookup":
-      return (_) => ValueOrErrors.Default.return([]);
+      const lookupType = typesMap.get(t.name)!;
+      if (!lookupType) {
+        return (_) =>
+          ValueOrErrors.Default.throwOne([
+            t.name,
+            "cannot find lookup type name",
+          ]);
+      }
+
+      const traverseLookupValue = traverse(typesMap, lookupType);
+      return (v) =>
+        !PredicateValue.Operations.IsVarLookup(v)
+          ? ValueOrErrors.Default.throwOne([v, "not a ValueLookup"])
+          : traverseLookupValue(v);
+
     case "primitive":
       return (_) => ValueOrErrors.Default.return([]);
+
     case "option":
       const traverseOptionValue = traverse(typesMap, t.value);
       return (v: PredicateValue) =>
         !PredicateValue.Operations.IsOption(v)
-          ? ValueOrErrors.Default.throwOne("error")
+          ? ValueOrErrors.Default.throwOne([v, "not a ValueOption"])
           : !v.isSome
           ? ValueOrErrors.Default.return([])
           : traverseOptionValue(v.value).Map((valueFailingChecks) =>
