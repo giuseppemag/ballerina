@@ -30,13 +30,22 @@ import {
   Sum,
   AsyncState,
   FormLayout,
+  InfiniteStreamSources,
+  ValueOrErrors,
+  TableApiSource,
 } from "../../../../main";
 import { Template } from "../../../template/state";
 import { Value } from "../../../value/state";
 
-export const Form = <
+export const RecordForm = <
   FieldStates extends { formFieldStates: any },
-  Context,
+  Context extends {
+    tableApiSource: TableApiSource;
+    fromApiParserByType: (
+      value: any,
+      type: ParsedType<any>,
+    ) => ValueOrErrors<PredicateValue, string>;
+  },
   ForeignMutationsExpected,
 >() => ({
   Default: <Fields extends keyof FieldStates["formFieldStates"]>() => {
@@ -54,6 +63,11 @@ export const Form = <
           disabled: boolean;
           visible: boolean;
           type: ParsedType<any>;
+          tableApiSource: TableApiSource;
+          fromApiParserByType: (
+            value: any,
+            type: ParsedType<any>,
+          ) => ValueOrErrors<PredicateValue, string>;
         },
       {
         customFormState: State["formFieldStates"][f]["customFormState"];
@@ -78,7 +92,13 @@ export const Form = <
         const fieldTemplates: FieldTemplates<
           Fields,
           FieldStates,
-          Context,
+          Context & {
+            tableApiSource: TableApiSource;
+            fromApiParserByType: (
+              value: any,
+              type: ParsedType<any>,
+            ) => ValueOrErrors<PredicateValue, string>;
+          },
           ForeignMutationsExpected
         > = {} as FieldTemplates<
           Fields,
@@ -98,6 +118,11 @@ export const Form = <
                 disabled: boolean;
                 visible: boolean;
                 type: ParsedType<any>;
+                tableApiSource: TableApiSource;
+                fromApiParserByType: (
+                  value: any,
+                  type: ParsedType<any>,
+                ) => ValueOrErrors<PredicateValue, string>;
               }
             >((_) => {
               // disabled flag is passed in from the wrapping container when mapping over fields
@@ -124,6 +149,8 @@ export const Form = <
                 visibilities: visibilitiesFromParent,
                 disabledFields: disabledFieldsFromParent,
                 globalConfiguration: _.globalConfiguration,
+                tableApiSource: _.tableApiSource,
+                fromApiParserByType: _.fromApiParserByType,
               } as any;
             })
             .mapState<State>((_) => (current) => {

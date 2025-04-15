@@ -1,14 +1,17 @@
-import { List } from "immutable";
+import { List, Map } from "immutable";
 import {
   BasicFun,
   Delta,
   Guid,
   PredicateValue,
+  SearchableInfiniteStreamState,
   simpleUpdater,
   Sum,
   Unit,
   Updater,
+  ValueOrErrors,
 } from "../../../../main";
+import { ValueInfiniteStreamState } from "../../../value-infinite-data-stream/state";
 import { FormParsingResult, FormsParserState } from "../parser/state";
 
 export type FormRefCreateApiHandlers<Arg> = {
@@ -24,6 +27,13 @@ export type FormRefEditApiHandlers<Arg> = {
   onUpdateSuccess?: (_: Arg) => void;
   onUpdateError?: (_: Arg) => void;
 };
+
+export type TableApiSource = BasicFun<
+  BasicFun<any, ValueOrErrors<PredicateValue, string>>,
+  BasicFun<Map<string, string>, ValueInfiniteStreamState["getChunk"]>
+>;
+
+export type TableApiSources = BasicFun<string, TableApiSource>;
 
 export type FormRef = {
   formName: string;

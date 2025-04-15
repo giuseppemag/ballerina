@@ -5,7 +5,7 @@ import {
   Sum,
   toAPIRawValue,
 } from "ballerina-core";
-import { List, OrderedMap } from "immutable";
+import { List, OrderedMap, Map } from "immutable";
 import { PersonFormInjectedTypes } from "src/domains/person-from-config/injected-forms/category";
 
 export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
@@ -135,5 +135,20 @@ export const fieldTypeConverters: ApiConverters<PersonFormInjectedTypes> = {
       IsRight: _.kind == "r",
       Value: _.value,
     }),
+  },
+  Table: {
+    fromAPIRawValue: (_) => {
+      if (_ == undefined) {
+        return { data: Map(), hasMoreValues: false, from: 0, to: 0 };
+      }
+      return {
+        data: Map<string, any>(_.Values),
+        hasMoreValues: _.HasMore,
+        from: _.From,
+        to: _.To,
+      };
+    },
+    // TODO: implement ? may not be needed since stream handles this
+    toAPIRawValue: ([_, __]) => _,
   },
 };

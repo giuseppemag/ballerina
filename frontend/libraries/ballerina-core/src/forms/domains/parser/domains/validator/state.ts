@@ -43,6 +43,7 @@ export type ParsedFormConfig<T> =
   | ParsedTableFormConfig<T>;
 
 export type ParsedRecordFormConfig<T> = {
+  kind: "recordForm";
   name: string;
   type: ParsedType<T>;
   fields: Map<FieldName, ParsedRenderer<T>>;
@@ -51,6 +52,7 @@ export type ParsedRecordFormConfig<T> = {
 };
 
 export type ParsedTableFormConfig<T> = {
+  kind: "tableForm";
   name: string;
   type: ParsedType<T>;
   columns: Map<FieldName, ParsedRenderer<T>>;
@@ -376,7 +378,8 @@ export const FormsConfig = {
               return;
             }
 
-            const parsedForm: ParsedFormConfig<T> = {
+            const parsedForm: ParsedRecordFormConfig<T> = {
+              kind: "recordForm",
               name: formName,
               fields: Map(),
               tabs: Map(),
@@ -465,6 +468,7 @@ export const FormsConfig = {
             }
 
             const parsedForm: ParsedTableFormConfig<T> = {
+              kind: "tableForm",
               name: formName,
               columns: Map(),
               renderer: form.renderer,
@@ -530,20 +534,22 @@ export const FormsConfig = {
                   configApi: formsConfig.launchers[launcherName]["configApi"],
                 }
               : formsConfig.launchers[launcherName]["kind"] ==
-                "passthrough-table"
-              ? {
-                  name: launcherName,
-                  kind: formsConfig.launchers[launcherName]["kind"],
-                  form: formsConfig.launchers[launcherName]["form"],
-                  configType: formsConfig.launchers[launcherName]["configType"],
-                  api: formsConfig.launchers[launcherName]["api"],
-                }
-              : {
-                  name: launcherName,
-                  kind: formsConfig.launchers[launcherName]["kind"],
-                  form: formsConfig.launchers[launcherName]["form"],
-                  configType: formsConfig.launchers[launcherName]["configType"],
-                };
+                  "passthrough-table"
+                ? {
+                    name: launcherName,
+                    kind: formsConfig.launchers[launcherName]["kind"],
+                    form: formsConfig.launchers[launcherName]["form"],
+                    configType:
+                      formsConfig.launchers[launcherName]["configType"],
+                    api: formsConfig.launchers[launcherName]["api"],
+                  }
+                : {
+                    name: launcherName,
+                    kind: formsConfig.launchers[launcherName]["kind"],
+                    form: formsConfig.launchers[launcherName]["form"],
+                    configType:
+                      formsConfig.launchers[launcherName]["configType"],
+                  };
           if (launcher.kind == "create")
             launchers.create = launchers.create.set(launcherName, launcher);
           else if (launcher.kind == "edit")
@@ -565,18 +571,6 @@ export const FormsConfig = {
           console.error(errors);
           return ValueOrErrors.Default.throw(errors);
         }
-
-        console.debug({
-          types: parsedTypes,
-          forms,
-          apis: {
-            enums,
-            streams,
-            entities,
-            tables,
-          },
-          launchers,
-        });
 
         return ValueOrErrors.Default.return({
           types: parsedTypes,

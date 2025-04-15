@@ -63,6 +63,71 @@ export const MostUglyValidationDebugView = (props: {
   );
 
 export const PersonFieldViews = {
+  table: {
+    finiteTable: (props: any) => {
+      return (
+        <table>
+          <thead style={{ border: "1px solid black" }}>
+            <tr style={{ border: "1px solid black" }}>
+              {props.VisibleColumns.map((header: any) => (
+                <th style={{ border: "1px solid black" }}>{header}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {props.TableValues.map(([chunkIndex, key]: [number, string]) => (
+              <tr style={{ border: "1px solid black" }}>
+                {props.VisibleColumns.map((header: any) => {
+                  return (
+                    <td style={{ border: "1px solid black" }}>
+                      {props.EmbeddedCellTemplates[header](chunkIndex)(key)({
+                        ...props,
+                        view: unit,
+                      })}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    },
+    streamingTable: (props: any) => {
+      return (
+        <>
+          <table>
+            <thead style={{ border: "1px solid black" }}>
+              <tr style={{ border: "1px solid black" }}>
+                {props.VisibleColumns.map((header: any) => (
+                  <th style={{ border: "1px solid black" }}>{header}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {props.TableValues.map(([chunkIndex, key]: [number, string]) => (
+                <tr style={{ border: "1px solid black" }}>
+                  {props.VisibleColumns.map((header: any) => {
+                    return (
+                      <td style={{ border: "1px solid black" }}>
+                        {props.EmbeddedCellTemplates[header](chunkIndex)(key)({
+                          ...props,
+                          view: unit,
+                        })}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <button onClick={() => props.foreignMutations.loadMore()}>
+            Load More
+          </button>
+        </>
+      );
+    },
+  },
   injectedCategory: {
     defaultCategory:
       <Context extends FormLabel, ForeignMutationsExpected>(): CategoryView<
@@ -251,7 +316,7 @@ export const PersonFieldViews = {
       (props) => {
         const displayValue = props.context.commonFormState.modifiedByUser
           ? props.context.customFormState.possiblyInvalidInput
-          : props.context.value?.toISOString();
+          : props.context.value?.toISOString().slice(0, 10);
 
         return (
           <>
