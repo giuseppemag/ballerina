@@ -12,9 +12,15 @@ import {
   TypeName,
   PredicateFormLayout,
   FormLayout,
+  PredicateValue,
+  Unit,
+  Updater,
+  Delta,
+  ValueOption,
 } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 import { ParsedRenderer } from "../renderer/state";
+import { fail } from "assert";
 
 export type RawForm = {
   type?: any;
@@ -420,6 +426,8 @@ export const FormsConfig = {
           return ValueOrErrors.Default.throw(errors);
         }
 
+        console.debug({ parsedTypes, fc });
+
         return ValueOrErrors.Default.return({
           types: parsedTypes,
           forms,
@@ -432,4 +440,82 @@ export const FormsConfig = {
         });
       },
   },
+};
+
+type FailingCheckApproval = (newApprovalValue: boolean) => {
+  // function to call when clicking on the approval button
+  OptimisticUpdate: Updater<PredicateValue>; // applied immediately in the FE
+  BackendDeltaPATCH: Delta; // sent to the BE
+};
+
+type FailingCheckOp = {
+  FailingCheck: PredicateValue;
+  ToggleApproval: FailingCheckApproval;
+};
+
+type CollectFailingChecks<T = Unit> = (
+  typesMap: Map<TypeName, ParsedType<T>>,
+  t: ParsedType<T>,
+) => (v: PredicateValue) => ValueOrErrors<
+  // these are all fields somewhere in the root
+  Array<FailingCheckOp>,
+  [_: any, msg: string]
+>;
+
+const traverse: CollectFailingChecks = (typesMap, t) => {
+  switch (t.kind) {
+    case "unionCase":
+      return (_) => ValueOrErrors.Default.return([]);
+    case "lookup":
+      const lookupType = typesMap.get(t.name)!;
+      if (!lookupType) {
+        return (_) =>
+          ValueOrErrors.Default.throwOne([
+            t.name,
+            "cannot find lookup type name",
+          ]);
+      }
+
+      const traverseLookupValue = traverse(typesMap, lookupType);
+      return (v) =>
+        !PredicateValue.Operations.IsVarLookup(v)
+          ? ValueOrErrors.Default.throwOne([v, "not a ValueLookup"])
+          : traverseLookupValue(v);
+
+    case "primitive":
+      return (_) => ValueOrErrors.Default.return([]);
+
+    case "option":
+      const traverseOptionValue = traverse(typesMap, t.value);
+      return (v: PredicateValue) =>
+        !PredicateValue.Operations.IsOption(v)
+          ? ValueOrErrors.Default.throwOne([v, "not a ValueOption"])
+          : !v.isSome
+          ? ValueOrErrors.Default.return([])
+          : traverseOptionValue(v.value).Map((valueFailingChecks) =>
+              valueFailingChecks.map<FailingCheckOp>((fOp) => ({
+                FailingCheck: fOp.FailingCheck,
+                ToggleApproval: (a) => {
+                  const innerApproval = fOp.ToggleApproval(a);
+                  return {
+                    OptimisticUpdate: ValueOption.Updaters.value(
+                      innerApproval.OptimisticUpdate,
+                    ),
+                    BackendDeltaPATCH: {
+                      kind: "OptionValue",
+                      value: innerApproval.BackendDeltaPATCH,
+                    },
+                  };
+                },
+              })),
+            );
+    case "record":
+      return (_) => ValueOrErrors.Default.return([]);
+    case "application":
+      return (_) => ValueOrErrors.Default.return([]);
+    case "union":
+      return (_) => ValueOrErrors.Default.return([]);
+    default:
+      return (_) => ValueOrErrors.Default.return([]);
+  }
 };
