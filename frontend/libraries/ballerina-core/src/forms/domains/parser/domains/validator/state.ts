@@ -20,6 +20,8 @@ import {
   ValueRecord,
   DeltaOption,
   DeltaRecord,
+  CollectionReference,
+  EnumReference,
 } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 import { ParsedRenderer } from "../renderer/state";
@@ -462,7 +464,7 @@ type CollectFailingChecks<T = Unit> = (
 ) => (v: PredicateValue) => ValueOrErrors<
   // these are all fields somewhere in the root
   Array<FailingCheckOp>,
-  [_: any, msg: string]
+  [msg: string, _: any]
 >;
 
 const traverse: CollectFailingChecks = (typesMap, t) => {
@@ -482,7 +484,7 @@ const traverse: CollectFailingChecks = (typesMap, t) => {
       const traverseLookupValue = traverse(typesMap, lookupType);
       return (v) =>
         !PredicateValue.Operations.IsVarLookup(v)
-          ? ValueOrErrors.Default.throwOne([v, "not a ValueLookup"])
+          ? ValueOrErrors.Default.throwOne(["not a ValueLookup", v])
           : traverseLookupValue(v);
 
     case "primitive":
@@ -492,7 +494,7 @@ const traverse: CollectFailingChecks = (typesMap, t) => {
       const traverseOptionValue = traverse(typesMap, t.value);
       return (v: PredicateValue) =>
         !PredicateValue.Operations.IsOption(v)
-          ? ValueOrErrors.Default.throwOne([v, "not a ValueOption"])
+          ? ValueOrErrors.Default.throwOne(["not a ValueOption", v])
           : !v.isSome
           ? ValueOrErrors.Default.return([])
           : traverseOptionValue(v.value).Map((valueFailingChecks) =>
@@ -514,50 +516,118 @@ const traverse: CollectFailingChecks = (typesMap, t) => {
             );
     case "record":
       const traverseRecordFields = t.fields.map((f) => traverse(typesMap, f));
-      return (v: PredicateValue) => {
-        if (!PredicateValue.Operations.IsRecord(v)) {
-          return ValueOrErrors.Default.return([]);
-        }
-
-        if (t.value === "FailingCheck") {
-          // found the failing checks predicate value
-        }
-
-        return ValueOrErrors.Operations.All(
-          List(
-            traverseRecordFields.entrySeq().map(([k, traverseField]) =>
-              traverseField(v.fields.get(k)!).Map((fieldFailingChecks) =>
-                fieldFailingChecks.map<FailingCheckOp>((fOp) => ({
-                  FailingCheck: fOp.FailingCheck,
-                  ToggleApproval: (a) => {
-                    const innerApproval = fOp.ToggleApproval(a);
-                    return {
-                      OptimisticUpdate: ValueRecord.Updaters.set(
-                        k,
-                        innerApproval.OptimisticUpdate(v.fields.get(k)!),
-                      ) as Updater<PredicateValue>,
-                      BackendDeltaPATCH: {
-                        kind: "RecordField",
-                        field: [k, innerApproval.BackendDeltaPATCH],
-                        recordType: t,
-                      } as DeltaRecord,
-                    };
-                  },
-                })),
+      return (v: PredicateValue) =>
+        !PredicateValue.Operations.IsRecord(v)
+          ? ValueOrErrors.Default.throwOne(["not a ValueRecord", v])
+          : ValueOrErrors.Operations.All(
+              List(
+                traverseRecordFields.entrySeq().map(([k, traverseField]) =>
+                  traverseField(v.fields.get(k)!).Map((fieldFailingChecks) =>
+                    fieldFailingChecks.map<FailingCheckOp>((fOp) => ({
+                      FailingCheck:
+                        t.value == "FailingCheck" ? v : fOp.FailingCheck,
+                      ToggleApproval: (a) => {
+                        const innerApproval = fOp.ToggleApproval(a);
+                        return {
+                          OptimisticUpdate: ValueRecord.Updaters.set(
+                            k,
+                            innerApproval.OptimisticUpdate(v.fields.get(k)!),
+                          ) as Updater<PredicateValue>,
+                          BackendDeltaPATCH: {
+                            kind: "RecordField",
+                            field: [k, innerApproval.BackendDeltaPATCH],
+                            recordType: t,
+                          } as DeltaRecord,
+                        };
+                      },
+                    })),
+                  ),
+                ),
               ),
-            ),
-          ),
-        ).Map(
-          (listFailingChecks) =>
-            listFailingChecks.flatten().toArray() as Array<FailingCheckOp>,
-        );
-      };
+            ).Map(
+              (listFailingChecks) =>
+                listFailingChecks.flatten().toArray() as Array<FailingCheckOp>,
+            );
 
     case "application":
-      return (_) => ValueOrErrors.Default.return([]);
+      switch (t.value) {
+        case "SingleSelection":
+          const traverseSingleSelection = traverse(typesMap, t.args[0]);
+          return (v) =>
+            !PredicateValue.Operations.IsOption(v)
+              ? ValueOrErrors.Default.throwOne(["not a ValueOption", v])
+              : !v.isSome
+              ? ValueOrErrors.Default.return([])
+              : !CollectionReference.Operations.IsCollectionReference(
+                  v.value,
+                ) && !EnumReference.Operations.IsEnumReference(v.value)
+              ? ValueOrErrors.Default.throwOne([
+                  "not a CollectionReference or EnumReference",
+                  v.value,
+                ])
+              : traverseSingleSelection(v.value).Map((valueFailingChecks) =>
+                  valueFailingChecks.map<FailingCheckOp>((fOp) => ({
+                    FailingCheck: fOp.FailingCheck,
+                    ToggleApproval: (a) => {
+                      const innerApproval = fOp.ToggleApproval(a);
+                      return {
+                        OptimisticUpdate: ValueOption.Updaters.value(
+                          innerApproval.OptimisticUpdate,
+                        ) as Updater<PredicateValue>,
+                        BackendDeltaPATCH: {
+                          kind: "OptionValue",
+                          value: innerApproval.BackendDeltaPATCH,
+                        } as DeltaOption,
+                      };
+                    },
+                  })),
+                );
+
+        case "MultiSelection":
+        case "Map":
+        case "Sum":
+        case "Option":
+        case "Tuple":
+        case "Union":
+        case "KeyOf":
+        case "List":
+        default:
+          return (_) => ValueOrErrors.Default.return([]);
+      }
     case "union":
-      return (_) => ValueOrErrors.Default.return([]);
+      const traverseUnionFields = t.args.map((f) => traverse(typesMap, f));
+      return (v) =>
+        !PredicateValue.Operations.IsRecord(v)
+          ? ValueOrErrors.Default.throwOne(["not a ValueRecord", v])
+          : ValueOrErrors.Operations.All(
+              List(
+                traverseUnionFields.entrySeq().map(([k, traverseField]) =>
+                  traverseField(v.fields.get(k)!).Map((fieldFailingChecks) =>
+                    fieldFailingChecks.map<FailingCheckOp>((fOp) => ({
+                      FailingCheck: fOp.FailingCheck,
+                      ToggleApproval: (a) => {
+                        const innerApproval = fOp.ToggleApproval(a);
+                        return {
+                          OptimisticUpdate: ValueRecord.Updaters.set(
+                            k,
+                            innerApproval.OptimisticUpdate(v.fields.get(k)!),
+                          ) as Updater<PredicateValue>,
+                          BackendDeltaPATCH: {
+                            kind: "RecordField",
+                            field: [k, innerApproval.BackendDeltaPATCH],
+                            recordType: t,
+                          } as DeltaRecord,
+                        };
+                      },
+                    })),
+                  ),
+                ),
+              ),
+            ).Map(
+              (listFailingChecks) =>
+                listFailingChecks.flatten().toArray() as Array<FailingCheckOp>,
+            );
     default:
-      return (_) => ValueOrErrors.Default.return([]);
+      return (_) => ValueOrErrors.Default.throwOne(["unknown type", t]);
   }
 };
