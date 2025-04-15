@@ -40,6 +40,41 @@ func MatchDeltaInt[Result any](
 	}
 }
 
+type DeltaInt64EffectsEnum string
+
+const (
+	Int64Replace DeltaInt64EffectsEnum = "Int64Replace"
+)
+
+var AllDeltaInt64EffectsEnumCases = [...]DeltaInt64EffectsEnum{Int64Replace}
+
+func DefaultDeltaInt64EffectsEnum() DeltaInt64EffectsEnum { return AllDeltaInt64EffectsEnumCases[0] }
+
+type DeltaInt64 struct {
+	DeltaBase
+	Discriminator DeltaInt64EffectsEnum
+	Replace       int64
+}
+
+func NewDeltaInt64Replace(value int64) DeltaInt64 {
+	return DeltaInt64{
+		Discriminator: Int64Replace,
+		Replace:       value,
+	}
+}
+func MatchDeltaInt64[Result any](
+	onReplace func(int64) (Result, error),
+) func(DeltaInt64) (Result, error) {
+	return func(delta DeltaInt64) (Result, error) {
+		var result Result
+		switch delta.Discriminator {
+		case "Int64Replace":
+			return onReplace(delta.Replace)
+		}
+		return result, NewInvalidDiscriminatorError(string(delta.Discriminator), "DeltaInt64")
+	}
+}
+
 func DefaultString() string {
 	return ""
 }
@@ -49,6 +84,10 @@ func DefaultBool() bool {
 }
 
 func DefaultInt32() int {
+	return 0
+}
+
+func DefaultInt64() int64 {
 	return 0
 }
 

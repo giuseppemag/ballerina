@@ -102,6 +102,30 @@ func NewTuple7[a any, b any, c any, d any, e any, f any, g any](item1 a, item2 b
 	return p
 }
 
+type Tuple8[a any, b any, c any, d any, e any, f any, g any, h any] struct {
+	Item1 a
+	Item2 b
+	Item3 c
+	Item4 d
+	Item5 e
+	Item6 f
+	Item7 g
+	Item8 h
+}
+
+func NewTuple8[a any, b any, c any, d any, e any, f any, g any, h any](item1 a, item2 b, item3 c, item4 d, item5 e, item6 f, item7 g, item8 h) Tuple8[a, b, c, d, e, f, g, h] {
+	var p Tuple8[a, b, c, d, e, f, g, h]
+	p.Item1 = item1
+	p.Item2 = item2
+	p.Item3 = item3
+	p.Item4 = item4
+	p.Item5 = item5
+	p.Item6 = item6
+	p.Item7 = item7
+	p.Item8 = item8
+	return p
+}
+
 type DeltaTuple2EffectsEnum string
 
 const (
@@ -607,5 +631,121 @@ func MatchDeltaTuple7[a any, b any, c any, d any, e any, f any, g any, deltaA an
 			return onItem7(delta.Item7)
 		}
 		return result, NewInvalidDiscriminatorError(string(delta.Discriminator), "DeltaTuple7")
+	}
+}
+
+type DeltaTuple8EffectsEnum string
+
+const (
+	Tuple8Replace DeltaTuple8EffectsEnum = "Tuple8Replace"
+	Tuple8Item1   DeltaTuple8EffectsEnum = "Tuple8Item1"
+	Tuple8Item2   DeltaTuple8EffectsEnum = "Tuple8Item2"
+	Tuple8Item3   DeltaTuple8EffectsEnum = "Tuple8Item3"
+	Tuple8Item4   DeltaTuple8EffectsEnum = "Tuple8Item4"
+	Tuple8Item5   DeltaTuple8EffectsEnum = "Tuple8Item5"
+	Tuple8Item6   DeltaTuple8EffectsEnum = "Tuple8Item6"
+	Tuple8Item7   DeltaTuple8EffectsEnum = "Tuple8Item7"
+)
+
+var AllDeltaTuple8EffectsEnumCases = [...]DeltaTuple8EffectsEnum{Tuple8Replace, Tuple8Item1, Tuple8Item2, Tuple8Item3, Tuple8Item4, Tuple8Item5, Tuple8Item6}
+
+func DefaultDeltaTuple8EffectsEnum() DeltaTuple8EffectsEnum { return AllDeltaTuple8EffectsEnumCases[0] }
+
+type DeltaTuple8[a any, b any, c any, d any, e any, f any, g any, h any, deltaA any, deltaB any, deltaC any, deltaD any, deltaE any, deltaF any, deltaG any, deltaH any] struct {
+	DeltaBase
+	Discriminator DeltaTuple8EffectsEnum
+	Replace       Tuple8[a, b, c, d, e, f, g, h]
+	Item1         deltaA
+	Item2         deltaB
+	Item3         deltaC
+	Item4         deltaD
+	Item5         deltaE
+	Item6         deltaF
+	Item7         deltaG
+	Item8         deltaH
+}
+
+func NewDeltaTuple8Replace[a any, b any, c any, d any, e any, f any, g any, h any, deltaA any, deltaB any, deltaC any, deltaD any, deltaE any, deltaF any, deltaG any, deltaH any](value Tuple8[a, b, c, d, e, f, g, h]) DeltaTuple8[a, b, c, d, e, f, g, h, deltaA, deltaB, deltaC, deltaD, deltaE, deltaF, deltaG, deltaH] {
+	return DeltaTuple8[a, b, c, d, e, f, g, h, deltaA, deltaB, deltaC, deltaD, deltaE, deltaF, deltaG, deltaH]{
+		Discriminator: Tuple8Replace,
+		Replace:       value,
+	}
+}
+func NewDeltaTuple8Item1[a any, b any, c any, d any, e any, f any, g any, h any, deltaA any, deltaB any, deltaC any, deltaD any, deltaE any, deltaF any, deltaG any, deltaH any](delta deltaA) DeltaTuple8[a, b, c, d, e, f, g, h, deltaA, deltaB, deltaC, deltaD, deltaE, deltaF, deltaG, deltaH] {
+	return DeltaTuple8[a, b, c, d, e, f, g, h, deltaA, deltaB, deltaC, deltaD, deltaE, deltaF, deltaG, deltaH]{
+		Discriminator: Tuple8Item1,
+		Item1:         delta,
+	}
+}
+func NewDeltaTuple8Item2[a any, b any, c any, d any, e any, f any, g any, h any, deltaA any, deltaB any, deltaC any, deltaD any, deltaE any, deltaF any, deltaG any, deltaH any](delta deltaB) DeltaTuple8[a, b, c, d, e, f, g, h, deltaA, deltaB, deltaC, deltaD, deltaE, deltaF, deltaG, deltaH] {
+	return DeltaTuple8[a, b, c, d, e, f, g, h, deltaA, deltaB, deltaC, deltaD, deltaE, deltaF, deltaG, deltaH]{
+		Discriminator: Tuple8Item2,
+		Item2:         delta,
+	}
+}
+func NewDeltaTuple8Item3[a any, b any, c any, d any, e any, f any, g any, h any, deltaA any, deltaB any, deltaC any, deltaD any, deltaE any, deltaF any, deltaG any, deltaH any](delta deltaC) DeltaTuple8[a, b, c, d, e, f, g, h, deltaA, deltaB, deltaC, deltaD, deltaE, deltaF, deltaG, deltaH] {
+	return DeltaTuple8[a, b, c, d, e, f, g, h, deltaA, deltaB, deltaC, deltaD, deltaE, deltaF, deltaG, deltaH]{
+		Discriminator: Tuple8Item3,
+		Item3:         delta,
+	}
+}
+func NewDeltaTuple8Item4[a any, b any, c any, d any, e any, f any, g any, h any, deltaA any, deltaB any, deltaC any, deltaD any, deltaE any, deltaF any, deltaG any, deltaH any](delta deltaD) DeltaTuple8[a, b, c, d, e, f, g, h, deltaA, deltaB, deltaC, deltaD, deltaE, deltaF, deltaG, deltaH] {
+	return DeltaTuple8[a, b, c, d, e, f, g, h, deltaA, deltaB, deltaC, deltaD, deltaE, deltaF, deltaG, deltaH]{
+		Discriminator: Tuple8Item4,
+		Item4:         delta,
+	}
+}
+func NewDeltaTuple8Item5[a any, b any, c any, d any, e any, f any, g any, h any, deltaA any, deltaB any, deltaC any, deltaD any, deltaE any, deltaF any, deltaG any, deltaH any](delta deltaE) DeltaTuple8[a, b, c, d, e, f, g, h, deltaA, deltaB, deltaC, deltaD, deltaE, deltaF, deltaG, deltaH] {
+	return DeltaTuple8[a, b, c, d, e, f, g, h, deltaA, deltaB, deltaC, deltaD, deltaE, deltaF, deltaG, deltaH]{
+		Discriminator: Tuple8Item5,
+		Item5:         delta,
+	}
+}
+func NewDeltaTuple8Item6[a any, b any, c any, d any, e any, f any, g any, h any, deltaA any, deltaB any, deltaC any, deltaD any, deltaE any, deltaF any, deltaG any, deltaH any](delta deltaF) DeltaTuple8[a, b, c, d, e, f, g, h, deltaA, deltaB, deltaC, deltaD, deltaE, deltaF, deltaG, deltaH] {
+	return DeltaTuple8[a, b, c, d, e, f, g, h, deltaA, deltaB, deltaC, deltaD, deltaE, deltaF, deltaG, deltaH]{
+		Discriminator: Tuple8Item6,
+		Item6:         delta,
+	}
+}
+func NewDeltaTuple8Item7[a any, b any, c any, d any, e any, f any, g any, h any, deltaA any, deltaB any, deltaC any, deltaD any, deltaE any, deltaF any, deltaG any, deltaH any](delta deltaG) DeltaTuple8[a, b, c, d, e, f, g, h, deltaA, deltaB, deltaC, deltaD, deltaE, deltaF, deltaG, deltaH] {
+	return DeltaTuple8[a, b, c, d, e, f, g, h, deltaA, deltaB, deltaC, deltaD, deltaE, deltaF, deltaG, deltaH]{
+		Discriminator: Tuple8Item7,
+		Item7:         delta,
+	}
+}
+func MatchDeltaTuple8[a any, b any, c any, d any, e any, f any, g any, h any, deltaA any, deltaB any, deltaC any, deltaD any, deltaE any, deltaF any, deltaG any, deltaH any, Result any](
+	onReplace func(Tuple8[a, b, c, d, e, f, g, h]) (Result, error),
+	onItem1 func(deltaA) (Result, error),
+	onItem2 func(deltaB) (Result, error),
+	onItem3 func(deltaC) (Result, error),
+	onItem4 func(deltaD) (Result, error),
+	onItem5 func(deltaE) (Result, error),
+	onItem6 func(deltaF) (Result, error),
+	onItem7 func(deltaG) (Result, error),
+	onItem8 func(deltaH) (Result, error),
+) func(DeltaTuple8[a, b, c, d, e, f, g, h, deltaA, deltaB, deltaC, deltaD, deltaE, deltaF, deltaG, deltaH]) (Result, error) {
+	return func(delta DeltaTuple8[a, b, c, d, e, f, g, h, deltaA, deltaB, deltaC, deltaD, deltaE, deltaF, deltaG, deltaH]) (Result, error) {
+		var result Result
+		switch delta.Discriminator {
+		case "Tuple8Replace":
+			return onReplace(delta.Replace)
+		case "Tuple8Item1":
+			return onItem1(delta.Item1)
+		case "Tuple8Item2":
+			return onItem2(delta.Item2)
+		case "Tuple8Item3":
+			return onItem3(delta.Item3)
+		case "Tuple8Item4":
+			return onItem4(delta.Item4)
+		case "Tuple8Item5":
+			return onItem5(delta.Item5)
+		case "Tuple8Item6":
+			return onItem6(delta.Item6)
+		case "Tuple8Item7":
+			return onItem7(delta.Item7)
+		case "Tuple8Item8":
+			return onItem8(delta.Item8)
+		}
+		return result, NewInvalidDiscriminatorError(string(delta.Discriminator), "DeltaTuple8")
 	}
 }
