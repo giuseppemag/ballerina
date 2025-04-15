@@ -9,6 +9,7 @@ import {
   replaceWith,
   Sum,
   ListRepo,
+  BasicUpdater,
 } from "../../../../../../main";
 
 export type TuplePredicateExpression = {
@@ -253,6 +254,24 @@ export type ValueOption = {
   kind: "option";
   isSome: boolean;
   value: PredicateValue;
+};
+export const ValueOption = {
+  Default: {
+    some: (value: PredicateValue): ValueOption => ({
+      kind: "option",
+      isSome: true,
+      value,
+    }),
+    none: (): ValueOption => ({
+      kind: "option",
+      isSome: false,
+      value: { kind: "unit" },
+    }),
+  },
+  Updaters: {
+    value: (_: BasicUpdater<PredicateValue>) =>
+      Updater<PredicateValue>((v) => ValueOption.Default.some(_(v))),
+  },
 };
 export type ValueVarLookup = { kind: "varLookup"; varName: string };
 export type ValueSum = {
