@@ -56,6 +56,8 @@
       ✅ TypeCheck
         ✅ validate the type of the expression as `Set<Enum>` where `Enum` is a subset of the field names of the type
     ❌ tables support
+      ❌ columns have optional extra booleans "IsFilterable", "IsSortable"
+      ❌ add disabledColumns, just like visibleColumns
       ✅ spec
         ✅ renderer
         ✅ columns

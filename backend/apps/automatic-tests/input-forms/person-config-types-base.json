@@ -104,13 +104,13 @@
     },
     "LandArea": {
       "fields": {
-        "x": "number",
-        "y": "number"
+        "X": "number",
+        "Y": "number"
       }
     },
     "PlotInfo": {
       "fields": {
-        "landArea": "LandArea"
+        "LandArea": "LandArea"
       }
     },
     "GendersEnum": {

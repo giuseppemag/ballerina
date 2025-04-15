@@ -62,7 +62,7 @@
                     "kind": "varLookup",
                     "varName": "root"
                   },
-                  "subscribeToNewsletter"
+                  "SubscribeToNewsletter"
                 ]
               },
               {
@@ -107,10 +107,10 @@
     "landArea": {
       "type": "LandArea",
       "fields": {
-        "x": {
+        "X": {
           "renderer": "defaultNumber"
         },
-        "y": {
+        "Y": {
           "renderer": "defaultNumber"
         }
       },
@@ -120,8 +120,8 @@
             "main": {
               "groups": {
                 "main": [
-                  "x",
-                  "y"
+                  "X",
+                  "Y"
                 ]
               }
             }
@@ -132,7 +132,7 @@
     "plotInfo": {
       "type": "PlotInfo",
       "fields": {
-        "landArea": {
+        "LandArea": {
           "renderer": "landArea"
         }
       },
@@ -142,7 +142,7 @@
             "main": {
               "groups": {
                 "main": [
-                  "landArea"
+                  "LandArea"
                 ]
               }
             }

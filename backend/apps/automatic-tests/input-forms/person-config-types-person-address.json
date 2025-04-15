@@ -2,7 +2,7 @@
   "types": {
     "Address": {
       "fields": {
-        "streetNumberAndCity": {
+        "StreetNumberAndCity": {
           "fun": "Tuple",
           "args": [
             "string",
@@ -19,68 +19,68 @@
     },
     "Person": {
       "fields": {
-        "category": "injectedCategory",
-        "fullName": {
+        "Category": "injectedCategory",
+        "FullName": {
           "fun": "Tuple",
           "args": [
             "string",
             "string"
           ]
         },
-        "birthday": "Date",
-        "job": "Job",
-        "subscribeToNewsletter": "boolean",
-        "favoriteColor": {
+        "Birthday": "Date",
+        "Job": "Job",
+        "SubscribeToNewsletter": "boolean",
+        "FavoriteColor": {
           "fun": "SingleSelection",
           "args": [
             "ColorRef"
           ]
         },
-        "gender": {
+        "Gender": {
           "fun": "SingleSelection",
           "args": [
             "GenderRef"
           ]
         },
-        "dependants": {
+        "Dependants": {
           "fun": "Map",
           "args": [
             "string",
             "injectedCategory"
           ]
         },
-        "friendsByCategory": {
+        "FriendsByCategory": {
           "fun": "Map",
           "args": [
             "injectedCategory",
             "string"
           ]
         },
-        "relatives": {
+        "Relatives": {
           "fun": "List",
           "args": [
             "injectedCategory"
           ]
         },
-        "interests": {
+        "Interests": {
           "fun": "MultiSelection",
           "args": [
             "InterestRef"
           ]
         },
-        "departments": {
+        "Departments": {
           "fun": "MultiSelection",
           "args": [
             "DepartmentRef"
           ]
         },
-        "emails": {
+        "Emails": {
           "fun": "List",
           "args": [
             "string"
           ]
         },
-        "mainAddress": {
+        "MainAddress": {
           "fun": "Sum",
           "args": [
             "string",
@@ -93,7 +93,7 @@
             }
           ]
         },
-        "addressesAndAddressesWithLabel": {
+        "AddressesAndAddressesWithLabel": {
           "fun": "Tuple",
           "args": [
             {
@@ -111,7 +111,7 @@
             }
           ]
         },
-        "addressesByCity": {
+        "AddressesByCity": {
           "fun": "Map",
           "args": [
             {
@@ -123,14 +123,14 @@
             "Address"
           ]
         },
-        "importantDate": {
+        "ImportantDate": {
           "fun": "Sum",
           "args": [
             "unit",
             "Date"
           ]
         },
-        "addressesBy": {
+        "AddressesBy": {
           "fun": "Sum",
           "args": [
             {
@@ -154,7 +154,7 @@
             }
           ]
         },
-        "addressesWithColorLabel": {
+        "AddressesWithColorLabel": {
           "fun": "Map",
           "args": [
             {
@@ -166,7 +166,7 @@
             "Address"
           ]
         },
-        "permissions": {
+        "Permissions": {
           "fun": "Map",
           "args": [
             {
@@ -178,7 +178,7 @@
             "boolean"
           ]
         },
-        "cityByDepartment": {
+        "CityByDepartment": {
           "fun": "Map",
           "args": [
             {
@@ -195,20 +195,20 @@
             }
           ]
         },
-        "shoeColours": {
+        "ShoeColours": {
           "fun": "MultiSelection",
           "args": [
             "ColorRef"
           ]
         },
-        "friendsBirthdays": {
+        "FriendsBirthdays": {
           "fun": "Map",
           "args": [
             "string",
             "Date"
           ]
         },
-        "holidays": {
+        "Holidays": {
           "fun": "List",
           "args": [
             "Date"

@@ -3,7 +3,7 @@
     "address": {
       "type": "Address",
       "fields": {
-        "streetNumberAndCity": {
+        "StreetNumberAndCity": {
           "label": "street number and city",
           "renderer": "defaultTuple3",
           "itemRenderers": [
@@ -28,7 +28,7 @@
                     "kind": "varLookup",
                     "varName": "root"
                   },
-                  "subscribeToNewsletter"
+                  "SubscribeToNewsletter"
                 ]
               },
               {
@@ -44,7 +44,7 @@
                             "kind": "varLookup",
                             "varName": "local"
                           },
-                          "streetNumberAndCity"
+                          "StreetNumberAndCity"
                         ]
                       },
                       2
@@ -63,7 +63,7 @@
             "main": {
               "groups": {
                 "main": [
-                  "streetNumberAndCity"
+                  "StreetNumberAndCity"
                 ]
               }
             }
@@ -74,11 +74,11 @@
     "person": {
       "type": "Person",
       "fields": {
-        "category": {
+        "Category": {
           "label": "category",
           "renderer": "defaultCategory"
         },
-        "fullName": {
+        "FullName": {
           "label": "full name",
           "renderer": "defaultTuple2",
           "itemRenderers": [
@@ -90,18 +90,18 @@
             }
           ]
         },
-        "job": {
+        "Job": {
           "renderer": "job"
         },
-        "birthday": {
+        "Birthday": {
           "renderer": "defaultDate",
           "tooltip": "happy birthday!"
         },
-        "favoriteColor": {
+        "FavoriteColor": {
           "renderer": "defaultEnum",
           "options": "colors"
         },
-        "gender": {
+        "Gender": {
           "label": "gender",
           "renderer": "defaultEnum",
           "options": "genders",
@@ -212,7 +212,7 @@
             ]
           }
         },
-        "dependants": {
+        "Dependants": {
           "label": "dependants",
           "renderer": "defaultMap",
           "tooltip": "someone who depends on you",
@@ -227,7 +227,7 @@
             "renderer": "defaultCategory"
           }
         },
-        "friendsByCategory": {
+        "FriendsByCategory": {
           "label": "friends by category",
           "renderer": "defaultMap",
           "keyRenderer": {
@@ -239,7 +239,7 @@
             "renderer": "defaultString"
           }
         },
-        "relatives": {
+        "Relatives": {
           "label": "relatives",
           "tooltip": "someone who you are related to",
           "renderer": "defaultList",
@@ -249,11 +249,11 @@
             "renderer": "defaultCategory"
           }
         },
-        "subscribeToNewsletter": {
+        "SubscribeToNewsletter": {
           "label": "subscribe to newsletter",
           "renderer": "defaultBoolean"
         },
-        "interests": {
+        "Interests": {
           "label": "interests",
           "renderer": "defaultEnumMultiselect",
           "options": "interests",
@@ -264,11 +264,11 @@
                 "kind": "varLookup",
                 "varName": "root"
               },
-              "subscribeToNewsletter"
+              "SubscribeToNewsletter"
             ]
           }
         },
-        "departments": {
+        "Departments": {
           "label": "departments",
           "renderer": "defaultInfiniteStreamMultiselect",
           "stream": "departments",
@@ -279,11 +279,11 @@
                 "kind": "varLookup",
                 "varName": "local"
               },
-              "subscribeToNewsletter"
+              "SubscribeToNewsletter"
             ]
           }
         },
-        "mainAddress": {
+        "MainAddress": {
           "label": "main address",
           "renderer": "defaultSum",
           "leftRenderer": {
@@ -309,11 +309,11 @@
                 "kind": "varLookup",
                 "varName": "local"
               },
-              "subscribeToNewsletter"
+              "SubscribeToNewsletter"
             ]
           }
         },
-        "addressesBy": {
+        "AddressesBy": {
           "label": "addresses by",
           "renderer": "defaultSum",
           "leftRenderer": {
@@ -342,13 +342,13 @@
             }
           }
         },
-        "importantDate": {
+        "ImportantDate": {
           "label": "important date",
           "renderer": "maybeDate",
           "visible": true,
           "disabled": false
         },
-        "emails": {
+        "Emails": {
           "label": "emails",
           "renderer": "defaultList",
           "elementRenderer": {
@@ -356,7 +356,7 @@
             "renderer": "defaultString"
           }
         },
-        "addressesAndAddressesWithLabel": {
+        "AddressesAndAddressesWithLabel": {
           "label": "other addresses",
           "renderer": "defaultTuple2",
           "itemRenderers": [
@@ -375,7 +375,7 @@
                           "kind": "varLookup",
                           "varName": "root"
                         },
-                        "subscribeToNewsletter"
+                        "SubscribeToNewsletter"
                       ]
                     },
                     true
@@ -396,7 +396,7 @@
             }
           ]
         },
-        "addressesByCity": {
+        "AddressesByCity": {
           "label": "addresses by city",
           "renderer": "defaultMap",
           "keyRenderer": {
@@ -410,7 +410,7 @@
             "renderer": "address"
           }
         },
-        "addressesWithColorLabel": {
+        "AddressesWithColorLabel": {
           "renderer": "defaultMap",
           "label": "addresses with color label",
           "keyRenderer": {
@@ -423,7 +423,7 @@
             "renderer": "address"
           }
         },
-        "permissions": {
+        "Permissions": {
           "label": "permissions",
           "renderer": "defaultMap",
           "keyRenderer": {
@@ -436,7 +436,7 @@
             "renderer": "defaultBoolean"
           }
         },
-        "cityByDepartment": {
+        "CityByDepartment": {
           "label": "city by department",
           "renderer": "defaultMap",
           "keyRenderer": {
@@ -450,12 +450,12 @@
             "stream": "cities"
           }
         },
-        "shoeColours": {
+        "ShoeColours": {
           "label": "shoe colours",
           "renderer": "defaultEnumMultiselect",
           "options": "colors"
         },
-        "friendsBirthdays": {
+        "FriendsBirthdays": {
           "renderer": "defaultMap",
           "label": "friends birthdays",
           "keyRenderer": {
@@ -467,7 +467,7 @@
             "renderer": "defaultDate"
           }
         },
-        "holidays": {
+        "Holidays": {
           "label": "holidays",
           "renderer": "defaultList",
           "elementRenderer": {
@@ -482,39 +482,39 @@
             "demographics": {
               "groups": {
                 "main": [
-                  "category",
-                  "fullName",
-                  "birthday",
-                  "gender",
-                  "emails",
-                  "dependants",
-                  "friendsByCategory",
-                  "relatives",
-                  "friendsBirthdays",
-                  "shoeColours"
+                  "Category",
+                  "FullName",
+                  "Birthday",
+                  "Gender",
+                  "Emails",
+                  "Dependants",
+                  "FriendsByCategory",
+                  "Relatives",
+                  "FriendsBirthdays",
+                  "ShoeColours"
                 ]
               }
             },
             "mailing": {
               "groups": {
                 "main": [
-                  "subscribeToNewsletter",
-                  "interests",
-                  "favoriteColor"
+                  "SubscribeToNewsletter",
+                  "Interests",
+                  "FavoriteColor"
                 ]
               }
             },
             "addresses": {
               "groups": {
                 "main": [
-                  "departments",
-                  "mainAddress",
-                  "addressesAndAddressesWithLabel",
-                  "addressesByCity",
-                  "addressesWithColorLabel",
-                  "permissions",
-                  "cityByDepartment",
-                  "holidays"
+                  "Departments",
+                  "MainAddress",
+                  "AddressesAndAddressesWithLabel",
+                  "AddressesByCity",
+                  "AddressesWithColorLabel",
+                  "Permissions",
+                  "CityByDepartment",
+                  "Holidays"
                 ]
               }
             }
