@@ -17,6 +17,9 @@ import {
   Updater,
   Delta,
   ValueOption,
+  ValueRecord,
+  DeltaOption,
+  DeltaRecord,
 } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 import { ParsedRenderer } from "../renderer/state";
@@ -500,17 +503,56 @@ const traverse: CollectFailingChecks = (typesMap, t) => {
                   return {
                     OptimisticUpdate: ValueOption.Updaters.value(
                       innerApproval.OptimisticUpdate,
-                    ),
+                    ) as Updater<PredicateValue>,
                     BackendDeltaPATCH: {
                       kind: "OptionValue",
                       value: innerApproval.BackendDeltaPATCH,
-                    },
+                    } as DeltaOption,
                   };
                 },
               })),
             );
     case "record":
-      return (_) => ValueOrErrors.Default.return([]);
+      const traverseRecordFields = t.fields.map((f) => traverse(typesMap, f));
+      return (v: PredicateValue) => {
+        if (!PredicateValue.Operations.IsRecord(v)) {
+          return ValueOrErrors.Default.return([]);
+        }
+
+        if (t.value === "FailingCheck") {
+          // found the failing checks predicate value
+        }
+
+        return ValueOrErrors.Operations.All(
+          List(
+            traverseRecordFields.entrySeq().map(([k, traverseField]) =>
+              traverseField(v.fields.get(k)!).Map((fieldFailingChecks) =>
+                fieldFailingChecks.map<FailingCheckOp>((fOp) => ({
+                  FailingCheck: fOp.FailingCheck,
+                  ToggleApproval: (a) => {
+                    const innerApproval = fOp.ToggleApproval(a);
+                    return {
+                      OptimisticUpdate: ValueRecord.Updaters.set(
+                        k,
+                        innerApproval.OptimisticUpdate(v.fields.get(k)!),
+                      ) as Updater<PredicateValue>,
+                      BackendDeltaPATCH: {
+                        kind: "RecordField",
+                        field: [k, innerApproval.BackendDeltaPATCH],
+                        recordType: t,
+                      } as DeltaRecord,
+                    };
+                  },
+                })),
+              ),
+            ),
+          ),
+        ).Map(
+          (listFailingChecks) =>
+            listFailingChecks.flatten().toArray() as Array<FailingCheckOp>,
+        );
+      };
+
     case "application":
       return (_) => ValueOrErrors.Default.return([]);
     case "union":

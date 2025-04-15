@@ -270,7 +270,7 @@ export const ValueOption = {
   },
   Updaters: {
     value: (_: BasicUpdater<PredicateValue>) =>
-      Updater<PredicateValue>((v) => ValueOption.Default.some(_(v))),
+      Updater<ValueOption>((v) => ValueOption.Default.some(_(v))),
   },
 };
 export type ValueVarLookup = { kind: "varLookup"; varName: string };
