@@ -17,8 +17,8 @@ export type Delta =
   | DeltaUnion
   | DeltaTuple
   | DeltaCustom
-  | DeltaUnit;
-
+  | DeltaUnit
+  | DeltaTable;
 export type DeltaPrimitive =
   | {
       kind: "NumberReplace";
@@ -184,6 +184,12 @@ export type DeltaTuple =
       item: [number, Delta];
       tupleType: ParsedType<any>;
     };
+export type DeltaTable = {
+  kind: "TableValue";
+  id: string;
+  nestedDelta: Delta;
+  tableType: ParsedType<any>;
+};
 
 export type DeltaCustom = {
   kind: "CustomDelta";
@@ -259,6 +265,10 @@ export type DeltaTransferTuple<DeltaTransferCustom> =
   | ({ Discriminator: string } & {
       [item: string]: DeltaTransfer<DeltaTransferCustom>;
     });
+export type DeltaTransferTable<DeltaTransferCustom> = {
+  Discriminator: "TableValue";
+  Value: { Item1: string; Item2: DeltaTransfer<DeltaTransferCustom> };
+};
 
 export type DeltaTransfer<DeltaTransferCustom> =
   | DeltaTransferPrimitive
@@ -271,6 +281,7 @@ export type DeltaTransfer<DeltaTransferCustom> =
   | DeltaTransferRecord<DeltaTransferCustom>
   | DeltaTransferUnion<DeltaTransferCustom>
   | DeltaTransferTuple<DeltaTransferCustom>
+  | DeltaTransferTable<DeltaTransferCustom>
   | DeltaTransferCustom;
 
 export type DeltaTransferComparand = string;
@@ -838,6 +849,23 @@ export const DeltaTransfer = {
           );
         }
 
+        if (delta.kind == "TableValue") {
+          return DeltaTransfer.Default.FromDelta(
+            toRawObject,
+            parseCustomDelta,
+          )(delta.nestedDelta).Then((value) =>
+            ValueOrErrors.Default.return<
+              [DeltaTransfer<DeltaTransferCustom>, DeltaTransferComparand],
+              string
+            >([
+              {
+                Discriminator: "TableValue",
+                Value: { Item1: delta.id, Item2: value[0] },
+              },
+              `[TableValue][${delta.id}]${value[1]}`,
+            ]),
+          );
+        }
         if (delta.kind == "CustomDelta") {
           return parseCustomDelta(
             toRawObject,

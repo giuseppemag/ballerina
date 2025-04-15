@@ -232,3 +232,69 @@ export const FormLayout = {
       ),
   },
 };
+
+export type PredicateVisibleColumns =
+  | {
+      kind: "Computed";
+      columns: Expr;
+    }
+  | {
+      kind: "Inlined";
+      columns: Array<string>;
+    };
+
+export const RawVisibleColumns = {
+  isInlined: (rawVisibleColumns: unknown): rawVisibleColumns is Array<string> =>
+    Array.isArray(rawVisibleColumns) &&
+    rawVisibleColumns.every((column) => typeof column == "string"),
+};
+
+export type CalculatedTableLayout = {
+  columns: Array<string>;
+};
+
+export const TableLayout = {
+  Default: (): CalculatedTableLayout => ({
+    columns: [],
+  }),
+  Operations: {
+    ParseLayout: (
+      rawVisibleColumns: unknown,
+    ): ValueOrErrors<PredicateVisibleColumns, string> => {
+      if (RawVisibleColumns.isInlined(rawVisibleColumns)) {
+        return ValueOrErrors.Default.return({
+          kind: "Inlined",
+          columns: rawVisibleColumns,
+        });
+      }
+      return Expr.Operations.parse(rawVisibleColumns).Then((expr) =>
+        ValueOrErrors.Default.return({
+          kind: "Computed",
+          columns: expr,
+        }),
+      );
+    },
+    CalculateLayout: (
+      bindings: Bindings,
+      visibleColumns: PredicateVisibleColumns,
+    ): ValueOrErrors<CalculatedTableLayout, string> => {
+      if (visibleColumns.kind == "Inlined") {
+        return ValueOrErrors.Default.return({
+          columns: visibleColumns.columns,
+        });
+      }
+      return Expr.Operations.Evaluate(bindings)(visibleColumns.columns).Then(
+        (result) => {
+          if (!PredicateValue.Operations.IsRecord(result)) {
+            return ValueOrErrors.Default.throwOne(
+              `Invalid visible columns: ${JSON.stringify(result)}`,
+            );
+          }
+          return ValueOrErrors.Default.return({
+            columns: Array.from(result.fields.keys()),
+          });
+        },
+      );
+    },
+  },
+};

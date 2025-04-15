@@ -80,12 +80,6 @@ export type EntityFormState<
   commonFormState: CommonFormState;
 };
 
-export type EntityAction =
-  | { kind: "add" }
-  | { kind: "remove" }
-  | { kind: "move"; to: number }
-  | { kind: "duplicate" }
-  | { kind: "insert" };
 export type EntityFormContext<
   Fields extends keyof FieldStates,
   FieldStates,

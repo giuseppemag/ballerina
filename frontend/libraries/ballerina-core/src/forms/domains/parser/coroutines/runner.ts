@@ -50,6 +50,7 @@ export const LoadValidateAndParseFormsConfig = <
             current.infiniteStreamSources,
             current.enumOptionsSources,
             current.entityApis,
+            current.tableApiSources,
           )(validationResult.value);
         },
         (_) => "transient failure",

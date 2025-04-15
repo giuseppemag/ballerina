@@ -39,24 +39,42 @@ import {
   PassthroughFormTemplate,
   defaultState,
   FieldName,
+  ParsedRecordFormConfig,
+  ParsedTableFormConfig,
+  TableApiSources,
+  PredicateVisibleColumns,
+  TableForm,
+  ParsedTableType,
+  ParsedRecordType,
 } from "../../../../main";
 import { EnumReference } from "../collection/domains/reference/state";
 import { SearchableInfiniteStreamState } from "../primitives/domains/searchable-infinite-stream/state";
-import { Form } from "../singleton/template";
+import { RecordForm } from "../singleton/template";
 import { ParsedRenderer } from "./domains/renderer/state";
+import { ValueInfiniteStreamState } from "../../../value-infinite-data-stream/state";
 
-export type ParsedForm<T> = {
+export type ParsedRecordForm<T> = {
   initialFormState: any;
   formConfig: any;
   formName: string;
-  formDef: ParsedFormConfig<T>;
+  formDef: ParsedRecordFormConfig<T>;
   visibilityPredicateExpressions: FieldPredicateExpressions;
   disabledPredicatedExpressions: FieldPredicateExpressions;
   fieldLabels: Map<FieldName, string | undefined>;
+  form: EntityFormTemplate<any, any, any, any>;
 };
-export const ParseForm = <T,>(
+export type ParsedTableForm<T> = {
+  initialFormState: any;
+  formConfig: any;
+  formName: string;
+  formDef: ParsedTableFormConfig<T>;
+  visibleColumns: PredicateVisibleColumns;
+  columnHeaders: Map<FieldName, string | undefined>;
+  form: EntityFormTemplate<any, any, any, any>;
+};
+export const ParseRecordForm = <T,>(
   formName: string,
-  formDef: ParsedFormConfig<T>,
+  formDef: ParsedRecordFormConfig<T>,
   nestedContainerFormView: any,
   formViews: Record<string, Record<string, any>>,
   forms: ParsedForms<T>,
@@ -66,7 +84,8 @@ export const ParseForm = <T,>(
   defaultValue: BasicFun<ParsedType<T>, any>,
   defaultState: BasicFun<ParsedType<T>, any>,
   injectedPrimitives?: InjectedPrimitives<T>,
-): ParsedForm<T> => {
+  tableApiSources?: TableApiSources,
+): Omit<ParsedRecordForm<T>, "form"> => {
   const formConfig: any = {};
   let visibilityPredicateExpressions: FieldPredicateExpressions = Map();
   let disabledPredicatedExpressions: FieldPredicateExpressions = Map();
@@ -90,6 +109,7 @@ export const ParseForm = <T,>(
         enumOptionsSources,
         infiniteStreamSources,
         injectedPrimitives,
+        tableApiSources,
       },
       formDef.fields.get(fieldName)!,
     );
@@ -122,6 +142,72 @@ export const ParseForm = <T,>(
   };
 };
 
+export const ParseTableForm = <T,>(
+  formName: string,
+  formDef: ParsedTableFormConfig<T>,
+  nestedContainerFormView: any,
+  formViews: Record<string, Record<string, any>>,
+  forms: ParsedForms<T>,
+  cellViewsConfig: any,
+  infiniteStreamSources: any,
+  enumOptionsSources: EnumOptionsSources,
+  defaultValue: BasicFun<ParsedType<T>, any>,
+  defaultState: BasicFun<ParsedType<T>, any>,
+  injectedPrimitives?: InjectedPrimitives<T>,
+  tableApiSources?: TableApiSources,
+): Omit<ParsedTableForm<T>, "form"> => {
+  const formConfig: any = {};
+
+  let columnHeaders: Map<FieldName, string | undefined> = Map();
+  // const getChunk = infiniteStreamSources(formDef.api);
+  const initialFormState: any = {
+    commonFormState: CommonFormState.Default(),
+    customFormState: {
+      // streamParams: Debounced.Default(Map()),
+      // stream: ValueInfiniteStreamState().Default(10, Map()),
+      isInitialized: false,
+    },
+  };
+
+  const columnNames = Object.keys(cellViewsConfig);
+
+  columnNames.forEach((columnName) => {
+    const parsedFormConfig = ParsedRenderer.Operations.RendererToForm(
+      columnName,
+      {
+        formViews,
+        forms,
+        nestedContainerFormView,
+        defaultValue,
+        defaultState,
+        enumOptionsSources,
+        infiniteStreamSources,
+        injectedPrimitives,
+        tableApiSources,
+      },
+      formDef.columns.get(columnName)!,
+    );
+    if (parsedFormConfig.kind == "errors") {
+      console.error(parsedFormConfig.errors.toJS());
+      throw Error(
+        `Error parsing column renderer ${cellViewsConfig[columnName]}`,
+      );
+    }
+    formConfig[columnName] = parsedFormConfig.value.form.renderer;
+
+    columnHeaders = columnHeaders.set(columnName, parsedFormConfig.value.label);
+  });
+
+  return {
+    initialFormState,
+    formConfig,
+    formDef,
+    formName,
+    visibleColumns: formDef.visibleColumns,
+    columnHeaders,
+  };
+};
+
 export const ParseForms =
   <T,>(
     builtIns: BuiltIns,
@@ -130,6 +216,7 @@ export const ParseForms =
     fieldViews: any,
     infiniteStreamSources: any,
     enumOptionsSources: EnumOptionsSources,
+    tableApiSources?: TableApiSources,
   ) =>
   (formsConfig: ParsedFormJSON<T>): ValueOrErrors<ParsedForms<T>, string> => {
     let errors: FormParsingErrors = List();
@@ -150,8 +237,14 @@ export const ParseForms =
         return;
       }
       seen = seen.add(formDef.name);
-      formDef.fields.forEach((field, fieldName) => {
-        if (field.type.kind == "lookup" || field.type.kind == "record") {
+      const formFields =
+        formDef.kind == "recordForm" ? formDef.fields : formDef.columns;
+      formFields.forEach((field, fieldName) => {
+        if (
+          field.type.kind == "lookup" ||
+          field.type.kind == "record" ||
+          field.type.kind == "table"
+        ) {
           traverse(formsConfig.forms.get(field.renderer)!);
         }
         try {
@@ -212,61 +305,120 @@ export const ParseForms =
 
     formProcessingOrder.forEach((formName) => {
       const formConfig = formsConfig.forms.get(formName)!;
-      const formFieldRenderers = formConfig.fields
-        .map((field) => field.renderer)
-        .toObject();
       try {
-        const parsedForm = ParseForm(
-          formName,
-          formConfig,
-          nestedContainerFormView,
-          fieldViews,
-          parsedForms,
-          formFieldRenderers,
-          infiniteStreamSources,
-          enumOptionsSources,
-          defaultValue(formsConfig.types, builtIns, injectedPrimitives),
-          defaultState(formsConfig.types, builtIns, injectedPrimitives),
-          injectedPrimitives,
-        );
-        const formBuilder = Form<any, any, any>().Default<any>();
-        const form = formBuilder
-          .template(
-            {
-              ...parsedForm.formConfig,
-            },
-            parsedForm.fieldLabels,
-          )
-          .mapContext<Unit>((_) => {
-            return {
-              type: parsedForm.formDef.type,
-              visible: (_ as any).visible ?? true,
-              disabled: (_ as any).disabled ?? false,
-              label: (_ as any).label,
-              value: (_ as any).value,
-              commonFormState: (_ as any).commonFormState,
-              formFieldStates: (_ as any).formFieldStates,
-              rootValue: (_ as any).rootValue,
-              extraContext: (_ as any).extraContext,
-              visibilities: (_ as any).visibilities,
-              disabledFields: (_ as any).disabledFields,
-              globalConfiguration: (_ as any).globalConfiguration,
-              visibilityPredicateExpressions:
-                parsedForm.visibilityPredicateExpressions,
-              disabledPredicateExpressions:
-                parsedForm.disabledPredicatedExpressions,
-              layout: formConfig.tabs,
-            };
-          });
+        if (formConfig.kind == "recordForm") {
+          const formFieldRenderers = formConfig.fields
+            .map((field) => field.renderer)
+            .toObject();
+          const parsedForm = ParseRecordForm(
+            formName,
+            formConfig,
+            nestedContainerFormView,
+            fieldViews,
+            parsedForms,
+            formFieldRenderers,
+            infiniteStreamSources,
+            enumOptionsSources,
+            defaultValue(formsConfig.types, builtIns, injectedPrimitives),
+            defaultState(formsConfig.types, builtIns, injectedPrimitives),
+            injectedPrimitives,
+            tableApiSources,
+          );
+          const formBuilder = RecordForm<any, any, any>().Default<any>();
+          const form = formBuilder
+            .template(
+              {
+                ...parsedForm.formConfig,
+              },
+              parsedForm.fieldLabels,
+            )
+            .mapContext<Unit>((_) => {
+              return {
+                type: parsedForm.formDef.type,
+                visible: (_ as any).visible ?? true,
+                disabled: (_ as any).disabled ?? false,
+                label: (_ as any).label,
+                value: (_ as any).value,
+                commonFormState: (_ as any).commonFormState,
+                formFieldStates: (_ as any).formFieldStates,
+                rootValue: (_ as any).rootValue,
+                extraContext: (_ as any).extraContext,
+                visibilities: (_ as any).visibilities,
+                disabledFields: (_ as any).disabledFields,
+                globalConfiguration: (_ as any).globalConfiguration,
+                visibilityPredicateExpressions:
+                  parsedForm.visibilityPredicateExpressions,
+                disabledPredicateExpressions:
+                  parsedForm.disabledPredicatedExpressions,
+                layout: formConfig.tabs,
+                fromApiParserByType: (_ as any).fromApiParserByType,
+              };
+            });
 
-        parsedForms = parsedForms.set(formName, {
-          ...parsedForm,
-          form,
-          visibilityPredicateExpressions:
-            parsedForm.visibilityPredicateExpressions,
-          disabledPredicatedExpressions:
-            parsedForm.disabledPredicatedExpressions,
-        });
+          parsedForms = parsedForms.set(formName, {
+            ...parsedForm,
+            form,
+          });
+        } else if (formConfig.kind == "tableForm") {
+          if (tableApiSources == undefined) {
+            throw Error(`Table API sources are not defined`);
+          }
+
+          const formColumnRenderers = formConfig.columns
+            .map((column) => column.renderer)
+            .toObject();
+
+          const parsedForm = ParseTableForm(
+            formName,
+            formConfig,
+            nestedContainerFormView,
+            fieldViews,
+            parsedForms,
+            formColumnRenderers,
+            infiniteStreamSources,
+            enumOptionsSources,
+            defaultValue(formsConfig.types, builtIns, injectedPrimitives),
+            defaultState(formsConfig.types, builtIns, injectedPrimitives),
+            injectedPrimitives,
+            tableApiSources,
+          );
+
+          const formBuilder = TableForm.Default();
+          const form = formBuilder
+            .template(
+              {
+                ...parsedForm.formConfig,
+              },
+              parsedForm.columnHeaders,
+              formConfig.type as ParsedRecordType<any>,
+              defaultState(formsConfig.types, builtIns, injectedPrimitives),
+            )
+            .mapContext<Unit>((_) => {
+              return {
+                ...parsedForm,
+                type: parsedForm.formDef.type,
+                visible: (_ as any).visible ?? true,
+                disabled: (_ as any).disabled ?? false,
+                label: (_ as any).label,
+                value: (_ as any).value,
+                commonFormState: (_ as any).commonFormState,
+                customFormState: (_ as any).customFormState,
+                rootValue: (_ as any).rootValue,
+                extraContext: (_ as any).extraContext,
+                visibilities: (_ as any).visibilities,
+                disabledFields: (_ as any).disabledFields,
+                globalConfiguration: (_ as any).globalConfiguration,
+                visibleColumns: parsedForm.visibleColumns,
+                fromApiParserByType: (_ as any).fromApiParserByType,
+                tableApiSource: (_ as any).tableApiSource,
+              };
+            });
+
+          parsedForms = parsedForms.set(formName, {
+            ...parsedForm,
+            form,
+          });
+        }
       } catch (error: any) {
         console.error(error);
         errors.push(error.message ?? error);
@@ -358,11 +510,7 @@ export type ParsedLaunchers = {
 };
 export type ParsedForms<T> = Map<
   string,
-  ParsedForm<T> & {
-    form: EntityFormTemplate<any, any, any, any>;
-    visibilityPredicateExpressions: FieldPredicateExpressions;
-    disabledPredicatedExpressions: FieldPredicateExpressions;
-  }
+  ParsedRecordForm<T> | ParsedTableForm<T>
 >;
 export type FormParsingErrors = List<string>;
 export type FormParsingResult = Sum<ParsedLaunchers, FormParsingErrors>;
@@ -397,6 +545,7 @@ export const parseFormsToLaunchers =
     infiniteStreamSources: InfiniteStreamSources,
     enumOptionsSources: EnumOptionsSources,
     entityApis: EntityApis,
+    tableApiSources?: TableApiSources,
   ) =>
   (formsConfig: ParsedFormJSON<T>): FormParsingResult => {
     let parsedLaunchers: ParsedLaunchers = {
@@ -412,6 +561,7 @@ export const parseFormsToLaunchers =
       fieldViews,
       infiniteStreamSources,
       enumOptionsSources,
+      tableApiSources,
     )(formsConfig);
 
     if (parsedFormsResult.kind == "errors") {
@@ -422,7 +572,7 @@ export const parseFormsToLaunchers =
     const parsedForms = parsedFormsResult.value;
 
     formsConfig.launchers.edit.forEach((launcher, launcherName) => {
-      const parsedForm = parsedForms.get(launcher.form)!;
+      const parsedForm = parsedForms.get(launcher.form)! as ParsedRecordForm<T>;
       const form = parsedForm.form;
       const initialState = parsedForm.initialFormState;
       const formType = parsedForm.formDef.type;
@@ -541,7 +691,7 @@ export const parseFormsToLaunchers =
     });
 
     formsConfig.launchers.create.forEach((launcher, launcherName) => {
-      const parsedForm = parsedForms.get(launcher.form)!;
+      const parsedForm = parsedForms.get(launcher.form)! as ParsedRecordForm<T>;
       const form = parsedForm.form;
       const initialState = parsedForm.initialFormState;
       const formType = parsedForm.formDef.type;
@@ -660,7 +810,7 @@ export const parseFormsToLaunchers =
     });
 
     formsConfig.launchers.passthrough.forEach((launcher, launcherName) => {
-      const parsedForm = parsedForms.get(launcher.form)!;
+      const parsedForm = parsedForms.get(launcher.form)! as ParsedRecordForm<T>;
       const form = parsedForm.form;
       const globalConfigurationType = formsConfig.types.get(
         launcher.configType,
@@ -713,6 +863,16 @@ export const parseFormsToLaunchers =
                       visibilities: _.visibilities,
                       disabledFields: _.disabledFields,
                       globalConfiguration: parentContext.globalConfiguration,
+                      fromApiParserByType:
+                        (type: ParsedType<any>) =>
+                        (value: any): ValueOrErrors<PredicateValue, string> =>
+                          fromAPIRawValue(
+                            type,
+                            formsConfig.types,
+                            builtIns,
+                            apiConverters,
+                            injectedPrimitives,
+                          )(value),
                     })),
                 }) as any,
             )
@@ -771,6 +931,7 @@ export type FormsParserContext<
   entityApis: EntityApis;
   getFormsConfig: BasicFun<void, Promise<any>>;
   injectedPrimitives?: Injectables<T>;
+  tableApiSources?: TableApiSources;
 };
 export type FormsParserState = {
   formsConfig: Synchronized<Unit, FormParsingResult>;

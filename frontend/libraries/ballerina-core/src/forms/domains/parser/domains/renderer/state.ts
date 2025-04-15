@@ -47,6 +47,10 @@ import {
   Value,
   ValueOption,
   ValueRecord,
+  ParsedRecordForm,
+  TableApiSources,
+  ParsedTableFormConfig,
+  TableApiSource,
 } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 
@@ -70,6 +74,7 @@ export type RawRenderer = {
   leftRenderer?: any;
   rightRenderer?: any;
   details?: any;
+  api?: any;
 };
 export type ParsedRenderer<T> = (
   | { kind: "primitive" }
@@ -91,6 +96,10 @@ export type ParsedRenderer<T> = (
       kind: "sum";
       leftRenderer?: ParsedRenderer<T>;
       rightRenderer?: ParsedRenderer<T>;
+    }
+  | {
+      kind: "table";
+      api: string;
     }
 ) & {
   renderer: string;
@@ -281,6 +290,26 @@ export const ParsedRenderer = {
       visible,
       disabled: disabled != undefined ? disabled : false,
     }),
+    table: <T>(
+      type: ParsedType<T>,
+      renderer: string,
+      visible: any,
+      disabled: any,
+      api: string,
+      label?: string,
+      tooltip?: string,
+      details?: string,
+    ): ParsedRenderer<T> => ({
+      kind: "table",
+      type,
+      renderer,
+      label,
+      tooltip,
+      details,
+      visible,
+      disabled,
+      api,
+    }),
   },
   Operations: {
     ParseRenderer: <T>(
@@ -408,6 +437,17 @@ export const ParsedRenderer = {
           field.tooltip,
           field.details,
         );
+      if (fieldType.kind == "table")
+        return ParsedRenderer.Default.table(
+          fieldType,
+          field.renderer,
+          field.visible,
+          field.disabled,
+          field.api,
+          field.label,
+          field.tooltip,
+          field.details,
+        );
       if (fieldType.kind == "lookup") {
         return ParsedRenderer.Operations.ParseRenderer(
           types.get(fieldType.name)!,
@@ -423,6 +463,17 @@ export const ParsedRenderer = {
       throw new Error("Invalid field type");
     },
     FormViewToViewKind: (
+      kind:
+        | "primitive"
+        | "record"
+        | "unit"
+        | "enum"
+        | "stream"
+        | "list"
+        | "map"
+        | "tuple"
+        | "sum"
+        | "table",
       viewName: string | undefined,
       formViews: Record<string, any>,
       formNames: Set<string>,
@@ -430,8 +481,11 @@ export const ParsedRenderer = {
       if (viewName == undefined) {
         throw Error(`cannot resolve view ${viewName}`); // TODO -- better error handling
       }
-      if (formNames.has(viewName)) {
+      if (formNames.has(viewName) && kind == "record") {
         return "form";
+      }
+      if (formNames.has(viewName) && kind == "table") {
+        return "table";
       }
       const viewTypes = Object.keys(formViews);
       for (const viewType of viewTypes) {
@@ -452,6 +506,7 @@ export const ParsedRenderer = {
         enumOptionsSources: EnumOptionsSources;
         infiniteStreamSources: any;
         injectedPrimitives?: InjectedPrimitives<T>;
+        tableApiSources?: TableApiSources;
       },
       parsedRenderer: ParsedRenderer<T>,
     ): ValueOrErrors<
@@ -460,10 +515,12 @@ export const ParsedRenderer = {
         visibilityPredicateExpression: FieldPredicateExpression;
         disabledPredicatedExpression: FieldPredicateExpression;
         label: string | undefined;
+        api?: TableApiSource;
       },
       string
     > => {
       const viewKind = ParsedRenderer.Operations.FormViewToViewKind(
+        parsedRenderer.kind,
         parsedRenderer.renderer,
         parsingContext.formViews,
         parsingContext.forms.keySeq().toSet(),
@@ -574,15 +631,67 @@ export const ParsedRenderer = {
                     visibilityPredicateExpression:
                       FieldPredicateExpression.Default.record(
                         visibilityExpr,
-                        parsingContext.forms.get(parsedRenderer.renderer)!
-                          .visibilityPredicateExpressions,
+                        (
+                          parsingContext.forms.get(
+                            parsedRenderer.renderer,
+                          )! as ParsedRecordForm<T>
+                        ).visibilityPredicateExpressions,
                       ),
                     disabledPredicatedExpression:
                       FieldPredicateExpression.Default.record(
                         disabledExpr,
-                        parsingContext.forms.get(parsedRenderer.renderer)!
-                          .disabledPredicatedExpressions,
+                        (
+                          parsingContext.forms.get(
+                            parsedRenderer.renderer,
+                          )! as ParsedRecordForm<T>
+                        ).disabledPredicatedExpressions,
                       ),
+                    label: parsedRenderer.label,
+                  }),
+              ),
+          );
+        case "table":
+          const tableApiSources = parsingContext.tableApiSources;
+          if (tableApiSources == undefined) {
+            return ValueOrErrors.Default.throwOne(
+              `Table API sources are not defined when parsing ${parsedRenderer.renderer}`,
+            );
+          }
+          const tableForm = parsingContext.forms.get(parsedRenderer.renderer)!;
+          return Expr.Operations.parse(parsedRenderer.visible ?? true).Then(
+            (visibilityExpr) =>
+              Expr.Operations.parse(parsedRenderer.disabled ?? false).Then(
+                (disabledExpr) =>
+                  ValueOrErrors.Default.return({
+                    form: {
+                      renderer: tableForm.form
+                        .withView(
+                          parsingContext.formViews[viewKind][
+                            (tableForm.formDef as ParsedTableFormConfig<T>)
+                              .renderer
+                          ],
+                        )
+                        .mapContext<any>((_) => ({
+                          ..._,
+                          type: parsedRenderer.type,
+                          label: parsedRenderer.label,
+                          tooltip: parsedRenderer.tooltip,
+                          details: parsedRenderer.details,
+                          tableApiSource: tableApiSources(parsedRenderer.api)!,
+                        })),
+                      initialValue: parsingContext.defaultValue(
+                        parsedRenderer.type,
+                      ),
+                      initialState: parsingContext.forms.get(
+                        parsedRenderer.renderer,
+                      )!.initialFormState,
+                    },
+                    visibilityPredicateExpression:
+                      FieldPredicateExpression.Default.primitive(
+                        visibilityExpr,
+                      ),
+                    disabledPredicatedExpression:
+                      FieldPredicateExpression.Default.primitive(disabledExpr),
                     label: parsedRenderer.label,
                   }),
               ),
@@ -896,7 +1005,9 @@ export const ParsedRenderer = {
         default:
           return ValueOrErrors.Default.throw(
             List([
-              `error: the kind for ${viewKind}::${parsedRenderer} cannot be found`,
+              `error: the kind for ${viewKind}::${JSON.stringify(
+                parsedRenderer,
+              )} cannot be found`,
             ]),
           );
       }

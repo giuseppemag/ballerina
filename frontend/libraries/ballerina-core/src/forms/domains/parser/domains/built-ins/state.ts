@@ -27,6 +27,9 @@ import {
   MapFieldState,
   TupleFormState,
   SumFormState,
+  TableState,
+  StreamPosition,
+  Chunk,
 } from "../../../../../../main";
 import { ValueOrErrors } from "../../../../../collections/domains/valueOrErrors/state";
 
@@ -65,6 +68,7 @@ export const GenericTypes = [
   "Option",
   "Sum",
   "KeyOf",
+  "Table",
 ] as const;
 export type GenericType = (typeof GenericTypes)[number];
 
@@ -79,6 +83,13 @@ export type ApiConverters<
 export type UnionCase = {
   caseName: string;
   fields: Record<string, any>;
+};
+
+export type Table = {
+  data: Map<string, any>;
+  hasMoreValues: boolean;
+  from: number;
+  to: number;
 };
 
 export type BuiltInApiConverters = {
@@ -99,6 +110,7 @@ export type BuiltInApiConverters = {
   Map: ApiConverter<List<[any, any]>>;
   Tuple: ApiConverter<List<any>>;
   Sum: ApiConverter<Sum<any, any>>;
+  Table: ApiConverter<Table>;
 };
 
 export type PrimitiveBuiltIn = {
@@ -129,6 +141,7 @@ export type BuiltIns = {
     map: Set<string>;
     tuple: Set<string>;
     sum: Set<string>;
+    table: Set<string>;
   };
 };
 
@@ -258,6 +271,15 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
           //   UnionFormState().Default(fields),
         },
       ],
+      [
+        "Table",
+        {
+          defaultValue: PredicateValue.Default.record(OrderedMap()),
+          defaultState: (
+            getChunk: TableState["customFormState"]["getChunkWithParams"],
+          ): TableState => TableState().Default(),
+        },
+      ],
     ]),
     renderers: {
       unit: Set(),
@@ -275,6 +297,7 @@ export const builtInsFromFieldViews = (fieldViews: any): BuiltIns => {
       secret: Set(),
       map: Set(),
       sum: Set(),
+      table: Set(),
     },
   };
   Object.keys(builtins.renderers).forEach((_categoryName) => {
@@ -344,6 +367,12 @@ export const defaultState =
           defaultState(types, builtIns, injectedPrimitives)(t.args[0]),
           defaultState(types, builtIns, injectedPrimitives)(t.args[1]),
         );
+    }
+
+    if (t.kind == "table") {
+      return builtIns.generics
+        .get("Table")!
+        .defaultState((): TableState => TableState().Default());
     }
 
     if (t.kind == "application") {
@@ -417,6 +446,31 @@ export const defaultValue =
           builtIns,
           injectedPrimitives,
         )(field);
+      });
+      return PredicateValue.Default.record(OrderedMap(res));
+    }
+
+    if (t.kind == "table") {
+      let res = {} as Record<string, PredicateValue>;
+
+      const tableType = types.get(t.tableType);
+
+      if (tableType == undefined) {
+        throw Error(
+          `cannot find type ${t.tableType} when resolving defaultValue`,
+        );
+      }
+
+      if (tableType.kind != "record") {
+        throw Error(`tableType ${t.tableType} is not a record`);
+      }
+
+      tableType.fields.forEach((column, columnName) => {
+        res[columnName] = defaultValue(
+          types,
+          builtIns,
+          injectedPrimitives,
+        )(column);
       });
       return PredicateValue.Default.record(OrderedMap(res));
     }
@@ -631,6 +685,61 @@ export const fromAPIRawValue =
       }
       return ValueOrErrors.Default.return(
         PredicateValue.Default.record(result),
+      );
+    }
+
+    if (t.kind == "table") {
+      const converted = converters["Table"].fromAPIRawValue(raw);
+      let result: Map<string, ValueRecord> = Map();
+      let errors: List<string> = List();
+      const tableType = types.get(t.tableType);
+      if (tableType == undefined) {
+        throw Error(
+          `cannot find type ${t.tableType} when resolving defaultValue`,
+        );
+      }
+      if (tableType.kind != "record") {
+        throw Error(`tableType ${t.tableType} is not a record`);
+      }
+      converted.data.forEach((row: any, rowIndex: string) => {
+        let rowResult: Map<string, PredicateValue> = Map();
+        tableType.fields.forEach((fieldType, fieldName) => {
+          const fieldValue = row[fieldName];
+          if (fieldValue == undefined) {
+            return;
+          }
+          const parsedValue = fromAPIRawValue(
+            fieldType,
+            types,
+            builtIns,
+            converters,
+            injectedPrimitives,
+          )(fieldValue);
+          if (parsedValue.kind == "errors") {
+            errors = errors.concat(parsedValue.errors);
+          } else {
+            rowResult = rowResult.set(fieldName, parsedValue.value);
+          }
+        });
+        result = result.set(
+          rowIndex.toString(),
+          PredicateValue.Default.record(rowResult),
+        );
+      });
+
+      if (errors.size > 0) {
+        return ValueOrErrors.Default.throw(errors);
+      }
+      return ValueOrErrors.Default.return(
+        // PredicateValue.Default.record(result),
+        PredicateValue.Default.record(
+          OrderedMap<string, PredicateValue>([
+            ["data", PredicateValue.Default.record(result)],
+            ["hasMoreValues", converted.hasMoreValues],
+            ["to", converted.to],
+            ["from", converted.from],
+          ]),
+        ),
       );
     }
 
