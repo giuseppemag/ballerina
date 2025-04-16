@@ -55,9 +55,17 @@
         ✅ tabs group can be either a list of fields or an expression
       ✅ TypeCheck
         ✅ validate the type of the expression as `Set<Enum>` where `Enum` is a subset of the field names of the type
+    ❌ lookup/lazy lookup support
+      ❌ field renderer just like List, with valueRenderer inside
+      ❌ also take as input an entity api -> implicitly pass the selected row ID
+      ❌ type is identical to List[T]
+      ❌ add a Lazy type in the go-config
+        ❌ check that dotnet test still works properly
+      ❌ (try) load upon render
     ❌ tables support
       ❌ columns have optional extra booleans "IsFilterable", "IsSortable"
       ❌ add disabledColumns, just like visibleColumns
+      ❌ detail view
       ✅ spec
         ✅ renderer
         ✅ columns

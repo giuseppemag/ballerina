@@ -125,7 +125,8 @@ module Runner =
                                 JsonValue.Record
                                   [| ("enumOptions", JsonValue.Record mergedJson.Enums)
                                      ("searchableStreams", JsonValue.Record mergedJson.Streams)
-                                     ("entities", JsonValue.Record mergedJson.Entities) |])
+                                     ("entities", JsonValue.Record mergedJson.Entities)
+                                     ("tables", JsonValue.Record mergedJson.Tables) |])
                                ("forms", JsonValue.Record mergedJson.Forms)
                                ("launchers", JsonValue.Record mergedJson.Launchers) |]
                           ) |}

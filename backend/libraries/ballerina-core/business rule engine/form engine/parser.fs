@@ -106,6 +106,7 @@ module Parser =
         do! ensureNoOverlap main1.Enums main2.Enums "Enums"
         do! ensureNoOverlap main1.Streams main2.Streams "Streams"
         do! ensureNoOverlap main1.Entities main2.Entities "Entities"
+        do! ensureNoOverlap main1.Tables main2.Tables "Tables"
 
         let inline naiveMerge (m1: seq<'k * 'v>) (m2: seq<'k * 'v>) =
           seq {
@@ -837,23 +838,26 @@ module Parser =
                   state {
                     let! form = formsState.TryFindForm s |> state.OfSum
 
-                    return! state{
-                      match form.Body with
-                      | FormBody.Union cases ->
-                        let formType = cases.UnionType
-                        return FormRenderer(form |> FormConfig.Id, formType, children)
-                      | FormBody.Record fields -> return FormRenderer(form |> FormConfig.Id, fields.RecordType, children)
-                      | FormBody.Table table ->
-                        // do Console.WriteLine form.FormName
-                        // do Console.WriteLine parentJsonFields.ToFSharpString
-                        // do Console.ReadLine() |> ignore
-                        let! tableApiNameJson = parentJsonFields |> sum.TryFindField "api" |> state.OfSum
-                        let! tableApiName = tableApiNameJson |> JsonValue.AsString |> state.OfSum
-                        let! (tableApi) = formsState.TryFindTableApi tableApiName |> state.OfSum
-                        let! tableType = formsState.TryFindType tableApi.TypeId.TypeName |> state.OfSum
+                    return!
+                      state {
+                        match form.Body with
+                        | FormBody.Union cases ->
+                          let formType = cases.UnionType
+                          return FormRenderer(form |> FormConfig.Id, formType, children)
+                        | FormBody.Record fields ->
+                          return FormRenderer(form |> FormConfig.Id, fields.RecordType, children)
+                        | FormBody.Table table ->
+                          // do Console.WriteLine form.FormName
+                          // do Console.WriteLine parentJsonFields.ToFSharpString
+                          // do Console.ReadLine() |> ignore
+                          let! tableApiNameJson = parentJsonFields |> sum.TryFindField "api" |> state.OfSum
+                          let! tableApiName = tableApiNameJson |> JsonValue.AsString |> state.OfSum
+                          let! (tableApi) = formsState.TryFindTableApi tableApiName |> state.OfSum
+                          let! tableType = formsState.TryFindType tableApi.TypeId.TypeName |> state.OfSum
 
-                        return FormRenderer(form |> FormConfig.Id, tableType.Type |> ExprType.TableType, children)
-                    } |> state.MapError(Errors.WithPriority ErrorPriority.High)
+                          return FormRenderer(form |> FormConfig.Id, tableType.Type |> ExprType.TableType, children)
+                      }
+                      |> state.MapError(Errors.WithPriority ErrorPriority.High)
 
                   }
                   state.Throw(
