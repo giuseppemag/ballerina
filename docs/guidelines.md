@@ -20,7 +20,7 @@ Pioneered by applications such as Reddit and GMail, the browser started to morph
 Javascript and direct HTML (DOM) manipulation was nowhere near a mature-enough model to deal with large applications, complex functionality, and especially one of the nastiest, most complex domains of all: network concurrency, which means that many processes need to wait for API responses that might not even ever arrive. It was a dark time, with monstrous spaghetti-code driving developers young and old to despising despair. Help was needed. 
 
 Help was on the way. Microsoft and Facebook started work on two shining projects. Typescript, and React. Typescript brought an advanced type system on top of Javascript. This type system could easily compete against type systems that we had so far only seen in the context of academic functional programming languages such as Haskell or Scala: beautiful, enticing like the song of sirens, but pitifully unusable in the context of real-world tasks. And there it was: Typescript! Capable of supporting pragmatic Javascript-style hacks when needed, but also capable of grand and beautiful type algebras to support the most advanced definitions to ensure spotless correctness in our concurrent, dynamic, API-driven frontend programs. Oh, the joy of functional programming, great types, and yet usable pragmatism for a pleasant but also practical daily life...
-But no, the gifts from the realm of functional programming to the web were not exhausted! React, based on the obscure but beloved FRP (functional REACTive programming) came into play and defined a new model of declarative rendering capable of automatically updating the "scene" on the screen whenever the data that this scene depends on changes. React introduced a series of models of computation that were unheard of outside the academic world, and even more so unheard of in the world of web development. The hard split between readonly properties and a mutable state, the notion of controlled components (straight out of functional programming), the model of flawless composition: React introduced a new scale of elegance to UI development.
+But no, the gifts from the realm of functional programming to the web were not exhausted! React, based on the obscure but beloved FRP (functional REACTive programming) came into play and defined a new model of declarative rendering capable of automatically updating the "scene" on the screen whenever the data that this scene depends on changes. React introduced a series of models of computation that were unheard of outside the academic world, and even more so unheard of in the world of web development. The hard split between Readonly properties and a mutable state, the notion of controlled components (straight out of functional programming), the model of flawless composition: React introduced a new scale of elegance to UI development.
 
 The early 2000s jokes about web developers not being real developers because of PHP and Javascript early poor quality all of a sudden melted like snow in the sun. Web development was now at the forefront of cutting edge knowledge on programming languages, type systems, functional programming, and more, thanks to the combination Typescript and React. Unbelievable.
 
@@ -443,9 +443,9 @@ Where we instantiate the domains, we need to provide the `ParentTemplate` with i
 
 
 ##### Readonly context and writable state
-The very last thing we define in a `state.ts` file are the readonly context and the writable state of the domain. The writable state is always the type of the state. This is just a disambiguation/hint for other developers, but there's nothing special here. Our domain will be able to read _and_ write this state.
+The very last thing we define in a `state.ts` file are the Readonly context and the writable state of the domain. The writable state is always the type of the state. This is just a disambiguation/hint for other developers, but there's nothing special here. Our domain will be able to read _and_ write this state.
 
-The readonly context on the other hand can be read, but cannot be written through updaters. For some domains with no dependencies this might be `Unit` (recall that `type Unit = {}`). For some subdomains it might be a slice of the domain states of the ancestors. For some domains it might be the state of other domains (it's always safe to read the state of other domains of course). Any combinations are allowed and also encountered in practice. 
+The Readonly context on the other hand can be read, but cannot be written through updaters. For some domains with no dependencies this might be `Unit` (recall that `type Unit = {}`). For some subdomains it might be a slice of the domain states of the ancestors. For some domains it might be the state of other domains (it's always safe to read the state of other domains of course). Any combinations are allowed and also encountered in practice. 
 
 For the `Parent` domain, we get:
 
@@ -477,7 +477,7 @@ export const Co = CoTypedFactory<ParentReadonlyContext, ParentWritableState>()
 ```
 
 We do this to avoid specifying the type arguments of the domain for each statement of the coroutine. The arguments are, in order:
-- the readonly context of the domain, which the coroutine may read;
+- the Readonly context of the domain, which the coroutine may read;
 - the writable state of the domain, which the coroutine may read and write.
 
 We then use this builder to define the coroutine itself. For example, we could define an infinite loop which invokes the tick updater every 2.5s:
@@ -591,7 +591,7 @@ Unfortunately, the `sync` and `value` updaters need to be built manually here. O
 > The `simpleUpdater`, as the name suggests, works well for simple scenarios, but in the core domains we might often see that it does not do the trick becaue we are using more advanced coding patterns. "Simple" indeed.
 
 And there we go! We can now define the synchronization coroutine. The coroutine needs two inputs, `p`, which is a function that takes as input the current value `v` and synchronizes it with a promise that returns a `syncResult` (or a permanent/temporary error to guide the retry mechanism), whatever the value and the synchronization result may be. The coroutine that is returned operates on:
-- a readonly context which is the state of the synchronized wrapper domain, `Synchronized<v, syncResult>`;
+- a Readonly context which is the state of the synchronized wrapper domain, `Synchronized<v, syncResult>`;
 - a writable state which is, again, the state of the synchronized wrapper domain, `Synchronized<v, syncResult>`;
 - finally, after having produced a series of state updaters over the state of the domain, we get one last completion result of type `ApiResultStatus`.
 
@@ -1070,11 +1070,11 @@ It is quite a handful so let's unpack it bit by bit.
 
 ##### Instantiating views components
 The first and foremost task of a template is to instantiate the appropriate views. The template has access to the following `props`:
-- `context`, which contains both the readonly context as well as the writable state of the template (everything that can be _read_, with type `ReadonlyContext & WritableState`);
+- `context`, which contains both the Readonly context as well as the writable state of the template (everything that can be _read_, with type `ReadonlyContext & WritableState`);
 - `setState`, which accepts an `Updater<WritableState>` to signal to the template that we wish to perform a mutation on the state;
 - `foreignMutations`, which are assorted callbacks that allow us to send signals to other domains.
 
-We pass a subset, or _projection_, of these `props` to the views of the domain, with the goal in mind of letting the view in on as little details as possible about the template itself. The view receives simple callbacks that usually invoke either `props.setState`, or a foreign mutation. The views also do not receive the whole readonly context and writable state, but ideally only the relevant information needed to perform their function, and nothing else.
+We pass a subset, or _projection_, of these `props` to the views of the domain, with the goal in mind of letting the view in on as little details as possible about the template itself. The view receives simple callbacks that usually invoke either `props.setState`, or a foreign mutation. The views also do not receive the whole Readonly context and writable state, but ideally only the relevant information needed to perform their function, and nothing else.
 
 Very often, in the context of a view, we wish to apply visual wrappers. A wrapper is a React component with children, that is it has signature `{ children?:JSX.Element | Array<JSX.Element> }`. There are two ways to apply a wrapper. One, just like we are used to in the React world, is to simply put it around whatever we want (also other templates, given that they are renderable React elements like all others):
 
@@ -1100,7 +1100,7 @@ Interestingly, both `ParentWrapper` and `ChildWrapper` have the same wrapper sig
 
 
 ##### Instantiating Child templates
-Whenever a component has children, like `Parent` does, we also want to instantiate the templates of the children components inside the parent. Of course we need to convert the readonly context, writable state, as well as `setState` and foreign mutations from the parent to the child. We can do this manually, that is nobody is stopping us from writing:
+Whenever a component has children, like `Parent` does, we also want to instantiate the templates of the children components inside the parent. Of course we need to convert the Readonly context, writable state, as well as `setState` and foreign mutations from the parent to the child. We can do this manually, that is nobody is stopping us from writing:
 
 ```tsx
 	<>
@@ -1124,7 +1124,7 @@ const Child2TemplateEmbedded = Child2Template
 	.mapState(Parent.Updaters.Core.child2)
 ```
 
-Narrowing usually just picks/singles out the subset of the readonly context and state of the child from the readonly context and state of the parent. It is usually quite a simple selection, almost trivial.
+Narrowing usually just picks/singles out the subset of the Readonly context and state of the child from the Readonly context and state of the parent. It is usually quite a simple selection, almost trivial.
 Widening takes as input an `Updater<child>` and converts it to an `Updater<parent>` through the appropriate `simpleUpdater`. It is also usually quite simple and almost trivial, if one does not think too hard about the level of nesting of higher order functions hidden all over this little call.
 
 Note that we always need to pass the context of the parent as a generic argument to `mapContext`: when embedding a child template, the type inference of Typescript cannot possibly guess which parent component we are embedding into, so we do need to provide this information explicitly.
@@ -1202,7 +1202,7 @@ There you go! Now we have a state instantiated. Cool! We can move to the renderi
 </>
 ```
 
-In this case, the `Uncle` domain does not need anything fancy: it just receives the state as readonly `context`, whenever the template triggers a state mutation then it gets forwarded immediately to `setUncle`, and there are no foreign mutations because the `Uncle` domain is self-contained.
+In this case, the `Uncle` domain does not need anything fancy: it just receives the state as Readonly `context`, whenever the template triggers a state mutation then it gets forwarded immediately to `setUncle`, and there are no foreign mutations because the `Uncle` domain is self-contained.
 
 
 ##### State management across domains

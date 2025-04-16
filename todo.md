@@ -99,7 +99,7 @@
     ❌ entities PATCH - gets single value and path of change
       ✅ support Id:string in CollectionReference, not just Id:Guid
       ✅ lots of no-ops in deltas
-        ✅ add ˋreadonlyˋ flag to record and custom types
+        ✅ add ˋReadonlyˋ flag to record and custom types
         ✅ do not generate PATCH callbacks for those fields and cases
       ✅ names of generic parameters of the deltas is inconsistent and should be fixed
       ❌ the BE can guide by providing deserializer callbacks for all the required types, such as `tryParseAsUpdateableEntityX:Raw -> UpdateableEntityX`
@@ -136,7 +136,7 @@
       ❌ get rid of tuple renderer
     ❌ improvements to the generated Golang code
       ❌ add unit tests for all the go Deltas
-      ❌ generate prefilled tuple match functions when some parameters are readonly types
+      ❌ generate prefilled tuple match functions when some parameters are Readonly types
       ❌ generate constructors with the `new{ ... }` syntax, not the field-by-field assignment
       ❌ make the deltas encapsulated
         ❌ use `private_` as a prefix for the patterns
@@ -332,7 +332,7 @@
           ❌ a few thousands ABs, CDs, EFs
           ❌ a dozen rules on many field "clusters"
         ❌ the construction of field descriptors in the schema could be streamlined
-        ❌ the metadata entities belong to the model, not to Ballerina
+        ❌ the Metadata entities belong to the model, not to Ballerina
         ❌ all rules should be applied on all entities after creation of a new entity
         ❌ BUG ALERT if translating to production! The Map of events will likely cause events not to be processed in create-order
         ❌ allow approval, with associated business rules
@@ -368,7 +368,7 @@
       ❌ persist the entities to Elasticsearch
       ❌ persist the entities to Postgres
         ❌ enums to strings
-        ❌ json fields, in particular metadata, expr, assignment
+        ❌ json fields, in particular Metadata, expr, assignment
       ✅ add OpenAPI support, see if we get luckier with C# unions and inheritance
     ❌ _generate_ translation of models into ef and OpenAPI
       ❌ records

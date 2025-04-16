@@ -1,4 +1,4 @@
-export type Size2 = { readonly width: number; readonly height: number };
+export type Size2 = { Readonly width: number; Readonly height: number };
 export const Size2 = {
   Default: Object.assign(
     (width: number, height: number): Size2 => ({ width, height }),

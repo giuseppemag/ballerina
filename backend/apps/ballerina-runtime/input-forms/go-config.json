@@ -144,7 +144,7 @@
       "WriterTypeName": "ballerina.WriterTuple6",
       "DeltaTypeName": "ballerina.DeltaTuple6",
       "RequiredImport": "ballerina.com/core",
-      "SupportedRenderers": ["defaultTuple6", "defaultTupleMetaData"],
+      "SupportedRenderers": ["defaultTuple6", "defaultTupleMetadata"],
       "Constructor": "ballerina.NewTuple6"
     }
   ],

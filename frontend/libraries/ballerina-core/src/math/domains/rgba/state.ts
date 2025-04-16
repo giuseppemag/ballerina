@@ -1,8 +1,8 @@
 export type RGBAColor = {
-  readonly r: number;
-  readonly g: number;
-  readonly b: number;
-  readonly a: number;
+  Readonly r: number;
+  Readonly g: number;
+  Readonly b: number;
+  Readonly a: number;
 };
 export const RGBAColor = {
   Default: Object.assign(

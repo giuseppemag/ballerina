@@ -70,7 +70,7 @@ Introducing...**coroutines**.
 ---
 # Very simple example
 
-We start by defining a coroutine builder, which specifies the readonly context (what the coroutines can read, but not modify) and the writable state (what the coroutine may both read and write):
+We start by defining a coroutine builder, which specifies the Readonly context (what the coroutines can read, but not modify) and the writable state (what the coroutine may both read and write):
 
 ```ts
 type Context = { stepSize:number }
